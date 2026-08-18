@@ -1,3 +1,6 @@
+import { Container } from "@/components/ui/container";
+import { SectionHeading } from "@/components/ui/section-heading";
+
 const projects = [
   {
     name: "Execution Kernel Protocol",
@@ -23,12 +26,13 @@ const projects = [
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-20 px-6 py-16">
+    <Container as="main" className="flex flex-1 flex-col gap-20 py-16">
       <section className="flex flex-col gap-4">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Tomás Araújo — Protocol Engineer | EVM &amp; SVM
+          Tomás Araújo — Protocol Engineer |{" "}
+          <span className="text-accent">EVM &amp; SVM</span>
         </h1>
-        <p className="max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-xl text-lg text-muted">
           I build protocol infrastructure and smart contracts across the EVM
           and SVM ecosystems — blockchain, Web3, and the systems that hold
           them together.
@@ -36,9 +40,7 @@ export default function Home() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          About
-        </h2>
+        <SectionHeading>About</SectionHeading>
         <p className="max-w-xl text-zinc-700 dark:text-zinc-300">
           My work centers on protocol engineering: Solidity and EVM internals,
           smart contract systems, and the infrastructure that keeps
@@ -48,20 +50,16 @@ export default function Home() {
       </section>
 
       <section className="flex flex-col gap-6">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Featured Work
-        </h2>
+        <SectionHeading>Featured Work</SectionHeading>
         <ul className="flex flex-col gap-6">
           {projects.map((project) => (
             <li key={project.name} className="flex flex-col gap-1">
               <span className="font-medium">{project.name}</span>
-              <span className="text-zinc-600 dark:text-zinc-400">
-                {project.description}
-              </span>
+              <span className="text-muted">{project.description}</span>
             </li>
           ))}
         </ul>
       </section>
-    </main>
+    </Container>
   );
 }
