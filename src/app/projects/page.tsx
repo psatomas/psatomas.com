@@ -4,10 +4,26 @@ import { Container } from "@/components/ui/container";
 import { Tag } from "@/components/ui/tag";
 import { getAllProjects } from "@/lib/projects";
 
+const description =
+  "Protocol engineering, smart contract, and blockchain infrastructure projects.";
+
 export const metadata: Metadata = {
-  title: "Projects — Tomás Araújo",
-  description:
-    "Protocol engineering, smart contract, and blockchain infrastructure projects.",
+  title: "Projects",
+  description,
+  alternates: {
+    canonical: "/projects",
+  },
+  openGraph: {
+    title: "Projects",
+    description,
+    url: "/projects",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Projects",
+    description,
+  },
 };
 
 export default function ProjectsPage() {
