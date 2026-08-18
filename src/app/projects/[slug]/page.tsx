@@ -19,9 +19,25 @@ export async function generateMetadata(
     return {};
   }
 
+  const url = `/projects/${project.slug}`;
+
   return {
-    title: `${project.name} — Tomás Araújo`,
+    title: project.name,
     description: project.summary,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title: project.name,
+      description: project.summary,
+      url,
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.name,
+      description: project.summary,
+    },
   };
 }
 
