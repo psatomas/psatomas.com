@@ -1,30 +1,11 @@
+import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
-
-const projects = [
-  {
-    name: "Execution Kernel Protocol",
-    description: "A lean execution layer kernel for EVM-compatible chains.",
-  },
-  {
-    name: "Protocol Engineering Lab",
-    description: "Experiments and reference implementations in protocol design.",
-  },
-  {
-    name: "Web3 Status Registry",
-    description: "On-chain registry for tracking protocol and node status.",
-  },
-  {
-    name: "StakeVerse Protocol",
-    description: "A staking protocol focused on validator infrastructure.",
-  },
-  {
-    name: "ProofChain",
-    description: "Verification and proof infrastructure for smart contracts.",
-  },
-];
+import { getAllProjects } from "@/lib/projects";
 
 export default function Home() {
+  const projects = getAllProjects();
+
   return (
     <Container as="main" className="flex flex-1 flex-col gap-20 py-16">
       <section className="flex flex-col gap-4">
@@ -53,12 +34,23 @@ export default function Home() {
         <SectionHeading>Featured Work</SectionHeading>
         <ul className="flex flex-col gap-6">
           {projects.map((project) => (
-            <li key={project.name} className="flex flex-col gap-1">
-              <span className="font-medium">{project.name}</span>
-              <span className="text-muted">{project.description}</span>
+            <li key={project.slug} className="flex flex-col gap-1">
+              <Link
+                href={`/projects/${project.slug}`}
+                className="w-fit font-medium hover:text-accent transition-colors"
+              >
+                {project.name}
+              </Link>
+              <span className="text-muted">{project.summary}</span>
             </li>
           ))}
         </ul>
+        <Link
+          href="/projects"
+          className="w-fit text-sm font-medium text-accent hover:underline"
+        >
+          View all projects →
+        </Link>
       </section>
     </Container>
   );

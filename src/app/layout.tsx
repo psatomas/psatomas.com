@@ -41,6 +41,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             >
               psatomas
             </Link>
+            <nav>
+              <Link
+                href="/projects"
+                className="text-sm text-muted hover:text-accent transition-colors"
+              >
+                Projects
+              </Link>
+            </nav>
           </Container>
         </header>
 
