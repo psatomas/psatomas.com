@@ -7,11 +7,18 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
-  },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "psatomas-com"
-    }
-  ]
+  }
+  // Self-reference service binding (WORKER_SELF_REFERENCE -> "psatomas-com")
+  // removed for now: a `services` binding target must already be deployed
+  // before the binding worker's own first deploy can succeed (Cloudflare
+  // docs, service bindings: "the target Worker must be deployed first...
+  // otherwise deployment will fail, because Worker A declares a binding to
+  // Worker B, which does not yet exist"). On this repo's very first deploy
+  // "psatomas-com" doesn't exist yet, so a self-reference to it is exactly
+  // that failure case. It's also currently unused — open-next.config.ts has
+  // no incremental-cache override that needs it. Re-add the `services`
+  // block (see node_modules/@opennextjs/cloudflare/templates/wrangler.jsonc
+  // for the exact shape) once the first deploy has succeeded and the
+  // "psatomas-com" script exists, or when a future stage needs on-demand
+  // revalidation. See https://opennext.js.org/cloudflare/caching
 }
