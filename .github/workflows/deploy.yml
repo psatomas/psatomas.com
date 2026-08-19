@@ -1,8 +1,9 @@
 name: Deploy to Cloudflare Workers
 
 # Manually triggered for now via the Actions tab (workflow_dispatch).
-# Once CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are added as repo
-# secrets, switch this to `push: branches: [main]` for auto-deploy on merge.
+# CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN are already set as repo
+# secrets — switch this to `push: branches: [main]` for auto-deploy on merge
+# once DNS/custom domain setup is confirmed working end to end.
 on:
   workflow_dispatch:
 
@@ -25,5 +26,5 @@ jobs:
       - name: Build and deploy
         run: npm run deploy
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
