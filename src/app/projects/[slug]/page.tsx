@@ -75,7 +75,7 @@ export default async function ProjectPage(
 
       <div className="flex max-w-xl flex-col gap-4">
         {project.description.map((paragraph) => (
-          <p key={paragraph} className="text-zinc-700 dark:text-zinc-300">
+          <p key={paragraph} className="text-foreground">
             {paragraph}
           </p>
         ))}
@@ -86,7 +86,7 @@ export default async function ProjectPage(
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
             {section.heading}
           </h2>
-          <ul className="flex max-w-xl flex-col gap-2 text-zinc-700 dark:text-zinc-300">
+          <ul className="flex max-w-xl flex-col gap-2 text-foreground">
             {section.items.map((item) => (
               <li key={item} className="list-inside list-disc">
                 {item}
