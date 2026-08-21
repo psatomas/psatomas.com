@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createCoinGeckoAdapter } from "./coingecko-adapter.ts";
+import { createCoinGeckoAdapter, SUPPORTED_ASSETS } from "./coingecko-adapter.ts";
 
 /**
  * These tests mock global fetch — they verify this adapter's own
@@ -32,6 +32,28 @@ test("maps a valid CoinGecko response into an OracleObservation", async () => {
       assert.equal(observation.value, 3421.2);
       assert.equal(observation.unit, "USD");
       assert.equal(observation.observedAt, 1735000000 * 1000);
+    },
+  );
+});
+
+test("SUPPORTED_ASSETS includes all three real assets this adapter maps", () => {
+  assert.deepEqual(new Set(SUPPORTED_ASSETS), new Set(["ETH/USD", "BTC/USD", "SOL/USD"]));
+});
+
+test("maps a valid BTC/USD response using the bitcoin coin id", async () => {
+  await withMockedFetch(
+    (async (url: string | URL | Request) => {
+      assert.match(String(url), /ids=bitcoin/);
+      return new Response(
+        JSON.stringify({ bitcoin: { usd: 78163, last_updated_at: 1787355730 } }),
+        { status: 200 },
+      );
+    }) as typeof fetch,
+    async () => {
+      const observation = await createCoinGeckoAdapter().fetchObservation("BTC/USD");
+      assert.ok(observation);
+      assert.equal(observation.value, 78163);
+      assert.equal(observation.observedAt, 1787355730 * 1000);
     },
   );
 });
