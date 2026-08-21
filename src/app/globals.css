@@ -1,33 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #52525b;
-  --border: rgba(0, 0, 0, 0.08);
-  --accent: #2563eb;
-  --accent-foreground: #ffffff;
+  --background: #0a0b0d;
+  --surface: #101216;
+  --surface-hover: #15181d;
+  --foreground: #e6e8eb;
+  --muted: #8a919c;
+  --dim: #565b64;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --grid-line: rgba(255, 255, 255, 0.045);
+  --accent: #38bdf8;
+  --accent-dim: rgba(56, 189, 248, 0.35);
+  --accent-foreground: #03141c;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-dim: var(--dim);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-grid-line: var(--grid-line);
   --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
   --color-accent-foreground: var(--accent-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #a1a1aa;
-    --border: rgba(255, 255, 255, 0.145);
-    --accent: #60a5fa;
-  }
 }
 
 body {
