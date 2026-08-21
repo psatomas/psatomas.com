@@ -1,4 +1,5 @@
 import { MonoLabel } from "@/components/ui/mono-label";
+import { FlowBox, FlowArrow } from "@/components/lab/flow";
 
 type Stat = { label: string; value: string };
 
@@ -25,30 +26,6 @@ function StatRow({ stat }: { stat: Stat }) {
   );
 }
 
-function TxBox({
-  children,
-  emphasis = false,
-}: {
-  children: string;
-  emphasis?: boolean;
-}) {
-  return (
-    <span
-      className={`whitespace-nowrap border px-2.5 py-1.5 font-mono text-[11px] tracking-[0.05em] ${
-        emphasis
-          ? "border-accent text-accent"
-          : "border-border-strong text-muted"
-      }`}
-    >
-      {children}
-    </span>
-  );
-}
-
-function Arrow() {
-  return <span className="text-dim">→</span>;
-}
-
 export function EvmSvmExperiment() {
   return (
     <div className="p-6 sm:p-8">
@@ -72,15 +49,15 @@ export function EvmSvmExperiment() {
           <div className="flex flex-col gap-3">
             <MonoLabel>SEQUENTIAL EXECUTION</MonoLabel>
             <div className="flex flex-wrap items-center gap-2">
-              <TxBox emphasis>TX 01</TxBox>
-              <Arrow />
-              <TxBox>STATE</TxBox>
-              <Arrow />
-              <TxBox emphasis>TX 02</TxBox>
-              <Arrow />
-              <TxBox>STATE</TxBox>
-              <Arrow />
-              <TxBox emphasis>TX 03</TxBox>
+              <FlowBox emphasis>TX 01</FlowBox>
+              <FlowArrow />
+              <FlowBox>STATE</FlowBox>
+              <FlowArrow />
+              <FlowBox emphasis>TX 02</FlowBox>
+              <FlowArrow />
+              <FlowBox>STATE</FlowBox>
+              <FlowArrow />
+              <FlowBox emphasis>TX 03</FlowBox>
             </div>
             <p className="text-xs text-muted">
               Each transaction reads and mutates global state in order — the
@@ -106,13 +83,13 @@ export function EvmSvmExperiment() {
             <MonoLabel>PARALLEL EXECUTION</MonoLabel>
             <div className="flex items-stretch gap-0">
               <div className="flex flex-col gap-2">
-                <TxBox emphasis>TX 01</TxBox>
-                <TxBox emphasis>TX 02</TxBox>
-                <TxBox emphasis>TX 03</TxBox>
+                <FlowBox emphasis>TX 01</FlowBox>
+                <FlowBox emphasis>TX 02</FlowBox>
+                <FlowBox emphasis>TX 03</FlowBox>
               </div>
               <div className="w-4 border-y border-r border-border-strong" />
               <div className="flex items-center">
-                <TxBox emphasis>EXECUTION</TxBox>
+                <FlowBox emphasis>EXECUTION</FlowBox>
               </div>
             </div>
             <p className="text-xs text-muted">

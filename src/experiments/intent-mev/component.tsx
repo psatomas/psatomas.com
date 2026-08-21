@@ -2,7 +2,8 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/lab/status-badge";
+import { FlowBox, FlowArrow } from "@/components/lab/flow";
 import {
   type Candidate,
   type ScorePolicy,
@@ -10,23 +11,7 @@ import {
   defaultPolicy,
   policyPresets,
   scoreAndRank,
-} from "@/lib/intent-simulation";
-
-function FlowBox({ children, emphasis = false }: { children: string; emphasis?: boolean }) {
-  return (
-    <span
-      className={`whitespace-nowrap border px-2.5 py-1.5 font-mono text-[11px] tracking-[0.05em] ${
-        emphasis ? "border-accent text-accent" : "border-border-strong text-muted"
-      }`}
-    >
-      {children}
-    </span>
-  );
-}
-
-function FlowArrow() {
-  return <span className="text-dim">→</span>;
-}
+} from "./simulation";
 
 const weightFields: Array<{ key: keyof ScorePolicy; label: string }> = [
   { key: "costWeight", label: "COST SENSITIVITY" },

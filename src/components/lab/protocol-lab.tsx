@@ -2,44 +2,12 @@
 
 import { useState } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { EvmSvmExperiment } from "@/components/sections/evm-svm-experiment";
-import { IntentMevExperiment } from "@/components/sections/intent-mev-experiment";
-import { OraclesExperiment } from "@/components/sections/oracles-experiment";
-
-type ExperimentId = "evm-svm" | "intent" | "oracles";
-
-const experiments: Array<{
-  id: ExperimentId;
-  index: string;
-  title: string;
-  subtitle: string;
-  enabled: boolean;
-}> = [
-  {
-    id: "evm-svm",
-    index: "01",
-    title: "EVM × SVM",
-    subtitle: "EXECUTION MODELS",
-    enabled: true,
-  },
-  {
-    id: "intent",
-    index: "02",
-    title: "INTENT",
-    subtitle: "EXECUTION & MEV",
-    enabled: true,
-  },
-  {
-    id: "oracles",
-    index: "03",
-    title: "ORACLES",
-    subtitle: "ON-CHAIN × OFF-CHAIN DATA",
-    enabled: true,
-  },
-];
+import { experiments, getExperiment } from "@/lib/experiments/registry";
+import type { ExperimentId } from "@/types";
 
 export function ProtocolLab() {
   const [selected, setSelected] = useState<ExperimentId | null>("evm-svm");
+  const active = getExperiment(selected);
 
   return (
     <section id="lab" className="mx-auto max-w-6xl px-6 py-20 md:py-28 scroll-mt-20">
@@ -70,7 +38,8 @@ export function ProtocolLab() {
         {/* spine */}
         <div className="h-px w-full bg-border-strong" />
 
-        {/* experiment nodes */}
+        {/* experiment nodes — the shell only ever reads registry metadata here,
+            it never knows what any experiment actually does */}
         <div className="grid grid-cols-1 sm:grid-cols-3">
           {experiments.map((exp) => {
             const isSelected = selected === exp.id;
@@ -109,17 +78,16 @@ export function ProtocolLab() {
           })}
         </div>
 
-        {/* expanded experiment */}
+        {/* expanded experiment — resolved through the registry, not a
+            hardcoded if/else chain */}
         <div
           className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-            selected ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            active ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
           }`}
         >
           <div className="overflow-hidden">
             <div className="border-t border-border">
-              {selected === "evm-svm" && <EvmSvmExperiment />}
-              {selected === "intent" && <IntentMevExperiment />}
-              {selected === "oracles" && <OraclesExperiment />}
+              {active && <active.Component />}
             </div>
           </div>
         </div>
