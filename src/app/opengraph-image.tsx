@@ -18,14 +18,14 @@ export default function Image() {
           justifyContent: "center",
           gap: 24,
           padding: 80,
-          background: "#0a0a0a",
+          background: "#0a0b0d",
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", fontSize: 64, fontWeight: 600, color: "#ededed" }}>
+        <div style={{ display: "flex", fontSize: 64, fontWeight: 600, color: "#e6e8eb" }}>
           {siteConfig.name}
         </div>
-        <div style={{ display: "flex", fontSize: 32, color: "#60a5fa" }}>
+        <div style={{ display: "flex", fontSize: 32, color: "#38bdf8" }}>
           Protocol Engineer | EVM & SVM
         </div>
       </div>

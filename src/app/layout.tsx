@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
-import { Container } from "@/components/ui/container";
+import { Nav } from "@/components/navigation/nav";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -40,10 +39,10 @@ export const metadata: Metadata = {
 };
 
 const socialLinks = [
-  { label: "GitHub", href: "https://github.com/psatomas" },
-  { label: "LinkedIn", href: "https://linkedin.com/in/psatomas" },
+  { label: "GITHUB", href: "https://github.com/psatomas" },
+  { label: "LINKEDIN", href: "https://linkedin.com/in/psatomas" },
   { label: "X", href: "https://x.com/psatomas" },
-  { label: "Email", href: "mailto:psatomas@gmail.com" },
+  { label: "EMAIL", href: "mailto:psatomas@gmail.com" },
 ];
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -53,31 +52,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header className="border-b border-border">
-          <Container className="flex items-center justify-between py-4">
-            <Link
-              href="/"
-              className="font-semibold tracking-tight hover:text-accent transition-colors"
-            >
-              psatomas
-            </Link>
-            <nav>
-              <Link
-                href="/projects"
-                className="text-sm text-muted hover:text-accent transition-colors"
-              >
-                Projects
-              </Link>
-            </nav>
-          </Container>
-        </header>
+        <Nav />
 
         {children}
 
         <footer className="border-t border-border">
-          <Container className="flex flex-col items-center gap-3 py-8 text-sm text-muted sm:flex-row sm:justify-between">
-            <p>&copy; {new Date().getFullYear()} Tomás Araújo</p>
-            <nav className="flex gap-4">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-8 font-mono text-xs tracking-[0.08em] text-dim sm:flex-row sm:justify-between">
+            <p>© {new Date().getFullYear()} TOMÁS ARAÚJO</p>
+            <nav className="flex gap-6">
               {socialLinks.map((link) => (
                 <a
                   key={link.label}
@@ -94,7 +76,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </a>
               ))}
             </nav>
-          </Container>
+          </div>
         </footer>
       </body>
     </html>
