@@ -2,28 +2,13 @@
 
 import { useState, type ReactNode } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/lab/status-badge";
+import { FlowBox, FlowArrow } from "@/components/lab/flow";
 import {
   type OracleEvaluation,
   defaultOracleInput,
   evaluateOracleUpdate,
-} from "@/lib/oracle-simulation";
-
-function FlowBox({ children, emphasis = false }: { children: string; emphasis?: boolean }) {
-  return (
-    <span
-      className={`whitespace-nowrap border px-2.5 py-1.5 font-mono text-[11px] tracking-[0.05em] ${
-        emphasis ? "border-accent text-accent" : "border-border-strong text-muted"
-      }`}
-    >
-      {children}
-    </span>
-  );
-}
-
-function FlowArrow() {
-  return <span className="text-dim">→</span>;
-}
+} from "./simulation";
 
 // Fixed simulation clock — deterministic, never Date.now(), so the demo
 // never depends on when it's rendered.
