@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { EvmSvmExperiment } from "@/components/sections/evm-svm-experiment";
+import { IntentMevExperiment } from "@/components/sections/intent-mev-experiment";
+import { OraclesExperiment } from "@/components/sections/oracles-experiment";
 
 type ExperimentId = "evm-svm" | "intent" | "oracles";
 
@@ -25,14 +27,14 @@ const experiments: Array<{
     index: "02",
     title: "INTENT",
     subtitle: "EXECUTION & MEV",
-    enabled: false,
+    enabled: true,
   },
   {
     id: "oracles",
     index: "03",
     title: "ORACLES",
     subtitle: "ON-CHAIN × OFF-CHAIN DATA",
-    enabled: false,
+    enabled: true,
   },
 ];
 
@@ -110,12 +112,14 @@ export function ProtocolLab() {
         {/* expanded experiment */}
         <div
           className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-            selected === "evm-svm" ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            selected ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
           }`}
         >
           <div className="overflow-hidden">
             <div className="border-t border-border">
-              <EvmSvmExperiment />
+              {selected === "evm-svm" && <EvmSvmExperiment />}
+              {selected === "intent" && <IntentMevExperiment />}
+              {selected === "oracles" && <OraclesExperiment />}
             </div>
           </div>
         </div>
