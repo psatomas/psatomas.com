@@ -27,8 +27,18 @@ export function createOracleService(
       const now = Date.now();
       return Promise.all(
         adapters.map(async (adapter) => {
-          const observation = await adapter.fetchObservation(asset);
-          return evaluateReading(adapter.id, asset, observation, now, policy);
+          // A thrown error means the adapter actually tried and failed
+          // (network error, timeout, rate limit, malformed response) —
+          // distinct from a plain `null`, which means "this adapter
+          // legitimately has nothing for this asset." Either way, one
+          // failing adapter never breaks evaluation of the others.
+          try {
+            const observation = await adapter.fetchObservation(asset);
+            return evaluateReading(adapter.id, asset, observation, now, policy);
+          } catch (error) {
+            const reason = error instanceof Error ? error.message : String(error);
+            return evaluateReading(adapter.id, asset, null, now, policy, reason);
+          }
         }),
       );
     },

@@ -39,3 +39,18 @@ test("orchestrates multiple independent adapters — one down doesn't affect the
   assert.equal(readings.find((r) => r.source === "source-ok")?.status, "OK");
   assert.equal(readings.find((r) => r.source === "source-down")?.status, "UNAVAILABLE");
 });
+
+test("an adapter that throws is represented as UNAVAILABLE, not a rejected service call", async () => {
+  const throwing: OracleSourceAdapter = {
+    id: "source-throws",
+    async fetchObservation() {
+      throw new Error("simulated network failure");
+    },
+  };
+
+  const service = createOracleService([throwing]);
+  const readings = await service.getReadings("ETH/USD");
+
+  assert.equal(readings[0].status, "UNAVAILABLE");
+  assert.match(readings[0].reason, /simulated network failure/);
+});
