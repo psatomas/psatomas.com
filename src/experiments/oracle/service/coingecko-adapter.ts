@@ -25,7 +25,14 @@ const REQUEST_TIMEOUT_MS = 5_000;
  * the adapter boundary only ever sees our own AssetSymbol ("ETH/USD"). */
 const ASSET_MAP: Record<AssetSymbol, { coinId: string; vsCurrency: string; unit: string }> = {
   "ETH/USD": { coinId: "ethereum", vsCurrency: "usd", unit: "USD" },
+  "BTC/USD": { coinId: "bitcoin", vsCurrency: "usd", unit: "USD" },
+  "SOL/USD": { coinId: "solana", vsCurrency: "usd", unit: "USD" },
 };
+
+/** Assets this adapter can actually serve — lets a consumer (e.g. an
+ * asset selector) discover real options instead of hardcoding a list
+ * that could drift out of sync with ASSET_MAP. */
+export const SUPPORTED_ASSETS = Object.keys(ASSET_MAP);
 
 type CoinGeckoResponse = Record<string, Record<string, number> & { last_updated_at?: number }>;
 
