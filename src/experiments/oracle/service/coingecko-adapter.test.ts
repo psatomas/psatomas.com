@@ -36,8 +36,8 @@ test("maps a valid CoinGecko response into an OracleObservation", async () => {
   );
 });
 
-test("SUPPORTED_ASSETS includes all three real assets this adapter maps", () => {
-  assert.deepEqual(new Set(SUPPORTED_ASSETS), new Set(["ETH/USD", "BTC/USD", "SOL/USD"]));
+test("SUPPORTED_ASSETS includes both real assets this adapter maps", () => {
+  assert.deepEqual(new Set(SUPPORTED_ASSETS), new Set(["ETH/USD", "BTC/USD"]));
 });
 
 test("maps a valid BTC/USD response using the bitcoin coin id", async () => {

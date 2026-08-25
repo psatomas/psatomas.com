@@ -12,7 +12,7 @@ type Node = {
 
 const nodes: Node[] = [
   { id: "evm", label: "EVM", descriptor: "STATE TRANSITIONS", x: 70, y: 56 },
-  { id: "svm", label: "SVM", descriptor: "ACCOUNT MODEL", x: 330, y: 56 },
+  { id: "solidity", label: "SOLIDITY", descriptor: "SMART CONTRACTS", x: 330, y: 56 },
   { id: "execution", label: "EXECUTION", descriptor: "POLICY / ROUTING", x: 200, y: 192 },
   { id: "oracles", label: "ORACLES", descriptor: "EXTERNAL DATA", x: 38, y: 306 },
   { id: "mev", label: "MEV", descriptor: "ORDER FLOW", x: 362, y: 306 },
@@ -21,11 +21,11 @@ const nodes: Node[] = [
 
 const edges: Array<[string, string]> = [
   ["evm", "execution"],
-  ["svm", "execution"],
+  ["solidity", "execution"],
   ["oracles", "execution"],
   ["mev", "execution"],
   ["indexing", "execution"],
-  ["evm", "svm"],
+  ["evm", "solidity"],
 ];
 
 const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
@@ -38,7 +38,7 @@ export function SystemMap() {
       viewBox="0 0 400 400"
       className="h-auto w-full max-w-md"
       role="img"
-      aria-label="Map of connected protocol engineering domains: EVM, SVM, Execution, Oracles, MEV, Indexing"
+      aria-label="Map of connected protocol engineering domains: EVM, Solidity, Execution, Oracles, MEV, Indexing"
     >
       {/* coordinate grid backdrop */}
       <defs>

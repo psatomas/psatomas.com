@@ -37,7 +37,7 @@ export function Hero() {
         </div>
 
         <MonoLabel className="text-dim">
-          EVM · SVM · PROTOCOL DESIGN · DISTRIBUTED SYSTEMS
+          EVM · SOLIDITY · PROTOCOL DESIGN · DISTRIBUTED SYSTEMS
         </MonoLabel>
       </div>
 

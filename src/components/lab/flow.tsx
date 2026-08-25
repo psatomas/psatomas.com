@@ -1,8 +1,8 @@
 /**
  * Shared Protocol Lab visualization primitive — a small bordered mono box
  * plus arrow separator, used to render pipeline/flow diagrams. Identical
- * across all three experiments (EVM×SVM, Intent×MEV, Oracle), so it lives
- * here rather than being duplicated per experiment.
+ * across all three experiments (EVM, Intent×MEV, Oracle), so it lives here
+ * rather than being duplicated per experiment.
  */
 
 export function FlowBox({

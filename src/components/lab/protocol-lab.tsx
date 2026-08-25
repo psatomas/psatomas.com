@@ -6,7 +6,7 @@ import { experiments, getExperiment } from "@/lib/experiments/registry";
 import type { ExperimentId } from "@/types";
 
 export function ProtocolLab() {
-  const [selected, setSelected] = useState<ExperimentId | null>("evm-svm");
+  const [selected, setSelected] = useState<ExperimentId | null>("evm");
   const active = getExperiment(selected);
 
   return (

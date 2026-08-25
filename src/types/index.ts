@@ -5,7 +5,7 @@ import type { ComponentType } from "react";
  * own descriptor and the registry that aggregates them — neither module
  * depends on the other for this type.
  */
-export type ExperimentId = "evm-svm" | "intent-mev" | "oracle";
+export type ExperimentId = "evm" | "intent-mev" | "oracle";
 
 /**
  * The shape every experiment's index.ts exports. Living here (rather than
