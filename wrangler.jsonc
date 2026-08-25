@@ -7,7 +7,26 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
-  }
+  },
+  // Shared cache for the Oracle experiment's most recent observation per
+  // source+asset (see src/experiments/oracle/service/observation-cache.ts)
+  // — this is what lets many concurrent /api/oracle requests, across
+  // however many Worker isolates handle them, share one recent upstream
+  // fetch instead of each independently re-contacting CoinGecko. KV is
+  // the right tool here: it's a globally-shared, eventually-consistent
+  // store built for exactly this "read-heavy, infrequently-written"
+  // shape, with no server process of our own to keep alive.
+  //
+  // The id below is a placeholder — `wrangler dev` / `opennextjs-cloudflare
+  // preview` emulate KV locally regardless of it, so local development and
+  // this repo's own tests work with no further setup. Before deploying to
+  // production, create a real namespace once and replace the id:
+  //   npx wrangler kv namespace create ORACLE_CACHE
+  // then paste the returned id here (or run `npm run cf-typegen` after,
+  // to refresh cloudflare-env.d.ts if the binding name ever changes).
+  "kv_namespaces": [
+    { "binding": "ORACLE_CACHE", "id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID" }
+  ]
   // Self-reference service binding (WORKER_SELF_REFERENCE -> "psatomas-com")
   // removed for now: a `services` binding target must already be deployed
   // before the binding worker's own first deploy can succeed (Cloudflare
