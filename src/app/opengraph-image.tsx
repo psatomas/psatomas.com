@@ -26,7 +26,7 @@ export default function Image() {
           {siteConfig.name}
         </div>
         <div style={{ display: "flex", fontSize: 32, color: "#38bdf8" }}>
-          Protocol Engineer | EVM & SVM
+          Protocol Engineer | EVM & Solidity
         </div>
       </div>
     ),

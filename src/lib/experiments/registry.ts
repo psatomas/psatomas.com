@@ -17,14 +17,14 @@
  */
 
 import type { ExperimentDefinition, ExperimentId } from "@/types";
-import { evmSvmExperiment } from "@/experiments/evm-svm";
+import { evmExperiment } from "@/experiments/evm";
 import { intentMevExperiment } from "@/experiments/intent-mev";
 import { oracleExperiment } from "@/experiments/oracle";
 
 export type ExperimentEntry = ExperimentDefinition & { enabled: boolean };
 
 const definitions: ExperimentDefinition[] = [
-  evmSvmExperiment,
+  evmExperiment,
   intentMevExperiment,
   oracleExperiment,
 ];

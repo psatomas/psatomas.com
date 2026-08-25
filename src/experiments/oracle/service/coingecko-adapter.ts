@@ -26,7 +26,6 @@ const REQUEST_TIMEOUT_MS = 5_000;
 const ASSET_MAP: Record<AssetSymbol, { coinId: string; vsCurrency: string; unit: string }> = {
   "ETH/USD": { coinId: "ethereum", vsCurrency: "usd", unit: "USD" },
   "BTC/USD": { coinId: "bitcoin", vsCurrency: "usd", unit: "USD" },
-  "SOL/USD": { coinId: "solana", vsCurrency: "usd", unit: "USD" },
 };
 
 /** Assets this adapter can actually serve — lets a consumer (e.g. an

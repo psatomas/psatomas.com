@@ -39,7 +39,6 @@ const projects: Project[] = [
       {
         heading: "Focus areas",
         items: [
-          "Rust systems programming",
           "Blockchain protocol design",
           "Solidity smart contracts",
           "Distributed systems & cryptography",
@@ -48,14 +47,14 @@ const projects: Project[] = [
       {
         heading: "Structure",
         items: [
-          "rust-algorithms — data structures & algorithm practice in Rust",
           "protocol-primitives — core blockchain components",
           "solidity-experiments — smart contract experiments",
+          "rust-algorithms — data structures & algorithm practice in Rust",
           "notes — research and insights",
         ],
       },
     ],
-    stack: ["Rust", "Solidity", "Cryptography"],
+    stack: ["Solidity", "Cryptography"],
   },
   {
     slug: "web3-status-registry",

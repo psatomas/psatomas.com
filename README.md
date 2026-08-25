@@ -52,7 +52,7 @@ src/
 │   └── ui/                    # generic shared primitives (MonoLabel, Tag, Container)
 ├── experiments/            # each Lab experiment owns its directory — no
 │   │                       # experiment imports another or the shell
-│   ├── evm-svm/            # static comparison, no simulation needed
+│   ├── evm/                # static, deterministic execution-model deep dive
 │   ├── intent-mev/         # deterministic scoring simulation
 │   └── oracle/             # domain model, service, CoinGecko adapter, API
 │       │                   # contract/client, and the live-data UI
@@ -71,9 +71,9 @@ The homepage's Protocol Lab section holds three interactive experiments,
 each an independently bounded module under `src/experiments/` — adding,
 removing, or replacing one never touches the shell or the others:
 
-1. **EVM × SVM** — execution model comparison (state model, gas vs. compute
-   units, sequential vs. parallel transaction execution). A static,
-   deterministic comparison.
+1. **EVM** — an execution-model deep dive (state/storage model, gas, message
+   calls, transaction-level atomicity). A static, deterministic exploration
+   of the EVM itself, not a comparison.
 2. **Intent Execution × MEV** — adjustable scoring policy over candidate
    execution routes; changing weights visibly changes which route wins. A
    deterministic, client-side simulation.
