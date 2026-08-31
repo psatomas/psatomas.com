@@ -1,0 +1,52 @@
+export const metadata = {
+  slug: "modeling-the-evm-as-a-state-transition-system",
+  title: "Modeling the EVM as a State Transition System",
+  description:
+    "The EVM is easiest to reason about as a pure function from one global state to the next — not as a virtual machine with instructions bolted on.",
+  category: "EVM",
+  date: "2026-08-20",
+  tags: ["EVM", "State Model", "Gas", "Atomicity"],
+};
+
+At its core, the EVM can be described as a single state transition function:
+apply a transaction to a state, and get a new state back. Everything else —
+opcodes, the stack, gas accounting, message calls — exists to make that one
+function well-defined and terminating.
+
+## Global state, not per-contract state
+
+There is one state trie for the whole chain, not one per contract. A
+contract's storage is a namespaced region within that single structure.
+Reasoning about "contract state" in isolation is a useful shorthand, but the
+atomicity guarantees below only make sense once you go back to thinking in
+terms of the one global state.
+
+## Execution as a stack machine
+
+The EVM executes bytecode against an operand stack, not registers. This
+keeps the instruction set small and the execution model easy to specify
+formally — every opcode's effect on the stack, memory, and storage is fully
+determined by its inputs, with no hidden state to track.
+
+## Gas as the resource model
+
+Gas turns an otherwise unbounded computation (arbitrary bytecode, arbitrary
+loops) into something that is guaranteed to terminate and whose cost is
+priced before execution starts. It's not an implementation detail — it's
+part of what makes "run arbitrary code from an untrusted source, on a
+shared machine, without one bad actor stalling everyone else" tractable at
+all.
+
+## Message calls and atomicity
+
+A transaction can trigger a chain of message calls between contracts. The
+whole chain still resolves to a single state transition: either every state
+change in the transaction commits, or none does. That "all or nothing" is
+the property everything above is really in service of — a lower-level
+`call()` can fail and be handled without reverting the outer transaction,
+but the transaction's aggregate state change is still atomic.
+
+---
+
+*Draft — this is seed content for the Research section's initial layout,
+not a finished piece. Expect this to be rewritten.*

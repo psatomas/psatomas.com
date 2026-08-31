@@ -35,3 +35,20 @@ export type Project = {
   stack: string[];
   repoUrl?: string;
 };
+
+/**
+ * The metadata every Research article exports (see
+ * src/content/research/*.mdx and src/lib/research.ts). `category` and
+ * `tags` are plain strings rather than a fixed enum — with zero articles
+ * written yet there's no real taxonomy to encode, and inventing one now
+ * would be guessing ahead of actual content.
+ */
+export type ResearchArticleMetadata = {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  /** ISO date string, e.g. "2026-08-29" — sortable as-is. */
+  date: string;
+  tags: string[];
+};
