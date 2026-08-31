@@ -1,0 +1,56 @@
+export const metadata = {
+  slug: "when-an-oracle-cache-becomes-part-of-the-consistency-model",
+  title: "When an Oracle Cache Becomes Part of the Consistency Model",
+  description:
+    "A cache that sits in front of an oracle isn't just a performance optimization — it's making a claim about what 'current' means, and that claim needs to be honest under load.",
+  category: "Distributed Systems",
+  date: "2026-08-29",
+  tags: ["Oracles", "Caching", "Cloudflare KV", "Consistency"],
+};
+
+An oracle experiment that polls a public price API from the browser looks
+harmless in isolation — one tab, one request every so often, well under
+any rate limit. It stops looking harmless the moment more than one person
+has the page open at the same time.
+
+## The failure mode was never the code
+
+Every browser tab polling independently means N tabs produce N independent
+upstream requests, all hitting the same keyless, rate-limited endpoint. The
+provider doesn't know or care that these requests are "the same" logical
+read — from its side, they're just N clients over the limit. That's exactly
+what a 429 in production traced back to here: not a bug in any single
+request, but an architecture with no shared state between them at all.
+
+## A cache here is a consistency decision, not just speed
+
+The obvious fix — cache the last observation — immediately raises the real
+question: cache it *where*, and what does a client actually receive while
+it's cached? A naive in-process cache doesn't work on Cloudflare Workers,
+where a given request can land on any of several isolated instances with no
+shared memory between them. The cache has to live somewhere genuinely
+shared — Cloudflare KV, in this case — or "cached" quietly becomes "cached
+per instance, sometimes," which is a much worse guarantee than no cache at
+all.
+
+## Staleness has to stay visible
+
+The one requirement that mattered most: a cached observation that has aged
+past its freshness window must still be reported as stale, not silently
+served as if it were live. Freshness is recomputed against the current time
+on every read, regardless of whether the underlying observation came from
+a fresh fetch or a cache hit — the cache changes how often the upstream is
+contacted, never what the client is told about how current the data is.
+
+## Coalescing is the other half of the fix
+
+A cache alone doesn't stop a burst of concurrent requests from all missing
+it at once and all firing their own upstream call simultaneously. The
+second piece is de-duplicating concurrent in-flight requests for the same
+key, so a burst collapses into one real fetch instead of one per request
+that happened to arrive before the first result was cached.
+
+---
+
+*Draft — this is seed content for the Research section's initial layout,
+not a finished piece. Expect this to be rewritten.*

@@ -1,0 +1,51 @@
+export const metadata = {
+  slug: "why-intent-based-execution-needs-a-scoring-model",
+  title: "Why Intent-Based Execution Needs a Scoring Model",
+  description:
+    "An intent describes a desired outcome, not a path. Something still has to pick between candidate paths — and that choice deserves to be explicit, not implicit in whichever solver responds first.",
+  category: "Protocol Engineering",
+  date: "2026-08-24",
+  tags: ["Intents", "MEV", "Execution", "Scoring"],
+};
+
+"Swap 1,000 USDC for ETH" is an intent, not an execution plan. Turning it
+into a plan means choosing among candidate routes — different solvers,
+different liquidity paths, different tradeoffs — and that choice is where
+most of the interesting protocol design work actually lives.
+
+## Candidates aren't ranked by one number
+
+A naive implementation picks whichever quote returns the best output amount
+and calls it done. In practice, at least three independent dimensions
+matter, and they don't collapse into each other:
+
+- **Cost** — the actual amount received net of fees and slippage.
+- **MEV exposure** — how vulnerable the chosen path is to being
+  sandwiched, reordered, or front-run before it settles.
+- **Latency** — how long the user waits for the route to actually confirm.
+
+A route that wins on cost but loses badly on MEV exposure isn't obviously
+better than one that's slightly more expensive but far harder to attack.
+
+## Why this has to be a policy, not a hardcoded rule
+
+Different callers legitimately want different tradeoffs — a market maker
+optimizing for latency looks nothing like a retail swap optimizing for
+worst-case cost. Encoding "the" correct weighting as a hardcoded
+if-statement bakes in someone's specific risk tolerance as if it were a
+protocol invariant. Making the weights an explicit, adjustable policy
+instead means the tradeoff is visible and owned, not accidental.
+
+## Determinism matters more than sophistication here
+
+Given the same candidates and the same policy, the selection has to be
+reproducible — the same inputs should always score the same way. A scoring
+model that can't be re-run and re-verified after the fact isn't
+trustworthy enough to explain *why* a particular route was chosen, which
+matters as much as the choice itself once MEV is one of the inputs being
+weighed.
+
+---
+
+*Draft — this is seed content for the Research section's initial layout,
+not a finished piece. Expect this to be rewritten.*

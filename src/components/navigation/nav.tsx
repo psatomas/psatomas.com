@@ -6,7 +6,7 @@ const navItems: Array<
 > = [
   { label: "LAB", href: "#lab" },
   { label: "SYSTEMS", href: "/projects" },
-  { label: "RESEARCH", disabled: true },
+  { label: "RESEARCH", href: "/research" },
   { label: "ABOUT", disabled: true },
   { label: "GITHUB", href: "https://github.com/psatomas", external: true },
 ];
