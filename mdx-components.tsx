@@ -4,9 +4,7 @@ import type { MDXComponents } from "mdx/types";
  * Required by @next/mdx for the App Router — maps Markdown's plain HTML
  * elements onto the site's own visual language instead of a generic
  * "prose" theme, so a Research article reads as part of the Protocol Lab
- * rather than a bolted-on blog. Not yet consumed by any route (the article
- * page is a later step) — this exists now because @next/mdx requires it
- * to be present at all, even just to import a .mdx file for its metadata.
+ * rather than a bolted-on blog.
  */
 const components: MDXComponents = {
   h2: ({ children }) => (
@@ -38,8 +36,13 @@ const components: MDXComponents = {
       {children}
     </code>
   ),
+  // Fenced code blocks compile to <pre><code>…</code></pre> — the [&>code]
+  // overrides below undo the standalone `code` styling above so a fenced
+  // block doesn't end up with a border-in-a-border look. No syntax
+  // highlighting here on purpose (would mean a new dependency); that can
+  // be layered on later without touching this structure.
   pre: ({ children }) => (
-    <pre className="mb-4 overflow-x-auto rounded border border-border bg-surface p-4 font-mono text-sm">
+    <pre className="mb-4 overflow-x-auto rounded border border-border bg-surface p-4 font-mono text-sm [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0">
       {children}
     </pre>
   ),
