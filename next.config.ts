@@ -9,7 +9,20 @@ const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 };
 
-const withMDX = createMDX({});
+// remark-gfm specifically for table support: confirmed empirically
+// (compiling a pipe-table with @mdx-js/mdx directly) that the default
+// CommonMark-only compiler renders `| a | b |` as a literal paragraph of
+// pipe characters, not a <table> — GFM tables are an extension, not part
+// of base Markdown. Without this, mdx-components.tsx's table mapping
+// would just never fire.
+//
+// Passed as a package-name string, not an imported function reference —
+// Turbopack requires MDX loader options to be serializable (a function
+// can't cross that boundary) and resolves plugins named this way itself.
+// Confirmed by hitting the actual build error the other way first.
+const withMDX = createMDX({
+  options: { remarkPlugins: ["remark-gfm"] },
+});
 
 export default withMDX(nextConfig);
 

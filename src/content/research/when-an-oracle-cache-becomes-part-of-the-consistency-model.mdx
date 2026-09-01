@@ -34,6 +34,12 @@ shared — Cloudflare KV, in this case — or "cached" quietly becomes "cached
 per instance, sometimes," which is a much worse guarantee than no cache at
 all.
 
+| Approach | Shared across isolates | Upstream calls under load |
+| --- | --- | --- |
+| No cache | — | One per request |
+| In-process cache | No | One per isolate, still many |
+| Cloudflare KV | Yes | One per TTL window, globally |
+
 ## Staleness has to stay visible
 
 The one requirement that mattered most: a cached observation that has aged
