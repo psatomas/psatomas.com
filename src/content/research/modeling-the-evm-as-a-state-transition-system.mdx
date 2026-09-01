@@ -2,59 +2,200 @@ export const metadata = {
   slug: "modeling-the-evm-as-a-state-transition-system",
   title: "Modeling the EVM as a State Transition System",
   description:
-    "The EVM is easiest to reason about as a pure function from one global state to the next — not as a virtual machine with instructions bolted on.",
+    "A transaction takes a global state, applies the protocol's rules, and produces a new one. Almost everything distinctive about the EVM — storage, gas, message calls, atomicity — exists to make that one function well-defined.",
   category: "EVM",
   date: "2026-08-20",
-  tags: ["EVM", "State Model", "Gas", "Atomicity"],
-  readingMinutes: 2,
+  tags: ["EVM", "State Transition Model", "Message Calls", "Atomicity"],
+  readingMinutes: 8,
 };
 
-At its core, the EVM can be described as a single state transition function:
-apply a transaction to a state, and get a new state back. Everything else —
-opcodes, the stack, gas accounting, message calls — exists to make that one
-function well-defined and terminating. Stripped to its signature:
+Every Ethereum node is expected to agree on the result of running arbitrary,
+untrusted code, with no coordinator, no shared memory, and no synchronized
+clocks between them — just thousands of independent machines that each have
+to compute the same answer on their own, and be able to prove it if
+challenged. That requirement, not smart contracts or tokens, is what the
+EVM's design actually answers. The stack machine, the gas metering, the
+precise shape of "state" — all of it follows from needing execution to be
+reproducible, not from decisions about what people would build with it.
 
+The model that falls out of that requirement is a state transition
+function:
+
+```text
+S(n+1) = E(S(n), T)
 ```
-apply(state, transaction) -> new_state
+
+Given a state `S(n)` and a transaction `T`, the execution function `E`
+deterministically produces the next state `S(n+1)`. Consensus over "what
+happened" reduces to consensus over `E` — every honest node runs the same
+function on the same inputs and gets the same output, so agreeing on the
+chain's history is really just agreeing on a sequence of transactions and
+trusting that everyone computed `E` the same way. Almost every EVM design
+choice below exists to keep that one function well-defined: what exactly is
+`S`, what exactly is `T`, and what does it mean for `E` to fail partway
+through.
+
+## What "state" actually is
+
+`S` is not a collection of independent contract databases. It's one global
+structure — a single state trie for the whole chain, mapping every address
+to an account: a balance, a nonce, a code hash, and a storage root. A
+contract's storage is not a sibling of this structure; it's a namespaced
+region *inside* it, addressed by the contract's own account entry.
+
+This matters beyond bookkeeping. Because there is exactly one `S`, a
+message call from contract A into contract B reads and writes the *same*
+global structure A itself is part of — there's no serialization step, no
+copying of "B's data" into "A's context." Composability (a lending protocol
+calling a price oracle calling a token contract, all within one
+transaction) is possible specifically because every contract's storage is a
+view into one shared state, not because contracts are unusually good at
+talking to each other.
+
+## Storage is the part of state a contract actually owns
+
+Within that global structure, a contract's storage is the durable part —
+the values that exist before the transaction starts and persist after it
+ends. Everything else a contract touches during execution (the stack, the
+scratch memory space, calldata) is transient: allocated when a call frame
+starts, discarded when it returns.
+
+```solidity
+contract Counter {
+    uint256 public count; // storage — part of S, persists across transactions
+
+    function increment() external {
+        uint256 next = count + 1; // computed in memory/the stack
+        count = next;             // SSTORE — this line is where S actually changes
+    }
+}
 ```
 
-Everything below is really just describing what that one function has to
-guarantee.
+The `SSTORE` on the last line isn't an implementation detail of how
+Solidity compiles a variable assignment — it's the literal mechanism by
+which `E` mutates `S`. Everything before it in the function body is
+scratch work; that one write is the state transition. This is also why
+storage writes are priced so much higher than almost anything else the EVM
+does: a write is the one class of operation whose effect every future
+state, on every node, forever, has to account for.
 
-## Global state, not per-contract state
+## The transaction is the unit of change
 
-There is one state trie for the whole chain, not one per contract. A
-contract's storage is a namespaced region within that single structure.
-Reasoning about "contract state" in isolation is a useful shorthand, but the
-atomicity guarantees below only make sense once you go back to thinking in
-terms of the one global state.
+`T` is a single signed request: a sender, a nonce, a target address (or
+none, for contract creation), a value, calldata, and a gas budget. The
+nonce matters more than it looks — it's what prevents the same signed
+transaction from being replayed, and it's what gives each sender's own
+transactions a strict order, independent of how they're eventually included
+in a block.
 
-## Execution as a stack machine
+A transaction is the smallest thing `E` operates on. Everything that
+happens *during* one — however many contracts get touched — is one
+application of `E`, not many.
 
-The EVM executes bytecode against an operand stack, not registers. This
-keeps the instruction set small and the execution model easy to specify
-formally — every opcode's effect on the stack, memory, and storage is fully
-determined by its inputs, with no hidden state to track.
+## One transaction can trigger many message calls
 
-## Gas as the resource model
+A transaction's calldata targets one address, but execution there can issue
+further calls into other contracts — `CALL`, `DELEGATECALL`, `STATICCALL`
+— each starting a new call frame with its own stack and memory. The result
+is a call tree, not a single hop, and the whole tree is still resolved
+within one application of `E`.
 
-Gas turns an otherwise unbounded computation (arbitrary bytecode, arbitrary
-loops) into something that is guaranteed to terminate and whose cost is
-priced before execution starts. It's not an implementation detail — it's
-part of what makes "run arbitrary code from an untrusted source, on a
-shared machine, without one bad actor stalling everyone else" tractable at
-all.
+The distinction between `CALL` and `DELEGATECALL` is worth being precise
+about, because it's easy to describe message calls as "one contract asking
+another to run code" and stop there. A `CALL` does exactly that — B's code
+runs against B's storage, with `msg.sender` set to A. A `DELEGATECALL` runs
+B's code against **A's** storage, with `msg.sender` and `msg.value`
+preserved from A's original caller. It's not "call another contract," it's
+"substitute the code being executed while keeping everything about whose
+state is being modified unchanged." That single mechanism is what makes
+upgradeable proxy contracts possible: a proxy holds the storage, delegates
+execution to a swappable logic contract, and from the outside nothing about
+whose state changed ever looks different.
 
-## Message calls and atomicity
+## Execution has to be reproducible, not just correct
 
-A transaction can trigger a chain of message calls between contracts. The
-whole chain still resolves to a single state transition: either every state
-change in the transaction commits, or none does. That "all or nothing" is
-the property everything above is really in service of — a lower-level
-`call()` can fail and be handled without reverting the outer transaction,
-but the transaction's aggregate state change is still atomic.
+Bytecode runs against an operand stack — not registers — which keeps the
+instruction set small enough to specify exactly: every opcode's effect on
+the stack, memory, and storage is a pure function of its inputs, with
+nothing hidden. That's a stronger requirement than "the code works." A
+node's execution engine isn't trying to compute *a* correct answer; it's
+trying to compute the *one* answer every other node will also reach.
+Anything that could differ between machines — floating-point rounding,
+iteration order over a hash map, real wall-clock time — is either absent
+from the instruction set or replaced with something consensus-safe (block
+timestamps come from the block proposer, not the executing node's clock).
+Determinism isn't a property the EVM happens to have; it's close to the
+entire design brief.
+
+## Gas prices the computation, not just the outcome
+
+Unbounded, attacker-supplied computation run by every node on the network
+is a denial-of-service vector by default. Gas turns that into a bounded,
+priced resource: each opcode has a cost, execution halts the instant the
+budget runs out, and the cost is charged whether or not the transaction's
+intended effect ends up committing.
+
+That last part is easy to state imprecisely. A transaction that runs out of
+gas, or hits an explicit revert, doesn't get its state changes applied —
+but the sender still pays for the computation that was performed, and the
+sender's nonce still increments. The failure is undone; the cost of
+attempting it is not. That asymmetry is what makes the pricing model
+actually work as a defense: a failed attack still costs the attacker,
+rather than being free to retry indefinitely.
+
+## Atomicity is a property of the transaction, not the call
+
+"All or nothing" is usually stated about the *transaction*: either every
+state change inside it commits, or none does. That's correct, but it
+describes the outer guarantee, not what happens at every point along the
+way — and the difference matters more than it sounds like it should.
+
+A low-level call can fail without taking the rest of the transaction down
+with it:
+
+```solidity
+(bool ok, ) = target.call(data);
+// ok can be false. Execution continues here regardless —
+// the transaction only reverts if *this* contract decides to make it:
+require(ok, "sub-call failed");
+```
+
+Nothing about the outer `E(S(n), T)` guarantee is violated by `ok` being
+`false` and execution simply continuing. Atomicity guarantees that
+whatever `S(n+1)` ends up being, it's consistent — not that every sub-call
+along the way had to succeed.
+
+This is also, precisely, why reentrancy is possible at all. Atomicity is a
+statement about the transaction's net effect on `S`, not a promise that
+intermediate states are invisible while execution is in progress. If
+contract A calls out to contract B before updating its own storage, and
+B's code calls back into A, A is genuinely re-entered mid-execution, seeing
+its own storage exactly as A itself last left it — not some finalized,
+post-transaction snapshot. "Check effects before interactions" isn't a
+style preference; it's the direct consequence of atomicity applying to the
+whole transaction rather than to each message call within it.
+
+## Why the lab looks the way it does
+
+The EVM experiment on this site's homepage shows six things: global state,
+contract storage, gas, stack-based execution, message calls, and
+transaction-level atomicity. Read against the model above, those aren't
+six arbitrary facts someone thought were interesting — they're exactly the
+concepts required to state `S(n+1) = E(S(n), T)` precisely. State and
+storage define what `S` *is*. Execution and gas define how `E` is computed
+and bounded. Message calls define how one `T` can produce compound effects
+across many contracts within a single application of `E`. Atomicity
+defines what `E` guarantees about the relationship between `S(n)` and
+`S(n+1)` when something inside that computation fails.
+
+The lab is the interactive surface of that model — six dimensions you can
+look at side by side. This is the reasoning underneath them: one state
+transition function, and everything else in the EVM's design existing to
+keep it well-defined.
 
 ---
 
-*Draft — this is seed content for the Research section's initial layout,
-not a finished piece. Expect this to be rewritten.*
+*This is the first full revision of this article — a synthesis of how the
+EVM's design decisions relate to each other, not new research. Feedback on
+precision or claims worth double-checking is welcome before this becomes
+the editorial standard for the rest of Research.*
