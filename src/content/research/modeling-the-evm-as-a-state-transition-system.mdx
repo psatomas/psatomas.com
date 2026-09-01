@@ -6,12 +6,20 @@ export const metadata = {
   category: "EVM",
   date: "2026-08-20",
   tags: ["EVM", "State Model", "Gas", "Atomicity"],
+  readingMinutes: 2,
 };
 
 At its core, the EVM can be described as a single state transition function:
 apply a transaction to a state, and get a new state back. Everything else —
 opcodes, the stack, gas accounting, message calls — exists to make that one
-function well-defined and terminating.
+function well-defined and terminating. Stripped to its signature:
+
+```
+apply(state, transaction) -> new_state
+```
+
+Everything below is really just describing what that one function has to
+guarantee.
 
 ## Global state, not per-contract state
 

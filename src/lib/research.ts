@@ -44,3 +44,24 @@ export async function getResearchArticleBySlug(
   if (!(SLUGS as readonly string[]).includes(slug)) return undefined;
   return loadMetadata(slug);
 }
+
+/**
+ * The article immediately newer and immediately older than `slug`, per
+ * the same sorted (newest-first) order the index uses — no separate
+ * ranking or recommendation logic, just adjacency in the one list that
+ * already exists. Either side is null at the ends of the list (the
+ * newest article has no newer neighbor, the oldest has no older one).
+ */
+export async function getAdjacentResearchArticles(slug: string): Promise<{
+  newer: ResearchArticleMetadata | null;
+  older: ResearchArticleMetadata | null;
+}> {
+  const articles = await getAllResearchArticles();
+  const index = articles.findIndex((article) => article.slug === slug);
+  if (index === -1) return { newer: null, older: null };
+
+  return {
+    newer: index > 0 ? articles[index - 1] : null,
+    older: index < articles.length - 1 ? articles[index + 1] : null,
+  };
+}

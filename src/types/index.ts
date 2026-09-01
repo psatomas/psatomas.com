@@ -51,4 +51,13 @@ export type ResearchArticleMetadata = {
   /** ISO date string, e.g. "2026-08-29" — sortable as-is. */
   date: string;
   tags: string[];
+  /**
+   * Set explicitly per article, not computed from rendered content —
+   * computing it would mean rendering the article body somewhere, and
+   * `react-dom/server` can't be imported into a Server Component's
+   * import graph (Next.js forbids it outright), while the raw .mdx
+   * source isn't readable at runtime on Cloudflare Workers either (see
+   * research.ts). A hand-set number is simpler and has no failure mode.
+   */
+  readingMinutes: number;
 };
