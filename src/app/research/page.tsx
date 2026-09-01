@@ -36,7 +36,7 @@ export default async function ResearchPage() {
 
             <Link
               href={`/research/${article.slug}`}
-              className="w-fit text-lg font-medium hover:text-accent transition-colors"
+              className="w-fit text-xl font-semibold text-foreground hover:text-accent transition-colors"
             >
               {article.title}
             </Link>
