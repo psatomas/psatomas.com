@@ -1,15 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ComponentType } from "react";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { Tag } from "@/components/ui/tag";
-import {
-  getAdjacentResearchArticles,
-  getAllResearchArticles,
-  getResearchArticleBySlug,
-} from "@/lib/research";
-import type { ResearchArticleMetadata } from "@/types";
+import { researchRepository } from "@/lib/research";
 
 // Prerenders every known article at build time — same as
 // /projects/[slug]. Deliberately NOT setting `dynamicParams = false` here:
@@ -21,7 +15,7 @@ import type { ResearchArticleMetadata } from "@/types";
 // /projects/[slug]/page.tsx already does successfully in production — is
 // the pattern actually proven to work on this stack.
 export async function generateStaticParams() {
-  const articles = await getAllResearchArticles();
+  const articles = await researchRepository.getPublishedArticles();
   return articles.map((article) => ({ slug: article.slug }));
 }
 
@@ -40,17 +34,15 @@ export default async function ResearchArticlePage(
 ) {
   const { slug } = await props.params;
 
-  const known = await getResearchArticleBySlug(slug);
-  if (!known) notFound();
+  // The page asks the repository for an article and either gets a fully
+  // renderable one back or doesn't — it never knows or cares whether that
+  // meant a slug lookup in an array, a file import, or (eventually) a D1
+  // query for a row with status = 'published'.
+  const article = await researchRepository.getPublishedArticleBySlug(slug);
+  if (!article) notFound();
 
-  const { default: Article, metadata } = (await import(
-    `@/content/research/${slug}.mdx`
-  )) as {
-    default: ComponentType;
-    metadata: ResearchArticleMetadata;
-  };
-
-  const { newer, older } = await getAdjacentResearchArticles(slug);
+  const { Content } = article;
+  const { newer, older } = await researchRepository.getAdjacentPublishedArticles(slug);
 
   return (
     <Container as="main" className="flex flex-1 flex-col gap-10 py-16">
@@ -63,32 +55,32 @@ export default async function ResearchArticlePage(
 
       <div className="flex flex-col gap-3">
         <MonoLabel className="text-dim">
-          RESEARCH / {metadata.category}
+          RESEARCH / {article.category}
         </MonoLabel>
         <div className="flex flex-wrap items-center gap-3">
           <MonoLabel className="text-dim">
-            {formatArticleDate(metadata.date)}
+            {formatArticleDate(article.publishedAt)}
           </MonoLabel>
           <span className="text-dim">·</span>
-          <MonoLabel className="text-dim">{metadata.readingMinutes} MIN READ</MonoLabel>
+          <MonoLabel className="text-dim">{article.readingMinutes} MIN READ</MonoLabel>
         </div>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {metadata.title}
+          {article.title}
         </h1>
-        <p className="max-w-xl text-lg text-muted">{metadata.description}</p>
+        <p className="max-w-xl text-lg text-muted">{article.description}</p>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border pt-8">
         <MonoLabel>ARTICLE</MonoLabel>
         <div className="max-w-xl">
-          <Article />
+          <Content />
         </div>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border pt-8">
         <MonoLabel>TAGS</MonoLabel>
         <div className="flex flex-wrap gap-2">
-          {metadata.tags.map((tag) => (
+          {article.tags.map((tag) => (
             <Tag key={tag}>{tag}</Tag>
           ))}
         </div>

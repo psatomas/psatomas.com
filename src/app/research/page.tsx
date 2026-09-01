@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { getAllResearchArticles } from "@/lib/research";
+import { researchRepository } from "@/lib/research";
 
 export default async function ResearchPage() {
-  const articles = await getAllResearchArticles();
+  const articles = await researchRepository.getPublishedArticles();
 
   return (
     <Container as="main" className="flex flex-1 flex-col gap-10 py-16">
@@ -29,7 +29,7 @@ export default async function ResearchPage() {
             className="flex flex-col gap-2 border-t border-border py-8 first:border-t-0 first:pt-0"
           >
             <div className="flex items-center gap-3">
-              <MonoLabel className="text-dim">{article.date}</MonoLabel>
+              <MonoLabel className="text-dim">{article.publishedAt}</MonoLabel>
               <span className="text-dim">·</span>
               <MonoLabel className="text-dim">{article.category}</MonoLabel>
             </div>
