@@ -26,6 +26,29 @@
   // to refresh cloudflare-env.d.ts if the binding name ever changes).
   "kv_namespaces": [
     { "binding": "ORACLE_CACHE", "id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID" }
+  ],
+  // Research's article store — a separate D1 database, not the Oracle KV
+  // above. KV is a cache (ephemeral, TTL'd, no querying); Research needs
+  // real persistent records with draft/published state, ordering, and
+  // future editing — a relational table is the right shape for that, and
+  // D1 is Cloudflare's native SQL option, reachable through the same
+  // getCloudflareContext() binding pattern already proven for KV.
+  //
+  // Same story as the KV id above: `wrangler dev` / `opennextjs-cloudflare
+  // preview` emulate D1 locally regardless of this id, so local dev and
+  // this repo's tests work with no further setup (see migrations/ and
+  // npm run db:migrate:local / db:seed:local). Before deploying to
+  // production, create a real database once:
+  //   npx wrangler d1 create psatomas-research
+  // then paste the returned database_id here, and apply the schema to it:
+  //   npx wrangler d1 migrations apply RESEARCH_DB --remote
+  "d1_databases": [
+    {
+      "binding": "RESEARCH_DB",
+      "database_name": "psatomas-research",
+      "database_id": "REPLACE_WITH_REAL_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
   ]
   // Self-reference service binding (WORKER_SELF_REFERENCE -> "psatomas-com")
   // removed for now: a `services` binding target must already be deployed

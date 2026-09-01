@@ -3,21 +3,16 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { Tag } from "@/components/ui/tag";
-import { researchRepository } from "@/lib/research";
+import { getResearchRepository } from "@/lib/research";
 
-// Prerenders every known article at build time — same as
-// /projects/[slug]. Deliberately NOT setting `dynamicParams = false` here:
-// confirmed empirically under real workerd that it throws
-// `Internal: NoFallbackError` for every slug, known or not, because this
-// project's OpenNext/Cloudflare config has no incremental-cache backend
-// configured (see open-next.config.ts). Leaving `dynamicParams` at its
-// default and checking the slug explicitly below — exactly what
-// /projects/[slug]/page.tsx already does successfully in production — is
-// the pattern actually proven to work on this stack.
-export async function generateStaticParams() {
-  const articles = await researchRepository.getPublishedArticles();
-  return articles.map((article) => ({ slug: article.slug }));
-}
+// No more generateStaticParams/build-time prerendering: D1 bindings are
+// only reachable at real request time inside a deployed Worker (same
+// reasoning as /research/page.tsx), and publishing/editing an article
+// through D1 is supposed to show up without a rebuild — the entire point
+// of moving off build-time MDX files. Every request now reads the
+// current published article fresh; an unknown or unpublished slug still
+// 404s via the explicit check below, same as before.
+export const dynamic = "force-dynamic";
 
 function formatArticleDate(iso: string): string {
   const [year, month, day] = iso.split("-").map(Number);
@@ -33,11 +28,12 @@ export default async function ResearchArticlePage(
   props: PageProps<"/research/[slug]">,
 ) {
   const { slug } = await props.params;
+  const researchRepository = await getResearchRepository();
 
   // The page asks the repository for an article and either gets a fully
   // renderable one back or doesn't — it never knows or cares whether that
-  // meant a slug lookup in an array, a file import, or (eventually) a D1
-  // query for a row with status = 'published'.
+  // meant a slug lookup in an array, a file import, or a D1 query for a
+  // row with status = 'published'.
   const article = await researchRepository.getPublishedArticleBySlug(slug);
   if (!article) notFound();
 

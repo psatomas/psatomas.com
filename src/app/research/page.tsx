@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { researchRepository } from "@/lib/research";
+import { getResearchRepository } from "@/lib/research";
+
+// D1 bindings are only reachable at real request time inside a deployed
+// Worker (confirmed by how the Oracle API already works) — not during
+// `next build`'s static generation, which runs as a plain Node process
+// with no live Worker/binding available. Forcing this route dynamic
+// means it always reads fresh from D1 on each request, which is also
+// exactly what a real publishing flow needs: a new or edited article
+// should show up without a full site rebuild and redeploy.
+export const dynamic = "force-dynamic";
 
 export default async function ResearchPage() {
+  const researchRepository = await getResearchRepository();
   const articles = await researchRepository.getPublishedArticles();
 
   return (

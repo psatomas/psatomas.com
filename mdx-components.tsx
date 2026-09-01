@@ -15,8 +15,14 @@ import type { MDXComponents } from "mdx/types";
  * from article structure at a glance. Table headers (`th`) are the one
  * exception — a column label genuinely is metadata, not argument, so it
  * intentionally borrows the MonoLabel voice instead.
+ *
+ * Exported (not just returned via the hook below) so
+ * src/lib/research/markdown-content.tsx can hand this same object to
+ * react-markdown for D1-stored content — one set of styling, two render
+ * paths (the build-time .mdx file pipeline and the runtime Markdown
+ * pipeline), never two visual systems to keep in sync.
  */
-const components: MDXComponents = {
+export const components: MDXComponents = {
   // Guardrail, not an invitation: the article page already renders the
   // real title as its own H1. An H1 inside the MDX body would be a
   // mistake, not a normal case — styled distinctly from both the page's
