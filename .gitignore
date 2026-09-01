@@ -38,6 +38,10 @@ yarn-error.log*
 .open-next
 .wrangler
 
+# generated from src/content/research/*.mdx by scripts/migrate-research-to-d1.mjs —
+# derived, not source; regenerate rather than commit
+/scripts/.generated
+
 # vercel
 .vercel
 
