@@ -3,85 +3,85 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Tag } from "@/components/ui/tag";
-import { getAllProjects, getProjectBySlug } from "@/lib/projects";
+import { getAllSystems, getSystemBySlug } from "@/lib/systems";
 
 export function generateStaticParams() {
-  return getAllProjects().map((project) => ({ slug: project.slug }));
+  return getAllSystems().map((system) => ({ slug: system.slug }));
 }
 
 export async function generateMetadata(
-  props: PageProps<"/projects/[slug]">,
+  props: PageProps<"/systems/[slug]">,
 ): Promise<Metadata> {
   const { slug } = await props.params;
-  const project = getProjectBySlug(slug);
+  const system = getSystemBySlug(slug);
 
-  if (!project) {
+  if (!system) {
     return {};
   }
 
-  const url = `/projects/${project.slug}`;
+  const url = `/systems/${system.slug}`;
 
   return {
-    title: project.name,
-    description: project.summary,
+    title: system.name,
+    description: system.summary,
     alternates: {
       canonical: url,
     },
     openGraph: {
-      title: project.name,
-      description: project.summary,
+      title: system.name,
+      description: system.summary,
       url,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: project.name,
-      description: project.summary,
+      title: system.name,
+      description: system.summary,
     },
   };
 }
 
-export default async function ProjectPage(
-  props: PageProps<"/projects/[slug]">,
+export default async function SystemPage(
+  props: PageProps<"/systems/[slug]">,
 ) {
   const { slug } = await props.params;
-  const project = getProjectBySlug(slug);
+  const system = getSystemBySlug(slug);
 
-  if (!project) {
+  if (!system) {
     notFound();
   }
 
   return (
     <Container as="main" className="flex flex-1 flex-col gap-10 py-16">
       <Link
-        href="/projects"
+        href="/systems"
         className="w-fit text-sm text-muted hover:text-accent transition-colors"
       >
-        ← Back to projects
+        ← Back to systems
       </Link>
 
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {project.name}
+          {system.name}
         </h1>
-        <p className="text-muted">{project.tagline}</p>
+        <p className="text-muted">{system.tagline}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {project.stack.map((tech) => (
+        {system.stack.map((tech) => (
           <Tag key={tech}>{tech}</Tag>
         ))}
       </div>
 
       <div className="flex max-w-xl flex-col gap-4">
-        {project.description.map((paragraph) => (
+        {system.description.map((paragraph) => (
           <p key={paragraph} className="text-foreground">
             {paragraph}
           </p>
         ))}
       </div>
 
-      {project.sections?.map((section) => (
+      {system.sections?.map((section) => (
         <div key={section.heading} className="flex flex-col gap-3">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
             {section.heading}
@@ -96,9 +96,9 @@ export default async function ProjectPage(
         </div>
       ))}
 
-      {project.repoUrl && (
+      {system.repoUrl && (
         <a
-          href={project.repoUrl}
+          href={system.repoUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="w-fit text-sm font-medium text-accent hover:underline"

@@ -2,38 +2,38 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Tag } from "@/components/ui/tag";
-import { getAllProjects } from "@/lib/projects";
+import { getAllSystems } from "@/lib/systems";
 
 const description =
-  "Protocol engineering, smart contract, and blockchain infrastructure projects.";
+  "Protocol engineering, smart contract, and blockchain infrastructure systems.";
 
 export const metadata: Metadata = {
-  title: "Projects",
+  title: "Systems",
   description,
   alternates: {
-    canonical: "/projects",
+    canonical: "/systems",
   },
   openGraph: {
-    title: "Projects",
+    title: "Systems",
     description,
-    url: "/projects",
+    url: "/systems",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Projects",
+    title: "Systems",
     description,
   },
 };
 
-export default function ProjectsPage() {
-  const projects = getAllProjects();
+export default function SystemsPage() {
+  const systems = getAllSystems();
 
   return (
     <Container as="main" className="flex flex-1 flex-col gap-10 py-16">
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Projects
+          Systems
         </h1>
         <p className="max-w-xl text-muted">
           Protocol engineering, smart contracts, and blockchain
@@ -42,18 +42,18 @@ export default function ProjectsPage() {
       </div>
 
       <ul className="flex flex-col gap-10">
-        {projects.map((project) => (
-          <li key={project.slug} className="flex flex-col gap-2">
+        {systems.map((system) => (
+          <li key={system.slug} className="flex flex-col gap-2">
             <Link
-              href={`/projects/${project.slug}`}
+              href={`/systems/${system.slug}`}
               className="w-fit text-lg font-medium hover:text-accent transition-colors"
             >
-              {project.name}
+              {system.name}
             </Link>
-            <p className="text-sm text-muted">{project.tagline}</p>
-            <p className="max-w-xl text-muted">{project.summary}</p>
+            <p className="text-sm text-muted">{system.tagline}</p>
+            <p className="max-w-xl text-muted">{system.summary}</p>
             <div className="mt-1 flex flex-wrap gap-2">
-              {project.stack.map((tech) => (
+              {system.stack.map((tech) => (
                 <Tag key={tech}>{tech}</Tag>
               ))}
             </div>
