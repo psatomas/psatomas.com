@@ -39,8 +39,9 @@ export default function LabPage() {
           Lab
         </h1>
         <p className="max-w-xl text-muted">
-          Bounded, interactive experiments — each one a different kind of
-          proof, none of them importing another.
+          Bounded technical experiments — each one built to test a single
+          idea about how a protocol behaves, not to demonstrate a finished
+          product.
         </p>
       </div>
 

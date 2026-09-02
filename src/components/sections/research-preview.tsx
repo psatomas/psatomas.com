@@ -18,40 +18,41 @@ export async function ResearchPreview() {
   if (articles.length === 0) return null;
 
   return (
-    <section aria-labelledby="research-heading" className="mx-auto max-w-6xl px-6 py-16 md:py-20">
-      <div className="flex flex-col gap-8 border-t border-border pt-16 md:pt-20">
-        <SectionIntro
-          id="research-heading"
-          role="How I think"
-          heading="Research"
-        />
+    <section
+      aria-labelledby="research-heading"
+      className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-14 md:pt-16"
+    >
+      <SectionIntro
+        id="research-heading"
+        role="How I think"
+        heading="Research"
+      />
 
-        <ul className="flex flex-col">
-          {articles.map((article) => (
-            <li key={article.slug} className="border-t border-border first:border-t-0">
-              <Link
-                href={`/research/${article.slug}`}
-                className="group flex flex-col gap-2 py-5"
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <MonoLabel className="text-dim">{article.publishedAt}</MonoLabel>
-                  <span className="text-dim">·</span>
-                  <MonoLabel className="text-dim">{article.category}</MonoLabel>
-                  <span className="text-dim">·</span>
-                  <MonoLabel className="text-dim">
-                    {article.readingMinutes} MIN READ
-                  </MonoLabel>
-                </div>
-                <span className="font-medium text-foreground group-hover:text-accent transition-colors">
-                  {article.title}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      <ul className="flex flex-col">
+        {articles.map((article) => (
+          <li key={article.slug} className="border-t border-border first:border-t-0">
+            <Link
+              href={`/research/${article.slug}`}
+              className="group flex flex-col gap-2 py-5"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <MonoLabel className="text-dim">{article.publishedAt}</MonoLabel>
+                <span className="text-dim">·</span>
+                <MonoLabel className="text-dim">{article.category}</MonoLabel>
+                <span className="text-dim">·</span>
+                <MonoLabel className="text-dim">
+                  {article.readingMinutes} MIN READ
+                </MonoLabel>
+              </div>
+              <span className="font-medium text-foreground group-hover:text-accent transition-colors">
+                {article.title}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
 
-        <SectionLink href="/research">View all research</SectionLink>
-      </div>
+      <SectionLink href="/research">View all research</SectionLink>
     </section>
   );
 }
