@@ -21,9 +21,14 @@ export interface PublicResearchRepository {
 }
 
 /**
- * The eventual authoring contract — create/update/publish/unpublish/
- * delete a draft. Defined now so its shape is settled before the editor
- * and D1 work starts; nothing implements this yet.
+ * The authoring contract — list/retrieve/create/update/publish/unpublish/
+ * delete. Identified by `id` rather than `slug`: unlike the public read
+ * side (where the slug *is* the identity a URL carries), the authoring
+ * side needs an identifier that survives a slug edit — a draft's slug can
+ * change before it's ever public, and `id` is what makes that a plain
+ * field update instead of a rename of the lookup key itself. See
+ * ./authoring-service.ts for the layer that adds the authorization check
+ * in front of every one of these.
  *
  * The MDX adapter deliberately does NOT implement this. It's not an
  * oversight — this site deploys to Cloudflare Workers, which has no
@@ -34,9 +39,16 @@ export interface PublicResearchRepository {
  * that step happens — not a workaround bolted onto file-based content.
  */
 export interface ResearchAuthoringRepository {
+  /** Every article regardless of status, newest-updated first — the
+   * source for the /research/write list. Single-author, so this is
+   * simply "all of them"; there's no per-author filter to apply. */
+  listArticles(): Promise<ResearchArticleRecord[]>;
+  /** Any status, unlike the public repository's slug lookup — the editor
+   * needs to reopen a draft that was never published. */
+  getArticleById(id: string): Promise<ResearchArticleRecord | null>;
   createDraft(input: DraftInput): Promise<ResearchArticleRecord>;
-  updateDraft(slug: string, input: Partial<DraftInput>): Promise<ResearchArticleRecord>;
-  publish(slug: string): Promise<ResearchArticleRecord>;
-  unpublish(slug: string): Promise<ResearchArticleRecord>;
-  deleteArticle(slug: string): Promise<void>;
+  updateDraft(id: string, input: Partial<DraftInput>): Promise<ResearchArticleRecord>;
+  publish(id: string): Promise<ResearchArticleRecord>;
+  unpublish(id: string): Promise<ResearchArticleRecord>;
+  deleteArticle(id: string): Promise<void>;
 }
