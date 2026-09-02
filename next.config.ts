@@ -7,6 +7,18 @@ const nextConfig: NextConfig = {
   // only imports, but the loader has to be configured regardless of which
   // way a given .mdx file is consumed.
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+
+  // /projects was renamed to /systems (public IA: About / Systems /
+  // Research / Lab) — the route itself no longer exists under
+  // src/app/projects/, only these permanent redirects do, so any
+  // externally indexed or bookmarked /projects URL keeps working instead
+  // of 404ing. :slug carries through unchanged via the named parameter.
+  async redirects() {
+    return [
+      { source: "/projects", destination: "/systems", permanent: true },
+      { source: "/projects/:slug", destination: "/systems/:slug", permanent: true },
+    ];
+  },
 };
 
 // remark-gfm specifically for table support: confirmed empirically

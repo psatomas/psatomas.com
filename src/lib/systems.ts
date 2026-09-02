@@ -1,6 +1,6 @@
-import type { Project } from "@/types";
+import type { System } from "@/types";
 
-const projects: Project[] = [
+const systems: System[] = [
   {
     slug: "execution-kernel-protocol",
     name: "Execution Kernel Protocol",
@@ -27,8 +27,13 @@ const projects: Project[] = [
     stack: ["Solidity", "Foundry", "TypeScript", "Node.js", "ethers.js"],
   },
   {
+    // Renamed from "Protocol Engineering Lab" — that name conflicted with
+    // the site's own primary Lab section (interactive experiments under
+    // /lab). "Lab" has exactly one meaning on this site now; this entry's
+    // actual content — a personal notes/practice repository, not an
+    // interactive experiment — is unchanged, only its public name is.
     slug: "protocol-engineering-lab",
-    name: "Protocol Engineering Lab",
+    name: "Protocol Engineering Notes",
     tagline: "Research & Learning Repository",
     summary:
       "A repository documenting the journey to becoming a protocol engineer.",
@@ -171,10 +176,10 @@ const projects: Project[] = [
   },
 ];
 
-export function getAllProjects(): Project[] {
-  return projects;
+export function getAllSystems(): System[] {
+  return systems;
 }
 
-export function getProjectBySlug(slug: string): Project | undefined {
-  return projects.find((project) => project.slug === slug);
+export function getSystemBySlug(slug: string): System | undefined {
+  return systems.find((system) => system.slug === slug);
 }

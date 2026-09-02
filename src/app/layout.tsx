@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Nav } from "@/components/navigation/nav";
-import { siteConfig } from "@/lib/site";
+import { siteConfig, socialLinks } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,13 +37,6 @@ export const metadata: Metadata = {
     description: siteConfig.description,
   },
 };
-
-const socialLinks = [
-  { label: "GITHUB", href: "https://github.com/psatomas" },
-  { label: "LINKEDIN", href: "https://linkedin.com/in/psatomas" },
-  { label: "X", href: "https://x.com/psatomas" },
-  { label: "EMAIL", href: "mailto:psatomas@gmail.com" },
-];
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

@@ -20,26 +20,29 @@ export type ExperimentDefinition = {
   Component: ComponentType;
 };
 
-export type ProjectSection = {
+export type SystemSection = {
   heading: string;
   items: string[];
 };
 
-export type Project = {
+/** A "System" — the public term for what used to be called a Project (see
+ * src/lib/systems.ts). Named for the public /systems route and IA: About /
+ * Systems / Research / Lab. */
+export type System = {
   slug: string;
   name: string;
   tagline: string;
   summary: string;
   description: string[];
-  sections?: ProjectSection[];
+  sections?: SystemSection[];
   stack: string[];
   repoUrl?: string;
 };
 
 // Research's domain types (ResearchArticleMetadata, ResearchCategory, etc.)
-// live in src/lib/research/domain.ts, not here — Research is becoming its
-// own bounded module (repository interface, multiple storage adapters,
-// eventual authoring), the same way the Oracle experiment owns its domain
-// model under src/experiments/oracle/domain/ rather than in this shared
-// file. This file stays for types genuinely shared across the site (the
-// Lab registry, Projects) that don't belong to one module.
+// live in src/lib/research/domain.ts, not here — Research is its own
+// bounded module (repository interface, multiple storage adapters,
+// authoring), the same way the Oracle experiment owns its domain model
+// under src/experiments/oracle/domain/ rather than in this shared file.
+// This file stays for types genuinely shared across the site (the Lab
+// registry, Systems) that don't belong to one module.
