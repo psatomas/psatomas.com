@@ -1,4 +1,7 @@
 import { createMarkdownContent } from "./markdown-content";
+import { estimateReadingMinutes } from "./reading-time";
+import { slugify } from "./slug";
+import { SlugTakenError } from "./errors";
 import type {
   AdjacentArticles,
   ArticleStatus,
@@ -8,6 +11,8 @@ import type {
   ResearchCategory,
 } from "./domain";
 import type { PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
+
+export { SlugTakenError } from "./errors";
 
 /** The literal shape of a row from the `articles` table (see
  * migrations/0001_create_articles.sql) — snake_case, tags as a JSON
@@ -62,14 +67,6 @@ function recordToMetadata(record: ResearchArticleRecord): ResearchArticleMetadat
   };
 }
 
-function slugify(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 /**
  * D1-backed implementation of both the public read interface and the
  * eventual authoring one. Nothing outside this file — and nothing outside
@@ -92,6 +89,25 @@ export function createD1ResearchRepository(
   async function findBySlug(slug: string): Promise<ResearchArticleRecord | null> {
     const row = await db.prepare("SELECT * FROM articles WHERE slug = ?").bind(slug).first<ArticleRow>();
     return row ? rowToRecord(row) : null;
+  }
+
+  async function findById(id: string): Promise<ResearchArticleRecord | null> {
+    const row = await db.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first<ArticleRow>();
+    return row ? rowToRecord(row) : null;
+  }
+
+  /** Resolves the slug a write should actually use: the author's override
+   * if given (still run through slugify — an override is a preference for
+   * *which* words, not a bypass of URL-safety), otherwise derived from the
+   * title. Throws SlugTakenError if another article already holds it.
+   * `excludingId` lets updateDraft check uniqueness against every row
+   * except the one being updated, so saving a draft under its own
+   * unchanged slug never trips over itself. */
+  async function resolveUniqueSlug(candidate: string, excludingId?: string): Promise<string> {
+    const slug = slugify(candidate);
+    const existing = await findBySlug(slug);
+    if (existing && existing.id !== excludingId) throw new SlugTakenError(slug);
+    return slug;
   }
 
   return {
@@ -125,13 +141,26 @@ export function createD1ResearchRepository(
     },
 
     // ---- ResearchAuthoringRepository ----
-    // Implemented for real (D1 has no fs-style blocker on writes) but not
-    // called from anywhere public yet — see repository.ts.
+    // Auth-agnostic on purpose — see ./authoring-service.ts for the layer
+    // that checks RESEARCH_AUTHOR_EMAIL before any of these run. Nothing
+    // here knows a session exists.
+
+    async listArticles(): Promise<ResearchArticleRecord[]> {
+      const { results } = await db
+        .prepare("SELECT * FROM articles ORDER BY updated_at DESC")
+        .all<ArticleRow>();
+      return results.map(rowToRecord);
+    },
+
+    async getArticleById(id: string): Promise<ResearchArticleRecord | null> {
+      return findById(id);
+    },
 
     async createDraft(input: DraftInput): Promise<ResearchArticleRecord> {
       const now = new Date().toISOString();
       const id = crypto.randomUUID();
-      const slug = slugify(input.title);
+      const slug = await resolveUniqueSlug(input.slug ?? input.title);
+      const readingMinutes = estimateReadingMinutes(input.content);
 
       await db
         .prepare(
@@ -147,78 +176,90 @@ export function createD1ResearchRepository(
           input.category,
           JSON.stringify(input.tags),
           input.content,
-          input.readingMinutes,
+          readingMinutes,
           now,
           now,
         )
         .run();
 
-      const record = await findBySlug(slug);
-      if (!record) throw new Error(`createDraft: failed to read back "${slug}" after inserting it`);
+      const record = await findById(id);
+      if (!record) throw new Error(`createDraft: failed to read back "${id}" after inserting it`);
       return record;
     },
 
-    async updateDraft(slug, input: Partial<DraftInput>): Promise<ResearchArticleRecord> {
-      const existing = await findBySlug(slug);
-      if (!existing) throw new Error(`updateDraft: no article with slug "${slug}"`);
+    async updateDraft(id, input: Partial<DraftInput>): Promise<ResearchArticleRecord> {
+      const existing = await findById(id);
+      if (!existing) throw new Error(`updateDraft: no article with id "${id}"`);
 
-      const merged: ResearchArticleRecord = { ...existing, ...input };
+      // A published article's slug is its live public URL — silently
+      // changing it would break that URL for anyone who already has it.
+      // The editor UI disables the slug field once published as a first
+      // line of defense, but that's a client-side nicety, not the actual
+      // guard: this is. A requested slug change on an already-published
+      // article is intentionally ignored rather than erroring, since it's
+      // never the author's actual goal (unpublish first to rename).
+      const slug =
+        existing.status === "draft" && input.slug !== undefined && slugify(input.slug) !== existing.slug
+          ? await resolveUniqueSlug(input.slug, id)
+          : existing.slug;
+      const merged: ResearchArticleRecord = { ...existing, ...input, slug };
       const now = new Date().toISOString();
 
       await db
         .prepare(
           `UPDATE articles
-           SET title = ?, description = ?, category = ?, tags = ?, content = ?, reading_minutes = ?, updated_at = ?
-           WHERE slug = ?`,
+           SET slug = ?, title = ?, description = ?, category = ?, tags = ?, content = ?, reading_minutes = ?, updated_at = ?
+           WHERE id = ?`,
         )
         .bind(
+          merged.slug,
           merged.title,
           merged.description,
           merged.category,
           JSON.stringify(merged.tags),
           merged.content,
-          merged.readingMinutes,
+          estimateReadingMinutes(merged.content),
           now,
-          slug,
+          id,
         )
         .run();
 
-      const record = await findBySlug(slug);
-      if (!record) throw new Error(`updateDraft: "${slug}" disappeared during update`);
+      const record = await findById(id);
+      if (!record) throw new Error(`updateDraft: "${id}" disappeared during update`);
       return record;
     },
 
-    async publish(slug): Promise<ResearchArticleRecord> {
+    async publish(id): Promise<ResearchArticleRecord> {
       const now = new Date().toISOString();
       // COALESCE keeps the original publish date on a re-publish after an
       // unpublish, rather than treating every publish as "new" — only a
       // genuinely first-time publish gets `now` as its publishedAt.
       await db
         .prepare(
-          "UPDATE articles SET status = 'published', published_at = COALESCE(published_at, ?), updated_at = ? WHERE slug = ?",
+          "UPDATE articles SET status = 'published', published_at = COALESCE(published_at, ?), updated_at = ? WHERE id = ?",
         )
-        .bind(now, now, slug)
+        .bind(now, now, id)
         .run();
 
-      const record = await findBySlug(slug);
-      if (!record) throw new Error(`publish: no article with slug "${slug}"`);
+      const record = await findById(id);
+      if (!record) throw new Error(`publish: no article with id "${id}"`);
       return record;
     },
 
-    async unpublish(slug): Promise<ResearchArticleRecord> {
+    async unpublish(id): Promise<ResearchArticleRecord> {
       const now = new Date().toISOString();
       await db
-        .prepare("UPDATE articles SET status = 'draft', updated_at = ? WHERE slug = ?")
-        .bind(now, slug)
+        .prepare("UPDATE articles SET status = 'draft', updated_at = ? WHERE id = ?")
+        .bind(now, id)
         .run();
 
-      const record = await findBySlug(slug);
-      if (!record) throw new Error(`unpublish: no article with slug "${slug}"`);
+      const record = await findById(id);
+      if (!record) throw new Error(`unpublish: no article with id "${id}"`);
       return record;
     },
 
-    async deleteArticle(slug): Promise<void> {
-      await db.prepare("DELETE FROM articles WHERE slug = ?").bind(slug).run();
+    async deleteArticle(id): Promise<void> {
+      await db.prepare("DELETE FROM articles WHERE id = ?").bind(id).run();
     },
   };
 }

@@ -33,7 +33,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { createD1ResearchRepository } from "./d1-repository";
 import { createMdxResearchRepository } from "./mdx-repository";
-import type { PublicResearchRepository } from "./repository";
+import type { PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
 
 export async function getResearchRepository(): Promise<PublicResearchRepository> {
   try {
@@ -46,9 +46,39 @@ export async function getResearchRepository(): Promise<PublicResearchRepository>
   return createMdxResearchRepository();
 }
 
-export { createMdxResearchRepository } from "./mdx-repository";
-export { createD1ResearchRepository } from "./d1-repository";
+/**
+ * The authoring-side counterpart to getResearchRepository() above — same
+ * lifecycle-safe shape (resolved fresh on every call, never memoized; see
+ * getResearchRepository's own comment for why), but with no MDX fallback.
+ * There's nothing to fall back to: the MDX adapter can't write (see
+ * repository.ts), so if RESEARCH_DB isn't reachable, authoring genuinely
+ * cannot function right now and this says so plainly instead of quietly
+ * handing back something that would fail in a more confusing way three
+ * calls later.
+ *
+ * Deliberately exported separately from getResearchRepository rather than
+ * widening its return type — the public repository is used from
+ * completely unauthenticated pages, and nothing about resolving *that*
+ * binding should ever need to know authoring exists. See
+ * ./authoring-service.ts for the layer that actually gates access to
+ * this with RESEARCH_AUTHOR_EMAIL.
+ */
+export async function getResearchAuthoringRepository(): Promise<ResearchAuthoringRepository> {
+  const { env } = await getCloudflareContext({ async: true });
+  if (!env.RESEARCH_DB) {
+    throw new Error(
+      "Research authoring requires the RESEARCH_DB binding, which isn't reachable in this environment.",
+    );
+  }
+  return createD1ResearchRepository(env.RESEARCH_DB);
+}
 
+export { createMdxResearchRepository } from "./mdx-repository";
+export { createD1ResearchRepository, SlugTakenError } from "./d1-repository";
+export { slugify } from "./slug";
+export { estimateReadingMinutes } from "./reading-time";
+
+export { RESEARCH_CATEGORIES } from "./domain";
 export type {
   AdjacentArticles,
   ArticleStatus,

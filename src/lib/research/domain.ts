@@ -16,7 +16,8 @@ import type { ComponentType } from "react";
  * — there's no fixed set of those, and no filtering feature yet that
  * would need one.
  */
-export type ResearchCategory = "EVM" | "Protocol Engineering" | "Distributed Systems";
+export const RESEARCH_CATEGORIES = ["EVM", "Protocol Engineering", "Distributed Systems"] as const;
+export type ResearchCategory = (typeof RESEARCH_CATEGORIES)[number];
 
 export type ArticleStatus = "draft" | "published";
 
@@ -80,12 +81,18 @@ export type ResearchArticleRecord = {
 
 /** Fields an author actually provides when writing or editing a draft —
  * everything on ResearchArticleRecord except what the system assigns
- * itself (id, status, timestamps). */
+ * itself (id, status, timestamps). `readingMinutes` is deliberately not
+ * here — the authoring layer derives it from `content` (see
+ * ./reading-time.ts) rather than asking the author to guess a number.
+ * `slug` is optional: omitted, the repository derives one from `title`;
+ * provided, it's used as-is (after the same sanitizing pass), which is
+ * what lets an author override the auto-generated slug before first
+ * save. See ./slug.ts. */
 export type DraftInput = {
   title: string;
+  slug?: string;
   description: string;
   category: ResearchCategory;
   tags: string[];
   content: string;
-  readingMinutes: number;
 };
