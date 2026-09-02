@@ -11,34 +11,35 @@ export function SystemsPreview() {
   const systems = getAllSystems();
 
   return (
-    <section aria-labelledby="systems-heading" className="mx-auto max-w-6xl px-6 py-16 md:py-20">
-      <div className="flex flex-col gap-8 border-t border-border pt-16 md:pt-20">
-        <SectionIntro
-          id="systems-heading"
-          role="What I build"
-          heading="Systems"
-        />
+    <section
+      aria-labelledby="systems-heading"
+      className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-14 md:pt-16"
+    >
+      <SectionIntro
+        id="systems-heading"
+        role="What I build"
+        heading="Systems"
+      />
 
-        <ul className="flex flex-col">
-          {systems.map((system) => (
-            <li key={system.slug} className="border-t border-border first:border-t-0">
-              <Link
-                href={`/systems/${system.slug}`}
-                className="group flex flex-col gap-1 py-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
-              >
-                <span className="font-medium text-foreground group-hover:text-accent transition-colors">
-                  {system.name}
-                </span>
-                <span className="font-mono text-xs tracking-[0.04em] text-dim">
-                  {system.tagline}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      <ul className="flex flex-col">
+        {systems.map((system) => (
+          <li key={system.slug} className="border-t border-border first:border-t-0">
+            <Link
+              href={`/systems/${system.slug}`}
+              className="group flex flex-col gap-1 py-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
+            >
+              <span className="font-medium text-foreground group-hover:text-accent transition-colors">
+                {system.name}
+              </span>
+              <span className="font-mono text-xs tracking-[0.04em] text-dim">
+                {system.tagline}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
 
-        <SectionLink href="/systems">View all systems</SectionLink>
-      </div>
+      <SectionLink href="/systems">View all systems</SectionLink>
     </section>
   );
 }
