@@ -34,14 +34,32 @@ export interface ObservationCache {
  * still evaluated fresh against the current time by evaluateReading, so a
  * cached observation that has actually aged out is still reported as such
  * rather than presented as live.
+ *
+ * Takes a resolver rather than a `KVNamespace` directly, and calls it on
+ * every get/set — never once at construction. `resolveKv` is what
+ * actually reaches into `getCloudflareContext()` (see route.ts); under
+ * `next dev` / `opennextjs-cloudflare preview`, Miniflare invalidates
+ * ("poisons") every previously issued binding stub whenever it reloads
+ * its runtime options, and this cache is built once and kept for an
+ * isolate's whole lifetime (see route.ts's `servicePromise`). If it
+ * closed over one `KVNamespace` captured at construction, that stub
+ * would outlive a Miniflare reload and the next `.get()`/`.set()` would
+ * throw. Resolving fresh per call costs nothing extra in a real
+ * deployed Worker isolate, where the binding never changes anyway.
  */
-export function createKvObservationCache(kv: KVNamespace): ObservationCache {
+export function createKvObservationCache(
+  resolveKv: () => Promise<KVNamespace | undefined>,
+): ObservationCache {
   return {
     async get(key) {
+      const kv = await resolveKv();
+      if (!kv) return null;
       const value = await kv.get<CachedObservation>(key, "json");
       return value ?? null;
     },
     async set(key, value, ttlMs) {
+      const kv = await resolveKv();
+      if (!kv) return;
       // KV enforces a minimum expirationTtl of 60s and rejects anything
       // shorter — round up so a tighter in-code freshness window (e.g.
       // 30s) never throws here. The actual "is this fresh enough to
@@ -55,14 +73,12 @@ export function createKvObservationCache(kv: KVNamespace): ObservationCache {
 }
 
 /**
- * In-memory fallback for the rare case there's no Cloudflare context to
- * read a KV binding from at all (see route.ts). Plain `next dev` doesn't
- * need this fallback — next.config.ts's initOpenNextCloudflareForDev()
- * already emulates the KV binding there — so this exists purely as a
- * last resort to keep the route serving readings instead of failing.
- * It provides zero cross-isolate sharing (a plain module-scope Map), so
- * it is NOT what makes multi-client caching correct — the KV cache above
- * is; this only prevents a missing binding from taking the route down.
+ * In-memory fallback — a plain module-scope Map, holding only observation
+ * data (never a Cloudflare binding), so unlike the KV cache above it's
+ * perfectly safe to build once and keep for an isolate's whole lifetime.
+ * It provides zero cross-isolate sharing, so it is NOT what makes
+ * multi-client caching correct — the KV cache above is; this only
+ * prevents a missing binding from taking the route down.
  */
 export function createInMemoryObservationCache(): ObservationCache {
   const store = new Map<string, CachedObservation>();
@@ -72,6 +88,35 @@ export function createInMemoryObservationCache(): ObservationCache {
     },
     async set(key, value) {
       store.set(key, value);
+    },
+  };
+}
+
+/**
+ * The cache route.ts actually uses: prefers the Cloudflare KV binding,
+ * resolved fresh on every operation via `resolveKv` (see
+ * createKvObservationCache above for why), falling back to a persistent
+ * in-process Map when no binding is reachable at all — e.g. no
+ * Cloudflare context reachable from the current call. That fallback Map
+ * is created once and reused for every fallback operation, so it still
+ * behaves like a real (if isolate-local, non-shared) cache rather than
+ * silently caching nothing, but it holds only observation data, never a
+ * binding, so keeping it for the composed cache's lifetime is safe.
+ */
+export function createResilientObservationCache(
+  resolveKv: () => Promise<KVNamespace | undefined>,
+): ObservationCache {
+  const kvCache = createKvObservationCache(resolveKv);
+  const fallback = createInMemoryObservationCache();
+
+  return {
+    async get(key) {
+      const kv = await resolveKv();
+      return kv ? kvCache.get(key) : fallback.get(key);
+    },
+    async set(key, value, ttlMs) {
+      const kv = await resolveKv();
+      return kv ? kvCache.set(key, value, ttlMs) : fallback.set(key, value, ttlMs);
     },
   };
 }
