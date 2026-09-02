@@ -17,15 +17,12 @@
   // store built for exactly this "read-heavy, infrequently-written"
   // shape, with no server process of our own to keep alive.
   //
-  // The id below is a placeholder — `wrangler dev` / `opennextjs-cloudflare
-  // preview` emulate KV locally regardless of it, so local development and
-  // this repo's own tests work with no further setup. Before deploying to
-  // production, create a real namespace once and replace the id:
-  //   npx wrangler kv namespace create ORACLE_CACHE
-  // then paste the returned id here (or run `npm run cf-typegen` after,
-  // to refresh cloudflare-env.d.ts if the binding name ever changes).
+  // `wrangler dev` / `opennextjs-cloudflare preview` emulate KV locally
+  // regardless of the id below, so local development and this repo's own
+  // tests work with no further setup. The id below is the real production
+  // namespace, created via `npx wrangler kv namespace create ORACLE_CACHE`.
   "kv_namespaces": [
-    { "binding": "ORACLE_CACHE", "id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID" }
+    { "binding": "ORACLE_CACHE", "id": "5a32ced8880c499a9282c3772811243e" }
   ],
   // Research's article store — a separate D1 database, not the Oracle KV
   // above. KV is a cache (ephemeral, TTL'd, no querying); Research needs
@@ -37,30 +34,25 @@
   // Same story as the KV id above: `wrangler dev` / `opennextjs-cloudflare
   // preview` emulate D1 locally regardless of this id, so local dev and
   // this repo's tests work with no further setup (see migrations/ and
-  // npm run db:migrate:local / db:seed:local). Before deploying to
-  // production, create a real database once:
-  //   npx wrangler d1 create psatomas-research
-  // then paste the returned database_id here, and apply the schema to it:
-  //   npx wrangler d1 migrations apply RESEARCH_DB --remote
+  // npm run db:migrate:local / db:seed:local). The database_id below is
+  // the real production database, created via
+  // `npx wrangler d1 create psatomas-research`; the schema is applied to
+  // it with `npx wrangler d1 migrations apply RESEARCH_DB --remote`.
   "d1_databases": [
     {
       "binding": "RESEARCH_DB",
       "database_name": "psatomas-research",
-      "database_id": "REPLACE_WITH_REAL_D1_DATABASE_ID",
+      "database_id": "eab4dfcf-3412-48d1-bd09-9566b03fba14",
       "migrations_dir": "migrations"
     }
   ]
   // Self-reference service binding (WORKER_SELF_REFERENCE -> "psatomas-com")
-  // removed for now: a `services` binding target must already be deployed
-  // before the binding worker's own first deploy can succeed (Cloudflare
-  // docs, service bindings: "the target Worker must be deployed first...
-  // otherwise deployment will fail, because Worker A declares a binding to
-  // Worker B, which does not yet exist"). On this repo's very first deploy
-  // "psatomas-com" doesn't exist yet, so a self-reference to it is exactly
-  // that failure case. It's also currently unused — open-next.config.ts has
-  // no incremental-cache override that needs it. Re-add the `services`
-  // block (see node_modules/@opennextjs/cloudflare/templates/wrangler.jsonc
-  // for the exact shape) once the first deploy has succeeded and the
-  // "psatomas-com" script exists, or when a future stage needs on-demand
-  // revalidation. See https://opennext.js.org/cloudflare/caching
+  // omitted: it's currently unused — open-next.config.ts has no
+  // incremental-cache override that needs it. (The "psatomas-com" Worker
+  // already exists from prior deploys, predating this Research/auth work,
+  // so the "target must be deployed first" concern that used to apply
+  // here no longer does.) Re-add the `services` block (see
+  // node_modules/@opennextjs/cloudflare/templates/wrangler.jsonc for the
+  // exact shape) once a future stage needs on-demand revalidation. See
+  // https://opennext.js.org/cloudflare/caching
 }
