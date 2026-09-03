@@ -33,10 +33,16 @@ const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
 export function SystemMap() {
   const [hovered, setHovered] = useState<string | null>(null);
 
+  // role="img" + aria-label already give assistive tech the full content
+  // of this diagram in one sentence, so the per-node <text> below is
+  // presentation only — aria-hidden keeps it from being announced a
+  // second time, and select-none keeps the hover-only descriptors (visible
+  // at opacity 0 the rest of the time) out of copy/paste and "select all",
+  // where they'd otherwise show up as a confusing wall of hidden text.
   return (
     <svg
       viewBox="0 0 400 400"
-      className="h-auto w-full max-w-md"
+      className="h-auto w-full max-w-md select-none"
       role="img"
       aria-label="Map of connected protocol engineering domains: EVM, Solidity, Execution, Oracles, MEV, Indexing"
     >
@@ -81,6 +87,7 @@ export function SystemMap() {
             onMouseEnter={() => setHovered(node.id)}
             onMouseLeave={() => setHovered(null)}
             className="cursor-default"
+            aria-hidden="true"
           >
             {/* generous invisible hit-area so hover isn't fiddly */}
             <circle cx={node.x} cy={node.y} r={28} fill="transparent" />
