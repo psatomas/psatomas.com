@@ -13,10 +13,21 @@ const nextConfig: NextConfig = {
   // src/app/projects/, only these permanent redirects do, so any
   // externally indexed or bookmarked /projects URL keeps working instead
   // of 404ing. :slug carries through unchanged via the named parameter.
+  // /systems/execution-kernel-protocol was renamed to /systems/exekpro —
+  // portfolio-presentation identity only (the ExeKPro project's own
+  // public branding), not a GitHub repo or package rename. Same
+  // permanent-redirect treatment as /projects above, for the same
+  // reason: an existing bookmark or external link to the old slug should
+  // keep working, not 404.
   async redirects() {
     return [
       { source: "/projects", destination: "/systems", permanent: true },
       { source: "/projects/:slug", destination: "/systems/:slug", permanent: true },
+      {
+        source: "/systems/execution-kernel-protocol",
+        destination: "/systems/exekpro",
+        permanent: true,
+      },
     ];
   },
 };

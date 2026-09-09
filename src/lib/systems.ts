@@ -2,29 +2,123 @@ import type { System } from "@/types";
 
 const systems: System[] = [
   {
-    slug: "execution-kernel-protocol",
-    name: "Execution Kernel Protocol",
+    // Portfolio identity is "ExeKPro" — the project's own public branding
+    // at exekpro.com — with "Execution Kernel Protocol" kept as the
+    // formal name (see System.formalName), not the primary label. The
+    // slug moved from execution-kernel-protocol to exekpro to match; the
+    // old path redirects permanently (see next.config.ts) rather than
+    // 404ing for any existing link. GitHub repo name and internal package
+    // names are unaffected — this is a portfolio-presentation rename
+    // only, not a project rename.
+    slug: "exekpro",
+    name: "ExeKPro",
+    formalName: "Execution Kernel Protocol",
     tagline: "Modular Blockchain Execution Infrastructure",
     summary:
-      "A modular blockchain infrastructure project exploring intent-based execution systems and extensible protocol architectures.",
+      "Modular execution infrastructure for Web3 intents, with competing execution modules evaluated and selected through a deterministic scoring policy.",
     description: [
-      "A modular blockchain infrastructure project exploring intent-based execution systems and extensible protocol architectures.",
-      "The project investigates how execution logic can be separated from application interfaces while maintaining deterministic state transitions and extensible protocol components.",
+      "ExeKPro is an execution-selection protocol for Web3 intents. Instead of binding an intent to a single execution strategy, the kernel evaluates independently deployed execution modules and selects the strongest valid candidate under a shared scoring policy.",
     ],
     sections: [
       {
+        heading: "Execution Model",
+        lede: "Every execution is one evaluation round: independently deployed modules compete for a single intent, and the highest-scoring valid candidate executes it. The current protocol selects exactly one winning module per execution — chaining multiple modules into a single execution graph is a future direction, not current behavior.",
+        flow: [
+          "INTENT",
+          "ELIGIBLE MODULES",
+          "SIMULATION",
+          "SCOREPOLICY",
+          "HIGHEST-SCORING MODULE",
+          "EXECUTION",
+        ],
+      },
+      {
         heading: "Architecture",
+        groups: [
+          {
+            heading: "On-Chain Kernel",
+            entries: [
+              { term: "IntentRegistry", detail: "Defines and validates registered execution intents." },
+              { term: "ModuleRegistry", detail: "Controls which execution modules are eligible for selection." },
+              { term: "ExecutionEngine", detail: "Evaluates candidate modules and coordinates execution." },
+              { term: "ScorePolicy", detail: "Provides the deterministic scoring mechanism used to compare candidates." },
+              { term: "ProtocolRoles", detail: "Defines protocol ownership and administrative boundaries." },
+            ],
+          },
+          {
+            heading: "Execution Modules",
+            entries: [
+              { term: "RouterModule", detail: "An independently deployed routing strategy competing for selection." },
+              { term: "MevProtectionModule", detail: "An independently deployed MEV-protection strategy competing for selection under the same policy." },
+            ],
+          },
+          {
+            heading: "Off-Chain Infrastructure",
+            entries: [
+              { term: "SDK", detail: "A TypeScript client built on viem — the primary integration surface for intents and execution." },
+              { term: "Execution Node", detail: "Processes intents off-chain and submits execution through the SDK." },
+              { term: "Indexer", detail: "Observes kernel events and derives execution and selection metrics." },
+              { term: "API", detail: "A read-only Fastify service exposing registry state, predictions, and execution metrics." },
+            ],
+          },
+          {
+            heading: "Protocol Console",
+            entries: [
+              { term: "Console", detail: "A Next.js application, built on wagmi and viem, providing the interactive protocol interface and wallet-driven execution." },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "System Boundaries",
+        entries: [
+          { term: "Ownership", detail: "Each kernel deployment has explicit protocol ownership through ProtocolRoles." },
+          { term: "Deployment Isolation", detail: "Each deployment maintains its own protocol state and ownership boundary. The current architecture uses isolated kernel deployments because IntentRegistry does not provide tenant namespacing." },
+          { term: "Execution", detail: "Execution is non-custodial — the console submits transactions through the connected user's own wallet. There is no hosted custody layer." },
+          { term: "Separation of Concerns", detail: "Intent registration, module registration, execution policy, execution, indexing, and presentation are each a distinct, independently owned layer." },
+        ],
+      },
+      {
+        heading: "Validation",
         items: [
-          "Modular execution engine",
-          "Pluggable execution modules",
-          "Intent-based execution flows",
-          "On-chain validation and configuration",
-          "SDK-oriented integration layer",
-          "Separation between canonical state and execution services",
+          "43/43 contract tests passing",
+          "Adversarial and fuzz validation",
+          "3 implementation issues identified and resolved through adversarial testing",
+          "Real browser E2E against the local protocol environment",
+          "CI validation on every PR",
+        ],
+      },
+      {
+        heading: "Current State",
+        lede: "ExeKPro is end-to-end validated against a local Anvil environment, with the protocol console publicly available at exekpro.com. A public testnet or mainnet deployment is not currently available.",
+      },
+      {
+        heading: "Scope",
+        items: [
+          "Deterministic module selection",
+          "One winning execution module per intent",
+          "Registered execution modules",
+          "Policy-driven scoring",
+          "Isolated protocol deployments",
+          "Non-custodial wallet execution",
+          "Indexing and observability",
+          "SDK, API, and console integration",
+        ],
+      },
+      {
+        heading: "Out of Scope",
+        items: [
+          "Multi-module execution graph chaining",
+          "Permissionless module registration",
+          "Governance timelocks",
+          "Persistent indexer storage",
+          "Hosted transaction submission or custody",
         ],
       },
     ],
-    stack: ["Solidity", "Foundry", "TypeScript", "Node.js", "ethers.js"],
+    stack: ["Solidity", "Foundry", "TypeScript", "viem", "Node.js", "Next.js", "wagmi", "Fastify"],
+    repoUrl: "https://github.com/psatomas/execution-kernel-protocol",
+    liveUrl: "https://exekpro.com/",
   },
   {
     // Renamed from "Protocol Engineering Lab" — that name conflicted with
