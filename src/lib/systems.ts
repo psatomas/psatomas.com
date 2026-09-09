@@ -17,17 +17,17 @@ const systems: System[] = [
     summary:
       "Modular execution infrastructure for Web3 intents, with competing execution modules evaluated and selected through a deterministic scoring policy.",
     description: [
-      "ExeKPro is an execution-selection protocol for Web3 intents. Instead of binding an intent to a single execution strategy, the kernel evaluates independently deployed execution modules and selects the strongest valid candidate under a shared scoring policy.",
+      "ExeKPro is an execution-selection protocol for Web3 intents. Instead of binding an intent to a single execution strategy, the kernel evaluates independently deployed execution modules and selects the highest-scoring valid candidate under a shared scoring policy.",
     ],
     sections: [
       {
         heading: "Execution Model",
-        lede: "Every execution is one evaluation round: independently deployed modules compete for a single intent, and the highest-scoring valid candidate executes it. The current protocol selects exactly one winning module per execution — chaining multiple modules into a single execution graph is a future direction, not current behavior.",
+        lede: "Every execution is one evaluation round: independently deployed modules compete for a single intent, and the highest-scoring valid candidate executes it. The current protocol selects exactly one winning module per execution.",
         flow: [
           "INTENT",
           "ELIGIBLE MODULES",
           "SIMULATION",
-          "SCOREPOLICY",
+          "SCORE POLICY",
           "HIGHEST-SCORING MODULE",
           "EXECUTION",
         ],
@@ -40,7 +40,7 @@ const systems: System[] = [
             entries: [
               { term: "IntentRegistry", detail: "Defines and validates registered execution intents." },
               { term: "ModuleRegistry", detail: "Controls which execution modules are eligible for selection." },
-              { term: "ExecutionEngine", detail: "Evaluates candidate modules and coordinates execution." },
+              { term: "ExecutionEngine", detail: "Evaluates eligible modules under the active scoring policy and executes the selected candidate." },
               { term: "ScorePolicy", detail: "Provides the deterministic scoring mechanism used to compare candidates." },
               { term: "ProtocolRoles", detail: "Defines protocol ownership and administrative boundaries." },
             ],
@@ -55,8 +55,8 @@ const systems: System[] = [
           {
             heading: "Off-Chain Infrastructure",
             entries: [
-              { term: "SDK", detail: "A TypeScript client built on viem — the primary integration surface for intents and execution." },
-              { term: "Execution Node", detail: "Processes intents off-chain and submits execution through the SDK." },
+              { term: "SDK", detail: "A TypeScript client built on viem, providing the primary integration surface for intents and execution." },
+              { term: "Execution Node", detail: "Processes intents off-chain and prepares execution for submission through the SDK." },
               { term: "Indexer", detail: "Observes kernel events and derives execution and selection metrics." },
               { term: "API", detail: "A read-only Fastify service exposing registry state, predictions, and execution metrics." },
             ],
@@ -74,8 +74,8 @@ const systems: System[] = [
         entries: [
           { term: "Ownership", detail: "Each kernel deployment has explicit protocol ownership through ProtocolRoles." },
           { term: "Deployment Isolation", detail: "Each deployment maintains its own protocol state and ownership boundary. The current architecture uses isolated kernel deployments because IntentRegistry does not provide tenant namespacing." },
-          { term: "Execution", detail: "Execution is non-custodial — the console submits transactions through the connected user's own wallet. There is no hosted custody layer." },
-          { term: "Separation of Concerns", detail: "Intent registration, module registration, execution policy, execution, indexing, and presentation are each a distinct, independently owned layer." },
+          { term: "Execution", detail: "Execution is non-custodial. The console submits transactions through the connected user's own wallet. There is no hosted custody layer." },
+          { term: "Separation of Concerns", detail: "Intent registration, module registration, execution policy, execution, indexing, and presentation are separated into distinct system boundaries." },
         ],
       },
       {
