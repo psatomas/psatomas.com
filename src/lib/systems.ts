@@ -187,34 +187,141 @@ const systems: System[] = [
     repoUrl: "https://github.com/psatomas/web3-status-registry-dapp",
   },
   {
+    // Positioning matches the system's actual center of gravity: DAO
+    // ownership, historical voting power, and protected reward
+    // accounting — not a generic "DeFi governance" label. Sepolia/testnet
+    // status stays explicit throughout (Deployment + Current State below)
+    // rather than implied-but-unstated, and known gaps between what the
+    // contracts support and what the frontend currently exposes (no
+    // unstake button, hardcoded oracle display) are named directly
+    // rather than omitted — all traced to the repository's own README,
+    // which is equally direct about them.
     slug: "stakeverse-protocol",
     name: "StakeVerse Protocol",
-    tagline: "Modular DeFi Governance System",
+    tagline: "Security-Hardened Governance & Staking Protocol",
     summary:
-      "A decentralized protocol MVP combining token economics, membership systems, staking mechanisms, and governance architecture.",
+      "DAO-governed staking protocol built on historical voting power, protected reward accounting, and DAO-controlled administrative authority — hardened through a structured security remediation process.",
     description: [
-      "A decentralized protocol MVP combining token economics, membership systems, staking mechanisms, and governance architecture.",
+      "StakeVerse is an on-chain governance and staking protocol centered on DAO-controlled authority. A token supplies historical voting power to a DAO that governs protocol administration through on-chain proposals, while a separate staking contract maintains its own protected reward accounting.",
     ],
     sections: [
       {
-        heading: "Components",
-        items: [
-          "ERC-20 utility token",
-          "ERC-721 membership NFT",
-          "Staking mechanisms",
-          "Reward distribution",
-          "DAO governance layer",
-          "Oracle integration",
+        heading: "System Model",
+        entries: [
+          { term: "Governance", detail: "StakeVerseDAO holds administrative authority over the protocol, including itself." },
+          { term: "Token / Voting Power", detail: "StakeVerseToken supplies historical voting power to governance through delegated ERC20Votes checkpoints." },
+          { term: "Staking / Reward Accounting", detail: "StakeVerseStaking runs a fixed-rate reward pool with principal and reward liquidity tracked separately." },
+          { term: "Membership NFT", detail: "StakeVerseNFT is a DAO-minted ERC-721 membership badge; it does not currently gate staking or governance." },
+          { term: "Oracle Boundary", detail: "PriceOracleConsumer validates Chainlink price data as a standalone contract, not yet consumed by the core protocol." },
         ],
       },
       {
-        heading: "Engineering",
+        heading: "Architecture",
+        lede: "StakeVerseDAO is the root administrative authority: it owns the token, staking, and NFT contracts, and owns itself. Governance therefore controls every protocol-level administrative action, including its own rules.",
+        flow: ["DAO", "TOKEN, STAKING, NFT, DAO (ITSELF)"],
+        groups: [
+          {
+            heading: "Governance",
+            entries: [
+              { term: "StakeVerseDAO", detail: "Root administrative authority. Owns Token, Staking, NFT, and itself; executes protocol-level actions through successful proposals." },
+            ],
+          },
+          {
+            heading: "Token / Voting Power",
+            entries: [
+              { term: "StakeVerseToken", detail: "ERC-20 utility and governance token (OpenZeppelin ERC20Votes, timestamp-based voting clock). DAO-controlled minting, DAO-owned. Voting power comes from delegated checkpoints — staking does not add voting weight." },
+            ],
+          },
+          {
+            heading: "Staking / Reward Accounting",
+            entries: [
+              { term: "StakeVerseStaking", detail: "Single fixed-rate staking pool. Principal and reward liquidity are tracked separately; reward claims are bounded by a funded reward reserve." },
+            ],
+          },
+          {
+            heading: "Membership NFT",
+            entries: [
+              { term: "StakeVerseNFT", detail: "ERC-721 membership badge, DAO-minted. Currently non-scarce and does not gate staking or governance." },
+            ],
+          },
+          {
+            heading: "Oracle Boundary",
+            entries: [
+              { term: "PriceOracleConsumer", detail: "Chainlink AggregatorV3 integration validating round completeness, price positivity, and staleness. Standalone — not currently consumed by staking or governance." },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "Oracle Boundary",
+        lede: "PriceOracleConsumer is a standalone Chainlink integration, not currently wired into staking or governance decisions.",
+        flow: ["CHAINLINK", "PRICEORACLECONSUMER (STANDALONE)"],
+      },
+      {
+        heading: "Governance Execution",
+        lede: "Voting power is bound to historical checkpoints, not current balances — delegation has to happen before a proposal's snapshot to count. Successful proposals execute permissionlessly, and the DAO can act on itself through the same mechanism.",
+        flow: ["DELEGATE", "CREATE PROPOSAL", "SNAPSHOT", "VOTE", "QUORUM / STATE", "EXECUTE"],
+      },
+      {
+        heading: "Staking Model",
+        lede: "Staking, unstaking, and reward claims are permissionless; funding, pausing, and the reward rate are DAO-controlled. Reward claims draw only from a separately funded reserve and can never consume staked principal.",
+        flow: ["APPROVE", "STAKE", "ACCRUE", "CLAIM / UNSTAKE"],
         items: [
-          "Modular smart contract architecture",
-          "OpenZeppelin standards",
-          "Automated contract testing",
-          "Security analysis workflows",
-          "Frontend wallet integration",
+          "Principal and reward liquidity are accounted separately",
+          "Reward claims are bounded by the funded reward reserve",
+          "Fixed reward rate, DAO-adjustable",
+          "Pausing blocks new staking without trapping withdrawals or claims",
+        ],
+      },
+      {
+        heading: "Security / Invariants",
+        items: [
+          "Reward claims cannot exceed the funded reward reserve",
+          "Reward claims cannot consume staked principal",
+          "Voting power is bound to historical checkpoints, preventing current-balance or just-in-time voting",
+          "Proposal quorum is evaluated against the proposal's own snapshot",
+          "Successful proposals execute permissionlessly, with no privileged executor",
+          "DAO ownership of every contract removes the deployer as a continuing administrator",
+          "Emergency pause blocks new staking without trapping existing funds",
+          "Chainlink price data is rejected when stale, future-dated, or incomplete",
+        ],
+      },
+      {
+        heading: "Verification",
+        items: [
+          "146/146 tests passing",
+          "100% line/statement coverage on every production contract",
+          "CI recompiles and re-runs the full test suite on every push",
+          "Frontend typecheck, build, and lint validated in CI",
+          "Deployment workflow re-verifies chain ID before broadcasting",
+          "Deployment workflow re-verifies deployed bytecode against source",
+          "Deployment workflow independently re-verifies contract ownership on-chain",
+          "Current Sepolia contracts are DAO-owned, confirmed post-deployment",
+        ],
+      },
+      {
+        heading: "Deployment",
+        entries: [
+          { term: "Network", detail: "Ethereum Sepolia (testnet), chain ID 11155111" },
+          { term: "Live Application", detail: "stakeverse.vercel.app" },
+          { term: "StakeVerseToken", detail: "0xf87d0115aF9Fc668d69c540dD7c27BC032d9Afcd" },
+          { term: "StakeVerseDAO", detail: "0x8B555044B4c0A0a91cb0028043004d94291FD01F" },
+          { term: "StakeVerseStaking", detail: "0x5EBd1259223CD30D1Ba95298b517F1F59ABBEa64" },
+          { term: "StakeVerseNFT", detail: "0xA2C7c2db9Ca89b90994049e74d1Ea3eaB62F286C" },
+          { term: "PriceOracleConsumer", detail: "0x5773E1acaE1Bda00caCedC5ebA1653db2C1e749F" },
+        ],
+      },
+      {
+        heading: "Current State",
+        lede: "StakeVerse is deployed and DAO-owned on Ethereum Sepolia — not mainnet. The current implementation has a few known gaps between contract capability and what the frontend or documentation currently expose.",
+        items: [
+          "Staking UI does not currently expose the contract's unstake function",
+          "The dashboard's oracle price is currently hardcoded, not a live read from PriceOracleConsumer",
+          "NFT ownership does not currently affect staking or governance",
+          "Token issuance is uncapped, controlled entirely by DAO governance; NFT issuance is non-scarce",
+          "No third-party audit or static-analysis review has been performed",
+          "Deployed contracts are not currently source-verified on a block explorer",
+          "Contracts are not upgradeable — fixes require redeployment and migration",
         ],
       },
     ],
@@ -225,9 +332,12 @@ const systems: System[] = [
       "Chainlink",
       "React",
       "TypeScript",
-      "Slither",
-      "Mythril",
+      "Vite",
+      "Tailwind CSS",
+      "ethers.js",
     ],
+    repoUrl: "https://github.com/psatomas/stakeverse-protocol",
+    liveUrl: "https://stakeverse.vercel.app/",
   },
   {
     slug: "provenance-registry",
