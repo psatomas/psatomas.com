@@ -1,5 +1,19 @@
 import type { System } from "@/types";
 
+// This is the portfolio's active Systems presentation, not a full project
+// archive — a deliberately curated three, in this order (execution ->
+// governance -> provenance), not alphabetical or chronological. Two
+// earlier entries ("Protocol Engineering Notes" / protocol-engineering-lab,
+// "Web3 Status Registry" / web3-status-registry) were removed from here
+// intentionally; their GitHub repos, history, and source are untouched —
+// this array is the only place that decided whether they appeared on the
+// site, so removing them here is the complete, correct removal. Since
+// /systems/[slug] (generateStaticParams) and the homepage's SystemsPreview
+// both read from getAllSystems() with no other hardcoded reference to
+// either slug anywhere in the codebase, their old detail pages now 404
+// rather than needing an explicit route deletion or a redirect — a
+// redirect would incorrectly imply the content moved somewhere, when it
+// was deliberately unfeatured instead.
 const systems: System[] = [
   {
     // Portfolio identity is "ExeKPro" — the project's own public branding
@@ -119,72 +133,6 @@ const systems: System[] = [
     stack: ["Solidity", "Foundry", "TypeScript", "viem", "Node.js", "Next.js", "wagmi", "Fastify"],
     repoUrl: "https://github.com/psatomas/execution-kernel-protocol",
     liveUrl: "https://exekpro.com/",
-  },
-  {
-    // Renamed from "Protocol Engineering Lab" — that name conflicted with
-    // the site's own primary Lab section (interactive experiments under
-    // /lab). "Lab" has exactly one meaning on this site now; this entry's
-    // actual content — a personal notes/practice repository, not an
-    // interactive experiment — is unchanged, only its public name is.
-    slug: "protocol-engineering-lab",
-    name: "Protocol Engineering Notes",
-    tagline: "Research & Learning Repository",
-    summary:
-      "A repository documenting the journey to becoming a protocol engineer.",
-    description: [
-      "This repository documents my journey to becoming a protocol engineer.",
-    ],
-    sections: [
-      {
-        heading: "Focus areas",
-        items: [
-          "Blockchain protocol design",
-          "Solidity smart contracts",
-          "Distributed systems & cryptography",
-        ],
-      },
-      {
-        heading: "Structure",
-        items: [
-          "protocol-primitives — core blockchain components",
-          "solidity-experiments — smart contract experiments",
-          "rust-algorithms — data structures & algorithm practice in Rust",
-          "notes — research and insights",
-        ],
-      },
-    ],
-    stack: ["Solidity", "Cryptography"],
-  },
-  {
-    slug: "web3-status-registry",
-    name: "Web3 Status Registry",
-    tagline: "My First Blockchain Integration",
-    summary:
-      "A Web3 dApp to store and retrieve on-chain status updates using Solidity, React, and ethers.js.",
-    description: [
-      "A Decentralized Application (DApp) that demonstrates the integration between a React frontend and a smart contract deployed on the Ethereum Sepolia test network.",
-      "Implements a hybrid smart contract architecture combining an on-chain status/audit logging system, ERC-20 token logic, and cryptographic hash verification — a simplified but realistic model of a modular decentralized application.",
-    ],
-    sections: [
-      {
-        heading: "Smart contract — Web3Registry",
-        items: [
-          "On-chain status registry with immutable event logging (updateStatus, getRecord, getTotalRecords)",
-          "Cryptographic hash verification for file integrity (registerHash, verifyHash)",
-          "ERC-20 token module — Web3Token (W3T)",
-        ],
-      },
-    ],
-    stack: [
-      "Solidity",
-      "React",
-      "Vite",
-      "TypeScript",
-      "ethers.js",
-      "OpenZeppelin",
-      "Ethereum Sepolia",
-    ],
-    repoUrl: "https://github.com/psatomas/web3-status-registry-dapp",
   },
   {
     // Positioning matches the system's actual center of gravity: DAO
