@@ -288,43 +288,199 @@ const systems: System[] = [
     liveUrl: "https://stakeverse.vercel.app/",
   },
   {
+    // Positioned as a minimal on-chain attestation primitive, not an audit
+    // platform or trustless registry without qualification — the one-line
+    // description and the Trust Model section below both say directly that
+    // the contract preserves submitted claims rather than proving them.
+    // The Remediation section documents a real authorization-boundary fix
+    // (arbitrary callers -> onlyOwner) without dramatizing it; the old
+    // contract is kept as a superseded, historical address, not erased.
+    // Every fact here — contract fields, error names, test count, pipeline
+    // steps, deployment addresses — is verified directly against the
+    // provenance-registry repository (contract source, test file,
+    // deploy-sepolia.yml, scripts/verify-deployment.ts), not taken from
+    // its own README's promotional framing at face value.
     slug: "provenance-registry",
     name: "Provenance Registry",
-    tagline: "On-Chain Audit Provenance Layer",
+    tagline: "On-Chain Attestation Registry",
     summary:
-      "A blockchain-based provenance system designed to make software evolution and audit history cryptographically verifiable.",
+      "Owner-gated Solidity registry appending immutable, timestamped keccak256 attestation records on Ethereum — client-side document verification, no backend infrastructure.",
     description: [
-      "A blockchain-based provenance system designed to make software evolution and audit history cryptographically verifiable.",
-      "The system creates immutable references between off-chain artifacts and blockchain records using cryptographic commitments.",
+      "An owner-gated Solidity registry that appends immutable, timestamped keccak256 attestation records on Ethereum, with client-side document verification and no backend infrastructure.",
     ],
     sections: [
       {
-        heading: "Features",
+        heading: "System Model",
+        lede: "The registry is a single Solidity contract with no imports and no external contract dependencies — no backend, no database, no indexer, no server-side blockchain service. The frontend communicates with the contract directly through the user's wallet.",
+        flow: ["OWNER", "REGISTER", "APPEND", "VERIFY", "EXPLORE"],
         items: [
-          "On-chain protocol version registry",
-          "Audit metadata storage",
-          "Commit hash verification",
-          "Timestamped blockchain records",
-          "Cryptographic linking using keccak256",
+          "Owner-gated registration",
+          "Append-only provenance records",
+          "Timestamped metadata",
+          "Audit-document hashing",
+          "Commit-hash metadata",
+          "Public historical reads",
+          "Client-side verification",
         ],
       },
       {
-        heading: "Web3 flow",
+        heading: "Architecture",
+        lede: "The client talks directly to the contract through the user's wallet — there is no backend, database, or indexing layer between them.",
+        flow: ["CLIENT (REACT)", "WEB3 (ETHERS.JS)", "CONTRACT (SOLIDITY)", "BLOCKCHAIN (SEPOLIA)"],
+        groups: [
+          {
+            heading: "Client Layer",
+            entries: [
+              { term: "React + TypeScript + Vite", detail: "Wallet interaction, registration UI, PDF hashing, verification, and history exploration." },
+            ],
+          },
+          {
+            heading: "Web3 Layer",
+            entries: [
+              { term: "ethers.js v6", detail: "Provider, signer, contract abstraction, transaction submission, contract reads, and Keccak hashing." },
+            ],
+          },
+          {
+            heading: "Contract Layer",
+            entries: [
+              { term: "ProtocolProvenanceRegistry.sol", detail: "Authorization, record validation, append-only storage, ownership, public reads, and event emission." },
+            ],
+          },
+          {
+            heading: "Blockchain",
+            entries: [
+              { term: "Ethereum Sepolia", detail: "Canonical storage for registered provenance records." },
+            ],
+          },
+        ],
+      },
+      {
+        heading: "Contract Model",
+        lede: "Every registration appends one ProtocolRecord to the calling protocol's history. The contract stores and preserves these submitted claims — it does not independently verify the PDF contents, the auditor's identity, the Git commit, or the relationship between contractAddress and the audited code.",
+        entries: [
+          { term: "protocolName", detail: "Free-form protocol identifier." },
+          { term: "contractAddress", detail: "Mapping key for the protocol's history." },
+          { term: "version", detail: "Free-form version string." },
+          { term: "auditHash", detail: "bytes32 document fingerprint." },
+          { term: "commitHash", detail: "bytes32 caller-supplied code-revision metadata." },
+          { term: "auditor", detail: "Free-form attribution." },
+          { term: "timestamp", detail: "Assigned by block.timestamp." },
+        ],
+      },
+      {
+        heading: "Registration Flow",
+        lede: "Registration is restricted to the current contract owner through onlyOwner.",
+        flow: ["OWNER WALLET", "REGISTER UI", "METAMASK", "REGISTERPROTOCOLRECORD()", "APPEND TO STORAGE", "PROTOCOLREGISTERED"],
         items: [
-          "User → Wallet Authentication → Transaction Signing → Smart Contract Execution → Blockchain State Update → Frontend Synchronization",
+          "The owner supplies protocol metadata",
+          "The PDF is hashed locally in the browser",
+          "The commit hash is supplied as bytes32 metadata",
+          "The wallet signs the transaction",
+          "The contract validates required fields",
+          "The record is appended to records[contractAddress]",
+          "ProtocolRegistered is emitted",
+        ],
+      },
+      {
+        heading: "Verification Flow",
+        lede: "Verification is read-only and requires no transaction. PDF bytes are hashed entirely client-side — the PDF itself never leaves the browser — and only the resulting bytes32 hash is compared with on-chain state, checked against historical records, not just the latest one. The interface distinguishes four outcomes:",
+        flow: ["PDF", "BROWSER KECCAK256", "GETPROTOCOLHISTORY()", "HASH COMPARISON", "VALID / INVALID"],
+        items: [
+          "No records",
+          "Match on latest record",
+          "Match on historical record",
+          "No matching record",
+        ],
+      },
+      {
+        heading: "Provenance History",
+        lede: "Records are stored in a per-address dynamic array; registration only appends, and existing records cannot be modified or deleted through the contract ABI. Historical records remain publicly readable.",
+        flow: ["PROTOCOL ADDRESS", "GETPROTOCOLHISTORY()", "HISTORICAL RECORDS", "TIMELINE"],
+        items: [
+          "getLatestRecord() returns the most recently appended record",
+          "getRecordCount() exposes the current number of records",
+          "The Explorer reads contract storage directly — there is no indexer",
+        ],
+      },
+      {
+        heading: "Security & Invariants",
+        lede: "The registry provides integrity of the registered record, not proof that the registered claims are truthful.",
+        entries: [
+          { term: "Access Control", detail: "registerProtocolRecord() is restricted by onlyOwner." },
+          { term: "Append-Only History", detail: "There is no update or delete path for existing records." },
+          { term: "Record Integrity", detail: "Once appended, the stored audit hash, commit hash, metadata, and timestamp cannot be modified through the contract." },
+          { term: "Historical Availability", detail: "Records remain publicly readable through the view functions." },
+          { term: "Ownership Control", detail: "Ownership can only change through the owner-authorized transferOwnership() path." },
+          { term: "No External Call Surface", detail: "The contract makes no external contract calls and has no payable, receive, or fallback path." },
+          { term: "Cryptographic Verification", detail: "Audit-document fingerprints use keccak256 over the raw PDF bytes in the browser." },
+        ],
+      },
+      {
+        heading: "Remediation",
+        lede: "The current deployment exists because of an authorization-boundary remediation, not a design change: the previous contract allowed any caller to invoke registerProtocolRecord(); the current one restricts it to the owner. Deployed Solidity bytecode is immutable, so the fix required a new deployment rather than a patch.",
+        entries: [
+          { term: "Superseded Deployment", detail: "0x8166431404B7f8e5e9d351333e08548a23Bbdae0 — allowed arbitrary callers to register records. No longer in use." },
+          { term: "Current Deployment", detail: "0xd8FC6C229d7666865EDE56f56C68Af01cC5021BA — adds onlyOwner, confirmed by a live non-owner simulation that reverts with NotOwner." },
+        ],
+      },
+      {
+        heading: "Verification Evidence",
+        items: [
+          "16/16 Solidity tests passing",
+          "Tests cover deployment/ownership, registration, unauthorized registration, field validation, ownership transfer, multi-record history, latest-record retrieval, and public read access",
+          "Deployment pipeline (manually triggered) compiles, tests, and deploys via Hardhat Ignition",
+          "Deployment pipeline verifies deployed bytecode, owner, and a record-read sanity check",
+          "Deployment pipeline runs a non-owner registration simulation",
+          "Current contract has verified source on Etherscan and Sourcify, per the project's deployment record",
+        ],
+      },
+      {
+        heading: "Deployment",
+        lede: "Ethereum Sepolia — a testnet, not Ethereum Mainnet. The core system is complete and end-to-end validated: register, verify, and explore all work against this deployment.",
+        entries: [
+          { term: "Network", detail: "Ethereum Sepolia (testnet), chain ID 11155111" },
+          { term: "Current Contract", detail: "0xd8FC6C229d7666865EDE56f56C68Af01cC5021BA — verified on Etherscan and Sourcify" },
+          { term: "Live Application", detail: "protocol-provenance-registry.vercel.app" },
+          { term: "Pitch Deck", detail: "Vercel-hosted PDF" },
+          { term: "Video Pitch", detail: "youtube.com/watch?v=YnaDlZ6Ywwg" },
+        ],
+      },
+      {
+        heading: "Current Limitations",
+        items: [
+          "A single EOA owner controls future registrations — no multisig or timelock",
+          "Audit hashes are not independently validated against documents by the contract",
+          "Commit hashes are caller-supplied metadata and are not verified against Git",
+          "Registered contract addresses are not verified against deployed code",
+          "getProtocolHistory() returns an unbounded array",
+          "The frontend has no automated test suite and no coverage measurement",
+          "A network-enforcement helper exists but is currently unused",
+          "The superseded deployment remains permanently deployed on Sepolia",
+        ],
+      },
+      {
+        heading: "Trust Model",
+        lede: "The registry makes provenance records tamper-evident, not inherently truthful.",
+        entries: [
+          { term: "Trustless After Registration", detail: "Once written, a record cannot be silently modified or deleted through the contract, anyone can read it, and anyone can independently hash a document and compare it with the stored hash." },
+          { term: "Owner-Curated Registration", detail: "Before registration, only the owner can create records — the owner determines what claims are recorded and is trusted for the truthfulness of the submitted metadata." },
         ],
       },
     ],
     stack: [
       "Solidity",
       "Hardhat",
+      "Hardhat Ignition",
       "React",
       "TypeScript",
       "Vite",
-      "Tailwind CSS",
       "ethers.js",
+      "Tailwind CSS",
+      "Framer Motion",
       "Ethereum Sepolia",
     ],
+    repoUrl: "https://github.com/psatomas/provenance-registry",
+    liveUrl: "https://protocol-provenance-registry.vercel.app/",
   },
 ];
 
