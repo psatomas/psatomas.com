@@ -6,7 +6,7 @@ import { MonoLabel } from "@/components/ui/mono-label";
 import { Tag } from "@/components/ui/tag";
 import { FlowBox, FlowArrow } from "@/components/lab/flow";
 import { getAllSystems, getSystemBySlug } from "@/lib/systems";
-import type { SystemSectionEntry } from "@/types";
+import type { System, SystemSectionEntry } from "@/types";
 
 export function generateStaticParams() {
   return getAllSystems().map((system) => ({ slug: system.slug }));
@@ -42,6 +42,49 @@ export async function generateMetadata(
       description: system.summary,
     },
   };
+}
+
+// The top row prioritizes the live interface; the bottom keeps GitHub first.
+function SystemLinks({
+  system,
+  placement,
+}: {
+  system: Pick<System, "name" | "liveUrl" | "repoUrl">;
+  placement: "top" | "bottom";
+}) {
+  const live = { href: system.liveUrl, label: `Visit ${system.name} ↗` };
+  const repo = { href: system.repoUrl, label: "GitHub ↗" };
+  const links = (placement === "top" ? [live, repo] : [repo, live]).filter(
+    (link): link is { href: string; label: string } => Boolean(link.href),
+  );
+
+  if (links.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-x-6 gap-y-2">
+      {links.map((link, index) => {
+        const primary = placement === "top" ? index === 0 : link === repo;
+
+        return (
+          <a
+            key={link.label}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex min-h-6 w-fit items-center text-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent ${
+              primary
+                ? "font-medium text-accent hover:underline"
+                : "text-muted hover:text-accent transition-colors"
+            }`}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </div>
+  );
 }
 
 // A term/detail pair — e.g. "IntentRegistry" / "Defines and validates
@@ -95,6 +138,8 @@ export default async function SystemPage(
           <Tag key={tech}>{tech}</Tag>
         ))}
       </div>
+
+      <SystemLinks system={system} placement="top" />
 
       <div className="flex max-w-xl flex-col gap-4">
         {system.description.map((paragraph) => (
@@ -159,34 +204,7 @@ export default async function SystemPage(
         </div>
       ))}
 
-      {/* GitHub is the primary technical reference (the actual code,
-          tests, and commits); a system's own live site, when it has one,
-          is a secondary "see it running" link — same underlying pattern,
-          different visual weight. */}
-      {(system.repoUrl || system.liveUrl) && (
-        <div className="flex flex-wrap gap-x-6 gap-y-2">
-          {system.repoUrl && (
-            <a
-              href={system.repoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-fit text-sm font-medium text-accent hover:underline"
-            >
-              GitHub ↗
-            </a>
-          )}
-          {system.liveUrl && (
-            <a
-              href={system.liveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-fit text-sm text-muted hover:text-accent transition-colors"
-            >
-              Visit {system.name} ↗
-            </a>
-          )}
-        </div>
-      )}
+      <SystemLinks system={system} placement="bottom" />
     </Container>
   );
 }
