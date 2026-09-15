@@ -42,44 +42,47 @@ const linkClass =
 // rather than an accident of omission.
 const proseClass = "text-left text-muted md:text-justify";
 
-// The section index's own data — deliberately a small, separate list
-// rather than deriving it from the <DocumentSection> calls below (which
-// stay literal JSX, unchanged from the approved document): these six
-// entries are fixed, and mirroring their number/title here is simpler
-// and less risky than restructuring the approved document into a
-// data-driven map just to share one array.
-const sectionIndexItems = [
-  { number: "01", title: "BACKGROUND", href: "#background" },
-  { number: "02", title: "BLOCKCHAIN", href: "#blockchain" },
-  { number: "03", title: "HOW I THINK ABOUT SYSTEMS", href: "#how-i-think-about-systems" },
-  { number: "04", title: "ENGINEERING DIRECTION", href: "#engineering-direction" },
-  { number: "05", title: "THIS SITE", href: "#this-site" },
-  { number: "06", title: "THE STANDARD", href: "#the-standard" },
+// The engineering scope block's own data — the six engineering concerns
+// the About narrative actually demonstrates, summarized rather than
+// indexed: this is deliberately a separate small list rather than
+// derived from the indexed document below, since these six concepts
+// don't map 1:1 onto the document's own six sections (they're a
+// cross-cutting summary, not a table of contents).
+const engineeringScopeItems = [
+  { concept: "EXECUTION", detail: "EVM · calls · gas" },
+  { concept: "STATE", detail: "storage · accounting" },
+  { concept: "AUTHORITY", detail: "ownership · access" },
+  { concept: "FAILURE", detail: "isolation · recovery" },
+  { concept: "VERIFICATION", detail: "tests · invariants" },
+  { concept: "INFRASTRUCTURE", detail: "indexers · deployment" },
 ] as const;
 
 /**
- * Per-item divider borders for the section index's 2-column x 3-row
- * (column-major) grid — explicit rather than the gap-color "peek-
- * through" trick used elsewhere on the site, because that trick only
- * works for uniform row-major grids: here, items 0/1 and 3/4 need a
- * bottom divider (rows 1→2 and 2→3 within each column) while items 2
- * and 5 (the bottom of each column) must not, a per-item distinction a
- * shared gap can't express. `sm:border-b-0` only ever has something to
- * cancel for index 2 (row 3 of column 1) — for index 5 it's a harmless
- * no-op, since that item never gets a base border-b to begin with.
- * Below `sm` everything is one stacked column in DOM order, so every
- * item except the very last needs the same bottom divider — computed
- * here as the unprefixed (mobile-first) `border-b`.
+ * Per-item divider borders for the engineering scope's 3-column x 2-row
+ * (row-major) grid — explicit rather than the gap-color "peek-through"
+ * trick used elsewhere on the site, per the same reasoning that already
+ * applied to this page's own former section index: a shared `gap-px`/
+ * `bg-border`/`bg-background` divider can silently omit part of a
+ * divider when a grid's per-cell edges aren't uniform, so every edge is
+ * computed explicitly here instead. Row-major DOM order (items 0-2 are
+ * the top row, 3-5 the bottom row) means this is simpler than the
+ * former column-major index: `isBottomRow` and `isLastColumn` alone
+ * decide every edge. `sm:border-b-0` only has something to cancel for
+ * indices 3/4 (index 5 never gets a base border-b, since it's also the
+ * last item overall) — a harmless no-op there, same as the pattern this
+ * mirrors. Below `sm`, everything is one stacked column in DOM order, so
+ * every item except the very last needs the same bottom divider,
+ * computed as the unprefixed (mobile-first) `border-b`.
  */
-function sectionIndexItemBorderClass(index: number): string {
+function engineeringScopeItemBorderClass(index: number): string {
   const isLastOverall = index === 5;
-  const isLastInColumn = index % 3 === 2;
-  const isFirstColumn = index < 3;
+  const isBottomRow = index >= 3;
+  const isLastColumn = index % 3 === 2;
 
   return [
     !isLastOverall && "border-b border-border",
-    isLastInColumn && "sm:border-b-0",
-    isFirstColumn && "sm:border-r",
+    isBottomRow && "sm:border-b-0",
+    !isLastColumn && "sm:border-r",
   ]
     .filter(Boolean)
     .join(" ");
@@ -225,49 +228,45 @@ export default function AboutPage() {
         supposed to establish.
       </p>
 
-      {/* Section index — a compact, restrained navigation aid to the
-          six sections below, deliberately smaller and quieter than the
-          indexed document itself: one thin border, tight item padding,
-          no header/divider row of its own (unlike Systems/Research/Lab's
-          identity-block-plus-grid environments) — just a label above one
-          small bordered grid, so it can't be mistaken for a seventh
-          "environment" competing with the real document. sm:grid-flow-col
-          with an explicit 3-row track is what produces the requested
-          "01-02-03 left column, 04-05-06 right column" visual layout
-          from plain top-to-bottom DOM order (01→06) — no reordering, no
-          `order` overrides, so keyboard/reading order stays exactly
-          sequential even though the visual fill is column-major.
-          Dividers are explicit per-item borders (see
-          sectionIndexItemBorderClass), not the gap-px/bg-border/
-          bg-background "peek-through" trick Systems/Research/Lab use for
-          their own (row-major) grids: that trick draws every divider as
-          the *absence* of cell background inside a shared 1px gap, which
-          depends on every cell correctly covering its own track — a
-          column-major grid has two cells (rows 1 and 2 of each column)
-          that need a bottom divider while a third (row 3) must not, a
-          distinction the uniform gap trick can't express per-item, only
-          per-track. Explicit borders encode that directly: each item
-          knows its own row/column position and draws its own edges. */}
-      <nav aria-label="About sections" className="flex flex-col gap-3">
-        <MonoLabel>SECTION INDEX</MonoLabel>
+      {/* Engineering scope — a compact, purely informational summary of
+          the engineering concerns the document below actually
+          demonstrates. Deliberately not navigation: no <nav>, no <Link>,
+          no hover/focus treatment, no cursor affordance — just a label
+          above one small bordered grid, read-only. It replaces what used
+          to be a fragment-navigation "section index" here, which became
+          redundant once the indexed document immediately below already
+          exposes its own 01-06 structure directly; this block answers a
+          different question ("what engineering concerns does this
+          document cover") rather than duplicating that same table of
+          contents. Row-major DOM order (top row 0-2, bottom row 3-5)
+          needs no grid-flow override, unlike the former column-major
+          index. Dividers are explicit per-item borders (see
+          engineeringScopeItemBorderClass) rather than the gap-px/
+          bg-border/bg-background "peek-through" trick used elsewhere on
+          the site — chosen deliberately here so the divider geometry
+          can't silently omit an edge the way the former section index's
+          did before it was corrected. No numbering: 01-06 belongs only
+          to the indexed document beneath this. */}
+      <div className="flex flex-col gap-3">
+        <MonoLabel>ENGINEERING SCOPE</MonoLabel>
         <div className="border border-border">
-          <ul className="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-col sm:grid-rows-3">
-            {sectionIndexItems.map((item, index) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`group flex h-full items-baseline gap-2 px-5 py-3 font-mono text-xs tracking-[0.08em] transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent ${sectionIndexItemBorderClass(index)}`}
-                >
-                  <span className="text-accent">{item.number}</span>
-                  <span className="text-foreground transition-colors group-hover:text-accent">
-                    {item.title}
-                  </span>
-                </Link>
+          <ul className="grid grid-cols-1 sm:grid-cols-3">
+            {engineeringScopeItems.map((item, index) => (
+              <li
+                key={item.concept}
+                className={`flex flex-col gap-1 px-5 py-4 ${engineeringScopeItemBorderClass(index)}`}
+              >
+                <span className="font-mono text-xs uppercase tracking-[0.1em] text-foreground">
+                  {item.concept}
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-dim">
+                  {item.detail}
+                </span>
               </li>
             ))}
           </ul>
         </div>
-      </nav>
+      </div>
 
       {/* The indexed document: one outer border, six sections separated
           by internal dividers only (see DocumentSection) — never six
