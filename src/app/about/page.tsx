@@ -58,6 +58,34 @@ const sectionIndexItems = [
 ] as const;
 
 /**
+ * Per-item divider borders for the section index's 2-column x 3-row
+ * (column-major) grid — explicit rather than the gap-color "peek-
+ * through" trick used elsewhere on the site, because that trick only
+ * works for uniform row-major grids: here, items 0/1 and 3/4 need a
+ * bottom divider (rows 1→2 and 2→3 within each column) while items 2
+ * and 5 (the bottom of each column) must not, a per-item distinction a
+ * shared gap can't express. `sm:border-b-0` only ever has something to
+ * cancel for index 2 (row 3 of column 1) — for index 5 it's a harmless
+ * no-op, since that item never gets a base border-b to begin with.
+ * Below `sm` everything is one stacked column in DOM order, so every
+ * item except the very last needs the same bottom divider — computed
+ * here as the unprefixed (mobile-first) `border-b`.
+ */
+function sectionIndexItemBorderClass(index: number): string {
+  const isLastOverall = index === 5;
+  const isLastInColumn = index % 3 === 2;
+  const isFirstColumn = index < 3;
+
+  return [
+    !isLastOverall && "border-b border-border",
+    isLastInColumn && "sm:border-b-0",
+    isFirstColumn && "sm:border-r",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/**
  * A section heading for the indexed document below — same typographic
  * voice as MonoLabel (font-mono, uppercase, tracked), but a real <h2>
  * rather than MonoLabel's own <span>, since these are genuine document
@@ -180,8 +208,14 @@ export default function AboutPage() {
           justification as the document prose (proseClass), reused
           rather than reinvented, so the preamble and the indexed
           document read as one consistent typographic system instead of
-          the preamble looking like leftover un-migrated text. */}
-      <p className={`max-w-xl text-lg ${proseClass}`}>
+          the preamble looking like leftover un-migrated text.
+          Deliberately no max-w-xl here (unlike the section body prose
+          below): as the thesis/abstract for the whole document, it
+          should span the same full structural width as the section
+          index and indexed document beneath it, not the narrower
+          controlled reading measure that's intentional for body
+          paragraphs inside each section. */}
+      <p className={`text-lg ${proseClass}`}>
         I care less about whether a system works once than about
         understanding what has to remain true for it to keep working.
         That changes the questions I ask while building: what happens
@@ -202,16 +236,27 @@ export default function AboutPage() {
           "01-02-03 left column, 04-05-06 right column" visual layout
           from plain top-to-bottom DOM order (01→06) — no reordering, no
           `order` overrides, so keyboard/reading order stays exactly
-          sequential even though the visual fill is column-major. */}
-      <nav aria-label="About sections" className="flex max-w-xl flex-col gap-3 sm:max-w-none">
+          sequential even though the visual fill is column-major.
+          Dividers are explicit per-item borders (see
+          sectionIndexItemBorderClass), not the gap-px/bg-border/
+          bg-background "peek-through" trick Systems/Research/Lab use for
+          their own (row-major) grids: that trick draws every divider as
+          the *absence* of cell background inside a shared 1px gap, which
+          depends on every cell correctly covering its own track — a
+          column-major grid has two cells (rows 1 and 2 of each column)
+          that need a bottom divider while a third (row 3) must not, a
+          distinction the uniform gap trick can't express per-item, only
+          per-track. Explicit borders encode that directly: each item
+          knows its own row/column position and draws its own edges. */}
+      <nav aria-label="About sections" className="flex flex-col gap-3">
         <MonoLabel>SECTION INDEX</MonoLabel>
         <div className="border border-border">
-          <ul className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 sm:grid-flow-col sm:grid-rows-3">
-            {sectionIndexItems.map((item) => (
-              <li key={item.href} className="bg-background">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-col sm:grid-rows-3">
+            {sectionIndexItems.map((item, index) => (
+              <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="group flex h-full items-baseline gap-2 px-5 py-3 font-mono text-xs tracking-[0.08em] transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent"
+                  className={`group flex h-full items-baseline gap-2 px-5 py-3 font-mono text-xs tracking-[0.08em] transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent ${sectionIndexItemBorderClass(index)}`}
                 >
                   <span className="text-accent">{item.number}</span>
                   <span className="text-foreground transition-colors group-hover:text-accent">
