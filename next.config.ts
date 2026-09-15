@@ -22,7 +22,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/projects", destination: "/systems", permanent: true },
+      {
+        source: "/projects/stakeverse-protocol",
+        destination: "/systems/stakeverse",
+        permanent: true,
+      },
       { source: "/projects/:slug", destination: "/systems/:slug", permanent: true },
+      {
+        source: "/systems/stakeverse-protocol",
+        destination: "/systems/stakeverse",
+        permanent: true,
+      },
       {
         source: "/systems/execution-kernel-protocol",
         destination: "/systems/exekpro",

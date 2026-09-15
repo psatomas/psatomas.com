@@ -144,8 +144,8 @@ const systems: System[] = [
     // unstake button, hardcoded oracle display) are named directly
     // rather than omitted — all traced to the repository's own README,
     // which is equally direct about them.
-    slug: "stakeverse-protocol",
-    name: "StakeVerse Protocol",
+    slug: "stakeverse",
+    name: "StakeVerse",
     tagline: "Security-Hardened Governance & Staking Protocol",
     summary:
       "DAO-governed staking protocol built on historical voting power, protected reward accounting, and DAO-controlled administrative authority — hardened through a structured security remediation process.",
@@ -284,7 +284,7 @@ const systems: System[] = [
       "Tailwind CSS",
       "ethers.js",
     ],
-    repoUrl: "https://github.com/psatomas/stakeverse-protocol",
+    repoUrl: "https://github.com/psatomas/StakeVerse",
     liveUrl: "https://stakeverse.vercel.app/",
   },
   {
