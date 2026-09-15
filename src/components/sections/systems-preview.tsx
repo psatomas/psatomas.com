@@ -64,7 +64,7 @@ export function SystemsPreview() {
   return (
     <section
       aria-labelledby="systems-heading"
-      className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-14 md:pt-16"
+      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-14 md:pt-16"
     >
       {/* One outer Systems environment, the same family as Research/Lab:
           the identity region is one ordinary block-level <Link> to

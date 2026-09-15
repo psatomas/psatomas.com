@@ -47,7 +47,7 @@ export function LabPreview() {
     // from butting straight into the footer's own border/padding.
     <section
       aria-labelledby="lab-heading"
-      className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-20 pb-16 md:pt-24 md:pb-20"
+      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-20 pb-16 md:pt-24 md:pb-20"
     >
       {/* One outer border for the whole Lab environment. Its open upper
           area — role, heading, description — is itself a single,

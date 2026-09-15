@@ -19,7 +19,7 @@ export async function ResearchPreview() {
   return (
     <section
       aria-labelledby="research-heading"
-      className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-14 md:pt-16"
+      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-14 md:pt-16"
     >
       {/* One outer Research environment, same shape as Lab's: the upper
           identity region is itself one ordinary block-level <Link> to
