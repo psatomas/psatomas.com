@@ -17,8 +17,26 @@ import portrait from "@/assets/portrait.jpg";
 // About/Systems/Research/Lab previews further down the page.
 export function Hero() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-      <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:justify-between">
+    // pt/pb split rather than one py-*: the bottom value now matches
+    // About's own top padding (pt-14/md:pt-16, see about-preview.tsx)
+    // exactly, so the homepage's Hero -> separator -> About transition
+    // divides into two equal gaps instead of the old py-20/28's larger,
+    // unrelated bottom value leaving far more room above the separator
+    // than About's own padding leaves below it. The top value is
+    // untouched — nothing about the navbar relationship changed.
+    <section className="mx-auto max-w-6xl px-6 pt-20 md:pt-28 pb-14 md:pb-16">
+      {/* lg:items-end (not lg:items-start): the person column (photo +
+          text, ending in the EVM/Solidity/... tag line) and the
+          territory column (SystemMap + its TECHNICAL TERRITORY caption)
+          aren't the same height — the caption's own line adds height
+          below the map that the person column has no equivalent for —
+          so top-aligning them left the two columns' closing lines
+          sitting at different Y positions. Bottom-aligning the row
+          instead makes both columns' actual last lines land on the same
+          baseline, which is what the person column's own internal
+          photo/text alignment already assumes implicitly (see the photo
+          aspect-ratio comment below). */}
+      <div className="flex flex-col gap-12 lg:flex-row lg:items-end lg:justify-between">
         {/* Person: the photograph beside the name and everything that
             follows it. A plain rectangular crop (no circular avatar, no
             card, no border) whose near-black backdrop matches
@@ -85,8 +103,14 @@ export function Hero() {
             photo. The caption is what turns the diagram from "a technical
             graphic placed beside the Hero" into an annotated map of this
             person's own territory — it names explicitly what the tag line
-            above already lists, pointing back at the same six domains. */}
-        <div className="flex flex-col items-center gap-3 lg:shrink-0 lg:items-end">
+            above already lists, pointing back at the same six domains.
+            gap-4 (not gap-3): matches the other MonoLabel-directly-under-
+            its-referent spacing already used above (the role line above
+            the name, also gap-4) — the map's own caption was sitting
+            closer to it than that established rhythm, which read as
+            tighter/more cramped than the rest of the Hero rather than a
+            deliberate caption-tightness choice. */}
+        <div className="flex flex-col items-center gap-4 lg:shrink-0 lg:items-end">
           <div className="w-full max-w-[300px]">
             <SystemMap />
           </div>
