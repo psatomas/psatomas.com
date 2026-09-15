@@ -39,3 +39,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* A restrained native scrollbar for internally-scrolling content (e.g.
+   the homepage Research preview's article index) — thin and colored from
+   the existing border tokens instead of an unstyled OS-default bar.
+   Standard `overflow-y-auto`/scroll behavior (wheel, trackpad, touch,
+   keyboard) is untouched; this only restyles the scrollbar's appearance. */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+}

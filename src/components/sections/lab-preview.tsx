@@ -50,7 +50,7 @@ export function LabPreview() {
       className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-20 pb-16 md:pt-24 md:pb-20"
     >
       {/* One outer border for the whole Lab environment. Its open upper
-          area — role, heading, description, CTA — is itself a single,
+          area — role, heading, description — is itself a single,
           ordinary <Link> to /lab, not an overlay stretched behind other
           content: just a block-level link whose children are plain text,
           so there's nothing here that could ever produce a nested anchor.
@@ -64,29 +64,20 @@ export function LabPreview() {
       <div className="border border-border bg-background">
         <Link
           href="/lab"
-          className="group flex flex-col gap-6 p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
+          className="group flex flex-col gap-3 p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
         >
-          <div className="flex flex-col gap-3">
-            <MonoLabel>What I explore</MonoLabel>
-            <h2
-              id="lab-heading"
-              className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
-            >
-              Lab
-            </h2>
-            <p className="max-w-xl text-muted">
-              Bounded technical experiments — each one built to test a
-              single idea about how a protocol behaves, not to
-              demonstrate a finished product.
-            </p>
-          </div>
-
-          <span className="inline-flex w-fit items-center gap-2 font-mono text-xs tracking-[0.1em] text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent">
-            EXPLORE LAB
-            <span className="transition-transform group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5">
-              →
-            </span>
-          </span>
+          <MonoLabel>What I explore</MonoLabel>
+          <h2
+            id="lab-heading"
+            className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
+          >
+            Lab
+          </h2>
+          <p className="max-w-xl text-muted">
+            Bounded technical experiments — each one built to test a
+            single idea about how a protocol behaves, not to
+            demonstrate a finished product.
+          </p>
         </Link>
 
         {/* The inner, experiment-only bordered grid. It carries just a
