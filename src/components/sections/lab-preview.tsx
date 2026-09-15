@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { FlowBox, FlowArrow } from "@/components/lab/flow";
-import { SectionIntro, SectionLink } from "@/components/sections/section-intro";
 import { experiments } from "@/lib/experiments/registry";
 import type { ExperimentId } from "@/types";
 
@@ -50,44 +49,83 @@ export function LabPreview() {
       aria-labelledby="lab-heading"
       className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-border px-6 pt-20 pb-16 md:pt-24 md:pb-20"
     >
-      <SectionIntro
-        id="lab-heading"
-        role="What I explore"
-        heading="Lab"
-        description="Bounded technical experiments — each one built to test a single idea about how a protocol behaves, not to demonstrate a finished product."
-      />
+      {/* One outer border for the whole Lab environment. Its open upper
+          area — role, heading, description, CTA — is itself a single,
+          ordinary <Link> to /lab, not an overlay stretched behind other
+          content: just a block-level link whose children are plain text,
+          so there's nothing here that could ever produce a nested anchor.
+          The experiment grid below is that Link's sibling, not its
+          descendant, so the two live in entirely separate subtrees. A
+          plain `group` on the Lab link and a plain `group` on each card's
+          own Link never collide, because Tailwind's `group-hover:` only
+          reaches descendants of the hovered `.group` — with the grid
+          outside the Lab link (and each card independent inside the
+          grid), hovering one can never bleed into the other. */}
+      <div className="border border-border bg-background">
+        <Link
+          href="/lab"
+          className="group flex flex-col gap-6 p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
+        >
+          <div className="flex flex-col gap-3">
+            <MonoLabel>What I explore</MonoLabel>
+            <h2
+              id="lab-heading"
+              className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
+            >
+              Lab
+            </h2>
+            <p className="max-w-xl text-muted">
+              Bounded technical experiments — each one built to test a
+              single idea about how a protocol behaves, not to
+              demonstrate a finished product.
+            </p>
+          </div>
 
-      <ul className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-3">
-        {featured.map((experiment) => {
-          const [first, second, third] = FLOW_PREVIEW[experiment.id];
-          return (
-            <li key={experiment.id} className="bg-background">
-              <Link
-                href={`/lab/${experiment.id}`}
-                className="group flex h-full flex-col gap-4 p-6 transition-colors hover:bg-surface-hover"
-              >
-                <div className="flex flex-col gap-2">
-                  <MonoLabel className="text-accent">{experiment.index}</MonoLabel>
-                  <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent transition-colors">
-                    {experiment.title}
-                  </span>
-                  <MonoLabel className="text-dim">{experiment.subtitle}</MonoLabel>
-                </div>
+          <span className="inline-flex w-fit items-center gap-2 font-mono text-xs tracking-[0.1em] text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent">
+            EXPLORE LAB
+            <span className="transition-transform group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5">
+              →
+            </span>
+          </span>
+        </Link>
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <FlowBox>{first}</FlowBox>
-                  <FlowArrow />
-                  <FlowBox>{second}</FlowBox>
-                  <FlowArrow />
-                  <FlowBox emphasis>{third}</FlowBox>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+        {/* The inner, experiment-only bordered grid. It carries just a
+            top divider (border-t) and internal hairlines between cells
+            (gap-px + bg-border) — no border of its own on the other three
+            sides, since it sits flush inside the outer border above, which
+            already draws those edges. That's what keeps this reading as
+            one bordered box for the experiments nested inside the larger
+            Lab surface, rather than a second, redundant outline. */}
+        <ul className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-3">
+          {featured.map((experiment) => {
+            const [first, second, third] = FLOW_PREVIEW[experiment.id];
+            return (
+              <li key={experiment.id} className="bg-background">
+                <Link
+                  href={`/lab/${experiment.id}`}
+                  className="group flex h-full flex-col gap-4 p-6 transition-colors hover:bg-surface-hover"
+                >
+                  <div className="flex flex-col gap-2">
+                    <MonoLabel className="text-accent">{experiment.index}</MonoLabel>
+                    <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent transition-colors">
+                      {experiment.title}
+                    </span>
+                    <MonoLabel className="text-dim">{experiment.subtitle}</MonoLabel>
+                  </div>
 
-      <SectionLink href="/lab">Explore the Lab</SectionLink>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <FlowBox>{first}</FlowBox>
+                    <FlowArrow />
+                    <FlowBox>{second}</FlowBox>
+                    <FlowArrow />
+                    <FlowBox emphasis>{third}</FlowBox>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </section>
   );
 }
