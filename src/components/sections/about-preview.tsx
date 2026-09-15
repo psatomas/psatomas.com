@@ -13,10 +13,9 @@ export function AboutPreview() {
     >
       <SectionIntro id="about-heading" role="Who I am" heading="About" />
       <p className="max-w-xl text-muted">
-        Protocol engineer drawn to the layer where a system&apos;s design
-        has to be exactly right — state transitions, execution
-        guarantees, consistency under load. Most of what&apos;s below is
-        that work, worked through directly.
+        I work across the boundaries that determine whether a blockchain
+        system stays correct: execution, state, authority, accounting,
+        deployment, and the infrastructure around the contracts.
       </p>
       <SectionLink href="/about">Read more</SectionLink>
     </section>

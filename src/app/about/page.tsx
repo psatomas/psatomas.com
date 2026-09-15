@@ -66,91 +66,168 @@ export default function AboutPage() {
       </div>
 
       <p className="max-w-xl text-lg text-muted">
-        I&apos;m a blockchain developer working primarily with Solidity,
-        TypeScript, and the EVM. My work is increasingly focused on what
-        happens beneath the application layer: how protocols represent
-        state, coordinate execution, enforce invariants, and connect
-        on-chain systems with the infrastructure around them.
+        I care less about whether a system works once than about
+        understanding what has to remain true for it to keep working.
+        That changes the questions I ask while building: what happens
+        outside the expected input range, which assumptions exist only
+        in the design, where failure can propagate, and whether the
+        deployed system actually preserves the guarantees the code was
+        supposed to establish.
       </p>
 
       <div className="flex max-w-xl flex-col gap-4 border-t border-border pt-10">
         <MonoLabel>BACKGROUND</MonoLabel>
-        <p className="text-muted">I came into blockchain through software engineering.</p>
         <p className="text-muted">
-          I started with HTML and JavaScript, moved into React and
-          frontend development, and then went deeper into backend systems
-          with Python and Django. That led me back to TypeScript and
-          Node.js, where I began working with ethers.js and viem before
-          moving further into Solidity and the EVM.
+          My background in software engineering gave me experience
+          building across application boundaries, but protocol work has
+          changed what I consider the object being engineered. The
+          contract is only one part of it. The execution path that
+          reaches it, the authority that can change it, the services
+          reconstructing its state, and the deployment that puts those
+          assumptions into effect can all determine whether the system
+          behaves correctly.
         </p>
         <p className="text-muted">
-          That path still influences how I approach blockchain
-          development. I don&apos;t see a smart contract as an isolated
-          piece of code. I look at the system around it: the state it
-          owns, the transitions it permits, the services that interact
-          with it, and the assumptions that exist between on-chain and
-          off-chain components.
+          That has made &ldquo;it works&rdquo; a less useful stopping
+          point for me. I want to know what made it work, which
+          conditions that answer depends on, and what happens when those
+          conditions stop being friendly.
         </p>
       </div>
 
       <div className="flex max-w-xl flex-col gap-4 border-t border-border pt-10">
         <MonoLabel>BLOCKCHAIN</MonoLabel>
         <p className="text-muted">
-          I had been studying blockchain technology for some time before
-          making it the focus of my development work. When I moved into
-          the space, I followed a deliberate path from the application
-          layer into smart contracts and EVM systems.
+          Blockchain makes some of those questions difficult to postpone.
+          State is persistent, authority has to be explicit, economic
+          mistakes can become accounting problems, and deployed bytecode
+          may leave no opportunity to quietly replace a bad assumption.
         </p>
         <p className="text-muted">
-          Today, Solidity and the EVM are at the center of my work,
-          supported by TypeScript and the infrastructure needed to build
-          and operate blockchain systems.
+          I encountered that directly when an authorization boundary
+          that existed in the design of{" "}
+          <Link href="/systems/provenance-registry" className={linkClass}>
+            Provenance Registry
+          </Link>{" "}
+          was absent from the deployed contract. Correcting the Solidity
+          was necessary, but it wasn&apos;t enough: the immutable
+          contract had to be superseded by a new deployment. More
+          importantly, I changed what I expected from the deployment
+          process itself. It now verifies the boundary against the
+          deployed contract by attempting the unauthorized behavior and
+          requiring it to fail for the expected reason.
         </p>
         <p className="text-muted">
-          I&apos;m particularly interested in smart contract architecture,
-          protocol mechanisms, security and auditing, deterministic
-          execution, state modeling, and the boundaries between canonical
-          on-chain state and derived off-chain data.
+          I&apos;ve applied the same thinking elsewhere. Ownership in{" "}
+          <Link href="/systems/stakeverse" className={linkClass}>
+            StakeVerse
+          </Link>{" "}
+          is checked again against live deployed state instead of being
+          trusted because the deployment script says it was configured
+          correctly. Oracle data is validated for the properties the
+          protocol actually depends on rather than accepted simply
+          because it arrived through an on-chain interface.
+        </p>
+        <p className="text-muted">
+          Those are small implementation decisions individually, but
+          together they reflect an important distinction for me: the
+          source code can describe the system I intended to deploy; it
+          cannot, by itself, prove the system that is actually there.
         </p>
       </div>
 
       <div className="flex max-w-xl flex-col gap-4 border-t border-border pt-10">
         <MonoLabel>HOW I THINK ABOUT SYSTEMS</MonoLabel>
         <p className="text-muted">
-          The interesting problems are often not contained within a
-          single contract.
+          I tend to learn the most about an implementation by pushing
+          against the assumptions that made its happy path
+          straightforward.
         </p>
         <p className="text-muted">
-          They emerge when execution crosses system boundaries, when
-          state has to be reconstructed from events, when an off-chain
-          service reports information back to a protocol, or when several
-          components have to agree on what happened and what should
-          happen next.
+          That is why fuzzing and adversarial tests have become more
+          useful to me than their coverage numbers. While working on{" "}
+          <Link href="/systems/exekpro" className={linkClass}>
+            ExeKPro
+          </Link>
+          &apos;s scoring model, inputs outside the ranges I would
+          naturally choose exposed both an arithmetic failure capable of
+          interrupting execution and an unsafe integer conversion that
+          could reverse the meaning of an extreme value. The important
+          outcome wasn&apos;t simply fixing two bugs. It changed the
+          boundary around execution modules so that one module&apos;s
+          failure no longer had to become everybody else&apos;s failure.
         </p>
         <p className="text-muted">
-          That&apos;s where my interests increasingly converge: execution,
-          state transitions, consistency, coordination, and the
-          guarantees that can be established across a distributed system.
+          I apply a similar standard to state outside the contracts. An
+          indexer should not claim progress for a block it failed to
+          process. A cached observation should not become
+          &ldquo;current&rdquo; merely because it was retrieved
+          successfully. When the{" "}
+          <Link href="/lab/oracle" className={linkClass}>
+            Oracle Lab experiment
+          </Link>{" "}
+          on this site began hitting real rate limits under concurrent
+          browser sessions, sharing and coalescing requests solved the
+          operational problem, but preserving the age of the underlying
+          observation was the correctness requirement. The cache was
+          allowed to change how data was obtained, not what that data
+          claimed about the world.
+        </p>
+        <p className="text-muted">
+          Accounting has pushed me toward the same kind of explicitness.
+          A contract balance says what the contract holds; it
+          doesn&apos;t necessarily say what the protocol is free to
+          spend. Separating staking principal from the reward reserve in
+          StakeVerse made that distinction concrete: principal, available
+          rewards, and accrued obligations needed to have different
+          meanings in the model rather than being inferred from one pool
+          of tokens.
+        </p>
+        <p className="text-muted">
+          The pattern I keep returning to is to make assumptions
+          observable and enforceable. Find the boundary, decide what
+          must remain true across it, test the conditions most likely to
+          violate it, and then verify the resulting behavior at the
+          level where the guarantee actually matters. Sometimes
+          that&apos;s a Solidity test. Sometimes it&apos;s an execution
+          module, an indexer, a deployment, or a service running outside
+          the chain.
+        </p>
+        <p className="text-muted">
+          Passing the test suite is evidence. I don&apos;t want it to be
+          the only evidence.
         </p>
       </div>
 
       <div className="flex max-w-xl flex-col gap-4 border-t border-border pt-10">
         <MonoLabel>ENGINEERING DIRECTION</MonoLabel>
         <p className="text-muted">
-          I&apos;m moving from building blockchain applications and
-          individual protocol components toward understanding and
-          designing the systems underneath them.
+          That standard is also shaping where I&apos;m going deeper.
         </p>
         <p className="text-muted">
-          That means going deeper into protocol architecture, execution
-          models, distributed coordination, security, and the
-          infrastructure that makes decentralized systems reliable.
+          ExeKPro has taken me further into execution models and the
+          interaction between protocol logic and the infrastructure
+          around it. Work on EVM state transitions has pushed me below
+          Solidity&apos;s surface toward understanding what the machine
+          is actually doing with calls, storage, gas, reverts, and
+          atomicity. Fuzzing and adversarial testing have made me more
+          interested in designing invariants before a failure reveals
+          why they were needed.
         </p>
         <p className="text-muted">
-          The work on this site is part of that progression. Some of it
-          is built software. Some of it is research. Some of it is
-          deliberately small experiments designed to isolate one
-          technical question and understand it properly.
+          There is still a large distance between exploring these
+          mechanisms in my own systems and operating protocols at
+          production scale, and I don&apos;t want this site to pretend
+          otherwise. What I do want is for each project to push the next
+          one toward stronger reasoning: fewer implicit assumptions,
+          clearer boundaries, better failure isolation, and verification
+          that reaches beyond the implementation that produced the
+          result.
+        </p>
+        <p className="text-muted">
+          That&apos;s the direction of the work here: deeper into
+          protocol architecture and execution, while becoming more
+          rigorous about the guarantees those systems actually provide.
         </p>
       </div>
 
@@ -160,63 +237,46 @@ export default function AboutPage() {
           <Link href="/systems" className={linkClass}>
             Systems
           </Link>{" "}
-          is where I build and ship.
+          is where those ideas become working implementations.
         </p>
         <p className="max-w-xl text-muted">
           <Link href="/research" className={linkClass}>
             Research
           </Link>{" "}
-          is where I work through a specific technical problem and
-          document what I learn.
+          is where I slow down around a technical question and work
+          through the mechanism underneath it.
         </p>
         <p className="max-w-xl text-muted">
           <Link href="/lab" className={linkClass}>
             Lab
           </Link>{" "}
-          is where I isolate smaller ideas and test how they behave.
+          is where I isolate smaller behaviors and test them directly.
         </p>
         <p className="max-w-xl text-muted">
-          The three are different views of the same process:{" "}
+          Together, they document the same process from different
+          angles:{" "}
           <strong className="font-semibold text-foreground">
-            build, investigate, and understand the system underneath.
+            build, challenge, verify, understand.
           </strong>
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-border pt-10">
-        <MonoLabel>ELSEWHERE</MonoLabel>
-        <p className="max-w-xl text-muted">
-          <a
-            href="https://github.com/psatomas"
-            className={linkClass}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>{" "}
-          — Code, experiments, and ongoing work.
+      <div className="flex max-w-xl flex-col gap-4 border-t border-border pt-10">
+        <MonoLabel>THE STANDARD</MonoLabel>
+        <p className="text-muted">
+          I&apos;m not trying to make every project larger. I&apos;m
+          trying to make the standard behind each one higher.
         </p>
-        <p className="max-w-xl text-muted">
-          <a
-            href="https://linkedin.com/in/psatomas"
-            className={linkClass}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            LinkedIn
-          </a>{" "}
-          — Professional background and engineering direction.
+        <p className="text-muted">
+          A system should do what it was designed to do, but it should
+          also make its assumptions visible, contain failure where it
+          begins, preserve the meaning of its state, and give me a way
+          to verify those properties beyond the path I expected to work.
         </p>
-        <p className="max-w-xl text-muted">
-          <a
-            href="https://x.com/psatomas"
-            className={linkClass}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            X
-          </a>{" "}
-          — Notes, observations, and technical interests.
+        <p className="text-muted">
+          That&apos;s the standard I&apos;m building toward. Not just
+          software that runs, but systems I can explain, challenge, and
+          trust for reasons I can demonstrate.
         </p>
       </div>
     </Container>
