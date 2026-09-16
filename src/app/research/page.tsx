@@ -54,8 +54,23 @@ export default async function ResearchPage() {
               className="group flex flex-col border border-border transition-colors hover:border-muted focus-visible:border-muted focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
             >
               <div className="flex flex-col gap-3 bg-surface px-6 py-5 sm:px-8 sm:py-6">
-                <div className="flex items-center gap-3">
-                  <MonoLabel className="text-dim">{article.publishedAt}</MonoLabel>
+                {/* flex-wrap (not a fixed layout): at narrow widths the
+                    identity plane's own padding leaves too little room for
+                    date + separator + a multi-word category on one line —
+                    without wrapping, the row didn't grow, it shrank its
+                    flex children instead, and the date (the only field with
+                    no whitespace-nowrap) broke internally mid-string
+                    ("2026-08-" / "24"). Wrapping the row lets date and
+                    "· category" fall onto their own line as whole units
+                    instead. whitespace-nowrap on the date is the actual
+                    fix, not the wrap alone: a date must never break
+                    internally regardless of available width, while the
+                    category is left free to wrap on its own if some future
+                    category name is ever long enough to need it. */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <MonoLabel className="text-dim whitespace-nowrap">
+                    {article.publishedAt}
+                  </MonoLabel>
                   <span className="text-dim">·</span>
                   <MonoLabel className="text-dim">{article.category}</MonoLabel>
                 </div>
