@@ -98,7 +98,13 @@ export function LabPreview() {
             sides, since it sits flush inside the outer border above, which
             already draws those edges. That's what keeps this reading as
             one bordered box for the experiments nested inside the larger
-            Lab surface, rather than a second, redundant outline. */}
+            Lab surface, rather than a second, redundant outline. Each
+            card's own hover/focus-visible now uses the same #737982
+            "this object is targeted" treatment as the environment
+            identity above, instead of the old dark surface-hover step
+            — but scoped to its own `group`, so only the targeted card
+            changes; sibling cards (and the identity plane) are
+            untouched. */}
         <ul className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-3">
           {featured.map((experiment) => {
             const [first, second, third] = FLOW_PREVIEW[experiment.id];
@@ -106,21 +112,38 @@ export function LabPreview() {
               <li key={experiment.id} className="bg-background">
                 <Link
                   href={`/lab/${experiment.id}`}
-                  className="group flex h-full flex-col gap-4 p-6 transition-colors hover:bg-surface-hover"
+                  className="group flex h-full flex-col gap-4 p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982]"
                 >
                   <div className="flex flex-col gap-2">
-                    <MonoLabel className="text-accent">{experiment.index}</MonoLabel>
-                    <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent transition-colors">
+                    <MonoLabel className="text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
+                      {experiment.index}
+                    </MonoLabel>
+                    <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent group-focus-visible:text-accent transition-colors">
                       {experiment.title}
                     </span>
-                    <MonoLabel className="text-dim">{experiment.subtitle}</MonoLabel>
+                    <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                      {experiment.subtitle}
+                    </MonoLabel>
                   </div>
 
+                  {/* text-muted (both plain FlowBox chips) and text-dim
+                      (both arrows) read too close in luminance to the
+                      #737982 active card background to stay legible, so
+                      they switch to the same dark/background treatment
+                      as the rest of the active card's supporting text.
+                      The emphasis chip stays cyan — it's the flow's own
+                      accent/primary step, not supporting information,
+                      so it follows the same "cyan may remain cyan" rule
+                      already applied to the card's title. */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <FlowBox>{first}</FlowBox>
-                    <FlowArrow />
-                    <FlowBox>{second}</FlowBox>
-                    <FlowArrow />
+                    <FlowBox className="transition-colors group-hover:text-background group-focus-visible:text-background">
+                      {first}
+                    </FlowBox>
+                    <FlowArrow className="transition-colors group-hover:text-background group-focus-visible:text-background" />
+                    <FlowBox className="transition-colors group-hover:text-background group-focus-visible:text-background">
+                      {second}
+                    </FlowBox>
+                    <FlowArrow className="transition-colors group-hover:text-background group-focus-visible:text-background" />
                     <FlowBox emphasis>{third}</FlowBox>
                   </div>
                 </Link>

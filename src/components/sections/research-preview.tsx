@@ -78,24 +78,37 @@ export async function ResearchPreview() {
             appearance only; the browser's own vertical scrollbar still
             renders on the right, and wheel/trackpad/touch/keyboard
             scrolling all keep working exactly as native overflow
-            provides. */}
+            provides. Each row's own hover/focus-visible now uses the
+            same #737982 "this object is targeted" treatment as the
+            environment identity above, instead of the old dark
+            surface-hover step — but scoped to its own `group`, so only
+            the targeted row changes; sibling rows (and the identity
+            plane) are untouched. */}
         <ul className="thin-scrollbar max-h-[256px] overflow-y-auto border-t border-border">
           {articles.map((article) => (
             <li key={article.slug} className="border-t border-border first:border-t-0">
               <Link
                 href={`/research/${article.slug}`}
-                className="group flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-surface-hover"
+                className="group flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982]"
               >
                 <div className="flex flex-wrap items-center gap-3">
-                  <MonoLabel className="text-dim">{article.publishedAt}</MonoLabel>
-                  <span className="text-dim">·</span>
-                  <MonoLabel className="text-dim">{article.category}</MonoLabel>
-                  <span className="text-dim">·</span>
-                  <MonoLabel className="text-dim">
+                  <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                    {article.publishedAt}
+                  </MonoLabel>
+                  <span className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                    ·
+                  </span>
+                  <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                    {article.category}
+                  </MonoLabel>
+                  <span className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                    ·
+                  </span>
+                  <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
                     {article.readingMinutes} MIN READ
                   </MonoLabel>
                 </div>
-                <span className="font-medium text-foreground transition-colors group-hover:text-accent">
+                <span className="font-medium text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent">
                   {article.title}
                 </span>
               </Link>

@@ -118,7 +118,14 @@ export function SystemsPreview() {
             divider between the identity block and the grid; gap-px +
             bg-border (with bg-background on each cell) draws the
             internal hairlines between systems, exactly as Lab's
-            experiment grid already does. */}
+            experiment grid already does. Each card's own hover/focus-
+            visible now uses the same #737982 "this object is targeted"
+            treatment as the environment identity above, instead of the
+            old dark surface-hover step — but scoped to its own `group`,
+            so only the targeted card changes; siblings (and the
+            identity plane) are untouched, since group-hover/
+            group-focus-visible only ever reach the hovered/focused
+            element's own descendants. */}
         <ul
           className={`grid grid-cols-1 gap-px border-t border-border bg-border ${systemsGridClassName(systems.length)}`}
         >
@@ -129,12 +136,14 @@ export function SystemsPreview() {
             >
               <Link
                 href={`/systems/${system.slug}`}
-                className="group flex h-full flex-col gap-2 p-6 transition-colors hover:bg-surface-hover"
+                className="group flex h-full flex-col gap-2 p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982]"
               >
-                <span className="font-mono text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent">
+                <span className="font-mono text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent">
                   {system.name}
                 </span>
-                <MonoLabel className="text-dim">{system.tagline}</MonoLabel>
+                <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                  {system.tagline}
+                </MonoLabel>
               </Link>
             </li>
           ))}
