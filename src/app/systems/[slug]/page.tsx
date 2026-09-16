@@ -8,8 +8,18 @@ import { FlowBox, FlowArrow } from "@/components/lab/flow";
 import { getAllSystems, getSystemBySlug } from "@/lib/systems";
 import type { System, SystemSectionEntry } from "@/types";
 
+// "exekpro" is excluded: it now has its own dedicated literal route
+// (src/app/systems/exekpro/page.tsx) for a bespoke presentation that this
+// shared, data-driven template can't express. Next.js always resolves a
+// literal segment before a dynamic one, so that route already wins at
+// request time regardless of this list — excluding it here just stops
+// this dynamic route from also statically generating a second, dead
+// /systems/exekpro output that would otherwise collide with the literal
+// route's own build. StakeVerse and Provenance Registry are unaffected.
 export function generateStaticParams() {
-  return getAllSystems().map((system) => ({ slug: system.slug }));
+  return getAllSystems()
+    .filter((system) => system.slug !== "exekpro")
+    .map((system) => ({ slug: system.slug }));
 }
 
 export async function generateMetadata(
