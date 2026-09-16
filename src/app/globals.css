@@ -61,3 +61,16 @@ body {
 .thin-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--border-strong);
 }
+
+/* Hero technical-territory stream (src/components/sections/hero.tsx):
+   translateX(0) -> translateX(-50%) over a row containing two identical
+   passes of the vocabulary is what makes the loop seamless — -50% is
+   exactly one pass's width, so the frame the animation loops back from is
+   pixel-identical to the frame it loops back to. Kept in globals.css
+   rather than an inline/arbitrary Tailwind value because a @keyframes
+   definition itself has no Tailwind utility equivalent. */
+@keyframes tech-stream {
+  to {
+    transform: translateX(-50%);
+  }
+}
