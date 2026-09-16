@@ -64,7 +64,7 @@ export function LabPreview() {
       <div className="border border-border bg-background">
         <Link
           href="/lab"
-          className="group flex flex-col gap-3 p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
+          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
         >
           <MonoLabel>What I explore</MonoLabel>
           <h2
