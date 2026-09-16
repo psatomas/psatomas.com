@@ -98,9 +98,14 @@ function engineeringScopeItemBorderClass(index: number): string {
  * three-color heading like this, and MonoLabel itself is used well
  * beyond About (homepage, Systems, Research, Lab).
  * Colors mirror Lab's own index/title convention (see lab-preview.tsx):
- * accent number, dim separator, foreground name — the same "technical
+ * accent number, muted separator, foreground name — the same "technical
  * identifier" language, just inlined onto one line instead of Lab's
- * stacked index/title.
+ * stacked index/title. The separator is text-muted rather than the
+ * text-dim used elsewhere on this page: this heading now renders on the
+ * identity plane's bg-surface (see DocumentSection), and dim's contrast
+ * against that gray is too low to stay legible — muted is the same
+ * "subordinate" token the homepage's own preview blocks already use for
+ * secondary text resting directly on bg-surface.
  */
 function SectionHeading({
   id,
@@ -123,58 +128,64 @@ function SectionHeading({
       className="scroll-mt-[93px] font-mono text-base uppercase tracking-[0.12em] sm:scroll-mt-[65px]"
     >
       <span className="text-accent">{number}</span>
-      <span className="text-dim"> / </span>
+      <span className="text-muted"> / </span>
       <span className="text-foreground">{children}</span>
     </h2>
   );
 }
 
 /**
- * One section of the indexed document — indexed heading, a small
- * subordinate descriptor naming the section's role (mirroring Lab's
- * own dim MonoLabel subtitle beneath its index/title), then the
- * section's own prose — kept to a readable max-w-xl measure even
- * though the document container itself spans the full width available.
- * `first` drops the divider for 01/BACKGROUND, so the outer border is
- * the only line at the top of the document rather than a doubled one.
- * The tight gap-1 between heading and descriptor keeps them read as
- * one identity block; the larger gap-6 before the prose is the
- * "meaningful breathing room" separating that identity block from the
- * paragraphs themselves.
+ * One numbered About section — its own independent bordered object, not
+ * part of a shared outer document border. Two stacked planes inside that
+ * one border: a dark-gray identity plane (indexed heading + subordinate
+ * descriptor) and a black body plane (the section's own prose), split by
+ * exactly one internal divider (the body plane's own border-t) so the
+ * identity→body seam is a single line, not doubled with the section's
+ * own outer border. The identity plane's bg-surface reuses the same
+ * resting "environment identity" treatment already established by the
+ * homepage's Systems/Research/Lab/About preview blocks — just the
+ * non-interactive resting state, with no hover/focus inversion, since
+ * these headings aren't links. The restrained space between one section
+ * and the next comes from the gap-12 these render into as siblings
+ * (see AboutPage) — the same rhythm already used between this page's own
+ * top-level identity/preamble/Engineering Scope blocks — rather than a
+ * new spacing value invented for this. Body prose stays at a readable
+ * max-w-xl measure even though the plane itself spans the section's
+ * full width.
  */
 function DocumentSection({
   id,
   number,
   title,
   descriptor,
-  first = false,
   children,
 }: {
   id: string;
   number: string;
   title: string;
   descriptor: string;
-  first?: boolean;
   children: ReactNode;
 }) {
   return (
-    <section
-      className={`px-6 py-8 sm:px-8 sm:py-10 ${first ? "" : "border-t border-border"}`}
-    >
-      <div className="flex max-w-xl flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <SectionHeading id={id} number={number}>{title}</SectionHeading>
-          {/* Deliberately not MonoLabel here: MonoLabel is fixed at
-              text-[11px], the same size as SectionHeading above it, so
-              reusing it made the descriptor read as equally prominent
-              rather than subordinate. One explicit size step down
-              (text-[10px]) is what actually establishes that this line
-              is secondary to the heading, not just differently colored. */}
-          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-dim">
-            {descriptor}
-          </span>
-        </div>
-        <div className="flex flex-col gap-4">{children}</div>
+    <section className="border border-border">
+      <div className="flex flex-col gap-1 bg-surface px-6 py-5 sm:px-8 sm:py-6">
+        <SectionHeading id={id} number={number}>{title}</SectionHeading>
+        {/* Deliberately not MonoLabel here: MonoLabel is fixed at
+            text-[11px], the same size as SectionHeading above it, so
+            reusing it made the descriptor read as equally prominent
+            rather than subordinate. One explicit size step down
+            (text-[10px]) is what actually establishes that this line
+            is secondary to the heading, not just differently colored.
+            text-muted, not text-dim: dim's contrast against this
+            plane's bg-surface is too low to read as legible-but-
+            subordinate, the same reason SectionHeading's own separator
+            changed above. */}
+        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
+          {descriptor}
+        </span>
+      </div>
+      <div className="border-t border-border bg-background px-6 py-8 sm:px-8 sm:py-10">
+        <div className="flex max-w-xl flex-col gap-4">{children}</div>
       </div>
     </section>
   );
@@ -277,242 +288,239 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* The indexed document: one outer border, six sections separated
-          by internal dividers only (see DocumentSection) — never six
-          independent boxes, gaps, or hoverable surfaces. Inline links
-          inside the prose stay interactive; the section surfaces
-          themselves are not. */}
-      <div className="border border-border bg-background">
-        <DocumentSection
-          id="background"
-          number="01"
-          title="BACKGROUND"
-          descriptor="ENGINEERING CONTEXT"
-          first
-        >
-          <p className={proseClass}>
-            My background in software engineering gave me experience
-            building across application boundaries, but protocol work has
-            changed what I consider the object being engineered. The
-            contract is only one part of it. The execution path that
-            reaches it, the authority that can change it, the services
-            reconstructing its state, and the deployment that puts those
-            assumptions into effect can all determine whether the system
-            behaves correctly.
-          </p>
-          <p className={proseClass}>
-            That has made &ldquo;it works&rdquo; a less useful stopping
-            point for me. I want to know what made it work, which
-            conditions that answer depends on, and what happens when those
-            conditions stop being friendly.
-          </p>
-        </DocumentSection>
+      {/* The six numbered sections — each its own independently bordered
+          object (see DocumentSection), spaced apart by the surrounding
+          gap-12 rather than joined into one shared document border.
+          Inline links inside the prose stay interactive; the section
+          surfaces themselves are not. */}
+      <DocumentSection
+        id="background"
+        number="01"
+        title="BACKGROUND"
+        descriptor="ENGINEERING CONTEXT"
+      >
+        <p className={proseClass}>
+          My background in software engineering gave me experience
+          building across application boundaries, but protocol work has
+          changed what I consider the object being engineered. The
+          contract is only one part of it. The execution path that
+          reaches it, the authority that can change it, the services
+          reconstructing its state, and the deployment that puts those
+          assumptions into effect can all determine whether the system
+          behaves correctly.
+        </p>
+        <p className={proseClass}>
+          That has made &ldquo;it works&rdquo; a less useful stopping
+          point for me. I want to know what made it work, which
+          conditions that answer depends on, and what happens when those
+          conditions stop being friendly.
+        </p>
+      </DocumentSection>
 
-        <DocumentSection
-          id="blockchain"
-          number="02"
-          title="BLOCKCHAIN"
-          descriptor="PROTOCOL CONSTRAINTS"
-        >
-          <p className={proseClass}>
-            Blockchain makes some of those questions difficult to postpone.
-            State is persistent, authority has to be explicit, economic
-            mistakes can become accounting problems, and deployed bytecode
-            may leave no opportunity to quietly replace a bad assumption.
-          </p>
-          <p className={proseClass}>
-            I encountered that directly when an authorization boundary
-            that existed in the design of{" "}
-            <Link href="/systems/provenance-registry" className={linkClass}>
-              Provenance Registry
-            </Link>{" "}
-            was absent from the deployed contract. Correcting the Solidity
-            was necessary, but it wasn&apos;t enough: the immutable
-            contract had to be superseded by a new deployment. More
-            importantly, I changed what I expected from the deployment
-            process itself. It now verifies the boundary against the
-            deployed contract by attempting the unauthorized behavior and
-            requiring it to fail for the expected reason.
-          </p>
-          <p className={proseClass}>
-            I&apos;ve applied the same thinking elsewhere. Ownership in{" "}
-            <Link href="/systems/stakeverse" className={linkClass}>
-              StakeVerse
-            </Link>{" "}
-            is checked again against live deployed state instead of being
-            trusted because the deployment script says it was configured
-            correctly. Oracle data is validated for the properties the
-            protocol actually depends on rather than accepted simply
-            because it arrived through an on-chain interface.
-          </p>
-          <p className={proseClass}>
-            Those are small implementation decisions individually, but
-            together they reflect an important distinction for me: the
-            source code can describe the system I intended to deploy; it
-            cannot, by itself, prove the system that is actually there.
-          </p>
-        </DocumentSection>
+      <DocumentSection
+        id="blockchain"
+        number="02"
+        title="BLOCKCHAIN"
+        descriptor="PROTOCOL CONSTRAINTS"
+      >
+        <p className={proseClass}>
+          Blockchain makes some of those questions difficult to postpone.
+          State is persistent, authority has to be explicit, economic
+          mistakes can become accounting problems, and deployed bytecode
+          may leave no opportunity to quietly replace a bad assumption.
+        </p>
+        <p className={proseClass}>
+          I encountered that directly when an authorization boundary
+          that existed in the design of{" "}
+          <Link href="/systems/provenance-registry" className={linkClass}>
+            Provenance Registry
+          </Link>{" "}
+          was absent from the deployed contract. Correcting the Solidity
+          was necessary, but it wasn&apos;t enough: the immutable
+          contract had to be superseded by a new deployment. More
+          importantly, I changed what I expected from the deployment
+          process itself. It now verifies the boundary against the
+          deployed contract by attempting the unauthorized behavior and
+          requiring it to fail for the expected reason.
+        </p>
+        <p className={proseClass}>
+          I&apos;ve applied the same thinking elsewhere. Ownership in{" "}
+          <Link href="/systems/stakeverse" className={linkClass}>
+            StakeVerse
+          </Link>{" "}
+          is checked again against live deployed state instead of being
+          trusted because the deployment script says it was configured
+          correctly. Oracle data is validated for the properties the
+          protocol actually depends on rather than accepted simply
+          because it arrived through an on-chain interface.
+        </p>
+        <p className={proseClass}>
+          Those are small implementation decisions individually, but
+          together they reflect an important distinction for me: the
+          source code can describe the system I intended to deploy; it
+          cannot, by itself, prove the system that is actually there.
+        </p>
+      </DocumentSection>
 
-        <DocumentSection
-          id="how-i-think-about-systems"
-          number="03"
-          title="HOW I THINK ABOUT SYSTEMS"
-          descriptor="ENGINEERING METHOD"
-        >
-          <p className={proseClass}>
-            I tend to learn the most about an implementation by pushing
-            against the assumptions that made its happy path
-            straightforward.
-          </p>
-          <p className={proseClass}>
-            That is why fuzzing and adversarial tests have become more
-            useful to me than their coverage numbers. While working on{" "}
-            <Link href="/systems/exekpro" className={linkClass}>
-              ExeKPro
-            </Link>
-            &apos;s scoring model, inputs outside the ranges I would
-            naturally choose exposed both an arithmetic failure capable of
-            interrupting execution and an unsafe integer conversion that
-            could reverse the meaning of an extreme value. The important
-            outcome wasn&apos;t simply fixing two bugs. It changed the
-            boundary around execution modules so that one module&apos;s
-            failure no longer had to become everybody else&apos;s failure.
-          </p>
-          <p className={proseClass}>
-            I apply a similar standard to state outside the contracts. An
-            indexer should not claim progress for a block it failed to
-            process. A cached observation should not become
-            &ldquo;current&rdquo; merely because it was retrieved
-            successfully. When the{" "}
-            <Link href="/lab/oracle" className={linkClass}>
-              Oracle Lab experiment
-            </Link>{" "}
-            on this site began hitting real rate limits under concurrent
-            browser sessions, sharing and coalescing requests solved the
-            operational problem, but preserving the age of the underlying
-            observation was the correctness requirement. The cache was
-            allowed to change how data was obtained, not what that data
-            claimed about the world.
-          </p>
-          <p className={proseClass}>
-            Accounting has pushed me toward the same kind of explicitness.
-            A contract balance says what the contract holds; it
-            doesn&apos;t necessarily say what the protocol is free to
-            spend. Separating staking principal from the reward reserve in
-            StakeVerse made that distinction concrete: principal, available
-            rewards, and accrued obligations needed to have different
-            meanings in the model rather than being inferred from one pool
-            of tokens.
-          </p>
-          <p className={proseClass}>
-            The pattern I keep returning to is to make assumptions
-            observable and enforceable. Find the boundary, decide what
-            must remain true across it, test the conditions most likely to
-            violate it, and then verify the resulting behavior at the
-            level where the guarantee actually matters. Sometimes
-            that&apos;s a Solidity test. Sometimes it&apos;s an execution
-            module, an indexer, a deployment, or a service running outside
-            the chain.
-          </p>
-          <p className={proseClass}>
-            Passing the test suite is evidence. I don&apos;t want it to be
-            the only evidence.
-          </p>
-        </DocumentSection>
+      <DocumentSection
+        id="how-i-think-about-systems"
+        number="03"
+        title="HOW I THINK ABOUT SYSTEMS"
+        descriptor="ENGINEERING METHOD"
+      >
+        <p className={proseClass}>
+          I tend to learn the most about an implementation by pushing
+          against the assumptions that made its happy path
+          straightforward.
+        </p>
+        <p className={proseClass}>
+          That is why fuzzing and adversarial tests have become more
+          useful to me than their coverage numbers. While working on{" "}
+          <Link href="/systems/exekpro" className={linkClass}>
+            ExeKPro
+          </Link>
+          &apos;s scoring model, inputs outside the ranges I would
+          naturally choose exposed both an arithmetic failure capable of
+          interrupting execution and an unsafe integer conversion that
+          could reverse the meaning of an extreme value. The important
+          outcome wasn&apos;t simply fixing two bugs. It changed the
+          boundary around execution modules so that one module&apos;s
+          failure no longer had to become everybody else&apos;s failure.
+        </p>
+        <p className={proseClass}>
+          I apply a similar standard to state outside the contracts. An
+          indexer should not claim progress for a block it failed to
+          process. A cached observation should not become
+          &ldquo;current&rdquo; merely because it was retrieved
+          successfully. When the{" "}
+          <Link href="/lab/oracle" className={linkClass}>
+            Oracle Lab experiment
+          </Link>{" "}
+          on this site began hitting real rate limits under concurrent
+          browser sessions, sharing and coalescing requests solved the
+          operational problem, but preserving the age of the underlying
+          observation was the correctness requirement. The cache was
+          allowed to change how data was obtained, not what that data
+          claimed about the world.
+        </p>
+        <p className={proseClass}>
+          Accounting has pushed me toward the same kind of explicitness.
+          A contract balance says what the contract holds; it
+          doesn&apos;t necessarily say what the protocol is free to
+          spend. Separating staking principal from the reward reserve in
+          StakeVerse made that distinction concrete: principal, available
+          rewards, and accrued obligations needed to have different
+          meanings in the model rather than being inferred from one pool
+          of tokens.
+        </p>
+        <p className={proseClass}>
+          The pattern I keep returning to is to make assumptions
+          observable and enforceable. Find the boundary, decide what
+          must remain true across it, test the conditions most likely to
+          violate it, and then verify the resulting behavior at the
+          level where the guarantee actually matters. Sometimes
+          that&apos;s a Solidity test. Sometimes it&apos;s an execution
+          module, an indexer, a deployment, or a service running outside
+          the chain.
+        </p>
+        <p className={proseClass}>
+          Passing the test suite is evidence. I don&apos;t want it to be
+          the only evidence.
+        </p>
+      </DocumentSection>
 
-        <DocumentSection
-          id="engineering-direction"
-          number="04"
-          title="ENGINEERING DIRECTION"
-          descriptor="CURRENT TRAJECTORY"
-        >
-          <p className={proseClass}>
-            That standard is also shaping where I&apos;m going deeper.
-          </p>
-          <p className={proseClass}>
-            ExeKPro has taken me further into execution models and the
-            interaction between protocol logic and the infrastructure
-            around it. Work on EVM state transitions has pushed me below
-            Solidity&apos;s surface toward understanding what the machine
-            is actually doing with calls, storage, gas, reverts, and
-            atomicity. Fuzzing and adversarial testing have made me more
-            interested in designing invariants before a failure reveals
-            why they were needed.
-          </p>
-          <p className={proseClass}>
-            There is still a large distance between exploring these
-            mechanisms in my own systems and operating protocols at
-            production scale, and I don&apos;t want this site to pretend
-            otherwise. What I do want is for each project to push the next
-            one toward stronger reasoning: fewer implicit assumptions,
-            clearer boundaries, better failure isolation, and verification
-            that reaches beyond the implementation that produced the
-            result.
-          </p>
-          <p className={proseClass}>
-            That&apos;s the direction of the work here: deeper into
-            protocol architecture and execution, while becoming more
-            rigorous about the guarantees those systems actually provide.
-          </p>
-        </DocumentSection>
+      <DocumentSection
+        id="engineering-direction"
+        number="04"
+        title="ENGINEERING DIRECTION"
+        descriptor="CURRENT TRAJECTORY"
+      >
+        <p className={proseClass}>
+          That standard is also shaping where I&apos;m going deeper.
+        </p>
+        <p className={proseClass}>
+          ExeKPro has taken me further into execution models and the
+          interaction between protocol logic and the infrastructure
+          around it. Work on EVM state transitions has pushed me below
+          Solidity&apos;s surface toward understanding what the machine
+          is actually doing with calls, storage, gas, reverts, and
+          atomicity. Fuzzing and adversarial testing have made me more
+          interested in designing invariants before a failure reveals
+          why they were needed.
+        </p>
+        <p className={proseClass}>
+          There is still a large distance between exploring these
+          mechanisms in my own systems and operating protocols at
+          production scale, and I don&apos;t want this site to pretend
+          otherwise. What I do want is for each project to push the next
+          one toward stronger reasoning: fewer implicit assumptions,
+          clearer boundaries, better failure isolation, and verification
+          that reaches beyond the implementation that produced the
+          result.
+        </p>
+        <p className={proseClass}>
+          That&apos;s the direction of the work here: deeper into
+          protocol architecture and execution, while becoming more
+          rigorous about the guarantees those systems actually provide.
+        </p>
+      </DocumentSection>
 
-        <DocumentSection
-          id="this-site"
-          number="05"
-          title="THIS SITE"
-          descriptor="WORKING STRUCTURE"
-        >
-          <p className={`max-w-xl ${proseClass}`}>
-            <Link href="/systems" className={linkClass}>
-              Systems
-            </Link>{" "}
-            is where those ideas become working implementations.
-          </p>
-          <p className={`max-w-xl ${proseClass}`}>
-            <Link href="/research" className={linkClass}>
-              Research
-            </Link>{" "}
-            is where I slow down around a technical question and work
-            through the mechanism underneath it.
-          </p>
-          <p className={`max-w-xl ${proseClass}`}>
-            <Link href="/lab" className={linkClass}>
-              Lab
-            </Link>{" "}
-            is where I isolate smaller behaviors and test them directly.
-          </p>
-          <p className={`max-w-xl ${proseClass}`}>
-            Together, they document the same process from different
-            angles:{" "}
-            <strong className="font-semibold text-foreground">
-              build, challenge, verify, understand.
-            </strong>
-          </p>
-        </DocumentSection>
+      <DocumentSection
+        id="this-site"
+        number="05"
+        title="THIS SITE"
+        descriptor="WORKING STRUCTURE"
+      >
+        <p className={`max-w-xl ${proseClass}`}>
+          <Link href="/systems" className={linkClass}>
+            Systems
+          </Link>{" "}
+          is where those ideas become working implementations.
+        </p>
+        <p className={`max-w-xl ${proseClass}`}>
+          <Link href="/research" className={linkClass}>
+            Research
+          </Link>{" "}
+          is where I slow down around a technical question and work
+          through the mechanism underneath it.
+        </p>
+        <p className={`max-w-xl ${proseClass}`}>
+          <Link href="/lab" className={linkClass}>
+            Lab
+          </Link>{" "}
+          is where I isolate smaller behaviors and test them directly.
+        </p>
+        <p className={`max-w-xl ${proseClass}`}>
+          Together, they document the same process from different
+          angles:{" "}
+          <strong className="font-semibold text-foreground">
+            build, challenge, verify, understand.
+          </strong>
+        </p>
+      </DocumentSection>
 
-        <DocumentSection
-          id="the-standard"
-          number="06"
-          title="THE STANDARD"
-          descriptor="CLOSING PRINCIPLE"
-        >
-          <p className={proseClass}>
-            I&apos;m not trying to make every project larger. I&apos;m
-            trying to make the standard behind each one higher.
-          </p>
-          <p className={proseClass}>
-            A system should do what it was designed to do, but it should
-            also make its assumptions visible, contain failure where it
-            begins, preserve the meaning of its state, and give me a way
-            to verify those properties beyond the path I expected to work.
-          </p>
-          <p className={proseClass}>
-            That&apos;s the standard I&apos;m building toward. Not just
-            software that runs, but systems I can explain, challenge, and
-            trust for reasons I can demonstrate.
-          </p>
-        </DocumentSection>
-      </div>
+      <DocumentSection
+        id="the-standard"
+        number="06"
+        title="THE STANDARD"
+        descriptor="CLOSING PRINCIPLE"
+      >
+        <p className={proseClass}>
+          I&apos;m not trying to make every project larger. I&apos;m
+          trying to make the standard behind each one higher.
+        </p>
+        <p className={proseClass}>
+          A system should do what it was designed to do, but it should
+          also make its assumptions visible, contain failure where it
+          begins, preserve the meaning of its state, and give me a way
+          to verify those properties beyond the path I expected to work.
+        </p>
+        <p className={proseClass}>
+          That&apos;s the standard I&apos;m building toward. Not just
+          software that runs, but systems I can explain, challenge, and
+          trust for reasons I can demonstrate.
+        </p>
+      </DocumentSection>
     </Container>
   );
 }
