@@ -32,20 +32,31 @@ export async function ResearchPreview() {
           entirely, so `group-hover:`/`group-focus-visible:` on the
           heading below can never bleed into or be triggered by an
           article row, and hovering a row can never reach back up into
-          this Link's own descendants. */}
+          this Link's own descendants.
+          Active state (hover/focus-visible) inverts this Link's own
+          plane to a light gray (#737982, an inline value — see
+          systems-preview.tsx for why this isn't a token), dark
+          supporting text, cyan heading — the same signal used across
+          all four homepage previews, tuned down from an earlier,
+          too-bright near-white version. Same DOM guarantee protects the
+          article index below: it's a sibling, not a descendant, so this
+          Link's group-hover/group-focus-visible styling structurally
+          cannot reach it — article rows stay black regardless. */}
       <div className="border border-border bg-background">
         <Link
           href="/research"
-          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
+          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
         >
-          <MonoLabel>How I think</MonoLabel>
+          <MonoLabel className="transition-colors group-hover:text-background group-focus-visible:text-background">
+            How I think
+          </MonoLabel>
           <h2
             id="research-heading"
             className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
           >
             Research
           </h2>
-          <p className="max-w-xl text-muted">
+          <p className="max-w-xl text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
             Technical questions worked through from implementation,
             failure cases, and the underlying protocol mechanics.
           </p>

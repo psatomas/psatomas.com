@@ -75,20 +75,37 @@ export function SystemsPreview() {
           reason it is on Research/Lab: the grid lives entirely outside
           this Link, so hovering/focusing it can never reach a card, and
           hovering a card (each with its own independent `group`) can
-          never reach back up into this Link's heading. */}
+          never reach back up into this Link's heading.
+          Active state (hover/focus-visible) inverts this Link's own
+          plane to a light gray (#737982 — an inline value rather than a
+          token: no existing color means "active light plane," and
+          --muted/--foreground are both the wrong semantic role for it,
+          so a one-off literal is more honest than repurposing either)
+          with dark (text-background) supporting text and a cyan
+          heading — a stronger "this environment is selected" signal
+          than the old surface-hover step, tuned down from an earlier,
+          too-bright near-white version. Because the
+          grid below is this Link's sibling rather than its descendant,
+          `group-hover:`/`group-focus-visible:` on that plane's own
+          children can never reach the grid: the black system cards stay
+          black regardless of this Link's state, by the same DOM
+          structure that already isolated hover from bleeding the other
+          direction. */}
       <div className="border border-border bg-background">
         <Link
           href="/systems"
-          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
+          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
         >
-          <MonoLabel>What I build</MonoLabel>
+          <MonoLabel className="transition-colors group-hover:text-background group-focus-visible:text-background">
+            What I build
+          </MonoLabel>
           <h2
             id="systems-heading"
             className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
           >
             Systems
           </h2>
-          <p className="max-w-xl text-muted">
+          <p className="max-w-xl text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
             Protocols and infrastructure developed through concrete
             problems in execution, state, coordination, security, and
             verification.

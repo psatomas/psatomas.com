@@ -60,20 +60,32 @@ export function LabPreview() {
           own Link never collide, because Tailwind's `group-hover:` only
           reaches descendants of the hovered `.group` — with the grid
           outside the Lab link (and each card independent inside the
-          grid), hovering one can never bleed into the other. */}
+          grid), hovering one can never bleed into the other.
+          Active state (hover/focus-visible) inverts this Link's own
+          plane to a light gray (#737982, an inline value — see
+          systems-preview.tsx for why this isn't a token), dark
+          supporting text, cyan heading — the same signal used across
+          all four homepage previews, tuned down from an earlier,
+          too-bright near-white version. The
+          same sibling/descendant split above means this Link's own
+          group-hover/group-focus-visible styling structurally cannot
+          reach the experiment grid: those cards stay black regardless
+          of this Link's state. */}
       <div className="border border-border bg-background">
         <Link
           href="/lab"
-          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
+          className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
         >
-          <MonoLabel>What I explore</MonoLabel>
+          <MonoLabel className="transition-colors group-hover:text-background group-focus-visible:text-background">
+            What I explore
+          </MonoLabel>
           <h2
             id="lab-heading"
             className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
           >
             Lab
           </h2>
-          <p className="max-w-xl text-muted">
+          <p className="max-w-xl text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
             Bounded technical experiments — each one built to test a
             single idea about how a protocol behaves, not to
             demonstrate a finished product.
