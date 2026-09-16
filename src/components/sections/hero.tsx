@@ -78,9 +78,14 @@ function TechTerritoryPass({ className = "" }: { className?: string }) {
  * can overflow the viewport either way since the outer wrapper stays
  * `overflow-hidden` regardless of motion preference.
  */
+// mt-auto: when this sits inside a stretched flex-col column (see the
+// photo+text row in Hero below), it consumes whatever leftover height
+// that column has rather than sitting directly under the paragraph —
+// which is what pins the stream's own bottom edge to the row's bottom
+// instead of just to the end of the preceding text.
 function TechnicalStream() {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="mt-auto flex flex-col gap-1">
       {/* The clipping viewport itself owns the accent border rather than
           an added wrapper: it already exists purely to define this
           object's edges (overflow-hidden), so a border on the same
@@ -161,7 +166,23 @@ export function Hero() {
             marquee. min-w-0 lets both flex items shrink to the space the
             row actually has, so the stream's own overflow-hidden viewport
             is what clips it, as intended. */}
-        <div className="flex min-w-0 flex-col gap-8 sm:flex-row sm:items-start">
+        {/* sm:items-stretch (not items-start): the photo and the text
+            column don't have the same natural height, and which one is
+            taller flips depending on viewport width (the text column
+            wraps to fewer lines as it gets more room). items-start left
+            whichever column was shorter ending above this row's own
+            bottom edge — at some widths that was the text column, so the
+            stream (its last child) stopped short of the row's actual
+            bottom instead of reaching it. Stretching both columns to the
+            row's full height, combined with mt-auto on TechnicalStream
+            (see above), pins the stream to the bottom of its column
+            regardless of which column is naturally taller — which is
+            what makes it reliably reach the same row-bottom line the
+            outer lg:items-end already aligns with Technical Territory's
+            caption. The photo itself is unaffected: it stays sized by
+            its own aspect-ratio and top-anchored; only its wrapper's
+            unused, background-colored height (if any) grows. */}
+        <div className="flex min-w-0 flex-col gap-8 sm:flex-row sm:items-stretch">
           <div className="w-full max-w-[220px] shrink-0 overflow-hidden sm:max-w-[260px]">
             <Image
               src={portrait}
