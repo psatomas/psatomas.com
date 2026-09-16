@@ -112,7 +112,16 @@ function SectionHeading({
   children: ReactNode;
 }) {
   return (
-    <h2 id={id} className="font-mono text-base uppercase tracking-[0.12em]">
+    // scroll-mt matches the sticky navbar's own rendered height (93px
+    // while nav items wrap to two rows below sm, 65px once they fit on
+    // one row at sm+ — see src/components/navigation/nav.tsx) so a
+    // direct link to one of these sections (e.g. /about#background)
+    // lands with the heading visible just below the navbar instead of
+    // scrolled fully underneath it.
+    <h2
+      id={id}
+      className="scroll-mt-[93px] font-mono text-base uppercase tracking-[0.12em] sm:scroll-mt-[65px]"
+    >
       <span className="text-accent">{number}</span>
       <span className="text-dim"> / </span>
       <span className="text-foreground">{children}</span>

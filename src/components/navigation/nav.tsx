@@ -19,7 +19,23 @@ const navItems: Array<{ label: string; href: string }> = [
 
 export function Nav() {
   return (
-    <header className="border-b border-border">
+    // sticky (not fixed): the header stays in normal document flow —
+    // it keeps occupying its own space at the top of the flex-col body
+    // (see layout.tsx), so nothing needs compensating top padding — and
+    // only pins to the viewport once scrolling would otherwise carry it
+    // past y=0. z-10 is deliberately small: nothing else on the site
+    // uses z-index or creates a positioned/stacking-context element at
+    // the page level, so this only needs to be a genuine, explicit
+    // "above normal document flow" layer, not a value competing with
+    // some other overlay system. bg-background (not bg-surface): the
+    // header was transparent before, which was invisible as long as it
+    // never overlapped scrolling content; sticky now puts page content
+    // directly behind it, so it needs an opaque backdrop to stay
+    // readable — the plain page-background token is the correct one
+    // semantically (this is navigation chrome, not an identity/context
+    // surface) and visually (identical color to the page itself, so
+    // there's no visible seam at scroll position 0).
+    <header className="sticky top-0 z-10 border-b border-border bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         {/* Site identity: the single canonical PSAT mark + PSATomas
             wordmark as one brand unit inside a single link to "/". The
