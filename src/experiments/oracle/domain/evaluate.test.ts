@@ -27,7 +27,7 @@ test("observation between freshAfterMs and maxAgeMs is OK/AGING", () => {
   const reading = evaluateReading(
     "test-source",
     "ETH/USD",
-    observationAge(30_000),
+    observationAge(240_000),
     now,
     defaultFreshnessPolicy,
   );
@@ -39,7 +39,7 @@ test("observation beyond maxAgeMs is rejected as STALE", () => {
   const reading = evaluateReading(
     "test-source",
     "ETH/USD",
-    observationAge(90_000),
+    observationAge(360_000),
     now,
     defaultFreshnessPolicy,
   );
@@ -61,3 +61,14 @@ test("deterministic: identical inputs always produce identical output", () => {
   const b = evaluateReading("s", "ETH/USD", observation, now, defaultFreshnessPolicy);
   assert.deepEqual(a, b);
 });
+
+for (const [age, freshness] of [
+  [120_000, "FRESH"], [179_000, "FRESH"], [180_000, "FRESH"],
+  [180_001, "AGING"], [300_000, "AGING"], [300_001, "STALE"],
+] as const) {
+  test(`default policy classifies ${age}ms as ${freshness}`, () => {
+    const reading = evaluateReading("coingecko", "ETH/USD", observationAge(age), now, defaultFreshnessPolicy);
+    assert.equal(reading.freshness, freshness);
+    assert.equal(reading.status, freshness === "STALE" ? "STALE" : "OK");
+  });
+}

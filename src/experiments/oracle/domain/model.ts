@@ -48,10 +48,15 @@ export type OracleReading = {
   source: OracleSourceId;
   asset: AssetSymbol;
   observation: OracleObservation | null;
-  /** Epoch ms — when our service asked the source for this reading. */
+  /** Epoch ms — when the service evaluated this reading, including cache hits. */
   retrievedAt: number;
   /** retrievedAt − observation.observedAt, or null when unavailable. */
   latencyMs: number | null;
+  /** Delivery provenance is separate from observation freshness. */
+  delivery?: "UPSTREAM" | "CACHE" | "FALLBACK";
+  /** Last successful upstream retrieval; never advanced by fallback. */
+  fetchedAt?: number;
+  refreshError?: string;
   freshness: OracleFreshness | null;
   status: OracleStatus;
   reason: string;
@@ -66,6 +71,9 @@ export type OracleFreshnessPolicy = {
 };
 
 export const defaultFreshnessPolicy: OracleFreshnessPolicy = {
-  freshAfterMs: 15_000,
-  maxAgeMs: 60_000,
+  // Keyless observations measured at 146–179s old on 2026-09-17.
+  // Accommodate those response ages; flag the next 2 minutes AGING,
+  // then STALE. This is an experiment policy, not a provider SLA.
+  freshAfterMs: 180_000,
+  maxAgeMs: 300_000,
 };

@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/lab/status-badge";
 import { SystemVisualization } from "@/components/lab/system-visualization";
 import { fetchOracleReadings } from "./api/client";
 import type { OracleReading } from "./domain/model";
+import { advanceReading, readingConnection } from "./api/presentation";
 import { SUPPORTED_ASSETS } from "./service/coingecko-adapter";
 import { ObservationGraph, type GraphPoint } from "./observation-graph";
 
@@ -20,11 +21,12 @@ const POLL_INTERVAL_MS = 45_000;
 // all — there is no "provider history" to fall back on here).
 const MAX_HISTORY = 24;
 
-type ConnectionState = "CONNECTING" | "LIVE" | "STALE" | "ERROR" | "DISCONNECTED";
+type ConnectionState = "CONNECTING" | "OK" | "DEGRADED" | "STALE" | "ERROR" | "DISCONNECTED";
 
 const connectionCopy: Record<ConnectionState, { label: string; variant: "accent" | "warn" | "neutral" }> = {
   CONNECTING: { label: "CONNECTING", variant: "neutral" },
-  LIVE: { label: "LIVE", variant: "accent" },
+  OK: { label: "OK", variant: "accent" },
+  DEGRADED: { label: "DEGRADED", variant: "warn" },
   STALE: { label: "STALE", variant: "warn" },
   ERROR: { label: "ERROR", variant: "warn" },
   DISCONNECTED: { label: "DISCONNECTED", variant: "warn" },
@@ -116,11 +118,11 @@ export function OraclesExperiment() {
         <p className="max-w-xl text-xs text-muted">
           Source: CoinGecko&apos;s keyless public API, fetched server-side by the Oracle API — this
           browser never calls CoinGecko directly. &ldquo;Observed at&rdquo; is CoinGecko&apos;s own
-          timestamp for the value; &ldquo;received at&rdquo; is when this client&apos;s request
-          reached the Oracle API. Their difference is latency — the real gap between something
-          happening off-chain and a protocol finding out about it. A future phase can add an
-          on-chain observation alongside this one for direct comparison; nothing here assumes
-          there will only ever be one source.
+          timestamp for the value. Age is measured from that timestamp, not from the last
+          successful fetch. FRESH means at most 3 minutes old; AGING means 3–5 minutes;
+          STALE means over 5 minutes. Failed refreshes show DEGRADED and retain the last
+          known observation and its original timestamps. The server refresh window is 30s.
+
         </p>
       </div>
     </div>
@@ -134,11 +136,11 @@ export function OraclesExperiment() {
  * here — every render of this component starts fresh on purpose.
  */
 function OracleFeed({ asset, paused }: { asset: string; paused: boolean }) {
-  const [reading, setReading] = useState<OracleReading | null>(null);
+  const [received, setReceived] = useState<{ reading: OracleReading; monotonicAt: number } | null>(null);
   const [history, setHistory] = useState<GraphPoint[]>([]);
   const [connection, setConnection] = useState<ConnectionState>("CONNECTING");
   const [lastError, setLastError] = useState<string | null>(null);
-  const [lastPolledAt, setLastPolledAt] = useState<number | null>(null);
+  const [lastResponseAt, setLastResponseAt] = useState<number | null>(null);
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
@@ -147,15 +149,15 @@ function OracleFeed({ asset, paused }: { asset: string; paused: boolean }) {
 
     function applySuccess(latest: OracleReading) {
       if (cancelled) return;
-      setReading(latest);
-      setLastPolledAt(Date.now());
+      setReceived({ reading: latest, monotonicAt: performance.now() });
+      setLastResponseAt(Date.now());
       setLastError(null);
 
       if (latest.status === "UNAVAILABLE") {
         setConnection("ERROR");
         return;
       }
-      setConnection(latest.status === "STALE" ? "STALE" : "LIVE");
+      setConnection(latest.status === "STALE" ? "STALE" : "OK");
 
       const obs = latest.observation;
       if (!obs) return;
@@ -168,12 +170,12 @@ function OracleFeed({ asset, paused }: { asset: string; paused: boolean }) {
       });
     }
 
-    function applyFailure(error: unknown) {
+    function applyFailure() {
       if (cancelled) return;
       // We couldn't even reach our own API — distinct from the API
       // reaching us but reporting the provider as unavailable.
       setConnection("DISCONNECTED");
-      setLastError(error instanceof Error ? error.message : String(error));
+      setLastError("The request could not be completed");
     }
 
     function runOnce() {
@@ -212,7 +214,18 @@ function OracleFeed({ asset, paused }: { asset: string; paused: boolean }) {
     };
   }, [asset, paused]);
 
-  const copy = connectionCopy[connection];
+  const [clock, setClock] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setClock(performance.now()), 1_000);
+    return () => clearInterval(timer);
+  }, []);
+  const reading = received
+    ? advanceReading(received.reading, clock - received.monotonicAt)
+    : null;
+  const displayConnection = (connection === "OK" || connection === "STALE") && reading
+    ? readingConnection(reading)
+    : connection;
+  const copy = connectionCopy[displayConnection];
   const obs = reading?.observation ?? null;
 
   return (
@@ -251,9 +264,9 @@ function OracleFeed({ asset, paused }: { asset: string; paused: boolean }) {
               emphasis
             />
             <Stat label="OBSERVED AT" value={obs ? formatTime(obs.observedAt) : "—"} />
-            <Stat label="RECEIVED AT" value={reading ? formatTime(reading.retrievedAt) : "—"} />
+            <Stat label="LAST FETCHED" value={reading?.fetchedAt != null ? formatTime(reading.fetchedAt) : "—"} />
             <Stat
-              label="LATENCY"
+              label="OBSERVATION AGE"
               value={reading?.latencyMs != null ? `${Math.round(reading.latencyMs / 1000)}s` : "—"}
             />
             <Stat
@@ -269,10 +282,16 @@ function OracleFeed({ asset, paused }: { asset: string; paused: boolean }) {
                 )
               }
             />
-            <Stat label="LAST POLLED" value={lastPolledAt ? formatTime(lastPolledAt) : "—"} />
+            <Stat label="LAST API RESPONSE" value={lastResponseAt ? formatTime(lastResponseAt) : "—"} />
           </div>
         )}
         {reading?.status === "UNAVAILABLE" && <p className="text-xs text-warn">{reading.reason}</p>}
+        {reading?.observation && reading.delivery === "FALLBACK" && (
+          <p className="text-xs text-warn">
+            Refresh failed. Showing the last known good observation;
+            no new value was fetched. {reading.reason}.
+          </p>
+        )}
       </div>
     </>
   );

@@ -1,11 +1,8 @@
 import type { OracleReadingsResponse } from "./contract.ts";
 
 /**
- * Frontend-facing client for the Oracle API. Not wired into the Oracle
- * experiment's UI yet (../component.tsx still uses its own client-side
- * simulation) — this exists so a later phase can switch the UI to real
- * data by importing this function, instead of touching the API route or
- * service directly from a component.
+ * Frontend-facing client used by the Oracle experiment UI. Calls our
+ * server-side API; CoinGecko access and caching stay behind that boundary.
  */
 export async function fetchOracleReadings(
   asset: string,

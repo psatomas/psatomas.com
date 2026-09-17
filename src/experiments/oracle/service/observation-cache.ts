@@ -11,7 +11,7 @@ import type { OracleObservation } from "../domain/model.ts";
  */
 export type CachedObservation = {
   observation: OracleObservation;
-  /** Epoch ms — when this service wrote this entry, not when the source
+  /** Epoch ms — when the successful upstream fetch completed, not when the source
    * produced the observation (that's observation.observedAt). */
   cachedAt: number;
 };
@@ -22,18 +22,12 @@ export interface ObservationCache {
 }
 
 /**
- * Cloudflare Workers KV-backed implementation — the actual cross-isolate,
- * cross-request shared cache, and what makes this correct in production.
- * KV is eventually consistent (Cloudflare's docs: a write can take up to
- * ~60s to be visible everywhere) and its own guidance is to avoid writing
- * the same key more than about once/second. Both are fine for this use:
- * a write only happens at most once per cacheTtlMs per source+asset (see
- * DEFAULT_CACHE_TTL_MS in oracle-service.ts — tens of seconds, not
- * per-request), and a briefly-stale read during propagation just costs an
- * occasional extra upstream call, never incorrect data — every reading is
- * still evaluated fresh against the current time by evaluateReading, so a
- * cached observation that has actually aged out is still reported as such
- * rather than presented as live.
+ * Cloudflare Workers KV-backed storage shared across isolates. KV is
+ * eventually consistent, so concurrent isolates can still fetch/write
+ * the same key. The service's refresh window reduces calls; it is not
+ * a global rate limiter. Storage retention is longer than that window
+ * so failed refreshes can use last-known-good observations. Every result
+ * is evaluated against the current time, independent of retention.
  *
  * Takes a resolver rather than a `KVNamespace` directly, and calls it on
  * every get/set — never once at construction. `resolveKv` is what
@@ -60,12 +54,8 @@ export function createKvObservationCache(
     async set(key, value, ttlMs) {
       const kv = await resolveKv();
       if (!kv) return;
-      // KV enforces a minimum expirationTtl of 60s and rejects anything
-      // shorter — round up so a tighter in-code freshness window (e.g.
-      // 30s) never throws here. The actual "is this fresh enough to
-      // serve" decision still happens on read in oracle-service.ts using
-      // the real ttlMs; this is only how long KV retains the entry at
-      // all before evicting it outright.
+      // Storage retention is independent of the service's 30s refresh
+      // window. KV requires at least 60s retention.
       const expirationTtl = Math.max(60, Math.ceil(ttlMs / 1000));
       await kv.put(key, JSON.stringify(value), { expirationTtl });
     },
@@ -81,13 +71,19 @@ export function createKvObservationCache(
  * prevents a missing binding from taking the route down.
  */
 export function createInMemoryObservationCache(): ObservationCache {
-  const store = new Map<string, CachedObservation>();
+  const store = new Map<string, { value: CachedObservation; expiresAt: number }>();
   return {
     async get(key) {
-      return store.get(key) ?? null;
+      const entry = store.get(key);
+      if (!entry) return null;
+      if (Date.now() >= entry.expiresAt) {
+        store.delete(key);
+        return null;
+      }
+      return entry.value;
     },
-    async set(key, value) {
-      store.set(key, value);
+    async set(key, value, ttlMs) {
+      store.set(key, { value, expiresAt: Date.now() + ttlMs });
     },
   };
 }

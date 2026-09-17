@@ -148,3 +148,15 @@ test("createResilientObservationCache re-evaluates reachability on every call ra
   await cache.set("k2", SAMPLE, 30_000);
   assert.deepEqual(await kv.get("k2"), SAMPLE);
 });
+
+test("KV storage retention is passed separately from the service refresh window", async () => {
+  let expirationTtl = 0;
+  const kv = {
+    async put(_key: string, _value: string, options: { expirationTtl: number }) {
+      expirationTtl = options.expirationTtl;
+    },
+  } as unknown as KVNamespace;
+  const cache = createKvObservationCache(async () => kv);
+  await cache.set("k", SAMPLE, 3_600_000);
+  assert.equal(expirationTtl, 3600);
+});
