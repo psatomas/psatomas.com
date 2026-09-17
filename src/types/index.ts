@@ -17,6 +17,8 @@ export type ExperimentDefinition = {
   index: string;
   title: string;
   subtitle: string;
+  /** Short teaser shown on the /lab index card. */
+  description: string;
   Component: ComponentType;
 };
 

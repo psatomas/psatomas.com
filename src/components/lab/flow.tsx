@@ -13,23 +13,25 @@
 export function FlowBox({
   children,
   emphasis = false,
+  dense = false,
   className = "",
 }: {
   children: string;
   emphasis?: boolean;
+  dense?: boolean;
   className?: string;
 }) {
   return (
     <span
-      className={`whitespace-nowrap border px-2.5 py-1.5 font-mono text-[11px] tracking-[0.05em] ${
-        emphasis ? "border-accent text-accent" : "border-border-strong text-muted"
-      } ${className}`}
+      className={`whitespace-nowrap border font-mono tracking-[0.05em] ${
+        dense ? "px-1.5 py-1 text-[10px]" : "px-2.5 py-1.5 text-[11px]"
+      } ${emphasis ? "border-accent text-accent" : "border-border-strong text-muted"} ${className}`}
     >
       {children}
     </span>
   );
 }
 
-export function FlowArrow({ className = "" }: { className?: string }) {
-  return <span className={`text-dim ${className}`}>→</span>;
+export function FlowArrow({ dense = false, className = "" }: { dense?: boolean; className?: string }) {
+  return <span className={`font-mono text-dim ${dense ? "text-[10px]" : "text-[11px]"} ${className}`}>→</span>;
 }

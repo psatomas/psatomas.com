@@ -6,5 +6,7 @@ export const evmExperiment: ExperimentDefinition = {
   index: "01",
   title: "EVM",
   subtitle: "EXECUTION MODEL",
+  description:
+    "Explores how sequential transactions transform EVM state and how execution outcomes become the starting state for subsequent calls.",
   Component: EvmExperiment,
 };

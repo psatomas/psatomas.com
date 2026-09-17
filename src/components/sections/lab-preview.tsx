@@ -1,32 +1,35 @@
 import Link from "next/link";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { FlowBox, FlowArrow } from "@/components/lab/flow";
+import { FLOW_PREVIEW } from "@/components/lab/flow-preview";
 import { experiments } from "@/lib/experiments/registry";
-import type { ExperimentId } from "@/types";
 
-const PREVIEW_COUNT = 3;
+// Splits `count` items into balanced rows of at most `maxPerRow`, biasing
+// extra items toward earlier rows (5 -> [3, 2], not [2, 3]) so a trailing
+// row is never the odd one out. Never leaves a final row of 1 when count
+// > 1: e.g. 7 -> [3, 2, 2], not [3, 3, 1].
+function balancedRowSizes(count: number, maxPerRow = 3): number[] {
+  if (count <= 0) return [];
+  const rows = Math.ceil(count / maxPerRow);
+  const base = Math.floor(count / rows);
+  const remainder = count % rows;
+  return Array.from({ length: rows }, (_, i) => base + (i < remainder ? 1 : 0));
+}
 
-/** A short, hand-picked excerpt of each experiment's own real flow
- * diagram (see src/experiments/{id}/component.tsx) — not new content,
- * just fewer steps of it. This is homepage-only curation, deliberately
- * kept out of the registry: it's an editorial choice about which three
- * steps hint at an experiment best on a small preview, not a fact about
- * the experiment itself the way index/title/subtitle are. Keyed by the
- * same ExperimentId the registry already uses, so TypeScript forces a
- * deliberate choice here whenever a new experiment is added, rather than
- * silently rendering nothing. */
-const FLOW_PREVIEW: Record<ExperimentId, readonly [string, string, string]> = {
-  evm: ["TX 01", "STATE", "TX 02"],
-  "intent-mev": ["INTENT", "SOLVERS", "SELECTED"],
-  oracle: ["COINGECKO", "ORACLE SERVICE", "PROTOCOL LAB"],
+// Tailwind needs each grid-cols-N class to appear literally in source to
+// generate its CSS — a row's size is always 1-3 (balancedRowSizes' own
+// maxPerRow cap), so this fixed lookup covers every case without a
+// per-total-count branch.
+const ROW_GRID_COLS: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-1 sm:grid-cols-2",
+  3: "grid-cols-1 sm:grid-cols-3",
 };
 
 // Reads the same registry /lab reads — no homepage-specific experiment
-// list. `enabled` is respected (a disabled experiment never appears here,
-// matching /lab and /lab/[id]'s own behavior), and the slice is a fixed
-// cap independent of how large the registry grows: adding a 21st
-// experiment should not automatically bump it onto the homepage, only
-// into /lab's own full index.
+// list, and no cap: every `enabled` experiment appears here (matching
+// /lab and /lab/[id]'s own behavior), with balancedRowSizes adapting the
+// grid's row composition to however many that turns out to be.
 //
 // Deliberately not interactive here — the accordion that used to live at
 // this spot on the homepage now lives at /lab and /lab/[id], where an
@@ -38,7 +41,13 @@ const FLOW_PREVIEW: Record<ExperimentId, readonly [string, string, string]> = {
 // technical environment lives behind this" without embedding any
 // experiment's actual logic, state, or live data.
 export function LabPreview() {
-  const featured = experiments.filter((experiment) => experiment.enabled).slice(0, PREVIEW_COUNT);
+  const featured = experiments.filter((experiment) => experiment.enabled);
+  const rows: (typeof featured)[number][][] = [];
+  let cursor = 0;
+  for (const size of balancedRowSizes(featured.length)) {
+    rows.push(featured.slice(cursor, cursor + size));
+    cursor += size;
+  }
 
   return (
     // Lab is the closing section, not just the fourth one — a taller top
@@ -104,53 +113,78 @@ export function LabPreview() {
             identity above, instead of the old dark surface-hover step
             — but scoped to its own `group`, so only the targeted card
             changes; sibling cards (and the identity plane) are
-            untouched. */}
-        <ul className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-3">
-          {featured.map((experiment) => {
-            const [first, second, third] = FLOW_PREVIEW[experiment.id];
-            return (
-              <li key={experiment.id} className="bg-background">
-                <Link
-                  href={`/lab/${experiment.id}`}
-                  className="group flex h-full flex-col gap-4 p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982]"
-                >
-                  <div className="flex flex-col gap-2">
-                    <MonoLabel className="text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
-                      {experiment.index}
-                    </MonoLabel>
-                    <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent group-focus-visible:text-accent transition-colors">
-                      {experiment.title}
-                    </span>
-                    <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
-                      {experiment.subtitle}
-                    </MonoLabel>
-                  </div>
+            untouched.
 
-                  {/* text-muted (both plain FlowBox chips) and text-dim
-                      (both arrows) read too close in luminance to the
-                      #737982 active card background to stay legible, so
-                      they switch to the same dark/background treatment
-                      as the rest of the active card's supporting text.
-                      The emphasis chip stays cyan — it's the flow's own
-                      accent/primary step, not supporting information,
-                      so it follows the same "cyan may remain cyan" rule
-                      already applied to the card's title. */}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <FlowBox className="transition-colors group-hover:text-background group-focus-visible:text-background">
-                      {first}
-                    </FlowBox>
-                    <FlowArrow className="transition-colors group-hover:text-background group-focus-visible:text-background" />
-                    <FlowBox className="transition-colors group-hover:text-background group-focus-visible:text-background">
-                      {second}
-                    </FlowBox>
-                    <FlowArrow className="transition-colors group-hover:text-background group-focus-visible:text-background" />
-                    <FlowBox emphasis>{third}</FlowBox>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+            Rows are balancedRowSizes' output rendered as one <ul> per
+            row rather than a single grid for the whole set — a plain CSS
+            grid can't give two rows a different column count on its own.
+            The outer wrapper's own gap-px + bg-border draws the hairline
+            between rows the same way each row's own gap-px + bg-border
+            draws the hairlines between its cells, so the two nest into
+            what still reads as one continuous grid. */}
+        <div className="flex flex-col gap-px border-t border-border bg-border">
+          {rows.map((row, rowIndex) => (
+            <ul
+              key={rowIndex}
+              className={`grid gap-px bg-border ${ROW_GRID_COLS[row.length]}`}
+            >
+              {row.map((experiment) => {
+                const [first, second, third] = FLOW_PREVIEW[experiment.id];
+                return (
+                  <li key={experiment.id} className="bg-background">
+                    <Link
+                      href={`/lab/${experiment.id}`}
+                      className="group flex h-full flex-col gap-4 p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982]"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {/* Not MonoLabel here, deliberately: MonoLabel's own
+                            base classString hardcodes text-muted, and
+                            Tailwind v4 emits utility rules in alphabetical-
+                            by-class-name order, so a text-accent override
+                            never wins the cascade against it regardless of
+                            class order (see ExperimentHeader / the Research
+                            article page for the same fix). Reproducing
+                            MonoLabel's exact typographic classes directly
+                            here, with no competing color utility, is what
+                            actually renders this cyan. */}
+                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
+                          {experiment.index}
+                        </span>
+                        <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent group-focus-visible:text-accent transition-colors">
+                          {experiment.title}
+                        </span>
+                        <MonoLabel className="text-dim transition-colors group-hover:text-background group-focus-visible:text-background">
+                          {experiment.subtitle}
+                        </MonoLabel>
+                      </div>
+
+                      {/* text-muted (both plain FlowBox chips) and text-dim
+                          (both arrows) read too close in luminance to the
+                          #737982 active card background to stay legible, so
+                          they switch to the same dark/background treatment
+                          as the rest of the active card's supporting text.
+                          The emphasis chip stays cyan — it's the flow's own
+                          accent/primary step, not supporting information,
+                          so it follows the same "cyan may remain cyan" rule
+                          already applied to the card's title. */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        <FlowBox dense className="transition-colors group-hover:text-background group-focus-visible:text-background">
+                          {first}
+                        </FlowBox>
+                        <FlowArrow dense className="transition-colors group-hover:text-background group-focus-visible:text-background" />
+                        <FlowBox dense className="transition-colors group-hover:text-background group-focus-visible:text-background">
+                          {second}
+                        </FlowBox>
+                        <FlowArrow dense className="transition-colors group-hover:text-background group-focus-visible:text-background" />
+                        <FlowBox dense emphasis>{third}</FlowBox>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ))}
+        </div>
       </div>
     </section>
   );
