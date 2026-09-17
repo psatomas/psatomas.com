@@ -52,19 +52,7 @@ export function IntentMevExperiment() {
   }
 
   return (
-    <div className="flex flex-col gap-10 p-6 sm:p-8">
-      <div>
-        <MonoLabel className="text-dim">
-          EXPERIMENT 02 — INTENT EXECUTION × MEV
-        </MonoLabel>
-        <p className="mt-2 max-w-xl text-sm text-muted">
-          An intent doesn&apos;t prescribe an exact execution path. The
-          protocol evaluates candidate execution routes and selects one
-          according to a scoring policy — MEV risk is one input to that
-          decision, not an afterthought.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-10 py-6 sm:py-8">
       {/* SYSTEM VISUALIZATION */}
       <div className="flex flex-col gap-3">
         <MonoLabel>SYSTEM VISUALIZATION</MonoLabel>

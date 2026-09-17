@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
-import { MonoLabel } from "@/components/ui/mono-label";
+import { ExperimentHeader } from "@/components/lab/experiment-header";
 import { experiments, getExperiment } from "@/lib/experiments/registry";
 import type { ExperimentId } from "@/types";
 
@@ -70,17 +70,15 @@ export default async function LabExperimentPage(
         ← All Lab experiments
       </Link>
 
-      <div className="flex flex-col gap-2">
-        <MonoLabel className="text-accent">{experiment.index}</MonoLabel>
-        <h1 className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">
-          {experiment.title}
-        </h1>
-        <MonoLabel className="text-dim">{experiment.subtitle}</MonoLabel>
-      </div>
+      <ExperimentHeader
+        index={experiment.index}
+        title={experiment.title}
+        subtitle={experiment.subtitle}
+        designation={experiment.designation}
+        excerpt={experiment.excerpt}
+      />
 
-      <div className="border-t border-border pt-8">
-        <Component />
-      </div>
+      <Component />
     </Container>
   );
 }

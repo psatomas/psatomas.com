@@ -17,8 +17,18 @@ export type ExperimentDefinition = {
   index: string;
   title: string;
   subtitle: string;
-  /** Short teaser shown on the /lab index card. */
+  /** Short teaser shown on the /lab index card — distinct from `excerpt`
+   * below, which is the fuller paragraph shown on the experiment's own
+   * detail-page header. */
   description: string;
+  /** The "EXPERIMENT NN — ..." designation line shown on the experiment's
+   * own detail-page header. */
+  designation: string;
+  /** Optional longer excerpt for the detail-page header's lower plane —
+   * optional because not every experiment has one yet (e.g. EVM), and a
+   * missing excerpt should render as an honestly smaller header, not a
+   * fabricated paragraph. */
+  excerpt?: string;
   Component: ComponentType;
 };
 

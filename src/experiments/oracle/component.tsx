@@ -47,16 +47,7 @@ export function OraclesExperiment() {
   const [resetToken, setResetToken] = useState(0);
 
   return (
-    <div className="flex flex-col gap-10 p-6 sm:p-8">
-      <div>
-        <MonoLabel className="text-dim">EXPERIMENT 03 — ORACLE · LIVE OBSERVATION</MonoLabel>
-        <p className="mt-2 max-w-xl text-sm text-muted">
-          An external source produces a value. An oracle observes it, timestamps its own
-          reception, and evaluates freshness before a protocol would ever act on it. Everything
-          below is real data from that pipeline — not a simulation.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-10 py-6 sm:py-8">
       {/* SYSTEM VISUALIZATION */}
       <div className="flex flex-col gap-3">
         <MonoLabel>SYSTEM VISUALIZATION</MonoLabel>
