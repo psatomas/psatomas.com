@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { StatusBadge } from "@/components/lab/status-badge";
-import { FlowBox, FlowArrow } from "@/components/lab/flow";
+import { SystemVisualization } from "@/components/lab/system-visualization";
 import {
   type Candidate,
   type ScorePolicy,
@@ -56,23 +56,19 @@ export function IntentMevExperiment() {
       {/* SYSTEM VISUALIZATION */}
       <div className="flex flex-col gap-3">
         <MonoLabel>SYSTEM VISUALIZATION</MonoLabel>
-        <div className="flex flex-wrap items-center gap-2">
-          <FlowBox>INTENT</FlowBox>
-          <FlowArrow />
-          <FlowBox>SWAP</FlowBox>
-          <FlowArrow />
-          <FlowBox>SOLVERS</FlowBox>
-          <FlowArrow />
-          <FlowBox>QUOTES</FlowBox>
-          <FlowArrow />
-          <FlowBox>SCORING</FlowBox>
-          <FlowArrow />
-          <FlowBox>MEV CHECK</FlowBox>
-          <FlowArrow />
-          <FlowBox emphasis>SELECTED</FlowBox>
-          <FlowArrow />
-          <FlowBox>SETTLEMENT</FlowBox>
-        </div>
+        <SystemVisualization
+          pathLabel="EXECUTION PATH"
+          stages={[
+            "INTENT",
+            "SWAP",
+            "SOLVERS",
+            "QUOTES",
+            "SCORING",
+            "MEV CHECK",
+            "SELECTED",
+            "SETTLEMENT",
+          ]}
+        />
         <p className="text-xs text-muted">
           User intent: <span className="text-foreground">&ldquo;Swap 1,000 USDC for ETH&rdquo;</span>
         </p>

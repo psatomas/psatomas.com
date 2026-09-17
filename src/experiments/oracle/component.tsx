@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { StatusBadge } from "@/components/lab/status-badge";
-import { FlowBox, FlowArrow } from "@/components/lab/flow";
+import { SystemVisualization } from "@/components/lab/system-visualization";
 import { fetchOracleReadings } from "./api/client";
 import type { OracleReading } from "./domain/model";
 import { SUPPORTED_ASSETS } from "./service/coingecko-adapter";
@@ -51,17 +51,10 @@ export function OraclesExperiment() {
       {/* SYSTEM VISUALIZATION */}
       <div className="flex flex-col gap-3">
         <MonoLabel>SYSTEM VISUALIZATION</MonoLabel>
-        <div className="flex flex-wrap items-center gap-2">
-          <FlowBox>COINGECKO</FlowBox>
-          <FlowArrow />
-          <FlowBox>ORACLE ADAPTER</FlowBox>
-          <FlowArrow />
-          <FlowBox>ORACLE SERVICE</FlowBox>
-          <FlowArrow />
-          <FlowBox>ORACLE API</FlowBox>
-          <FlowArrow />
-          <FlowBox emphasis>PROTOCOL LAB</FlowBox>
-        </div>
+        <SystemVisualization
+          pathLabel="OBSERVATION PATH"
+          stages={["COINGECKO", "ORACLE ADAPTER", "ORACLE SERVICE", "ORACLE API", "PROTOCOL LAB"]}
+        />
       </div>
 
       {/* INTERACTIVE CONTROLS */}
