@@ -8,17 +8,24 @@ import { FlowBox, FlowArrow } from "@/components/lab/flow";
 import { getAllSystems, getSystemBySlug } from "@/lib/systems";
 import type { System, SystemSectionEntry } from "@/types";
 
-// "exekpro" is excluded: it now has its own dedicated literal route
-// (src/app/systems/exekpro/page.tsx) for a bespoke presentation that this
+// Every current system — "exekpro", "stakeverse", and
+// "provenance-registry" — now has its own dedicated literal route
+// (src/app/systems/<slug>/page.tsx) for a bespoke presentation this
 // shared, data-driven template can't express. Next.js always resolves a
-// literal segment before a dynamic one, so that route already wins at
-// request time regardless of this list — excluding it here just stops
-// this dynamic route from also statically generating a second, dead
-// /systems/exekpro output that would otherwise collide with the literal
-// route's own build. StakeVerse and Provenance Registry are unaffected.
+// literal segment before a dynamic one, so those routes already win at
+// request time regardless of this list — excluding them here just stops
+// this dynamic route from also statically generating dead output at the
+// same paths, which would otherwise collide with each literal route's
+// own build. This leaves generateStaticParams returning an empty array
+// today, which is correct rather than dead: this template (and
+// SystemPage/SystemLinks/EntryList below) remains the working fallback
+// for any future system added to systems.ts that isn't given its own
+// literal route.
+const LITERAL_ROUTE_SLUGS = ["exekpro", "stakeverse", "provenance-registry"];
+
 export function generateStaticParams() {
   return getAllSystems()
-    .filter((system) => system.slug !== "exekpro")
+    .filter((system) => !LITERAL_ROUTE_SLUGS.includes(system.slug))
     .map((system) => ({ slug: system.slug }));
 }
 

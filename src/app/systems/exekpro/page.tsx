@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { FlowBox } from "@/components/lab/flow";
 import { getSystemBySlug } from "@/lib/systems";
-import type { SystemSectionEntry } from "@/types";
-import { ExecutionPipeline } from "./execution-pipeline";
+import { SectionHeader } from "@/components/systems/section-header";
+import { ObjectCard } from "@/components/systems/object-card";
+import { EntryList } from "@/components/systems/entry-list";
+import { SequencePipeline, type PipelineStage } from "@/components/systems/sequence-pipeline";
 
 // ExeKPro's presentation is bespoke enough (a locked, animated six-cell
 // pipeline; architecture regrouped into four independent objects instead
@@ -22,6 +23,11 @@ import { ExecutionPipeline } from "./execution-pipeline";
 // unchanged (see the generateStaticParams exclusion in [slug]/page.tsx).
 // All factual copy below is still read from src/lib/systems.ts, not
 // duplicated as new hardcoded strings — only the layout is bespoke.
+//
+// SectionHeader/ObjectCard/EntryList/SequencePipeline live under
+// src/components/systems/ (promoted from this file) since StakeVerse's
+// own literal route reuses the same primitives — see that component
+// directory's files for the shared rationale.
 
 const system = getSystemBySlug("exekpro");
 
@@ -46,66 +52,24 @@ export const metadata: Metadata = system
     }
   : {};
 
-function SectionHeader({ index, subtitle }: { index: string; subtitle: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      {/* Not <MonoLabel className="text-accent">: MonoLabel's own base
-          classes bake in text-muted after it in the generated stylesheet,
-          so a text-accent override loses regardless of class order in
-          this className string — the same pre-existing issue already
-          affects /lab's "01" index badges. Reproducing MonoLabel's own
-          classes directly here (rather than editing the shared
-          component, which would also change Lab) is scoped to just this
-          page. */}
-      <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
-        {index}
-      </span>
-      <span className="font-mono text-lg font-semibold tracking-tight text-foreground">
-        {subtitle}
-      </span>
-    </div>
-  );
-}
+// ExeKPro's own line-break map for its six Execution Model stages —
+// forced wrapping independent of container width (see PipelineStage).
+// Falls back to a single line for any stage not listed, so an
+// unrecognized/renamed stage degrades gracefully instead of disappearing.
+const EXECUTION_STAGE_LINES: Record<string, string[]> = {
+  INTENT: ["INTENT"],
+  "ELIGIBLE MODULES": ["ELIGIBLE", "MODULES"],
+  SIMULATION: ["SIMULATION"],
+  "SCORE POLICY": ["SCORE", "POLICY"],
+  "HIGHEST-SCORING MODULE": ["HIGHEST-", "SCORING", "MODULE"],
+  EXECUTION: ["EXECUTION"],
+};
 
-// A term/detail pair, e.g. "IntentRegistry" / "Defines and validates
-// registered execution intents." Small local equivalent of the private
-// EntryList in [slug]/page.tsx — not imported from there since that
-// component isn't exported, and duplicating ~10 lines here is cheaper
-// and safer than exporting a piece of the shared template just for this
-// one isolated route.
-function EntryList({ entries }: { entries: SystemSectionEntry[] }) {
-  return (
-    <dl className="flex flex-col gap-3">
-      {entries.map((entry) => (
-        <div key={entry.term} className="flex flex-col gap-0.5">
-          <dt className="font-mono text-sm font-medium text-foreground">
-            {entry.term}
-          </dt>
-          <dd className="text-sm text-muted">{entry.detail}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-// One independent bordered object: a dark-gray identity plane (title)
-// directly attached to a black content plane (children) with a single
-// divider between them — the same two-plane shape as each system object
-// on /systems, reused here for Architecture's and System Boundaries'
-// independent components rather than one enclosing table.
-function ObjectCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="border border-border">
-      <div className="bg-surface p-6 sm:p-8">
-        <span className="font-mono text-sm font-semibold uppercase tracking-wide text-foreground">
-          {title}
-        </span>
-      </div>
-      <div className="border-t border-border bg-background p-6 sm:p-8">
-        {children}
-      </div>
-    </div>
-  );
+function toPipelineStages(stages: string[]): PipelineStage[] {
+  return stages.map((label) => ({
+    label,
+    lines: EXECUTION_STAGE_LINES[label] ?? [label],
+  }));
 }
 
 // The same five Validation facts as system.sections "Validation" .items,
@@ -233,7 +197,7 @@ export default function ExeKProPage() {
             )}
           </div>
           <div className="border-t border-border">
-            <ExecutionPipeline stages={executionModel.flow ?? []} />
+            <SequencePipeline stages={toPipelineStages(executionModel.flow ?? [])} />
           </div>
         </div>
       )}
