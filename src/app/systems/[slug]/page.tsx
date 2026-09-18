@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { systemSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,31 +36,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await props.params;
   const system = getSystemBySlug(slug);
-
-  if (!system) {
-    return {};
-  }
-
-  const url = `/systems/${system.slug}`;
-
-  return {
-    title: system.name,
-    description: system.summary,
-    alternates: {
-      canonical: url,
-    },
-    openGraph: {
-      title: system.name,
-      description: system.summary,
-      url,
-      type: "article",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: system.name,
-      description: system.summary,
-    },
-  };
+  if (!system) notFound();
+  return buildSocialMetadata(systemSocial(system));
 }
 
 // The top row prioritizes the live interface; the bottom keeps GitHub first.

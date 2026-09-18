@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { staticSocial } from "@/lib/social/content";
 import { Hero } from "@/components/sections/hero";
 import { AboutPreview } from "@/components/sections/about-preview";
 import { SystemsPreview } from "@/components/sections/systems-preview";
@@ -20,6 +22,8 @@ import { LabPreview } from "@/components/sections/lab-preview";
 // never appear on the homepage without a full rebuild+redeploy — exactly
 // the staleness D1 was adopted to avoid on /research itself.
 export const dynamic = "force-dynamic";
+
+export const metadata = buildSocialMetadata(staticSocial.home);
 
 export default async function Home() {
   return (

@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { staticSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Image from "next/image";
@@ -7,27 +9,7 @@ import { MonoLabel } from "@/components/ui/mono-label";
 import { siteConfig } from "@/lib/site";
 import portrait from "@/assets/portrait.jpg";
 
-const description =
-  "Blockchain developer working in Solidity, TypeScript, and the EVM, moving deeper into protocol-level engineering.";
-
-export const metadata: Metadata = {
-  title: "About",
-  description,
-  alternates: {
-    canonical: "/about",
-  },
-  openGraph: {
-    title: "About",
-    description,
-    url: "/about",
-    type: "profile",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "About",
-    description,
-  },
-};
+export const metadata: Metadata = buildSocialMetadata(staticSocial.about);
 
 const linkClass =
   "font-semibold text-foreground hover:text-accent transition-colors";

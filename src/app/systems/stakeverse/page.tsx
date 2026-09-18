@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { systemSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,26 +25,7 @@ import { SequencePipeline, type PipelineStage } from "@/components/systems/seque
 
 const system = getSystemBySlug("stakeverse");
 
-export const metadata: Metadata = system
-  ? {
-      title: system.name,
-      description: system.summary,
-      alternates: {
-        canonical: "/systems/stakeverse",
-      },
-      openGraph: {
-        title: system.name,
-        description: system.summary,
-        url: "/systems/stakeverse",
-        type: "article",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: system.name,
-        description: system.summary,
-      },
-    }
-  : {};
+export const metadata: Metadata = buildSocialMetadata(systemSocial(system ?? notFound()));
 
 // The five protocol domains, used twice: once with System Model's plain-
 // language summary (01), once with Architecture's precise component

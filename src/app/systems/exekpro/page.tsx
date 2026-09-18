@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { systemSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,26 +33,7 @@ import { SequencePipeline, type PipelineStage } from "@/components/systems/seque
 
 const system = getSystemBySlug("exekpro");
 
-export const metadata: Metadata = system
-  ? {
-      title: system.name,
-      description: system.summary,
-      alternates: {
-        canonical: "/systems/exekpro",
-      },
-      openGraph: {
-        title: system.name,
-        description: system.summary,
-        url: "/systems/exekpro",
-        type: "article",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: system.name,
-        description: system.summary,
-      },
-    }
-  : {};
+export const metadata: Metadata = buildSocialMetadata(systemSocial(system ?? notFound()));
 
 // ExeKPro's own line-break map for its six Execution Model stages —
 // forced wrapping independent of container width (see PipelineStage).

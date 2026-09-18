@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { staticSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
@@ -5,27 +7,7 @@ import { MonoLabel } from "@/components/ui/mono-label";
 import { FlowBox } from "@/components/lab/flow";
 import { getAllSystems } from "@/lib/systems";
 
-const description =
-  "Protocol engineering, smart contract, and blockchain infrastructure systems.";
-
-export const metadata: Metadata = {
-  title: "Systems",
-  description,
-  alternates: {
-    canonical: "/systems",
-  },
-  openGraph: {
-    title: "Systems",
-    description,
-    url: "/systems",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Systems",
-    description,
-  },
-};
+export const metadata: Metadata = buildSocialMetadata(staticSocial.systems);
 
 export default function SystemsPage() {
   const systems = getAllSystems();

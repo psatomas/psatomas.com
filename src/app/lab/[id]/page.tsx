@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { experimentSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,29 +19,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { id } = await props.params;
   const experiment = getExperiment(id as ExperimentId);
-  if (!experiment || !experiment.enabled) return {};
-
-  const description = experiment.subtitle;
-  const url = `/lab/${experiment.id}`;
-
-  return {
-    title: experiment.title,
-    description,
-    alternates: {
-      canonical: url,
-    },
-    openGraph: {
-      title: experiment.title,
-      description,
-      url,
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: experiment.title,
-      description,
-    },
-  };
+  if (!experiment || !experiment.enabled) notFound();
+  return buildSocialMetadata(experimentSocial(experiment));
 }
 
 // A thin shell around the registry — this route resolves an id to an

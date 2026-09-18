@@ -1,3 +1,6 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { articleSocial } from "@/lib/social/content";
+import { getPublishedArticle } from "@/lib/research/public-article";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
@@ -12,6 +15,13 @@ import { getResearchRepository } from "@/lib/research";
 // current published article fresh; an unknown or unpublished slug still
 // 404s via the explicit check below, same as before.
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(props: PageProps<"/research/[slug]">) {
+  const { slug } = await props.params;
+  const article = await getPublishedArticle(slug);
+  if (!article) notFound();
+  return buildSocialMetadata(articleSocial(article));
+}
 
 function formatArticleDate(iso: string): string {
   const [year, month, day] = iso.split("-").map(Number);
@@ -33,7 +43,7 @@ export default async function ResearchArticlePage(
   // renderable one back or doesn't — it never knows or cares whether that
   // meant a slug lookup in an array, a file import, or a D1 query for a
   // row with status = 'published'.
-  const article = await researchRepository.getPublishedArticleBySlug(slug);
+  const article = await getPublishedArticle(slug);
   if (!article) notFound();
 
   const { Content } = article;

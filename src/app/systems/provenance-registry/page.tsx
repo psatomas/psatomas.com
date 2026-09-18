@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { systemSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,26 +32,7 @@ import { ObjectCard } from "@/components/systems/object-card";
 
 const system = getSystemBySlug("provenance-registry");
 
-export const metadata: Metadata = system
-  ? {
-      title: system.name,
-      description: system.summary,
-      alternates: {
-        canonical: "/systems/provenance-registry",
-      },
-      openGraph: {
-        title: system.name,
-        description: system.summary,
-        url: "/systems/provenance-registry",
-        type: "article",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: system.name,
-        description: system.summary,
-      },
-    }
-  : {};
+export const metadata: Metadata = buildSocialMetadata(systemSocial(system ?? notFound()));
 
 // A static attached-cell strip: equal-width cells sharing hairline
 // dividers (the same gap-px/bg-border + bg-background technique used

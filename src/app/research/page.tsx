@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { staticSocial } from "@/lib/social/content";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
@@ -11,6 +13,8 @@ import { getResearchRepository } from "@/lib/research";
 // exactly what a real publishing flow needs: a new or edited article
 // should show up without a full site rebuild and redeploy.
 export const dynamic = "force-dynamic";
+
+export const metadata = buildSocialMetadata(staticSocial.research);
 
 export default async function ResearchPage() {
   const researchRepository = await getResearchRepository();

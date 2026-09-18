@@ -1,3 +1,5 @@
+import { buildSocialMetadata } from "@/lib/social/metadata";
+import { staticSocial } from "@/lib/social/content";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
@@ -6,27 +8,7 @@ import { FlowBox, FlowArrow } from "@/components/lab/flow";
 import { FLOW_PREVIEW } from "@/components/lab/flow-preview";
 import { experiments } from "@/lib/experiments/registry";
 
-const description =
-  "Bounded, interactive experiments in blockchain execution, MEV, and oracle infrastructure.";
-
-export const metadata: Metadata = {
-  title: "Lab",
-  description,
-  alternates: {
-    canonical: "/lab",
-  },
-  openGraph: {
-    title: "Lab",
-    description,
-    url: "/lab",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Lab",
-    description,
-  },
-};
+export const metadata: Metadata = buildSocialMetadata(staticSocial.lab);
 
 // A public index over the same registry the homepage's Lab preview
 // already reads (src/lib/experiments/registry.ts) — no second experiment
