@@ -22,15 +22,20 @@ const STAGE_MS = 2000;
  * Model, for instance) can reuse the same grammar instead of a second
  * bespoke implementation.
  *
- * Resting dividers use the gap-px/bg-border + bg-background technique
- * already established elsewhere on the site (Systems index, Lab preview)
- * for hairline seams that stay correct across any responsive column
- * count. The active indicator is a per-cell inset `outline` rather than a
- * `border`: a real border on top of those gap-px seams would double up
- * with the adjacent seam into a visibly thicker line at every boundary an
- * active cell touches. An outline never participates in box layout —
- * regardless of color or offset — so it can highlight one cell with zero
- * risk of doubled width, seam misalignment, or layout shift, and no
+ * Resting dividers are real 1px borders (right + bottom on every cell),
+ * not `gap-px` gaps: a gap is an ordinary CSS length, so at any device
+ * pixel ratio below 1 (browser zoom under 100%) Chrome snaps individual
+ * 1px gaps to 0 device pixels depending on the fractional column
+ * positions, and seams silently disappear. Borders are the one thing the
+ * browser never lets collapse below 1 device pixel. The grid is offset
+ * -1px right/bottom inside an overflow-hidden wrapper so the outermost
+ * right/bottom borders are clipped, leaving only true internal seams at
+ * any responsive column count.
+ *
+ * The active indicator is an inset ring (a box-shadow drawn inside the
+ * padding box) rather than an outline or a border: it never participates
+ * in box layout, and because it sits inside the padding box it can never
+ * paint over, thicken, or replace the neutral seam next to it. No
  * background fill/glow/movement is used, only this boundary color change.
  *
  * `columnClassName` lets a caller override the responsive column count
@@ -60,28 +65,30 @@ export function SequencePipeline({
     <div
       role="img"
       aria-label={`Sequence: ${stages.map((s) => s.label).join(" → ")}`}
-      className={`grid gap-px bg-border ${columnClassName}`}
+      className="overflow-hidden"
     >
-      {stages.map((stage, i) => {
-        const isActive = i === active;
-        return (
-          <div
-            key={stage.label}
-            aria-hidden="true"
-            className={`flex min-h-[6.5rem] flex-col items-center justify-center gap-0.5 bg-background p-3 text-center font-mono text-[11px] uppercase tracking-[0.08em] outline-2 outline-offset-[-2px] transition-[outline-color,color] ${
-              isActive
-                ? "text-accent outline-accent motion-reduce:text-muted motion-reduce:outline-transparent"
-                : "text-muted outline-transparent"
-            }`}
-          >
-            {stage.lines.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </div>
-        );
-      })}
+      <div className={`-mr-px -mb-px grid ${columnClassName}`}>
+        {stages.map((stage, i) => {
+          const isActive = i === active;
+          return (
+            <div
+              key={stage.label}
+              aria-hidden="true"
+              className={`flex min-h-[6.5rem] flex-col items-center justify-center gap-0.5 border-r border-b border-border bg-background p-3 text-center font-mono text-[11px] uppercase tracking-[0.08em] ring-2 ring-inset transition-[box-shadow,color] ${
+                isActive
+                  ? "text-accent ring-accent motion-reduce:text-muted motion-reduce:ring-transparent"
+                  : "text-muted ring-transparent"
+              }`}
+            >
+              {stage.lines.map((line) => (
+                <span key={line} className="block">
+                  {line}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
