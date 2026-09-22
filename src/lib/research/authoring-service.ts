@@ -52,15 +52,8 @@ export type AuthoringDependencies = {
 
 const liveDependencies: AuthoringDependencies = {
   getAuthorization: getAuthorizationResult,
-  // Lazy/dynamic on purpose, unlike getAuthorization above: ./index.ts
-  // pulls in d1-repository.ts, which imports markdown-content.tsx (JSX)
-  // at module scope for the public read side. Node's plain `--test`
-  // runner has no JSX transform, so a static top-level import here would
-  // make authoring-service.test.ts fail to even load — despite every
-  // test in that file injecting a fake repository and never touching
-  // this function at all. A dynamic import defers resolution to the one
-  // real call site (a Server Action under src/app/research/write/),
-  // where Next.js's own bundler handles it normally.
+  // Resolve the Cloudflare-backed repository only on live calls. Tests
+  // inject a repository without loading the runtime bindings in ./index.ts.
   getRepository: async () => {
     const { getResearchAuthoringRepository } = await import("./index.ts");
     return getResearchAuthoringRepository();

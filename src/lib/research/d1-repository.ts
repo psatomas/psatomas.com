@@ -1,7 +1,7 @@
-import { createMarkdownContent } from "./markdown-content";
-import { estimateReadingMinutes } from "./reading-time";
-import { slugify } from "./slug";
-import { SlugTakenError } from "./errors";
+import { publicationDate } from "./publication-date.ts";
+import { estimateReadingMinutes } from "./reading-time.ts";
+import { slugify } from "./slug.ts";
+import { SlugTakenError } from "./errors.ts";
 import type {
   AdjacentArticles,
   ArticleStatus,
@@ -12,7 +12,7 @@ import type {
 } from "./domain";
 import type { PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
 
-export { SlugTakenError } from "./errors";
+export { SlugTakenError } from "./errors.ts";
 
 /** The literal shape of a row from the `articles` table (see
  * migrations/0001_create_articles.sql) — snake_case, tags as a JSON
@@ -125,6 +125,9 @@ export function createD1ResearchRepository(
         .first<ArticleRow>();
       if (!row) return undefined;
       const record = rowToRecord(row);
+      // Load JSX only for body rendering; authoring and metadata remain
+      // directly testable with Node's TypeScript runner.
+      const { createMarkdownContent } = await import("./markdown-content");
       return { ...recordToMetadata(record), Content: createMarkdownContent(record.content) };
     },
 
@@ -231,14 +234,17 @@ export function createD1ResearchRepository(
 
     async publish(id): Promise<ResearchArticleRecord> {
       const now = new Date().toISOString();
+      const existing = await findById(id);
+      if (!existing) throw new Error(`publish: no article with id "${id}"`);
+      const publishedAt = publicationDate(existing.publishedAt, new Date(now));
       // COALESCE keeps the original publish date on a re-publish after an
       // unpublish, rather than treating every publish as "new" — only a
-      // genuinely first-time publish gets `now` as its publishedAt.
+      // genuinely first-time publish gets the UTC calendar date as its publishedAt.
       await db
         .prepare(
           "UPDATE articles SET status = 'published', published_at = COALESCE(published_at, ?), updated_at = ? WHERE id = ?",
         )
-        .bind(now, now, id)
+        .bind(publishedAt, now, id)
         .run();
 
       const record = await findById(id);

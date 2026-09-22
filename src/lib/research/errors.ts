@@ -1,14 +1,5 @@
-/**
- * Split out from d1-repository.ts specifically so this class can be
- * imported without pulling in the rest of that module — d1-repository.ts
- * imports markdown-content.tsx (JSX) at its top level for the public
- * read side, which Node's plain `--test` runner can't parse (no JSX
- * transform in that pipeline). authoring-service.ts needs this error
- * class for a synchronous `instanceof` check but must stay loadable
- * under `node --test` with only fake dependencies injected — see
- * authoring-service.test.ts — so it imports this file instead of
- * d1-repository.ts directly.
- */
+/** Shared by the repository and authoring service so error handling does
+ * not depend on the persistence implementation. */
 
 /** Thrown by createDraft/updateDraft when the requested (or derived)
  * slug already belongs to a different article. A distinct class rather

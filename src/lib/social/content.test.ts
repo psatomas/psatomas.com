@@ -13,7 +13,7 @@ const experiment: ExperimentDefinition & { enabled: boolean } = { id: "oracle", 
   subtitle: "ON-CHAIN × OFF-CHAIN DATA", description: "Substantive description", designation: "Experiment 03",
   Component: () => null, enabled: true };
 const article: ResearchArticleMetadata = { slug: "newly-published", title: "A newly published article",
-  description: "Actual excerpt", category: "Distributed Systems", publishedAt: "2026-09-18T12:34:56.000Z",
+  description: "Actual excerpt", category: "Distributed Systems", publishedAt: "2026-09-18",
   tags: ["Consistency"], readingMinutes: 5 };
 const sources = {
   system: (slug: string) => slug === system.slug ? system : undefined,

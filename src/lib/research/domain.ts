@@ -73,7 +73,7 @@ export type ResearchArticleRecord = {
   content: string;
   readingMinutes: number;
   status: ArticleStatus;
-  /** Null until the article is published for the first time. */
+  /** UTC publication date (YYYY-MM-DD), null until first publication. */
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
