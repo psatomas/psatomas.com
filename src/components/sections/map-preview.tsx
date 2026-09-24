@@ -6,10 +6,10 @@ import { MAP_PREVIEW_TOPICS } from "./map-preview-topics";
 /**
  * MAP's homepage introduction. As with Systems/Research/Lab, the identity
  * plane is the environment's single gateway link and uses the same active
- * plane treatment. The territory preview below is its sibling, informational
- * except for topics that name an existing placement, which are targeted entry
- * links into /map. No tree, no disclosure, no internal scrolling. The
- * ontology grows at /map, never here.
+ * plane treatment. Below it, its sibling previews MAP's breadth through the 27
+ * L0 domains; a domain becomes a targeted entry link into /map only once it
+ * names an existing placement. No tree, no disclosure, no internal scrolling.
+ * The ontology grows at /map, never here.
  */
 export function MapPreview() {
   return (
@@ -46,33 +46,61 @@ export function MapPreview() {
           </p>
         </Link>
 
-        <ul
-          aria-label="Selected territory"
-          className="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-border px-5 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-3"
+        {/* The 27 L0 domains as one connected surface, in the same hairline
+            grid language as Systems/Lab (gap-px over bg-border, black
+            cells). The whole cell reacts to hover with a faint cyan tint and
+            cyan label; the #737982 "targeted object" plane is reserved for
+            real links, so non-actionable cells never imply navigation. One
+            column below 360px (the longest word would not fit two), two
+            from 360px (the last cell spans both so no empty slot shows),
+            three from sm: 27 = 9 full rows. */}
+        <ol
+          aria-label="MAP domains"
+          className="grid grid-cols-1 gap-px border-t border-border bg-border min-[360px]:grid-cols-2 sm:grid-cols-3"
         >
-          {MAP_PREVIEW_TOPICS.map(({ label, placementId }) => (
-            <li
-              key={label}
-              className="min-w-0 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground sm:text-xs"
-            >
-              {/* Targeted entry: opens /map at this placement. The persistent
-                  arrow marks it as a link without relying on hover. */}
-              {placementId ? (
-                <Link
-                  href={getMapContextHref(placementId)}
-                  className="group inline-flex items-baseline gap-2 transition-colors hover:text-accent focus-visible:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-                >
+          {MAP_PREVIEW_TOPICS.map(({ label, placementId }, index) => {
+            // Number, label, and (for links) arrow sit on one line; only
+            // the two-column range stacks the number above the label, where
+            // inline numbering would force mid-word breaks.
+            const content = (
+              <>
+                <span aria-hidden="true" className="shrink-0 text-dim transition-colors group-hover:text-accent group-focus-visible:text-accent">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="min-w-0 flex-1 text-muted [overflow-wrap:anywhere] transition-colors group-hover:text-accent group-focus-visible:text-accent">
                   {label}
-                  <span aria-hidden="true" className="text-muted transition-colors group-hover:text-accent group-focus-visible:text-accent">
+                </span>
+                {placementId ? (
+                  <span aria-hidden="true" className="shrink-0 text-muted transition-colors group-hover:text-accent group-focus-visible:text-accent">
                     →
                   </span>
-                </Link>
-              ) : (
-                label
-              )}
-            </li>
-          ))}
-        </ul>
+                ) : null}
+              </>
+            );
+            const cell =
+              "group flex h-full items-baseline gap-3 px-3 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:bg-accent/[0.06] min-[360px]:max-sm:flex-col min-[360px]:max-sm:items-stretch min-[360px]:max-sm:gap-1 sm:px-4 sm:text-xs";
+
+            return (
+              <li
+                key={label}
+                className="bg-background min-[360px]:last:col-span-2 sm:last:col-span-1"
+              >
+                {/* Only a topic naming an existing placement is a link; the
+                    rest are plain content with visual hover identity only. */}
+                {placementId ? (
+                  <Link
+                    href={getMapContextHref(placementId)}
+                    className={`${cell} focus-visible:bg-accent/[0.06] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent`}
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div className={cell}>{content}</div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       </div>
     </section>
   );
