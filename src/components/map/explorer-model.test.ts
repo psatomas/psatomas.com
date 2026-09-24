@@ -55,6 +55,38 @@ test("collapsed branches hide descendants while independent branches coexist", (
   assert.equal(rows.find((row) => row.placementId === "consensus"), undefined);
 });
 
+test("expansion is keyed by placement, so one multi-placed concept opens per context", () => {
+  const model: MapKnowledgeModel = {
+    concepts: ["region-a", "region-b", "shared", "detail"].map((id) => ({ id, slug: id, title: id })),
+    placements: [
+      { id: "region-a", conceptId: "region-a", order: 0 },
+      { id: "region-b", conceptId: "region-b", order: 1 },
+      { id: "shared-in-a", conceptId: "shared", parentPlacementId: "region-a", order: 0 },
+      { id: "shared-in-b", conceptId: "shared", parentPlacementId: "region-b", order: 0 },
+      { id: "detail-in-a", conceptId: "detail", parentPlacementId: "shared-in-a", order: 0 },
+      { id: "detail-in-b", conceptId: "detail", parentPlacementId: "shared-in-b", order: 0 },
+    ],
+    relationships: [],
+    content: [],
+    mechanisms: [],
+    knowledgePaths: [],
+  };
+  const sharedResolver = createMapResolver(model);
+  const sharedView = buildMapExplorerView(sharedResolver, rootPlacementIds(sharedResolver));
+  const visible = (expanded: string[]) =>
+    getVisibleMapExplorerRows(sharedView, new Set(expanded)).map((row) => row.placementId);
+
+  assert.deepEqual(visible(["region-a", "region-b", "shared-in-a"]), [
+    "region-a",
+    "shared-in-a",
+    "detail-in-a",
+    "region-b",
+    "shared-in-b",
+  ]);
+  // Collapsing an ancestor hides the branch but retains its descendant state for reopening.
+  assert.deepEqual(visible(["region-b", "shared-in-a"]), ["region-a", "region-b", "shared-in-b"]);
+});
+
 test("root regions are initially open while descendant branches remain reader-controlled", () => {
   assert.deepEqual(getInitialExpandedPlacementIds(view), ["distributed-systems", "scaling", "identity"]);
 });
