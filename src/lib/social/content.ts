@@ -15,6 +15,11 @@ export const staticSocial = {
     description: "Blockchain developer working in Solidity, TypeScript, and the EVM, moving deeper into protocol-level engineering.",
     supporting: "Solidity · TypeScript · EVM", type: "profile",
   },
+  map: {
+    path: "/map", title: "Map", environment: "MAP", category: "PROTOCOL ENGINEERING",
+    description: "A structured knowledge environment for understanding Protocol Engineering and the systems behind programmable digital economies.",
+    supporting: "Foundations · Execution · Coordination · Autonomous systems", type: "website",
+  },
   systems: {
     path: "/systems", title: "Systems", environment: "SYSTEMS", category: "PROTOCOLS / INFRASTRUCTURE",
     description: "Protocol engineering, smart contract, and blockchain infrastructure systems.",

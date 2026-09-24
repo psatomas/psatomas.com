@@ -24,7 +24,7 @@ function metadata(html) {
 const index = await fetch(`${base}/research`).then((r) => r.text());
 const articles = [...new Set([...index.matchAll(/href="(\/research\/[^"?#]+)"/g)].map((m) => m[1]))].filter((p) => !p.startsWith('/research/write'));
 assert.ok(articles.length, 'Local Research must contain a published article');
-const paths = ['/', '/about', '/systems', '/systems/exekpro', '/systems/stakeverse', '/systems/provenance-registry',
+const paths = ['/', '/about', '/map', '/systems', '/systems/exekpro', '/systems/stakeverse', '/systems/provenance-registry',
   '/research', ...articles, '/lab', '/lab/evm', '/lab/intent-mev', '/lab/oracle'];
 const required = ['title', 'description', 'canonical', 'og:title', 'og:description', 'og:url', 'og:type', 'og:site_name',
   'og:image', 'og:image:width', 'og:image:height', 'og:image:type', 'og:image:alt',
