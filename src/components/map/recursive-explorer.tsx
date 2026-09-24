@@ -38,6 +38,8 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
             L{row.depth}
           </span>
           <span className="min-w-0 flex-1 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground sm:text-xs">
+            {/* The flat row plane must still announce hierarchy; levels are 1-based as in aria-level. */}
+            <span className="sr-only">Level {row.depth + 1}: </span>
             {row.label}
           </span>
           {row.hasChildren ? (
