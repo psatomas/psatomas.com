@@ -98,10 +98,10 @@ MAP's taxonomy has 27 L0 domains, in this order:
 These are the root regions of the pedagogical taxonomy and the macro
 structure every MAP surface presents, including the homepage preview. They
 are taxonomy structure, not a separate ontology primitive: each is a canonical
-concept with a root placement, authored like any other record. Until those
-root placements exist in the knowledge data, this list is the specification
-rather than repository data. Deeper levels are authored incrementally beneath
-them.
+concept with a root placement, authored like any other record, and they form
+the root layer of the knowledge data. This list, the root placements, and the
+homepage preview must agree; tests enforce it. Deeper levels are authored
+incrementally beneath them.
 
 A concept missing from a domain name is not missing from MAP. Sequencing,
 Settlement, Data Availability, Verification, Finality, and Preconfirmations are

@@ -42,22 +42,43 @@ function rootPlacementIds(resolver: ReturnType<typeof createMapResolver>): strin
 const resolver = createMapResolver(mapKnowledge);
 const view = buildMapExplorerView(resolver, rootPlacementIds(resolver));
 
-test("explorer resolves ordered roots and placement children from the MAP domain", () => {
-  assert.deepEqual(view.roots.map((root) => root.placementId), [
-    "distributed-systems",
-    "scaling",
-    "identity",
-    "authority",
-    "ai-agent",
-  ]);
-  assert.deepEqual(view.roots[0].children.map((child) => child.placementId), ["consensus"]);
-  assert.deepEqual(view.roots[1].children.map((child) => child.placementId), ["rollups"]);
+// L0 domains that currently hold re-homed proof-fixture placements.
+const POPULATED_L0 = {
+  foundations: ["distributed-systems"],
+  "consensus-ordering": ["consensus"],
+  "identity-accounts-authority": ["identity", "authority"],
+  "scaling-modular-systems": ["scaling"],
+  "ai-intelligent-systems": ["ai-agent"],
+} as const;
+
+test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
+  assert.equal(view.roots.length, 27);
+  assert.equal(view.roots[0].placementId, "foundations");
+  assert.equal(view.roots[26].placementId, "frontier-systems");
+  for (const root of view.roots) {
+    const expected = POPULATED_L0[root.placementId as keyof typeof POPULATED_L0] ?? [];
+    assert.deepEqual(root.children.map((child) => child.placementId), expected, root.placementId);
+  }
+});
+
+test("empty L0 domains are leaves that never expose disclosure, even if marked expanded", () => {
+  const everyRoot = new Set(view.roots.map((root) => root.placementId));
+  const rows = getVisibleMapExplorerRows(view, everyRoot).filter((row) => row.depth === 0);
+  const populated = Object.keys(POPULATED_L0);
+
+  for (const row of rows) {
+    const hasChildren = populated.includes(row.placementId);
+    assert.equal(row.hasChildren, hasChildren, row.placementId);
+    assert.equal(row.isExpanded, hasChildren, row.placementId);
+  }
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 22);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
   const rows = getVisibleMapExplorerRows(view, new Set([
-    "distributed-systems",
+    "consensus-ordering",
     "consensus",
+    "scaling-modular-systems",
     "scaling",
     "rollups",
   ]));
@@ -71,10 +92,10 @@ test("Finality remains one concept rendered through two independent placements",
 });
 
 test("collapsed branches hide descendants while independent branches coexist", () => {
-  const expanded = new Set(["distributed-systems", "consensus", "scaling", "rollups"]);
+  const expanded = new Set(["consensus-ordering", "consensus", "scaling-modular-systems", "scaling", "rollups"]);
   assert.equal(getVisibleMapExplorerRows(view, expanded).filter((row) => row.conceptId === "finality").length, 2);
 
-  expanded.delete("distributed-systems");
+  expanded.delete("consensus-ordering");
   const rows = getVisibleMapExplorerRows(view, expanded);
   assert.deepEqual(rows.filter((row) => row.conceptId === "finality").map((row) => row.placementId), [
     "finality-in-rollups",
@@ -115,7 +136,13 @@ test("expansion is keyed by placement, so one multi-placed concept opens per con
 });
 
 test("root regions are initially open while descendant branches remain reader-controlled", () => {
-  assert.deepEqual(getInitialExpandedPlacementIds(view), ["distributed-systems", "scaling", "identity"]);
+  assert.deepEqual(getInitialExpandedPlacementIds(view), [
+    "foundations",
+    "consensus-ordering",
+    "identity-accounts-authority",
+    "scaling-modular-systems",
+    "ai-intelligent-systems",
+  ]);
 });
 
 test("recursive projection supports synthetic deep hierarchies without a depth limit", () => {
@@ -156,12 +183,10 @@ test("disclosure never implicitly focuses, and several branches stay open", () =
   state = toggleMapExplorerPlacement(state, "rollups");
   assert.equal(state.focusedPlacementId, null);
   assert.deepEqual([...state.expandedPlacementIds].sort(), [
+    ...getInitialExpandedPlacementIds(view),
     "consensus",
-    "distributed-systems",
-    "identity",
     "rollups",
-    "scaling",
-  ]);
+  ].sort());
 
   // Disclosure also leaves an existing context untouched.
   state = focusMapExplorerPlacement(state, "finality-in-rollups");
@@ -197,8 +222,8 @@ test("the two Finality placements produce distinct contexts for one canonical co
   const inConsensus = getMapExplorerContext(index, "finality-in-consensus");
   const inRollups = getMapExplorerContext(index, "finality-in-rollups");
 
-  assert.deepEqual(inConsensus.map((step) => step.label), ["Distributed Systems", "Consensus", "Finality"]);
-  assert.deepEqual(inRollups.map((step) => step.label), ["Scaling", "Rollups", "Finality"]);
+  assert.deepEqual(inConsensus.map((step) => step.label), ["Consensus & Ordering", "Consensus", "Finality"]);
+  assert.deepEqual(inRollups.map((step) => step.label), ["Scaling & Modular Systems", "Scaling", "Rollups", "Finality"]);
   assert.equal(inConsensus.at(-1)?.conceptId, "finality");
   assert.equal(inRollups.at(-1)?.conceptId, "finality");
   assert.notEqual(inConsensus.at(-1)?.placementId, inRollups.at(-1)?.placementId);
@@ -214,21 +239,21 @@ test("context ancestry supports arbitrary depth", () => {
 });
 
 test("root placements become structural regions holding their visible descendants", () => {
-  const regions = getVisibleMapExplorerRegions(view, new Set(["distributed-systems", "consensus", "identity"]));
+  const regions = getVisibleMapExplorerRegions(view, new Set(["foundations", "consensus-ordering", "consensus"]));
 
-  assert.deepEqual(regions.map((region) => region.header.placementId), [
-    "distributed-systems",
-    "scaling",
-    "identity",
-    "authority",
-    "ai-agent",
-  ]);
+  assert.deepEqual(regions.map((region) => region.header.placementId), view.roots.map((root) => root.placementId));
   assert.deepEqual(regions[0].rows.map((row) => [row.placementId, row.parentLabel]), [
-    ["consensus", "Distributed Systems"],
+    ["distributed-systems", "Foundations"],
+  ]);
+  assert.deepEqual(regions[3].rows.map((row) => [row.placementId, row.parentLabel]), [
+    ["consensus", "Consensus & Ordering"],
     ["finality-in-consensus", "Consensus"],
   ]);
-  // A collapsed region keeps its identity but exposes no rows.
+  // A collapsed region keeps its identity but exposes no rows; an empty one has none.
+  assert.deepEqual(regions[14].rows, []);
+  assert.equal(regions[14].header.hasChildren, true);
   assert.deepEqual(regions[1].rows, []);
+  assert.equal(regions[1].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -241,14 +266,15 @@ test("no entry context yields exactly the default initial state", () => {
 test("an entry context opens its region and itself, focuses it, and expands nothing deeper", () => {
   const state = getInitialMapExplorerState(view, "consensus");
   assert.equal(state.focusedPlacementId, "consensus");
-  assert.ok(state.expandedPlacementIds.has("distributed-systems"));
+  assert.ok(state.expandedPlacementIds.has("consensus-ordering"));
   assert.ok(state.expandedPlacementIds.has("consensus"));
 
   const visible = getVisibleMapExplorerRows(view, state.expandedPlacementIds).map((row) => row.placementId);
   assert.ok(visible.includes("finality-in-consensus"));
   // Independent branches keep their default disclosure; other Finality stays hidden.
   assert.ok(!visible.includes("finality-in-rollups"));
-  assert.ok(visible.includes("rollups"));
+  assert.ok(visible.includes("scaling"));
+  assert.ok(!visible.includes("rollups"));
 });
 
 test("an entry context reveals its ancestry at arbitrary depth without opening its subtree", () => {
@@ -274,4 +300,23 @@ test("an unknown entry context is ignored rather than breaking the explorer", ()
   for (const context of ["unknown-placement", "", "finality"]) {
     assert.deepEqual(getInitialMapExplorerState(view, context), getInitialMapExplorerState(view));
   }
+});
+
+test("an L0 entry context focuses the domain; an empty domain adds no disclosure state", () => {
+  const populated = getInitialMapExplorerState(view, "scaling-modular-systems");
+  assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
+  assert.deepEqual([...populated.expandedPlacementIds], getInitialExpandedPlacementIds(view));
+
+  const empty = getInitialMapExplorerState(view, "state-data");
+  assert.equal(empty.focusedPlacementId, "state-data");
+  assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds(view));
+});
+
+test("a deep entry context reveals its full ancestor chain from the L0 domain", () => {
+  const state = getInitialMapExplorerState(view, "finality-in-rollups");
+  for (const id of ["scaling-modular-systems", "scaling", "rollups"]) assert.ok(state.expandedPlacementIds.has(id), id);
+  assert.deepEqual(
+    getMapExplorerContext(indexMapExplorerView(view), state.focusedPlacementId).map((step) => step.placementId),
+    ["scaling-modular-systems", "scaling", "rollups", "finality-in-rollups"],
+  );
 });

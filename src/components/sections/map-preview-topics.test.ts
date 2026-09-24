@@ -45,6 +45,13 @@ test("homepage L0 domains agree with the MAP specification", () => {
   assert.deepEqual(MAP_PREVIEW_TOPICS.map((topic) => topic.label), specDomains);
 });
 
+test("homepage L0 domains agree with the MAP root taxonomy", () => {
+  const resolver = createMapResolver(mapKnowledge);
+  const rootTitles = resolver.getRootPlacements().map((placement) => resolver.getConcept(placement.conceptId)?.title);
+
+  assert.deepEqual(MAP_PREVIEW_TOPICS.map((topic) => topic.label), rootTitles);
+});
+
 test("any linked homepage MAP topic targets an existing placement", () => {
   const resolver = createMapResolver(mapKnowledge);
   for (const topic of MAP_PREVIEW_TOPICS) {

@@ -11,6 +11,97 @@ function errorsFor(mutator: (model: MapKnowledgeModel) => MapKnowledgeModel): st
   return validateMapKnowledge(mutator(mapKnowledge));
 }
 
+const L0_DOMAINS: Array<[string, string]> = [
+  ["foundations", "Foundations"],
+  ["computation-execution", "Computation & Execution"],
+  ["state-data", "State & Data"],
+  ["consensus-ordering", "Consensus & Ordering"],
+  ["networks-infrastructure", "Networks & Infrastructure"],
+  ["cryptography-proofs", "Cryptography & Proofs"],
+  ["storage-availability", "Storage & Availability"],
+  ["identity-accounts-authority", "Identity, Accounts & Authority"],
+  ["oracles-external-reality", "Oracles & External Reality"],
+  ["economics-mechanism-design", "Economics & Mechanism Design"],
+  ["markets-financial-protocols", "Markets & Financial Protocols"],
+  ["mev-execution-markets", "MEV & Execution Markets"],
+  ["intents-coordination", "Intents & Coordination"],
+  ["governance-institutions", "Governance & Institutions"],
+  ["scaling-modular-systems", "Scaling & Modular Systems"],
+  ["interoperability-abstraction", "Interoperability & Abstraction"],
+  ["security-correctness-resilience", "Security, Correctness & Resilience"],
+  ["protocol-architecture", "Protocol Architecture"],
+  ["protocol-design-lifecycle", "Protocol Design & Lifecycle"],
+  ["ai-intelligent-systems", "AI & Intelligent Systems"],
+  ["machine-economy", "Machine Economy"],
+  ["autonomous-coordination", "Autonomous Coordination"],
+  ["autonomous-execution", "Autonomous Execution"],
+  ["autonomous-organizations", "Autonomous Organizations"],
+  ["autonomous-protocols", "Autonomous Protocols"],
+  ["autonomous-economy", "Autonomous Economy"],
+  ["frontier-systems", "Frontier Systems"],
+];
+
+test("the taxonomy root is exactly the 27 L0 domains in agreed order", () => {
+  const roots = resolver.getRootPlacements();
+  assert.deepEqual(roots.map((placement) => placement.id), L0_DOMAINS.map(([id]) => id));
+  assert.deepEqual(roots.map((placement) => placement.order), L0_DOMAINS.map((_, index) => index));
+  for (const [id, title] of L0_DOMAINS) {
+    const placement = resolver.getPlacement(id);
+    assert.equal(placement?.conceptId, id);
+    assert.equal(resolver.getConcept(id)?.title, title);
+    assert.deepEqual(resolver.getPlacementsForConcept(id).map((entry) => entry.id), [id]);
+  }
+});
+
+test("canonical concept identities stay unique after adding the L0 layer", () => {
+  const ids = mapKnowledge.concepts.map((concept) => concept.id);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(ids.length, 27 + 11);
+});
+
+test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
+  const parents = Object.fromEntries(
+    mapKnowledge.placements.filter((placement) => placement.parentPlacementId).map((placement) => [placement.id, placement.parentPlacementId]),
+  );
+  assert.deepEqual(parents, {
+    "distributed-systems": "foundations",
+    consensus: "consensus-ordering",
+    "finality-in-consensus": "consensus",
+    scaling: "scaling-modular-systems",
+    rollups: "scaling",
+    "finality-in-rollups": "rollups",
+    identity: "identity-accounts-authority",
+    "agent-identity": "identity",
+    authority: "identity-accounts-authority",
+    "ai-agent": "ai-intelligent-systems",
+  });
+  // Settlement and Economic Agency stay deliberately unplaced.
+  assert.deepEqual(resolver.getPlacementsForConcept("settlement"), []);
+  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
+});
+
+test("re-homing changes no relationship, content, mechanism, or path record", () => {
+  assert.deepEqual(mapKnowledge.relationships.map((relationship) => relationship.id), [
+    "finality-finalizes-settlement",
+    "rollups-depend-on-finality",
+    "agent-identity-authenticates-ai-agent",
+    "authority-constrains-ai-agent",
+    "agent-identity-enables-economic-agency",
+  ]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.mechanisms.map((mechanism) => mechanism.id), ["consensus-to-finality"]);
+  assert.deepEqual(mapKnowledge.knowledgePaths.map((path) => path.id), ["distributed-systems-to-rollups"]);
+  // L0 domains are taxonomy only: no semantic edges, content, mechanism steps, or path steps.
+  const l0 = new Set(L0_DOMAINS.map(([id]) => id));
+  const referenced = [
+    ...mapKnowledge.relationships.flatMap((relationship) => [relationship.sourceConceptId, relationship.targetConceptId]),
+    ...mapKnowledge.content.map((content) => content.conceptId),
+    ...mapKnowledge.mechanisms.flatMap((mechanism) => [mechanism.conceptId, ...mechanism.steps.map((step) => step.conceptId)]),
+    ...mapKnowledge.knowledgePaths.flatMap((path) => path.conceptIds),
+  ];
+  assert.deepEqual(referenced.filter((conceptId) => l0.has(conceptId)), []);
+});
+
 test("one canonical Finality concept resolves through two independent placements", () => {
   const consensusFinality = resolver.getPlacement("finality-in-consensus");
   const rollupFinality = resolver.getPlacement("finality-in-rollups");
@@ -27,12 +118,15 @@ test("one canonical Finality concept resolves through two independent placements
   );
   assert.deepEqual(
     resolver.getAncestors("finality-in-rollups").map((placement) => placement.id),
-    ["scaling", "rollups"],
+    ["scaling-modular-systems", "scaling", "rollups"],
   );
 });
 
 test("taxonomy nesting does not create semantic relationships", () => {
   assert.deepEqual(resolver.getChildren("consensus").map((placement) => placement.conceptId), ["finality"]);
+  assert.deepEqual(resolver.getChildren("consensus-ordering").map((placement) => placement.conceptId), ["consensus"]);
+  assert.deepEqual(resolver.getRelationshipsFrom("consensus-ordering"), []);
+  assert.deepEqual(resolver.getRelationshipsTo("consensus"), []);
   assert.deepEqual(resolver.getRelationshipsFrom("consensus"), []);
   assert.deepEqual(resolver.getRelationshipsTo("finality").map((relationship) => relationship.id), [
     "rollups-depend-on-finality",
@@ -78,7 +172,7 @@ test("validation rejects malformed references, cycles, and semantic edges", () =
     [
       "duplicate concept",
       errorsFor((model) => ({ ...model, concepts: [...model.concepts, model.concepts[0]] })),
-      'Duplicate concept identifier "distributed-systems"',
+      'Duplicate concept identifier "foundations"',
     ],
     [
       "dangling placement concept",
@@ -93,10 +187,10 @@ test("validation rejects malformed references, cycles, and semantic edges", () =
       errorsFor((model) => ({
         ...model,
         placements: model.placements.map((placement) =>
-          placement.id === "distributed-systems" ? { ...placement, parentPlacementId: "consensus" } : placement,
+          placement.id === "foundations" ? { ...placement, parentPlacementId: "distributed-systems" } : placement,
         ),
       })),
-      'Placement hierarchy contains cycle at "distributed-systems"',
+      'Placement hierarchy contains cycle at "foundations"',
     ],
     [
       "dangling relationship target",
