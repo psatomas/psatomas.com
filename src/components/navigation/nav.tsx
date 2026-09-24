@@ -3,8 +3,8 @@ import Link from "next/link";
 import psatMark from "@/assets/psat-mark-navbar.png";
 import psatomasWordmark from "@/assets/psatomas-wordmark-navbar.png";
 
-// Primary IA: About (who I am) / Systems (what I build) / Research (how I
-// think) / Lab (what I explore). GitHub deliberately isn't here — it's
+// Primary IA: About (who I am) / MAP (the knowledge environment) / Systems
+// (what I build) / Research (how I think) / Lab (what I explore). GitHub deliberately isn't here — it's
 // external professional proof, not one of the site's own sections, and it
 // already has an equal-weight home in the footer alongside LinkedIn, X,
 // and email (see src/app/layout.tsx). Never add a sign-in/write/author/CMS
@@ -12,6 +12,7 @@ import psatomasWordmark from "@/assets/psatomas-wordmark-navbar.png";
 // its URL, not by navigation.
 const navItems: Array<{ label: string; href: string }> = [
   { label: "ABOUT", href: "/about" },
+  { label: "MAP", href: "/map" },
   { label: "SYSTEMS", href: "/systems" },
   { label: "RESEARCH", href: "/research" },
   { label: "LAB", href: "/lab" },

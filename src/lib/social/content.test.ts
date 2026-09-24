@@ -67,7 +67,7 @@ test("only known public paths resolve; hostile paths never trigger source reads"
     ["research", "slug?title=evil"], ["systems", "x/y"], ["lab", "evm", "extra"], ["research", "<script>"], ["api", "oracle"]]) {
     assert.equal(await resolveSocialPath(path, { system: fail, experiment: fail, publishedArticle: fail }), undefined);
   }
-  for (const key of ["about", "systems", "research", "lab"] as const) {
+  for (const key of ["about", "map", "systems", "research", "lab"] as const) {
     assert.deepEqual(await resolveSocialPath([key], sources), staticSocial[key]);
   }
 });

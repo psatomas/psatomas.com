@@ -4,8 +4,8 @@ import { getResearchRepository } from "@/lib/research";
 import { experiments } from "@/lib/experiments/registry";
 import { siteConfig } from "@/lib/site";
 
-// Covers every public route in the site's IA (About / Systems / Research /
-// Lab). Research's entries come from the same repository the public
+// Covers every public route in the site's IA (About / MAP / Systems / Research
+// / Lab). Research's entries come from the same repository the public
 // /research pages read from, which means this route needs the same
 // force-dynamic treatment those pages already use: D1 is only reachable
 // at real request time inside a deployed Worker, not during `next build`'s
@@ -54,6 +54,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${siteConfig.url}/about`,
       changeFrequency: "yearly",
       priority: 0.5,
+    },
+    {
+      url: `${siteConfig.url}/map`,
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
     {
       url: `${siteConfig.url}/systems`,
