@@ -41,6 +41,11 @@ export function createMapResolver(model: MapKnowledgeModel) {
         ? placements.get(concept.preferredPlacementId)
         : this.getPlacementsForConcept(conceptId)[0];
     },
+    getRootPlacements(): MapPlacement[] {
+      return sortPlacements(
+        model.placements.filter((placement) => placement.parentPlacementId === undefined),
+      );
+    },
     getChildren(placementId: string): MapPlacement[] {
       return sortPlacements(
         model.placements.filter((placement) => placement.parentPlacementId === placementId),
