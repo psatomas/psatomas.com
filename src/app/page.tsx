@@ -2,17 +2,19 @@ import { buildSocialMetadata } from "@/lib/social/metadata";
 import { staticSocial } from "@/lib/social/content";
 import { Hero } from "@/components/sections/hero";
 import { AboutPreview } from "@/components/sections/about-preview";
+import { MapPreview } from "@/components/sections/map-preview";
 import { SystemsPreview } from "@/components/sections/systems-preview";
 import { ResearchPreview } from "@/components/sections/research-preview";
 import { LabPreview } from "@/components/sections/lab-preview";
 
 // The narrative is deliberate and matches the site's own conceptual model
-// — person, then work, then thinking, then exploration — not an order to
-// rebalance by content volume: Hero (who) -> About (who, in more words)
-// -> Systems (what I build) -> Research (how I think) -> Lab (what I
-// explore). Every section below Hero reads from its own domain's existing
-// source (systems.ts, the Research repository, the experiment registry)
-// with no homepage-specific data file duplicating any of it.
+// — person, then conceptual territory, then work, thinking, and exploration
+// — not an order to rebalance by content volume: Hero (who) -> About (who,
+// in more words) -> MAP (the knowledge environment) -> Systems (what I
+// build) -> Research (how I think) -> Lab (what I explore). Every section
+// below Hero reads from its own domain's existing source, or (for MAP's
+// intentionally non-canonical territory preview) keeps presentation copy
+// local rather than duplicating ontology data.
 //
 // force-dynamic for the same reason /research/page.tsx already needs it:
 // ResearchPreview reads the same D1-backed repository, which is only
@@ -56,6 +58,7 @@ export default async function Home() {
       </div>
 
       <AboutPreview />
+      <MapPreview />
       <SystemsPreview />
       <ResearchPreview />
       <LabPreview />
