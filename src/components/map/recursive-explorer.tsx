@@ -19,8 +19,15 @@ const FOCUSED_ROW = "shadow-[inset_2px_0_0_0_var(--color-accent)]";
 const LABEL_TEXT = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
 const CONTROL_FOCUS = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent";
 
-export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
-  const [state, setState] = useState(() => getInitialMapExplorerState(view));
+export function RecursiveMapExplorer({
+  view,
+  initialContextPlacementId = null,
+}: {
+  view: MapExplorerView;
+  /** Entry context from the URL; unknown placements fall back to the default state. */
+  initialContextPlacementId?: string | null;
+}) {
+  const [state, setState] = useState(() => getInitialMapExplorerState(view, initialContextPlacementId));
   const index = useMemo(() => indexMapExplorerView(view), [view]);
   const regions = getVisibleMapExplorerRegions(view, state.expandedPlacementIds);
   const context = getMapExplorerContext(index, state.focusedPlacementId);
