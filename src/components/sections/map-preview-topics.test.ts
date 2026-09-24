@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createMapResolver, mapKnowledge } from "../../lib/map/index.ts";
 import { getMapContextHref } from "../map/explorer-model.ts";
@@ -34,6 +35,14 @@ test("homepage MAP preview presents exactly the 27 L0 domains in order", () => {
     "Autonomous Economy",
     "Frontier Systems",
   ]);
+});
+
+test("homepage L0 domains agree with the MAP specification", () => {
+  const spec = readFileSync(new URL("../../../docs/map-spec.md", import.meta.url), "utf8");
+  const scope = spec.slice(spec.indexOf("## 5. Long-term knowledge scope"), spec.indexOf("## 6."));
+  const specDomains = [...scope.matchAll(/^\d+\. (.+)$/gm)].map((match) => match[1]);
+
+  assert.deepEqual(MAP_PREVIEW_TOPICS.map((topic) => topic.label), specDomains);
 });
 
 test("any linked homepage MAP topic targets an existing placement", () => {

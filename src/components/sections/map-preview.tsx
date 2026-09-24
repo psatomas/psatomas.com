@@ -46,28 +46,29 @@ export function MapPreview() {
           </p>
         </Link>
 
-        {/* The 27 L0 domains as one connected surface, in the same hairline
-            grid language as Systems/Lab (gap-px over bg-border, black
-            cells). The whole cell reacts to hover with a faint cyan tint and
-            cyan label; the #737982 "targeted object" plane is reserved for
-            real links, so non-actionable cells never imply navigation. One
-            column below 360px (the longest word would not fit two), two
-            from 360px (the last cell spans both so no empty slot shows),
-            three from sm: 27 = 9 full rows. */}
+        {/* The 27 L0 domains as one surface divided by shared seams. Each
+            seam is a single 1px border owned by exactly one cell (top border
+            unless the cell starts a column; left border from the second
+            column) rather than gap-px over a translucent bg-border: gaps
+            land on fractional device pixels under display scaling and
+            anti-alias unevenly, and a translucent border over a translucent
+            background compounds into a brighter line. The hover plane lives
+            on the inner cell, inside the borders, so seams never change.
+            Mobile is one column, 01 → 27; from sm the grid flows by column
+            (9 rows), reading 01–09, 10–18, 19–27 while DOM order stays 01 → 27.
+            The palette is Lab's: cyan index and light label at rest; on
+            hover the #737982 plane with a dark index and cyan label. */}
         <ol
           aria-label="MAP domains"
-          className="grid grid-cols-1 gap-px border-t border-border bg-border min-[360px]:grid-cols-2 sm:grid-cols-3"
+          className="grid grid-cols-1 border-t border-border sm:grid-flow-col sm:grid-cols-3 sm:grid-rows-9"
         >
           {MAP_PREVIEW_TOPICS.map(({ label, placementId }, index) => {
-            // Number, label, and (for links) arrow sit on one line; only
-            // the two-column range stacks the number above the label, where
-            // inline numbering would force mid-word breaks.
             const content = (
               <>
-                <span aria-hidden="true" className="shrink-0 text-dim transition-colors group-hover:text-accent group-focus-visible:text-accent">
+                <span aria-hidden="true" className="shrink-0 text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className="min-w-0 flex-1 text-muted [overflow-wrap:anywhere] transition-colors group-hover:text-accent group-focus-visible:text-accent">
+                <span className="min-w-0 flex-1 text-foreground [overflow-wrap:anywhere] transition-colors group-hover:text-accent group-focus-visible:text-accent">
                   {label}
                 </span>
                 {placementId ? (
@@ -78,19 +79,19 @@ export function MapPreview() {
               </>
             );
             const cell =
-              "group flex h-full items-baseline gap-3 px-3 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:bg-accent/[0.06] min-[360px]:max-sm:flex-col min-[360px]:max-sm:items-stretch min-[360px]:max-sm:gap-1 sm:px-4 sm:text-xs";
+              "group flex h-full items-baseline gap-3 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:bg-[#737982] sm:text-xs";
 
             return (
               <li
                 key={label}
-                className="bg-background min-[360px]:last:col-span-2 sm:last:col-span-1"
+                className="border-border not-first:border-t sm:[&:nth-child(9n+1)]:border-t-0 sm:[&:nth-child(n+10)]:border-l"
               >
                 {/* Only a topic naming an existing placement is a link; the
                     rest are plain content with visual hover identity only. */}
                 {placementId ? (
                   <Link
                     href={getMapContextHref(placementId)}
-                    className={`${cell} focus-visible:bg-accent/[0.06] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent`}
+                    className={`${cell} focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent`}
                   >
                     {content}
                   </Link>
