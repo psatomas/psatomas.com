@@ -65,42 +65,42 @@ models, security properties, economics, and coordination make them possible.
 
 ## 5. Long-term knowledge scope
 
-The following 27 regions are design input, not repository data and not
+The following 17 macro regions are design input, not repository data and not
 permanent ontology primitives:
 
 1. Foundations
-2. Computation & Execution
-3. State & Data
-4. Consensus & Ordering
-5. Networks & Infrastructure
-6. Cryptography & Proofs
-7. Storage & Availability
-8. Identity, Accounts & Authority
-9. Oracles & External Reality
-10. Economics & Mechanism Design
-11. Markets & Financial Protocols
-12. MEV & Execution Markets
-13. Intents & Coordination
-14. Governance & Institutions
-15. Scaling & Modular Systems
-16. Interoperability & Abstraction
-17. Security, Correctness & Resilience
-18. Protocol Architecture
-19. Protocol Design & Lifecycle
-20. AI & Intelligent Systems
-21. Machine Economy
-22. Autonomous Coordination
-23. Autonomous Execution
-24. Autonomous Organizations
-25. Autonomous Protocols
-26. Autonomous Economy
-27. Frontier Systems
+2. Computation & State
+3. Consensus & Coordination
+4. Networks & Data
+5. Cryptography & Verification
+6. Accounts, Identity & Authority
+7. Economics & Incentives
+8. Security & Resilience
+9. Transaction Supply Chain
+10. Intents & Execution Markets
+11. Scaling & Modularity
+12. Interoperability & Abstraction
+13. Governance
+14. Protocol Mechanisms
+15. Protocol Architecture & Design
+16. Protocol Lifecycle & Operations
+17. Frontier & Autonomous Systems
 
 They preserve intended breadth and guide initial taxonomy authoring. They do
 not require a fixed root set forever, a fixed ordering forever, or a new
-canonical concept for each contextual appearance. Frontier is especially a
-presentation/taxonomy concern: it can place existing concepts such as
-Verifiable AI or Preconfirmations without creating duplicate identities.
+canonical concept for each contextual appearance.
+
+A concept missing from a region name is not missing from MAP. Oracles,
+Sequencing, Settlement, Data Availability, Storage, Verification, and Finality
+are canonical concepts that may be placed in several regions.
+
+Intelligent and autonomous systems are taught where their technical substance
+lives: Agent Identity under Accounts, Identity & Authority; Verifiable AI under
+Cryptography & Verification; agent economic mechanisms under Economics &
+Incentives or Protocol Mechanisms; intents used by agents under Intents &
+Execution Markets. Frontier & Autonomous Systems expresses the integrated
+frontier and must not become a catch-all for AI; like any region, it places
+existing concepts without creating duplicate identities.
 
 ## 6. Core architectural principles
 
@@ -326,6 +326,30 @@ overflow.
 
 The explorer is not a graph canvas. Relationship traversal is presented as a
 separate conceptual action from hierarchical expansion.
+
+### Disclosure, context, and concept navigation
+
+Three reader intentions stay separate:
+
+- **Disclosure** shows or hides one placement's children. Many placements may
+  be expanded at once, so distant parts of the taxonomy can be compared. It
+  never changes context, navigates, or closes unrelated branches.
+- **Context** is the focused placement: zero or one, changed only by an
+  explicit focus action, never inferred from expansion. Its ancestry is shown
+  as a context trail (for example `Distributed Systems › Consensus ›
+  Finality`) derived from placement ancestry, not from display strings and
+  not from Knowledge Paths. Ancestors in the trail re-focus their placement.
+- **Concept navigation** opens the canonical concept (`/map/[conceptId]`,
+  optionally with `?context=[placementId]`). It is not offered until concept
+  routes exist; the explorer never presents unavailable navigation.
+
+Root placements render as structural regions: a graphite region identity
+plane, connected rows within the region, and whitespace between regions.
+Visual meanings remain distinct: graphite marks structural region identity, a
+restrained accent marks the current context, and the disclosure control marks
+expanded/collapsed state. Depth is not shown with engineering markers; it is
+conveyed through context (region, parent label, context trail) and exposed to
+assistive technology.
 
 ## 16. Page anatomy
 
@@ -616,6 +640,6 @@ commit, push, dependency installation, deployment, or production MAP code.
 11. **Can content expand without radically expanding implementation
     complexity?** Yes. Static typed records, validation, and bounded resolvers
     keep data growth separate from UI architecture.
-12. **Does the model preserve the 27-region breadth without making those
+12. **Does the model preserve the 17-region breadth without making those
     regions permanent primitives?** Yes. They are explicit design input and
     initial pedagogical guidance, not immutable ontology categories.
