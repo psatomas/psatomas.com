@@ -1,5 +1,5 @@
 import { MonoLabel } from "@/components/ui/mono-label";
-import { buildMapExplorerView } from "@/components/map/explorer-model";
+import { buildMapExplorerView, MAP_CONTEXT_PARAM } from "@/components/map/explorer-model";
 import { RecursiveMapExplorer } from "@/components/map/recursive-explorer";
 import { createMapResolver, mapKnowledge } from "@/lib/map";
 import { staticSocial } from "@/lib/social/content";
@@ -7,11 +7,19 @@ import { buildSocialMetadata } from "@/lib/social/metadata";
 
 export const metadata = buildSocialMetadata(staticSocial.map);
 
-export default function MapPage() {
+export default async function MapPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   // Keep canonical MAP data and resolution server-side. The client receives
   // only this route's serializable placement taxonomy, not graph/content/path
   // records or the raw knowledge model.
   const resolver = createMapResolver(mapKnowledge);
+  // `?context=<placementId>` (MAP spec §14) is an entry context, validated
+  // here: anything that is not a single known placement is ignored.
+  const context = (await searchParams)[MAP_CONTEXT_PARAM];
+  const contextPlacementId = typeof context === "string" && resolver.getPlacement(context) ? context : null;
   const explorerView = buildMapExplorerView(
     resolver,
     resolver.getRootPlacements().map((placement) => placement.id),
@@ -42,7 +50,12 @@ export default function MapPage() {
             to set your context.
           </p>
         </div>
-        <RecursiveMapExplorer view={explorerView} />
+        {/* Keyed by context so a changed entry URL re-initializes the explorer. */}
+        <RecursiveMapExplorer
+          key={contextPlacementId ?? ""}
+          view={explorerView}
+          initialContextPlacementId={contextPlacementId}
+        />
       </section>
     </main>
   );

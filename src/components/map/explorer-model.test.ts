@@ -230,3 +230,48 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows.
   assert.deepEqual(regions[1].rows, []);
 });
+
+test("no entry context yields exactly the default initial state", () => {
+  const state = getInitialMapExplorerState(view);
+  assert.deepEqual([...state.expandedPlacementIds], getInitialExpandedPlacementIds(view));
+  assert.equal(state.focusedPlacementId, null);
+  assert.deepEqual(getInitialMapExplorerState(view, null), state);
+});
+
+test("an entry context opens its region and itself, focuses it, and expands nothing deeper", () => {
+  const state = getInitialMapExplorerState(view, "consensus");
+  assert.equal(state.focusedPlacementId, "consensus");
+  assert.ok(state.expandedPlacementIds.has("distributed-systems"));
+  assert.ok(state.expandedPlacementIds.has("consensus"));
+
+  const visible = getVisibleMapExplorerRows(view, state.expandedPlacementIds).map((row) => row.placementId);
+  assert.ok(visible.includes("finality-in-consensus"));
+  // Independent branches keep their default disclosure; other Finality stays hidden.
+  assert.ok(!visible.includes("finality-in-rollups"));
+  assert.ok(visible.includes("rollups"));
+});
+
+test("an entry context reveals its ancestry at arbitrary depth without opening its subtree", () => {
+  const deepResolver = createMapResolver(chainModel(12));
+  const deepView = buildMapExplorerView(deepResolver, rootPlacementIds(deepResolver));
+  const state = getInitialMapExplorerState(deepView, "level-6");
+  const visible = getVisibleMapExplorerRows(deepView, state.expandedPlacementIds).map((row) => row.placementId);
+
+  assert.equal(state.focusedPlacementId, "level-6");
+  assert.deepEqual(visible, Array.from({ length: 8 }, (_, i) => `level-${i}`));
+});
+
+test("an entry context at a leaf placement reveals that placement, not its sibling contexts", () => {
+  const state = getInitialMapExplorerState(view, "finality-in-rollups");
+  const rows = getVisibleMapExplorerRows(view, state.expandedPlacementIds);
+  assert.deepEqual(rows.filter((row) => row.conceptId === "finality").map((row) => row.placementId), [
+    "finality-in-rollups",
+  ]);
+  assert.ok(!state.expandedPlacementIds.has("finality-in-rollups"));
+});
+
+test("an unknown entry context is ignored rather than breaking the explorer", () => {
+  for (const context of ["unknown-placement", "", "finality"]) {
+    assert.deepEqual(getInitialMapExplorerState(view, context), getInitialMapExplorerState(view));
+  }
+});

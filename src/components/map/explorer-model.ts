@@ -51,6 +51,14 @@ export type MapExplorerContextStep = {
   label: string;
 };
 
+/** Query parameter carrying an entry placement context (MAP spec §14). */
+export const MAP_CONTEXT_PARAM = "context";
+
+/** `/map` opened at one placement context; placement identity, never display text. */
+export function getMapContextHref(placementId: string): string {
+  return `/map?${new URLSearchParams({ [MAP_CONTEXT_PARAM]: placementId })}`;
+}
+
 type IndexedPlacement = { node: MapExplorerNode; parentPlacementId?: string };
 export type MapExplorerIndex = ReadonlyMap<string, IndexedPlacement>;
 
@@ -91,11 +99,25 @@ export function getInitialExpandedPlacementIds(view: MapExplorerView): string[] 
   return view.roots.filter((root) => root.children.length > 0).map((root) => root.placementId);
 }
 
-export function getInitialMapExplorerState(view: MapExplorerView): MapExplorerState {
-  return {
-    expandedPlacementIds: new Set(getInitialExpandedPlacementIds(view)),
-    focusedPlacementId: null,
-  };
+/**
+ * An entry context (e.g. `/map?context=<placementId>`) becomes the focused
+ * placement and is revealed: its ancestors and the placement itself open, so
+ * its immediate children are visible, but nothing deeper is expanded. An
+ * unknown context is ignored and yields the default state.
+ */
+export function getInitialMapExplorerState(
+  view: MapExplorerView,
+  contextPlacementId: string | null = null,
+): MapExplorerState {
+  const expandedPlacementIds = new Set(getInitialExpandedPlacementIds(view));
+  const index = indexMapExplorerView(view);
+  const context = getMapExplorerContext(index, contextPlacementId);
+  if (context.length === 0) return { expandedPlacementIds, focusedPlacementId: null };
+
+  for (const { placementId } of context) {
+    if (index.get(placementId)?.node.children.length) expandedPlacementIds.add(placementId);
+  }
+  return { expandedPlacementIds, focusedPlacementId: context[context.length - 1].placementId };
 }
 
 /** Disclosure only: never changes the focused context. */
