@@ -65,42 +65,61 @@ models, security properties, economics, and coordination make them possible.
 
 ## 5. Long-term knowledge scope
 
-The following 17 macro regions are design input, not repository data and not
-permanent ontology primitives:
+MAP's taxonomy has 27 L0 domains, in this order:
 
 1. Foundations
-2. Computation & State
-3. Consensus & Coordination
-4. Networks & Data
-5. Cryptography & Verification
-6. Accounts, Identity & Authority
-7. Economics & Incentives
-8. Security & Resilience
-9. Transaction Supply Chain
-10. Intents & Execution Markets
-11. Scaling & Modularity
-12. Interoperability & Abstraction
-13. Governance
-14. Protocol Mechanisms
-15. Protocol Architecture & Design
-16. Protocol Lifecycle & Operations
-17. Frontier & Autonomous Systems
+2. Computation & Execution
+3. State & Data
+4. Consensus & Ordering
+5. Networks & Infrastructure
+6. Cryptography & Proofs
+7. Storage & Availability
+8. Identity, Accounts & Authority
+9. Oracles & External Reality
+10. Economics & Mechanism Design
+11. Markets & Financial Protocols
+12. MEV & Execution Markets
+13. Intents & Coordination
+14. Governance & Institutions
+15. Scaling & Modular Systems
+16. Interoperability & Abstraction
+17. Security, Correctness & Resilience
+18. Protocol Architecture
+19. Protocol Design & Lifecycle
+20. AI & Intelligent Systems
+21. Machine Economy
+22. Autonomous Coordination
+23. Autonomous Execution
+24. Autonomous Organizations
+25. Autonomous Protocols
+26. Autonomous Economy
+27. Frontier Systems
 
-They preserve intended breadth and guide initial taxonomy authoring. They do
-not require a fixed root set forever, a fixed ordering forever, or a new
-canonical concept for each contextual appearance.
+These are the root regions of the pedagogical taxonomy and the macro
+structure every MAP surface presents, including the homepage preview. They
+are taxonomy structure, not a separate ontology primitive: each is a canonical
+concept with a root placement, authored like any other record. Until those
+root placements exist in the knowledge data, this list is the specification
+rather than repository data. Deeper levels are authored incrementally beneath
+them.
 
-A concept missing from a region name is not missing from MAP. Oracles,
-Sequencing, Settlement, Data Availability, Storage, Verification, and Finality
-are canonical concepts that may be placed in several regions.
+A concept missing from a domain name is not missing from MAP. Sequencing,
+Settlement, Data Availability, Verification, Finality, and Preconfirmations are
+canonical concepts that may be placed in several domains without becoming
+several concepts.
 
-Intelligent and autonomous systems are taught where their technical substance
-lives: Agent Identity under Accounts, Identity & Authority; Verifiable AI under
-Cryptography & Verification; agent economic mechanisms under Economics &
-Incentives or Protocol Mechanisms; intents used by agents under Intents &
-Execution Markets. Frontier & Autonomous Systems expresses the integrated
-frontier and must not become a catch-all for AI; like any region, it places
-existing concepts without creating duplicate identities.
+AI & Intelligent Systems, Machine Economy, and the Autonomous Coordination,
+Execution, Organizations, Protocols, and Economy domains are explicit L0
+domains. They extend outward from the Protocol Engineering foundations (§4)
+and reuse the same canonical concepts. Intelligent and autonomous systems are
+also taught where their technical substance lives: Agent Identity under
+Identity, Accounts & Authority; Verifiable AI under Cryptography & Proofs;
+agent economic mechanisms under Economics & Mechanism Design or Machine
+Economy; intents used by agents under Intents & Coordination. Frontier Systems
+expresses the integrated frontier and is especially a presentation/taxonomy
+concern: it can place existing concepts such as Verifiable AI or
+Preconfirmations without creating duplicate identities, and it must not
+become a catch-all for AI.
 
 ## 6. Core architectural principles
 
@@ -640,6 +659,7 @@ commit, push, dependency installation, deployment, or production MAP code.
 11. **Can content expand without radically expanding implementation
     complexity?** Yes. Static typed records, validation, and bounded resolvers
     keep data growth separate from UI architecture.
-12. **Does the model preserve the 17-region breadth without making those
-    regions permanent primitives?** Yes. They are explicit design input and
-    initial pedagogical guidance, not immutable ontology categories.
+12. **Does the model preserve the 27-domain breadth without making those
+    domains a separate primitive?** Yes. The 27 L0 domains are canonical
+    concepts with root placements, so they use the same identity, placement,
+    and validation model as every other concept.
