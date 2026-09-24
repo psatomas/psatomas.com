@@ -8,10 +8,11 @@ import { ResearchPreview } from "@/components/sections/research-preview";
 import { LabPreview } from "@/components/sections/lab-preview";
 
 // The narrative is deliberate and matches the site's own conceptual model
-// — person, then conceptual territory, then work, thinking, and exploration
-// — not an order to rebalance by content volume: Hero (who) -> About (who,
-// in more words) -> MAP (the knowledge environment) -> Systems (what I
-// build) -> Research (how I think) -> Lab (what I explore). Every section
+// — person, then work, thinking, the broader territory they synthesize
+// into, and exploration — not an order to rebalance by content volume:
+// Hero (who) -> About (who, in more words) -> Systems (what I build) ->
+// Research (how I reason) -> MAP (the structured technical territory) ->
+// Lab (what I explore). Every section
 // below Hero reads from its own domain's existing source, or (for MAP's
 // intentionally non-canonical territory preview) keeps presentation copy
 // local rather than duplicating ontology data.
@@ -58,9 +59,9 @@ export default async function Home() {
       </div>
 
       <AboutPreview />
-      <MapPreview />
       <SystemsPreview />
       <ResearchPreview />
+      <MapPreview />
       <LabPreview />
     </main>
   );
