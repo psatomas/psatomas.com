@@ -1,27 +1,27 @@
 import Link from "next/link";
 import { MonoLabel } from "@/components/ui/mono-label";
 
-// This is homepage presentation copy, not MAP taxonomy data. It communicates
-// the environment's intended intellectual range without claiming that the
-// Phase 1 proof fixture is the ontology or that this sequence is canonical.
+// Homepage presentation copy, not MAP taxonomy data: a deliberately selective
+// glimpse of the territory. It is neither the complete macro-region list nor
+// a projection of the ontology, so it must never be read as a data source.
 const TERRITORY_PREVIEW = [
   "Foundations",
-  "Distributed Systems",
-  "Protocols",
-  "Computation / Execution",
-  "Cryptography / Security",
-  "Economics / Markets",
-  "Intents / Coordination",
-  "Intelligent Agents",
-  "Machine Economy",
+  "Computation & State",
+  "Consensus",
+  "Cryptography & Verification",
+  "Identity & Authority",
+  "Economics & Incentives",
+  "Intents",
+  "Protocol Architecture",
   "Autonomous Systems",
 ] as const;
 
 /**
- * MAP's homepage introduction. The identity plane links to the actual /map
- * environment. The connected full-width rows preview the future environment's
- * structural language without representing taxonomy depth or imposing a
- * canonical learning sequence.
+ * MAP's homepage introduction. As with Systems/Research/Lab, the identity
+ * plane is the environment's single gateway link and uses the same active
+ * plane treatment. The territory preview below is its sibling, informational
+ * only: no tree, no disclosure, no internal scrolling. The ontology grows at
+ * /map, never here.
  */
 export function MapPreview() {
   return (
@@ -34,50 +34,43 @@ export function MapPreview() {
           href="/map"
           className="group flex flex-col gap-3 bg-surface p-6 transition-colors hover:bg-[#737982] focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
         >
-          <MonoLabel className="transition-colors group-hover:text-background group-focus-visible:text-background">
-            A structured knowledge environment
-          </MonoLabel>
+          <div className="flex items-baseline justify-between gap-4">
+            <MonoLabel className="transition-colors group-hover:text-background group-focus-visible:text-background">
+              Map / Protocol Engineering
+            </MonoLabel>
+            {/* Internal navigation cue; the link's name comes from its text. */}
+            <span
+              aria-hidden="true"
+              className="font-mono text-base leading-none text-muted transition-colors group-hover:text-accent group-focus-visible:text-accent"
+            >
+              →
+            </span>
+          </div>
           <h2
             id="map-heading"
-            className="text-2xl font-semibold tracking-tight transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
+            className="text-2xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent sm:text-3xl"
           >
             Map
           </h2>
           <p className="max-w-xl text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
-            Explore Protocol Engineering through the systems, mechanisms,
-            trust models, economics, and coordination layers behind
-            programmable digital systems.
+            A knowledge environment for exploring the foundations of
+            programmable and increasingly autonomous digital systems.
           </p>
-          <span className="font-mono text-xs tracking-[0.1em] text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
-            EXPLORE MAP →
-          </span>
         </Link>
 
-        <div className="border-t border-border">
-          <div className="bg-background px-5 py-4 sm:px-6">
-            <MonoLabel>Map / Protocol Engineering</MonoLabel>
-          </div>
-
-          {/* A single bordered stack rather than nested or indented boxes:
-              every territory row retains the same left/right boundaries.
-              It is an illustrative progression, not a taxonomy projection
-              or an interactive disclosure control. */}
-          <ol className="border-t border-border">
-            {TERRITORY_PREVIEW.map((territory, index) => (
-              <li
-                key={territory}
-                className="flex min-w-0 items-center gap-3 border-t border-border px-5 py-3.5 first:border-t-0 sm:px-6"
-              >
-                <span aria-hidden="true" className="font-mono text-xs text-dim">
-                  {index === 0 ? "·" : "↓"}
-                </span>
-                <span className="min-w-0 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground sm:text-xs">
-                  {territory}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        <ul
+          aria-label="Selected territory"
+          className="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-border px-5 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-3"
+        >
+          {TERRITORY_PREVIEW.map((territory) => (
+            <li
+              key={territory}
+              className="min-w-0 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground sm:text-xs"
+            >
+              {territory}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
