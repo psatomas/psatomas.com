@@ -23,28 +23,26 @@ export default function MapPage() {
         <MonoLabel>Map / Protocol Engineering</MonoLabel>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Map</h1>
         <p className="text-lg text-muted">
-          A structured knowledge environment for understanding the systems,
-          mechanisms, trust models, economics, and coordination layers behind
-          programmable digital systems.
+          A structured knowledge environment for the foundations of
+          programmable and increasingly autonomous digital systems.
         </p>
       </header>
 
-      <section aria-labelledby="exploration-surface-heading" className="flex flex-col gap-6">
-        <div className="flex flex-col gap-3 bg-surface p-6 sm:p-8">
-          <MonoLabel>Exploration environment</MonoLabel>
+      <section aria-labelledby="exploration-surface-heading" className="flex flex-col gap-8">
+        {/* Plain intro rather than a graphite plane: inside the explorer,
+            graphite is reserved for structural region identity. */}
+        <div className="flex max-w-2xl flex-col gap-3">
           <h2 id="exploration-surface-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Protocol Engineering
           </h2>
-          <p className="max-w-2xl text-muted">
-            Explore the pedagogical taxonomy directly. Each row is a placement
-            of one canonical MAP concept; branches can be opened independently
-            without changing the width of the reading surface.
+          <p className="text-muted">
+            Explore the systems, mechanisms, trust models, economics,
+            coordination structures, and intelligent agents behind them.
+            Open as many regions and branches as you like; select a concept
+            to set your context.
           </p>
         </div>
-        <div className="flex flex-col gap-3">
-          <MonoLabel>Conceptual territory</MonoLabel>
-          <RecursiveMapExplorer view={explorerView} />
-        </div>
+        <RecursiveMapExplorer view={explorerView} />
       </section>
     </main>
   );
