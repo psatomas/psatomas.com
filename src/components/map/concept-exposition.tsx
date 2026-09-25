@@ -8,12 +8,14 @@ import type { MapContentBlock } from "@/lib/map";
 
 const MONO = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
 
-// MAP knowledge composition: one frame, two roles. Prose runs left-aligned on
-// a wide editorial measure; structures (models, axioms, tension matrices)
-// centre on the frame's axis. The frame is plain block flow so vertical
-// margins collapse: prose-to-prose transitions share one spacing, and any
-// transition into or out of a structure shares a larger one.
-const PROSE = "my-6 max-w-[54rem] first:mt-0 last:mb-0";
+// MAP knowledge composition. The panel is the container; the knowledge field
+// inside it has the prose measure and is the one coordinate system for all
+// exposition: prose fills it left-aligned, and structures (models, axioms,
+// tension matrices) centre within it, never on the wider panel. The field is
+// plain block flow so vertical margins collapse: prose-to-prose transitions
+// share one spacing, and any transition into or out of a structure another.
+const KNOWLEDGE_FIELD = "max-w-[54rem]";
+const PROSE = "my-6 first:mt-0 last:mb-0";
 const STRUCTURE = "my-10 first:mt-0 last:mb-0";
 
 // One request per concept for the page's lifetime; failures are not cached.
@@ -65,7 +67,7 @@ export function ConceptExposition({ id, conceptId, label }: { id: string; concep
       className="border-t border-border px-5 py-7 sm:px-6 sm:py-9"
     >
       {current?.exposition ? (
-        <div>
+        <div className={KNOWLEDGE_FIELD}>
           {current.exposition.blocks.map((block, index) => (
             <ExpositionBlock key={index} block={block} lead={index === 0} />
           ))}
