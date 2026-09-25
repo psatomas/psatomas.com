@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
-import type { Ref } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, Ref } from "react";
 import { useSearchParams } from "next/navigation";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { ConceptExposition } from "./concept-exposition";
@@ -39,10 +39,11 @@ const CONTROL_FOCUS = "focus-visible:outline-2 focus-visible:-outline-offset-2 f
 // focus keeps its own outline.
 const ROW_HOVER =
   "relative before:pointer-events-none before:absolute before:-inset-px before:z-10 before:border before:border-transparent before:transition-colors hover:before:border-[color-mix(in_srgb,white_60%,var(--background))]";
-// A revealed row lands just below the sticky navbar with 24px of room above
-// it: the navbar is up to 117px while its items wrap below sm (three lines at
-// 320px) and 65px from sm.
-const REVEAL_MARGIN = "scroll-mt-[141px] sm:scroll-mt-[89px]";
+// A revealed row lands 24px below the sticky navbar and, when there is a
+// context, the sticky breadcrumb beneath it. Both heights are measured (the
+// navbar wraps to different heights below sm) into CSS variables on the
+// explorer root, so the margin is pure CSS.
+const REVEAL_MARGIN = "scroll-mt-[calc(var(--map-sticky-top)+var(--map-context-h)+24px)]";
 
 /** A request to bring a placement's row into view; the nonce makes each request distinct. */
 type RevealRequest = { placementId: string; behavior: "auto" | "smooth"; nonce: number };
@@ -84,19 +85,38 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
   const domainEntries = useMemo(() => getMapL0IndexEntries(view), [view]);
   const context = getMapExplorerContext(index, focusedPlacementId);
   const rowHintId = useId();
-  const contextRef = useRef<HTMLElement>(null);
-  // Where keyboard focus goes once a breadcrumb move or Clear has rendered,
-  // since both remove the control that was activated.
-  const pendingFocusRef = useRef<{ target: string | null } | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const trailRef = useRef<HTMLElement>(null);
+  // Where keyboard focus goes once a breadcrumb move has rendered, since the
+  // chosen ancestor becomes the (non-interactive) current step.
+  const pendingFocusRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const pending = pendingFocusRef.current;
-    if (!pending) return;
+    const target = pendingFocusRef.current;
+    if (!target) return;
     pendingFocusRef.current = null;
-    const control = pending.target
-      ? document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(pending.target)}"] [data-row-control]`)
-      : null;
-    (control ?? contextRef.current)?.focus({ preventScroll: true });
+    document
+      .querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(target)}"] [data-row-control]`)
+      ?.focus({ preventScroll: true });
+  }, [focusedPlacementId]);
+
+  // Sticky geometry from the real layout: the site navbar's height (it wraps
+  // below sm) places the breadcrumb, and the breadcrumb's own height (none
+  // without a context) joins it in every row's scroll margin. Measured in a
+  // layout effect, before any reveal runs, and kept current on resize.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const navbar = [...document.querySelectorAll("header")].find((el) => getComputedStyle(el).position === "sticky");
+    const update = () => {
+      root.style.setProperty("--map-sticky-top", `${navbar?.getBoundingClientRect().height ?? 0}px`);
+      root.style.setProperty("--map-context-h", `${trailRef.current?.getBoundingClientRect().height ?? 0}px`);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    if (navbar) observer.observe(navbar);
+    if (trailRef.current) observer.observe(trailRef.current);
+    return () => observer.disconnect();
   }, [focusedPlacementId]);
 
   // The URL's context decides what is brought into view, so the browser's own
@@ -118,9 +138,8 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     row?.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
   }, [reveal]);
 
-  // Each explicit context change is its own history entry; Clear returns to /map.
-  const navigate = (placementId: string | null) =>
-    window.history.pushState(null, "", getMapContextHref(placementId));
+  // Each explicit context change is its own history entry.
+  const navigate = (placementId: string) => window.history.pushState(null, "", getMapContextHref(placementId));
   // Moves to a placement: navigates if the context changes (the reveal then
   // follows the rendered context) or reveals at once if it does not. Short
   // in-place moves (a row, the breadcrumb) scroll smoothly; a jump from the
@@ -145,10 +164,9 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     setExpandedPlacementIds(next.expandedPlacementIds);
     moveTo(placementId, "auto");
   };
-  const navigateFromTrail = (placementId: string | null) => {
-    pendingFocusRef.current = { target: placementId };
-    if (placementId) moveTo(placementId, "smooth");
-    else navigate(null);
+  const navigateFromTrail = (placementId: string) => {
+    pendingFocusRef.current = placementId;
+    moveTo(placementId, "smooth");
   };
 
   // Opening a concept reveals its canonical explanation first, then its next
@@ -216,7 +234,14 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
   }
 
   return (
-    <div className="flex flex-col gap-10 sm:gap-12">
+    // The sticky breadcrumb must be a direct child of this long column so it
+    // stays pinned through the whole explorer. The variables default to the
+    // desktop navbar until measured.
+    <div
+      ref={rootRef}
+      className="flex flex-col"
+      style={{ "--map-sticky-top": "65px", "--map-context-h": "0px" } as CSSProperties}
+    >
       {/* Description only (via aria-describedby); hidden from reading order. */}
       <p id={rowHintId} hidden>
         Selects this concept as the current context and shows or hides what it contains.
@@ -226,13 +251,25 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
         containingPlacementId={getContainingMapL0(index, focusedPlacementId)}
         onEnter={enterDomain}
       />
-      <ContextTrail ref={contextRef} context={context} onNavigate={navigateFromTrail} />
+      {/* The CONTEXT label stays at the breadcrumb's natural position and
+          scrolls away; only the path below it is sticky. Neither exists
+          without a context. */}
+      {context.length > 0 ? (
+        <>
+          <p className="mt-10 sm:mt-12">
+            <MonoLabel>Context</MonoLabel>
+          </p>
+          <ContextTrail ref={trailRef} context={context} onNavigate={navigateFromTrail} />
+        </>
+      ) : null}
 
       {/* Regions are separated by whitespace; rows inside a region stay
-          connected. Every row shares the region's full width at any depth. */}
+          connected. Every row shares the region's full width at any depth.
+          isolate keeps the rows' hover layers (z-10) below the sticky
+          breadcrumb and the navbar. */}
       {/* ARIA lists rather than <ol>/<ul>: list semantics without native
           markers, so no numbering can appear even without styles. */}
-      <div role="list" aria-label="Protocol Engineering regions" className="flex flex-col gap-10 sm:gap-14">
+      <div role="list" aria-label="Protocol Engineering regions" className="isolate mt-10 flex flex-col gap-10 sm:mt-12 sm:gap-14">
         {regions.map(({ header, rows }) => (
           <div role="listitem" key={header.placementId} className="border border-border">
             <div
@@ -282,8 +319,16 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
 
 /**
  * Breadcrumb of the focused placement's taxonomy ancestry (placement
- * ancestry, not graph relationships or concept identity). Ancestors navigate
- * to their own placement; the trail wraps rather than overflowing.
+ * ancestry, not graph relationships or concept identity), and the page's
+ * persistent orientation: it is sticky beneath the navbar while the explorer
+ * scrolls. Visually text only; its backing is the opaque page background so
+ * content scrolling beneath never shows through. Ancestors navigate to their
+ * own placement; the current step is plain text with aria-current.
+ *
+ * Below sm the path is compact: ancestors share one line in which the
+ * intermediate steps shrink to an ellipsis before the L0 domain does, and the
+ * current concept has its own line and is never truncated. Truncation is
+ * visual only; every step keeps its full text and accessible name.
  */
 function ContextTrail({
   ref,
@@ -292,56 +337,45 @@ function ContextTrail({
 }: {
   ref: Ref<HTMLElement>;
   context: MapExplorerContextStep[];
-  onNavigate: (placementId: string | null) => void;
+  onNavigate: (placementId: string) => void;
 }) {
+  const ancestors = context.slice(0, -1);
+  const current = context[context.length - 1];
   return (
     <nav
       ref={ref}
-      tabIndex={-1}
       aria-label="Context"
-      className="flex min-w-0 flex-col gap-3 border border-border px-5 py-4 outline-none sm:flex-row sm:items-baseline sm:gap-6 sm:px-6"
+      className="sticky top-[var(--map-sticky-top)] z-[5] mt-1 bg-background py-3"
     >
-      <MonoLabel className="shrink-0">Context</MonoLabel>
-      {context.length === 0 ? (
-        <p className={`${LABEL_TEXT} flex-1 text-dim`}>Select a concept to set context</p>
-      ) : (
-        <>
-          {/* Segments wrap onto further lines (and long labels wrap within
-              themselves) so any depth stays inside the reading width. */}
-          <div role="list" className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
-            {context.map((step, index) => (
-              <div role="listitem" key={step.placementId} className="flex min-w-0 items-baseline gap-2">
-                {index > 0 ? (
-                  <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
-                    /
-                  </span>
-                ) : null}
-                {index === context.length - 1 ? (
-                  <span aria-current="location" className={`${LABEL_TEXT} py-1.5 text-accent [overflow-wrap:anywhere]`}>
-                    {step.label}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate(step.placementId)}
-                    className={`${LABEL_TEXT} py-1.5 text-left text-muted [overflow-wrap:anywhere] transition-colors hover:text-accent ${CONTROL_FOCUS}`}
-                  >
-                    {step.label}
-                  </button>
-                )}
+      <div role="list" className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2">
+        {ancestors.length > 0 ? (
+          <div role="none" className="flex min-w-0 items-baseline gap-x-2 overflow-hidden sm:contents">
+            {ancestors.map((step, index) => (
+              <div
+                role="listitem"
+                key={step.placementId}
+                className={`flex min-w-0 items-baseline gap-2 ${index === 0 ? "shrink" : "min-w-[3em] shrink-[8]"} sm:shrink-0 sm:min-w-0`}
+              >
+                <button
+                  type="button"
+                  onClick={() => onNavigate(step.placementId)}
+                  className={`${LABEL_TEXT} min-w-0 truncate py-1 text-left text-muted transition-colors hover:text-accent sm:overflow-visible sm:whitespace-normal sm:[overflow-wrap:anywhere] ${CONTROL_FOCUS}`}
+                >
+                  {step.label}
+                </button>
+                <span aria-hidden="true" className={`${LABEL_TEXT} shrink-0 text-dim`}>
+                  /
+                </span>
               </div>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => onNavigate(null)}
-            aria-label="Clear context"
-            className={`${LABEL_TEXT} self-start py-1.5 text-dim transition-colors hover:text-accent sm:self-auto ${CONTROL_FOCUS}`}
-          >
-            Clear
-          </button>
-        </>
-      )}
+        ) : null}
+        <div role="listitem" className="min-w-0">
+          <span aria-current="location" className={`${LABEL_TEXT} block py-1 text-accent [overflow-wrap:anywhere]`}>
+            {current.label}
+          </span>
+        </div>
+      </div>
     </nav>
   );
 }
