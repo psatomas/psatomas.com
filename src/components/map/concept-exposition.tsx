@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getMapConceptContentHref } from "./explorer-model";
 import type { MapConceptExposition } from "./explorer-model";
+import { FlowModel, TensionPair } from "./exposition-models";
 import type { MapContentBlock } from "@/lib/map";
 
 const MONO = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
@@ -56,7 +57,9 @@ export function ConceptExposition({ id, conceptId, label }: { id: string; concep
       className="border-t border-border px-5 py-7 sm:px-6 sm:py-9"
     >
       {current?.exposition ? (
-        <div className="flex max-w-3xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
+          {/* Prose keeps a readable measure; conceptual models may use the
+              panel's full width so parallel sets never break labels. */}
           {current.exposition.blocks.map((block, index) => (
             <ExpositionBlock key={index} block={block} lead={index === 0} />
           ))}
@@ -79,48 +82,31 @@ function ExpositionBlock({ block, lead }: { block: MapContentBlock; lead: boolea
   switch (block.kind) {
     case "paragraph":
       return (
-        <p className={lead ? "text-lg leading-8 text-foreground" : "leading-7 text-foreground/80"}>{block.text}</p>
+        <p className={`max-w-3xl ${lead ? "text-lg leading-8 text-foreground" : "leading-7 text-foreground/80"}`}>{block.text}</p>
       );
     case "flow":
-      // Ordered stages; a stage with several elements lays them side by side
-      // and wraps on narrow screens. Arrows are decorative: order is semantic.
-      return (
-        <ol aria-label={block.label} className="flex flex-col gap-2 py-2">
-          {block.stages.map((stage, index) => (
-            <li key={index} className="flex flex-col items-center gap-2">
-              {index > 0 ? (
-                <span aria-hidden="true" className={`${MONO} text-dim`}>
-                  ↓
-                </span>
-              ) : null}
-              <ul className="flex flex-wrap justify-center gap-2">
-                {stage.map((element) => (
-                  <li key={element} className={`${MONO} border border-border px-3 py-2 text-center text-foreground`}>
-                    {element}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ol>
-      );
+      return <FlowModel label={block.label} stages={block.stages} />;
     case "distinction":
+      // Visible symbol; spoken wording lives only in the text alternative.
       return (
-        <p className={`${MONO} border-y border-border py-4 text-center text-foreground`}>
-          {block.left} <span aria-hidden="true" className="px-2 align-middle text-base leading-none text-muted">≠</span>
-          <span className="sr-only">is not the same as</span> {block.right}
+        <p
+          role="img"
+          aria-label={`${block.left} is not the same as ${block.right}`}
+          className={`${MONO} max-w-3xl border-y border-border py-4 text-center text-foreground`}
+        >
+          {block.left} <span className="px-2 align-middle text-base leading-none text-muted">≠</span> {block.right}
         </p>
       );
     case "tensions":
+      // Six relationship rows, each [concept] ↔ [concept]; not a table.
       return (
-        <ul aria-label={block.label} className="grid gap-x-10 gap-y-3 py-1 sm:grid-cols-2">
+        <div role="list" aria-label={block.label} className="flex max-w-xl flex-col gap-2 py-1">
           {block.pairs.map(([left, right]) => (
-            <li key={`${left}-${right}`} className={`${MONO} text-foreground`}>
-              {left} <span aria-hidden="true" className="px-1.5 align-middle text-base leading-none text-muted">↔</span>
-              <span className="sr-only">in tension with</span> {right}
-            </li>
+            <div role="listitem" key={`${left}-${right}`}>
+              <TensionPair left={left} right={right} />
+            </div>
           ))}
-        </ul>
+        </div>
       );
   }
 }
