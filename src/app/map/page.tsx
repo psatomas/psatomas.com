@@ -31,10 +31,8 @@ export default function MapPage() {
         <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">Map / Protocol Engineering</p>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Map</h1>
         <p className="text-lg text-muted">
-          A structured knowledge environment for exploring the systems,
-          mechanisms, trust models, economics, coordination structures, and
-          intelligent agents behind programmable and increasingly autonomous
-          digital systems.
+          A structured knowledge environment for the foundations of
+          programmable and increasingly autonomous digital systems.
         </p>
       </header>
 
