@@ -362,12 +362,34 @@ Three reader intentions stay separate:
   never changes context, navigates, or closes unrelated branches.
 - **Context** is the focused placement: zero or one, changed only by an
   explicit focus action, never inferred from expansion. Its ancestry is shown
-  as a context trail (for example `Distributed Systems › Consensus ›
-  Finality`) derived from placement ancestry, not from display strings and
-  not from Knowledge Paths. Ancestors in the trail re-focus their placement.
+  as a context trail (for example `15 Scaling & Modular Systems / Scaling /
+  Rollups / Finality`) derived from placement ancestry, not from display
+  strings and not from Knowledge Paths. Ancestors in the trail re-focus their
+  placement.
 - **Concept navigation** opens the canonical concept (`/map/[conceptId]`,
   optionally with `?context=[placementId]`). It is not offered until concept
   routes exist; the explorer never presents unavailable navigation.
+
+### Explorer navigation contract
+
+- Each explorer row is one control. Activating an open row collapses it and
+  changes nothing else; activating a closed or leaf row makes it the context,
+  opens it when it has anything to disclose, and brings it into view. The
+  +/− indicator is state inside the row, not a separate control.
+- `/map` opens with the 27 L0 domains as an index into the explorer, derived
+  from the canonical root placements (the same entries, order, and ordinals
+  as the homepage). Entering a domain sets it as the context in place and
+  never collapses it.
+- Each context change is a history entry, so Back/Forward and refresh
+  reconstruct it from the URL; the explorer, not the browser's scroll
+  restoration, decides what is brought into view.
+- The context trail stays visible beneath the navbar while the explorer
+  scrolls. It leads with the containing L0 domain's canonical ordinal, which,
+  like every MAP ordinal, is visual only.
+- Bringing a context into view is a bounded operation: while exposition it
+  opened is still loading, layout that moves the target is corrected; it ends
+  once loading settles, and is abandoned as soon as the reader scrolls or
+  interacts, or the context changes.
 
 ### Collapsed identity, expanded knowledge
 
