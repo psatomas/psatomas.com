@@ -239,9 +239,41 @@ export function toggleMapExplorerPlacement(
   return next;
 }
 
-/** Selecting the active placement again clears context; any other selection moves to it. */
-export function getNextMapContext(current: string | null, selected: string): string | null {
-  return current === selected ? null : selected;
+/** The outcome of activating one explorer row, the row's single control. */
+export type MapRowActivation = {
+  /** The context after activation; a change is a navigation (new history entry). */
+  contextPlacementId: string | null;
+  expandedPlacementIds: ReadonlySet<string>;
+  /** Whether the row should be brought into view. */
+  reveal: boolean;
+};
+
+/**
+ * One interaction per row, over two independent state dimensions. An open
+ * row collapses and nothing else changes: context stays (even when another
+ * placement is the context) and there is nothing to reveal. A closed or leaf
+ * row becomes the context and opens if it has anything to disclose, then is
+ * brought into view. Disclosure never clears context.
+ */
+export function activateMapExplorerRow(
+  row: Pick<MapExplorerRow, "placementId" | "isExpandable" | "isExpanded">,
+  contextPlacementId: string | null,
+  expandedPlacementIds: ReadonlySet<string>,
+): MapRowActivation {
+  if (row.isExpanded) {
+    return {
+      contextPlacementId,
+      expandedPlacementIds: toggleMapExplorerPlacement(expandedPlacementIds, row.placementId),
+      reveal: false,
+    };
+  }
+  return {
+    contextPlacementId: row.placementId,
+    expandedPlacementIds: row.isExpandable
+      ? toggleMapExplorerPlacement(expandedPlacementIds, row.placementId)
+      : expandedPlacementIds,
+    reveal: true,
+  };
 }
 
 /** Placement lookup with parent links, derived from the view's placement tree. */

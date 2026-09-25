@@ -10,9 +10,9 @@ import {
   getMapExplorerContext,
   getMapL0Entries,
   getMapConceptContentHref,
-  getNextMapContext,
   getVisibleMapExplorerRegions,
   getVisibleMapExplorerRows,
+  activateMapExplorerRow,
   indexMapExplorerView,
   resolveMapContextParam,
   revealMapExplorerContext,
@@ -210,10 +210,61 @@ test("a context change reveals only its ancestors and never closes a branch", ()
   assert.equal(revealMapExplorerContext(open, index, null), open);
 });
 
-test("selecting the active placement clears context; anything else moves to it", () => {
-  assert.equal(getNextMapContext(null, "consensus"), "consensus");
-  assert.equal(getNextMapContext("consensus", "finality-in-consensus"), "finality-in-consensus");
-  assert.equal(getNextMapContext("consensus", "consensus"), null);
+test("row activation: a closed row becomes the context and opens", () => {
+  const foundations = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "foundations")!;
+  const result = activateMapExplorerRow(foundations, "state-data", new Set());
+  assert.equal(result.contextPlacementId, "foundations");
+  assert.deepEqual([...result.expandedPlacementIds], ["foundations"]);
+  assert.equal(result.reveal, true);
+});
+
+test("row activation: a closed active row stays the context and opens", () => {
+  const foundations = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "foundations")!;
+  const result = activateMapExplorerRow(foundations, "foundations", new Set());
+  assert.equal(result.contextPlacementId, "foundations");
+  assert.ok(result.expandedPlacementIds.has("foundations"));
+  assert.equal(result.reveal, true);
+});
+
+test("row activation: an open active row collapses and keeps context, with nothing to reveal", () => {
+  const open = new Set(["foundations"]);
+  const foundations = getVisibleMapExplorerRows(view, open).find((row) => row.placementId === "foundations")!;
+  const result = activateMapExplorerRow(foundations, "foundations", open);
+  assert.equal(result.contextPlacementId, "foundations");
+  assert.deepEqual([...result.expandedPlacementIds], []);
+  assert.equal(result.reveal, false);
+});
+
+test("row activation: an open non-active row collapses without taking the context", () => {
+  const open = new Set(["foundations", "scaling-modular-systems"]);
+  const scaling = getVisibleMapExplorerRows(view, open).find((row) => row.placementId === "scaling-modular-systems")!;
+  const result = activateMapExplorerRow(scaling, "foundations", open);
+  assert.equal(result.contextPlacementId, "foundations");
+  assert.deepEqual([...result.expandedPlacementIds], ["foundations"]);
+  assert.equal(result.reveal, false);
+});
+
+test("row activation: a leaf becomes the context without fabricated disclosure", () => {
+  const open = new Set(["foundations"]);
+  const protocols = getVisibleMapExplorerRows(view, open).find((row) => row.placementId === "protocols")!;
+  assert.equal(protocols.isExpandable, false);
+  const result = activateMapExplorerRow(protocols, "foundations", open);
+  assert.equal(result.contextPlacementId, "protocols");
+  assert.equal(result.expandedPlacementIds, open);
+  assert.equal(result.reveal, true);
+  // An empty domain is a leaf too.
+  const stateData = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "state-data")!;
+  assert.equal(activateMapExplorerRow(stateData, null, new Set()).expandedPlacementIds.size, 0);
+});
+
+test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
+  const index = indexMapExplorerView(view);
+  const opened = revealMapExplorerContext(new Set(), index, "finality-in-consensus", true);
+  assert.deepEqual([...opened].sort(), ["consensus", "consensus-ordering", "finality-in-consensus"]);
+  // Collapsing is a disclosure change: the URL-owned context is untouched.
+  const finality = getVisibleMapExplorerRows(view, opened).find((row) => row.placementId === "finality-in-consensus")!;
+  const collapsed = activateMapExplorerRow(finality, "finality-in-consensus", opened);
+  assert.equal(getMapContextHref(collapsed.contextPlacementId), "/map?context=finality-in-consensus");
 });
 
 test("context navigation URLs carry placement identity only; clearing returns to /map", () => {
