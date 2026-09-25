@@ -9,6 +9,7 @@ import {
   getMapContextHref,
   getMapExplorerContext,
   getMapL0Entries,
+  getMapConceptContentHref,
   getNextMapContext,
   getVisibleMapExplorerRegions,
   getVisibleMapExplorerRows,
@@ -16,6 +17,7 @@ import {
   resolveMapContextParam,
   revealMapExplorerContext,
   toggleMapExplorerPlacement,
+  toMapConceptExposition,
 } from "./explorer-model.ts";
 
 function chainModel(depth: number): MapKnowledgeModel {
@@ -147,14 +149,11 @@ test("expansion is keyed by placement, so one multi-placed concept opens per con
   assert.deepEqual(visible(["region-b", "shared-in-a"]), ["region-a", "region-b", "shared-in-b"]);
 });
 
-test("root regions are initially open while descendant branches remain reader-controlled", () => {
-  assert.deepEqual(getInitialExpandedPlacementIds(view), [
-    "foundations",
-    "consensus-ordering",
-    "identity-accounts-authority",
-    "scaling-modular-systems",
-    "ai-intelligent-systems",
-  ]);
+test("domains begin collapsed: the initial view is the 27 domain identities only", () => {
+  assert.deepEqual(getInitialExpandedPlacementIds(), []);
+  const rows = getVisibleMapExplorerRows(view, new Set(getInitialExpandedPlacementIds()));
+  assert.equal(rows.length, 27);
+  assert.ok(rows.every((row) => row.depth === 0 && !row.isExpanded));
 });
 
 test("recursive projection supports synthetic deep hierarchies without a depth limit", () => {
@@ -194,7 +193,8 @@ test("disclosure only changes the expanded set, so several branches stay open an
   expanded = toggleMapExplorerPlacement(expanded, "foundations");
 
   // Disclosure is a Set-to-Set change; the context (URL-owned) has no input or output here.
-  assert.ok(expanded.has("consensus") && expanded.has("rollups") && expanded.has("ai-intelligent-systems"));
+  assert.ok(expanded.has("consensus") && expanded.has("rollups") && expanded.has("scaling-modular-systems"));
+  assert.ok(!expanded.has("foundations"));
   assert.equal(getMapContextHref(initial.focusedPlacementId), "/map?context=finality-in-rollups");
 });
 
@@ -309,7 +309,7 @@ test("root placements become structural regions holding their visible descendant
 
 test("no entry context yields exactly the default initial state", () => {
   const state = getInitialMapExplorerState(view);
-  assert.deepEqual([...state.expandedPlacementIds], getInitialExpandedPlacementIds(view));
+  assert.deepEqual([...state.expandedPlacementIds], getInitialExpandedPlacementIds());
   assert.equal(state.focusedPlacementId, null);
   assert.deepEqual(getInitialMapExplorerState(view, null), state);
 });
@@ -322,10 +322,10 @@ test("an entry context opens its region and itself, focuses it, and expands noth
 
   const visible = getVisibleMapExplorerRows(view, state.expandedPlacementIds).map((row) => row.placementId);
   assert.ok(visible.includes("finality-in-consensus"));
-  // Independent branches keep their default disclosure; other Finality stays hidden.
+  // Independent branches keep their default (collapsed) disclosure.
   assert.ok(!visible.includes("finality-in-rollups"));
-  assert.ok(visible.includes("scaling"));
-  assert.ok(!visible.includes("rollups"));
+  assert.ok(visible.includes("scaling-modular-systems"));
+  assert.ok(!visible.includes("scaling"));
 });
 
 test("an entry context reveals its ancestry at arbitrary depth without opening its subtree", () => {
@@ -338,13 +338,15 @@ test("an entry context reveals its ancestry at arbitrary depth without opening i
   assert.deepEqual(visible, Array.from({ length: 8 }, (_, i) => `level-${i}`));
 });
 
-test("an entry context at a leaf placement reveals that placement, not its sibling contexts", () => {
+test("an entry context reveals that placement and opens its exposition, not its sibling contexts", () => {
   const state = getInitialMapExplorerState(view, "finality-in-rollups");
   const rows = getVisibleMapExplorerRows(view, state.expandedPlacementIds);
   assert.deepEqual(rows.filter((row) => row.conceptId === "finality").map((row) => row.placementId), [
     "finality-in-rollups",
   ]);
-  assert.ok(!state.expandedPlacementIds.has("finality-in-rollups"));
+  // Finality has canonical content, so entering at it opens its explanation.
+  const finality = rows.find((row) => row.placementId === "finality-in-rollups");
+  assert.ok(finality?.isExpanded && finality.hasContent && !finality.hasChildren);
 });
 
 test("an unknown entry context is ignored rather than breaking the explorer", () => {
@@ -356,11 +358,11 @@ test("an unknown entry context is ignored rather than breaking the explorer", ()
 test("an L0 entry context focuses the domain; an empty domain adds no disclosure state", () => {
   const populated = getInitialMapExplorerState(view, "scaling-modular-systems");
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
-  assert.deepEqual([...populated.expandedPlacementIds], getInitialExpandedPlacementIds(view));
+  assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
   const empty = getInitialMapExplorerState(view, "state-data");
   assert.equal(empty.focusedPlacementId, "state-data");
-  assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds(view));
+  assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
 test("a deep entry context reveals its full ancestor chain from the L0 domain", () => {
@@ -388,4 +390,59 @@ test("L0 rows carry ordinals 01 → 27 from the canonical root order; nested row
 test("a bounded view of some roots keeps each domain's canonical ordinal", () => {
   const bounded = buildMapExplorerView(resolver, ["state-data", "frontier-systems"]);
   assert.deepEqual(bounded.roots.map((root) => root.ordinal), ["03", "27"]);
+});
+
+test("collapsed Foundations is identity only; opening it reveals its exposition and then its seven concepts", () => {
+  const collapsed = getVisibleMapExplorerRows(view, new Set());
+  const foundations = collapsed.find((row) => row.placementId === "foundations");
+  assert.ok(foundations?.hasContent && foundations.isExpandable && !foundations.isExpanded);
+  assert.ok(!collapsed.some((row) => row.depth > 0));
+
+  const [region] = getVisibleMapExplorerRegions(view, new Set(["foundations"]));
+  assert.ok(region.header.isExpanded && region.header.hasContent);
+  assert.deepEqual(region.rows.map((row) => row.label), [
+    "Protocols",
+    "Distributed Systems",
+    "State Machines",
+    "Trust Models",
+    "Coordination",
+    "Adversarial Environments",
+    "Protocol Properties",
+  ]);
+  // The seven are the next layer only: identities, not yet expandable.
+  assert.ok(region.rows.every((row) => row.depth === 1 && !row.isExpandable));
+});
+
+test("a concept is expandable when it has exposition or a next layer, never when empty", () => {
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const byId = new Map(rows.map((row) => [row.placementId, row]));
+  assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
+  assert.ok(byId.get("consensus")?.isExpandable); // children, no content
+  assert.ok(!byId.get("state-data")?.isExpandable); // neither
+  assert.ok(!byId.get("protocols")?.isExpandable);
+});
+
+test("the explorer view carries only a content flag, never exposition text", () => {
+  const serialized = JSON.stringify(view);
+  for (const content of mapKnowledge.content) {
+    assert.ok(!serialized.includes(content.definition), content.conceptId);
+    for (const block of content.body ?? []) {
+      if (block.kind === "paragraph") assert.ok(!serialized.includes(block.text), content.conceptId);
+    }
+  }
+  assert.ok(serialized.includes('"hasContent":true'));
+});
+
+test("exposition is normalized to ordered blocks: definition leads, no labelled scaffolding", () => {
+  const finality = mapKnowledge.content.find((content) => content.conceptId === "finality")!;
+  const exposition = toMapConceptExposition(finality);
+  assert.deepEqual(exposition.blocks, [
+    { kind: "paragraph", text: finality.definition },
+    { kind: "paragraph", text: finality.summary },
+    { kind: "paragraph", text: finality.whyItMatters },
+  ]);
+  const foundations = toMapConceptExposition(mapKnowledge.content.find((content) => content.conceptId === "foundations")!);
+  assert.equal(foundations.blocks[0].kind, "paragraph");
+  assert.equal(foundations.blocks.length, 1 + (mapKnowledge.content[0].body?.length ?? 0));
+  assert.equal(getMapConceptContentHref("foundations"), "/api/map/content/foundations");
 });

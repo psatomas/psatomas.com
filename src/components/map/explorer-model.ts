@@ -1,4 +1,4 @@
-import type { MapResolver } from "@/lib/map";
+import type { MapConceptContent, MapContentBlock, MapResolver } from "@/lib/map";
 
 /**
  * Serializable, taxonomy-only data for the interactive client boundary.
@@ -12,6 +12,8 @@ export type MapExplorerNode = {
   label: string;
   /** Two-digit L0 ordinal ("01"…) from the canonical root order; roots only. */
   ordinal?: string;
+  /** Whether the canonical concept has exposition; the exposition itself stays server-side. */
+  hasContent: boolean;
   children: readonly MapExplorerNode[];
 };
 
@@ -30,6 +32,9 @@ export type MapExplorerRow = {
   parentPlacementId?: string;
   parentLabel?: string;
   hasChildren: boolean;
+  hasContent: boolean;
+  /** Disclosure reveals knowledge: a concept opens if it has exposition or a next layer. */
+  isExpandable: boolean;
   isExpanded: boolean;
 };
 
@@ -72,6 +77,29 @@ export function formatMapL0Ordinal(position: number): string {
   return String(position).padStart(2, "0");
 }
 
+/** Where a concept's canonical exposition is served (prerendered, one document per concept). */
+export function getMapConceptContentHref(conceptId: string): string {
+  return `/api/map/content/${encodeURIComponent(conceptId)}`;
+}
+
+/** A concept's canonical exposition as the client receives it: ordered blocks, lead first. */
+export type MapConceptExposition = {
+  conceptId: string;
+  blocks: readonly MapContentBlock[];
+};
+
+/**
+ * Normalizes canonical content into one ordered exposition: the definition
+ * leads, any legacy prose fields follow as paragraphs (never as labelled
+ * scaffolding), then the structured body.
+ */
+export function toMapConceptExposition(content: MapConceptContent): MapConceptExposition {
+  const prose = [content.definition, content.summary, content.explanation, content.whyItMatters]
+    .filter((text): text is string => Boolean(text))
+    .map((text): MapContentBlock => ({ kind: "paragraph", text }));
+  return { conceptId: content.conceptId, blocks: [...prose, ...(content.body ?? [])] };
+}
+
 /** One L0 domain as an entry point into /map, derived from canonical root placements. */
 export type MapL0Entry = {
   placementId: string;
@@ -109,6 +137,7 @@ function resolveNode(resolver: MapResolver, placementId: string): MapExplorerNod
     placementId: placement.id,
     conceptId: concept.id,
     label: placement.contextualLabel ?? concept.title,
+    hasContent: resolver.getContentForConcept(concept.id) !== undefined,
     children: resolver.getChildren(placement.id).map((child) => resolveNode(resolver, child.id)),
   };
 }
@@ -135,12 +164,15 @@ export function buildMapExplorerView(
 }
 
 /**
- * Root regions begin open so the explorer signals its affordance immediately.
- * Descendant branches remain closed until the reader chooses to inspect them.
+ * Domains begin collapsed: a collapsed concept is its identity only, and the
+ * reader opens the knowledge they want. An entry context reveals itself.
  */
-export function getInitialExpandedPlacementIds(view: MapExplorerView): string[] {
-  return view.roots.filter((root) => root.children.length > 0).map((root) => root.placementId);
+export function getInitialExpandedPlacementIds(): string[] {
+  return [];
 }
+
+const isExpandableNode = (node: MapExplorerNode | undefined) =>
+  Boolean(node && (node.children.length > 0 || node.hasContent));
 
 /**
  * The URL's context value as a known placement, or null. Anything other than
@@ -169,7 +201,7 @@ export function revealMapExplorerContext(
   const context = getMapExplorerContext(index, placementId);
   const steps = includeSelf ? context : context.slice(0, -1);
   const missing = steps.filter(
-    ({ placementId: id }) => index.get(id)?.node.children.length && !expandedPlacementIds.has(id),
+    ({ placementId: id }) => isExpandableNode(index.get(id)?.node) && !expandedPlacementIds.has(id),
   );
   if (missing.length === 0) return expandedPlacementIds;
   return new Set([...expandedPlacementIds, ...missing.map((step) => step.placementId)]);
@@ -188,7 +220,7 @@ export function getInitialMapExplorerState(
   const index = indexMapExplorerView(view);
   const focusedPlacementId = resolveMapContextParam(index, contextPlacementId);
   const expandedPlacementIds = revealMapExplorerContext(
-    new Set(getInitialExpandedPlacementIds(view)),
+    new Set(getInitialExpandedPlacementIds()),
     index,
     focusedPlacementId,
     true,
@@ -255,7 +287,8 @@ export function getVisibleMapExplorerRows(
 
   function visit(node: MapExplorerNode, depth: number, parent?: MapExplorerNode): void {
     const hasChildren = node.children.length > 0;
-    const isExpanded = hasChildren && expandedPlacementIds.has(node.placementId);
+    const isExpandable = isExpandableNode(node);
+    const isExpanded = isExpandable && expandedPlacementIds.has(node.placementId);
 
     rows.push({
       placementId: node.placementId,
@@ -266,6 +299,8 @@ export function getVisibleMapExplorerRows(
       parentPlacementId: parent?.placementId,
       parentLabel: parent?.label,
       hasChildren,
+      hasContent: node.hasContent,
+      isExpandable,
       isExpanded,
     });
 
