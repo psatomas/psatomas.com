@@ -129,6 +129,23 @@ const POPULATED_L0 = {
     "data-availability-sampling",
     "storage-proofs",
   ],
+  "governance-institutions": [
+    "governance-models",
+    "governance-participants",
+    "proposals",
+    "voting",
+    "representation",
+    "decision-rules",
+    "governance-execution",
+    "councils-committees",
+    "treasury-governance",
+    "constitutional-rules",
+    "checks-balances",
+    "dispute-resolution",
+    "emergency-governance",
+    "governance-attacks",
+    "institutional-design",
+  ],
   "intents-coordination": [
     "intents",
     "intent-specification",
@@ -233,7 +250,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 12);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 11);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -401,8 +418,8 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const governance = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "governance-institutions")!;
-  assert.equal(activateMapExplorerRow(governance, null, new Set()).expandedPlacementIds.size, 0);
+  const interoperability = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "interoperability-abstraction")!;
+  assert.equal(activateMapExplorerRow(interoperability, null, new Set()).expandedPlacementIds.size, 0);
 });
 
 test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
@@ -506,8 +523,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[13].rows, []);
-  assert.equal(regions[13].header.hasChildren, false);
+  assert.deepEqual(regions[15].rows, []);
+  assert.equal(regions[15].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -563,8 +580,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "governance-institutions");
-  assert.equal(empty.focusedPlacementId, "governance-institutions");
+  const empty = getInitialMapExplorerState(view, "interoperability-abstraction");
+  assert.equal(empty.focusedPlacementId, "interoperability-abstraction");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -621,11 +638,35 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("governance-institutions")?.isExpandable); // neither
+  assert.ok(!byId.get("interoperability-abstraction")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
   assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+});
+
+test("Governance & Institutions L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("quorum-requirements"), ["Governance & Institutions", "Decision Rules", "Quorum Requirements"]);
+  assert.deepEqual(labels("borrowed-voting-power"), ["Governance & Institutions", "Governance Attacks", "Borrowed Voting Power"]);
+  assert.deepEqual(labels("delegation-in-representation"), ["Governance & Institutions", "Representation", "Delegation"]);
+  assert.deepEqual(labels("evidence-in-dispute-resolution"), ["Governance & Institutions", "Dispute Resolution", "Evidence"]);
+  assert.deepEqual(labels("delegation"), ["Identity, Accounts & Authority", "Authority", "Delegation"]);
+  for (const id of ["timelocks", "delegation-in-representation", "incentive-alignment-in-institutional-design", "checks-balances"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "guardians").expandedPlacementIds].sort(), ["emergency-governance", "governance-institutions"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "governance-institutions" && row.depth > 0);
+  assert.equal(subtreeRows.length, 15 + 89);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "14");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
 });
 
 test("Intents & Coordination L2 topics are ordinary placements: context, ancestry, containing L0", () => {

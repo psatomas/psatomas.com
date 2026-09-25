@@ -931,6 +931,126 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "shared-sequencing-in-cross-domain-coordination", conceptId: "shared-sequencing" },
     "cross-domain-atomicity",
   ],
+  // 14 Governance & Institutions
+  "governance-models": [
+    "on-chain-governance",
+    "off-chain-governance",
+    "token-based-governance",
+    "reputation-based-governance",
+    "futarchy",
+    "governance-minimization",
+  ],
+  "governance-participants": [
+    "token-holders",
+    "voters",
+    "delegates",
+    "stewards",
+    "stakeholders",
+    "voter-participation",
+  ],
+  proposals: [
+    "proposal-lifecycle",
+    "proposal-submission",
+    "proposal-thresholds",
+    "deliberation",
+    "signaling-votes",
+    "proposal-review",
+  ],
+  voting: [
+    "voting-mechanisms",
+    "token-weighted-voting",
+    "quadratic-voting",
+    "conviction-voting",
+    "optimistic-governance",
+    "vote-privacy",
+  ],
+  representation: [
+    { placementId: "delegation-in-representation", conceptId: "delegation" },
+    "liquid-democracy",
+    "delegate-incentives",
+    "delegate-accountability",
+    "constituencies",
+    "representative-bodies",
+  ],
+  "decision-rules": [
+    "majority-rule",
+    "supermajority",
+    "quorum-requirements",
+    "approval-thresholds",
+    "veto-rights",
+    "tie-breaking",
+  ],
+  "governance-execution": [
+    "proposal-execution",
+    "timelocks",
+    "parameter-changes",
+    "protocol-upgrades",
+    "execution-authority",
+  ],
+  "councils-committees": [
+    "security-councils",
+    "working-groups",
+    "committee-selection",
+    "mandates",
+    "term-limits",
+    "signer-sets",
+  ],
+  "treasury-governance": [
+    "treasuries",
+    "treasury-management",
+    "budget-allocation",
+    "grants",
+    "public-goods-funding",
+    "spending-controls",
+  ],
+  "constitutional-rules": [
+    "constitutions",
+    "rule-changes",
+    "amendment-processes",
+    "immutability",
+    "governance-scope",
+    "social-consensus",
+  ],
+  "checks-balances": [
+    "separation-of-powers",
+    "oversight",
+    "accountability",
+    "transparency",
+    "exit-rights",
+    "minority-protection",
+  ],
+  "dispute-resolution": [
+    "arbitration",
+    "appeals",
+    "decentralized-courts",
+    { placementId: "evidence-in-dispute-resolution", conceptId: "evidence" },
+    "juror-selection",
+    "ruling-enforcement",
+  ],
+  "emergency-governance": [
+    "emergency-powers",
+    "pause-mechanisms",
+    "guardians",
+    "emergency-upgrades",
+    "circuit-breakers",
+    "incident-response",
+  ],
+  "governance-attacks": [
+    "governance-capture",
+    "vote-buying",
+    "borrowed-voting-power",
+    "voter-apathy",
+    "plutocracy",
+    "hostile-takeovers",
+  ],
+  "institutional-design": [
+    "institutions",
+    "legitimacy",
+    "credible-neutrality",
+    { placementId: "incentive-alignment-in-institutional-design", conceptId: "incentive-alignment" },
+    "path-dependence",
+    "institutional-evolution",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -948,8 +1068,8 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
- * and Intents & Coordination; and a deliberately small Phase 1 proof fixture
- * re-homed beneath its L0 domains.
+ * Intents & Coordination, and Governance & Institutions; and a deliberately
+ * small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1568,8 +1688,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "ownership", slug: "ownership", title: "Ownership" },
     { id: "roles", slug: "roles", title: "Roles" },
     { id: "capabilities", slug: "capabilities", title: "Capabilities" },
-    // Also placed under 13's Intents (an intent delegates execution); this
-    // placement is preferred.
+    // Also placed under 13's Intents (an intent delegates execution) and 14's
+    // Representation (delegating votes); this placement is preferred.
     { id: "delegation", slug: "delegation", title: "Delegation", preferredPlacementId: "delegation" },
     { id: "permission-models", slug: "permission-models", title: "Permission Models" },
     { id: "authority-boundaries", slug: "authority-boundaries", title: "Authority Boundaries" },
@@ -1673,7 +1793,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Attesters (validators).
     { id: "real-world-attesters", slug: "real-world-attesters", title: "Real-World Attesters" },
     { id: "claims", slug: "claims", title: "Claims" },
-    { id: "evidence", slug: "evidence", title: "Evidence" },
+    // Also placed under 14's Dispute Resolution; this placement is preferred.
+    { id: "evidence", slug: "evidence", title: "Evidence", preferredPlacementId: "evidence" },
     { id: "attestation-verification", slug: "attestation-verification", title: "Attestation Verification" },
     { id: "revocation", slug: "revocation", title: "Revocation" },
     // 10 Economics & Mechanism Design: L1 topics (Strategic Behavior is
@@ -1693,7 +1814,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // L2 topics (placements in L2_TOPICS). Negative Incentives are any
     // discouragement; Penalties are explicit punishment, also placed as
     // "Economic Penalties" under Cryptoeconomic Security.
-    { id: "incentive-alignment", slug: "incentive-alignment", title: "Incentive Alignment" },
+    // Also placed under 14's Institutional Design; this placement is preferred.
+    { id: "incentive-alignment", slug: "incentive-alignment", title: "Incentive Alignment", preferredPlacementId: "incentive-alignment" },
     { id: "positive-incentives", slug: "positive-incentives", title: "Positive Incentives" },
     { id: "negative-incentives", slug: "negative-incentives", title: "Negative Incentives" },
     { id: "rewards", slug: "rewards", title: "Rewards" },
@@ -2084,6 +2206,125 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "cross-domain-execution", slug: "cross-domain-execution", title: "Cross-Domain Execution" },
     { id: "cross-domain-settlement", slug: "cross-domain-settlement", title: "Cross-Domain Settlement" },
     { id: "cross-domain-atomicity", slug: "cross-domain-atomicity", title: "Cross-Domain Atomicity" },
+    // 14 Governance & Institutions: L1 topics. Governance mechanisms stay distinct
+    // from technically similar ones: Voting is not 04's Agreement, Governance
+    // Execution is not protocol execution, Decision Rules are not consensus rules.
+    { id: "governance-models", slug: "governance-models", title: "Governance Models" },
+    { id: "governance-participants", slug: "governance-participants", title: "Governance Participants" },
+    { id: "proposals", slug: "proposals", title: "Proposals" },
+    { id: "voting", slug: "voting", title: "Voting" },
+    { id: "representation", slug: "representation", title: "Representation" },
+    { id: "decision-rules", slug: "decision-rules", title: "Decision Rules" },
+    { id: "governance-execution", slug: "governance-execution", title: "Governance Execution" },
+    { id: "councils-committees", slug: "councils-committees", title: "Councils & Committees" },
+    { id: "treasury-governance", slug: "treasury-governance", title: "Treasury Governance" },
+    { id: "constitutional-rules", slug: "constitutional-rules", title: "Constitutional Rules" },
+    { id: "checks-balances", slug: "checks-balances", title: "Checks & Balances" },
+    { id: "dispute-resolution", slug: "dispute-resolution", title: "Dispute Resolution" },
+    { id: "emergency-governance", slug: "emergency-governance", title: "Emergency Governance" },
+    { id: "governance-attacks", slug: "governance-attacks", title: "Governance Attacks" },
+    { id: "institutional-design", slug: "institutional-design", title: "Institutional Design" },
+    { id: "on-chain-governance", slug: "on-chain-governance", title: "On-Chain Governance" },
+    { id: "off-chain-governance", slug: "off-chain-governance", title: "Off-Chain Governance" },
+    { id: "token-based-governance", slug: "token-based-governance", title: "Token-Based Governance" },
+    { id: "reputation-based-governance", slug: "reputation-based-governance", title: "Reputation-Based Governance" },
+    { id: "futarchy", slug: "futarchy", title: "Futarchy" },
+    { id: "governance-minimization", slug: "governance-minimization", title: "Governance Minimization" },
+    { id: "token-holders", slug: "token-holders", title: "Token Holders" },
+    // L2 topics (placements in L2_TOPICS). Voters and Delegates are governance
+    // roles, not 04's Validators; Stakeholders are not Foundations' Participants.
+    { id: "voters", slug: "voters", title: "Voters" },
+    { id: "delegates", slug: "delegates", title: "Delegates" },
+    { id: "stewards", slug: "stewards", title: "Stewards" },
+    { id: "stakeholders", slug: "stakeholders", title: "Stakeholders" },
+    { id: "voter-participation", slug: "voter-participation", title: "Voter Participation" },
+    // Proposal Thresholds (to submit) are not Approval Thresholds (to pass) or
+    // 06's Threshold Cryptography.
+    { id: "proposal-lifecycle", slug: "proposal-lifecycle", title: "Proposal Lifecycle" },
+    { id: "proposal-submission", slug: "proposal-submission", title: "Proposal Submission" },
+    { id: "proposal-thresholds", slug: "proposal-thresholds", title: "Proposal Thresholds" },
+    { id: "deliberation", slug: "deliberation", title: "Deliberation" },
+    { id: "signaling-votes", slug: "signaling-votes", title: "Signaling Votes" },
+    { id: "proposal-review", slug: "proposal-review", title: "Proposal Review" },
+    { id: "voting-mechanisms", slug: "voting-mechanisms", title: "Voting Mechanisms" },
+    { id: "token-weighted-voting", slug: "token-weighted-voting", title: "Token-Weighted Voting" },
+    { id: "quadratic-voting", slug: "quadratic-voting", title: "Quadratic Voting" },
+    { id: "conviction-voting", slug: "conviction-voting", title: "Conviction Voting" },
+    { id: "optimistic-governance", slug: "optimistic-governance", title: "Optimistic Governance" },
+    { id: "vote-privacy", slug: "vote-privacy", title: "Vote Privacy" },
+    // Delegate Accountability and Incentives are specific to representatives.
+    { id: "liquid-democracy", slug: "liquid-democracy", title: "Liquid Democracy" },
+    { id: "delegate-incentives", slug: "delegate-incentives", title: "Delegate Incentives" },
+    { id: "delegate-accountability", slug: "delegate-accountability", title: "Delegate Accountability" },
+    { id: "constituencies", slug: "constituencies", title: "Constituencies" },
+    { id: "representative-bodies", slug: "representative-bodies", title: "Representative Bodies" },
+    // Quorum Requirements (minimum participation for a valid vote) are not 04's
+    // Quorums (the node sets consensus needs).
+    { id: "majority-rule", slug: "majority-rule", title: "Majority Rule" },
+    { id: "supermajority", slug: "supermajority", title: "Supermajority" },
+    { id: "quorum-requirements", slug: "quorum-requirements", title: "Quorum Requirements" },
+    { id: "approval-thresholds", slug: "approval-thresholds", title: "Approval Thresholds" },
+    { id: "veto-rights", slug: "veto-rights", title: "Veto Rights" },
+    { id: "tie-breaking", slug: "tie-breaking", title: "Tie-Breaking" },
+    // Proposal Execution and Execution Authority turn decisions into actions; not
+    // 02's Transaction Execution or 08's Authority.
+    { id: "proposal-execution", slug: "proposal-execution", title: "Proposal Execution" },
+    { id: "timelocks", slug: "timelocks", title: "Timelocks" },
+    { id: "parameter-changes", slug: "parameter-changes", title: "Parameter Changes" },
+    { id: "protocol-upgrades", slug: "protocol-upgrades", title: "Protocol Upgrades" },
+    { id: "execution-authority", slug: "execution-authority", title: "Execution Authority" },
+    // Security Councils and Committee Selection are not 07's Availability
+    // Committees; Signer Sets are not 04's Validator Sets or 06's Multisignatures.
+    { id: "security-councils", slug: "security-councils", title: "Security Councils" },
+    { id: "working-groups", slug: "working-groups", title: "Working Groups" },
+    { id: "committee-selection", slug: "committee-selection", title: "Committee Selection" },
+    { id: "mandates", slug: "mandates", title: "Mandates" },
+    { id: "term-limits", slug: "term-limits", title: "Term Limits" },
+    { id: "signer-sets", slug: "signer-sets", title: "Signer Sets" },
+    { id: "treasuries", slug: "treasuries", title: "Treasuries" },
+    { id: "treasury-management", slug: "treasury-management", title: "Treasury Management" },
+    { id: "budget-allocation", slug: "budget-allocation", title: "Budget Allocation" },
+    { id: "grants", slug: "grants", title: "Grants" },
+    { id: "public-goods-funding", slug: "public-goods-funding", title: "Public Goods Funding" },
+    { id: "spending-controls", slug: "spending-controls", title: "Spending Controls" },
+    // Social Consensus (a community's off-chain agreement) is not 04's Consensus.
+    { id: "constitutions", slug: "constitutions", title: "Constitutions" },
+    { id: "rule-changes", slug: "rule-changes", title: "Rule Changes" },
+    { id: "amendment-processes", slug: "amendment-processes", title: "Amendment Processes" },
+    { id: "immutability", slug: "immutability", title: "Immutability" },
+    { id: "governance-scope", slug: "governance-scope", title: "Governance Scope" },
+    { id: "social-consensus", slug: "social-consensus", title: "Social Consensus" },
+    { id: "separation-of-powers", slug: "separation-of-powers", title: "Separation of Powers" },
+    { id: "oversight", slug: "oversight", title: "Oversight" },
+    { id: "accountability", slug: "accountability", title: "Accountability" },
+    { id: "transparency", slug: "transparency", title: "Transparency" },
+    { id: "exit-rights", slug: "exit-rights", title: "Exit Rights" },
+    { id: "minority-protection", slug: "minority-protection", title: "Minority Protection" },
+    // Dispute Resolution reuses 09's Evidence.
+    { id: "arbitration", slug: "arbitration", title: "Arbitration" },
+    { id: "appeals", slug: "appeals", title: "Appeals" },
+    { id: "decentralized-courts", slug: "decentralized-courts", title: "Decentralized Courts" },
+    { id: "juror-selection", slug: "juror-selection", title: "Juror Selection" },
+    { id: "ruling-enforcement", slug: "ruling-enforcement", title: "Ruling Enforcement" },
+    { id: "emergency-powers", slug: "emergency-powers", title: "Emergency Powers" },
+    { id: "pause-mechanisms", slug: "pause-mechanisms", title: "Pause Mechanisms" },
+    { id: "guardians", slug: "guardians", title: "Guardians" },
+    { id: "emergency-upgrades", slug: "emergency-upgrades", title: "Emergency Upgrades" },
+    { id: "circuit-breakers", slug: "circuit-breakers", title: "Circuit Breakers" },
+    { id: "incident-response", slug: "incident-response", title: "Incident Response" },
+    // Vote Buying is not 10's general Bribery.
+    { id: "governance-capture", slug: "governance-capture", title: "Governance Capture" },
+    { id: "vote-buying", slug: "vote-buying", title: "Vote Buying" },
+    { id: "borrowed-voting-power", slug: "borrowed-voting-power", title: "Borrowed Voting Power" },
+    { id: "voter-apathy", slug: "voter-apathy", title: "Voter Apathy" },
+    { id: "plutocracy", slug: "plutocracy", title: "Plutocracy" },
+    { id: "hostile-takeovers", slug: "hostile-takeovers", title: "Hostile Takeovers" },
+    // Institutional Design reuses 10's Incentive Alignment.
+    { id: "institutions", slug: "institutions", title: "Institutions" },
+    { id: "legitimacy", slug: "legitimacy", title: "Legitimacy" },
+    { id: "credible-neutrality", slug: "credible-neutrality", title: "Credible Neutrality" },
+    { id: "path-dependence", slug: "path-dependence", title: "Path Dependence" },
+    { id: "institutional-evolution", slug: "institutional-evolution", title: "Institutional Evolution" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -2303,6 +2544,67 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "intent-settlement", conceptId: "intent-settlement", parentPlacementId: "intents-coordination", order: 9 },
     { id: "multi-party-coordination", conceptId: "multi-party-coordination", parentPlacementId: "intents-coordination", order: 10 },
     { id: "cross-domain-coordination", conceptId: "cross-domain-coordination", parentPlacementId: "intents-coordination", order: 11 },
+    // 14 Governance & Institutions: L1 topics.
+    { id: "governance-models", conceptId: "governance-models", parentPlacementId: "governance-institutions", order: 0 },
+    {
+      id: "governance-participants",
+      conceptId: "governance-participants",
+      parentPlacementId: "governance-institutions",
+      order: 1,
+    },
+    { id: "proposals", conceptId: "proposals", parentPlacementId: "governance-institutions", order: 2 },
+    { id: "voting", conceptId: "voting", parentPlacementId: "governance-institutions", order: 3 },
+    { id: "representation", conceptId: "representation", parentPlacementId: "governance-institutions", order: 4 },
+    { id: "decision-rules", conceptId: "decision-rules", parentPlacementId: "governance-institutions", order: 5 },
+    {
+      id: "governance-execution",
+      conceptId: "governance-execution",
+      parentPlacementId: "governance-institutions",
+      order: 6,
+    },
+    {
+      id: "councils-committees",
+      conceptId: "councils-committees",
+      parentPlacementId: "governance-institutions",
+      order: 7,
+    },
+    {
+      id: "treasury-governance",
+      conceptId: "treasury-governance",
+      parentPlacementId: "governance-institutions",
+      order: 8,
+    },
+    {
+      id: "constitutional-rules",
+      conceptId: "constitutional-rules",
+      parentPlacementId: "governance-institutions",
+      order: 9,
+    },
+    { id: "checks-balances", conceptId: "checks-balances", parentPlacementId: "governance-institutions", order: 10 },
+    {
+      id: "dispute-resolution",
+      conceptId: "dispute-resolution",
+      parentPlacementId: "governance-institutions",
+      order: 11,
+    },
+    {
+      id: "emergency-governance",
+      conceptId: "emergency-governance",
+      parentPlacementId: "governance-institutions",
+      order: 12,
+    },
+    {
+      id: "governance-attacks",
+      conceptId: "governance-attacks",
+      parentPlacementId: "governance-institutions",
+      order: 13,
+    },
+    {
+      id: "institutional-design",
+      conceptId: "institutional-design",
+      parentPlacementId: "governance-institutions",
+      order: 14,
+    },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

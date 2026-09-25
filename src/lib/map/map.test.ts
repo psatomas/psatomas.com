@@ -1257,6 +1257,149 @@ const INTENTS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const INTENTS_L2 = INTENTS_TREE.flatMap(([, children]) => children);
 
+// 14 Governance & Institutions. Delegation (08), Evidence (09) and Incentive
+// Alignment (10) are reused; governance mechanisms stay distinct from their
+// technical look-alikes.
+const GOVERNANCE_LAYER: Array<[string, string, string]> = [
+  ["governance-models", "governance-models", "Governance Models"],
+  ["governance-participants", "governance-participants", "Governance Participants"],
+  ["proposals", "proposals", "Proposals"],
+  ["voting", "voting", "Voting"],
+  ["representation", "representation", "Representation"],
+  ["decision-rules", "decision-rules", "Decision Rules"],
+  ["governance-execution", "governance-execution", "Governance Execution"],
+  ["councils-committees", "councils-committees", "Councils & Committees"],
+  ["treasury-governance", "treasury-governance", "Treasury Governance"],
+  ["constitutional-rules", "constitutional-rules", "Constitutional Rules"],
+  ["checks-balances", "checks-balances", "Checks & Balances"],
+  ["dispute-resolution", "dispute-resolution", "Dispute Resolution"],
+  ["emergency-governance", "emergency-governance", "Emergency Governance"],
+  ["governance-attacks", "governance-attacks", "Governance Attacks"],
+  ["institutional-design", "institutional-design", "Institutional Design"],
+];
+const GOVERNANCE_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["governance-models", [
+    ["on-chain-governance", "on-chain-governance", "On-Chain Governance"],
+    ["off-chain-governance", "off-chain-governance", "Off-Chain Governance"],
+    ["token-based-governance", "token-based-governance", "Token-Based Governance"],
+    ["reputation-based-governance", "reputation-based-governance", "Reputation-Based Governance"],
+    ["futarchy", "futarchy", "Futarchy"],
+    ["governance-minimization", "governance-minimization", "Governance Minimization"],
+  ]],
+  ["governance-participants", [
+    ["token-holders", "token-holders", "Token Holders"],
+    ["voters", "voters", "Voters"],
+    ["delegates", "delegates", "Delegates"],
+    ["stewards", "stewards", "Stewards"],
+    ["stakeholders", "stakeholders", "Stakeholders"],
+    ["voter-participation", "voter-participation", "Voter Participation"],
+  ]],
+  ["proposals", [
+    ["proposal-lifecycle", "proposal-lifecycle", "Proposal Lifecycle"],
+    ["proposal-submission", "proposal-submission", "Proposal Submission"],
+    ["proposal-thresholds", "proposal-thresholds", "Proposal Thresholds"],
+    ["deliberation", "deliberation", "Deliberation"],
+    ["signaling-votes", "signaling-votes", "Signaling Votes"],
+    ["proposal-review", "proposal-review", "Proposal Review"],
+  ]],
+  ["voting", [
+    ["voting-mechanisms", "voting-mechanisms", "Voting Mechanisms"],
+    ["token-weighted-voting", "token-weighted-voting", "Token-Weighted Voting"],
+    ["quadratic-voting", "quadratic-voting", "Quadratic Voting"],
+    ["conviction-voting", "conviction-voting", "Conviction Voting"],
+    ["optimistic-governance", "optimistic-governance", "Optimistic Governance"],
+    ["vote-privacy", "vote-privacy", "Vote Privacy"],
+  ]],
+  ["representation", [
+    ["delegation-in-representation", "delegation", "Delegation"],
+    ["liquid-democracy", "liquid-democracy", "Liquid Democracy"],
+    ["delegate-incentives", "delegate-incentives", "Delegate Incentives"],
+    ["delegate-accountability", "delegate-accountability", "Delegate Accountability"],
+    ["constituencies", "constituencies", "Constituencies"],
+    ["representative-bodies", "representative-bodies", "Representative Bodies"],
+  ]],
+  ["decision-rules", [
+    ["majority-rule", "majority-rule", "Majority Rule"],
+    ["supermajority", "supermajority", "Supermajority"],
+    ["quorum-requirements", "quorum-requirements", "Quorum Requirements"],
+    ["approval-thresholds", "approval-thresholds", "Approval Thresholds"],
+    ["veto-rights", "veto-rights", "Veto Rights"],
+    ["tie-breaking", "tie-breaking", "Tie-Breaking"],
+  ]],
+  ["governance-execution", [
+    ["proposal-execution", "proposal-execution", "Proposal Execution"],
+    ["timelocks", "timelocks", "Timelocks"],
+    ["parameter-changes", "parameter-changes", "Parameter Changes"],
+    ["protocol-upgrades", "protocol-upgrades", "Protocol Upgrades"],
+    ["execution-authority", "execution-authority", "Execution Authority"],
+  ]],
+  ["councils-committees", [
+    ["security-councils", "security-councils", "Security Councils"],
+    ["working-groups", "working-groups", "Working Groups"],
+    ["committee-selection", "committee-selection", "Committee Selection"],
+    ["mandates", "mandates", "Mandates"],
+    ["term-limits", "term-limits", "Term Limits"],
+    ["signer-sets", "signer-sets", "Signer Sets"],
+  ]],
+  ["treasury-governance", [
+    ["treasuries", "treasuries", "Treasuries"],
+    ["treasury-management", "treasury-management", "Treasury Management"],
+    ["budget-allocation", "budget-allocation", "Budget Allocation"],
+    ["grants", "grants", "Grants"],
+    ["public-goods-funding", "public-goods-funding", "Public Goods Funding"],
+    ["spending-controls", "spending-controls", "Spending Controls"],
+  ]],
+  ["constitutional-rules", [
+    ["constitutions", "constitutions", "Constitutions"],
+    ["rule-changes", "rule-changes", "Rule Changes"],
+    ["amendment-processes", "amendment-processes", "Amendment Processes"],
+    ["immutability", "immutability", "Immutability"],
+    ["governance-scope", "governance-scope", "Governance Scope"],
+    ["social-consensus", "social-consensus", "Social Consensus"],
+  ]],
+  ["checks-balances", [
+    ["separation-of-powers", "separation-of-powers", "Separation of Powers"],
+    ["oversight", "oversight", "Oversight"],
+    ["accountability", "accountability", "Accountability"],
+    ["transparency", "transparency", "Transparency"],
+    ["exit-rights", "exit-rights", "Exit Rights"],
+    ["minority-protection", "minority-protection", "Minority Protection"],
+  ]],
+  ["dispute-resolution", [
+    ["arbitration", "arbitration", "Arbitration"],
+    ["appeals", "appeals", "Appeals"],
+    ["decentralized-courts", "decentralized-courts", "Decentralized Courts"],
+    ["evidence-in-dispute-resolution", "evidence", "Evidence"],
+    ["juror-selection", "juror-selection", "Juror Selection"],
+    ["ruling-enforcement", "ruling-enforcement", "Ruling Enforcement"],
+  ]],
+  ["emergency-governance", [
+    ["emergency-powers", "emergency-powers", "Emergency Powers"],
+    ["pause-mechanisms", "pause-mechanisms", "Pause Mechanisms"],
+    ["guardians", "guardians", "Guardians"],
+    ["emergency-upgrades", "emergency-upgrades", "Emergency Upgrades"],
+    ["circuit-breakers", "circuit-breakers", "Circuit Breakers"],
+    ["incident-response", "incident-response", "Incident Response"],
+  ]],
+  ["governance-attacks", [
+    ["governance-capture", "governance-capture", "Governance Capture"],
+    ["vote-buying", "vote-buying", "Vote Buying"],
+    ["borrowed-voting-power", "borrowed-voting-power", "Borrowed Voting Power"],
+    ["voter-apathy", "voter-apathy", "Voter Apathy"],
+    ["plutocracy", "plutocracy", "Plutocracy"],
+    ["hostile-takeovers", "hostile-takeovers", "Hostile Takeovers"],
+  ]],
+  ["institutional-design", [
+    ["institutions", "institutions", "Institutions"],
+    ["legitimacy", "legitimacy", "Legitimacy"],
+    ["credible-neutrality", "credible-neutrality", "Credible Neutrality"],
+    ["incentive-alignment-in-institutional-design", "incentive-alignment", "Incentive Alignment"],
+    ["path-dependence", "path-dependence", "Path Dependence"],
+    ["institutional-evolution", "institutional-evolution", "Institutional Evolution"],
+  ]],
+];
+const GOVERNANCE_L2 = GOVERNANCE_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -1285,6 +1428,8 @@ const AUTHORED_TOPICS = new Set([
   ...MEV_L2.map(([id]) => id),
   ...INTENTS_LAYER.map(([id]) => id),
   ...INTENTS_L2.map(([id]) => id),
+  ...GOVERNANCE_LAYER.map(([id]) => id),
+  ...GOVERNANCE_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -1367,8 +1512,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // new L1 and 61 new L2 concepts, then Economics & Mechanism Design's 10 new
   // L1 and 65 new L2 concepts, then Markets & Financial Protocols' 12 new L1
   // and 69 new L2 concepts, then MEV & Execution Markets' 11 new L1 and 74
-  // new L2 concepts, then Intents & Coordination's 12 new L1 and 64 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64);
+  // new L2 concepts, then Intents & Coordination's 12 new L1 and 64 new L2
+  // concepts, then Governance & Institutions' 15 new L1 and 86 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1691,6 +1837,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("economics-mechanism-design"), 11 + 66);
   assert.equal(subtreeOf("markets-financial-protocols"), 12 + 72);
   assert.equal(subtreeOf("mev-execution-markets"), 13 + 79);
+  assert.equal(subtreeOf("intents-coordination"), 12 + 71);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -2054,7 +2201,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   // Oracles & External Reality), and agent/machine topics kept as their own concepts.
   assert.deepEqual(placementsOf("credentials"), ["credentials", "credentials-in-real-world-attestations"]);
   // Delegation is also placed under Intents & Coordination's Intents.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
   for (const conceptId of ["reputation", "ownership", "roles", "capabilities"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
@@ -2176,11 +2323,13 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis"]);
+  // Also placed in Governance & Institutions.
+  const placedElsewhere: Record<string, string[]> = { evidence: ["evidence-in-dispute-resolution"] };
   for (const [id, conceptId] of [...ORACLES_LAYER, ...ORACLES_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...ORACLES_LAYER, ...ORACLES_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2263,6 +2412,7 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
     bids: ["bids-in-order-books"],
     "auction-clearing": ["auction-clearing-in-mev-auctions"],
     "batch-auctions": ["batch-auctions-in-solver-competition"],
+    "incentive-alignment": ["incentive-alignment-in-institutional-design"],
   };
   for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -2463,8 +2613,10 @@ test("Intents & Coordination has exactly its twelve L1 topics and their L2 place
 test("Intents & Coordination reuses existing concepts without moving their preferred placements", () => {
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Each reused concept is placed again here; its existing home stays preferred.
+  // Delegation is also placed by Governance & Institutions.
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
+  assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation");
   for (const [conceptId, here] of [
-    ["delegation", "delegation-in-intents"],
     ["batch-auctions", "batch-auctions-in-solver-competition"],
     ["order-flow-auctions", "order-flow-auctions-in-solver-competition"],
     ["preconfirmations", "preconfirmations-in-intent-commitments"],
@@ -2526,6 +2678,83 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...INTENTS_LAYER, ...INTENTS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Governance & Institutions has exactly its fifteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("governance-institutions").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    GOVERNANCE_LAYER,
+  );
+  for (const [parent, children] of GOVERNANCE_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of GOVERNANCE_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "governance-institutions")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...GOVERNANCE_LAYER.map(([id]) => id), ...GOVERNANCE_L2.map(([id]) => id)].sort());
+  assert.equal(GOVERNANCE_L2.length, 89);
+});
+
+test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignment and keeps governance mechanisms distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Reused concepts keep their existing home as the preferred placement.
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
+  for (const [conceptId, here] of [
+    ["evidence", "evidence-in-dispute-resolution"],
+    ["incentive-alignment", "incentive-alignment-in-institutional-design"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+  }
+  for (const conceptId of ["delegation", "evidence", "incentive-alignment"]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
+  }
+  // Governance mechanisms stay distinct from technically similar ones.
+  for (const [placementId, related] of [
+    ["voting", "agreement"],
+    ["voters", "validators"],
+    ["delegates", "delegation"],
+    ["stakeholders", "participants"],
+    ["quorum-requirements", "quorums"],
+    ["approval-thresholds", "threshold-cryptography"],
+    ["approval-thresholds", "threshold-signatures"],
+    ["proposal-thresholds", "approval-thresholds"],
+    ["governance-execution", "transaction-execution"],
+    ["proposal-execution", "contract-execution"],
+    ["execution-authority", "authority"],
+    ["decision-rules", "consensus-rules"],
+    ["social-consensus", "consensus"],
+    ["vote-buying", "bribery"],
+    ["signer-sets", "validator-sets"],
+    ["signer-sets", "multisignatures"],
+    ["security-councils", "availability-committees"],
+    ["delegate-incentives", "incentives"],
+    ["delegate-accountability", "accountability"],
+    ["vote-privacy", "privacy"],
+    ["emergency-upgrades", "protocol-upgrades"],
+    ["representation", "multi-party-coordination"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["delegation", "evidence", "incentive-alignment"]);
+  for (const [id, conceptId] of [...GOVERNANCE_LAYER, ...GOVERNANCE_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...GOVERNANCE_LAYER, ...GOVERNANCE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 
