@@ -376,6 +376,23 @@ const POPULATED_L0 = {
     "execution-monitoring",
     "execution-recovery",
   ],
+  "autonomous-organizations": [
+    "organizations-in-autonomous-organizations",
+    "organizational-membership",
+    "roles-authority",
+    "organizational-structure",
+    "organizational-governance",
+    "organizational-decision-making",
+    "organizational-policies",
+    "treasuries-in-autonomous-organizations",
+    "organizational-budgeting",
+    "organizational-workflows",
+    "autonomous-operations",
+    "accountability-auditability",
+    "disputes-emergency-controls",
+    "organizational-lifecycle",
+    "inter-organizational-coordination",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -1019,6 +1036,32 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Autonomous Organizations L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("treasury-custody"), ["Autonomous Organizations", "Treasuries", "Treasury Custody"]);
+  assert.deepEqual(labels("authority-escalation-in-organizational-decision-making"), ["Autonomous Organizations", "Organizational Decision-Making", "Escalation"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("organizations-in-autonomous-organizations"), ["Autonomous Organizations", "Organizations"]);
+  assert.deepEqual(labels("organizations"), ["Machine Economy", "Economic Agents", "Organizations"]);
+  assert.deepEqual(labels("treasuries"), ["Governance & Institutions", "Treasury Governance", "Treasuries"]);
+  assert.deepEqual(labels("voting-in-organizational-governance"), ["Autonomous Organizations", "Organizational Governance", "Voting"]);
+  for (const id of ["organizations-in-autonomous-organizations", "treasuries-in-autonomous-organizations", "succession", "guardians-in-disputes-emergency-controls"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "handoffs").expandedPlacementIds].sort(), ["autonomous-organizations", "organizational-workflows"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-organizations" && row.depth > 0);
+  assert.equal(subtreeRows.length, 15 + 88);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "24");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });

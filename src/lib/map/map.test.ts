@@ -2552,6 +2552,148 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const EXECUTION_L2 = EXECUTION_TREE.flatMap(([, children]) => children);
 
+// 24 Autonomous Organizations. Organizations (21) and Treasuries (14) are L1
+// topics with their own layers; the other reused topics are 08's, 10's, 14's,
+// 20's, 21's, 22's and 23's.
+const ORGANIZATIONS_LAYER: Array<[string, string, string]> = [
+  ["organizations-in-autonomous-organizations", "organizations", "Organizations"],
+  ["organizational-membership", "organizational-membership", "Organizational Membership"],
+  ["roles-authority", "roles-authority", "Roles & Authority"],
+  ["organizational-structure", "organizational-structure", "Organizational Structure"],
+  ["organizational-governance", "organizational-governance", "Organizational Governance"],
+  ["organizational-decision-making", "organizational-decision-making", "Organizational Decision-Making"],
+  ["organizational-policies", "organizational-policies", "Organizational Policies"],
+  ["treasuries-in-autonomous-organizations", "treasuries", "Treasuries"],
+  ["organizational-budgeting", "organizational-budgeting", "Organizational Budgeting"],
+  ["organizational-workflows", "organizational-workflows", "Organizational Workflows"],
+  ["autonomous-operations", "autonomous-operations", "Autonomous Operations"],
+  ["accountability-auditability", "accountability-auditability", "Accountability & Auditability"],
+  ["disputes-emergency-controls", "disputes-emergency-controls", "Disputes & Emergency Controls"],
+  ["organizational-lifecycle", "organizational-lifecycle", "Organizational Lifecycle"],
+  ["inter-organizational-coordination", "inter-organizational-coordination", "Inter-Organizational Coordination"],
+];
+const ORGANIZATIONS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["organizations-in-autonomous-organizations", [
+    ["decentralized-autonomous-organizations", "decentralized-autonomous-organizations", "Decentralized Autonomous Organizations"],
+    ["organizational-identity", "organizational-identity", "Organizational Identity"],
+    ["organizational-objectives", "organizational-objectives", "Organizational Objectives"],
+    ["organizational-boundaries", "organizational-boundaries", "Organizational Boundaries"],
+    ["legal-wrappers", "legal-wrappers", "Legal Wrappers"],
+  ]],
+  ["organizational-membership", [
+    ["membership-criteria", "membership-criteria", "Membership Criteria"],
+    ["member-admission", "member-admission", "Member Admission"],
+    ["membership-rights", "membership-rights", "Membership Rights"],
+    ["membership-obligations", "membership-obligations", "Membership Obligations"],
+    ["membership-tokens", "membership-tokens", "Membership Tokens"],
+    ["member-exit", "member-exit", "Member Exit"],
+  ]],
+  ["roles-authority", [
+    ["roles-in-roles-authority", "roles", "Roles"],
+    ["role-assignment", "role-assignment", "Role Assignment"],
+    ["role-hierarchies", "role-hierarchies", "Role Hierarchies"],
+    ["mandates-in-roles-authority", "mandates", "Mandates"],
+    ["authority-boundaries-in-roles-authority", "authority-boundaries", "Authority Boundaries"],
+    ["separation-of-powers-in-roles-authority", "separation-of-powers", "Separation of Powers"],
+  ]],
+  ["organizational-structure", [
+    ["hierarchical-structures", "hierarchical-structures", "Hierarchical Structures"],
+    ["flat-structures", "flat-structures", "Flat Structures"],
+    ["sub-organizations", "sub-organizations", "Sub-Organizations"],
+    ["working-groups-in-organizational-structure", "working-groups", "Working Groups"],
+    ["councils-committees-in-organizational-structure", "councils-committees", "Councils & Committees"],
+    ["reporting-lines", "reporting-lines", "Reporting Lines"],
+  ]],
+  ["organizational-governance", [
+    ["governance-models-in-organizational-governance", "governance-models", "Governance Models"],
+    ["constitutions-in-organizational-governance", "constitutions", "Constitutions"],
+    ["proposals-in-organizational-governance", "proposals", "Proposals"],
+    ["voting-in-organizational-governance", "voting", "Voting"],
+    ["decision-rules-in-organizational-governance", "decision-rules", "Decision Rules"],
+    ["hybrid-governance", "hybrid-governance", "Hybrid Governance"],
+  ]],
+  ["organizational-decision-making", [
+    ["decision-rights", "decision-rights", "Decision Rights"],
+    ["collective-decision-making-in-organizational-decision-making", "collective-decision-making", "Collective Decision-Making"],
+    ["automated-decisions", "automated-decisions", "Automated Decisions"],
+    ["authority-escalation-in-organizational-decision-making", "authority-escalation", "Escalation"],
+    ["veto-rights-in-organizational-decision-making", "veto-rights", "Veto Rights"],
+    ["decision-records", "decision-records", "Decision Records"],
+  ]],
+  ["organizational-policies", [
+    ["policy-setting", "policy-setting", "Policy Setting"],
+    ["policy-hierarchies", "policy-hierarchies", "Policy Hierarchies"],
+    ["policy-constraints-in-organizational-policies", "policy-constraints", "Policy Constraints"],
+    ["spending-controls-in-organizational-policies", "spending-controls", "Spending Controls"],
+    ["organizational-compliance", "organizational-compliance", "Organizational Compliance"],
+    ["policy-updates", "policy-updates", "Policy Updates"],
+  ]],
+  ["treasuries-in-autonomous-organizations", [
+    ["treasury-management-in-treasuries-in-autonomous-organizations", "treasury-management", "Treasury Management"],
+    ["treasury-custody", "treasury-custody", "Treasury Custody"],
+    ["revenue-in-treasuries-in-autonomous-organizations", "revenue", "Revenue"],
+    ["runway", "runway", "Runway"],
+    ["treasury-diversification", "treasury-diversification", "Treasury Diversification"],
+    ["capital-allocation-in-treasuries-in-autonomous-organizations", "capital-allocation", "Capital Allocation"],
+  ]],
+  ["organizational-budgeting", [
+    ["budget-cycles", "budget-cycles", "Budget Cycles"],
+    ["budget-allocation-in-organizational-budgeting", "budget-allocation", "Budget Allocation"],
+    ["resource-allocation-in-organizational-budgeting", "resource-allocation", "Resource Allocation"],
+    ["grants-in-organizational-budgeting", "grants", "Grants"],
+    ["contributor-compensation", "contributor-compensation", "Contributor Compensation"],
+    ["spending-approvals", "spending-approvals", "Spending Approvals"],
+  ]],
+  ["organizational-workflows", [
+    ["workflow-definitions", "workflow-definitions", "Workflow Definitions"],
+    ["task-assignment-in-organizational-workflows", "task-assignment", "Task Assignment"],
+    ["approval-workflows", "approval-workflows", "Approval Workflows"],
+    ["handoffs", "handoffs", "Handoffs"],
+    ["workflow-automation", "workflow-automation", "Workflow Automation"],
+    ["service-level-agreements", "service-level-agreements", "Service-Level Agreements"],
+  ]],
+  ["autonomous-operations", [
+    ["organizational-autonomy", "organizational-autonomy", "Organizational Autonomy"],
+    ["agent-workforces", "agent-workforces", "Agent Workforces"],
+    ["operating-procedures", "operating-procedures", "Operating Procedures"],
+    ["human-oversight-in-autonomous-operations", "human-oversight", "Human Oversight"],
+    ["organizational-performance", "organizational-performance", "Organizational Performance"],
+  ]],
+  ["accountability-auditability", [
+    ["accountability-in-accountability-auditability", "accountability", "Accountability"],
+    ["responsibility-attribution", "responsibility-attribution", "Responsibility Attribution"],
+    ["audit-trails-in-accountability-auditability", "audit-trails", "Audit Trails"],
+    ["auditability", "auditability", "Auditability"],
+    ["transparency-in-accountability-auditability", "transparency", "Transparency"],
+    ["liability", "liability", "Liability"],
+  ]],
+  ["disputes-emergency-controls", [
+    ["dispute-resolution-in-disputes-emergency-controls", "dispute-resolution", "Dispute Resolution"],
+    ["conflict-resolution-in-disputes-emergency-controls", "conflict-resolution", "Conflict Resolution"],
+    ["emergency-powers-in-disputes-emergency-controls", "emergency-powers", "Emergency Powers"],
+    ["pause-mechanisms-in-disputes-emergency-controls", "pause-mechanisms", "Pause Mechanisms"],
+    ["guardians-in-disputes-emergency-controls", "guardians", "Guardians"],
+    ["incident-response-in-disputes-emergency-controls", "incident-response", "Incident Response"],
+  ]],
+  ["organizational-lifecycle", [
+    ["organization-formation", "organization-formation", "Organization Formation"],
+    ["organizational-bootstrapping", "organizational-bootstrapping", "Organizational Bootstrapping"],
+    ["restructuring", "restructuring", "Restructuring"],
+    ["organizational-mergers", "organizational-mergers", "Organizational Mergers"],
+    ["succession", "succession", "Succession"],
+    ["organizational-dissolution", "organizational-dissolution", "Organizational Dissolution"],
+  ]],
+  ["inter-organizational-coordination", [
+    ["organizational-alliances", "organizational-alliances", "Organizational Alliances"],
+    ["federations", "federations", "Federations"],
+    ["negotiated-agreement-in-inter-organizational-coordination", "negotiated-agreement", "Negotiated Agreement"],
+    ["joint-ventures", "joint-ventures", "Joint Ventures"],
+    ["shared-services", "shared-services", "Shared Services"],
+    ["cross-organizational-governance", "cross-organizational-governance", "Cross-Organizational Governance"],
+  ]],
+];
+const ORGANIZATIONS_L2 = ORGANIZATIONS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2600,6 +2742,8 @@ const AUTHORED_TOPICS = new Set([
   ...COORDINATION_L2.map(([id]) => id),
   ...EXECUTION_LAYER.map(([id]) => id),
   ...EXECUTION_L2.map(([id]) => id),
+  ...ORGANIZATIONS_LAYER.map(([id]) => id),
+  ...ORGANIZATIONS_L2.map(([id]) => id),
 ]);
 
 // Each domain's tests see the stack as it stood when that domain was authored:
@@ -2733,8 +2877,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Intelligent Systems' 10 new L1 and 65 new L2 concepts, then Machine
   // Economy's 12 new L1 and 60 new L2 concepts, then Autonomous
   // Coordination's 5 new L1 and 56 new L2 concepts, then Autonomous
-  // Execution's 11 new L1 and 45 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45);
+  // Execution's 11 new L1 and 45 new L2 concepts, then Autonomous
+  // Organizations' 13 new L1 and 54 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -3032,6 +3177,8 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("ai-intelligent-systems"), 12 + 69);
   assert.equal(subtreeOf("machine-economy"), 14 + 84);
   assert.equal(subtreeOf("autonomous-coordination"), 10 + 60);
+  assert.equal(subtreeOf("governance-institutions"), GOVERNANCE_LAYER.length + GOVERNANCE_L2.length);
+  assert.equal(subtreeOf("autonomous-execution"), EXECUTION_LAYER.length + EXECUTION_L2.length);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -4925,6 +5072,129 @@ test("Autonomous Execution leaves 20–22 unchanged", () => {
   }
 });
 
+test("Autonomous Organizations has exactly its fifteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("autonomous-organizations").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    ORGANIZATIONS_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("autonomous-organizations").map((placement) => placement.order), ORGANIZATIONS_LAYER.map((_, order) => order));
+  for (const [parent, children] of ORGANIZATIONS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of ORGANIZATIONS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "autonomous-organizations")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...ORGANIZATIONS_LAYER.map(([id]) => id), ...ORGANIZATIONS_L2.map(([id]) => id)].sort());
+  assert.equal(ORGANIZATIONS_L2.length, 88);
+  assert.deepEqual(resolver.getAncestors("treasury-custody").map((placement) => placement.id), ["autonomous-organizations", "treasuries-in-autonomous-organizations"]);
+  assert.deepEqual(resolver.getAncestors("voting-in-organizational-governance").map((placement) => placement.id), ["autonomous-organizations", "organizational-governance"]);
+});
+
+test("Autonomous Organizations reuses existing concepts where the meaning is the same and keeps organization-level concepts distinct", () => {
+  const placementsOf = (conceptId: string) => placementsThrough("autonomous-organizations", conceptId);
+  // Organizations (21) and Treasuries (14) are L1 topics here with their own
+  // layers; preferred here, where they are taught.
+  for (const [conceptId, home] of [
+    ["organizations", "organizations"],
+    ["treasuries", "treasuries"],
+  ]) {
+    const here = `${conceptId}-in-autonomous-organizations`;
+    assert.deepEqual(placementsOf(conceptId), [home, here].sort(), conceptId);
+    assertPreferredThrough("autonomous-organizations", conceptId, here);
+    assert.equal(resolver.getChildren(here).length, conceptId === "organizations" ? 5 : 6, here);
+    assert.deepEqual(resolver.getChildren(home), [], home);
+  }
+  // Every other reused concept gains this placement here and stays preferred at its home.
+  const reused = ORGANIZATIONS_L2.filter(([id, conceptId]) => id !== conceptId);
+  assert.equal(reused.length, 34);
+  for (const [id, conceptId] of reused) {
+    assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
+    assert.ok(placementsOf(conceptId).includes(id), id);
+    const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
+    assert.ok(preferred && preferred !== id, `${conceptId} stays preferred at its home`);
+    assertPreferredThrough("autonomous-organizations", conceptId, preferred);
+  }
+  // Organization-level concepts kept distinct from the concepts they sit near.
+  for (const [placementId, related] of [
+    ["organizational-membership", "coalition-membership"],
+    ["organizational-governance", "governance-models"],
+    ["hybrid-governance", "governance-models"],
+    ["cross-organizational-governance", "organizational-governance"],
+    ["organizational-policies", "execution-policies"],
+    ["organizational-workflows", "execution-planning"],
+    ["workflow-definitions", "plans"],
+    ["accountability-auditability", "accountability"],
+    ["liability", "accountability"],
+    ["auditability", "audit-trails"],
+    ["responsibility-attribution", "attribution"],
+    ["treasury-custody", "key-management"],
+    ["runway", "solvency"],
+    ["organizational-autonomy", "autonomy-levels"],
+    ["organizational-lifecycle", "contract-lifecycle"],
+    ["organizational-dissolution", "coalition-dissolution"],
+    ["organization-formation", "coalition-formation"],
+    ["organizational-alliances", "coalition-formation"],
+    ["federations", "councils-committees"],
+    ["sub-organizations", "working-groups"],
+    ["organizational-identity", "identity"],
+    ["organizational-identity", "agent-identity"],
+    ["organizational-objectives", "shared-objectives"],
+    ["organizational-objectives", "agent-objectives"],
+    ["membership-tokens", "token-holders"],
+    ["member-exit", "exit-rights"],
+    ["decision-rights", "capabilities"],
+    ["automated-decisions", "collective-decision-making"],
+    ["organizational-compliance", "policy-constraints"],
+    ["policy-updates", "rule-changes"],
+    ["budget-cycles", "budget-allocation"],
+    ["contributor-compensation", "rewards"],
+    ["spending-approvals", "human-approval"],
+    ["approval-workflows", "multi-party-approval"],
+    ["handoffs", "task-delegation"],
+    ["workflow-automation", "automation"],
+    ["service-level-agreements", "negotiated-agreement"],
+    ["agent-workforces", "economic-agents"],
+    ["operating-procedures", "execution-policies"],
+    ["organizational-performance", "metrics"],
+    ["restructuring", "reorganizations"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  for (const [id, conceptId] of [...ORGANIZATIONS_LAYER, ...ORGANIZATIONS_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (id !== conceptId) continue;
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...ORGANIZATIONS_LAYER, ...ORGANIZATIONS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Autonomous Organizations leaves 20–23 unchanged", () => {
+  for (const [root, layer, tree] of [
+    ["ai-intelligent-systems", AI_LAYER, AI_TREE],
+    ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
+    ["autonomous-coordination", COORDINATION_LAYER, COORDINATION_TREE],
+    ["autonomous-execution", EXECUTION_LAYER, EXECUTION_TREE],
+  ] as const) {
+    assert.deepEqual(resolver.getChildren(root).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), layer, root);
+    for (const [parent, children] of tree) {
+      assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
+    }
+  }
+});
+
 // Cross-domain invariants, asserted once for the whole stack rather than in each
 // domain's own tests.
 test("a concept has an explicit preferred placement exactly when it is placed more than once, and resolves to it", () => {
@@ -4973,6 +5243,7 @@ const POPULATED_L0 = [
   "machine-economy",
   "autonomous-coordination",
   "autonomous-execution",
+  "autonomous-organizations",
 ];
 
 test("L0 domains without authored topics stay empty", () => {

@@ -1973,6 +1973,125 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "circuit-breakers-in-execution-recovery", conceptId: "circuit-breakers" },
     "kill-switches",
   ],
+  // 24 Autonomous Organizations
+  "organizations-in-autonomous-organizations": [
+    "decentralized-autonomous-organizations",
+    "organizational-identity",
+    "organizational-objectives",
+    "organizational-boundaries",
+    "legal-wrappers",
+  ],
+  "organizational-membership": [
+    "membership-criteria",
+    "member-admission",
+    "membership-rights",
+    "membership-obligations",
+    "membership-tokens",
+    "member-exit",
+  ],
+  "roles-authority": [
+    { placementId: "roles-in-roles-authority", conceptId: "roles" },
+    "role-assignment",
+    "role-hierarchies",
+    { placementId: "mandates-in-roles-authority", conceptId: "mandates" },
+    { placementId: "authority-boundaries-in-roles-authority", conceptId: "authority-boundaries" },
+    { placementId: "separation-of-powers-in-roles-authority", conceptId: "separation-of-powers" },
+  ],
+  "organizational-structure": [
+    "hierarchical-structures",
+    "flat-structures",
+    "sub-organizations",
+    { placementId: "working-groups-in-organizational-structure", conceptId: "working-groups" },
+    { placementId: "councils-committees-in-organizational-structure", conceptId: "councils-committees" },
+    "reporting-lines",
+  ],
+  "organizational-governance": [
+    { placementId: "governance-models-in-organizational-governance", conceptId: "governance-models" },
+    { placementId: "constitutions-in-organizational-governance", conceptId: "constitutions" },
+    { placementId: "proposals-in-organizational-governance", conceptId: "proposals" },
+    { placementId: "voting-in-organizational-governance", conceptId: "voting" },
+    { placementId: "decision-rules-in-organizational-governance", conceptId: "decision-rules" },
+    "hybrid-governance",
+  ],
+  "organizational-decision-making": [
+    "decision-rights",
+    { placementId: "collective-decision-making-in-organizational-decision-making", conceptId: "collective-decision-making" },
+    "automated-decisions",
+    { placementId: "authority-escalation-in-organizational-decision-making", conceptId: "authority-escalation", contextualLabel: "Escalation" },
+    { placementId: "veto-rights-in-organizational-decision-making", conceptId: "veto-rights" },
+    "decision-records",
+  ],
+  "organizational-policies": [
+    "policy-setting",
+    "policy-hierarchies",
+    { placementId: "policy-constraints-in-organizational-policies", conceptId: "policy-constraints" },
+    { placementId: "spending-controls-in-organizational-policies", conceptId: "spending-controls" },
+    "organizational-compliance",
+    "policy-updates",
+  ],
+  "treasuries-in-autonomous-organizations": [
+    { placementId: "treasury-management-in-treasuries-in-autonomous-organizations", conceptId: "treasury-management" },
+    "treasury-custody",
+    { placementId: "revenue-in-treasuries-in-autonomous-organizations", conceptId: "revenue" },
+    "runway",
+    "treasury-diversification",
+    { placementId: "capital-allocation-in-treasuries-in-autonomous-organizations", conceptId: "capital-allocation" },
+  ],
+  "organizational-budgeting": [
+    "budget-cycles",
+    { placementId: "budget-allocation-in-organizational-budgeting", conceptId: "budget-allocation" },
+    { placementId: "resource-allocation-in-organizational-budgeting", conceptId: "resource-allocation" },
+    { placementId: "grants-in-organizational-budgeting", conceptId: "grants" },
+    "contributor-compensation",
+    "spending-approvals",
+  ],
+  "organizational-workflows": [
+    "workflow-definitions",
+    { placementId: "task-assignment-in-organizational-workflows", conceptId: "task-assignment" },
+    "approval-workflows",
+    "handoffs",
+    "workflow-automation",
+    "service-level-agreements",
+  ],
+  "autonomous-operations": [
+    "organizational-autonomy",
+    "agent-workforces",
+    "operating-procedures",
+    { placementId: "human-oversight-in-autonomous-operations", conceptId: "human-oversight" },
+    "organizational-performance",
+  ],
+  "accountability-auditability": [
+    { placementId: "accountability-in-accountability-auditability", conceptId: "accountability" },
+    "responsibility-attribution",
+    { placementId: "audit-trails-in-accountability-auditability", conceptId: "audit-trails" },
+    "auditability",
+    { placementId: "transparency-in-accountability-auditability", conceptId: "transparency" },
+    "liability",
+  ],
+  "disputes-emergency-controls": [
+    { placementId: "dispute-resolution-in-disputes-emergency-controls", conceptId: "dispute-resolution" },
+    { placementId: "conflict-resolution-in-disputes-emergency-controls", conceptId: "conflict-resolution" },
+    { placementId: "emergency-powers-in-disputes-emergency-controls", conceptId: "emergency-powers" },
+    { placementId: "pause-mechanisms-in-disputes-emergency-controls", conceptId: "pause-mechanisms" },
+    { placementId: "guardians-in-disputes-emergency-controls", conceptId: "guardians" },
+    { placementId: "incident-response-in-disputes-emergency-controls", conceptId: "incident-response" },
+  ],
+  "organizational-lifecycle": [
+    "organization-formation",
+    "organizational-bootstrapping",
+    "restructuring",
+    "organizational-mergers",
+    "succession",
+    "organizational-dissolution",
+  ],
+  "inter-organizational-coordination": [
+    "organizational-alliances",
+    "federations",
+    { placementId: "negotiated-agreement-in-inter-organizational-coordination", conceptId: "negotiated-agreement" },
+    "joint-ventures",
+    "shared-services",
+    "cross-organizational-governance",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1993,9 +2112,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
  * Systems, Interoperability & Abstraction, Security, Correctness &
  * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
- * Intelligent Systems, Machine Economy, Autonomous Coordination, and
- * Autonomous Execution; and a deliberately small Phase 1 proof fixture
- * re-homed beneath its L0 domains.
+ * Intelligent Systems, Machine Economy, Autonomous Coordination, Autonomous
+ * Execution, and Autonomous Organizations; and a deliberately small Phase 1
+ * proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -2764,7 +2883,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "credential-authentication", slug: "credential-authentication", title: "Credential Authentication" },
     { id: "authentication-policies", slug: "authentication-policies", title: "Authentication Policies" },
     { id: "ownership", slug: "ownership", title: "Ownership" },
-    { id: "roles", slug: "roles", title: "Roles" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "roles", slug: "roles", title: "Roles", preferredPlacementId: "roles" },
     // Also placed under 21's Agent Permissions; this placement is preferred.
     { id: "capabilities", slug: "capabilities", title: "Capabilities", preferredPlacementId: "capabilities" },
     // One party entrusting another to act on its behalf. Also placed under 13's
@@ -2778,14 +2898,15 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "delegation-in-autonomous-coordination",
     },
     // Also placed in 17 Security, Correctness & Resilience and under 21's Agent
-    // Permissions; this placement is preferred.
+    // Permissions and under 21's Agent Permissions; this placement is preferred.
     {
       id: "permission-models",
       slug: "permission-models",
       title: "Permission Models",
       preferredPlacementId: "permission-models",
     },
-    { id: "authority-boundaries", slug: "authority-boundaries", title: "Authority Boundaries" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "authority-boundaries", slug: "authority-boundaries", title: "Authority Boundaries", preferredPlacementId: "authority-boundaries" },
     // Agent and machine subjects are taught as their own topics, like the
     // fixture's Agent Identity; merging them into the general concepts would put
     // two rows of one concept side by side under Machine Identity.
@@ -3405,18 +3526,24 @@ export const mapKnowledge: MapKnowledgeModel = {
     // 14 Governance & Institutions: L1 topics. Governance mechanisms stay distinct
     // from technically similar ones: Voting is not 04's Agreement, Governance
     // Execution is not protocol execution, Decision Rules are not consensus rules.
-    { id: "governance-models", slug: "governance-models", title: "Governance Models" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "governance-models", slug: "governance-models", title: "Governance Models", preferredPlacementId: "governance-models" },
     { id: "governance-participants", slug: "governance-participants", title: "Governance Participants" },
-    { id: "proposals", slug: "proposals", title: "Proposals" },
-    { id: "voting", slug: "voting", title: "Voting" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "proposals", slug: "proposals", title: "Proposals", preferredPlacementId: "proposals" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "voting", slug: "voting", title: "Voting", preferredPlacementId: "voting" },
     { id: "representation", slug: "representation", title: "Representation" },
-    { id: "decision-rules", slug: "decision-rules", title: "Decision Rules" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "decision-rules", slug: "decision-rules", title: "Decision Rules", preferredPlacementId: "decision-rules" },
     { id: "governance-execution", slug: "governance-execution", title: "Governance Execution" },
-    { id: "councils-committees", slug: "councils-committees", title: "Councils & Committees" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "councils-committees", slug: "councils-committees", title: "Councils & Committees", preferredPlacementId: "councils-committees" },
     { id: "treasury-governance", slug: "treasury-governance", title: "Treasury Governance" },
     { id: "constitutional-rules", slug: "constitutional-rules", title: "Constitutional Rules" },
     { id: "checks-balances", slug: "checks-balances", title: "Checks & Balances" },
-    { id: "dispute-resolution", slug: "dispute-resolution", title: "Dispute Resolution" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "dispute-resolution", slug: "dispute-resolution", title: "Dispute Resolution", preferredPlacementId: "dispute-resolution" },
     { id: "emergency-governance", slug: "emergency-governance", title: "Emergency Governance" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
     {
@@ -3467,7 +3594,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "supermajority", slug: "supermajority", title: "Supermajority" },
     { id: "quorum-requirements", slug: "quorum-requirements", title: "Quorum Requirements" },
     { id: "approval-thresholds", slug: "approval-thresholds", title: "Approval Thresholds" },
-    { id: "veto-rights", slug: "veto-rights", title: "Veto Rights" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "veto-rights", slug: "veto-rights", title: "Veto Rights", preferredPlacementId: "veto-rights" },
     { id: "tie-breaking", slug: "tie-breaking", title: "Tie-Breaking" },
     // Proposal Execution and Execution Authority turn decisions into actions; not
     // 02's Transaction Execution or 08's Authority.
@@ -3492,19 +3620,27 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Security Councils and Committee Selection are not 07's Availability
     // Committees; Signer Sets are not 04's Validator Sets or 06's Multisignatures.
     { id: "security-councils", slug: "security-councils", title: "Security Councils" },
-    { id: "working-groups", slug: "working-groups", title: "Working Groups" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "working-groups", slug: "working-groups", title: "Working Groups", preferredPlacementId: "working-groups" },
     { id: "committee-selection", slug: "committee-selection", title: "Committee Selection" },
-    { id: "mandates", slug: "mandates", title: "Mandates" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "mandates", slug: "mandates", title: "Mandates", preferredPlacementId: "mandates" },
     { id: "term-limits", slug: "term-limits", title: "Term Limits" },
     { id: "signer-sets", slug: "signer-sets", title: "Signer Sets" },
-    { id: "treasuries", slug: "treasuries", title: "Treasuries" },
-    { id: "treasury-management", slug: "treasury-management", title: "Treasury Management" },
-    { id: "budget-allocation", slug: "budget-allocation", title: "Budget Allocation" },
-    { id: "grants", slug: "grants", title: "Grants" },
+    // Also 24 Autonomous Organizations' L1 topic, with its own layer; preferred there.
+    { id: "treasuries", slug: "treasuries", title: "Treasuries", preferredPlacementId: "treasuries-in-autonomous-organizations" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "treasury-management", slug: "treasury-management", title: "Treasury Management", preferredPlacementId: "treasury-management" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "budget-allocation", slug: "budget-allocation", title: "Budget Allocation", preferredPlacementId: "budget-allocation" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "grants", slug: "grants", title: "Grants", preferredPlacementId: "grants" },
     { id: "public-goods-funding", slug: "public-goods-funding", title: "Public Goods Funding" },
-    { id: "spending-controls", slug: "spending-controls", title: "Spending Controls" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "spending-controls", slug: "spending-controls", title: "Spending Controls", preferredPlacementId: "spending-controls" },
     // Social Consensus (a community's off-chain agreement) is not 04's Consensus.
-    { id: "constitutions", slug: "constitutions", title: "Constitutions" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "constitutions", slug: "constitutions", title: "Constitutions", preferredPlacementId: "constitutions" },
     // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
     { id: "rule-changes", slug: "rule-changes", title: "Rule Changes", preferredPlacementId: "rule-changes" },
     { id: "amendment-processes", slug: "amendment-processes", title: "Amendment Processes" },
@@ -3512,10 +3648,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "immutability", slug: "immutability", title: "Immutability", preferredPlacementId: "immutability" },
     { id: "governance-scope", slug: "governance-scope", title: "Governance Scope" },
     { id: "social-consensus", slug: "social-consensus", title: "Social Consensus" },
-    { id: "separation-of-powers", slug: "separation-of-powers", title: "Separation of Powers" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "separation-of-powers", slug: "separation-of-powers", title: "Separation of Powers", preferredPlacementId: "separation-of-powers" },
     { id: "oversight", slug: "oversight", title: "Oversight" },
-    { id: "accountability", slug: "accountability", title: "Accountability" },
-    { id: "transparency", slug: "transparency", title: "Transparency" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "accountability", slug: "accountability", title: "Accountability", preferredPlacementId: "accountability" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "transparency", slug: "transparency", title: "Transparency", preferredPlacementId: "transparency" },
     { id: "exit-rights", slug: "exit-rights", title: "Exit Rights" },
     { id: "minority-protection", slug: "minority-protection", title: "Minority Protection" },
     // Dispute Resolution reuses 09's Evidence.
@@ -3524,16 +3663,18 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "decentralized-courts", slug: "decentralized-courts", title: "Decentralized Courts" },
     { id: "juror-selection", slug: "juror-selection", title: "Juror Selection" },
     { id: "ruling-enforcement", slug: "ruling-enforcement", title: "Ruling Enforcement" },
-    { id: "emergency-powers", slug: "emergency-powers", title: "Emergency Powers" },
-    // Also placed under 16's Trust & Failure Modes (a bridge pause); this
-    // placement is preferred.
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "emergency-powers", slug: "emergency-powers", title: "Emergency Powers", preferredPlacementId: "emergency-powers" },
+    // Also placed under 16's Trust & Failure Modes (a bridge pause) and under 24
+    // Autonomous Organizations; this placement is preferred.
     {
       id: "pause-mechanisms",
       slug: "pause-mechanisms",
       title: "Pause Mechanisms",
       preferredPlacementId: "pause-mechanisms",
     },
-    { id: "guardians", slug: "guardians", title: "Guardians" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "guardians", slug: "guardians", title: "Guardians", preferredPlacementId: "guardians" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
     {
       id: "emergency-upgrades",
@@ -3542,14 +3683,15 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "emergency-upgrades",
     },
     // Also placed in 17 Security, Correctness & Resilience and under 23's Execution
-    // Recovery; this placement is preferred.
+    // Recovery and under 23's Execution Recovery; this placement is preferred.
     {
       id: "circuit-breakers",
       slug: "circuit-breakers",
       title: "Circuit Breakers",
       preferredPlacementId: "circuit-breakers",
     },
-    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    // Also placed in 17 Security, Correctness & Resilience and under 24 Autonomous
+    // Organizations; this placement is preferred.
     {
       id: "incident-response",
       slug: "incident-response",
@@ -4342,7 +4484,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // 14 and 24.
     { id: "human-agents", slug: "human-agents", title: "Human Agents" },
     { id: "software-agents", slug: "software-agents", title: "Software Agents" },
-    { id: "organizations", slug: "organizations", title: "Organizations" },
+    // Also 24 Autonomous Organizations' L1 topic, with its own layer; preferred there.
+    { id: "organizations", slug: "organizations", title: "Organizations", preferredPlacementId: "organizations-in-autonomous-organizations" },
     { id: "hybrid-agents", slug: "hybrid-agents", title: "Hybrid Agents" },
     // Kinds of owner of an agent, not 08's Ownership (control of an asset or
     // contract) in general.
@@ -4365,7 +4508,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "spending-authority", slug: "spending-authority", title: "Spending Authority" },
     // Capital Constraints are not 11's Solvency Constraints; Capital Allocation
     // is not 10's Capacity Allocation.
-    { id: "revenue", slug: "revenue", title: "Revenue" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "revenue", slug: "revenue", title: "Revenue", preferredPlacementId: "revenue" },
     // Also placed under 22's Resource Allocation; this placement is preferred.
     { id: "capital-allocation", slug: "capital-allocation", title: "Capital Allocation", preferredPlacementId: "capital-allocation" },
     { id: "working-capital", slug: "working-capital", title: "Working Capital" },
@@ -4382,7 +4526,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // not 10's Mechanism Constraints; policy enforcement in execution is 23's.
     // Also placed under 23 Autonomous Execution; this placement is preferred.
     { id: "policy-constraints", slug: "policy-constraints", title: "Policy Constraints", preferredPlacementId: "policy-constraints" },
-    { id: "authority-escalation", slug: "authority-escalation", title: "Authority Escalation" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "authority-escalation", slug: "authority-escalation", title: "Authority Escalation", preferredPlacementId: "authority-escalation" },
     // Automated Settlement (settling without a human step) is not Settlement itself.
     // Payment Channels are 15's (a state channel specialized for payments), placed
     // again here as a machine-payment rail.
@@ -4479,7 +4624,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "counteroffers", slug: "counteroffers", title: "Counteroffers" },
     { id: "negotiation-constraints", slug: "negotiation-constraints", title: "Negotiation Constraints" },
     { id: "negotiation-strategies", slug: "negotiation-strategies", title: "Negotiation Strategies" },
-    { id: "negotiated-agreement", slug: "negotiated-agreement", title: "Negotiated Agreement" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "negotiated-agreement", slug: "negotiated-agreement", title: "Negotiated Agreement", preferredPlacementId: "negotiated-agreement" },
     { id: "negotiation-failure", slug: "negotiation-failure", title: "Negotiation Failure" },
     // Task Delegation (handing over work) and Authority Delegation (handing
     // over rights) are the narrower kinds of Delegation.
@@ -4526,7 +4672,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "task-discovery", slug: "task-discovery", title: "Task Discovery" },
     { id: "task-providers", slug: "task-providers", title: "Task Providers" },
     { id: "task-bidding", slug: "task-bidding", title: "Task Bidding" },
-    { id: "task-assignment", slug: "task-assignment", title: "Task Assignment" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "task-assignment", slug: "task-assignment", title: "Task Assignment", preferredPlacementId: "task-assignment" },
     { id: "task-settlement", slug: "task-settlement", title: "Task Settlement" },
     // Shared Plans are not 20's Plans (one agent's); Coordination Protocols are
     // not Protocols. Agents aligning their timing and actions, shown as
@@ -4536,8 +4683,10 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "shared-plans", slug: "shared-plans", title: "Shared Plans" },
     { id: "coordination-protocols", slug: "coordination-protocols", title: "Coordination Protocols" },
     { id: "agent-synchronization", slug: "agent-synchronization", title: "Agent Synchronization" },
-    { id: "conflict-resolution", slug: "conflict-resolution", title: "Conflict Resolution" },
-    { id: "collective-decision-making", slug: "collective-decision-making", title: "Collective Decision-Making" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "conflict-resolution", slug: "conflict-resolution", title: "Conflict Resolution", preferredPlacementId: "conflict-resolution" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "collective-decision-making", slug: "collective-decision-making", title: "Collective Decision-Making", preferredPlacementId: "collective-decision-making" },
     { id: "emergent-coordination", slug: "emergent-coordination", title: "Emergent Coordination" },
     // 23 Autonomous Execution: L1 topics, the lifecycle of carrying out one
     // autonomous action. Simulation is the general concept (not only pre-trade
@@ -4627,7 +4776,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Oversight 20's. Audit Trails (a record of what an agent did and why) are not
     // 03's Traceability.
     { id: "progress-tracking", slug: "progress-tracking", title: "Progress Tracking" },
-    { id: "audit-trails", slug: "audit-trails", title: "Audit Trails" },
+    // Also placed under 24 Autonomous Organizations; this placement is preferred.
+    { id: "audit-trails", slug: "audit-trails", title: "Audit Trails", preferredPlacementId: "audit-trails" },
     // Execution Failures are not Foundations' Failures (process faults);
     // Rollbacks are not 02's Transaction Reversion or 04's Reorganizations.
     // Circuit Breakers are 14's (automatic halts on a condition), not Kill
@@ -4637,6 +4787,118 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "rollbacks", slug: "rollbacks", title: "Rollbacks" },
     { id: "compensating-actions", slug: "compensating-actions", title: "Compensating Actions" },
     { id: "kill-switches", slug: "kill-switches", title: "Kill Switches" },
+    // 24 Autonomous Organizations: L1 topics. Organizations (21's concept) and
+    // Treasuries (14's) are L1 topics here with their own layers, preferred here.
+    // Organizational Governance, Policies and Workflows are an organization's
+    // own, not 14's governance in general, 23's Execution Policies or 23's
+    // Execution Planning. Operating protocols themselves is 25's; economy-level
+    // systems are 26's.
+    { id: "organizational-membership", slug: "organizational-membership", title: "Organizational Membership" },
+    { id: "roles-authority", slug: "roles-authority", title: "Roles & Authority" },
+    { id: "organizational-structure", slug: "organizational-structure", title: "Organizational Structure" },
+    { id: "organizational-governance", slug: "organizational-governance", title: "Organizational Governance" },
+    { id: "organizational-decision-making", slug: "organizational-decision-making", title: "Organizational Decision-Making" },
+    { id: "organizational-policies", slug: "organizational-policies", title: "Organizational Policies" },
+    { id: "organizational-budgeting", slug: "organizational-budgeting", title: "Organizational Budgeting" },
+    { id: "organizational-workflows", slug: "organizational-workflows", title: "Organizational Workflows" },
+    { id: "autonomous-operations", slug: "autonomous-operations", title: "Autonomous Operations" },
+    { id: "accountability-auditability", slug: "accountability-auditability", title: "Accountability & Auditability" },
+    { id: "disputes-emergency-controls", slug: "disputes-emergency-controls", title: "Disputes & Emergency Controls" },
+    { id: "organizational-lifecycle", slug: "organizational-lifecycle", title: "Organizational Lifecycle" },
+    { id: "inter-organizational-coordination", slug: "inter-organizational-coordination", title: "Inter-Organizational Coordination" },
+    // L2 topics (placements in L2_TOPICS). Organizational Identity is not 08's
+    // Identity or Agent Identity; Organizational Objectives are not 22's Shared
+    // or 21's Agent Objectives.
+    { id: "decentralized-autonomous-organizations", slug: "decentralized-autonomous-organizations", title: "Decentralized Autonomous Organizations" },
+    { id: "organizational-identity", slug: "organizational-identity", title: "Organizational Identity" },
+    { id: "organizational-objectives", slug: "organizational-objectives", title: "Organizational Objectives" },
+    { id: "organizational-boundaries", slug: "organizational-boundaries", title: "Organizational Boundaries" },
+    { id: "legal-wrappers", slug: "legal-wrappers", title: "Legal Wrappers" },
+    // Organizational Membership is not 22's Coalition Membership; Membership
+    // Tokens are not 14's Token Holders; Member Exit (leaving) is not 14's Exit
+    // Rights (the right to leave with one's share).
+    { id: "membership-criteria", slug: "membership-criteria", title: "Membership Criteria" },
+    { id: "member-admission", slug: "member-admission", title: "Member Admission" },
+    { id: "membership-rights", slug: "membership-rights", title: "Membership Rights" },
+    { id: "membership-obligations", slug: "membership-obligations", title: "Membership Obligations" },
+    { id: "membership-tokens", slug: "membership-tokens", title: "Membership Tokens" },
+    { id: "member-exit", slug: "member-exit", title: "Member Exit" },
+    // Roles, Authority Boundaries (08), Mandates and Separation of Powers (14)
+    // are placed again.
+    { id: "role-assignment", slug: "role-assignment", title: "Role Assignment" },
+    { id: "role-hierarchies", slug: "role-hierarchies", title: "Role Hierarchies" },
+    // Sub-Organizations are not 14's Working Groups; Reporting Lines are not
+    // Role Hierarchies.
+    { id: "hierarchical-structures", slug: "hierarchical-structures", title: "Hierarchical Structures" },
+    { id: "flat-structures", slug: "flat-structures", title: "Flat Structures" },
+    { id: "sub-organizations", slug: "sub-organizations", title: "Sub-Organizations" },
+    { id: "reporting-lines", slug: "reporting-lines", title: "Reporting Lines" },
+    // Governance by humans and autonomous agents together; not 14's Governance
+    // Models in general.
+    { id: "hybrid-governance", slug: "hybrid-governance", title: "Hybrid Governance" },
+    // Decision Rights (who may decide what) are not 08's Capabilities; Automated
+    // Decisions (taken by agents within a mandate) are not 22's Collective
+    // Decision-Making.
+    { id: "decision-rights", slug: "decision-rights", title: "Decision Rights" },
+    { id: "automated-decisions", slug: "automated-decisions", title: "Automated Decisions" },
+    { id: "decision-records", slug: "decision-records", title: "Decision Records" },
+    // Organizational Compliance is not 21's Policy Constraints; Policy Updates
+    // are not 14's Rule Changes (to constitutional rules).
+    { id: "policy-setting", slug: "policy-setting", title: "Policy Setting" },
+    { id: "policy-hierarchies", slug: "policy-hierarchies", title: "Policy Hierarchies" },
+    { id: "organizational-compliance", slug: "organizational-compliance", title: "Organizational Compliance" },
+    { id: "policy-updates", slug: "policy-updates", title: "Policy Updates" },
+    // Treasury Custody (who holds the keys) is not 08's Key Management; Runway
+    // and Treasury Diversification are not 11's Solvency or Reserves.
+    { id: "treasury-custody", slug: "treasury-custody", title: "Treasury Custody" },
+    { id: "runway", slug: "runway", title: "Runway" },
+    { id: "treasury-diversification", slug: "treasury-diversification", title: "Treasury Diversification" },
+    // Budget Cycles are not 14's Budget Allocation; Contributor Compensation is
+    // not 10's Rewards; Spending Approvals are not 23's Human Approval.
+    { id: "budget-cycles", slug: "budget-cycles", title: "Budget Cycles" },
+    { id: "contributor-compensation", slug: "contributor-compensation", title: "Contributor Compensation" },
+    { id: "spending-approvals", slug: "spending-approvals", title: "Spending Approvals" },
+    // Workflow Definitions (an organization's repeatable processes) are not 23's
+    // or 20's Plans; Approval Workflows are not 23's Multi-Party Approval;
+    // Handoffs (between humans and agents) are not 22's Task Delegation;
+    // Workflow Automation is not 05's Automation; Service-Level Agreements are
+    // not 22's Negotiated Agreement.
+    { id: "workflow-definitions", slug: "workflow-definitions", title: "Workflow Definitions" },
+    { id: "approval-workflows", slug: "approval-workflows", title: "Approval Workflows" },
+    { id: "handoffs", slug: "handoffs", title: "Handoffs" },
+    { id: "workflow-automation", slug: "workflow-automation", title: "Workflow Automation" },
+    { id: "service-level-agreements", slug: "service-level-agreements", title: "Service-Level Agreements" },
+    // Organizational Autonomy is not 20's Autonomy Levels (one agent's); Agent
+    // Workforces are not 21's Economic Agents; Operating Procedures are not 23's
+    // Execution Policies; Organizational Performance is not 05's Metrics.
+    { id: "organizational-autonomy", slug: "organizational-autonomy", title: "Organizational Autonomy" },
+    { id: "agent-workforces", slug: "agent-workforces", title: "Agent Workforces" },
+    { id: "operating-procedures", slug: "operating-procedures", title: "Operating Procedures" },
+    { id: "organizational-performance", slug: "organizational-performance", title: "Organizational Performance" },
+    // Accountability and Transparency are 14's and Audit Trails 23's.
+    // Responsibility Attribution is not 03's Attribution; Liability is not
+    // Accountability; Auditability is the property, Audit Trails the record.
+    { id: "responsibility-attribution", slug: "responsibility-attribution", title: "Responsibility Attribution" },
+    { id: "auditability", slug: "auditability", title: "Auditability" },
+    { id: "liability", slug: "liability", title: "Liability" },
+    // Organizational Lifecycle is not 02's Contract Lifecycle; Organization
+    // Formation is not 22's Coalition Formation; Restructuring is not 04's
+    // Reorganizations; Organizational Dissolution is not 22's Coalition
+    // Dissolution.
+    { id: "organization-formation", slug: "organization-formation", title: "Organization Formation" },
+    { id: "organizational-bootstrapping", slug: "organizational-bootstrapping", title: "Organizational Bootstrapping" },
+    { id: "restructuring", slug: "restructuring", title: "Restructuring" },
+    { id: "organizational-mergers", slug: "organizational-mergers", title: "Organizational Mergers" },
+    { id: "succession", slug: "succession", title: "Succession" },
+    { id: "organizational-dissolution", slug: "organizational-dissolution", title: "Organizational Dissolution" },
+    // Organizational Alliances are not 22's Coalition Formation (among agents);
+    // Federations are not 14's Councils & Committees; Cross-Organizational
+    // Governance is not Organizational Governance.
+    { id: "organizational-alliances", slug: "organizational-alliances", title: "Organizational Alliances" },
+    { id: "federations", slug: "federations", title: "Federations" },
+    { id: "joint-ventures", slug: "joint-ventures", title: "Joint Ventures" },
+    { id: "shared-services", slug: "shared-services", title: "Shared Services" },
+    { id: "cross-organizational-governance", slug: "cross-organizational-governance", title: "Cross-Organizational Governance" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -5286,6 +5548,22 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "verification-settlement", conceptId: "verification-settlement", parentPlacementId: "autonomous-execution", order: 8 },
     { id: "execution-monitoring", conceptId: "execution-monitoring", parentPlacementId: "autonomous-execution", order: 9 },
     { id: "execution-recovery", conceptId: "execution-recovery", parentPlacementId: "autonomous-execution", order: 10 },
+    // 24 Autonomous Organizations: L1 topics.
+    { id: "organizations-in-autonomous-organizations", conceptId: "organizations", parentPlacementId: "autonomous-organizations", order: 0 },
+    { id: "organizational-membership", conceptId: "organizational-membership", parentPlacementId: "autonomous-organizations", order: 1 },
+    { id: "roles-authority", conceptId: "roles-authority", parentPlacementId: "autonomous-organizations", order: 2 },
+    { id: "organizational-structure", conceptId: "organizational-structure", parentPlacementId: "autonomous-organizations", order: 3 },
+    { id: "organizational-governance", conceptId: "organizational-governance", parentPlacementId: "autonomous-organizations", order: 4 },
+    { id: "organizational-decision-making", conceptId: "organizational-decision-making", parentPlacementId: "autonomous-organizations", order: 5 },
+    { id: "organizational-policies", conceptId: "organizational-policies", parentPlacementId: "autonomous-organizations", order: 6 },
+    { id: "treasuries-in-autonomous-organizations", conceptId: "treasuries", parentPlacementId: "autonomous-organizations", order: 7 },
+    { id: "organizational-budgeting", conceptId: "organizational-budgeting", parentPlacementId: "autonomous-organizations", order: 8 },
+    { id: "organizational-workflows", conceptId: "organizational-workflows", parentPlacementId: "autonomous-organizations", order: 9 },
+    { id: "autonomous-operations", conceptId: "autonomous-operations", parentPlacementId: "autonomous-organizations", order: 10 },
+    { id: "accountability-auditability", conceptId: "accountability-auditability", parentPlacementId: "autonomous-organizations", order: 11 },
+    { id: "disputes-emergency-controls", conceptId: "disputes-emergency-controls", parentPlacementId: "autonomous-organizations", order: 12 },
+    { id: "organizational-lifecycle", conceptId: "organizational-lifecycle", parentPlacementId: "autonomous-organizations", order: 13 },
+    { id: "inter-organizational-coordination", conceptId: "inter-organizational-coordination", parentPlacementId: "autonomous-organizations", order: 14 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
