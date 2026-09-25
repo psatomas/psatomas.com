@@ -1,13 +1,19 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import type { Ref } from "react";
+import { useSearchParams } from "next/navigation";
 import { MonoLabel } from "@/components/ui/mono-label";
 import {
-  focusMapExplorerPlacement,
   getInitialMapExplorerState,
+  getMapContextHref,
   getMapExplorerContext,
+  getNextMapContext,
   getVisibleMapExplorerRegions,
   indexMapExplorerView,
+  MAP_CONTEXT_PARAM,
+  resolveMapContextParam,
+  revealMapExplorerContext,
   toggleMapExplorerPlacement,
 } from "./explorer-model";
 import type { MapExplorerContextStep, MapExplorerRow, MapExplorerView } from "./explorer-model";
@@ -19,30 +25,55 @@ const FOCUSED_ROW = "shadow-[inset_2px_0_0_0_var(--color-accent)]";
 const LABEL_TEXT = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
 const CONTROL_FOCUS = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent";
 
-export function RecursiveMapExplorer({
-  view,
-  initialContextPlacementId = null,
-}: {
-  view: MapExplorerView;
-  /** Entry context from the URL; unknown placements fall back to the default state. */
-  initialContextPlacementId?: string | null;
-}) {
-  const [state, setState] = useState(() => getInitialMapExplorerState(view, initialContextPlacementId));
+/**
+ * One source of truth per concern: the URL's `?context=` owns the active
+ * placement (so refresh, sharing, and Back/Forward reconstruct it), while
+ * disclosure is local state that no context change ever closes.
+ */
+export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
   const index = useMemo(() => indexMapExplorerView(view), [view]);
-  const regions = getVisibleMapExplorerRegions(view, state.expandedPlacementIds);
-  const context = getMapExplorerContext(index, state.focusedPlacementId);
+  const focusedPlacementId = resolveMapContextParam(index, useSearchParams().getAll(MAP_CONTEXT_PARAM));
+  const [expandedPlacementIds, setExpandedPlacementIds] = useState(
+    () => getInitialMapExplorerState(view, focusedPlacementId).expandedPlacementIds,
+  );
+  // When the URL context changes (a selection, Back/Forward), reveal its
+  // ancestors during render, before paint; open branches stay open.
+  const [revealedFor, setRevealedFor] = useState(focusedPlacementId);
+  if (revealedFor !== focusedPlacementId) {
+    setRevealedFor(focusedPlacementId);
+    setExpandedPlacementIds((current) => revealMapExplorerContext(current, index, focusedPlacementId));
+  }
+  const regions = getVisibleMapExplorerRegions(view, expandedPlacementIds);
+  const context = getMapExplorerContext(index, focusedPlacementId);
   const focusHintId = useId();
+  const contextRef = useRef<HTMLElement>(null);
+  // Where keyboard focus goes once a breadcrumb move or Clear has rendered,
+  // since both remove the control that was activated.
+  const pendingFocusRef = useRef<{ target: string | null } | null>(null);
 
-  const toggle = (placementId: string) => setState((current) => toggleMapExplorerPlacement(current, placementId));
-  const focus = (placementId: string | null) =>
-    setState((current) => focusMapExplorerPlacement(current, placementId));
-  const toggleFocus = (placementId: string) =>
-    setState((current) =>
-      focusMapExplorerPlacement(current, current.focusedPlacementId === placementId ? null : placementId),
-    );
+  useEffect(() => {
+    const pending = pendingFocusRef.current;
+    if (!pending) return;
+    pendingFocusRef.current = null;
+    const control = pending.target
+      ? document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(pending.target)}"] button[aria-pressed]`)
+      : null;
+    (control ?? contextRef.current)?.focus();
+  }, [focusedPlacementId]);
+
+  const toggle = (placementId: string) =>
+    setExpandedPlacementIds((current) => toggleMapExplorerPlacement(current, placementId));
+  // Each explicit context change is its own history entry; Clear returns to /map.
+  const navigate = (placementId: string | null) =>
+    window.history.pushState(null, "", getMapContextHref(placementId));
+  const toggleFocus = (placementId: string) => navigate(getNextMapContext(focusedPlacementId, placementId));
+  const navigateFromTrail = (placementId: string | null) => {
+    pendingFocusRef.current = { target: placementId };
+    navigate(placementId);
+  };
 
   function renderFocusControl(row: MapExplorerRow, region: boolean) {
-    const focused = row.placementId === state.focusedPlacementId;
+    const focused = row.placementId === focusedPlacementId;
     // A row's own parent is only shown below region level; the region plane
     // already names the parent of its first-level rows.
     const parentLabel = row.depth >= 2 ? row.parentLabel : undefined;
@@ -104,7 +135,7 @@ export function RecursiveMapExplorer({
       <p id={focusHintId} hidden>
         Sets this concept as the current context.
       </p>
-      <ContextTrail context={context} onFocus={focus} />
+      <ContextTrail ref={contextRef} context={context} onNavigate={navigateFromTrail} />
 
       {/* Regions are separated by whitespace; rows inside a region stay
           connected. Every row shares the region's full width at any depth. */}
@@ -116,7 +147,7 @@ export function RecursiveMapExplorer({
               data-concept-id={header.conceptId}
               data-depth={header.depth}
               className={`flex min-w-0 items-stretch bg-surface ${
-                header.placementId === state.focusedPlacementId ? FOCUSED_ROW : ""
+                header.placementId === focusedPlacementId ? FOCUSED_ROW : ""
               }`}
             >
               <h3 className="flex min-w-0 flex-1">{renderFocusControl(header, true)}</h3>
@@ -132,7 +163,7 @@ export function RecursiveMapExplorer({
                     data-concept-id={row.conceptId}
                     data-depth={row.depth}
                     className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${
-                      row.placementId === state.focusedPlacementId ? FOCUSED_ROW : ""
+                      row.placementId === focusedPlacementId ? FOCUSED_ROW : ""
                     }`}
                   >
                     {/* Hierarchy stays available to assistive technology without visible depth markers. */}
@@ -151,20 +182,25 @@ export function RecursiveMapExplorer({
 }
 
 /**
- * The focused placement's taxonomy ancestry. Ancestors re-focus their own
- * placement; the trail wraps rather than overflowing at any depth.
+ * Breadcrumb of the focused placement's taxonomy ancestry (placement
+ * ancestry, not graph relationships or concept identity). Ancestors navigate
+ * to their own placement; the trail wraps rather than overflowing.
  */
 function ContextTrail({
+  ref,
   context,
-  onFocus,
+  onNavigate,
 }: {
+  ref: Ref<HTMLElement>;
   context: MapExplorerContextStep[];
-  onFocus: (placementId: string | null) => void;
+  onNavigate: (placementId: string | null) => void;
 }) {
   return (
     <nav
+      ref={ref}
+      tabIndex={-1}
       aria-label="Context"
-      className="flex min-w-0 flex-col gap-3 border border-border px-5 py-4 sm:flex-row sm:items-baseline sm:gap-6 sm:px-6"
+      className="flex min-w-0 flex-col gap-3 border border-border px-5 py-4 outline-none sm:flex-row sm:items-baseline sm:gap-6 sm:px-6"
     >
       <MonoLabel className="shrink-0">Context</MonoLabel>
       {context.length === 0 ? (
@@ -178,7 +214,7 @@ function ContextTrail({
               <li key={step.placementId} className="flex min-w-0 items-baseline gap-2">
                 {index > 0 ? (
                   <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
-                    ›
+                    /
                   </span>
                 ) : null}
                 {index === context.length - 1 ? (
@@ -188,7 +224,7 @@ function ContextTrail({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => onFocus(step.placementId)}
+                    onClick={() => onNavigate(step.placementId)}
                     className={`${LABEL_TEXT} py-1.5 text-left text-muted [overflow-wrap:anywhere] transition-colors hover:text-accent ${CONTROL_FOCUS}`}
                   >
                     {step.label}
@@ -199,7 +235,7 @@ function ContextTrail({
           </ol>
           <button
             type="button"
-            onClick={() => onFocus(null)}
+            onClick={() => onNavigate(null)}
             aria-label="Clear context"
             className={`${LABEL_TEXT} self-start py-1.5 text-dim transition-colors hover:text-accent sm:self-auto ${CONTROL_FOCUS}`}
           >

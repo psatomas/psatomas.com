@@ -1,25 +1,23 @@
 import { MonoLabel } from "@/components/ui/mono-label";
-import { buildMapExplorerView, MAP_CONTEXT_PARAM } from "@/components/map/explorer-model";
+import { buildMapExplorerView } from "@/components/map/explorer-model";
 import { RecursiveMapExplorer } from "@/components/map/recursive-explorer";
 import { createMapResolver, mapKnowledge } from "@/lib/map";
 import { staticSocial } from "@/lib/social/content";
 import { buildSocialMetadata } from "@/lib/social/metadata";
 
+// Request-rendered so the explorer's `?context=` (read with useSearchParams)
+// is present in the server render: refresh and direct entry arrive with the
+// active placement, breadcrumb, and revealed ancestors already in the HTML.
+export const dynamic = "force-dynamic";
+
+// Canonical identity is always /map; the context query never becomes canonical.
 export const metadata = buildSocialMetadata(staticSocial.map);
 
-export default async function MapPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default function MapPage() {
   // Keep canonical MAP data and resolution server-side. The client receives
   // only this route's serializable placement taxonomy, not graph/content/path
   // records or the raw knowledge model.
   const resolver = createMapResolver(mapKnowledge);
-  // `?context=<placementId>` (MAP spec §14) is an entry context, validated
-  // here: anything that is not a single known placement is ignored.
-  const context = (await searchParams)[MAP_CONTEXT_PARAM];
-  const contextPlacementId = typeof context === "string" && resolver.getPlacement(context) ? context : null;
   const explorerView = buildMapExplorerView(
     resolver,
     resolver.getRootPlacements().map((placement) => placement.id),
@@ -50,12 +48,7 @@ export default async function MapPage({
             to set your context.
           </p>
         </div>
-        {/* Keyed by context so a changed entry URL re-initializes the explorer. */}
-        <RecursiveMapExplorer
-          key={contextPlacementId ?? ""}
-          view={explorerView}
-          initialContextPlacementId={contextPlacementId}
-        />
+        <RecursiveMapExplorer view={explorerView} />
       </section>
     </main>
   );

@@ -4,13 +4,17 @@ import { mapKnowledge, createMapResolver } from "../../lib/map/index.ts";
 import type { MapKnowledgeModel } from "../../lib/map/index.ts";
 import {
   buildMapExplorerView,
-  focusMapExplorerPlacement,
   getInitialExpandedPlacementIds,
   getInitialMapExplorerState,
+  getMapContextHref,
   getMapExplorerContext,
+  getMapL0Entries,
+  getNextMapContext,
   getVisibleMapExplorerRegions,
   getVisibleMapExplorerRows,
   indexMapExplorerView,
+  resolveMapContextParam,
+  revealMapExplorerContext,
   toggleMapExplorerPlacement,
 } from "./explorer-model.ts";
 
@@ -175,36 +179,76 @@ test("recursive projection supports synthetic deep hierarchies without a depth l
   assert.ok(rows.every((row) => typeof row.depth === "number"));
 });
 
-test("disclosure never implicitly focuses, and several branches stay open", () => {
-  let state = getInitialMapExplorerState(view);
-  assert.equal(state.focusedPlacementId, null);
+test("disclosure only changes the expanded set, so several branches stay open and context is untouched", () => {
+  const initial = getInitialMapExplorerState(view, "finality-in-rollups");
+  let expanded = toggleMapExplorerPlacement(initial.expandedPlacementIds, "consensus");
+  expanded = toggleMapExplorerPlacement(expanded, "foundations");
+  expanded = toggleMapExplorerPlacement(expanded, "foundations");
 
-  state = toggleMapExplorerPlacement(state, "consensus");
-  state = toggleMapExplorerPlacement(state, "rollups");
-  assert.equal(state.focusedPlacementId, null);
-  assert.deepEqual([...state.expandedPlacementIds].sort(), [
-    ...getInitialExpandedPlacementIds(view),
-    "consensus",
-    "rollups",
-  ].sort());
-
-  // Disclosure also leaves an existing context untouched.
-  state = focusMapExplorerPlacement(state, "finality-in-rollups");
-  state = toggleMapExplorerPlacement(state, "consensus");
-  assert.equal(state.focusedPlacementId, "finality-in-rollups");
+  // Disclosure is a Set-to-Set change; the context (URL-owned) has no input or output here.
+  assert.ok(expanded.has("consensus") && expanded.has("rollups") && expanded.has("ai-intelligent-systems"));
+  assert.equal(getMapContextHref(initial.focusedPlacementId), "/map?context=finality-in-rollups");
 });
 
-test("focusing a placement never opens or closes branches", () => {
-  let state = getInitialMapExplorerState(view);
-  state = toggleMapExplorerPlacement(state, "consensus");
-  state = toggleMapExplorerPlacement(state, "rollups");
-  const expandedBefore = [...state.expandedPlacementIds];
+test("a context change reveals only its ancestors and never closes a branch", () => {
+  const index = indexMapExplorerView(view);
+  const open = new Set(["foundations", "ai-intelligent-systems", "consensus-ordering"]);
 
-  state = focusMapExplorerPlacement(state, "finality-in-consensus");
-  assert.deepEqual([...state.expandedPlacementIds], expandedBefore);
-  state = focusMapExplorerPlacement(state, null);
-  assert.equal(state.focusedPlacementId, null);
-  assert.deepEqual([...state.expandedPlacementIds], expandedBefore);
+  const revealed = revealMapExplorerContext(open, index, "finality-in-rollups");
+  assert.deepEqual([...revealed].sort(), [...open, "scaling-modular-systems", "scaling", "rollups"].sort());
+  // Already-visible context: nothing changes (same set instance).
+  assert.equal(revealMapExplorerContext(revealed, index, "rollups"), revealed);
+  // Clearing context reveals nothing and closes nothing.
+  assert.equal(revealMapExplorerContext(open, index, null), open);
+});
+
+test("selecting the active placement clears context; anything else moves to it", () => {
+  assert.equal(getNextMapContext(null, "consensus"), "consensus");
+  assert.equal(getNextMapContext("consensus", "finality-in-consensus"), "finality-in-consensus");
+  assert.equal(getNextMapContext("consensus", "consensus"), null);
+});
+
+test("context navigation URLs carry placement identity only; clearing returns to /map", () => {
+  assert.equal(getMapContextHref("consensus-ordering"), "/map?context=consensus-ordering");
+  assert.equal(getMapContextHref("finality-in-consensus"), "/map?context=finality-in-consensus");
+  assert.equal(getMapContextHref(null), "/map");
+  assert.equal(getMapContextHref("a b&c"), "/map?context=a+b%26c");
+});
+
+test("the URL context value is validated against placements in the view", () => {
+  const index = indexMapExplorerView(view);
+  assert.equal(resolveMapContextParam(index, ["finality-in-consensus"]), "finality-in-consensus");
+  assert.equal(resolveMapContextParam(index, "machine-economy"), "machine-economy");
+  for (const invalid of [[], [""], ["nope"], ["finality"], ["consensus", "rollups"], ["<script>"], null, undefined]) {
+    assert.equal(resolveMapContextParam(index, invalid), null, JSON.stringify(invalid));
+  }
+});
+
+test("every L0 placement is a valid context, empty or populated", () => {
+  const index = indexMapExplorerView(view);
+  for (const root of view.roots) {
+    const state = getInitialMapExplorerState(view, root.placementId);
+    assert.equal(state.focusedPlacementId, root.placementId);
+    assert.deepEqual(getMapExplorerContext(index, root.placementId).map((step) => step.placementId), [root.placementId]);
+    // Populated roots are open; empty roots gain no disclosure state.
+    assert.equal(state.expandedPlacementIds.has(root.placementId), root.children.length > 0);
+  }
+});
+
+test("homepage L0 entries derive from canonical root placements: 27, ordered, linked", () => {
+  const entries = getMapL0Entries(resolver);
+  const roots = resolver.getRootPlacements();
+
+  assert.equal(entries.length, 27);
+  assert.deepEqual(entries.map((entry) => entry.placementId), roots.map((placement) => placement.id));
+  assert.deepEqual(entries.map((entry) => entry.ordinal), Array.from({ length: 27 }, (_, i) => String(i + 1).padStart(2, "0")));
+  for (const entry of entries) {
+    assert.ok(resolver.getPlacement(entry.placementId));
+    assert.equal(entry.label, resolver.getConcept(entry.conceptId)?.title);
+    assert.equal(entry.href, `/map?context=${entry.placementId}`);
+  }
+  assert.equal(entries[0].href, "/map?context=foundations");
+  assert.equal(entries[26].href, "/map?context=frontier-systems");
 });
 
 test("context ancestry is placement-derived and matches resolver ancestry", () => {

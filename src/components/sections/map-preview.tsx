@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { getMapContextHref } from "@/components/map/explorer-model";
-import { MAP_PREVIEW_TOPICS } from "./map-preview-topics";
+import { getMapL0Entries } from "@/components/map/explorer-model";
+import { createMapResolver, mapKnowledge } from "@/lib/map";
 
 /**
  * MAP's homepage introduction. As with Systems/Research/Lab, the identity
  * plane is the environment's single gateway link and uses the same active
  * plane treatment. Below it, its sibling previews MAP's breadth through the 27
- * L0 domains; a domain becomes a targeted entry link into /map only once it
- * names an existing placement. No tree, no disclosure, no internal scrolling.
- * The ontology grows at /map, never here.
+ * L0 domains, each a contextual entry link to /map?context=<placementId>. The
+ * domains, their order, and their placement identities are read from the
+ * canonical MAP model (server-side), so the homepage holds no second copy of
+ * MAP identity. No tree, no disclosure, no internal scrolling.
  */
 export function MapPreview() {
+  const domains = getMapL0Entries(createMapResolver(mapKnowledge));
+
   return (
     <section
       aria-labelledby="map-heading"
@@ -57,50 +60,30 @@ export function MapPreview() {
             Mobile is one column, 01 → 27; from sm the grid flows by column
             (9 rows), reading 01–09, 10–18, 19–27 while DOM order stays 01 → 27.
             The palette is Lab's: cyan index and light label at rest; on
-            hover the #737982 plane with a dark index and cyan label. */}
+            hover/focus the #737982 plane with a dark index and cyan label.
+            The whole cell is the link. */}
         <ol
           aria-label="MAP domains"
           className="grid grid-cols-1 border-t border-border sm:grid-flow-col sm:grid-cols-3 sm:grid-rows-9"
         >
-          {MAP_PREVIEW_TOPICS.map(({ label, placementId }, index) => {
-            const content = (
-              <>
+          {domains.map(({ placementId, label, ordinal, href }) => (
+            <li
+              key={placementId}
+              className="border-border not-first:border-t sm:[&:nth-child(9n+1)]:border-t-0 sm:[&:nth-child(n+10)]:border-l"
+            >
+              <Link
+                href={href}
+                className="group flex h-full items-baseline gap-3 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:bg-[#737982] focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:text-xs"
+              >
                 <span aria-hidden="true" className="shrink-0 text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
-                  {String(index + 1).padStart(2, "0")}
+                  {ordinal}
                 </span>
                 <span className="min-w-0 flex-1 text-foreground [overflow-wrap:anywhere] transition-colors group-hover:text-accent group-focus-visible:text-accent">
                   {label}
                 </span>
-                {placementId ? (
-                  <span aria-hidden="true" className="shrink-0 text-muted transition-colors group-hover:text-accent group-focus-visible:text-accent">
-                    →
-                  </span>
-                ) : null}
-              </>
-            );
-            const cell =
-              "group flex h-full items-baseline gap-3 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:bg-[#737982] sm:text-xs";
-
-            return (
-              <li
-                key={label}
-                className="border-border not-first:border-t sm:[&:nth-child(9n+1)]:border-t-0 sm:[&:nth-child(n+10)]:border-l"
-              >
-                {/* Only a topic naming an existing placement is a link; the
-                    rest are plain content with visual hover identity only. */}
-                {placementId ? (
-                  <Link
-                    href={getMapContextHref(placementId)}
-                    className={`${cell} focus-visible:bg-[#737982] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent`}
-                  >
-                    {content}
-                  </Link>
-                ) : (
-                  <div className={cell}>{content}</div>
-                )}
-              </li>
-            );
-          })}
+              </Link>
+            </li>
+          ))}
         </ol>
       </div>
     </section>
