@@ -152,6 +152,66 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "fee-accounting",
     "denial-of-service-resistance",
   ],
+  // 03 State & Data
+  "state-representation": [
+    "state-models",
+    "global-state",
+    "local-state",
+    "state-encoding",
+    "state-layout",
+    { placementId: "state-roots-in-state-representation", conceptId: "state-roots" },
+  ],
+  "transitions-in-state-data": [
+    "transition-functions",
+    "valid-transitions",
+    "invalid-transitions",
+    "transition-preconditions",
+    "transition-effects",
+    "atomic-state-transitions",
+  ],
+  "state-commitments": [
+    "merkle-trees",
+    "merkle-patricia-tries",
+    "verkle-trees",
+    "commitment-schemes",
+    { placementId: "state-roots-in-state-commitments", conceptId: "state-roots" },
+    "state-proofs",
+  ],
+  "historical-state": [
+    "state-history",
+    "historical-queries",
+    "state-snapshots",
+    { placementId: "state-checkpoints", conceptId: "state-checkpoints", contextualLabel: "Checkpoints" },
+    "archival-state",
+    "state-reconstruction",
+  ],
+  synchronization: [
+    "initial-synchronization",
+    "full-sync",
+    "snap-sync",
+    "state-sync",
+    "incremental-synchronization",
+    "synchronization-verification",
+  ],
+  "on-chain-data": ["calldata", "logs", "events", "transaction-data", "block-data", "protocol-state"],
+  "off-chain-data": ["external-data", "metadata", "off-chain-state", "data-references", "content-addressing"],
+  "data-integrity": [
+    "integrity-guarantees",
+    "data-hashing",
+    "data-commitments",
+    "integrity-verification",
+    "tamper-evidence",
+    "authenticity",
+  ],
+  provenance: ["data-origin", "lineage", "attribution", "provenance-records", "attestations", "traceability"],
+  indexing: [
+    "data-extraction",
+    "data-transformation",
+    "derived-state",
+    "index-construction",
+    "query-models",
+    "reorganization-handling",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -165,8 +225,8 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
 /**
  * The complete L0 layer; Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
- * L2 topics of Computation & Execution; and a deliberately small Phase 1
- * proof fixture re-homed beneath its L0 domains.
+ * L2 topics of Computation & Execution and of State & Data; and a
+ * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -203,7 +263,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "failures", slug: "failures", title: "Failures" },
     { id: "fault-models", slug: "fault-models", title: "Fault Models" },
     { id: "inputs", slug: "inputs", title: "Inputs" },
-    { id: "transitions", slug: "transitions", title: "Transitions" },
+    // Also placed as 03 State & Data's "State Transitions": a ledger's state
+    // transition is a state machine's transition.
+    { id: "transitions", slug: "transitions", title: "Transitions", preferredPlacementId: "transitions" },
     { id: "transition-rules", slug: "transition-rules", title: "Transition Rules" },
     { id: "determinism", slug: "determinism", title: "Determinism" },
     { id: "state-machine-replication", slug: "state-machine-replication", title: "State Machine Replication" },
@@ -285,6 +347,82 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "resource-limits", slug: "resource-limits", title: "Resource Limits" },
     { id: "fee-accounting", slug: "fee-accounting", title: "Fee Accounting" },
     { id: "denial-of-service-resistance", slug: "denial-of-service-resistance", title: "Denial-of-Service Resistance" },
+    // 03 State & Data: L1 topics (State Transitions is Foundations' Transitions).
+    { id: "state-representation", slug: "state-representation", title: "State Representation" },
+    { id: "state-commitments", slug: "state-commitments", title: "State Commitments" },
+    { id: "historical-state", slug: "historical-state", title: "Historical State" },
+    { id: "synchronization", slug: "synchronization", title: "Synchronization" },
+    { id: "on-chain-data", slug: "on-chain-data", title: "On-Chain Data" },
+    { id: "off-chain-data", slug: "off-chain-data", title: "Off-Chain Data" },
+    { id: "data-integrity", slug: "data-integrity", title: "Data Integrity" },
+    { id: "provenance", slug: "provenance", title: "Provenance" },
+    { id: "indexing", slug: "indexing", title: "Indexing" },
+    // L2 topics (placements in L2_TOPICS).
+    { id: "state-models", slug: "state-models", title: "State Models" },
+    { id: "global-state", slug: "global-state", title: "Global State" },
+    { id: "local-state", slug: "local-state", title: "Local State" },
+    { id: "state-encoding", slug: "state-encoding", title: "State Encoding" },
+    { id: "state-layout", slug: "state-layout", title: "State Layout" },
+    // One concept under State Representation and State Commitments; a state
+    // root is a commitment, so that placement is preferred.
+    { id: "state-roots", slug: "state-roots", title: "State Roots", preferredPlacementId: "state-roots-in-state-commitments" },
+    // Transition Functions compute a transition; Foundations' Transition Rules
+    // govern which are allowed. Atomic State Transitions (indivisible state
+    // change) is not Transaction Atomicity (a transaction's all-or-nothing effects).
+    { id: "transition-functions", slug: "transition-functions", title: "Transition Functions" },
+    { id: "valid-transitions", slug: "valid-transitions", title: "Valid Transitions" },
+    { id: "invalid-transitions", slug: "invalid-transitions", title: "Invalid Transitions" },
+    { id: "transition-preconditions", slug: "transition-preconditions", title: "Transition Preconditions" },
+    { id: "transition-effects", slug: "transition-effects", title: "Transition Effects" },
+    { id: "atomic-state-transitions", slug: "atomic-state-transitions", title: "Atomic State Transitions" },
+    { id: "merkle-trees", slug: "merkle-trees", title: "Merkle Trees" },
+    { id: "merkle-patricia-tries", slug: "merkle-patricia-tries", title: "Merkle Patricia Tries" },
+    { id: "verkle-trees", slug: "verkle-trees", title: "Verkle Trees" },
+    { id: "commitment-schemes", slug: "commitment-schemes", title: "Commitment Schemes" },
+    { id: "state-proofs", slug: "state-proofs", title: "State Proofs" },
+    { id: "state-history", slug: "state-history", title: "State History" },
+    { id: "historical-queries", slug: "historical-queries", title: "Historical Queries" },
+    { id: "state-snapshots", slug: "state-snapshots", title: "State Snapshots" },
+    // Shown as "Checkpoints" under Historical State; the bare term's usual
+    // protocol meaning, consensus and finality checkpoints, is a different concept.
+    { id: "state-checkpoints", slug: "state-checkpoints", title: "State Checkpoints" },
+    { id: "archival-state", slug: "archival-state", title: "Archival State" },
+    { id: "state-reconstruction", slug: "state-reconstruction", title: "State Reconstruction" },
+    { id: "initial-synchronization", slug: "initial-synchronization", title: "Initial Synchronization" },
+    { id: "full-sync", slug: "full-sync", title: "Full Sync" },
+    { id: "snap-sync", slug: "snap-sync", title: "Snap Sync" },
+    { id: "state-sync", slug: "state-sync", title: "State Sync" },
+    { id: "incremental-synchronization", slug: "incremental-synchronization", title: "Incremental Synchronization" },
+    { id: "synchronization-verification", slug: "synchronization-verification", title: "Synchronization Verification" },
+    { id: "calldata", slug: "calldata", title: "Calldata" },
+    { id: "logs", slug: "logs", title: "Logs" },
+    { id: "events", slug: "events", title: "Events" },
+    { id: "transaction-data", slug: "transaction-data", title: "Transaction Data" },
+    { id: "block-data", slug: "block-data", title: "Block Data" },
+    { id: "protocol-state", slug: "protocol-state", title: "Protocol State" },
+    { id: "external-data", slug: "external-data", title: "External Data" },
+    { id: "metadata", slug: "metadata", title: "Metadata" },
+    { id: "off-chain-state", slug: "off-chain-state", title: "Off-Chain State" },
+    { id: "data-references", slug: "data-references", title: "Data References" },
+    { id: "content-addressing", slug: "content-addressing", title: "Content Addressing" },
+    { id: "integrity-guarantees", slug: "integrity-guarantees", title: "Integrity Guarantees" },
+    { id: "data-hashing", slug: "data-hashing", title: "Data Hashing" },
+    { id: "data-commitments", slug: "data-commitments", title: "Data Commitments" },
+    { id: "integrity-verification", slug: "integrity-verification", title: "Integrity Verification" },
+    { id: "tamper-evidence", slug: "tamper-evidence", title: "Tamper Evidence" },
+    { id: "authenticity", slug: "authenticity", title: "Authenticity" },
+    { id: "data-origin", slug: "data-origin", title: "Data Origin" },
+    { id: "lineage", slug: "lineage", title: "Lineage" },
+    { id: "attribution", slug: "attribution", title: "Attribution" },
+    { id: "provenance-records", slug: "provenance-records", title: "Provenance Records" },
+    { id: "attestations", slug: "attestations", title: "Attestations" },
+    { id: "traceability", slug: "traceability", title: "Traceability" },
+    { id: "data-extraction", slug: "data-extraction", title: "Data Extraction" },
+    { id: "data-transformation", slug: "data-transformation", title: "Data Transformation" },
+    { id: "derived-state", slug: "derived-state", title: "Derived State" },
+    { id: "index-construction", slug: "index-construction", title: "Index Construction" },
+    { id: "query-models", slug: "query-models", title: "Query Models" },
+    { id: "reorganization-handling", slug: "reorganization-handling", title: "Reorganization Handling" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -320,6 +458,22 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "verifiable-computation", conceptId: "verifiable-computation", parentPlacementId: "computation-execution", order: 4 },
     { id: "off-chain-computation", conceptId: "off-chain-computation", parentPlacementId: "computation-execution", order: 5 },
     { id: "resource-accounting", conceptId: "resource-accounting", parentPlacementId: "computation-execution", order: 6 },
+    { id: "state-representation", conceptId: "state-representation", parentPlacementId: "state-data", order: 0 },
+    {
+      id: "transitions-in-state-data",
+      conceptId: "transitions",
+      parentPlacementId: "state-data",
+      order: 1,
+      contextualLabel: "State Transitions",
+    },
+    { id: "state-commitments", conceptId: "state-commitments", parentPlacementId: "state-data", order: 2 },
+    { id: "historical-state", conceptId: "historical-state", parentPlacementId: "state-data", order: 3 },
+    { id: "synchronization", conceptId: "synchronization", parentPlacementId: "state-data", order: 4 },
+    { id: "on-chain-data", conceptId: "on-chain-data", parentPlacementId: "state-data", order: 5 },
+    { id: "off-chain-data", conceptId: "off-chain-data", parentPlacementId: "state-data", order: 6 },
+    { id: "data-integrity", conceptId: "data-integrity", parentPlacementId: "state-data", order: 7 },
+    { id: "provenance", conceptId: "provenance", parentPlacementId: "state-data", order: 8 },
+    { id: "indexing", conceptId: "indexing", parentPlacementId: "state-data", order: 9 },
     ...l2Placements,
     { id: "consensus", conceptId: "consensus", parentPlacementId: "consensus-ordering", order: 0 },
     {

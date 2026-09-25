@@ -134,8 +134,118 @@ const COMPUTATION_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const COMPUTATION_LAYER = COMPUTATION_TREE.map(([id]) => id);
 const COMPUTATION_L2 = COMPUTATION_TREE.flatMap(([, children]) => children);
+// 03 State & Data. Its L1 is written like its L2: [placement, concept, label].
+// State Transitions is Foundations' Transitions; Checkpoints is State Checkpoints.
+const STATE_DATA_LAYER: Array<[string, string, string]> = [
+  ["state-representation", "state-representation", "State Representation"],
+  ["transitions-in-state-data", "transitions", "State Transitions"],
+  ["state-commitments", "state-commitments", "State Commitments"],
+  ["historical-state", "historical-state", "Historical State"],
+  ["synchronization", "synchronization", "Synchronization"],
+  ["on-chain-data", "on-chain-data", "On-Chain Data"],
+  ["off-chain-data", "off-chain-data", "Off-Chain Data"],
+  ["data-integrity", "data-integrity", "Data Integrity"],
+  ["provenance", "provenance", "Provenance"],
+  ["indexing", "indexing", "Indexing"],
+];
+const STATE_DATA_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["state-representation", [
+    ["state-models", "state-models", "State Models"],
+    ["global-state", "global-state", "Global State"],
+    ["local-state", "local-state", "Local State"],
+    ["state-encoding", "state-encoding", "State Encoding"],
+    ["state-layout", "state-layout", "State Layout"],
+    ["state-roots-in-state-representation", "state-roots", "State Roots"],
+  ]],
+  ["transitions-in-state-data", [
+    ["transition-functions", "transition-functions", "Transition Functions"],
+    ["valid-transitions", "valid-transitions", "Valid Transitions"],
+    ["invalid-transitions", "invalid-transitions", "Invalid Transitions"],
+    ["transition-preconditions", "transition-preconditions", "Transition Preconditions"],
+    ["transition-effects", "transition-effects", "Transition Effects"],
+    ["atomic-state-transitions", "atomic-state-transitions", "Atomic State Transitions"],
+  ]],
+  ["state-commitments", [
+    ["merkle-trees", "merkle-trees", "Merkle Trees"],
+    ["merkle-patricia-tries", "merkle-patricia-tries", "Merkle Patricia Tries"],
+    ["verkle-trees", "verkle-trees", "Verkle Trees"],
+    ["commitment-schemes", "commitment-schemes", "Commitment Schemes"],
+    ["state-roots-in-state-commitments", "state-roots", "State Roots"],
+    ["state-proofs", "state-proofs", "State Proofs"],
+  ]],
+  ["historical-state", [
+    ["state-history", "state-history", "State History"],
+    ["historical-queries", "historical-queries", "Historical Queries"],
+    ["state-snapshots", "state-snapshots", "State Snapshots"],
+    ["state-checkpoints", "state-checkpoints", "Checkpoints"],
+    ["archival-state", "archival-state", "Archival State"],
+    ["state-reconstruction", "state-reconstruction", "State Reconstruction"],
+  ]],
+  ["synchronization", [
+    ["initial-synchronization", "initial-synchronization", "Initial Synchronization"],
+    ["full-sync", "full-sync", "Full Sync"],
+    ["snap-sync", "snap-sync", "Snap Sync"],
+    ["state-sync", "state-sync", "State Sync"],
+    ["incremental-synchronization", "incremental-synchronization", "Incremental Synchronization"],
+    ["synchronization-verification", "synchronization-verification", "Synchronization Verification"],
+  ]],
+  ["on-chain-data", [
+    ["calldata", "calldata", "Calldata"],
+    ["logs", "logs", "Logs"],
+    ["events", "events", "Events"],
+    ["transaction-data", "transaction-data", "Transaction Data"],
+    ["block-data", "block-data", "Block Data"],
+    ["protocol-state", "protocol-state", "Protocol State"],
+  ]],
+  ["off-chain-data", [
+    ["external-data", "external-data", "External Data"],
+    ["metadata", "metadata", "Metadata"],
+    ["off-chain-state", "off-chain-state", "Off-Chain State"],
+    ["data-references", "data-references", "Data References"],
+    ["content-addressing", "content-addressing", "Content Addressing"],
+  ]],
+  ["data-integrity", [
+    ["integrity-guarantees", "integrity-guarantees", "Integrity Guarantees"],
+    ["data-hashing", "data-hashing", "Data Hashing"],
+    ["data-commitments", "data-commitments", "Data Commitments"],
+    ["integrity-verification", "integrity-verification", "Integrity Verification"],
+    ["tamper-evidence", "tamper-evidence", "Tamper Evidence"],
+    ["authenticity", "authenticity", "Authenticity"],
+  ]],
+  ["provenance", [
+    ["data-origin", "data-origin", "Data Origin"],
+    ["lineage", "lineage", "Lineage"],
+    ["attribution", "attribution", "Attribution"],
+    ["provenance-records", "provenance-records", "Provenance Records"],
+    ["attestations", "attestations", "Attestations"],
+    ["traceability", "traceability", "Traceability"],
+  ]],
+  ["indexing", [
+    ["data-extraction", "data-extraction", "Data Extraction"],
+    ["data-transformation", "data-transformation", "Data Transformation"],
+    ["derived-state", "derived-state", "Derived State"],
+    ["index-construction", "index-construction", "Index Construction"],
+    ["query-models", "query-models", "Query Models"],
+    ["reorganization-handling", "reorganization-handling", "Reorganization Handling"],
+  ]],
+];
+const STATE_DATA_L2 = STATE_DATA_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
-const AUTHORED_TOPICS = new Set([...FOUNDATIONS_LAYER, ...FOUNDATIONS_L2.map(([id]) => id), ...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)]);
+const AUTHORED_TOPICS = new Set([
+  ...FOUNDATIONS_LAYER,
+  ...FOUNDATIONS_L2.map(([id]) => id),
+  ...COMPUTATION_LAYER,
+  ...COMPUTATION_L2.map(([id]) => id),
+  ...STATE_DATA_LAYER.map(([id]) => id),
+  ...STATE_DATA_L2.map(([id]) => id),
+]);
+
+// A placement's label as the explorer shows it: contextual wording, else the concept title.
+function placementLabel(placementId: string): string | undefined {
+  const placement = resolver.getPlacement(placementId);
+  return placement && (placement.contextualLabel ?? resolver.getConcept(placement.conceptId)?.title);
+}
 
 function errorsFor(mutator: (model: MapKnowledgeModel) => MapKnowledgeModel): string[] {
   return validateMapKnowledge(mutator(mapKnowledge));
@@ -201,8 +311,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   const ids = mapKnowledge.concepts.map((concept) => concept.id);
   assert.equal(new Set(ids).size, ids.length);
   // L0, the Phase 1 fixture, Foundations' L1 layer and its 40 new L2
-  // concepts, then Computation & Execution's 7 L1 and 38 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38);
+  // concepts, Computation & Execution's 7 L1 and 38 new L2 concepts, then
+  // State & Data's 9 new L1 and 58 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -328,7 +439,10 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
   // Every other L2 topic is a new concept placed once here (Verification is
   // also placed in Computation & Execution), and none has exposition yet.
   const reused = new Set(["state", "protocol-properties", "finality"]);
-  const placedElsewhere: Record<string, string[]> = { verification: ["verification-in-verifiable-computation"] };
+  const placedElsewhere: Record<string, string[]> = {
+    verification: ["verification-in-verifiable-computation"],
+    transitions: ["transitions-in-state-data"],
+  };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
     assert.equal(id, conceptId);
@@ -418,6 +532,80 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
   const ids = [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)];
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(ids.every((id) => !FOUNDATIONS_L2.some(([foundationsId]) => foundationsId === id)));
+});
+
+test("State & Data has exactly its ten L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("state-data").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    STATE_DATA_LAYER,
+  );
+  for (const [parent, children] of STATE_DATA_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of STATE_DATA_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "state-data")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...STATE_DATA_LAYER.map(([id]) => id), ...STATE_DATA_L2.map(([id]) => id)].sort());
+  assert.equal(STATE_DATA_L2.length, 59);
+});
+
+test("State & Data reuses State Roots and Transitions and keeps overlapping labels distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // State Roots: one concept in two contexts, preferred where it is taught as a commitment.
+  assert.deepEqual(placementsOf("state-roots"), ["state-roots-in-state-commitments", "state-roots-in-state-representation"]);
+  assert.equal(resolver.getConcept("state-roots")?.preferredPlacementId, "state-roots-in-state-commitments");
+  // State Transitions (L1) is Foundations' Transitions in contextual wording; children belong to the placement.
+  assert.deepEqual(placementsOf("transitions"), ["transitions", "transitions-in-state-data"]);
+  assert.equal(resolver.getConcept("transitions")?.title, "Transitions");
+  assert.equal(resolver.getConcept("transitions")?.preferredPlacementId, "transitions");
+  assert.deepEqual(resolver.getChildren("transitions"), []);
+  assert.equal(resolver.getChildren("transitions-in-state-data").length, 6);
+  // Checkpoints is State Checkpoints; the bare term stays free for consensus checkpoints.
+  assert.equal(resolver.getConcept("state-checkpoints")?.title, "State Checkpoints");
+  assert.equal(resolver.getConcept("checkpoints"), undefined);
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["transition-functions", "transition-rules"],
+    ["atomic-state-transitions", "transaction-atomicity"],
+    ["integrity-verification", "verification"],
+    ["synchronization-verification", "verification"],
+    ["local-state", "contract-state"],
+    ["protocol-state", "state"],
+    ["commitment-schemes", "computation-commitments"],
+    ["data-commitments", "commitment-schemes"],
+    ["state-proofs", "computation-proofs"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition; placement IDs are unique.
+  const shared = new Set(["transitions", "state-roots"]);
+  for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...STATE_DATA_LAYER, ...STATE_DATA_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("preceding domain hierarchies are unchanged by later domains", () => {
+  // Foundations and Computation & Execution keep exactly their authored subtrees.
+  const subtreeOf = (root: string) => mapKnowledge.placements.filter((placement) => resolver.getAncestors(placement.id)[0]?.id === root).length;
+  assert.equal(subtreeOf("foundations"), 7 + 43);
+  assert.equal(subtreeOf("computation-execution"), 7 + 39);
+  assert.equal(placementLabel("transitions"), "Transitions");
+  assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
 
 test("one canonical Finality concept resolves through independent placements", () => {
