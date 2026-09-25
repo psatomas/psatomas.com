@@ -324,6 +324,22 @@ const POPULATED_L0 = {
     "ai-security",
     "verifiable-ai",
   ],
+  "machine-economy": [
+    "economic-agents",
+    "agent-ownership",
+    "agent-identity-in-machine-economy",
+    "agent-wallets",
+    "agent-capital",
+    "agent-budgets",
+    "agent-permissions",
+    "machine-payments",
+    "machine-commerce",
+    "agent-markets",
+    "agent-reputation-in-machine-economy",
+    "agent-credit",
+    "agent-risk",
+    "agent-incentives",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -346,7 +362,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 7);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 6);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -514,7 +530,7 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "machine-economy")!;
+  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "autonomous-coordination")!;
   assert.equal(activateMapExplorerRow(machineEconomy, null, new Set()).expandedPlacementIds.size, 0);
 });
 
@@ -619,8 +635,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[20].rows, []);
-  assert.equal(regions[20].header.hasChildren, false);
+  assert.deepEqual(regions[21].rows, []);
+  assert.equal(regions[21].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -676,8 +692,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "machine-economy");
-  assert.equal(empty.focusedPlacementId, "machine-economy");
+  const empty = getInitialMapExplorerState(view, "autonomous-coordination");
+  assert.equal(empty.focusedPlacementId, "autonomous-coordination");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -734,7 +750,7 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("machine-economy")?.isExpandable); // neither
+  assert.ok(!byId.get("autonomous-coordination")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
@@ -964,6 +980,49 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Machine Economy L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("machine-to-machine-payments"), ["Machine Economy", "Machine Payments", "Machine-to-Machine Payments"]);
+  assert.deepEqual(labels("principal-agent-problems"), ["Machine Economy", "Agent Incentives", "Principal-Agent Problems"]);
+  // Contextual wording.
+  assert.deepEqual(labels("ai-agent-in-economic-agents"), ["Machine Economy", "Economic Agents", "AI Agents"]);
+  assert.deepEqual(labels("agent-credentials-in-agent-identity"), ["Machine Economy", "Agent Identity", "Credentials"]);
+  assert.deepEqual(labels("machine-authentication-in-agent-identity"), ["Machine Economy", "Agent Identity", "Authentication"]);
+  assert.deepEqual(labels("agent-reputation-in-agent-identity"), ["Machine Economy", "Agent Identity", "Reputation"]);
+  assert.deepEqual(labels("authority-escalation"), ["Machine Economy", "Agent Permissions", "Escalation"]);
+  assert.deepEqual(labels("credit-default"), ["Machine Economy", "Agent Credit", "Default"]);
+  assert.deepEqual(labels("agent-objectives"), ["Machine Economy", "Agent Incentives", "Objectives"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("agent-identity-in-machine-economy"), ["Machine Economy", "Agent Identity"]);
+  assert.deepEqual(labels("agent-identity"), ["Identity, Accounts & Authority", "Machine Identity", "Agent Identity"]);
+  assert.deepEqual(labels("agent-reputation-in-machine-economy"), ["Machine Economy", "Agent Reputation"]);
+  assert.deepEqual(labels("agent-reputation"), ["Identity, Accounts & Authority", "Machine Identity", "Agent Reputation"]);
+  assert.deepEqual(labels("ai-agent"), ["AI & Intelligent Systems", "AI Agents"]);
+  assert.deepEqual(labels("assets-in-agent-capital"), ["Machine Economy", "Agent Capital", "Assets"]);
+  assert.deepEqual(labels("assets"), ["Markets & Financial Protocols", "Assets"]);
+  assert.deepEqual(labels("settlement-in-machine-commerce"), ["Machine Economy", "Machine Commerce", "Settlement"]);
+  assert.deepEqual(labels("settlement"), ["Markets & Financial Protocols", "Derivatives", "Settlement"]);
+  assert.deepEqual(labels("delegation-in-agent-permissions"), ["Machine Economy", "Agent Permissions", "Delegation"]);
+  assert.deepEqual(labels("protocols-in-economic-agents"), ["Machine Economy", "Economic Agents", "Protocols"]);
+  assert.deepEqual(labels("protocols"), ["Foundations", "Protocols"]);
+  for (const id of ["agent-identity-in-machine-economy", "agent-reputation-in-machine-economy", "ai-agent-in-economic-agents", "credit-default", "settlement-in-machine-commerce"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "micropayments").expandedPlacementIds].sort(), ["machine-economy", "machine-payments"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "machine-economy" && row.depth > 0);
+  assert.equal(subtreeRows.length, 14 + 84);
+  // Agent Identity's L1 placement carries its canonical exposition as well as its layer.
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && row.hasContent === (row.conceptId === "agent-identity")));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "21");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });
@@ -1343,7 +1402,7 @@ test("entering a domain from the index sets context, opens it, and never collaps
   const again = enterMapExplorerContext("foundations", open, index);
   assert.equal(again.expandedPlacementIds, open);
   // An empty domain is entered without fabricated disclosure.
-  assert.deepEqual([...enterMapExplorerContext("machine-economy", new Set(), index).expandedPlacementIds], []);
+  assert.deepEqual([...enterMapExplorerContext("autonomous-coordination", new Set(), index).expandedPlacementIds], []);
   assert.equal(getMapContextHref(closed.contextPlacementId), "/map?context=foundations");
 });
 

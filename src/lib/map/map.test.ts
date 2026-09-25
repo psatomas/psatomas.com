@@ -2093,9 +2093,12 @@ const LIFECYCLE_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
 ];
 const LIFECYCLE_L2 = LIFECYCLE_TREE.flatMap(([, children]) => children);
-// Earlier domains' concepts that 17–19 place again, for their placement-list assertions.
+// Earlier domains' concepts that 17–21 place again, for their placement-list assertions.
 const alsoInLaterDomains = (conceptId: string) =>
-  [...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2, ...LIFECYCLE_LAYER, ...LIFECYCLE_L2]
+  [
+    ...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2, ...LIFECYCLE_LAYER, ...LIFECYCLE_L2,
+    ...AI_LAYER, ...AI_L2, ...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2,
+  ]
     .filter(([id, concept]) => concept === conceptId && id !== concept)
     .map(([id]) => id);
 
@@ -2213,6 +2216,141 @@ const AI_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const AI_L2 = AI_TREE.flatMap(([, children]) => children);
 
+// 21 Machine Economy. Agent Identity and Agent Reputation are 08's concepts;
+// AI Agents is 20's AI Agent; Protocols is Foundations'; the other reused
+// topics are 03's, 08's, 09's, 10's and 11's.
+const MACHINE_ECONOMY_LAYER: Array<[string, string, string]> = [
+  ["economic-agents", "economic-agents", "Economic Agents"],
+  ["agent-ownership", "agent-ownership", "Agent Ownership"],
+  ["agent-identity-in-machine-economy", "agent-identity", "Agent Identity"],
+  ["agent-wallets", "agent-wallets", "Agent Wallets"],
+  ["agent-capital", "agent-capital", "Agent Capital"],
+  ["agent-budgets", "agent-budgets", "Agent Budgets"],
+  ["agent-permissions", "agent-permissions", "Agent Permissions"],
+  ["machine-payments", "machine-payments", "Machine Payments"],
+  ["machine-commerce", "machine-commerce", "Machine Commerce"],
+  ["agent-markets", "agent-markets", "Agent Markets"],
+  ["agent-reputation-in-machine-economy", "agent-reputation", "Agent Reputation"],
+  ["agent-credit", "agent-credit", "Agent Credit"],
+  ["agent-risk", "agent-risk", "Agent Risk"],
+  ["agent-incentives", "agent-incentives", "Agent Incentives"],
+];
+const MACHINE_ECONOMY_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["economic-agents", [
+    ["human-agents", "human-agents", "Human Agents"],
+    ["software-agents", "software-agents", "Software Agents"],
+    ["ai-agent-in-economic-agents", "ai-agent", "AI Agents"],
+    ["organizations", "organizations", "Organizations"],
+    ["protocols-in-economic-agents", "protocols", "Protocols"],
+    ["hybrid-agents", "hybrid-agents", "Hybrid Agents"],
+  ]],
+  ["agent-ownership", [
+    ["human-ownership", "human-ownership", "Human Ownership"],
+    ["organizational-ownership", "organizational-ownership", "Organizational Ownership"],
+    ["shared-ownership", "shared-ownership", "Shared Ownership"],
+    ["protocol-ownership", "protocol-ownership", "Protocol Ownership"],
+    ["beneficial-ownership", "beneficial-ownership", "Beneficial Ownership"],
+    ["ownership-transfer", "ownership-transfer", "Ownership Transfer"],
+  ]],
+  ["agent-identity-in-machine-economy", [
+    ["persistent-identity", "persistent-identity", "Persistent Identity"],
+    ["agent-credentials-in-agent-identity", "agent-credentials", "Credentials"],
+    ["machine-authentication-in-agent-identity", "machine-authentication", "Authentication"],
+    ["agent-reputation-in-agent-identity", "agent-reputation", "Reputation"],
+    ["identity-portability", "identity-portability", "Identity Portability"],
+    ["identity-recovery", "identity-recovery", "Identity Recovery"],
+  ]],
+  ["agent-wallets", [
+    ["agent-accounts", "agent-accounts", "Agent Accounts"],
+    ["key-management-in-agent-wallets", "key-management", "Key Management"],
+    ["smart-accounts-in-agent-wallets", "smart-accounts", "Smart Accounts"],
+    ["session-authority", "session-authority", "Session Authority"],
+    ["spending-authority", "spending-authority", "Spending Authority"],
+    ["wallet-recovery-in-agent-wallets", "wallet-recovery", "Wallet Recovery"],
+  ]],
+  ["agent-capital", [
+    ["assets-in-agent-capital", "assets", "Assets"],
+    ["liquidity-in-agent-capital", "liquidity", "Liquidity"],
+    ["revenue", "revenue", "Revenue"],
+    ["capital-allocation", "capital-allocation", "Capital Allocation"],
+    ["working-capital", "working-capital", "Working Capital"],
+    ["capital-constraints", "capital-constraints", "Capital Constraints"],
+  ]],
+  ["agent-budgets", [
+    ["spending-limits", "spending-limits", "Spending Limits"],
+    ["allowances", "allowances", "Allowances"],
+    ["resource-budgets", "resource-budgets", "Resource Budgets"],
+    ["time-budgets", "time-budgets", "Time Budgets"],
+    ["budget-policies", "budget-policies", "Budget Policies"],
+    ["budget-enforcement", "budget-enforcement", "Budget Enforcement"],
+  ]],
+  ["agent-permissions", [
+    ["capabilities-in-agent-permissions", "capabilities", "Capabilities"],
+    ["delegation-in-agent-permissions", "delegation", "Delegation"],
+    ["permission-models-in-agent-permissions", "permission-models", "Permission Models"],
+    ["policy-constraints", "policy-constraints", "Policy Constraints"],
+    ["revocation-in-agent-permissions", "revocation", "Revocation"],
+    ["authority-escalation", "authority-escalation", "Escalation"],
+  ]],
+  ["machine-payments", [
+    ["machine-to-machine-payments", "machine-to-machine-payments", "Machine-to-Machine Payments"],
+    ["micropayments", "micropayments", "Micropayments"],
+    ["streaming-payments", "streaming-payments", "Streaming Payments"],
+    ["conditional-payments", "conditional-payments", "Conditional Payments"],
+    ["payment-channels-in-machine-payments", "payment-channels", "Payment Channels"],
+    ["automated-settlement", "automated-settlement", "Automated Settlement"],
+  ]],
+  ["machine-commerce", [
+    ["service-discovery", "service-discovery", "Service Discovery"],
+    ["price-discovery", "price-discovery", "Price Discovery"],
+    ["negotiation", "negotiation", "Negotiation"],
+    ["purchasing", "purchasing", "Purchasing"],
+    ["subscriptions", "subscriptions", "Subscriptions"],
+    ["settlement-in-machine-commerce", "settlement", "Settlement"],
+  ]],
+  ["agent-markets", [
+    ["compute-markets", "compute-markets", "Compute Markets"],
+    ["data-markets", "data-markets", "Data Markets"],
+    ["model-markets", "model-markets", "Model Markets"],
+    ["solver-markets", "solver-markets", "Solver Markets"],
+    ["service-markets", "service-markets", "Service Markets"],
+    ["information-markets", "information-markets", "Information Markets"],
+  ]],
+  ["agent-reputation-in-machine-economy", [
+    ["performance-history", "performance-history", "Performance History"],
+    ["attestations-in-agent-reputation", "attestations", "Attestations"],
+    ["trust-scores", "trust-scores", "Trust Scores"],
+    ["reputation-portability", "reputation-portability", "Reputation Portability"],
+    ["reputation-decay", "reputation-decay", "Reputation Decay"],
+    ["reputation-attacks", "reputation-attacks", "Reputation Attacks"],
+  ]],
+  ["agent-credit", [
+    ["creditworthiness", "creditworthiness", "Creditworthiness"],
+    ["credit-limits", "credit-limits", "Credit Limits"],
+    ["collateral-in-agent-credit", "collateral", "Collateral"],
+    ["unsecured-credit", "unsecured-credit", "Unsecured Credit"],
+    ["repayment-in-agent-credit", "repayment", "Repayment"],
+    ["credit-default", "credit-default", "Default"],
+  ]],
+  ["agent-risk", [
+    ["operational-risk", "operational-risk", "Operational Risk"],
+    ["financial-risk", "financial-risk", "Financial Risk"],
+    ["counterparty-risk-in-agent-risk", "counterparty-risk", "Counterparty Risk"],
+    ["policy-risk", "policy-risk", "Policy Risk"],
+    ["model-risk", "model-risk", "Model Risk"],
+    ["risk-limits", "risk-limits", "Risk Limits"],
+  ]],
+  ["agent-incentives", [
+    ["agent-objectives", "agent-objectives", "Objectives"],
+    ["rewards-in-agent-incentives", "rewards", "Rewards"],
+    ["penalties-in-agent-incentives", "penalties", "Penalties"],
+    ["incentive-alignment-in-agent-incentives", "incentive-alignment", "Incentive Alignment"],
+    ["principal-agent-problems", "principal-agent-problems", "Principal-Agent Problems"],
+    ["incentive-compatibility-in-agent-incentives", "incentive-compatibility", "Incentive Compatibility"],
+  ]],
+];
+const MACHINE_ECONOMY_L2 = MACHINE_ECONOMY_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2255,6 +2393,8 @@ const AUTHORED_TOPICS = new Set([
   ...LIFECYCLE_L2.map(([id]) => id),
   ...AI_LAYER.map(([id]) => id),
   ...AI_L2.map(([id]) => id),
+  ...MACHINE_ECONOMY_LAYER.map(([id]) => id),
+  ...MACHINE_ECONOMY_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -2344,8 +2484,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Security, Correctness & Resilience's 19 new L1 and 82 new L2 concepts, then
   // Protocol Architecture's 12 new L1 and 54 new L2 concepts, then Protocol
   // Design & Lifecycle's 14 new L1 and 60 new L2 concepts, then AI &
-  // Intelligent Systems' 10 new L1 and 65 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65);
+  // Intelligent Systems' 10 new L1 and 65 new L2 concepts, then Machine
+  // Economy's 12 new L1 and 60 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -2358,9 +2499,9 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
   });
   // AI Agent is now an authored L1 topic of AI & Intelligent Systems, keeping its placement ID.
   assert.equal(resolver.getPlacement("ai-agent")?.parentPlacementId, "ai-intelligent-systems");
-  // Settlement is placed by Markets & Financial Protocols and Intents &
-  // Coordination (its record is unchanged); Economic Agency stays deliberately unplaced.
-  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement"]);
+  // Settlement is placed by Markets & Financial Protocols (preferred), Intents &
+  // Coordination and Machine Economy; Economic Agency stays deliberately unplaced.
+  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce"]);
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
 });
 
@@ -2566,7 +2707,6 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
       "computation-proofs": ["computation-proofs-in-cryptography-proofs"],
       "parallel-execution": ["parallel-execution-in-execution-layers"],
       "off-chain-execution": ["off-chain-execution-in-off-chain-scaling"],
-      "trusted-execution": ["trusted-execution-in-verifiable-ai"],
     };
     assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
@@ -2679,6 +2819,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("interoperability-abstraction"), 14 + 82);
   assert.equal(subtreeOf("security-correctness-resilience"), 20 + 119);
   assert.equal(subtreeOf("protocol-architecture"), 12 + 68);
+  assert.equal(subtreeOf("ai-intelligent-systems"), 12 + 69);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -3047,10 +3188,12 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   assert.equal(resolver.getPlacement("identity")?.parentPlacementId, "identity-accounts-authority");
   assert.equal(resolver.getPlacement("authority")?.parentPlacementId, "identity-accounts-authority");
   // AI & Intelligent Systems places Agent Identity again under AI Agents; this placement stays preferred.
-  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity", "agent-identity-in-ai-agents"]);
+  // Machine Economy places it again as an L1 topic; this placement stays preferred.
+  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity", "agent-identity-in-ai-agents", "agent-identity-in-machine-economy"]);
   assert.equal(resolver.getConcept("agent-identity")?.preferredPlacementId, "agent-identity");
   // Attestations: 03's concept, preferred here; Signing and Transaction Submission stay preferred at home.
-  assert.deepEqual(placementsOf("attestations"), ["attestations", "attestations-in-identity"]);
+  // (Machine Economy places Attestations again under Agent Reputation.)
+  assert.deepEqual(placementsOf("attestations"), ["attestations", "attestations-in-agent-reputation", "attestations-in-identity"]);
   assert.equal(resolver.getConcept("attestations")?.preferredPlacementId, "attestations-in-identity");
   assert.deepEqual(placementsOf("signing"), ["signing", "signing-in-wallets"]);
   assert.equal(resolver.getConcept("signing")?.preferredPlacementId, "signing");
@@ -3059,13 +3202,31 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   // General concepts for later reuse (Credentials is already placed again by
   // Oracles & External Reality), and agent/machine topics kept as their own concepts.
   assert.deepEqual(placementsOf("credentials"), ["credentials", "credentials-in-real-world-attestations"]);
-  for (const conceptId of ["reputation", "ownership", "roles", "capabilities"]) {
+  for (const conceptId of ["reputation", "ownership", "roles"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
   // Delegation is placed again by Intents & Coordination, Governance &
-  // Institutions and AI & Intelligent Systems; this placement stays preferred.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
+  // Institutions, AI & Intelligent Systems and Machine Economy; this placement stays preferred.
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
   assert.equal(resolver.getConcept("delegation")?.preferredPlacementId, "delegation");
+  // Machine Economy places these again; each stays preferred here, except Agent
+  // Reputation, which Machine Economy teaches with its own layer.
+  for (const [conceptId, later] of [
+    ["capabilities", "capabilities-in-agent-permissions"],
+    ["permission-models", "permission-models-in-agent-permissions"],
+    ["key-management", "key-management-in-agent-wallets"],
+    ["smart-accounts", "smart-accounts-in-agent-wallets"],
+    ["wallet-recovery", "wallet-recovery-in-agent-wallets"],
+    ["agent-credentials", "agent-credentials-in-agent-identity"],
+    ["machine-authentication", "machine-authentication-in-agent-identity"],
+  ]) {
+    // (Later domains' placements, this one included, come from alsoInLaterDomains.)
+    assert.ok(alsoInLaterDomains(conceptId).includes(later), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [conceptId, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+  }
+  assert.deepEqual(placementsOf("agent-reputation"), ["agent-reputation", "agent-reputation-in-agent-identity", "agent-reputation-in-machine-economy"]);
+  assert.equal(resolver.getConcept("agent-reputation")?.preferredPlacementId, "agent-reputation-in-machine-economy");
   for (const [placementId, related] of [
     ["agent-credentials", "credentials"],
     ["machine-credentials", "credentials"],
@@ -3095,7 +3256,22 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     "account-abstraction": ["account-abstraction-in-chain-abstraction"],
     "gas-abstraction": ["gas-abstraction-in-abstraction-layers"],
   };
-  const shared = new Set(["attestations", "signing", "transaction-submission", "credentials", "agent-identity", "delegation"]);
+  const shared = new Set([
+    "attestations",
+    "signing",
+    "transaction-submission",
+    "credentials",
+    "agent-identity",
+    "delegation",
+    "capabilities",
+    "permission-models",
+    "key-management",
+    "smart-accounts",
+    "wallet-recovery",
+    "agent-credentials",
+    "machine-authentication",
+    "agent-reputation",
+  ]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -3194,7 +3370,10 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis", "ai-inference", "inference-confidence"]);
+  // Revocation is placed again by Machine Economy (withdrawing a grant); this placement stays preferred.
+  assert.deepEqual(placementsOf("revocation"), ["revocation", "revocation-in-agent-permissions"]);
+  assert.equal(resolver.getConcept("revocation")?.preferredPlacementId, "revocation");
+  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis", "ai-inference", "inference-confidence", "revocation"]);
   // Also placed in Governance & Institutions.
   const placedElsewhere: Record<string, string[]> = { evidence: ["evidence-in-dispute-resolution"] };
   for (const [id, conceptId] of [...ORACLES_LAYER, ...ORACLES_L2]) {
@@ -3237,7 +3416,7 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
   assert.deepEqual(resolver.getChildren("strategic-behavior"), []);
   assert.equal(resolver.getChildren("strategic-behavior-in-economics-mechanism-design").length, 6);
   // Economic Penalties is Penalties in contextual wording, within this domain.
-  assert.deepEqual(placementsOf("penalties"), ["penalties", "penalties-in-cryptoeconomic-security"]);
+  assert.deepEqual(placementsOf("penalties"), ["penalties", "penalties-in-agent-incentives", "penalties-in-cryptoeconomic-security"]);
   assert.equal(resolver.getConcept("penalties")?.preferredPlacementId, "penalties");
   // Objectives and Constraints are the mechanism's, in contextual wording.
   assert.equal(resolver.getConcept("mechanism-objectives")?.title, "Mechanism Objectives");
@@ -3278,7 +3457,13 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  const shared = new Set(["strategic-behavior", "penalties"]);
+  // Machine Economy places these again under Agent Incentives; each stays preferred here.
+  for (const conceptId of ["rewards", "incentive-alignment", "incentive-compatibility"]) {
+    const governance = conceptId === "incentive-alignment" ? ["incentive-alignment-in-institutional-design"] : [];
+    assert.deepEqual(placementsOf(conceptId), [conceptId, `${conceptId}-in-agent-incentives`, ...governance].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+  }
+  const shared = new Set(["strategic-behavior", "penalties", "rewards", "incentive-alignment", "incentive-compatibility"]);
   // Also placed in Markets & Financial Protocols.
   const placedElsewhere: Record<string, string[]> = {
     bids: ["bids-in-order-books"],
@@ -3324,7 +3509,8 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
   assert.deepEqual(placementsOf("bids"), ["bids", "bids-in-order-books"]);
   assert.equal(resolver.getConcept("bids")?.preferredPlacementId, "bids");
   // Settlement: the fixture's general concept, first placed here; its relationship and mechanism step are unchanged.
-  assert.deepEqual(placementsOf("settlement"), ["settlement", "settlement-in-intent-settlement"]);
+  // Intents & Coordination and Machine Economy place it again; this placement stays preferred.
+  assert.deepEqual(placementsOf("settlement"), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce"]);
   assert.equal(resolver.getConcept("settlement")?.preferredPlacementId, "settlement");
   assert.equal(resolver.getPlacement("settlement")?.parentPlacementId, "derivatives");
   assert.deepEqual(resolver.getRelationshipsTo("settlement").map((relationship) => relationship.id), ["finality-finalizes-settlement"]);
@@ -3332,8 +3518,19 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
   assert.deepEqual(placementsOf("liquidity-risk"), ["liquidity-risk-in-liquidity", "liquidity-risk-in-risk"]);
   assert.equal(resolver.getConcept("liquidity-risk")?.preferredPlacementId, "liquidity-risk-in-risk");
   // General concepts, each placed once for now, available to later domains.
-  for (const conceptId of ["assets", "markets", "liquidity", "collateral", "risk", "reserves", "solvency"]) {
+  for (const conceptId of ["markets", "risk", "reserves", "solvency"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
+  }
+  // Machine Economy places these again; each stays preferred here.
+  for (const [conceptId, later] of [
+    ["assets", "assets-in-agent-capital"],
+    ["liquidity", "liquidity-in-agent-capital"],
+    ["collateral", "collateral-in-agent-credit"],
+    ["repayment", "repayment-in-agent-credit"],
+    ["counterparty-risk", "counterparty-risk-in-agent-risk"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, later].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
   }
   // Financial mechanisms stay distinct from their general economic primitives, and other near pairs.
   for (const [placementId, related] of [
@@ -3359,7 +3556,7 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  const shared = new Set(["bids", "liquidity-risk", "settlement"]);
+  const shared = new Set(["bids", "liquidity-risk", "settlement", "assets", "liquidity", "collateral", "repayment", "counterparty-risk"]);
   for (const [id, conceptId] of [...MARKETS_LAYER, ...MARKETS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -3486,7 +3683,7 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Each reused concept is placed again here; its existing home stays preferred.
   // Delegation is also placed by Governance & Institutions.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
   assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation");
   for (const [conceptId, here] of [
     ["batch-auctions", "batch-auctions-in-solver-competition"],
@@ -3585,7 +3782,7 @@ test("Governance & Institutions has exactly its fifteen L1 topics and their L2 p
 test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignment and keeps governance mechanisms distinct", () => {
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Reused concepts keep their existing home as the preferred placement.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
   for (const [conceptId, here] of [
     ["evidence", "evidence-in-dispute-resolution"],
     ["incentive-alignment", "incentive-alignment-in-institutional-design"],
@@ -4183,15 +4380,15 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   // 09 keeps its contextual wording; here the concept title is shown.
   assert.equal(placementLabel("inference-confidence"), "Confidence");
   assert.equal(placementLabel("inference-confidence-in-uncertainty-reliability"), "Inference Confidence");
-  // Delegation, Agent Identity and Trusted Execution stay preferred at home
-  // (13 and 14 also place Delegation).
-  for (const [conceptId, here] of [
-    ["delegation", "delegation-in-ai-agents"],
-    ["agent-identity", "agent-identity-in-ai-agents"],
-    ["trusted-execution", "trusted-execution-in-verifiable-ai"],
-  ]) {
-    const earlier = conceptId === "delegation" ? ["delegation-in-intents", "delegation-in-representation"] : [];
-    assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...earlier].sort(), conceptId);
+  // Delegation, Agent Identity and Trusted Execution stay preferred at home.
+  // (13 and 14 also place Delegation; Machine Economy places Delegation and
+  // Agent Identity again.)
+  for (const [conceptId, here, others] of [
+    ["delegation", "delegation-in-ai-agents", ["delegation-in-intents", "delegation-in-representation", "delegation-in-agent-permissions"]],
+    ["agent-identity", "agent-identity-in-ai-agents", ["agent-identity-in-machine-economy"]],
+    ["trusted-execution", "trusted-execution-in-verifiable-ai", []],
+  ] as const) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...others].sort(), conceptId);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
   }
   // Principals is a general concept, titled without an AI qualifier.
@@ -4241,12 +4438,13 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 21–27's scope to them", () => {
+test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 22–27's scope to them", () => {
   // The fixture's concept, placement ID and relationships are unchanged; only
-  // its position and contextual wording change.
+  // its position and contextual wording change. Machine Economy places it again
+  // as one kind of economic agent; this placement stays preferred.
   assert.equal(resolver.getConcept("ai-agent")?.title, "AI Agent");
-  assert.equal(resolver.getConcept("ai-agent")?.preferredPlacementId, undefined);
-  assert.deepEqual(placementsOf("ai-agent"), ["ai-agent"]);
+  assert.equal(resolver.getConcept("ai-agent")?.preferredPlacementId, "ai-agent");
+  assert.deepEqual(placementsOf("ai-agent"), ["ai-agent", "ai-agent-in-economic-agents"]);
   const placement = resolver.getPlacement("ai-agent");
   assert.equal(placement?.parentPlacementId, "ai-intelligent-systems");
   assert.equal(placement?.order, 6);
@@ -4260,10 +4458,10 @@ test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 21–27's
     ],
   );
   assert.equal(resolver.getPreferredPlacementForConcept("ai-agent")?.id, "ai-agent");
-  // Economic Agency stays unplaced for 21; 21–27 remain empty; the bare
-  // Autonomy and Agents concepts are left to later domains.
+  // Economic Agency stays unplaced; 22–27 remain empty; the bare Autonomy and
+  // Agents concepts are left to later domains.
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
-  for (const l0 of ["machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+  for (const l0 of ["autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
     assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
   assert.equal(resolver.getConcept("autonomy"), undefined);
@@ -4272,6 +4470,155 @@ test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 21–27's
   function placementsOf(conceptId: string) {
     return resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   }
+});
+
+test("Machine Economy has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("machine-economy").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    MACHINE_ECONOMY_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("machine-economy").map((placement) => placement.order), MACHINE_ECONOMY_LAYER.map((_, order) => order));
+  for (const [parent, children] of MACHINE_ECONOMY_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of MACHINE_ECONOMY_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "machine-economy")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...MACHINE_ECONOMY_LAYER.map(([id]) => id), ...MACHINE_ECONOMY_L2.map(([id]) => id)].sort());
+  assert.equal(MACHINE_ECONOMY_L2.length, 84);
+  // Ancestry runs through the L1 placement to the L0 domain.
+  assert.deepEqual(resolver.getAncestors("micropayments").map((placement) => placement.id), ["machine-economy", "machine-payments"]);
+  assert.deepEqual(resolver.getAncestors("agent-credentials-in-agent-identity").map((placement) => placement.id), ["machine-economy", "agent-identity-in-machine-economy"]);
+  assert.deepEqual(resolver.getAncestors("ai-agent-in-economic-agents").map((placement) => placement.id), ["machine-economy", "economic-agents"]);
+});
+
+test("Machine Economy reuses existing concepts where the meaning is the same and keeps related concepts distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Agent Identity: 08's concept (with its exposition), an L1 topic here with its own layer; 08 stays preferred.
+  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity", "agent-identity-in-ai-agents", "agent-identity-in-machine-economy"]);
+  assert.equal(resolver.getConcept("agent-identity")?.preferredPlacementId, "agent-identity");
+  assert.equal(resolver.getChildren("agent-identity-in-machine-economy").length, 6);
+  assert.deepEqual(resolver.getChildren("agent-identity"), []);
+  // Agent Reputation: 08's concept, an L1 topic here with its own layer and
+  // Agent Identity's "Reputation"; preferred here, where it is taught.
+  assert.deepEqual(placementsOf("agent-reputation"), ["agent-reputation", "agent-reputation-in-agent-identity", "agent-reputation-in-machine-economy"]);
+  assert.equal(resolver.getConcept("agent-reputation")?.preferredPlacementId, "agent-reputation-in-machine-economy");
+  assert.equal(resolver.getChildren("agent-reputation-in-machine-economy").length, 6);
+  assert.deepEqual(resolver.getChildren("agent-reputation-in-agent-identity"), []);
+  // Every other reused concept stays preferred at its home.
+  const reused: Array<[string, string]> = [
+    ["ai-agent", "ai-agent"],
+    ["protocols", "protocols"],
+    ["agent-credentials", "agent-credentials"],
+    ["machine-authentication", "machine-authentication"],
+    ["key-management", "key-management"],
+    ["smart-accounts", "smart-accounts"],
+    ["wallet-recovery", "wallet-recovery"],
+    ["assets", "assets"],
+    ["liquidity", "liquidity"],
+    ["capabilities", "capabilities"],
+    ["delegation", "delegation"],
+    ["permission-models", "permission-models"],
+    ["revocation", "revocation"],
+    ["settlement", "settlement"],
+    ["attestations", "attestations-in-identity"],
+    ["collateral", "collateral"],
+    ["repayment", "repayment"],
+    ["counterparty-risk", "counterparty-risk"],
+    ["payment-channels", "payment-channels"],
+    ["rewards", "rewards"],
+    ["penalties", "penalties"],
+    ["incentive-alignment", "incentive-alignment"],
+    ["incentive-compatibility", "incentive-compatibility"],
+  ];
+  const here = new Map(MACHINE_ECONOMY_L2.map(([id, conceptId]) => [conceptId, id]));
+  for (const [conceptId, preferred] of reused) {
+    assert.ok(placementsOf(conceptId).includes(here.get(conceptId)!), conceptId);
+    assert.notEqual(here.get(conceptId), conceptId, `${conceptId} keeps a distinct placement identity here`);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  // Contextual wording over reused and new concepts.
+  assert.equal(resolver.getConcept("ai-agent")?.title, "AI Agent");
+  assert.equal(resolver.getConcept("agent-credentials")?.title, "Agent Credentials");
+  assert.equal(resolver.getConcept("machine-authentication")?.title, "Machine Authentication");
+  assert.equal(resolver.getConcept("authority-escalation")?.title, "Authority Escalation");
+  assert.equal(resolver.getConcept("credit-default")?.title, "Credit Default");
+  assert.equal(resolver.getConcept("agent-objectives")?.title, "Agent Objectives");
+  for (const bare of ["objectives", "default", "escalation", "economic-agent"]) assert.equal(resolver.getConcept(bare), undefined, bare);
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["economic-agents", "economic-agency"],
+    ["agent-permissions", "agent-authorization"],
+    ["agent-permissions", "account-permissions"],
+    ["agent-wallets", "wallets"],
+    ["agent-accounts", "accounts"],
+    ["agent-ownership", "ownership"],
+    ["agent-risk", "risk"],
+    ["agent-incentives", "incentives"],
+    ["agent-markets", "markets"],
+    ["session-authority", "session-keys"],
+    ["identity-recovery", "account-recovery"],
+    ["identity-recovery", "wallet-recovery"],
+    ["resource-budgets", "resource-limits"],
+    ["capital-constraints", "solvency-constraints"],
+    ["capital-allocation", "capacity-allocation"],
+    ["policy-constraints", "mechanism-constraints"],
+    ["automated-settlement", "settlement"],
+    ["price-discovery", "market-prices"],
+    ["trust-scores", "trust-models"],
+    ["reputation-attacks", "sybil-attacks"],
+    ["credit-default", "bad-debt"],
+    ["credit-default", "insolvency"],
+    ["creditworthiness", "credit-risk"],
+    ["risk-limits", "risk-parameters"],
+    ["model-risk", "model-uncertainty"],
+    ["agent-objectives", "goals"],
+    ["agent-objectives", "mechanism-objectives"],
+    ["principal-agent-problems", "principals"],
+    ["human-agents", "participants"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition; only
+  // Agent Identity keeps its existing content.
+  const shared = new Set(["agent-identity", "agent-reputation", ...reused.map(([conceptId]) => conceptId)]);
+  for (const [id, conceptId] of [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2]) {
+    if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Machine Economy leaves Economic Agency unplaced and 22–27 empty, and 20 unchanged", () => {
+  // Economic Agency (the capacity to act economically) is not Economic Agents
+  // (the kinds of actor); its relationship from Agent Identity is unchanged.
+  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
+  assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
+  assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
+  for (const l0 of ["autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+    assert.deepEqual(resolver.getChildren(l0), [], l0);
+  }
+  // 20's tree is exactly as authored.
+  assert.deepEqual(resolver.getChildren("ai-intelligent-systems").map((placement) => placement.id), AI_LAYER.map(([id]) => id));
+  for (const [parent, children] of AI_TREE) {
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.id), children.map(([id]) => id), parent);
+  }
+  assert.equal(placementLabel("ai-agent"), "AI Agents");
 });
 
 test("reused concepts resolve to their preferred placements", () => {

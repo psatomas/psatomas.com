@@ -1690,6 +1690,119 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "model-provenance",
     "verifiable-agents",
   ],
+  // 21 Machine Economy
+  "economic-agents": [
+    "human-agents",
+    "software-agents",
+    { placementId: "ai-agent-in-economic-agents", conceptId: "ai-agent", contextualLabel: "AI Agents" },
+    "organizations",
+    { placementId: "protocols-in-economic-agents", conceptId: "protocols" },
+    "hybrid-agents",
+  ],
+  "agent-ownership": [
+    "human-ownership",
+    "organizational-ownership",
+    "shared-ownership",
+    "protocol-ownership",
+    "beneficial-ownership",
+    "ownership-transfer",
+  ],
+  "agent-identity-in-machine-economy": [
+    "persistent-identity",
+    { placementId: "agent-credentials-in-agent-identity", conceptId: "agent-credentials", contextualLabel: "Credentials" },
+    { placementId: "machine-authentication-in-agent-identity", conceptId: "machine-authentication", contextualLabel: "Authentication" },
+    { placementId: "agent-reputation-in-agent-identity", conceptId: "agent-reputation", contextualLabel: "Reputation" },
+    "identity-portability",
+    "identity-recovery",
+  ],
+  "agent-wallets": [
+    "agent-accounts",
+    { placementId: "key-management-in-agent-wallets", conceptId: "key-management" },
+    { placementId: "smart-accounts-in-agent-wallets", conceptId: "smart-accounts" },
+    "session-authority",
+    "spending-authority",
+    { placementId: "wallet-recovery-in-agent-wallets", conceptId: "wallet-recovery" },
+  ],
+  "agent-capital": [
+    { placementId: "assets-in-agent-capital", conceptId: "assets" },
+    { placementId: "liquidity-in-agent-capital", conceptId: "liquidity" },
+    "revenue",
+    "capital-allocation",
+    "working-capital",
+    "capital-constraints",
+  ],
+  "agent-budgets": [
+    "spending-limits",
+    "allowances",
+    "resource-budgets",
+    "time-budgets",
+    "budget-policies",
+    "budget-enforcement",
+  ],
+  "agent-permissions": [
+    { placementId: "capabilities-in-agent-permissions", conceptId: "capabilities" },
+    { placementId: "delegation-in-agent-permissions", conceptId: "delegation" },
+    { placementId: "permission-models-in-agent-permissions", conceptId: "permission-models" },
+    "policy-constraints",
+    { placementId: "revocation-in-agent-permissions", conceptId: "revocation" },
+    { placementId: "authority-escalation", conceptId: "authority-escalation", contextualLabel: "Escalation" },
+  ],
+  "machine-payments": [
+    "machine-to-machine-payments",
+    "micropayments",
+    "streaming-payments",
+    "conditional-payments",
+    { placementId: "payment-channels-in-machine-payments", conceptId: "payment-channels" },
+    "automated-settlement",
+  ],
+  "machine-commerce": [
+    "service-discovery",
+    "price-discovery",
+    "negotiation",
+    "purchasing",
+    "subscriptions",
+    { placementId: "settlement-in-machine-commerce", conceptId: "settlement" },
+  ],
+  "agent-markets": [
+    "compute-markets",
+    "data-markets",
+    "model-markets",
+    "solver-markets",
+    "service-markets",
+    "information-markets",
+  ],
+  "agent-reputation-in-machine-economy": [
+    "performance-history",
+    { placementId: "attestations-in-agent-reputation", conceptId: "attestations" },
+    "trust-scores",
+    "reputation-portability",
+    "reputation-decay",
+    "reputation-attacks",
+  ],
+  "agent-credit": [
+    "creditworthiness",
+    "credit-limits",
+    { placementId: "collateral-in-agent-credit", conceptId: "collateral" },
+    "unsecured-credit",
+    { placementId: "repayment-in-agent-credit", conceptId: "repayment" },
+    { placementId: "credit-default", conceptId: "credit-default", contextualLabel: "Default" },
+  ],
+  "agent-risk": [
+    "operational-risk",
+    "financial-risk",
+    { placementId: "counterparty-risk-in-agent-risk", conceptId: "counterparty-risk" },
+    "policy-risk",
+    "model-risk",
+    "risk-limits",
+  ],
+  "agent-incentives": [
+    { placementId: "agent-objectives", conceptId: "agent-objectives", contextualLabel: "Objectives" },
+    { placementId: "rewards-in-agent-incentives", conceptId: "rewards" },
+    { placementId: "penalties-in-agent-incentives", conceptId: "penalties" },
+    { placementId: "incentive-alignment-in-agent-incentives", conceptId: "incentive-alignment" },
+    "principal-agent-problems",
+    { placementId: "incentive-compatibility-in-agent-incentives", conceptId: "incentive-compatibility" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1709,15 +1822,16 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
  * Systems, Interoperability & Abstraction, Security, Correctness &
- * Resilience, Protocol Architecture, Protocol Design & Lifecycle, and AI &
- * Intelligent Systems; and a deliberately small Phase 1 proof fixture
- * re-homed beneath its L0 domains.
+ * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
+ * Intelligent Systems, and Machine Economy; and a deliberately small Phase 1
+ * proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
     ...l0Concepts,
     // Foundations' conceptual layer (Distributed Systems is shared with the fixture).
-    { id: "protocols", slug: "protocols", title: "Protocols" },
+    // Also placed under 21's Economic Agents (protocols as economic actors); preferred here.
+    { id: "protocols", slug: "protocols", title: "Protocols", preferredPlacementId: "protocols" },
     // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
     { id: "state-machines", slug: "state-machines", title: "State Machines", preferredPlacementId: "state-machines" },
     { id: "trust-models", slug: "trust-models", title: "Trust Models" },
@@ -2394,7 +2508,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // the fixture's concepts, below).
     { id: "accounts", slug: "accounts", title: "Accounts" },
     { id: "wallets", slug: "wallets", title: "Wallets" },
-    { id: "smart-accounts", slug: "smart-accounts", title: "Smart Accounts" },
+    // Also placed under 21's Agent Wallets; this placement is preferred.
+    { id: "smart-accounts", slug: "smart-accounts", title: "Smart Accounts", preferredPlacementId: "smart-accounts" },
     // Also placed under 16's Chain Abstraction; this placement is preferred.
     {
       id: "account-abstraction",
@@ -2422,9 +2537,11 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "account-nonces", slug: "account-nonces", title: "Account Nonces" },
     { id: "account-permissions", slug: "account-permissions", title: "Account Permissions" },
     { id: "account-recovery", slug: "account-recovery", title: "Account Recovery" },
-    { id: "key-management", slug: "key-management", title: "Key Management" },
+    // Also placed under 21's Agent Wallets; this placement is preferred.
+    { id: "key-management", slug: "key-management", title: "Key Management", preferredPlacementId: "key-management" },
     { id: "transaction-construction", slug: "transaction-construction", title: "Transaction Construction" },
-    { id: "wallet-recovery", slug: "wallet-recovery", title: "Wallet Recovery" },
+    // Also placed under 21's Agent Wallets; this placement is preferred.
+    { id: "wallet-recovery", slug: "wallet-recovery", title: "Wallet Recovery", preferredPlacementId: "wallet-recovery" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
     {
       id: "wallet-security",
@@ -2461,12 +2578,14 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "authentication-policies", slug: "authentication-policies", title: "Authentication Policies" },
     { id: "ownership", slug: "ownership", title: "Ownership" },
     { id: "roles", slug: "roles", title: "Roles" },
-    { id: "capabilities", slug: "capabilities", title: "Capabilities" },
+    // Also placed under 21's Agent Permissions; this placement is preferred.
+    { id: "capabilities", slug: "capabilities", title: "Capabilities", preferredPlacementId: "capabilities" },
     // Also placed under 13's Intents (an intent delegates execution), 14's
-    // Representation (delegating votes) and 20's AI Agents (an agent acting on
-    // its principal's authority); this placement is preferred.
+    // Representation (delegating votes), 20's AI Agents (an agent acting on its
+    // principal's authority) and 21's Agent Permissions; this placement is preferred.
     { id: "delegation", slug: "delegation", title: "Delegation", preferredPlacementId: "delegation" },
-    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    // Also placed in 17 Security, Correctness & Resilience and under 21's Agent
+    // Permissions; this placement is preferred.
     {
       id: "permission-models",
       slug: "permission-models",
@@ -2477,11 +2596,20 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Agent and machine subjects are taught as their own topics, like the
     // fixture's Agent Identity; merging them into the general concepts would put
     // two rows of one concept side by side under Machine Identity.
-    { id: "agent-credentials", slug: "agent-credentials", title: "Agent Credentials" },
-    { id: "agent-reputation", slug: "agent-reputation", title: "Agent Reputation" },
+    // Also placed as 21's "Credentials" under Agent Identity; this placement is preferred.
+    { id: "agent-credentials", slug: "agent-credentials", title: "Agent Credentials", preferredPlacementId: "agent-credentials" },
+    // Also 21 Machine Economy's L1 topic, with its own layer, and its "Reputation"
+    // under Agent Identity; the L1 placement is preferred.
+    {
+      id: "agent-reputation",
+      slug: "agent-reputation",
+      title: "Agent Reputation",
+      preferredPlacementId: "agent-reputation-in-machine-economy",
+    },
     { id: "agent-authorization", slug: "agent-authorization", title: "Agent Authorization" },
     { id: "machine-credentials", slug: "machine-credentials", title: "Machine Credentials" },
-    { id: "machine-authentication", slug: "machine-authentication", title: "Machine Authentication" },
+    // Also placed as 21's "Authentication" under Agent Identity; this placement is preferred.
+    { id: "machine-authentication", slug: "machine-authentication", title: "Machine Authentication", preferredPlacementId: "machine-authentication" },
     // 09 Oracles & External Reality: L1 topics (Provenance is 03's concept).
     { id: "oracle-problem", slug: "oracle-problem", title: "Oracle Problem" },
     { id: "data-sources", slug: "data-sources", title: "Data Sources" },
@@ -2610,7 +2738,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 14's Dispute Resolution; this placement is preferred.
     { id: "evidence", slug: "evidence", title: "Evidence", preferredPlacementId: "evidence" },
     { id: "attestation-verification", slug: "attestation-verification", title: "Attestation Verification" },
-    { id: "revocation", slug: "revocation", title: "Revocation" },
+    // Withdrawing something issued or granted before it expires; also under 21's Agent Permissions. Preferred here.
+    { id: "revocation", slug: "revocation", title: "Revocation", preferredPlacementId: "revocation" },
     // 10 Economics & Mechanism Design: L1 topics (Strategic Behavior is
     // Foundations' concept). Incentives, Mechanism Design, Game Theory, Fees and
     // Auctions are general concepts for reuse by later domains; Cryptoeconomic
@@ -2634,13 +2763,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     // L2 topics (placements in L2_TOPICS). Negative Incentives are any
     // discouragement; Penalties are explicit punishment, also placed as
     // "Economic Penalties" under Cryptoeconomic Security.
-    // Also placed under 14's Institutional Design; this placement is preferred.
+    // Also placed under 14's Institutional Design and 21's Agent Incentives; this
+    // placement is preferred.
     { id: "incentive-alignment", slug: "incentive-alignment", title: "Incentive Alignment", preferredPlacementId: "incentive-alignment" },
     { id: "positive-incentives", slug: "positive-incentives", title: "Positive Incentives" },
     { id: "negative-incentives", slug: "negative-incentives", title: "Negative Incentives" },
-    { id: "rewards", slug: "rewards", title: "Rewards" },
+    // Also placed under 21's Agent Incentives; this placement is preferred.
+    { id: "rewards", slug: "rewards", title: "Rewards", preferredPlacementId: "rewards" },
     { id: "penalties", slug: "penalties", title: "Penalties", preferredPlacementId: "penalties" },
-    { id: "incentive-compatibility", slug: "incentive-compatibility", title: "Incentive Compatibility" },
+    // Also placed under 21's Agent Incentives; this placement is preferred.
+    { id: "incentive-compatibility", slug: "incentive-compatibility", title: "Incentive Compatibility", preferredPlacementId: "incentive-compatibility" },
     { id: "mechanisms", slug: "mechanisms", title: "Mechanisms" },
     // A mechanism's objectives and constraints, shown as "Objectives" and
     // "Constraints"; the bare terms name other things elsewhere (an agent's
@@ -2735,13 +2867,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "cryptoeconomic-assumptions", slug: "cryptoeconomic-assumptions", title: "Cryptoeconomic Assumptions" },
     // 11 Markets & Financial Protocols: L1 topics. Assets, Markets, Liquidity,
     // Collateral, Risk and Solvency are general concepts for reuse by later domains.
-    { id: "assets", slug: "assets", title: "Assets" },
+    // Also placed under 21's Agent Capital; this placement is preferred.
+    { id: "assets", slug: "assets", title: "Assets", preferredPlacementId: "assets" },
     { id: "markets", slug: "markets", title: "Markets" },
-    { id: "liquidity", slug: "liquidity", title: "Liquidity" },
+    // Also placed under 21's Agent Capital; this placement is preferred.
+    { id: "liquidity", slug: "liquidity", title: "Liquidity", preferredPlacementId: "liquidity" },
     { id: "automated-market-makers", slug: "automated-market-makers", title: "Automated Market Makers" },
     { id: "order-books", slug: "order-books", title: "Order Books" },
     { id: "lending-borrowing", slug: "lending-borrowing", title: "Lending & Borrowing" },
-    { id: "collateral", slug: "collateral", title: "Collateral" },
+    // Also placed under 21's Agent Credit; this placement is preferred.
+    { id: "collateral", slug: "collateral", title: "Collateral", preferredPlacementId: "collateral" },
     { id: "liquidations", slug: "liquidations", title: "Liquidations" },
     { id: "stablecoins", slug: "stablecoins", title: "Stablecoins" },
     { id: "derivatives", slug: "derivatives", title: "Derivatives" },
@@ -2790,7 +2925,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "lenders", slug: "lenders", title: "Lenders" },
     { id: "interest-rates", slug: "interest-rates", title: "Interest Rates" },
     { id: "utilization", slug: "utilization", title: "Utilization" },
-    { id: "repayment", slug: "repayment", title: "Repayment" },
+    // Also placed under 21's Agent Credit; this placement is preferred.
+    { id: "repayment", slug: "repayment", title: "Repayment", preferredPlacementId: "repayment" },
     { id: "collateralization", slug: "collateralization", title: "Collateralization" },
     { id: "collateral-ratios", slug: "collateral-ratios", title: "Collateral Ratios" },
     { id: "overcollateralization", slug: "overcollateralization", title: "Overcollateralization" },
@@ -2819,7 +2955,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "margin", slug: "margin", title: "Margin" },
     { id: "market-risk", slug: "market-risk", title: "Market Risk" },
     { id: "credit-risk", slug: "credit-risk", title: "Credit Risk" },
-    { id: "counterparty-risk", slug: "counterparty-risk", title: "Counterparty Risk" },
+    // Also placed under 21's Agent Risk; this placement is preferred.
+    { id: "counterparty-risk", slug: "counterparty-risk", title: "Counterparty Risk", preferredPlacementId: "counterparty-risk" },
     { id: "systemic-risk", slug: "systemic-risk", title: "Systemic Risk" },
     { id: "risk-parameters", slug: "risk-parameters", title: "Risk Parameters" },
     // Assets and Liabilities is the balance-sheet view, not Assets; Solvency
@@ -3295,7 +3432,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "zkevms", slug: "zkevms", title: "zkEVMs" },
     { id: "sidechains", slug: "sidechains", title: "Sidechains" },
     { id: "state-channels", slug: "state-channels", title: "State Channels" },
-    { id: "payment-channels", slug: "payment-channels", title: "Payment Channels" },
+    // Also placed under 21's Machine Payments; this placement, beside State
+    // Channels, is preferred.
+    { id: "payment-channels", slug: "payment-channels", title: "Payment Channels", preferredPlacementId: "payment-channels" },
     { id: "plasma", slug: "plasma", title: "Plasma" },
     { id: "validiums", slug: "validiums", title: "Validiums" },
     { id: "modular-blockchains", slug: "modular-blockchains", title: "Modular Blockchains" },
@@ -3972,6 +4111,116 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "model-commitments", slug: "model-commitments", title: "Model Commitments" },
     { id: "model-provenance", slug: "model-provenance", title: "Model Provenance" },
     { id: "verifiable-agents", slug: "verifiable-agents", title: "Verifiable Agents" },
+    // 21 Machine Economy: L1 topics (Agent Identity and Agent Reputation are 08's
+    // concepts). Agent Wallets, Agent Capital, Agent Budgets, Machine Payments,
+    // Machine Commerce, Agent Markets, Agent Credit and Agent Risk are general
+    // concepts for reuse by 22–26. Agent Wallets are not 08's Wallets; Agent
+    // Permissions (the grants an agent holds) are not 08's Agent Authorization
+    // (deciding what an authenticated agent may do); Agent Risk and Agent
+    // Incentives are not 11's Risk or 10's Incentives.
+    { id: "economic-agents", slug: "economic-agents", title: "Economic Agents" },
+    { id: "agent-ownership", slug: "agent-ownership", title: "Agent Ownership" },
+    { id: "agent-wallets", slug: "agent-wallets", title: "Agent Wallets" },
+    { id: "agent-capital", slug: "agent-capital", title: "Agent Capital" },
+    { id: "agent-budgets", slug: "agent-budgets", title: "Agent Budgets" },
+    { id: "agent-permissions", slug: "agent-permissions", title: "Agent Permissions" },
+    { id: "machine-payments", slug: "machine-payments", title: "Machine Payments" },
+    { id: "machine-commerce", slug: "machine-commerce", title: "Machine Commerce" },
+    { id: "agent-markets", slug: "agent-markets", title: "Agent Markets" },
+    { id: "agent-credit", slug: "agent-credit", title: "Agent Credit" },
+    { id: "agent-risk", slug: "agent-risk", title: "Agent Risk" },
+    { id: "agent-incentives", slug: "agent-incentives", title: "Agent Incentives" },
+    // L2 topics (placements in L2_TOPICS). AI Agents is 20's AI Agent and
+    // Protocols is Foundations' concept; Organizations is a general concept for
+    // 14 and 24.
+    { id: "human-agents", slug: "human-agents", title: "Human Agents" },
+    { id: "software-agents", slug: "software-agents", title: "Software Agents" },
+    { id: "organizations", slug: "organizations", title: "Organizations" },
+    { id: "hybrid-agents", slug: "hybrid-agents", title: "Hybrid Agents" },
+    // Kinds of owner of an agent, not 08's Ownership (control of an asset or
+    // contract) in general.
+    { id: "human-ownership", slug: "human-ownership", title: "Human Ownership" },
+    { id: "organizational-ownership", slug: "organizational-ownership", title: "Organizational Ownership" },
+    { id: "shared-ownership", slug: "shared-ownership", title: "Shared Ownership" },
+    { id: "protocol-ownership", slug: "protocol-ownership", title: "Protocol Ownership" },
+    { id: "beneficial-ownership", slug: "beneficial-ownership", title: "Beneficial Ownership" },
+    { id: "ownership-transfer", slug: "ownership-transfer", title: "Ownership Transfer" },
+    // Identity Recovery (regaining control of an identity) is not 08's Account
+    // or Wallet Recovery.
+    { id: "persistent-identity", slug: "persistent-identity", title: "Persistent Identity" },
+    { id: "identity-portability", slug: "identity-portability", title: "Identity Portability" },
+    { id: "identity-recovery", slug: "identity-recovery", title: "Identity Recovery" },
+    // Session Authority (the bounded authority granted for a session) is not
+    // 08's Session Keys (one mechanism that carries it); Agent Accounts are not
+    // 08's Accounts in general.
+    { id: "agent-accounts", slug: "agent-accounts", title: "Agent Accounts" },
+    { id: "session-authority", slug: "session-authority", title: "Session Authority" },
+    { id: "spending-authority", slug: "spending-authority", title: "Spending Authority" },
+    // Capital Constraints are not 11's Solvency Constraints; Capital Allocation
+    // is not 10's Capacity Allocation.
+    { id: "revenue", slug: "revenue", title: "Revenue" },
+    { id: "capital-allocation", slug: "capital-allocation", title: "Capital Allocation" },
+    { id: "working-capital", slug: "working-capital", title: "Working Capital" },
+    { id: "capital-constraints", slug: "capital-constraints", title: "Capital Constraints" },
+    // Resource Budgets are not 02's Resource Limits (per-transaction execution limits).
+    { id: "spending-limits", slug: "spending-limits", title: "Spending Limits" },
+    { id: "allowances", slug: "allowances", title: "Allowances" },
+    { id: "resource-budgets", slug: "resource-budgets", title: "Resource Budgets" },
+    { id: "time-budgets", slug: "time-budgets", title: "Time Budgets" },
+    { id: "budget-policies", slug: "budget-policies", title: "Budget Policies" },
+    { id: "budget-enforcement", slug: "budget-enforcement", title: "Budget Enforcement" },
+    // Referring a request beyond a grant to a higher authority, shown as
+    // "Escalation"; not privilege escalation (an attack). Policy Constraints are
+    // not 10's Mechanism Constraints; policy enforcement in execution is 23's.
+    { id: "policy-constraints", slug: "policy-constraints", title: "Policy Constraints" },
+    { id: "authority-escalation", slug: "authority-escalation", title: "Authority Escalation" },
+    // Automated Settlement (settling without a human step) is not Settlement itself.
+    // Payment Channels are 15's (a state channel specialized for payments), placed
+    // again here as a machine-payment rail.
+    { id: "machine-to-machine-payments", slug: "machine-to-machine-payments", title: "Machine-to-Machine Payments" },
+    { id: "micropayments", slug: "micropayments", title: "Micropayments" },
+    { id: "streaming-payments", slug: "streaming-payments", title: "Streaming Payments" },
+    { id: "conditional-payments", slug: "conditional-payments", title: "Conditional Payments" },
+    { id: "automated-settlement", slug: "automated-settlement", title: "Automated Settlement" },
+    // Service Discovery, Price Discovery and Negotiation are general concepts for
+    // 22; Price Discovery is not 11's Market Prices (its result).
+    { id: "service-discovery", slug: "service-discovery", title: "Service Discovery" },
+    { id: "price-discovery", slug: "price-discovery", title: "Price Discovery" },
+    { id: "negotiation", slug: "negotiation", title: "Negotiation" },
+    { id: "purchasing", slug: "purchasing", title: "Purchasing" },
+    { id: "subscriptions", slug: "subscriptions", title: "Subscriptions" },
+    // Markets in what agents buy and sell, each a kind of 11's Markets.
+    { id: "compute-markets", slug: "compute-markets", title: "Compute Markets" },
+    { id: "data-markets", slug: "data-markets", title: "Data Markets" },
+    { id: "model-markets", slug: "model-markets", title: "Model Markets" },
+    { id: "solver-markets", slug: "solver-markets", title: "Solver Markets" },
+    { id: "service-markets", slug: "service-markets", title: "Service Markets" },
+    { id: "information-markets", slug: "information-markets", title: "Information Markets" },
+    // Trust Scores are not 01's Trust Models; Reputation Attacks are not 09's
+    // Sybil Attacks (one way to mount them).
+    { id: "performance-history", slug: "performance-history", title: "Performance History" },
+    { id: "trust-scores", slug: "trust-scores", title: "Trust Scores" },
+    { id: "reputation-portability", slug: "reputation-portability", title: "Reputation Portability" },
+    { id: "reputation-decay", slug: "reputation-decay", title: "Reputation Decay" },
+    { id: "reputation-attacks", slug: "reputation-attacks", title: "Reputation Attacks" },
+    // A borrower failing to repay, shown as "Default"; not 11's Bad Debt (the
+    // loss left behind) or Insolvency. Creditworthiness is not 11's Credit Risk.
+    { id: "creditworthiness", slug: "creditworthiness", title: "Creditworthiness" },
+    { id: "credit-limits", slug: "credit-limits", title: "Credit Limits" },
+    { id: "unsecured-credit", slug: "unsecured-credit", title: "Unsecured Credit" },
+    { id: "credit-default", slug: "credit-default", title: "Credit Default" },
+    // Model Risk is not 20's Model Uncertainty; Risk Limits (bounds on an
+    // agent's exposure) are not 11's Risk Parameters (a protocol's settings).
+    { id: "operational-risk", slug: "operational-risk", title: "Operational Risk" },
+    { id: "financial-risk", slug: "financial-risk", title: "Financial Risk" },
+    { id: "policy-risk", slug: "policy-risk", title: "Policy Risk" },
+    { id: "model-risk", slug: "model-risk", title: "Model Risk" },
+    { id: "risk-limits", slug: "risk-limits", title: "Risk Limits" },
+    // What an economic agent optimizes, shown as "Objectives": not 20's Goals
+    // (what a plan pursues) or 10's Mechanism Objectives. Principal-Agent
+    // Problems build on 20's Principals.
+    { id: "agent-objectives", slug: "agent-objectives", title: "Agent Objectives" },
+    { id: "principal-agent-problems", slug: "principal-agent-problems", title: "Principal-Agent Problems" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -3985,15 +4234,18 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "rollups", slug: "rollups", title: "Rollups" },
     // The general concept (a transaction's obligations discharged and done): a
     // relationship target and mechanism step, placed under 11's Derivatives
-    // (preferred) and 13's Intent Settlement.
+    // (preferred), 13's Intent Settlement and 21's Machine Commerce.
     { id: "settlement", slug: "settlement", title: "Settlement", preferredPlacementId: "settlement" },
     { id: "identity", slug: "identity", title: "Identity" },
     // Also placed under 20's AI Agents; this placement (08's Machine Identity)
     // is preferred.
     { id: "agent-identity", slug: "agent-identity", title: "Agent Identity", preferredPlacementId: "agent-identity" },
     { id: "authority", slug: "authority", title: "Authority" },
-    { id: "ai-agent", slug: "ai-agent", title: "AI Agent" },
-    // Intentionally unplaced and without content: sparse/orphan concepts are valid.
+    // Also placed as 21's "AI Agents" under Economic Agents; 20's placement is preferred.
+    { id: "ai-agent", slug: "ai-agent", title: "AI Agent", preferredPlacementId: "ai-agent" },
+    // Intentionally unplaced and without content: sparse/orphan concepts are
+    // valid. The capacity to act economically, not 21's Economic Agents (the
+    // kinds of actor that exercise it).
     { id: "economic-agency", slug: "economic-agency", title: "Economic Agency" },
   ],
   placements: [
@@ -4575,6 +4827,21 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "alignment-control", conceptId: "alignment-control", parentPlacementId: "ai-intelligent-systems", order: 9 },
     { id: "ai-security", conceptId: "ai-security", parentPlacementId: "ai-intelligent-systems", order: 10 },
     { id: "verifiable-ai", conceptId: "verifiable-ai", parentPlacementId: "ai-intelligent-systems", order: 11 },
+    // 21 Machine Economy: L1 topics.
+    { id: "economic-agents", conceptId: "economic-agents", parentPlacementId: "machine-economy", order: 0 },
+    { id: "agent-ownership", conceptId: "agent-ownership", parentPlacementId: "machine-economy", order: 1 },
+    { id: "agent-identity-in-machine-economy", conceptId: "agent-identity", parentPlacementId: "machine-economy", order: 2 },
+    { id: "agent-wallets", conceptId: "agent-wallets", parentPlacementId: "machine-economy", order: 3 },
+    { id: "agent-capital", conceptId: "agent-capital", parentPlacementId: "machine-economy", order: 4 },
+    { id: "agent-budgets", conceptId: "agent-budgets", parentPlacementId: "machine-economy", order: 5 },
+    { id: "agent-permissions", conceptId: "agent-permissions", parentPlacementId: "machine-economy", order: 6 },
+    { id: "machine-payments", conceptId: "machine-payments", parentPlacementId: "machine-economy", order: 7 },
+    { id: "machine-commerce", conceptId: "machine-commerce", parentPlacementId: "machine-economy", order: 8 },
+    { id: "agent-markets", conceptId: "agent-markets", parentPlacementId: "machine-economy", order: 9 },
+    { id: "agent-reputation-in-machine-economy", conceptId: "agent-reputation", parentPlacementId: "machine-economy", order: 10 },
+    { id: "agent-credit", conceptId: "agent-credit", parentPlacementId: "machine-economy", order: 11 },
+    { id: "agent-risk", conceptId: "agent-risk", parentPlacementId: "machine-economy", order: 12 },
+    { id: "agent-incentives", conceptId: "agent-incentives", parentPlacementId: "machine-economy", order: 13 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
