@@ -129,6 +129,22 @@ const POPULATED_L0 = {
     "data-availability-sampling",
     "storage-proofs",
   ],
+  "interoperability-abstraction": [
+    "interoperability-models",
+    "cross-chain-messaging",
+    "bridges",
+    "asset-bridging",
+    "cross-chain-state",
+    "cross-chain-verification",
+    "interoperability-protocols",
+    "cross-domain-execution-in-interoperability-abstraction",
+    "cross-domain-settlement-in-interoperability-abstraction",
+    "cross-domain-atomicity-in-interoperability-abstraction",
+    "chain-abstraction",
+    "abstraction-layers",
+    "interoperability-security",
+    "trust-failure-modes",
+  ],
   "governance-institutions": [
     "governance-models",
     "governance-participants",
@@ -265,7 +281,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 11);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 10);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -433,8 +449,8 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const interoperability = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "interoperability-abstraction")!;
-  assert.equal(activateMapExplorerRow(interoperability, null, new Set()).expandedPlacementIds.size, 0);
+  const security = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "security-correctness-resilience")!;
+  assert.equal(activateMapExplorerRow(security, null, new Set()).expandedPlacementIds.size, 0);
 });
 
 test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
@@ -538,8 +554,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[15].rows, []);
-  assert.equal(regions[15].header.hasChildren, false);
+  assert.deepEqual(regions[16].rows, []);
+  assert.equal(regions[16].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -595,8 +611,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "interoperability-abstraction");
-  assert.equal(empty.focusedPlacementId, "interoperability-abstraction");
+  const empty = getInitialMapExplorerState(view, "security-correctness-resilience");
+  assert.equal(empty.focusedPlacementId, "security-correctness-resilience");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -653,7 +669,7 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("interoperability-abstraction")?.isExpandable); // neither
+  assert.ok(!byId.get("security-correctness-resilience")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
@@ -681,6 +697,31 @@ test("Scaling & Modular Systems L2 topics are ordinary placements: context, ance
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "finality") && row.isExpandable === row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "15");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Interoperability & Abstraction L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("hashed-timelock-contracts"), ["Interoperability & Abstraction", "Cross-Chain Atomicity", "Hashed Timelock Contracts"]);
+  assert.deepEqual(labels("finality-in-cross-chain-verification"), ["Interoperability & Abstraction", "Cross-Chain Verification", "Finality"]);
+  assert.deepEqual(labels("cross-domain-execution-in-interoperability-abstraction"), ["Interoperability & Abstraction", "Cross-Chain Execution"]);
+  assert.deepEqual(labels("cross-domain-execution"), ["Intents & Coordination", "Cross-Domain Coordination", "Cross-Domain Execution"]);
+  assert.deepEqual(labels("account-abstraction-in-chain-abstraction"), ["Interoperability & Abstraction", "Chain Abstraction", "Account Abstraction"]);
+  for (const id of ["bridges", "cross-domain-settlement-in-interoperability-abstraction", "state-proofs-in-cross-chain-state", "zk-verification"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "lock-and-mint").expandedPlacementIds].sort(), ["asset-bridging", "interoperability-abstraction"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "interoperability-abstraction" && row.depth > 0);
+  assert.equal(subtreeRows.length, 14 + 82);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  // L2 topics are leaves; the reused Finality keeps its canonical exposition, so it opens.
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "finality") && row.isExpandable === row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "16");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });

@@ -1531,6 +1531,139 @@ const SCALING_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const SCALING_L2 = SCALING_TREE.flatMap(([, children]) => children);
 
+// 16 Interoperability & Abstraction. Cross-Domain Execution, Settlement and
+// Atomicity (13) are L1 topics here in "Cross-Chain" wording; ten further
+// concepts are placed again at L2.
+const INTEROP_LAYER: Array<[string, string, string]> = [
+  ["interoperability-models", "interoperability-models", "Interoperability Models"],
+  ["cross-chain-messaging", "cross-chain-messaging", "Cross-Chain Messaging"],
+  ["bridges", "bridges", "Bridges"],
+  ["asset-bridging", "asset-bridging", "Asset Bridging"],
+  ["cross-chain-state", "cross-chain-state", "Cross-Chain State"],
+  ["cross-chain-verification", "cross-chain-verification", "Cross-Chain Verification"],
+  ["interoperability-protocols", "interoperability-protocols", "Interoperability Protocols"],
+  ["cross-domain-execution-in-interoperability-abstraction", "cross-domain-execution", "Cross-Chain Execution"],
+  ["cross-domain-settlement-in-interoperability-abstraction", "cross-domain-settlement", "Cross-Chain Settlement"],
+  ["cross-domain-atomicity-in-interoperability-abstraction", "cross-domain-atomicity", "Cross-Chain Atomicity"],
+  ["chain-abstraction", "chain-abstraction", "Chain Abstraction"],
+  ["abstraction-layers", "abstraction-layers", "Abstraction Layers"],
+  ["interoperability-security", "interoperability-security", "Interoperability Security"],
+  ["trust-failure-modes", "trust-failure-modes", "Trust & Failure Modes"],
+];
+const INTEROP_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["interoperability-models", [
+    ["native-interoperability", "native-interoperability", "Native Interoperability"],
+    ["trusted-interoperability", "trusted-interoperability", "Trusted Interoperability"],
+    ["trust-minimized-interoperability", "trust-minimized-interoperability", "Trust-Minimized Interoperability"],
+    ["hub-and-spoke-interoperability", "hub-and-spoke-interoperability", "Hub-and-Spoke Interoperability"],
+    ["point-to-point-interoperability", "point-to-point-interoperability", "Point-to-Point Interoperability"],
+    ["cross-chain-composability", "cross-chain-composability", "Cross-Chain Composability"],
+  ]],
+  ["cross-chain-messaging", [
+    ["cross-chain-messages", "cross-chain-messages", "Cross-Chain Messages"],
+    ["message-delivery", "message-delivery", "Message Delivery"],
+    ["message-ordering", "message-ordering", "Message Ordering"],
+    ["replay-protection", "replay-protection", "Replay Protection"],
+    ["message-authentication", "message-authentication", "Message Authentication"],
+    ["relayers-in-cross-chain-messaging", "relayers", "Relayers"],
+  ]],
+  ["bridges", [
+    ["bridge-contracts", "bridge-contracts", "Bridge Contracts"],
+    ["bridge-operators", "bridge-operators", "Bridge Operators"],
+    ["bridge-custody", "bridge-custody", "Bridge Custody"],
+    ["canonical-bridges", "canonical-bridges", "Canonical Bridges"],
+    ["third-party-bridges", "third-party-bridges", "Third-Party Bridges"],
+    ["bridge-upgradeability", "bridge-upgradeability", "Bridge Upgradeability"],
+  ]],
+  ["asset-bridging", [
+    ["lock-and-mint", "lock-and-mint", "Lock-and-Mint"],
+    ["burn-and-mint", "burn-and-mint", "Burn-and-Mint"],
+    ["liquidity-based-bridging", "liquidity-based-bridging", "Liquidity-Based Bridging"],
+    ["wrapped-assets", "wrapped-assets", "Wrapped Assets"],
+    ["canonical-assets", "canonical-assets", "Canonical Assets"],
+    ["bridged-asset-risk", "bridged-asset-risk", "Bridged Asset Risk"],
+  ]],
+  ["cross-chain-state", [
+    ["remote-state", "remote-state", "Remote State"],
+    ["state-proofs-in-cross-chain-state", "state-proofs", "State Proofs"],
+    ["state-roots-in-cross-chain-state", "state-roots", "State Roots"],
+    ["cross-chain-queries", "cross-chain-queries", "Cross-Chain Queries"],
+    ["header-relaying", "header-relaying", "Header Relaying"],
+    ["cross-chain-state-sync", "cross-chain-state-sync", "Cross-Chain State Sync"],
+  ]],
+  ["cross-chain-verification", [
+    ["light-client-verification", "light-client-verification", "Light-Client Verification"],
+    ["zk-verification", "zk-verification", "ZK Verification"],
+    ["optimistic-verification", "optimistic-verification", "Optimistic Verification"],
+    ["committee-verification", "committee-verification", "Committee Verification"],
+    ["finality-in-cross-chain-verification", "finality", "Finality"],
+    ["verification-latency", "verification-latency", "Verification Latency"],
+  ]],
+  ["interoperability-protocols", [
+    ["interoperability-standards", "interoperability-standards", "Interoperability Standards"],
+    ["messaging-protocols", "messaging-protocols", "Messaging Protocols"],
+    ["inter-blockchain-communication", "inter-blockchain-communication", "Inter-Blockchain Communication"],
+    ["cross-chain-token-standards", "cross-chain-token-standards", "Cross-Chain Token Standards"],
+    ["protocol-adapters", "protocol-adapters", "Protocol Adapters"],
+    ["interoperability-layers", "interoperability-layers", "Interoperability Layers"],
+  ]],
+  ["cross-domain-execution-in-interoperability-abstraction", [
+    ["cross-chain-transactions", "cross-chain-transactions", "Cross-Chain Transactions"],
+    ["cross-chain-calls", "cross-chain-calls", "Cross-Chain Calls"],
+    ["remote-execution", "remote-execution", "Remote Execution"],
+    ["execution-callbacks", "execution-callbacks", "Execution Callbacks"],
+    ["cross-chain-intents-in-cross-chain-execution", "cross-chain-intents", "Cross-Chain Intents"],
+    ["execution-failure-handling", "execution-failure-handling", "Execution Failure Handling"],
+  ]],
+  ["cross-domain-settlement-in-interoperability-abstraction", [
+    ["settlement-latency", "settlement-latency", "Settlement Latency"],
+    ["settlement-proofs", "settlement-proofs", "Settlement Proofs"],
+    ["rebalancing", "rebalancing", "Rebalancing"],
+    ["solver-repayment", "solver-repayment", "Solver Repayment"],
+    ["reorg-risk", "reorg-risk", "Reorg Risk"],
+  ]],
+  ["cross-domain-atomicity-in-interoperability-abstraction", [
+    ["atomic-swaps", "atomic-swaps", "Atomic Swaps"],
+    ["hashed-timelock-contracts", "hashed-timelock-contracts", "Hashed Timelock Contracts"],
+    ["two-phase-commit", "two-phase-commit", "Two-Phase Commit"],
+    ["shared-sequencing-in-cross-chain-atomicity", "shared-sequencing", "Shared Sequencing"],
+    ["partial-failures", "partial-failures", "Partial Failures"],
+    ["atomicity-guarantees", "atomicity-guarantees", "Atomicity Guarantees"],
+  ]],
+  ["chain-abstraction", [
+    ["unified-accounts", "unified-accounts", "Unified Accounts"],
+    ["unified-balances", "unified-balances", "Unified Balances"],
+    ["chain-agnostic-interfaces", "chain-agnostic-interfaces", "Chain-Agnostic Interfaces"],
+    ["chain-routing", "chain-routing", "Chain Routing"],
+    ["resource-locks", "resource-locks", "Resource Locks"],
+    ["account-abstraction-in-chain-abstraction", "account-abstraction", "Account Abstraction"],
+  ]],
+  ["abstraction-layers", [
+    ["asset-abstraction", "asset-abstraction", "Asset Abstraction"],
+    ["gas-abstraction-in-abstraction-layers", "gas-abstraction", "Gas Abstraction"],
+    ["liquidity-abstraction", "liquidity-abstraction", "Liquidity Abstraction"],
+    ["intent-based-abstraction", "intent-based-abstraction", "Intent-Based Abstraction"],
+    ["execution-abstraction", "execution-abstraction", "Execution Abstraction"],
+  ]],
+  ["interoperability-security", [
+    ["bridge-security", "bridge-security", "Bridge Security"],
+    ["bridge-exploits", "bridge-exploits", "Bridge Exploits"],
+    ["verifier-compromise", "verifier-compromise", "Verifier Compromise"],
+    ["message-forgery", "message-forgery", "Message Forgery"],
+    ["replay-attacks", "replay-attacks", "Replay Attacks"],
+    ["transfer-limits", "transfer-limits", "Transfer Limits"],
+  ]],
+  ["trust-failure-modes", [
+    ["trust-assumptions-in-trust-failure-modes", "trust-assumptions", "Trust Assumptions"],
+    ["liveness-failures", "liveness-failures", "Liveness Failures"],
+    ["safety-failures", "safety-failures", "Safety Failures"],
+    ["failure-isolation", "failure-isolation", "Failure Isolation"],
+    ["contagion-risk", "contagion-risk", "Contagion Risk"],
+    ["pause-mechanisms-in-trust-failure-modes", "pause-mechanisms", "Pause Mechanisms"],
+  ]],
+];
+const INTEROP_L2 = INTEROP_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -1563,6 +1696,8 @@ const AUTHORED_TOPICS = new Set([
   ...GOVERNANCE_L2.map(([id]) => id),
   ...SCALING_LAYER.map(([id]) => id),
   ...SCALING_L2.map(([id]) => id),
+  ...INTEROP_LAYER.map(([id]) => id),
+  ...INTEROP_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -1647,8 +1782,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // and 69 new L2 concepts, then MEV & Execution Markets' 11 new L1 and 74
   // new L2 concepts, then Intents & Coordination's 12 new L1 and 64 new L2
   // concepts, then Governance & Institutions' 15 new L1 and 86 new L2 concepts,
-  // then Scaling & Modular Systems' 12 new L1 and 64 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64);
+  // then Scaling & Modular Systems' 12 new L1 and 64 new L2 concepts, then
+  // Interoperability & Abstraction's 11 new L1 and 72 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1751,7 +1887,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
   assert.equal(resolver.getChildren("protocol-properties").length, 7);
   assert.deepEqual(resolver.getChildren("protocol-properties-in-protocols"), []);
   // Finality is the existing canonical concept: one content record for every placement.
-  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-protocol-properties", "finality-in-rollups"]);
+  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-cross-chain-verification", "finality-in-protocol-properties", "finality-in-rollups"]);
   assert.equal(resolver.getConcept("finality")?.preferredPlacementId, "finality-in-consensus");
   assert.equal(mapKnowledge.content.filter((content) => content.conceptId === "finality").length, 1);
 
@@ -1772,7 +1908,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     transitions: ["transitions-in-state-data"],
     "censorship-resistance": ["censorship-resistance-in-consensus-ordering"],
     "fault-tolerance": ["fault-tolerance-in-distributed-storage"],
-    "trust-assumptions": ["trust-assumptions-in-oracle-problem", "trust-assumptions-in-rollup-security"],
+    "trust-assumptions": ["trust-assumptions-in-oracle-problem", "trust-assumptions-in-rollup-security", "trust-assumptions-in-trust-failure-modes"],
     collusion: ["collusion-in-oracle-security"],
     "strategic-behavior": ["strategic-behavior-in-economics-mechanism-design"],
     "collective-action": ["collective-action-in-multi-party-coordination"],
@@ -1901,7 +2037,7 @@ test("State & Data has exactly its ten L1 topics and their L2 placements, in ord
 test("State & Data reuses State Roots and Transitions and keeps overlapping labels distinct", () => {
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // State Roots: one concept in two contexts, preferred where it is taught as a commitment.
-  assert.deepEqual(placementsOf("state-roots"), ["state-roots-in-state-commitments", "state-roots-in-state-representation"]);
+  assert.deepEqual(placementsOf("state-roots"), ["state-roots-in-cross-chain-state", "state-roots-in-state-commitments", "state-roots-in-state-representation"]);
   assert.equal(resolver.getConcept("state-roots")?.preferredPlacementId, "state-roots-in-state-commitments");
   // State Transitions (L1) is Foundations' Transitions in contextual wording; children belong to the placement.
   assert.deepEqual(placementsOf("transitions"), ["transitions", "transitions-in-state-data"]);
@@ -1942,6 +2078,7 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     "state-commitments": ["state-commitments-in-settlement-layers"],
     "transition-functions": ["transition-functions-in-execution-layers"],
     calldata: ["calldata-in-data-availability-layers"],
+    "state-proofs": ["state-proofs-in-cross-chain-state"],
     provenance: ["provenance-in-oracles-external-reality"],
     "external-data": ["external-data-in-oracle-problem"],
     authenticity: ["authenticity-in-oracle-problem"],
@@ -2006,7 +2143,7 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   // Finality: the fixture placement keeps its ID and preferred role, now an L1 topic with its own layer.
   assert.equal(resolver.getPlacement("finality-in-consensus")?.parentPlacementId, "consensus-ordering");
   assert.equal(resolver.getConcept("finality")?.preferredPlacementId, "finality-in-consensus");
-  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-protocol-properties", "finality-in-rollups"]);
+  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-cross-chain-verification", "finality-in-protocol-properties", "finality-in-rollups"]);
   assert.equal(resolver.getChildren("finality-in-consensus").length, 6);
   assert.deepEqual(resolver.getChildren("finality-in-rollups"), []);
   // Censorship Resistance: Foundations' property, taught here through inclusion; preferred here.
@@ -2052,7 +2189,11 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
     "private-mempools": ["private-mempools-in-private-execution"],
     "inclusion-guarantees": ["inclusion-guarantees-in-mev-mitigation"],
     preconfirmations: ["preconfirmations-in-intent-commitments"],
-    "shared-sequencing": ["shared-sequencing-in-cross-domain-coordination", "shared-sequencing-in-rollup-sequencing"],
+    "shared-sequencing": [
+      "shared-sequencing-in-cross-chain-atomicity",
+      "shared-sequencing-in-cross-domain-coordination",
+      "shared-sequencing-in-rollup-sequencing",
+    ],
     "centralized-sequencing": ["centralized-sequencing-in-rollup-sequencing"],
     "decentralized-sequencing": ["decentralized-sequencing-in-rollup-sequencing"],
   };
@@ -2133,6 +2274,7 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
   const placedElsewhere: Record<string, string[]> = {
     "archive-nodes": ["archive-nodes-in-archival-storage"],
     "transaction-submission": ["transaction-submission-in-wallets"],
+    relayers: ["relayers-in-cross-chain-messaging"],
   };
   for (const [id, conceptId] of [...NETWORKS_LAYER, ...NETWORKS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -2377,12 +2519,17 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once; only Agent Identity keeps its existing content.
+  // Also placed in Interoperability & Abstraction.
+  const placedElsewhere: Record<string, string[]> = {
+    "account-abstraction": ["account-abstraction-in-chain-abstraction"],
+    "gas-abstraction": ["gas-abstraction-in-abstraction-layers"],
+  };
   const shared = new Set(["attestations", "signing", "transaction-submission", "credentials", "delegation"]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
@@ -2818,12 +2965,19 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
+  // Also placed in Interoperability & Abstraction.
+  const placedElsewhere: Record<string, string[]> = {
+    "cross-chain-intents": ["cross-chain-intents-in-cross-chain-execution"],
+    "cross-domain-execution": ["cross-domain-execution-in-interoperability-abstraction"],
+    "cross-domain-settlement": ["cross-domain-settlement-in-interoperability-abstraction"],
+    "cross-domain-atomicity": ["cross-domain-atomicity-in-interoperability-abstraction"],
+  };
   const shared = new Set(["delegation", "batch-auctions", "order-flow-auctions", "preconfirmations", "settlement", "collective-action", "shared-sequencing"]);
   for (const [id, conceptId] of [...INTENTS_LAYER, ...INTENTS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...INTENTS_LAYER, ...INTENTS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2895,12 +3049,14 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
+  // Also placed in Interoperability & Abstraction.
+  const placedElsewhere: Record<string, string[]> = { "pause-mechanisms": ["pause-mechanisms-in-trust-failure-modes"] };
   const shared = new Set(["delegation", "evidence", "incentive-alignment"]);
   for (const [id, conceptId] of [...GOVERNANCE_LAYER, ...GOVERNANCE_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...GOVERNANCE_LAYER, ...GOVERNANCE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3005,6 +3161,106 @@ test("Scaling & Modular Systems reuses existing concepts and keeps scaling-speci
   assert.equal(new Set(ids).size, ids.length);
 });
 
+test("Interoperability & Abstraction has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("interoperability-abstraction").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    INTEROP_LAYER,
+  );
+  for (const [parent, children] of INTEROP_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of INTEROP_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "interoperability-abstraction")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...INTEROP_LAYER.map(([id]) => id), ...INTEROP_L2.map(([id]) => id)].sort());
+  assert.equal(INTEROP_L2.length, 82);
+});
+
+test("Interoperability & Abstraction reuses existing concepts without moving their preferred placements", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  // [concept, placement here, preferred placement (unchanged home)]
+  for (const [conceptId, here, preferred] of [
+    ["cross-domain-execution", "cross-domain-execution-in-interoperability-abstraction", "cross-domain-execution"],
+    ["cross-domain-settlement", "cross-domain-settlement-in-interoperability-abstraction", "cross-domain-settlement"],
+    ["cross-domain-atomicity", "cross-domain-atomicity-in-interoperability-abstraction", "cross-domain-atomicity"],
+    ["relayers", "relayers-in-cross-chain-messaging", "relayers"],
+    ["state-proofs", "state-proofs-in-cross-chain-state", "state-proofs"],
+    ["state-roots", "state-roots-in-cross-chain-state", "state-roots-in-state-commitments"],
+    ["finality", "finality-in-cross-chain-verification", "finality-in-consensus"],
+    ["cross-chain-intents", "cross-chain-intents-in-cross-chain-execution", "cross-chain-intents"],
+    ["shared-sequencing", "shared-sequencing-in-cross-chain-atomicity", "shared-sequencing"],
+    ["account-abstraction", "account-abstraction-in-chain-abstraction", "account-abstraction"],
+    ["gas-abstraction", "gas-abstraction-in-abstraction-layers", "gas-abstraction"],
+    ["trust-assumptions", "trust-assumptions-in-trust-failure-modes", "trust-assumptions"],
+    ["pause-mechanisms", "pause-mechanisms-in-trust-failure-modes", "pause-mechanisms"],
+  ]) {
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
+    assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  // The cross-domain concepts are L1 topics here, each owning its own layer, in "Cross-Chain" wording.
+  for (const [placementId, label] of [
+    ["cross-domain-execution-in-interoperability-abstraction", "Cross-Chain Execution"],
+    ["cross-domain-settlement-in-interoperability-abstraction", "Cross-Chain Settlement"],
+    ["cross-domain-atomicity-in-interoperability-abstraction", "Cross-Chain Atomicity"],
+  ]) {
+    assert.equal(placementLabel(placementId), label);
+    assert.ok(resolver.getChildren(placementId).length >= 5, placementId);
+  }
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["bridges", "cross-chain-messaging"],
+    ["cross-chain-verification", "verification"],
+    ["bridge-security", "interoperability-security"],
+    ["asset-bridging", "asset-abstraction"],
+    ["chain-abstraction", "account-abstraction"],
+    ["interoperability-protocols", "protocols"],
+    ["cross-chain-messages", "message-propagation"],
+    ["message-ordering", "transaction-ordering"],
+    ["message-authentication", "authentication"],
+    ["replay-protection", "replay-attacks"],
+    ["wrapped-assets", "tokenized-assets"],
+    ["canonical-assets", "native-assets"],
+    ["remote-state", "global-state"],
+    ["header-relaying", "message-relaying"],
+    ["cross-chain-state-sync", "synchronization"],
+    ["zk-verification", "proof-verification"],
+    ["committee-verification", "availability-committees"],
+    ["reorg-risk", "reorganizations"],
+    ["atomic-swaps", "atomic-settlement"],
+    ["unified-accounts", "accounts"],
+    ["chain-routing", "execution-routing"],
+    ["chain-routing", "chain-selection"],
+    ["verifier-compromise", "source-compromise"],
+    ["transfer-limits", "rate-limiting"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Cross-chain settlement and atomicity stay distinct from the generic concepts.
+  assert.notEqual(resolver.getPlacement("cross-domain-settlement-in-interoperability-abstraction")?.conceptId, "settlement");
+  assert.notEqual(resolver.getPlacement("cross-domain-atomicity-in-interoperability-abstraction")?.conceptId, "transaction-atomicity");
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["cross-domain-execution", "cross-domain-settlement", "cross-domain-atomicity", "relayers", "state-proofs", "state-roots", "finality", "cross-chain-intents", "shared-sequencing", "account-abstraction", "gas-abstraction", "trust-assumptions", "pause-mechanisms"]);
+  for (const [id, conceptId] of [...INTEROP_LAYER, ...INTEROP_L2]) {
+    if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...INTEROP_LAYER, ...INTEROP_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
 test("one canonical Finality concept resolves through independent placements", () => {
   const consensusFinality = resolver.getPlacement("finality-in-consensus");
   const rollupFinality = resolver.getPlacement("finality-in-rollups");
@@ -3017,7 +3273,7 @@ test("one canonical Finality concept resolves through independent placements", (
   assert.equal(resolver.getConcept(consensusFinality.conceptId), resolver.getConcept(rollupFinality.conceptId));
   assert.deepEqual(
     resolver.getPlacementsForConcept("finality").map((placement) => placement.id).sort(),
-    ["finality-in-consensus", "finality-in-protocol-properties", "finality-in-rollups"],
+    ["finality-in-consensus", "finality-in-cross-chain-verification", "finality-in-protocol-properties", "finality-in-rollups"],
   );
   assert.deepEqual(
     resolver.getAncestors("finality-in-rollups").map((placement) => placement.id),

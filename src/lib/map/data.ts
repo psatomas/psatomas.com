@@ -1148,6 +1148,117 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "sequencer-censorship",
     { placementId: "trust-assumptions-in-rollup-security", conceptId: "trust-assumptions" },
   ],
+  // 16 Interoperability & Abstraction
+  "interoperability-models": [
+    "native-interoperability",
+    "trusted-interoperability",
+    "trust-minimized-interoperability",
+    "hub-and-spoke-interoperability",
+    "point-to-point-interoperability",
+    "cross-chain-composability",
+  ],
+  "cross-chain-messaging": [
+    "cross-chain-messages",
+    "message-delivery",
+    "message-ordering",
+    "replay-protection",
+    "message-authentication",
+    { placementId: "relayers-in-cross-chain-messaging", conceptId: "relayers" },
+  ],
+  "bridges": [
+    "bridge-contracts",
+    "bridge-operators",
+    "bridge-custody",
+    "canonical-bridges",
+    "third-party-bridges",
+    "bridge-upgradeability",
+  ],
+  "asset-bridging": [
+    "lock-and-mint",
+    "burn-and-mint",
+    "liquidity-based-bridging",
+    "wrapped-assets",
+    "canonical-assets",
+    "bridged-asset-risk",
+  ],
+  "cross-chain-state": [
+    "remote-state",
+    { placementId: "state-proofs-in-cross-chain-state", conceptId: "state-proofs" },
+    { placementId: "state-roots-in-cross-chain-state", conceptId: "state-roots" },
+    "cross-chain-queries",
+    "header-relaying",
+    "cross-chain-state-sync",
+  ],
+  "cross-chain-verification": [
+    "light-client-verification",
+    "zk-verification",
+    "optimistic-verification",
+    "committee-verification",
+    { placementId: "finality-in-cross-chain-verification", conceptId: "finality" },
+    "verification-latency",
+  ],
+  "interoperability-protocols": [
+    "interoperability-standards",
+    "messaging-protocols",
+    "inter-blockchain-communication",
+    "cross-chain-token-standards",
+    "protocol-adapters",
+    "interoperability-layers",
+  ],
+  "cross-domain-execution-in-interoperability-abstraction": [
+    "cross-chain-transactions",
+    "cross-chain-calls",
+    "remote-execution",
+    "execution-callbacks",
+    { placementId: "cross-chain-intents-in-cross-chain-execution", conceptId: "cross-chain-intents" },
+    "execution-failure-handling",
+  ],
+  "cross-domain-settlement-in-interoperability-abstraction": [
+    "settlement-latency",
+    "settlement-proofs",
+    "rebalancing",
+    "solver-repayment",
+    "reorg-risk",
+  ],
+  "cross-domain-atomicity-in-interoperability-abstraction": [
+    "atomic-swaps",
+    "hashed-timelock-contracts",
+    "two-phase-commit",
+    { placementId: "shared-sequencing-in-cross-chain-atomicity", conceptId: "shared-sequencing" },
+    "partial-failures",
+    "atomicity-guarantees",
+  ],
+  "chain-abstraction": [
+    "unified-accounts",
+    "unified-balances",
+    "chain-agnostic-interfaces",
+    "chain-routing",
+    "resource-locks",
+    { placementId: "account-abstraction-in-chain-abstraction", conceptId: "account-abstraction" },
+  ],
+  "abstraction-layers": [
+    "asset-abstraction",
+    { placementId: "gas-abstraction-in-abstraction-layers", conceptId: "gas-abstraction" },
+    "liquidity-abstraction",
+    "intent-based-abstraction",
+    "execution-abstraction",
+  ],
+  "interoperability-security": [
+    "bridge-security",
+    "bridge-exploits",
+    "verifier-compromise",
+    "message-forgery",
+    "replay-attacks",
+    "transfer-limits",
+  ],
+  "trust-failure-modes": [
+    { placementId: "trust-assumptions-in-trust-failure-modes", conceptId: "trust-assumptions" },
+    "liveness-failures",
+    "safety-failures",
+    "failure-isolation",
+    "contagion-risk",
+    { placementId: "pause-mechanisms-in-trust-failure-modes", conceptId: "pause-mechanisms" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1165,9 +1276,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
- * Intents & Coordination, Governance & Institutions, and Scaling & Modular
- * Systems; and a deliberately small Phase 1 proof fixture re-homed beneath its
- * L0 domains.
+ * Intents & Coordination, Governance & Institutions, Scaling & Modular
+ * Systems, and Interoperability & Abstraction; and a deliberately small Phase 1
+ * proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1391,7 +1502,8 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Commitment Schemes",
       preferredPlacementId: "commitment-schemes-in-cryptographic-commitments",
     },
-    { id: "state-proofs", slug: "state-proofs", title: "State Proofs" },
+    // Also placed under 16's Cross-Chain State; this placement is preferred.
+    { id: "state-proofs", slug: "state-proofs", title: "State Proofs", preferredPlacementId: "state-proofs" },
     { id: "state-history", slug: "state-history", title: "State History" },
     { id: "historical-queries", slug: "historical-queries", title: "Historical Queries" },
     { id: "state-snapshots", slug: "state-snapshots", title: "State Snapshots" },
@@ -1562,7 +1674,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "nodes", slug: "nodes", title: "Nodes" },
     { id: "rpc", slug: "rpc", title: "RPC" },
     { id: "indexers", slug: "indexers", title: "Indexers" },
-    { id: "relayers", slug: "relayers", title: "Relayers" },
+    // Also placed under 16's Cross-Chain Messaging; this placement is preferred.
+    { id: "relayers", slug: "relayers", title: "Relayers", preferredPlacementId: "relayers" },
     { id: "keepers", slug: "keepers", title: "Keepers" },
     { id: "bots", slug: "bots", title: "Bots" },
     { id: "monitoring", slug: "monitoring", title: "Monitoring" },
@@ -1801,7 +1914,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "accounts", slug: "accounts", title: "Accounts" },
     { id: "wallets", slug: "wallets", title: "Wallets" },
     { id: "smart-accounts", slug: "smart-accounts", title: "Smart Accounts" },
-    { id: "account-abstraction", slug: "account-abstraction", title: "Account Abstraction" },
+    // Also placed under 16's Chain Abstraction; this placement is preferred.
+    {
+      id: "account-abstraction",
+      slug: "account-abstraction",
+      title: "Account Abstraction",
+      preferredPlacementId: "account-abstraction",
+    },
     { id: "authentication", slug: "authentication", title: "Authentication" },
     { id: "machine-identity", slug: "machine-identity", title: "Machine Identity" },
     // L2 topics (placements in L2_TOPICS). Credentials, Reputation, Ownership,
@@ -1837,7 +1956,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "entry-points", slug: "entry-points", title: "Entry Points" },
     { id: "paymasters", slug: "paymasters", title: "Paymasters" },
     { id: "alternative-mempools", slug: "alternative-mempools", title: "Alternative Mempools" },
-    { id: "gas-abstraction", slug: "gas-abstraction", title: "Gas Abstraction" },
+    // Also placed under 16's Abstraction Layers; this placement is preferred.
+    {
+      id: "gas-abstraction",
+      slug: "gas-abstraction",
+      title: "Gas Abstraction",
+      preferredPlacementId: "gas-abstraction",
+    },
     // Signature Authentication proves control of a key; it is not 06's
     // Signature Verification.
     { id: "authentication-factors", slug: "authentication-factors", title: "Authentication Factors" },
@@ -2363,10 +2488,37 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "commitment-devices", slug: "commitment-devices", title: "Commitment Devices" },
     { id: "coordination-failures", slug: "coordination-failures", title: "Coordination Failures" },
     // Cross-Domain Atomicity is not 02's Transaction or 12's Bundle Atomicity.
-    { id: "cross-chain-intents", slug: "cross-chain-intents", title: "Cross-Chain Intents" },
-    { id: "cross-domain-execution", slug: "cross-domain-execution", title: "Cross-Domain Execution" },
-    { id: "cross-domain-settlement", slug: "cross-domain-settlement", title: "Cross-Domain Settlement" },
-    { id: "cross-domain-atomicity", slug: "cross-domain-atomicity", title: "Cross-Domain Atomicity" },
+    // Also placed under 16's Cross-Chain Execution; this placement is preferred.
+    {
+      id: "cross-chain-intents",
+      slug: "cross-chain-intents",
+      title: "Cross-Chain Intents",
+      preferredPlacementId: "cross-chain-intents",
+    },
+    // Also an L1 topic of 16, shown as "Cross-Chain Execution" (a chain is one
+    // kind of domain); this placement is preferred.
+    {
+      id: "cross-domain-execution",
+      slug: "cross-domain-execution",
+      title: "Cross-Domain Execution",
+      preferredPlacementId: "cross-domain-execution",
+    },
+    // Also an L1 topic of 16, shown as "Cross-Chain Settlement"; not 11's general
+    // Settlement. This placement is preferred.
+    {
+      id: "cross-domain-settlement",
+      slug: "cross-domain-settlement",
+      title: "Cross-Domain Settlement",
+      preferredPlacementId: "cross-domain-settlement",
+    },
+    // Also an L1 topic of 16, shown as "Cross-Chain Atomicity"; this placement is
+    // preferred.
+    {
+      id: "cross-domain-atomicity",
+      slug: "cross-domain-atomicity",
+      title: "Cross-Domain Atomicity",
+      preferredPlacementId: "cross-domain-atomicity",
+    },
     // 14 Governance & Institutions: L1 topics. Governance mechanisms stay distinct
     // from technically similar ones: Voting is not 04's Agreement, Governance
     // Execution is not protocol execution, Decision Rules are not consensus rules.
@@ -2468,7 +2620,14 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "juror-selection", slug: "juror-selection", title: "Juror Selection" },
     { id: "ruling-enforcement", slug: "ruling-enforcement", title: "Ruling Enforcement" },
     { id: "emergency-powers", slug: "emergency-powers", title: "Emergency Powers" },
-    { id: "pause-mechanisms", slug: "pause-mechanisms", title: "Pause Mechanisms" },
+    // Also placed under 16's Trust & Failure Modes (a bridge pause); this
+    // placement is preferred.
+    {
+      id: "pause-mechanisms",
+      slug: "pause-mechanisms",
+      title: "Pause Mechanisms",
+      preferredPlacementId: "pause-mechanisms",
+    },
     { id: "guardians", slug: "guardians", title: "Guardians" },
     { id: "emergency-upgrades", slug: "emergency-upgrades", title: "Emergency Upgrades" },
     { id: "circuit-breakers", slug: "circuit-breakers", title: "Circuit Breakers" },
@@ -2588,6 +2747,116 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "upgrade-keys", slug: "upgrade-keys", title: "Upgrade Keys" },
     { id: "escape-hatches", slug: "escape-hatches", title: "Escape Hatches" },
     { id: "sequencer-censorship", slug: "sequencer-censorship", title: "Sequencer Censorship" },
+    // 16 Interoperability & Abstraction: L1 topics (Cross-Chain Execution,
+    // Settlement and Atomicity are 13's cross-domain concepts). Interoperability
+    // Protocols are not Foundations' Protocols; Cross-Chain Verification is not
+    // Foundations' Verification; Chain Abstraction is not 08's Account
+    // Abstraction; Asset Bridging (moving assets) is not Asset Abstraction.
+    { id: "interoperability-models", slug: "interoperability-models", title: "Interoperability Models" },
+    { id: "cross-chain-messaging", slug: "cross-chain-messaging", title: "Cross-Chain Messaging" },
+    { id: "bridges", slug: "bridges", title: "Bridges" },
+    { id: "asset-bridging", slug: "asset-bridging", title: "Asset Bridging" },
+    { id: "cross-chain-state", slug: "cross-chain-state", title: "Cross-Chain State" },
+    { id: "cross-chain-verification", slug: "cross-chain-verification", title: "Cross-Chain Verification" },
+    { id: "interoperability-protocols", slug: "interoperability-protocols", title: "Interoperability Protocols" },
+    { id: "chain-abstraction", slug: "chain-abstraction", title: "Chain Abstraction" },
+    { id: "abstraction-layers", slug: "abstraction-layers", title: "Abstraction Layers" },
+    { id: "interoperability-security", slug: "interoperability-security", title: "Interoperability Security" },
+    { id: "trust-failure-modes", slug: "trust-failure-modes", title: "Trust & Failure Modes" },
+    // L2 topics (placements in L2_TOPICS).
+    { id: "native-interoperability", slug: "native-interoperability", title: "Native Interoperability" },
+    { id: "trusted-interoperability", slug: "trusted-interoperability", title: "Trusted Interoperability" },
+    { id: "trust-minimized-interoperability", slug: "trust-minimized-interoperability", title: "Trust-Minimized Interoperability" },
+    { id: "hub-and-spoke-interoperability", slug: "hub-and-spoke-interoperability", title: "Hub-and-Spoke Interoperability" },
+    { id: "point-to-point-interoperability", slug: "point-to-point-interoperability", title: "Point-to-Point Interoperability" },
+    { id: "cross-chain-composability", slug: "cross-chain-composability", title: "Cross-Chain Composability" },
+    // Cross-chain messaging is not 05's Message Propagation (gossip within a
+    // network); Message Ordering is not 04's Transaction Ordering; Message
+    // Authentication is not 08's Authentication; Replay Protection is the
+    // defence against Replay Attacks.
+    { id: "cross-chain-messages", slug: "cross-chain-messages", title: "Cross-Chain Messages" },
+    { id: "message-delivery", slug: "message-delivery", title: "Message Delivery" },
+    { id: "message-ordering", slug: "message-ordering", title: "Message Ordering" },
+    { id: "replay-protection", slug: "replay-protection", title: "Replay Protection" },
+    { id: "message-authentication", slug: "message-authentication", title: "Message Authentication" },
+    // Bridges are one mechanism for cross-chain messaging, not messaging itself.
+    { id: "bridge-contracts", slug: "bridge-contracts", title: "Bridge Contracts" },
+    { id: "bridge-operators", slug: "bridge-operators", title: "Bridge Operators" },
+    { id: "bridge-custody", slug: "bridge-custody", title: "Bridge Custody" },
+    { id: "canonical-bridges", slug: "canonical-bridges", title: "Canonical Bridges" },
+    { id: "third-party-bridges", slug: "third-party-bridges", title: "Third-Party Bridges" },
+    { id: "bridge-upgradeability", slug: "bridge-upgradeability", title: "Bridge Upgradeability" },
+    // Wrapped Assets are not 11's Tokenized or Synthetic Assets; Canonical Assets
+    // are not 11's Native Assets.
+    { id: "lock-and-mint", slug: "lock-and-mint", title: "Lock-and-Mint" },
+    { id: "burn-and-mint", slug: "burn-and-mint", title: "Burn-and-Mint" },
+    { id: "liquidity-based-bridging", slug: "liquidity-based-bridging", title: "Liquidity-Based Bridging" },
+    { id: "wrapped-assets", slug: "wrapped-assets", title: "Wrapped Assets" },
+    { id: "canonical-assets", slug: "canonical-assets", title: "Canonical Assets" },
+    { id: "bridged-asset-risk", slug: "bridged-asset-risk", title: "Bridged Asset Risk" },
+    // Remote State is another chain's state, not 03's Global State; Header
+    // Relaying is not 05's Message Relaying; Cross-Chain State Sync is not 03's
+    // Synchronization.
+    { id: "remote-state", slug: "remote-state", title: "Remote State" },
+    { id: "cross-chain-queries", slug: "cross-chain-queries", title: "Cross-Chain Queries" },
+    { id: "header-relaying", slug: "header-relaying", title: "Header Relaying" },
+    { id: "cross-chain-state-sync", slug: "cross-chain-state-sync", title: "Cross-Chain State Sync" },
+    // ZK Verification of another chain is not 06's Proof Verification alone;
+    // Committee Verification is not 07's Availability Committees.
+    { id: "light-client-verification", slug: "light-client-verification", title: "Light-Client Verification" },
+    { id: "zk-verification", slug: "zk-verification", title: "ZK Verification" },
+    { id: "optimistic-verification", slug: "optimistic-verification", title: "Optimistic Verification" },
+    { id: "committee-verification", slug: "committee-verification", title: "Committee Verification" },
+    { id: "verification-latency", slug: "verification-latency", title: "Verification Latency" },
+    { id: "interoperability-standards", slug: "interoperability-standards", title: "Interoperability Standards" },
+    { id: "messaging-protocols", slug: "messaging-protocols", title: "Messaging Protocols" },
+    { id: "inter-blockchain-communication", slug: "inter-blockchain-communication", title: "Inter-Blockchain Communication" },
+    { id: "cross-chain-token-standards", slug: "cross-chain-token-standards", title: "Cross-Chain Token Standards" },
+    { id: "protocol-adapters", slug: "protocol-adapters", title: "Protocol Adapters" },
+    { id: "interoperability-layers", slug: "interoperability-layers", title: "Interoperability Layers" },
+    // Execution Failure Handling concerns cross-chain calls that fail partway.
+    { id: "cross-chain-transactions", slug: "cross-chain-transactions", title: "Cross-Chain Transactions" },
+    { id: "cross-chain-calls", slug: "cross-chain-calls", title: "Cross-Chain Calls" },
+    { id: "remote-execution", slug: "remote-execution", title: "Remote Execution" },
+    { id: "execution-callbacks", slug: "execution-callbacks", title: "Execution Callbacks" },
+    { id: "execution-failure-handling", slug: "execution-failure-handling", title: "Execution Failure Handling" },
+    // Reorg Risk (a source chain reorganizing under a transfer) is not 04's
+    // Reorganizations.
+    { id: "settlement-latency", slug: "settlement-latency", title: "Settlement Latency" },
+    { id: "settlement-proofs", slug: "settlement-proofs", title: "Settlement Proofs" },
+    { id: "rebalancing", slug: "rebalancing", title: "Rebalancing" },
+    { id: "solver-repayment", slug: "solver-repayment", title: "Solver Repayment" },
+    { id: "reorg-risk", slug: "reorg-risk", title: "Reorg Risk" },
+    // Atomic Swaps are not 13's Atomic Settlement.
+    { id: "atomic-swaps", slug: "atomic-swaps", title: "Atomic Swaps" },
+    { id: "hashed-timelock-contracts", slug: "hashed-timelock-contracts", title: "Hashed Timelock Contracts" },
+    { id: "two-phase-commit", slug: "two-phase-commit", title: "Two-Phase Commit" },
+    { id: "partial-failures", slug: "partial-failures", title: "Partial Failures" },
+    { id: "atomicity-guarantees", slug: "atomicity-guarantees", title: "Atomicity Guarantees" },
+    // Unified Accounts are not 08's Accounts; Chain Routing is not 13's Execution
+    // Routing or 04's Chain Selection.
+    { id: "unified-accounts", slug: "unified-accounts", title: "Unified Accounts" },
+    { id: "unified-balances", slug: "unified-balances", title: "Unified Balances" },
+    { id: "chain-agnostic-interfaces", slug: "chain-agnostic-interfaces", title: "Chain-Agnostic Interfaces" },
+    { id: "chain-routing", slug: "chain-routing", title: "Chain Routing" },
+    { id: "resource-locks", slug: "resource-locks", title: "Resource Locks" },
+    { id: "asset-abstraction", slug: "asset-abstraction", title: "Asset Abstraction" },
+    { id: "liquidity-abstraction", slug: "liquidity-abstraction", title: "Liquidity Abstraction" },
+    { id: "intent-based-abstraction", slug: "intent-based-abstraction", title: "Intent-Based Abstraction" },
+    { id: "execution-abstraction", slug: "execution-abstraction", title: "Execution Abstraction" },
+    // Bridge Security is specific to bridges, not protocol security in general;
+    // Verifier Compromise is not 09's Source Compromise; Transfer Limits (value
+    // caps) are not 05's Rate Limiting.
+    { id: "bridge-security", slug: "bridge-security", title: "Bridge Security" },
+    { id: "bridge-exploits", slug: "bridge-exploits", title: "Bridge Exploits" },
+    { id: "verifier-compromise", slug: "verifier-compromise", title: "Verifier Compromise" },
+    { id: "message-forgery", slug: "message-forgery", title: "Message Forgery" },
+    { id: "replay-attacks", slug: "replay-attacks", title: "Replay Attacks" },
+    { id: "transfer-limits", slug: "transfer-limits", title: "Transfer Limits" },
+    { id: "liveness-failures", slug: "liveness-failures", title: "Liveness Failures" },
+    { id: "safety-failures", slug: "safety-failures", title: "Safety Failures" },
+    { id: "failure-isolation", slug: "failure-isolation", title: "Failure Isolation" },
+    { id: "contagion-risk", slug: "contagion-risk", title: "Contagion Risk" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -2867,6 +3136,84 @@ export const mapKnowledge: MapKnowledgeModel = {
       conceptId: "institutional-design",
       parentPlacementId: "governance-institutions",
       order: 14,
+    },
+    // 16 Interoperability & Abstraction: L1 topics.
+    {
+      id: "interoperability-models",
+      conceptId: "interoperability-models",
+      parentPlacementId: "interoperability-abstraction",
+      order: 0,
+    },
+    {
+      id: "cross-chain-messaging",
+      conceptId: "cross-chain-messaging",
+      parentPlacementId: "interoperability-abstraction",
+      order: 1,
+    },
+    { id: "bridges", conceptId: "bridges", parentPlacementId: "interoperability-abstraction", order: 2 },
+    { id: "asset-bridging", conceptId: "asset-bridging", parentPlacementId: "interoperability-abstraction", order: 3 },
+    {
+      id: "cross-chain-state",
+      conceptId: "cross-chain-state",
+      parentPlacementId: "interoperability-abstraction",
+      order: 4,
+    },
+    {
+      id: "cross-chain-verification",
+      conceptId: "cross-chain-verification",
+      parentPlacementId: "interoperability-abstraction",
+      order: 5,
+    },
+    {
+      id: "interoperability-protocols",
+      conceptId: "interoperability-protocols",
+      parentPlacementId: "interoperability-abstraction",
+      order: 6,
+    },
+    {
+      id: "cross-domain-execution-in-interoperability-abstraction",
+      conceptId: "cross-domain-execution",
+      parentPlacementId: "interoperability-abstraction",
+      order: 7,
+      contextualLabel: "Cross-Chain Execution",
+    },
+    {
+      id: "cross-domain-settlement-in-interoperability-abstraction",
+      conceptId: "cross-domain-settlement",
+      parentPlacementId: "interoperability-abstraction",
+      order: 8,
+      contextualLabel: "Cross-Chain Settlement",
+    },
+    {
+      id: "cross-domain-atomicity-in-interoperability-abstraction",
+      conceptId: "cross-domain-atomicity",
+      parentPlacementId: "interoperability-abstraction",
+      order: 9,
+      contextualLabel: "Cross-Chain Atomicity",
+    },
+    {
+      id: "chain-abstraction",
+      conceptId: "chain-abstraction",
+      parentPlacementId: "interoperability-abstraction",
+      order: 10,
+    },
+    {
+      id: "abstraction-layers",
+      conceptId: "abstraction-layers",
+      parentPlacementId: "interoperability-abstraction",
+      order: 11,
+    },
+    {
+      id: "interoperability-security",
+      conceptId: "interoperability-security",
+      parentPlacementId: "interoperability-abstraction",
+      order: 12,
+    },
+    {
+      id: "trust-failure-modes",
+      conceptId: "trust-failure-modes",
+      parentPlacementId: "interoperability-abstraction",
+      order: 13,
     },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
