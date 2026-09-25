@@ -47,8 +47,9 @@ function Relation({ className = "" }: { className?: string }) {
 
 // A parallel set stacks beside a rail on narrow screens (indented equally on
 // both sides so stacked nodes stay on the model's axis) and becomes
-// side-by-side columns once they can hold their labels: up to three at sm,
-// more at lg. Every class is spelled out so Tailwind generates it.
+// side-by-side columns once they can hold their labels within the knowledge
+// field: up to three at sm, more at lg (the field's full 54rem, 144px per
+// column for six). Every class is spelled out so Tailwind generates it.
 const PARALLEL = {
   sm: {
     set: "sm:grid sm:gap-y-0 sm:border-l-0 sm:px-0",
