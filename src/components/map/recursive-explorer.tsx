@@ -10,6 +10,7 @@ import {
   activateMapExplorerRow,
   enterMapExplorerContext,
   getContainingMapL0,
+  getContainingMapL0Ordinal,
   getMapL0IndexEntries,
   getInitialMapExplorerState,
   getMapContextHref,
@@ -259,7 +260,12 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
           <p className="mt-10 sm:mt-12">
             <MonoLabel>Context</MonoLabel>
           </p>
-          <ContextTrail ref={trailRef} context={context} onNavigate={navigateFromTrail} />
+          <ContextTrail
+            ref={trailRef}
+            context={context}
+            ordinal={getContainingMapL0Ordinal(index, focusedPlacementId)}
+            onNavigate={navigateFromTrail}
+          />
         </>
       ) : null}
 
@@ -333,14 +339,25 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
 function ContextTrail({
   ref,
   context,
+  ordinal,
   onNavigate,
 }: {
   ref: Ref<HTMLElement>;
   context: MapExplorerContextStep[];
+  /** The containing L0's canonical 01–27 ordinal, shown before the L0 step only. */
+  ordinal: string | null;
   onNavigate: (placementId: string) => void;
 }) {
   const ancestors = context.slice(0, -1);
   const current = context[context.length - 1];
+  // The L0 coordinate: muted, never truncated, outside the step's control so
+  // hover never recolours it, and hidden from assistive technology like every
+  // other MAP ordinal (the path itself names the domain).
+  const coordinate = ordinal ? (
+    <span aria-hidden="true" className={`${LABEL_TEXT} mr-1 shrink-0 text-muted`}>
+      {ordinal}
+    </span>
+  ) : null;
   return (
     <nav
       ref={ref}
@@ -356,6 +373,7 @@ function ContextTrail({
                 key={step.placementId}
                 className={`flex min-w-0 items-baseline gap-2 ${index === 0 ? "shrink" : "min-w-[3em] shrink-[8]"} sm:shrink-0 sm:min-w-0`}
               >
+                {index === 0 ? coordinate : null}
                 <button
                   type="button"
                   onClick={() => onNavigate(step.placementId)}
@@ -370,8 +388,9 @@ function ContextTrail({
             ))}
           </div>
         ) : null}
-        <div role="listitem" className="min-w-0">
-          <span aria-current="location" className={`${LABEL_TEXT} block py-1 text-accent [overflow-wrap:anywhere]`}>
+        <div role="listitem" className="flex min-w-0 items-baseline gap-2">
+          {ancestors.length === 0 ? coordinate : null}
+          <span aria-current="location" className={`${LABEL_TEXT} block min-w-0 py-1 text-accent [overflow-wrap:anywhere]`}>
             {current.label}
           </span>
         </div>
