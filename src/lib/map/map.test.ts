@@ -788,6 +788,114 @@ const ORACLES_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const ORACLES_L2 = ORACLES_TREE.flatMap(([, children]) => children);
 
+// 10 Economics & Mechanism Design. Strategic Behavior is Foundations' concept;
+// Economic Penalties is Penalties; Objectives and Constraints are Mechanism
+// Objectives and Mechanism Constraints.
+const ECONOMICS_LAYER: Array<[string, string, string]> = [
+  ["incentives", "incentives", "Incentives"],
+  ["mechanism-design", "mechanism-design", "Mechanism Design"],
+  ["game-theory", "game-theory", "Game Theory"],
+  ["strategic-behavior-in-economics-mechanism-design", "strategic-behavior", "Strategic Behavior"],
+  ["token-economics", "token-economics", "Token Economics"],
+  ["fees", "fees", "Fees"],
+  ["auctions", "auctions", "Auctions"],
+  ["resource-allocation", "resource-allocation", "Resource Allocation"],
+  ["staking-economics", "staking-economics", "Staking Economics"],
+  ["security-budgets", "security-budgets", "Security Budgets"],
+  ["cryptoeconomic-security", "cryptoeconomic-security", "Cryptoeconomic Security"],
+];
+const ECONOMICS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["incentives", [
+    ["incentive-alignment", "incentive-alignment", "Incentive Alignment"],
+    ["positive-incentives", "positive-incentives", "Positive Incentives"],
+    ["negative-incentives", "negative-incentives", "Negative Incentives"],
+    ["rewards", "rewards", "Rewards"],
+    ["penalties", "penalties", "Penalties"],
+    ["incentive-compatibility", "incentive-compatibility", "Incentive Compatibility"],
+  ]],
+  ["mechanism-design", [
+    ["mechanisms", "mechanisms", "Mechanisms"],
+    ["mechanism-objectives", "mechanism-objectives", "Objectives"],
+    ["mechanism-constraints", "mechanism-constraints", "Constraints"],
+    ["allocation-rules", "allocation-rules", "Allocation Rules"],
+    ["payment-rules", "payment-rules", "Payment Rules"],
+    ["mechanism-properties", "mechanism-properties", "Mechanism Properties"],
+  ]],
+  ["game-theory", [
+    ["players", "players", "Players"],
+    ["strategies", "strategies", "Strategies"],
+    ["payoffs", "payoffs", "Payoffs"],
+    ["best-responses", "best-responses", "Best Responses"],
+    ["dominant-strategies", "dominant-strategies", "Dominant Strategies"],
+    ["nash-equilibrium", "nash-equilibrium", "Nash Equilibrium"],
+  ]],
+  ["strategic-behavior-in-economics-mechanism-design", [
+    ["rational-behavior", "rational-behavior", "Rational Behavior"],
+    ["deviations", "deviations", "Deviations"],
+    ["manipulation", "manipulation", "Manipulation"],
+    ["free-riding", "free-riding", "Free Riding"],
+    ["griefing", "griefing", "Griefing"],
+    ["bribery", "bribery", "Bribery"],
+  ]],
+  ["token-economics", [
+    ["token-supply", "token-supply", "Token Supply"],
+    ["token-distribution", "token-distribution", "Token Distribution"],
+    ["issuance", "issuance", "Issuance"],
+    ["emissions", "emissions", "Emissions"],
+    ["burns", "burns", "Burns"],
+    ["token-utility", "token-utility", "Token Utility"],
+  ]],
+  ["fees", [
+    ["transaction-fees", "transaction-fees", "Transaction Fees"],
+    ["fee-markets", "fee-markets", "Fee Markets"],
+    ["fee-calculation", "fee-calculation", "Fee Calculation"],
+    ["fee-allocation", "fee-allocation", "Fee Allocation"],
+    ["priority-fees", "priority-fees", "Priority Fees"],
+    ["congestion-pricing", "congestion-pricing", "Congestion Pricing"],
+  ]],
+  ["auctions", [
+    ["bids", "bids", "Bids"],
+    ["first-price-auctions", "first-price-auctions", "First-Price Auctions"],
+    ["second-price-auctions", "second-price-auctions", "Second-Price Auctions"],
+    ["sealed-bid-auctions", "sealed-bid-auctions", "Sealed-Bid Auctions"],
+    ["batch-auctions", "batch-auctions", "Batch Auctions"],
+    ["auction-clearing", "auction-clearing", "Auction Clearing"],
+  ]],
+  ["resource-allocation", [
+    ["scarce-resources", "scarce-resources", "Scarce Resources"],
+    ["resource-pricing", "resource-pricing", "Resource Pricing"],
+    ["capacity-allocation", "capacity-allocation", "Capacity Allocation"],
+    ["allocation-efficiency", "allocation-efficiency", "Allocation Efficiency"],
+    ["congestion", "congestion", "Congestion"],
+    ["rationing", "rationing", "Rationing"],
+  ]],
+  ["staking-economics", [
+    ["stake", "stake", "Stake"],
+    ["staking-rewards", "staking-rewards", "Staking Rewards"],
+    ["slashing", "slashing", "Slashing"],
+    ["validator-economics", "validator-economics", "Validator Economics"],
+    ["delegated-stake", "delegated-stake", "Delegated Stake"],
+    ["economic-security", "economic-security", "Economic Security"],
+  ]],
+  ["security-budgets", [
+    ["security-expenditure", "security-expenditure", "Security Expenditure"],
+    ["issuance-funded-security", "issuance-funded-security", "Issuance-Funded Security"],
+    ["fee-funded-security", "fee-funded-security", "Fee-Funded Security"],
+    ["security-subsidies", "security-subsidies", "Security Subsidies"],
+    ["attack-cost", "attack-cost", "Attack Cost"],
+    ["cost-of-corruption", "cost-of-corruption", "Cost of Corruption"],
+  ]],
+  ["cryptoeconomic-security", [
+    ["economic-guarantees", "economic-guarantees", "Economic Guarantees"],
+    ["economic-finality", "economic-finality", "Economic Finality"],
+    ["incentive-attacks", "incentive-attacks", "Incentive Attacks"],
+    ["stake-based-security", "stake-based-security", "Stake-Based Security"],
+    ["penalties-in-cryptoeconomic-security", "penalties", "Economic Penalties"],
+    ["cryptoeconomic-assumptions", "cryptoeconomic-assumptions", "Cryptoeconomic Assumptions"],
+  ]],
+];
+const ECONOMICS_L2 = ECONOMICS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -808,6 +916,8 @@ const AUTHORED_TOPICS = new Set([
   ...IDENTITY_L2.map(([id]) => id),
   ...ORACLES_LAYER.map(([id]) => id),
   ...ORACLES_L2.map(([id]) => id),
+  ...ECONOMICS_LAYER.map(([id]) => id),
+  ...ECONOMICS_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -887,8 +997,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Proofs' 7 new L1 and 46 new L2 concepts, then Storage & Availability's
   // 8 new L1 and 47 new L2 concepts, then Identity, Accounts & Authority's
   // 6 new L1 and 43 new L2 concepts, then Oracles & External Reality's 11
-  // new L1 and 61 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61);
+  // new L1 and 61 new L2 concepts, then Economics & Mechanism Design's 10 new
+  // L1 and 65 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1016,6 +1127,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     "fault-tolerance": ["fault-tolerance-in-distributed-storage"],
     "trust-assumptions": ["trust-assumptions-in-oracle-problem"],
     collusion: ["collusion-in-oracle-security"],
+    "strategic-behavior": ["strategic-behavior-in-economics-mechanism-design"],
   };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
@@ -1204,6 +1316,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("cryptography-proofs"), 8 + 48);
   assert.equal(subtreeOf("storage-availability"), 9 + 51);
   assert.equal(subtreeOf("identity-accounts-authority"), 8 + 47);
+  assert.equal(subtreeOf("oracles-external-reality"), 12 + 70);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1680,6 +1793,88 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...ORACLES_LAYER, ...ORACLES_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Economics & Mechanism Design has exactly its eleven L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("economics-mechanism-design").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    ECONOMICS_LAYER,
+  );
+  for (const [parent, children] of ECONOMICS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of ECONOMICS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "economics-mechanism-design")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...ECONOMICS_LAYER.map(([id]) => id), ...ECONOMICS_L2.map(([id]) => id)].sort());
+  assert.equal(ECONOMICS_L2.length, 66);
+});
+
+test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and keeps related concepts distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Strategic Behavior: Foundations' concept, an L1 topic here with its own layer; preferred here.
+  assert.deepEqual(placementsOf("strategic-behavior"), ["strategic-behavior", "strategic-behavior-in-economics-mechanism-design"]);
+  assert.equal(resolver.getConcept("strategic-behavior")?.preferredPlacementId, "strategic-behavior-in-economics-mechanism-design");
+  assert.deepEqual(resolver.getChildren("strategic-behavior"), []);
+  assert.equal(resolver.getChildren("strategic-behavior-in-economics-mechanism-design").length, 6);
+  // Economic Penalties is Penalties in contextual wording, within this domain.
+  assert.deepEqual(placementsOf("penalties"), ["penalties", "penalties-in-cryptoeconomic-security"]);
+  assert.equal(resolver.getConcept("penalties")?.preferredPlacementId, "penalties");
+  // Objectives and Constraints are the mechanism's, in contextual wording.
+  assert.equal(resolver.getConcept("mechanism-objectives")?.title, "Mechanism Objectives");
+  assert.equal(resolver.getConcept("mechanism-constraints")?.title, "Mechanism Constraints");
+  assert.equal(resolver.getConcept("objectives"), undefined);
+  assert.equal(resolver.getConcept("constraints"), undefined);
+  // General concepts, each placed once for now, available to later domains.
+  for (const conceptId of ["incentives", "mechanism-design", "game-theory", "auctions", "fees", "stake", "slashing", "economic-security", "attack-cost", "cost-of-corruption"]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
+  }
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["incentives", "validator-incentives"],
+    ["incentives", "oracle-incentives"],
+    ["incentives", "keeper-incentives"],
+    ["incentives", "relay-incentives"],
+    ["validator-economics", "validator-incentives"],
+    ["transaction-fees", "execution-cost"],
+    ["fee-calculation", "fee-accounting"],
+    ["bids", "block-bids"],
+    ["economic-finality", "finality"],
+    ["economic-finality", "probabilistic-finality"],
+    ["cryptoeconomic-assumptions", "fault-assumptions"],
+    ["cryptoeconomic-assumptions", "trust-assumptions"],
+    ["incentive-attacks", "economic-attacks"],
+    ["manipulation", "oracle-manipulation"],
+    ["players", "participants"],
+    ["delegated-stake", "delegation"],
+    ["priority-fees", "transaction-prioritization"],
+    ["mechanism-properties", "protocol-properties"],
+    ["stake-based-security", "economic-security"],
+    ["cryptoeconomic-security", "economic-security"],
+    ["negative-incentives", "penalties"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["strategic-behavior", "penalties"]);
+  for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...ECONOMICS_LAYER, ...ECONOMICS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

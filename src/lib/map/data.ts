@@ -599,6 +599,74 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "attestation-verification",
     "revocation",
   ],
+  // 10 Economics & Mechanism Design
+  incentives: [
+    "incentive-alignment",
+    "positive-incentives",
+    "negative-incentives",
+    "rewards",
+    "penalties",
+    "incentive-compatibility",
+  ],
+  "mechanism-design": [
+    "mechanisms",
+    { placementId: "mechanism-objectives", conceptId: "mechanism-objectives", contextualLabel: "Objectives" },
+    { placementId: "mechanism-constraints", conceptId: "mechanism-constraints", contextualLabel: "Constraints" },
+    "allocation-rules",
+    "payment-rules",
+    "mechanism-properties",
+  ],
+  "game-theory": ["players", "strategies", "payoffs", "best-responses", "dominant-strategies", "nash-equilibrium"],
+  "strategic-behavior-in-economics-mechanism-design": [
+    "rational-behavior",
+    "deviations",
+    "manipulation",
+    "free-riding",
+    "griefing",
+    "bribery",
+  ],
+  "token-economics": ["token-supply", "token-distribution", "issuance", "emissions", "burns", "token-utility"],
+  fees: ["transaction-fees", "fee-markets", "fee-calculation", "fee-allocation", "priority-fees", "congestion-pricing"],
+  auctions: [
+    "bids",
+    "first-price-auctions",
+    "second-price-auctions",
+    "sealed-bid-auctions",
+    "batch-auctions",
+    "auction-clearing",
+  ],
+  "resource-allocation": [
+    "scarce-resources",
+    "resource-pricing",
+    "capacity-allocation",
+    "allocation-efficiency",
+    "congestion",
+    "rationing",
+  ],
+  "staking-economics": [
+    "stake",
+    "staking-rewards",
+    "slashing",
+    "validator-economics",
+    "delegated-stake",
+    "economic-security",
+  ],
+  "security-budgets": [
+    "security-expenditure",
+    "issuance-funded-security",
+    "fee-funded-security",
+    "security-subsidies",
+    "attack-cost",
+    "cost-of-corruption",
+  ],
+  "cryptoeconomic-security": [
+    "economic-guarantees",
+    "economic-finality",
+    "incentive-attacks",
+    "stake-based-security",
+    { placementId: "penalties-in-cryptoeconomic-security", conceptId: "penalties", contextualLabel: "Economic Penalties" },
+    "cryptoeconomic-assumptions",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -614,8 +682,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
- * Identity, Accounts & Authority, and Oracles & External Reality; and a
- * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Identity, Accounts & Authority, Oracles & External Reality, and Economics &
+ * Mechanism Design; and a deliberately small Phase 1 proof fixture re-homed
+ * beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -679,7 +748,14 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "censorship", slug: "censorship", title: "Censorship" },
     // Also placed under 09's Oracle Security; this placement is preferred.
     { id: "collusion", slug: "collusion", title: "Collusion", preferredPlacementId: "collusion" },
-    { id: "strategic-behavior", slug: "strategic-behavior", title: "Strategic Behavior" },
+    // Participants acting in their own interest; also an L1 topic of 10
+    // Economics & Mechanism Design, its game-theoretic home, preferred there.
+    {
+      id: "strategic-behavior",
+      slug: "strategic-behavior",
+      title: "Strategic Behavior",
+      preferredPlacementId: "strategic-behavior-in-economics-mechanism-design",
+    },
     { id: "safety", slug: "safety", title: "Safety" },
     { id: "liveness", slug: "liveness", title: "Liveness" },
     { id: "availability", slug: "availability", title: "Availability" },
@@ -1322,6 +1398,103 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "evidence", slug: "evidence", title: "Evidence" },
     { id: "attestation-verification", slug: "attestation-verification", title: "Attestation Verification" },
     { id: "revocation", slug: "revocation", title: "Revocation" },
+    // 10 Economics & Mechanism Design: L1 topics (Strategic Behavior is
+    // Foundations' concept). Incentives, Mechanism Design, Game Theory, Fees and
+    // Auctions are general concepts for reuse by later domains; Cryptoeconomic
+    // Security (the approach) is not its L2 Economic Security (the measure).
+    { id: "incentives", slug: "incentives", title: "Incentives" },
+    { id: "mechanism-design", slug: "mechanism-design", title: "Mechanism Design" },
+    { id: "game-theory", slug: "game-theory", title: "Game Theory" },
+    { id: "token-economics", slug: "token-economics", title: "Token Economics" },
+    { id: "fees", slug: "fees", title: "Fees" },
+    { id: "auctions", slug: "auctions", title: "Auctions" },
+    { id: "resource-allocation", slug: "resource-allocation", title: "Resource Allocation" },
+    { id: "staking-economics", slug: "staking-economics", title: "Staking Economics" },
+    { id: "security-budgets", slug: "security-budgets", title: "Security Budgets" },
+    { id: "cryptoeconomic-security", slug: "cryptoeconomic-security", title: "Cryptoeconomic Security" },
+    // L2 topics (placements in L2_TOPICS). Negative Incentives are any
+    // discouragement; Penalties are explicit punishment, also placed as
+    // "Economic Penalties" under Cryptoeconomic Security.
+    { id: "incentive-alignment", slug: "incentive-alignment", title: "Incentive Alignment" },
+    { id: "positive-incentives", slug: "positive-incentives", title: "Positive Incentives" },
+    { id: "negative-incentives", slug: "negative-incentives", title: "Negative Incentives" },
+    { id: "rewards", slug: "rewards", title: "Rewards" },
+    { id: "penalties", slug: "penalties", title: "Penalties", preferredPlacementId: "penalties" },
+    { id: "incentive-compatibility", slug: "incentive-compatibility", title: "Incentive Compatibility" },
+    { id: "mechanisms", slug: "mechanisms", title: "Mechanisms" },
+    // A mechanism's objectives and constraints, shown as "Objectives" and
+    // "Constraints"; the bare terms name other things elsewhere (an agent's
+    // objectives, resource constraints).
+    { id: "mechanism-objectives", slug: "mechanism-objectives", title: "Mechanism Objectives" },
+    { id: "mechanism-constraints", slug: "mechanism-constraints", title: "Mechanism Constraints" },
+    // Mechanism Properties are not Foundations' Protocol Properties; Players (a
+    // game's agents) are not Foundations' Participants.
+    { id: "allocation-rules", slug: "allocation-rules", title: "Allocation Rules" },
+    { id: "payment-rules", slug: "payment-rules", title: "Payment Rules" },
+    { id: "mechanism-properties", slug: "mechanism-properties", title: "Mechanism Properties" },
+    { id: "players", slug: "players", title: "Players" },
+    { id: "strategies", slug: "strategies", title: "Strategies" },
+    { id: "payoffs", slug: "payoffs", title: "Payoffs" },
+    { id: "best-responses", slug: "best-responses", title: "Best Responses" },
+    { id: "dominant-strategies", slug: "dominant-strategies", title: "Dominant Strategies" },
+    { id: "nash-equilibrium", slug: "nash-equilibrium", title: "Nash Equilibrium" },
+    // Manipulation in general, not 09's Oracle Manipulation.
+    { id: "rational-behavior", slug: "rational-behavior", title: "Rational Behavior" },
+    { id: "deviations", slug: "deviations", title: "Deviations" },
+    { id: "manipulation", slug: "manipulation", title: "Manipulation" },
+    { id: "free-riding", slug: "free-riding", title: "Free Riding" },
+    { id: "griefing", slug: "griefing", title: "Griefing" },
+    { id: "bribery", slug: "bribery", title: "Bribery" },
+    { id: "token-supply", slug: "token-supply", title: "Token Supply" },
+    { id: "token-distribution", slug: "token-distribution", title: "Token Distribution" },
+    { id: "issuance", slug: "issuance", title: "Issuance" },
+    { id: "emissions", slug: "emissions", title: "Emissions" },
+    { id: "burns", slug: "burns", title: "Burns" },
+    { id: "token-utility", slug: "token-utility", title: "Token Utility" },
+    // Transaction Fees and Fee Calculation are what a user pays and its
+    // formula, not 02's Execution Cost and Fee Accounting (charging during
+    // execution). Priority Fees are not 04's Transaction Prioritization.
+    { id: "transaction-fees", slug: "transaction-fees", title: "Transaction Fees" },
+    { id: "fee-markets", slug: "fee-markets", title: "Fee Markets" },
+    { id: "fee-calculation", slug: "fee-calculation", title: "Fee Calculation" },
+    { id: "fee-allocation", slug: "fee-allocation", title: "Fee Allocation" },
+    { id: "priority-fees", slug: "priority-fees", title: "Priority Fees" },
+    { id: "congestion-pricing", slug: "congestion-pricing", title: "Congestion Pricing" },
+    // Bids in general, not 04's Block Bids.
+    { id: "bids", slug: "bids", title: "Bids" },
+    { id: "first-price-auctions", slug: "first-price-auctions", title: "First-Price Auctions" },
+    { id: "second-price-auctions", slug: "second-price-auctions", title: "Second-Price Auctions" },
+    { id: "sealed-bid-auctions", slug: "sealed-bid-auctions", title: "Sealed-Bid Auctions" },
+    { id: "batch-auctions", slug: "batch-auctions", title: "Batch Auctions" },
+    { id: "auction-clearing", slug: "auction-clearing", title: "Auction Clearing" },
+    { id: "scarce-resources", slug: "scarce-resources", title: "Scarce Resources" },
+    { id: "resource-pricing", slug: "resource-pricing", title: "Resource Pricing" },
+    { id: "capacity-allocation", slug: "capacity-allocation", title: "Capacity Allocation" },
+    { id: "allocation-efficiency", slug: "allocation-efficiency", title: "Allocation Efficiency" },
+    { id: "congestion", slug: "congestion", title: "Congestion" },
+    { id: "rationing", slug: "rationing", title: "Rationing" },
+    // Validator Economics (a validator's revenues and costs) is not 04's
+    // Validator Incentives; Delegated Stake is not 08's Delegation (of authority).
+    { id: "stake", slug: "stake", title: "Stake" },
+    { id: "staking-rewards", slug: "staking-rewards", title: "Staking Rewards" },
+    { id: "slashing", slug: "slashing", title: "Slashing" },
+    { id: "validator-economics", slug: "validator-economics", title: "Validator Economics" },
+    { id: "delegated-stake", slug: "delegated-stake", title: "Delegated Stake" },
+    { id: "economic-security", slug: "economic-security", title: "Economic Security" },
+    { id: "security-expenditure", slug: "security-expenditure", title: "Security Expenditure" },
+    { id: "issuance-funded-security", slug: "issuance-funded-security", title: "Issuance-Funded Security" },
+    { id: "fee-funded-security", slug: "fee-funded-security", title: "Fee-Funded Security" },
+    { id: "security-subsidies", slug: "security-subsidies", title: "Security Subsidies" },
+    { id: "attack-cost", slug: "attack-cost", title: "Attack Cost" },
+    { id: "cost-of-corruption", slug: "cost-of-corruption", title: "Cost of Corruption" },
+    // Economic Finality (reversal made costly) is a kind of finality, like 04's
+    // Probabilistic and Deterministic Finality. Incentive Attacks are not 09's
+    // Economic Attacks; Cryptoeconomic Assumptions are not Fault or Trust Assumptions.
+    { id: "economic-guarantees", slug: "economic-guarantees", title: "Economic Guarantees" },
+    { id: "economic-finality", slug: "economic-finality", title: "Economic Finality" },
+    { id: "incentive-attacks", slug: "incentive-attacks", title: "Incentive Attacks" },
+    { id: "stake-based-security", slug: "stake-based-security", title: "Stake-Based Security" },
+    { id: "cryptoeconomic-assumptions", slug: "cryptoeconomic-assumptions", title: "Cryptoeconomic Assumptions" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -1455,6 +1628,23 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "sensors-external-systems", conceptId: "sensors-external-systems", parentPlacementId: "oracles-external-reality", order: 9 },
     { id: "ai-interpreted-data", conceptId: "ai-interpreted-data", parentPlacementId: "oracles-external-reality", order: 10 },
     { id: "real-world-attestations", conceptId: "real-world-attestations", parentPlacementId: "oracles-external-reality", order: 11 },
+    // 10 Economics & Mechanism Design: L1 topics.
+    { id: "incentives", conceptId: "incentives", parentPlacementId: "economics-mechanism-design", order: 0 },
+    { id: "mechanism-design", conceptId: "mechanism-design", parentPlacementId: "economics-mechanism-design", order: 1 },
+    { id: "game-theory", conceptId: "game-theory", parentPlacementId: "economics-mechanism-design", order: 2 },
+    {
+      id: "strategic-behavior-in-economics-mechanism-design",
+      conceptId: "strategic-behavior",
+      parentPlacementId: "economics-mechanism-design",
+      order: 3,
+    },
+    { id: "token-economics", conceptId: "token-economics", parentPlacementId: "economics-mechanism-design", order: 4 },
+    { id: "fees", conceptId: "fees", parentPlacementId: "economics-mechanism-design", order: 5 },
+    { id: "auctions", conceptId: "auctions", parentPlacementId: "economics-mechanism-design", order: 6 },
+    { id: "resource-allocation", conceptId: "resource-allocation", parentPlacementId: "economics-mechanism-design", order: 7 },
+    { id: "staking-economics", conceptId: "staking-economics", parentPlacementId: "economics-mechanism-design", order: 8 },
+    { id: "security-budgets", conceptId: "security-budgets", parentPlacementId: "economics-mechanism-design", order: 9 },
+    { id: "cryptoeconomic-security", conceptId: "cryptoeconomic-security", parentPlacementId: "economics-mechanism-design", order: 10 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
