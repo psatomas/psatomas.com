@@ -1,5 +1,5 @@
 import { MAP_RELATIONSHIP_TYPES } from "./types.ts";
-import type { MapKnowledgeModel } from "./types.ts";
+import type { MapContentBlock, MapKnowledgeModel } from "./types.ts";
 
 const IDENTIFIER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -28,6 +28,27 @@ function validateIdentifiers(errors: string[], label: string, ids: readonly stri
     if (!IDENTIFIER.test(id)) errors.push(`${label} has invalid identifier "${id}"`);
   }
   for (const id of duplicateValues(ids)) errors.push(`Duplicate ${label} identifier "${id}"`);
+}
+
+const blank = (text: string) => text.trim().length === 0;
+
+function contentBlockProblems(block: MapContentBlock): string[] {
+  switch (block.kind) {
+    case "paragraph":
+      return blank(block.text) ? ["is empty"] : [];
+    case "flow":
+      if (blank(block.label)) return ["has no label"];
+      if (block.stages.length < 2) return ["must contain at least two stages"];
+      return block.stages.some((stage) => stage.length === 0 || stage.some(blank)) ? ["has an empty stage or element"] : [];
+    case "distinction":
+      return blank(block.left) || blank(block.right) ? ["must name both sides"] : [];
+    case "tensions":
+      if (blank(block.label)) return ["has no label"];
+      if (block.pairs.length === 0) return ["must contain at least one pair"];
+      return block.pairs.some((pair) => pair.length !== 2 || pair.some(blank)) ? ["has an incomplete pair"] : [];
+    default:
+      return [`is an unknown block kind`];
+  }
 }
 
 /** Returns deterministic validation errors without mutating or repairing input. */
@@ -123,6 +144,11 @@ export function validateMapKnowledge(model: MapKnowledgeModel): string[] {
       errors.push(`Concept "${content.conceptId}" has duplicate canonical content ownership`);
     }
     contentOwners.add(content.conceptId);
+    content.body?.forEach((block, index) => {
+      for (const problem of contentBlockProblems(block)) {
+        errors.push(`Content "${content.id}" block ${index} (${block.kind}) ${problem}`);
+      }
+    });
   }
 
   for (const mechanism of model.mechanisms) {

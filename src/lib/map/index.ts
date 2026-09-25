@@ -6,6 +6,7 @@ export { MAP_RELATIONSHIP_TYPES } from "./types.ts";
 export type {
   MapConcept,
   MapConceptContent,
+  MapContentBlock,
   MapKnowledgeModel,
   MapKnowledgePath,
   MapMechanism,
