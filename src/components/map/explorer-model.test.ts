@@ -431,6 +431,24 @@ const POPULATED_L0 = {
     "economic-dynamics",
     "human-machine-economic-interaction",
   ],
+  "frontier-systems": [
+    "machine-native-ownership",
+    "autonomous-legal-entities",
+    "machine-native-monetary-systems",
+    "programmable-law",
+    "machine-constitutions",
+    "synthetic-institutions",
+    "ai-mediated-governance",
+    "digital-polities",
+    "agent-societies",
+    "machine-mediated-commons",
+    "recursive-autonomy",
+    "self-modifying-systems",
+    "protocol-ecologies",
+    "autonomous-infrastructure",
+    "cyber-physical-autonomous-systems",
+    "autonomous-science-systems",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -1074,6 +1092,31 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Frontier Systems L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("self-owning-agents"), ["Frontier Systems", "Machine-Native Ownership", "Self-Owning Agents"]);
+  assert.deepEqual(labels("mixed-human-machine-societies"), ["Frontier Systems", "Agent Societies", "Mixed Human–Machine Societies"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("economic-agency-in-machine-native-ownership"), ["Frontier Systems", "Machine-Native Ownership", "Economic Agency"]);
+  assert.deepEqual(labels("economic-agency"), ["Autonomous Economy", "Autonomous Economic Actors", "Economic Agency"]);
+  assert.deepEqual(labels("constitutions-in-machine-constitutions"), ["Frontier Systems", "Machine Constitutions", "Constitutions"]);
+  for (const id of ["frontier-systems", "network-states", "corrigibility-in-self-modifying-systems", "self-driving-laboratories"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "agent-spawning").expandedPlacementIds].sort(), ["frontier-systems", "recursive-autonomy"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "frontier-systems" && row.depth > 0);
+  assert.equal(subtreeRows.length, 16 + 89);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "27");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });

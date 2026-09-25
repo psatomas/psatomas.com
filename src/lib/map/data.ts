@@ -2363,6 +2363,128 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "consumer-protection",
     "value-distribution",
   ],
+  // 27 Frontier Systems
+  "machine-native-ownership": [
+    "self-owning-agents",
+    "self-sovereign-machines",
+    "programmable-ownership",
+    "machine-native-property",
+    { placementId: "economic-agency-in-machine-native-ownership", conceptId: "economic-agency" },
+  ],
+  "autonomous-legal-entities": [
+    "agent-legal-personhood",
+    "algorithmic-entities",
+    "autonomous-liability",
+    "machine-legal-contracting",
+    { placementId: "legal-wrappers-in-autonomous-legal-entities", conceptId: "legal-wrappers" },
+  ],
+  "machine-native-monetary-systems": [
+    "machine-native-money",
+    "agent-issued-currencies",
+    "compute-backed-money",
+    "autonomous-monetary-authorities",
+    "autonomous-capital-formation",
+    { placementId: "monetary-systems-in-machine-native-monetary-systems", conceptId: "monetary-systems" },
+  ],
+  "programmable-law": [
+    "machine-executable-law",
+    "computable-contracts",
+    "automated-regulation",
+    "embedded-compliance",
+    "legal-oracles",
+    "code-as-law",
+  ],
+  "machine-constitutions": [
+    { placementId: "constitutions-in-machine-constitutions", conceptId: "constitutions" },
+    "agent-constitutions",
+    "adaptive-constitutions",
+    "machine-enforced-constitutions",
+    "constitutional-verification",
+  ],
+  "synthetic-institutions": [
+    { placementId: "institutions-in-synthetic-institutions", conceptId: "institutions" },
+    "agent-native-institutions",
+    "programmable-institutions",
+    "emergent-institutions",
+    "machine-arbitration",
+    "institutional-composability",
+  ],
+  "ai-mediated-governance": [
+    "ai-delegates",
+    "verifiable-governance-agents",
+    "ai-deliberation",
+    "ai-preference-aggregation",
+    "governance-simulation",
+    { placementId: "human-oversight-in-ai-mediated-governance", conceptId: "human-oversight" },
+  ],
+  "digital-polities": [
+    "autonomous-jurisdictions",
+    "network-states",
+    "protocol-native-societies",
+    "digital-citizenship",
+    "digital-sovereignty",
+    { placementId: "exit-rights-in-digital-polities", conceptId: "exit-rights" },
+  ],
+  "agent-societies": [
+    "open-agent-societies",
+    "mixed-human-machine-societies",
+    "agent-social-norms",
+    "emergent-conventions",
+    "planetary-scale-coordination",
+    { placementId: "collective-decision-making-in-agent-societies", conceptId: "collective-decision-making" },
+  ],
+  "machine-mediated-commons": [
+    "commons-governance",
+    "autonomous-public-goods",
+    "commons-stewards",
+    "commons-dilemmas",
+    { placementId: "public-goods-funding-in-machine-mediated-commons", conceptId: "public-goods-funding" },
+  ],
+  "recursive-autonomy": [
+    "recursive-organizations",
+    "recursively-autonomous-systems",
+    "agent-spawning",
+    "nested-autonomy",
+    "recursion-limits",
+  ],
+  "self-modifying-systems": [
+    "self-modifying-protocols",
+    "self-improving-agents",
+    "self-improving-protocols",
+    "self-modification-safeguards",
+    "verifiable-self-modification",
+    { placementId: "corrigibility-in-self-modifying-systems", conceptId: "corrigibility" },
+  ],
+  "protocol-ecologies": [
+    "evolutionary-protocols",
+    "protocol-selection-pressure",
+    "multi-protocol-ecosystems",
+    "protocol-symbiosis",
+    "ecosystem-dynamics",
+  ],
+  "autonomous-infrastructure": [
+    "decentralized-ai-infrastructure",
+    "verifiable-agent-networks",
+    { placementId: "verifiable-agents-in-autonomous-infrastructure", conceptId: "verifiable-agents" },
+    "self-provisioning-infrastructure",
+    "self-maintaining-infrastructure",
+  ],
+  "cyber-physical-autonomous-systems": [
+    "autonomous-robotics",
+    "autonomous-fleets",
+    "physical-actuation",
+    { placementId: "cyber-physical-interfaces-in-cyber-physical-autonomous-systems", conceptId: "cyber-physical-interfaces" },
+    "decentralized-physical-infrastructure",
+    "physical-safety-constraints",
+  ],
+  "autonomous-science-systems": [
+    "autonomous-research-agents",
+    "automated-experimentation",
+    "self-driving-laboratories",
+    "machine-discovery",
+    "verifiable-research",
+    "open-science-protocols",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -2384,9 +2506,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Systems, Interoperability & Abstraction, Security, Correctness &
  * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
  * Intelligent Systems, Machine Economy, Autonomous Coordination, Autonomous
- * Execution, Autonomous Organizations, Autonomous Protocols, and Autonomous
- * Economy; and a deliberately small Phase 1 proof fixture re-homed beneath its
- * L0 domains.
+ * Execution, Autonomous Organizations, Autonomous Protocols, Autonomous
+ * Economy, and Frontier Systems; and a deliberately small Phase 1 proof
+ * fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -3302,7 +3424,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "iot-devices", slug: "iot-devices", title: "IoT Devices" },
     { id: "trusted-hardware", slug: "trusted-hardware", title: "Trusted Hardware" },
     { id: "physical-events", slug: "physical-events", title: "Physical Events" },
-    { id: "cyber-physical-interfaces", slug: "cyber-physical-interfaces", title: "Cyber-Physical Interfaces" },
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "cyber-physical-interfaces", slug: "cyber-physical-interfaces", title: "Cyber-Physical Interfaces", preferredPlacementId: "cyber-physical-interfaces" },
     { id: "unstructured-data", slug: "unstructured-data", title: "Unstructured Data" },
     // Pulling facts from unstructured data, shown as "Data Extraction"; not 03's
     // Data Extraction (indexing). Inference Confidence is a model's, shown as
@@ -3950,7 +4073,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "accountability", slug: "accountability", title: "Accountability", preferredPlacementId: "accountability" },
     // Also placed under 24 Autonomous Organizations; this placement is preferred.
     { id: "transparency", slug: "transparency", title: "Transparency", preferredPlacementId: "transparency" },
-    { id: "exit-rights", slug: "exit-rights", title: "Exit Rights" },
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "exit-rights", slug: "exit-rights", title: "Exit Rights", preferredPlacementId: "exit-rights" },
     { id: "minority-protection", slug: "minority-protection", title: "Minority Protection" },
     // Dispute Resolution reuses 09's Evidence.
     { id: "arbitration", slug: "arbitration", title: "Arbitration" },
@@ -4748,7 +4872,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 23 Autonomous Execution; this placement is preferred.
     { id: "human-oversight", slug: "human-oversight", title: "Human Oversight", preferredPlacementId: "human-oversight" },
     { id: "interpretability", slug: "interpretability", title: "Interpretability" },
-    { id: "corrigibility", slug: "corrigibility", title: "Corrigibility" },
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "corrigibility", slug: "corrigibility", title: "Corrigibility", preferredPlacementId: "corrigibility" },
     // Training Data Poisoning (corrupting what a model learns from) is not 09's
     // Data Poisoning (corrupting an oracle's sources): different attack surfaces.
     { id: "prompt-injection", slug: "prompt-injection", title: "Prompt Injection" },
@@ -4764,7 +4889,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "zkml", slug: "zkml", title: "zkML" },
     { id: "model-commitments", slug: "model-commitments", title: "Model Commitments" },
     { id: "model-provenance", slug: "model-provenance", title: "Model Provenance" },
-    { id: "verifiable-agents", slug: "verifiable-agents", title: "Verifiable Agents" },
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "verifiable-agents", slug: "verifiable-agents", title: "Verifiable Agents", preferredPlacementId: "verifiable-agents" },
     // 21 Machine Economy: L1 topics (Agent Identity and Agent Reputation are 08's
     // concepts). Agent Wallets, Agent Capital, Agent Budgets, Machine Payments,
     // Machine Commerce, Agent Markets, Agent Credit and Agent Risk are general
@@ -5130,7 +5256,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "organizational-identity", slug: "organizational-identity", title: "Organizational Identity" },
     { id: "organizational-objectives", slug: "organizational-objectives", title: "Organizational Objectives" },
     { id: "organizational-boundaries", slug: "organizational-boundaries", title: "Organizational Boundaries" },
-    { id: "legal-wrappers", slug: "legal-wrappers", title: "Legal Wrappers" },
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "legal-wrappers", slug: "legal-wrappers", title: "Legal Wrappers", preferredPlacementId: "legal-wrappers" },
     // Organizational Membership is not 22's Coalition Membership; Membership
     // Tokens are not 14's Token Holders; Member Exit (leaving) is not 14's Exit
     // Rights (the right to leave with one's share).
@@ -5385,7 +5512,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "capital-payment-flows", slug: "capital-payment-flows", title: "Capital & Payment Flows" },
     { id: "economy-wide-allocation", slug: "economy-wide-allocation", title: "Economy-Wide Allocation" },
     { id: "autonomous-credit-systems", slug: "autonomous-credit-systems", title: "Autonomous Credit Systems" },
-    { id: "monetary-systems", slug: "monetary-systems", title: "Monetary Systems" },
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "monetary-systems", slug: "monetary-systems", title: "Monetary Systems", preferredPlacementId: "monetary-systems" },
     { id: "economic-institutions", slug: "economic-institutions", title: "Economic Institutions" },
     { id: "economic-governance", slug: "economic-governance", title: "Economic Governance" },
     { id: "market-power", slug: "market-power", title: "Market Power" },
@@ -5509,6 +5637,158 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "economic-alignment", slug: "economic-alignment", title: "Economic Alignment" },
     { id: "consumer-protection", slug: "consumer-protection", title: "Consumer Protection" },
     { id: "value-distribution", slug: "value-distribution", title: "Value Distribution" },
+    // 27 Frontier Systems: L1 topics. Emerging architectures beyond the
+    // established scope of 20–26: machine-native ownership, law, money and
+    // institutions; agent societies and commons; recursive, self-modifying and
+    // evolving systems; autonomous infrastructure, cyber-physical systems and
+    // science. Machine-Native Monetary Systems are not 26's Monetary Systems;
+    // Machine Constitutions are not 14's Constitutions; Synthetic Institutions
+    // are not 14's Institutions or 26's Economic Institutions; AI-Mediated
+    // Governance is not 14's Governance Models; Digital Polities are not 24's
+    // Autonomous Organizations; Agent Societies are not 22's Multi-Agent
+    // Coordination; Machine-Mediated Commons are not 14's governance in general;
+    // Protocol Ecologies are not 16's interoperability; Autonomous Infrastructure
+    // is not 05's Automation Networks; Cyber-Physical Autonomous Systems are not
+    // 09's Sensors & External Systems; Autonomous Science Systems are not 22's
+    // Task Markets or 21's Service Markets.
+    { id: "machine-native-ownership", slug: "machine-native-ownership", title: "Machine-Native Ownership" },
+    { id: "autonomous-legal-entities", slug: "autonomous-legal-entities", title: "Autonomous Legal Entities" },
+    { id: "machine-native-monetary-systems", slug: "machine-native-monetary-systems", title: "Machine-Native Monetary Systems" },
+    { id: "programmable-law", slug: "programmable-law", title: "Programmable Law" },
+    { id: "machine-constitutions", slug: "machine-constitutions", title: "Machine Constitutions" },
+    { id: "synthetic-institutions", slug: "synthetic-institutions", title: "Synthetic Institutions" },
+    { id: "ai-mediated-governance", slug: "ai-mediated-governance", title: "AI-Mediated Governance" },
+    { id: "digital-polities", slug: "digital-polities", title: "Digital Polities" },
+    { id: "agent-societies", slug: "agent-societies", title: "Agent Societies" },
+    { id: "machine-mediated-commons", slug: "machine-mediated-commons", title: "Machine-Mediated Commons" },
+    { id: "recursive-autonomy", slug: "recursive-autonomy", title: "Recursive Autonomy" },
+    { id: "self-modifying-systems", slug: "self-modifying-systems", title: "Self-Modifying Systems" },
+    { id: "protocol-ecologies", slug: "protocol-ecologies", title: "Protocol Ecologies" },
+    { id: "autonomous-infrastructure", slug: "autonomous-infrastructure", title: "Autonomous Infrastructure" },
+    { id: "cyber-physical-autonomous-systems", slug: "cyber-physical-autonomous-systems", title: "Cyber-Physical Autonomous Systems" },
+    { id: "autonomous-science-systems", slug: "autonomous-science-systems", title: "Autonomous Science Systems" },
+    // L2 topics (placements in L2_TOPICS). Self-Owning Agents (owned by no
+    // principal) are not 21's Agent Ownership; Programmable Ownership is not
+    // 08's Ownership; Machine-Native Property is not 26's Machine-Owned Assets.
+    // Economic Agency is 26's.
+    { id: "self-owning-agents", slug: "self-owning-agents", title: "Self-Owning Agents" },
+    { id: "self-sovereign-machines", slug: "self-sovereign-machines", title: "Self-Sovereign Machines" },
+    { id: "programmable-ownership", slug: "programmable-ownership", title: "Programmable Ownership" },
+    { id: "machine-native-property", slug: "machine-native-property", title: "Machine-Native Property" },
+    // Autonomous Liability is not 24's Liability; Machine Legal Contracting is
+    // not 26's Autonomous Contracting. Legal Wrappers are 24's.
+    { id: "agent-legal-personhood", slug: "agent-legal-personhood", title: "Agent Legal Personhood" },
+    { id: "algorithmic-entities", slug: "algorithmic-entities", title: "Algorithmic Entities" },
+    { id: "autonomous-liability", slug: "autonomous-liability", title: "Autonomous Liability" },
+    { id: "machine-legal-contracting", slug: "machine-legal-contracting", title: "Machine Legal Contracting" },
+    // Machine-Native Money is not 26's Machine Money; Autonomous Capital
+    // Formation is not 26's Capital Formation; Autonomous Monetary Authorities
+    // are not 26's Monetary Policy.
+    { id: "machine-native-money", slug: "machine-native-money", title: "Machine-Native Money" },
+    { id: "agent-issued-currencies", slug: "agent-issued-currencies", title: "Agent-Issued Currencies" },
+    { id: "compute-backed-money", slug: "compute-backed-money", title: "Compute-Backed Money" },
+    { id: "autonomous-monetary-authorities", slug: "autonomous-monetary-authorities", title: "Autonomous Monetary Authorities" },
+    { id: "autonomous-capital-formation", slug: "autonomous-capital-formation", title: "Autonomous Capital Formation" },
+    // Programmable Law is not Foundations' Rules (a protocol's rules);
+    // Computable Contracts are not 02's Smart Contracts; Embedded Compliance is
+    // not 24's Organizational Compliance; Legal Oracles are not 09's Oracle
+    // Networks.
+    { id: "machine-executable-law", slug: "machine-executable-law", title: "Machine-Executable Law" },
+    { id: "computable-contracts", slug: "computable-contracts", title: "Computable Contracts" },
+    { id: "automated-regulation", slug: "automated-regulation", title: "Automated Regulation" },
+    { id: "embedded-compliance", slug: "embedded-compliance", title: "Embedded Compliance" },
+    { id: "legal-oracles", slug: "legal-oracles", title: "Legal Oracles" },
+    { id: "code-as-law", slug: "code-as-law", title: "Code as Law" },
+    // Constitutions are 14's. Adaptive Constitutions are not 14's Amendment
+    // Processes.
+    { id: "agent-constitutions", slug: "agent-constitutions", title: "Agent Constitutions" },
+    { id: "adaptive-constitutions", slug: "adaptive-constitutions", title: "Adaptive Constitutions" },
+    { id: "machine-enforced-constitutions", slug: "machine-enforced-constitutions", title: "Machine-Enforced Constitutions" },
+    { id: "constitutional-verification", slug: "constitutional-verification", title: "Constitutional Verification" },
+    // Institutions are 14's. Emergent Institutions (arising undesigned among
+    // agents) are not 14's Institutional Evolution; Machine Arbitration is not
+    // 14's Arbitration.
+    { id: "agent-native-institutions", slug: "agent-native-institutions", title: "Agent-Native Institutions" },
+    { id: "programmable-institutions", slug: "programmable-institutions", title: "Programmable Institutions" },
+    { id: "emergent-institutions", slug: "emergent-institutions", title: "Emergent Institutions" },
+    { id: "machine-arbitration", slug: "machine-arbitration", title: "Machine Arbitration" },
+    { id: "institutional-composability", slug: "institutional-composability", title: "Institutional Composability" },
+    // AI Delegates are not 14's Delegates; AI Deliberation is not 14's
+    // Deliberation; Governance Simulation is not 23's Simulation. Human
+    // Oversight is 20's.
+    { id: "ai-delegates", slug: "ai-delegates", title: "AI Delegates" },
+    { id: "verifiable-governance-agents", slug: "verifiable-governance-agents", title: "Verifiable Governance Agents" },
+    { id: "ai-deliberation", slug: "ai-deliberation", title: "AI Deliberation" },
+    { id: "ai-preference-aggregation", slug: "ai-preference-aggregation", title: "AI Preference Aggregation" },
+    { id: "governance-simulation", slug: "governance-simulation", title: "Governance Simulation" },
+    // Autonomous Jurisdictions are not 24's Autonomous Organizations; Digital
+    // Citizenship is not 24's Organizational Membership. Exit Rights are 14's.
+    { id: "autonomous-jurisdictions", slug: "autonomous-jurisdictions", title: "Autonomous Jurisdictions" },
+    { id: "network-states", slug: "network-states", title: "Network States" },
+    { id: "protocol-native-societies", slug: "protocol-native-societies", title: "Protocol-Native Societies" },
+    { id: "digital-citizenship", slug: "digital-citizenship", title: "Digital Citizenship" },
+    { id: "digital-sovereignty", slug: "digital-sovereignty", title: "Digital Sovereignty" },
+    // Mixed Human–Machine Societies are not 26's Human–Machine Economic
+    // Interaction; Emergent Conventions are not 22's Emergent Coordination;
+    // Planetary-Scale Coordination is not Foundations' Coordination.
+    { id: "open-agent-societies", slug: "open-agent-societies", title: "Open Agent Societies" },
+    { id: "mixed-human-machine-societies", slug: "mixed-human-machine-societies", title: "Mixed Human–Machine Societies" },
+    { id: "agent-social-norms", slug: "agent-social-norms", title: "Agent Social Norms" },
+    { id: "emergent-conventions", slug: "emergent-conventions", title: "Emergent Conventions" },
+    { id: "planetary-scale-coordination", slug: "planetary-scale-coordination", title: "Planetary-Scale Coordination" },
+    // Commons Governance is not 14's Governance Models; Autonomous Public Goods
+    // are not 14's Public Goods Funding; Commons Dilemmas are not Foundations'
+    // Collective Action.
+    { id: "commons-governance", slug: "commons-governance", title: "Commons Governance" },
+    { id: "autonomous-public-goods", slug: "autonomous-public-goods", title: "Autonomous Public Goods" },
+    { id: "commons-stewards", slug: "commons-stewards", title: "Commons Stewards" },
+    { id: "commons-dilemmas", slug: "commons-dilemmas", title: "Commons Dilemmas" },
+    // Recursive Organizations (organizations of organizations, all the way
+    // down) are not 24's Role Hierarchies or Sub-Organizations; Agent Spawning
+    // is not 22's Task Delegation.
+    { id: "recursive-organizations", slug: "recursive-organizations", title: "Recursive Organizations" },
+    { id: "recursively-autonomous-systems", slug: "recursively-autonomous-systems", title: "Recursively Autonomous Systems" },
+    { id: "agent-spawning", slug: "agent-spawning", title: "Agent Spawning" },
+    { id: "nested-autonomy", slug: "nested-autonomy", title: "Nested Autonomy" },
+    { id: "recursion-limits", slug: "recursion-limits", title: "Recursion Limits" },
+    // Self-Modifying Protocols are not 14's Protocol Upgrades; Self-Improving
+    // Protocols are not 25's Protocol Adaptation; Self-Improving Agents are not
+    // 20's Self-Correction. Corrigibility is 20's.
+    { id: "self-modifying-protocols", slug: "self-modifying-protocols", title: "Self-Modifying Protocols" },
+    { id: "self-improving-agents", slug: "self-improving-agents", title: "Self-Improving Agents" },
+    { id: "self-improving-protocols", slug: "self-improving-protocols", title: "Self-Improving Protocols" },
+    { id: "self-modification-safeguards", slug: "self-modification-safeguards", title: "Self-Modification Safeguards" },
+    { id: "verifiable-self-modification", slug: "verifiable-self-modification", title: "Verifiable Self-Modification" },
+    // Evolutionary Protocols (variation and selection across protocols) are not
+    // 25's Adaptive Mechanisms; Multi-Protocol Ecosystems are not 26's
+    // Inter-Protocol Economies.
+    { id: "evolutionary-protocols", slug: "evolutionary-protocols", title: "Evolutionary Protocols" },
+    { id: "protocol-selection-pressure", slug: "protocol-selection-pressure", title: "Protocol Selection Pressure" },
+    { id: "multi-protocol-ecosystems", slug: "multi-protocol-ecosystems", title: "Multi-Protocol Ecosystems" },
+    { id: "protocol-symbiosis", slug: "protocol-symbiosis", title: "Protocol Symbiosis" },
+    { id: "ecosystem-dynamics", slug: "ecosystem-dynamics", title: "Ecosystem Dynamics" },
+    // Verifiable Agent Networks are not 20's Verifiable Agents (placed here);
+    // Self-Maintaining Infrastructure is not 25's Protocol Maintenance.
+    { id: "decentralized-ai-infrastructure", slug: "decentralized-ai-infrastructure", title: "Decentralized AI Infrastructure" },
+    { id: "verifiable-agent-networks", slug: "verifiable-agent-networks", title: "Verifiable Agent Networks" },
+    { id: "self-provisioning-infrastructure", slug: "self-provisioning-infrastructure", title: "Self-Provisioning Infrastructure" },
+    { id: "self-maintaining-infrastructure", slug: "self-maintaining-infrastructure", title: "Self-Maintaining Infrastructure" },
+    // Cyber-Physical Interfaces are 09's. Physical Actuation is not 09's
+    // Physical Events; Decentralized Physical Infrastructure is not 09's
+    // Sensors.
+    { id: "autonomous-robotics", slug: "autonomous-robotics", title: "Autonomous Robotics" },
+    { id: "autonomous-fleets", slug: "autonomous-fleets", title: "Autonomous Fleets" },
+    { id: "physical-actuation", slug: "physical-actuation", title: "Physical Actuation" },
+    { id: "decentralized-physical-infrastructure", slug: "decentralized-physical-infrastructure", title: "Decentralized Physical Infrastructure" },
+    { id: "physical-safety-constraints", slug: "physical-safety-constraints", title: "Physical Safety Constraints" },
+    // Automated Experimentation is not 23's Dry Runs; Verifiable Research is
+    // not 20's Verifiable Inference.
+    { id: "autonomous-research-agents", slug: "autonomous-research-agents", title: "Autonomous Research Agents" },
+    { id: "automated-experimentation", slug: "automated-experimentation", title: "Automated Experimentation" },
+    { id: "self-driving-laboratories", slug: "self-driving-laboratories", title: "Self-Driving Laboratories" },
+    { id: "machine-discovery", slug: "machine-discovery", title: "Machine Discovery" },
+    { id: "verifiable-research", slug: "verifiable-research", title: "Verifiable Research" },
+    { id: "open-science-protocols", slug: "open-science-protocols", title: "Open Science Protocols" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -5533,8 +5813,10 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "ai-agent", slug: "ai-agent", title: "AI Agent", preferredPlacementId: "ai-agent" },
     // The capacity to act economically, not 21's Economic Agents (the kinds of
     // actor that exercise it); first placed under 26's Autonomous Economic
-    // Actors. Without content.
-    { id: "economic-agency", slug: "economic-agency", title: "Economic Agency" },
+    // Actors (preferred) and again under 27's Machine-Native Ownership. Without
+    // content.
+    // Also placed under 27 Frontier Systems; this placement is preferred.
+    { id: "economic-agency", slug: "economic-agency", title: "Economic Agency", preferredPlacementId: "economic-agency" },
   ],
   placements: [
     ...l0Placements,
@@ -6210,6 +6492,23 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "economic-resilience", conceptId: "economic-resilience", parentPlacementId: "autonomous-economy", order: 14 },
     { id: "economic-dynamics", conceptId: "economic-dynamics", parentPlacementId: "autonomous-economy", order: 15 },
     { id: "human-machine-economic-interaction", conceptId: "human-machine-economic-interaction", parentPlacementId: "autonomous-economy", order: 16 },
+    // 27 Frontier Systems: L1 topics.
+    { id: "machine-native-ownership", conceptId: "machine-native-ownership", parentPlacementId: "frontier-systems", order: 0 },
+    { id: "autonomous-legal-entities", conceptId: "autonomous-legal-entities", parentPlacementId: "frontier-systems", order: 1 },
+    { id: "machine-native-monetary-systems", conceptId: "machine-native-monetary-systems", parentPlacementId: "frontier-systems", order: 2 },
+    { id: "programmable-law", conceptId: "programmable-law", parentPlacementId: "frontier-systems", order: 3 },
+    { id: "machine-constitutions", conceptId: "machine-constitutions", parentPlacementId: "frontier-systems", order: 4 },
+    { id: "synthetic-institutions", conceptId: "synthetic-institutions", parentPlacementId: "frontier-systems", order: 5 },
+    { id: "ai-mediated-governance", conceptId: "ai-mediated-governance", parentPlacementId: "frontier-systems", order: 6 },
+    { id: "digital-polities", conceptId: "digital-polities", parentPlacementId: "frontier-systems", order: 7 },
+    { id: "agent-societies", conceptId: "agent-societies", parentPlacementId: "frontier-systems", order: 8 },
+    { id: "machine-mediated-commons", conceptId: "machine-mediated-commons", parentPlacementId: "frontier-systems", order: 9 },
+    { id: "recursive-autonomy", conceptId: "recursive-autonomy", parentPlacementId: "frontier-systems", order: 10 },
+    { id: "self-modifying-systems", conceptId: "self-modifying-systems", parentPlacementId: "frontier-systems", order: 11 },
+    { id: "protocol-ecologies", conceptId: "protocol-ecologies", parentPlacementId: "frontier-systems", order: 12 },
+    { id: "autonomous-infrastructure", conceptId: "autonomous-infrastructure", parentPlacementId: "frontier-systems", order: 13 },
+    { id: "cyber-physical-autonomous-systems", conceptId: "cyber-physical-autonomous-systems", parentPlacementId: "frontier-systems", order: 14 },
+    { id: "autonomous-science-systems", conceptId: "autonomous-science-systems", parentPlacementId: "frontier-systems", order: 15 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

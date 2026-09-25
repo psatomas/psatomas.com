@@ -3013,6 +3013,151 @@ const ECONOMY_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const ECONOMY_L2 = ECONOMY_TREE.flatMap(([, children]) => children);
 
+// 27 Frontier Systems. Reused topics keep their homes: 09's, 14's, 20's,
+// 22's, 24's and 26's.
+const FRONTIER_LAYER: Array<[string, string, string]> = [
+  ["machine-native-ownership", "machine-native-ownership", "Machine-Native Ownership"],
+  ["autonomous-legal-entities", "autonomous-legal-entities", "Autonomous Legal Entities"],
+  ["machine-native-monetary-systems", "machine-native-monetary-systems", "Machine-Native Monetary Systems"],
+  ["programmable-law", "programmable-law", "Programmable Law"],
+  ["machine-constitutions", "machine-constitutions", "Machine Constitutions"],
+  ["synthetic-institutions", "synthetic-institutions", "Synthetic Institutions"],
+  ["ai-mediated-governance", "ai-mediated-governance", "AI-Mediated Governance"],
+  ["digital-polities", "digital-polities", "Digital Polities"],
+  ["agent-societies", "agent-societies", "Agent Societies"],
+  ["machine-mediated-commons", "machine-mediated-commons", "Machine-Mediated Commons"],
+  ["recursive-autonomy", "recursive-autonomy", "Recursive Autonomy"],
+  ["self-modifying-systems", "self-modifying-systems", "Self-Modifying Systems"],
+  ["protocol-ecologies", "protocol-ecologies", "Protocol Ecologies"],
+  ["autonomous-infrastructure", "autonomous-infrastructure", "Autonomous Infrastructure"],
+  ["cyber-physical-autonomous-systems", "cyber-physical-autonomous-systems", "Cyber-Physical Autonomous Systems"],
+  ["autonomous-science-systems", "autonomous-science-systems", "Autonomous Science Systems"],
+];
+const FRONTIER_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["machine-native-ownership", [
+    ["self-owning-agents", "self-owning-agents", "Self-Owning Agents"],
+    ["self-sovereign-machines", "self-sovereign-machines", "Self-Sovereign Machines"],
+    ["programmable-ownership", "programmable-ownership", "Programmable Ownership"],
+    ["machine-native-property", "machine-native-property", "Machine-Native Property"],
+    ["economic-agency-in-machine-native-ownership", "economic-agency", "Economic Agency"],
+  ]],
+  ["autonomous-legal-entities", [
+    ["agent-legal-personhood", "agent-legal-personhood", "Agent Legal Personhood"],
+    ["algorithmic-entities", "algorithmic-entities", "Algorithmic Entities"],
+    ["autonomous-liability", "autonomous-liability", "Autonomous Liability"],
+    ["machine-legal-contracting", "machine-legal-contracting", "Machine Legal Contracting"],
+    ["legal-wrappers-in-autonomous-legal-entities", "legal-wrappers", "Legal Wrappers"],
+  ]],
+  ["machine-native-monetary-systems", [
+    ["machine-native-money", "machine-native-money", "Machine-Native Money"],
+    ["agent-issued-currencies", "agent-issued-currencies", "Agent-Issued Currencies"],
+    ["compute-backed-money", "compute-backed-money", "Compute-Backed Money"],
+    ["autonomous-monetary-authorities", "autonomous-monetary-authorities", "Autonomous Monetary Authorities"],
+    ["autonomous-capital-formation", "autonomous-capital-formation", "Autonomous Capital Formation"],
+    ["monetary-systems-in-machine-native-monetary-systems", "monetary-systems", "Monetary Systems"],
+  ]],
+  ["programmable-law", [
+    ["machine-executable-law", "machine-executable-law", "Machine-Executable Law"],
+    ["computable-contracts", "computable-contracts", "Computable Contracts"],
+    ["automated-regulation", "automated-regulation", "Automated Regulation"],
+    ["embedded-compliance", "embedded-compliance", "Embedded Compliance"],
+    ["legal-oracles", "legal-oracles", "Legal Oracles"],
+    ["code-as-law", "code-as-law", "Code as Law"],
+  ]],
+  ["machine-constitutions", [
+    ["constitutions-in-machine-constitutions", "constitutions", "Constitutions"],
+    ["agent-constitutions", "agent-constitutions", "Agent Constitutions"],
+    ["adaptive-constitutions", "adaptive-constitutions", "Adaptive Constitutions"],
+    ["machine-enforced-constitutions", "machine-enforced-constitutions", "Machine-Enforced Constitutions"],
+    ["constitutional-verification", "constitutional-verification", "Constitutional Verification"],
+  ]],
+  ["synthetic-institutions", [
+    ["institutions-in-synthetic-institutions", "institutions", "Institutions"],
+    ["agent-native-institutions", "agent-native-institutions", "Agent-Native Institutions"],
+    ["programmable-institutions", "programmable-institutions", "Programmable Institutions"],
+    ["emergent-institutions", "emergent-institutions", "Emergent Institutions"],
+    ["machine-arbitration", "machine-arbitration", "Machine Arbitration"],
+    ["institutional-composability", "institutional-composability", "Institutional Composability"],
+  ]],
+  ["ai-mediated-governance", [
+    ["ai-delegates", "ai-delegates", "AI Delegates"],
+    ["verifiable-governance-agents", "verifiable-governance-agents", "Verifiable Governance Agents"],
+    ["ai-deliberation", "ai-deliberation", "AI Deliberation"],
+    ["ai-preference-aggregation", "ai-preference-aggregation", "AI Preference Aggregation"],
+    ["governance-simulation", "governance-simulation", "Governance Simulation"],
+    ["human-oversight-in-ai-mediated-governance", "human-oversight", "Human Oversight"],
+  ]],
+  ["digital-polities", [
+    ["autonomous-jurisdictions", "autonomous-jurisdictions", "Autonomous Jurisdictions"],
+    ["network-states", "network-states", "Network States"],
+    ["protocol-native-societies", "protocol-native-societies", "Protocol-Native Societies"],
+    ["digital-citizenship", "digital-citizenship", "Digital Citizenship"],
+    ["digital-sovereignty", "digital-sovereignty", "Digital Sovereignty"],
+    ["exit-rights-in-digital-polities", "exit-rights", "Exit Rights"],
+  ]],
+  ["agent-societies", [
+    ["open-agent-societies", "open-agent-societies", "Open Agent Societies"],
+    ["mixed-human-machine-societies", "mixed-human-machine-societies", "Mixed Human–Machine Societies"],
+    ["agent-social-norms", "agent-social-norms", "Agent Social Norms"],
+    ["emergent-conventions", "emergent-conventions", "Emergent Conventions"],
+    ["planetary-scale-coordination", "planetary-scale-coordination", "Planetary-Scale Coordination"],
+    ["collective-decision-making-in-agent-societies", "collective-decision-making", "Collective Decision-Making"],
+  ]],
+  ["machine-mediated-commons", [
+    ["commons-governance", "commons-governance", "Commons Governance"],
+    ["autonomous-public-goods", "autonomous-public-goods", "Autonomous Public Goods"],
+    ["commons-stewards", "commons-stewards", "Commons Stewards"],
+    ["commons-dilemmas", "commons-dilemmas", "Commons Dilemmas"],
+    ["public-goods-funding-in-machine-mediated-commons", "public-goods-funding", "Public Goods Funding"],
+  ]],
+  ["recursive-autonomy", [
+    ["recursive-organizations", "recursive-organizations", "Recursive Organizations"],
+    ["recursively-autonomous-systems", "recursively-autonomous-systems", "Recursively Autonomous Systems"],
+    ["agent-spawning", "agent-spawning", "Agent Spawning"],
+    ["nested-autonomy", "nested-autonomy", "Nested Autonomy"],
+    ["recursion-limits", "recursion-limits", "Recursion Limits"],
+  ]],
+  ["self-modifying-systems", [
+    ["self-modifying-protocols", "self-modifying-protocols", "Self-Modifying Protocols"],
+    ["self-improving-agents", "self-improving-agents", "Self-Improving Agents"],
+    ["self-improving-protocols", "self-improving-protocols", "Self-Improving Protocols"],
+    ["self-modification-safeguards", "self-modification-safeguards", "Self-Modification Safeguards"],
+    ["verifiable-self-modification", "verifiable-self-modification", "Verifiable Self-Modification"],
+    ["corrigibility-in-self-modifying-systems", "corrigibility", "Corrigibility"],
+  ]],
+  ["protocol-ecologies", [
+    ["evolutionary-protocols", "evolutionary-protocols", "Evolutionary Protocols"],
+    ["protocol-selection-pressure", "protocol-selection-pressure", "Protocol Selection Pressure"],
+    ["multi-protocol-ecosystems", "multi-protocol-ecosystems", "Multi-Protocol Ecosystems"],
+    ["protocol-symbiosis", "protocol-symbiosis", "Protocol Symbiosis"],
+    ["ecosystem-dynamics", "ecosystem-dynamics", "Ecosystem Dynamics"],
+  ]],
+  ["autonomous-infrastructure", [
+    ["decentralized-ai-infrastructure", "decentralized-ai-infrastructure", "Decentralized AI Infrastructure"],
+    ["verifiable-agent-networks", "verifiable-agent-networks", "Verifiable Agent Networks"],
+    ["verifiable-agents-in-autonomous-infrastructure", "verifiable-agents", "Verifiable Agents"],
+    ["self-provisioning-infrastructure", "self-provisioning-infrastructure", "Self-Provisioning Infrastructure"],
+    ["self-maintaining-infrastructure", "self-maintaining-infrastructure", "Self-Maintaining Infrastructure"],
+  ]],
+  ["cyber-physical-autonomous-systems", [
+    ["autonomous-robotics", "autonomous-robotics", "Autonomous Robotics"],
+    ["autonomous-fleets", "autonomous-fleets", "Autonomous Fleets"],
+    ["physical-actuation", "physical-actuation", "Physical Actuation"],
+    ["cyber-physical-interfaces-in-cyber-physical-autonomous-systems", "cyber-physical-interfaces", "Cyber-Physical Interfaces"],
+    ["decentralized-physical-infrastructure", "decentralized-physical-infrastructure", "Decentralized Physical Infrastructure"],
+    ["physical-safety-constraints", "physical-safety-constraints", "Physical Safety Constraints"],
+  ]],
+  ["autonomous-science-systems", [
+    ["autonomous-research-agents", "autonomous-research-agents", "Autonomous Research Agents"],
+    ["automated-experimentation", "automated-experimentation", "Automated Experimentation"],
+    ["self-driving-laboratories", "self-driving-laboratories", "Self-Driving Laboratories"],
+    ["machine-discovery", "machine-discovery", "Machine Discovery"],
+    ["verifiable-research", "verifiable-research", "Verifiable Research"],
+    ["open-science-protocols", "open-science-protocols", "Open Science Protocols"],
+  ]],
+];
+const FRONTIER_L2 = FRONTIER_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -3067,6 +3212,8 @@ const AUTHORED_TOPICS = new Set([
   ...PROTOCOLS_L2.map(([id]) => id),
   ...ECONOMY_LAYER.map(([id]) => id),
   ...ECONOMY_L2.map(([id]) => id),
+  ...FRONTIER_LAYER.map(([id]) => id),
+  ...FRONTIER_L2.map(([id]) => id),
 ]);
 
 // Each domain's tests see the stack as it stood when that domain was authored:
@@ -3203,8 +3350,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Execution's 11 new L1 and 45 new L2 concepts, then Autonomous
   // Organizations' 13 new L1 and 54 new L2 concepts, then Autonomous
   // Protocols' 17 new L1 and 60 new L2 concepts, then Autonomous
-  // Economy's 17 new L1 and 73 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54 + 17 + 60 + 17 + 73);
+  // Economy's 17 new L1 and 73 new L2 concepts, then Frontier Systems'
+  // 16 new L1 and 77 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54 + 17 + 60 + 17 + 73 + 16 + 77);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -3506,6 +3654,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("autonomous-execution"), EXECUTION_LAYER.length + EXECUTION_L2.length);
   assert.equal(subtreeOf("autonomous-organizations"), ORGANIZATIONS_LAYER.length + ORGANIZATIONS_L2.length);
   assert.equal(subtreeOf("autonomous-protocols"), PROTOCOLS_LAYER.length + PROTOCOLS_L2.length);
+  assert.equal(subtreeOf("autonomous-economy"), ECONOMY_LAYER.length + ECONOMY_L2.length);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -5678,7 +5827,7 @@ test("Autonomous Economy places Economic Agency, reuses existing concepts at the
   const placementsOf = (conceptId: string) => placementsThrough("autonomous-economy", conceptId);
   // Economic Agency, unplaced until now, is placed here once, keeping its ID and relationship.
   assert.deepEqual(placementsOf("economic-agency"), ["economic-agency"]);
-  assert.equal(resolver.getConcept("economic-agency")?.preferredPlacementId, undefined);
+  assert.equal(resolver.getPreferredPlacementForConcept("economic-agency")?.id, "economic-agency");
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
   // Every L1 topic is a new concept; every other reused concept gains exactly
   // this placement here and stays preferred at its home.
@@ -5775,6 +5924,136 @@ test("Autonomous Economy leaves 20–25 unchanged", () => {
   }
 });
 
+test("Frontier Systems has exactly its sixteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("frontier-systems").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    FRONTIER_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("frontier-systems").map((placement) => placement.order), FRONTIER_LAYER.map((_, order) => order));
+  for (const [parent, children] of FRONTIER_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of FRONTIER_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "frontier-systems")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...FRONTIER_LAYER.map(([id]) => id), ...FRONTIER_L2.map(([id]) => id)].sort());
+  assert.equal(FRONTIER_L2.length, 89);
+  assert.deepEqual(resolver.getAncestors("self-owning-agents").map((placement) => placement.id), ["frontier-systems", "machine-native-ownership"]);
+  assert.deepEqual(resolver.getAncestors("corrigibility-in-self-modifying-systems").map((placement) => placement.id), ["frontier-systems", "self-modifying-systems"]);
+});
+
+test("Frontier Systems reuses established concepts at their homes and keeps frontier concepts distinct from them", () => {
+  const placementsOf = (conceptId: string) => placementsThrough("frontier-systems", conceptId);
+  // Every L1 topic is a new concept; every reused concept gains exactly this
+  // placement here and stays preferred at its (established) home.
+  assert.ok(FRONTIER_LAYER.every(([id, conceptId]) => id === conceptId));
+  const reused = FRONTIER_L2.filter(([id, conceptId]) => id !== conceptId);
+  assert.deepEqual(reused.map(([, conceptId]) => conceptId), [
+    "economic-agency", "legal-wrappers", "monetary-systems", "constitutions", "institutions", "human-oversight",
+    "exit-rights", "collective-decision-making", "public-goods-funding", "corrigibility", "verifiable-agents", "cyber-physical-interfaces",
+  ]);
+  for (const [id, conceptId] of reused) {
+    assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
+    assert.ok(placementsOf(conceptId).includes(id), id);
+    const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
+    assert.ok(preferred && containingL0(preferred) !== "frontier-systems", `${conceptId} stays preferred at its home`);
+    assertPreferredThrough("frontier-systems", conceptId, preferred);
+  }
+  // Economic Agency stays preferred at its first placement, in 26.
+  assertPreferredThrough("frontier-systems", "economic-agency", "economic-agency");
+  // Frontier concepts kept distinct from the established concepts they extend.
+  for (const [placementId, related] of [
+    ["self-owning-agents", "agent-ownership"],
+    ["programmable-ownership", "ownership"],
+    ["machine-native-property", "machine-owned-assets"],
+    ["agent-native-institutions", "economic-institutions"],
+    ["synthetic-institutions", "institutions"],
+    ["emergent-institutions", "institutional-evolution"],
+    ["machine-arbitration", "arbitration"],
+    ["autonomous-jurisdictions", "autonomous-organizations"],
+    ["digital-citizenship", "organizational-membership"],
+    ["machine-constitutions", "constitutions"],
+    ["adaptive-constitutions", "amendment-processes"],
+    ["ai-mediated-governance", "governance-models"],
+    ["ai-delegates", "delegates"],
+    ["ai-deliberation", "deliberation"],
+    ["governance-simulation", "simulation"],
+    ["recursive-organizations", "role-hierarchies"],
+    ["recursive-organizations", "sub-organizations"],
+    ["agent-spawning", "task-delegation"],
+    ["self-modifying-protocols", "protocol-upgrades"],
+    ["self-improving-protocols", "protocol-adaptation"],
+    ["self-improving-agents", "self-correction"],
+    ["evolutionary-protocols", "adaptive-mechanisms"],
+    ["multi-protocol-ecosystems", "inter-protocol-economies"],
+    ["autonomous-infrastructure", "automation-networks"],
+    ["self-maintaining-infrastructure", "protocol-maintenance"],
+    ["verifiable-agent-networks", "verifiable-agents"],
+    ["agent-societies", "multi-agent-coordination"],
+    ["emergent-conventions", "emergent-coordination"],
+    ["planetary-scale-coordination", "coordination"],
+    ["mixed-human-machine-societies", "human-machine-economic-interaction"],
+    ["machine-native-money", "machine-money"],
+    ["machine-native-monetary-systems", "monetary-systems"],
+    ["autonomous-capital-formation", "capital-formation"],
+    ["autonomous-monetary-authorities", "monetary-policy"],
+    ["programmable-law", "rules"],
+    ["computable-contracts", "smart-contracts"],
+    ["embedded-compliance", "organizational-compliance"],
+    ["legal-oracles", "oracle-networks"],
+    ["autonomous-liability", "liability"],
+    ["machine-legal-contracting", "autonomous-contracting"],
+    ["commons-governance", "governance-models"],
+    ["autonomous-public-goods", "public-goods-funding"],
+    ["commons-dilemmas", "collective-action"],
+    ["cyber-physical-autonomous-systems", "sensors-external-systems"],
+    ["decentralized-physical-infrastructure", "sensors"],
+    ["physical-actuation", "physical-events"],
+    ["autonomous-science-systems", "task-markets"],
+    ["autonomous-science-systems", "service-markets"],
+    ["automated-experimentation", "dry-runs"],
+    ["verifiable-research", "verifiable-inference"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  for (const [id, conceptId] of [...FRONTIER_LAYER, ...FRONTIER_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (id !== conceptId) continue;
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...FRONTIER_LAYER, ...FRONTIER_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Frontier Systems leaves 20–26 unchanged", () => {
+  for (const [root, layer, tree] of [
+    ["ai-intelligent-systems", AI_LAYER, AI_TREE],
+    ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
+    ["autonomous-coordination", COORDINATION_LAYER, COORDINATION_TREE],
+    ["autonomous-execution", EXECUTION_LAYER, EXECUTION_TREE],
+    ["autonomous-organizations", ORGANIZATIONS_LAYER, ORGANIZATIONS_TREE],
+    ["autonomous-protocols", PROTOCOLS_LAYER, PROTOCOLS_TREE],
+    ["autonomous-economy", ECONOMY_LAYER, ECONOMY_TREE],
+  ] as const) {
+    assert.deepEqual(resolver.getChildren(root).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), layer, root);
+    for (const [parent, children] of tree) {
+      assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
+    }
+  }
+});
+
 // Cross-domain invariants, asserted once for the whole stack rather than in each
 // domain's own tests.
 test("a concept has an explicit preferred placement exactly when it is placed more than once, and resolves to it", () => {
@@ -5826,6 +6105,7 @@ const POPULATED_L0 = [
   "autonomous-organizations",
   "autonomous-protocols",
   "autonomous-economy",
+  "frontier-systems",
 ];
 
 test("L0 domains without authored topics stay empty", () => {
