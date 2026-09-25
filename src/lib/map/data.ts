@@ -388,6 +388,69 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "private-computation",
     "privacy-preserving-protocols",
   ],
+  // 07 Storage & Availability
+  "on-chain-storage": [
+    "persistent-storage",
+    "storage-layout",
+    "storage-slots",
+    "storage-costs",
+    "state-storage",
+    "storage-optimization",
+  ],
+  "distributed-storage": [
+    "storage-nodes",
+    "data-replication",
+    "data-distribution",
+    "redundancy",
+    { placementId: "fault-tolerance-in-distributed-storage", conceptId: "fault-tolerance" },
+    "storage-networks",
+  ],
+  "content-addressing-in-storage-availability": [
+    "content-identifiers",
+    "content-hashing",
+    "immutable-references",
+    "address-resolution",
+    "content-retrieval",
+  ],
+  "archival-storage": [
+    "historical-data",
+    "long-term-storage",
+    { placementId: "archive-nodes-in-archival-storage", conceptId: "archive-nodes" },
+    "data-retention",
+    "data-pruning",
+    "state-archiving",
+  ],
+  "data-availability": [
+    "availability-guarantees",
+    "data-publication",
+    "data-retrieval",
+    "availability-verification",
+    "data-withholding",
+    "availability-committees",
+  ],
+  "erasure-coding": [
+    "data-shards",
+    "redundant-encoding",
+    { placementId: "data-reconstruction", conceptId: "data-reconstruction", contextualLabel: "Reconstruction" },
+    "coding-parameters",
+    "fault-recovery",
+  ],
+  blobs: ["blob-data", "blob-transactions", "blob-commitments", "blob-propagation", "blob-retention", "blob-pricing"],
+  "data-availability-sampling": [
+    "sampling",
+    "random-sampling",
+    "sample-verification",
+    "availability-confidence",
+    "light-client-sampling",
+  ],
+  "storage-proofs": [
+    "proof-of-storage",
+    "proof-of-replication",
+    "proof-of-space",
+    "proof-of-retrievability",
+    { placementId: "proof-generation-in-storage-proofs", conceptId: "proof-generation" },
+    { placementId: "proof-verification-in-storage-proofs", conceptId: "proof-verification" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -402,8 +465,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * The complete L0 layer; Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
- * Networks & Infrastructure, and Cryptography & Proofs; and a deliberately
- * small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Networks & Infrastructure, Cryptography & Proofs, and Storage &
+ * Availability; and a deliberately small Phase 1 proof fixture re-homed
+ * beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -470,7 +534,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "liveness", slug: "liveness", title: "Liveness" },
     { id: "availability", slug: "availability", title: "Availability" },
     { id: "consistency", slug: "consistency", title: "Consistency" },
-    { id: "fault-tolerance", slug: "fault-tolerance", title: "Fault Tolerance" },
+    // Also placed under 07's Distributed Storage; this placement is preferred.
+    { id: "fault-tolerance", slug: "fault-tolerance", title: "Fault Tolerance", preferredPlacementId: "fault-tolerance" },
     // Also 04 Consensus & Ordering's L1 topic, where the property is taught
     // through its inclusion mechanisms; that placement is preferred.
     {
@@ -614,7 +679,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "metadata", slug: "metadata", title: "Metadata" },
     { id: "off-chain-state", slug: "off-chain-state", title: "Off-Chain State" },
     { id: "data-references", slug: "data-references", title: "Data References" },
-    { id: "content-addressing", slug: "content-addressing", title: "Content Addressing" },
+    // Also an L1 topic of 07 Storage & Availability, where it is taught; preferred there.
+    {
+      id: "content-addressing",
+      slug: "content-addressing",
+      title: "Content Addressing",
+      preferredPlacementId: "content-addressing-in-storage-availability",
+    },
     { id: "integrity-guarantees", slug: "integrity-guarantees", title: "Integrity Guarantees" },
     { id: "data-hashing", slug: "data-hashing", title: "Data Hashing" },
     { id: "data-commitments", slug: "data-commitments", title: "Data Commitments" },
@@ -746,7 +817,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Validator Nodes are the infrastructure running 04's Validators (a role).
     { id: "full-nodes", slug: "full-nodes", title: "Full Nodes" },
     { id: "light-nodes", slug: "light-nodes", title: "Light Nodes" },
-    { id: "archive-nodes", slug: "archive-nodes", title: "Archive Nodes" },
+    // Also placed under 07's Archival Storage; this placement is preferred.
+    { id: "archive-nodes", slug: "archive-nodes", title: "Archive Nodes", preferredPlacementId: "archive-nodes" },
     { id: "validator-nodes", slug: "validator-nodes", title: "Validator Nodes" },
     { id: "bootnodes", slug: "bootnodes", title: "Bootnodes" },
     { id: "rpc-interfaces", slug: "rpc-interfaces", title: "RPC Interfaces" },
@@ -846,8 +918,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "recursive-proofs", slug: "recursive-proofs", title: "Recursive Proofs" },
     { id: "proof-composition", slug: "proof-composition", title: "Proof Composition" },
     { id: "verifiable-execution", slug: "verifiable-execution", title: "Verifiable Execution" },
-    { id: "proof-generation", slug: "proof-generation", title: "Proof Generation" },
-    { id: "proof-verification", slug: "proof-verification", title: "Proof Verification" },
+    // Producing and checking a proof; also placed under 07's Storage Proofs.
+    { id: "proof-generation", slug: "proof-generation", title: "Proof Generation", preferredPlacementId: "proof-generation" },
+    { id: "proof-verification", slug: "proof-verification", title: "Proof Verification", preferredPlacementId: "proof-verification" },
     { id: "succinct-verification", slug: "succinct-verification", title: "Succinct Verification" },
     { id: "proof-carrying-computation", slug: "proof-carrying-computation", title: "Proof-Carrying Computation" },
     { id: "confidentiality", slug: "confidentiality", title: "Confidentiality" },
@@ -856,6 +929,72 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "selective-disclosure", slug: "selective-disclosure", title: "Selective Disclosure" },
     { id: "private-computation", slug: "private-computation", title: "Private Computation" },
     { id: "privacy-preserving-protocols", slug: "privacy-preserving-protocols", title: "Privacy-Preserving Protocols" },
+    // 07 Storage & Availability: L1 topics (Content Addressing is 03's concept).
+    // Data Availability (published data can be downloaded) is not Foundations'
+    // Availability (a system keeps serving).
+    { id: "on-chain-storage", slug: "on-chain-storage", title: "On-Chain Storage" },
+    { id: "distributed-storage", slug: "distributed-storage", title: "Distributed Storage" },
+    { id: "archival-storage", slug: "archival-storage", title: "Archival Storage" },
+    { id: "data-availability", slug: "data-availability", title: "Data Availability" },
+    { id: "erasure-coding", slug: "erasure-coding", title: "Erasure Coding" },
+    { id: "blobs", slug: "blobs", title: "Blobs" },
+    { id: "data-availability-sampling", slug: "data-availability-sampling", title: "Data Availability Sampling" },
+    { id: "storage-proofs", slug: "storage-proofs", title: "Storage Proofs" },
+    // L2 topics (placements in L2_TOPICS). Storage Layout (a contract's storage
+    // slots) is not 03's State Layout; State Storage (where state is persisted)
+    // is not Contract State or State.
+    { id: "persistent-storage", slug: "persistent-storage", title: "Persistent Storage" },
+    { id: "storage-layout", slug: "storage-layout", title: "Storage Layout" },
+    { id: "storage-slots", slug: "storage-slots", title: "Storage Slots" },
+    { id: "storage-costs", slug: "storage-costs", title: "Storage Costs" },
+    { id: "state-storage", slug: "state-storage", title: "State Storage" },
+    { id: "storage-optimization", slug: "storage-optimization", title: "Storage Optimization" },
+    { id: "storage-nodes", slug: "storage-nodes", title: "Storage Nodes" },
+    { id: "data-replication", slug: "data-replication", title: "Data Replication" },
+    { id: "data-distribution", slug: "data-distribution", title: "Data Distribution" },
+    { id: "redundancy", slug: "redundancy", title: "Redundancy" },
+    { id: "storage-networks", slug: "storage-networks", title: "Storage Networks" },
+    // Content Hashing derives an address from content, not 03's Data Hashing (an
+    // integrity fingerprint); Immutable References are not Data References.
+    { id: "content-identifiers", slug: "content-identifiers", title: "Content Identifiers" },
+    { id: "content-hashing", slug: "content-hashing", title: "Content Hashing" },
+    { id: "immutable-references", slug: "immutable-references", title: "Immutable References" },
+    { id: "address-resolution", slug: "address-resolution", title: "Address Resolution" },
+    { id: "content-retrieval", slug: "content-retrieval", title: "Content Retrieval" },
+    // State Archiving is the process; 03's Archival State is the retained data.
+    { id: "historical-data", slug: "historical-data", title: "Historical Data" },
+    { id: "long-term-storage", slug: "long-term-storage", title: "Long-Term Storage" },
+    { id: "data-retention", slug: "data-retention", title: "Data Retention" },
+    { id: "data-pruning", slug: "data-pruning", title: "Data Pruning" },
+    { id: "state-archiving", slug: "state-archiving", title: "State Archiving" },
+    { id: "availability-guarantees", slug: "availability-guarantees", title: "Availability Guarantees" },
+    { id: "data-publication", slug: "data-publication", title: "Data Publication" },
+    { id: "data-retrieval", slug: "data-retrieval", title: "Data Retrieval" },
+    { id: "availability-verification", slug: "availability-verification", title: "Availability Verification" },
+    { id: "data-withholding", slug: "data-withholding", title: "Data Withholding" },
+    { id: "availability-committees", slug: "availability-committees", title: "Availability Committees" },
+    { id: "data-shards", slug: "data-shards", title: "Data Shards" },
+    { id: "redundant-encoding", slug: "redundant-encoding", title: "Redundant Encoding" },
+    // Recovering data from coded shards, shown as "Reconstruction"; not 03's
+    // State Reconstruction (rebuilding state from history).
+    { id: "data-reconstruction", slug: "data-reconstruction", title: "Data Reconstruction" },
+    { id: "coding-parameters", slug: "coding-parameters", title: "Coding Parameters" },
+    { id: "fault-recovery", slug: "fault-recovery", title: "Fault Recovery" },
+    { id: "blob-data", slug: "blob-data", title: "Blob Data" },
+    { id: "blob-transactions", slug: "blob-transactions", title: "Blob Transactions" },
+    { id: "blob-commitments", slug: "blob-commitments", title: "Blob Commitments" },
+    { id: "blob-propagation", slug: "blob-propagation", title: "Blob Propagation" },
+    { id: "blob-retention", slug: "blob-retention", title: "Blob Retention" },
+    { id: "blob-pricing", slug: "blob-pricing", title: "Blob Pricing" },
+    { id: "sampling", slug: "sampling", title: "Sampling" },
+    { id: "random-sampling", slug: "random-sampling", title: "Random Sampling" },
+    { id: "sample-verification", slug: "sample-verification", title: "Sample Verification" },
+    { id: "availability-confidence", slug: "availability-confidence", title: "Availability Confidence" },
+    { id: "light-client-sampling", slug: "light-client-sampling", title: "Light-Client Sampling" },
+    { id: "proof-of-storage", slug: "proof-of-storage", title: "Proof of Storage" },
+    { id: "proof-of-replication", slug: "proof-of-replication", title: "Proof of Replication" },
+    { id: "proof-of-space", slug: "proof-of-space", title: "Proof of Space" },
+    { id: "proof-of-retrievability", slug: "proof-of-retrievability", title: "Proof of Retrievability" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -938,6 +1077,21 @@ export const mapKnowledge: MapKnowledgeModel = {
       order: 6,
     },
     { id: "privacy", conceptId: "privacy", parentPlacementId: "cryptography-proofs", order: 7 },
+    // 07 Storage & Availability: L1 topics.
+    { id: "on-chain-storage", conceptId: "on-chain-storage", parentPlacementId: "storage-availability", order: 0 },
+    { id: "distributed-storage", conceptId: "distributed-storage", parentPlacementId: "storage-availability", order: 1 },
+    {
+      id: "content-addressing-in-storage-availability",
+      conceptId: "content-addressing",
+      parentPlacementId: "storage-availability",
+      order: 2,
+    },
+    { id: "archival-storage", conceptId: "archival-storage", parentPlacementId: "storage-availability", order: 3 },
+    { id: "data-availability", conceptId: "data-availability", parentPlacementId: "storage-availability", order: 4 },
+    { id: "erasure-coding", conceptId: "erasure-coding", parentPlacementId: "storage-availability", order: 5 },
+    { id: "blobs", conceptId: "blobs", parentPlacementId: "storage-availability", order: 6 },
+    { id: "data-availability-sampling", conceptId: "data-availability-sampling", parentPlacementId: "storage-availability", order: 7 },
+    { id: "storage-proofs", conceptId: "storage-proofs", parentPlacementId: "storage-availability", order: 8 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

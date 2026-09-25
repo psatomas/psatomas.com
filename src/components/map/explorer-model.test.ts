@@ -118,6 +118,17 @@ const POPULATED_L0 = {
     "verifiable-computation-in-cryptography-proofs",
     "privacy",
   ],
+  "storage-availability": [
+    "on-chain-storage",
+    "distributed-storage",
+    "content-addressing-in-storage-availability",
+    "archival-storage",
+    "data-availability",
+    "erasure-coding",
+    "blobs",
+    "data-availability-sampling",
+    "storage-proofs",
+  ],
   "identity-accounts-authority": ["identity", "authority"],
   "scaling-modular-systems": ["scaling"],
   "ai-intelligent-systems": ["ai-agent"],
@@ -143,7 +154,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 18);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 17);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -311,8 +322,8 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const storage = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "storage-availability")!;
-  assert.equal(activateMapExplorerRow(storage, null, new Set()).expandedPlacementIds.size, 0);
+  const oracles = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "oracles-external-reality")!;
+  assert.equal(activateMapExplorerRow(oracles, null, new Set()).expandedPlacementIds.size, 0);
 });
 
 test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
@@ -416,8 +427,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[6].rows, []);
-  assert.equal(regions[6].header.hasChildren, false);
+  assert.deepEqual(regions[8].rows, []);
+  assert.equal(regions[8].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -473,8 +484,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "storage-availability");
-  assert.equal(empty.focusedPlacementId, "storage-availability");
+  const empty = getInitialMapExplorerState(view, "oracles-external-reality");
+  assert.equal(empty.focusedPlacementId, "oracles-external-reality");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -531,11 +542,40 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("storage-availability")?.isExpandable); // neither
+  assert.ok(!byId.get("oracles-external-reality")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
   assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+});
+
+test("Storage & Availability L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("proof-of-retrievability"), ["Storage & Availability", "Storage Proofs", "Proof of Retrievability"]);
+  assert.deepEqual(labels("light-client-sampling"), ["Storage & Availability", "Data Availability Sampling", "Light-Client Sampling"]);
+  assert.deepEqual(labels("data-reconstruction"), ["Storage & Availability", "Erasure Coding", "Reconstruction"]);
+  // Shared concepts, each in its own context.
+  assert.deepEqual(labels("content-addressing-in-storage-availability"), ["Storage & Availability", "Content Addressing"]);
+  assert.deepEqual(labels("content-addressing"), ["State & Data", "Off-Chain Data", "Content Addressing"]);
+  assert.deepEqual(labels("fault-tolerance-in-distributed-storage"), ["Storage & Availability", "Distributed Storage", "Fault Tolerance"]);
+  assert.deepEqual(labels("archive-nodes-in-archival-storage"), ["Storage & Availability", "Archival Storage", "Archive Nodes"]);
+  assert.deepEqual(labels("proof-verification-in-storage-proofs"), ["Storage & Availability", "Storage Proofs", "Proof Verification"]);
+  assert.deepEqual(labels("proof-verification"), ["Cryptography & Proofs", "Verifiable Computation", "Proof Verification"]);
+  for (const id of ["blob-commitments", "content-addressing-in-storage-availability", "archive-nodes-in-archival-storage", "data-reconstruction"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "blob-pricing").expandedPlacementIds].sort(), ["blobs", "storage-availability"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "storage-availability" && row.depth > 0);
+  assert.equal(subtreeRows.length, 9 + 51);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "07");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
 });
 
 test("Cryptography & Proofs L2 topics are ordinary placements: context, ancestry, containing L0", () => {

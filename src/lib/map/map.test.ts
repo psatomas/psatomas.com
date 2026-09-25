@@ -504,6 +504,93 @@ const CRYPTOGRAPHY_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const CRYPTOGRAPHY_L2 = CRYPTOGRAPHY_TREE.flatMap(([, children]) => children);
 
+// 07 Storage & Availability. Content Addressing is 03's concept, Fault Tolerance
+// Foundations', Archive Nodes 05's, Proof Generation and Verification 06's;
+// Reconstruction is Data Reconstruction.
+const STORAGE_LAYER: Array<[string, string, string]> = [
+  ["on-chain-storage", "on-chain-storage", "On-Chain Storage"],
+  ["distributed-storage", "distributed-storage", "Distributed Storage"],
+  ["content-addressing-in-storage-availability", "content-addressing", "Content Addressing"],
+  ["archival-storage", "archival-storage", "Archival Storage"],
+  ["data-availability", "data-availability", "Data Availability"],
+  ["erasure-coding", "erasure-coding", "Erasure Coding"],
+  ["blobs", "blobs", "Blobs"],
+  ["data-availability-sampling", "data-availability-sampling", "Data Availability Sampling"],
+  ["storage-proofs", "storage-proofs", "Storage Proofs"],
+];
+const STORAGE_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["on-chain-storage", [
+    ["persistent-storage", "persistent-storage", "Persistent Storage"],
+    ["storage-layout", "storage-layout", "Storage Layout"],
+    ["storage-slots", "storage-slots", "Storage Slots"],
+    ["storage-costs", "storage-costs", "Storage Costs"],
+    ["state-storage", "state-storage", "State Storage"],
+    ["storage-optimization", "storage-optimization", "Storage Optimization"],
+  ]],
+  ["distributed-storage", [
+    ["storage-nodes", "storage-nodes", "Storage Nodes"],
+    ["data-replication", "data-replication", "Data Replication"],
+    ["data-distribution", "data-distribution", "Data Distribution"],
+    ["redundancy", "redundancy", "Redundancy"],
+    ["fault-tolerance-in-distributed-storage", "fault-tolerance", "Fault Tolerance"],
+    ["storage-networks", "storage-networks", "Storage Networks"],
+  ]],
+  ["content-addressing-in-storage-availability", [
+    ["content-identifiers", "content-identifiers", "Content Identifiers"],
+    ["content-hashing", "content-hashing", "Content Hashing"],
+    ["immutable-references", "immutable-references", "Immutable References"],
+    ["address-resolution", "address-resolution", "Address Resolution"],
+    ["content-retrieval", "content-retrieval", "Content Retrieval"],
+  ]],
+  ["archival-storage", [
+    ["historical-data", "historical-data", "Historical Data"],
+    ["long-term-storage", "long-term-storage", "Long-Term Storage"],
+    ["archive-nodes-in-archival-storage", "archive-nodes", "Archive Nodes"],
+    ["data-retention", "data-retention", "Data Retention"],
+    ["data-pruning", "data-pruning", "Data Pruning"],
+    ["state-archiving", "state-archiving", "State Archiving"],
+  ]],
+  ["data-availability", [
+    ["availability-guarantees", "availability-guarantees", "Availability Guarantees"],
+    ["data-publication", "data-publication", "Data Publication"],
+    ["data-retrieval", "data-retrieval", "Data Retrieval"],
+    ["availability-verification", "availability-verification", "Availability Verification"],
+    ["data-withholding", "data-withholding", "Data Withholding"],
+    ["availability-committees", "availability-committees", "Availability Committees"],
+  ]],
+  ["erasure-coding", [
+    ["data-shards", "data-shards", "Data Shards"],
+    ["redundant-encoding", "redundant-encoding", "Redundant Encoding"],
+    ["data-reconstruction", "data-reconstruction", "Reconstruction"],
+    ["coding-parameters", "coding-parameters", "Coding Parameters"],
+    ["fault-recovery", "fault-recovery", "Fault Recovery"],
+  ]],
+  ["blobs", [
+    ["blob-data", "blob-data", "Blob Data"],
+    ["blob-transactions", "blob-transactions", "Blob Transactions"],
+    ["blob-commitments", "blob-commitments", "Blob Commitments"],
+    ["blob-propagation", "blob-propagation", "Blob Propagation"],
+    ["blob-retention", "blob-retention", "Blob Retention"],
+    ["blob-pricing", "blob-pricing", "Blob Pricing"],
+  ]],
+  ["data-availability-sampling", [
+    ["sampling", "sampling", "Sampling"],
+    ["random-sampling", "random-sampling", "Random Sampling"],
+    ["sample-verification", "sample-verification", "Sample Verification"],
+    ["availability-confidence", "availability-confidence", "Availability Confidence"],
+    ["light-client-sampling", "light-client-sampling", "Light-Client Sampling"],
+  ]],
+  ["storage-proofs", [
+    ["proof-of-storage", "proof-of-storage", "Proof of Storage"],
+    ["proof-of-replication", "proof-of-replication", "Proof of Replication"],
+    ["proof-of-space", "proof-of-space", "Proof of Space"],
+    ["proof-of-retrievability", "proof-of-retrievability", "Proof of Retrievability"],
+    ["proof-generation-in-storage-proofs", "proof-generation", "Proof Generation"],
+    ["proof-verification-in-storage-proofs", "proof-verification", "Proof Verification"],
+  ]],
+];
+const STORAGE_L2 = STORAGE_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -518,6 +605,8 @@ const AUTHORED_TOPICS = new Set([
   ...NETWORKS_L2.map(([id]) => id),
   ...CRYPTOGRAPHY_LAYER.map(([id]) => id),
   ...CRYPTOGRAPHY_L2.map(([id]) => id),
+  ...STORAGE_LAYER.map(([id]) => id),
+  ...STORAGE_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -594,8 +683,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // State & Data's 9 new L1 and 58 new L2 concepts, then Consensus &
   // Ordering's 7 new L1 and 56 new L2 concepts, then Networks &
   // Infrastructure's 10 new L1 and 55 new L2 concepts, then Cryptography &
-  // Proofs' 7 new L1 and 46 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46);
+  // Proofs' 7 new L1 and 46 new L2 concepts, then Storage & Availability's
+  // 8 new L1 and 47 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -723,6 +813,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     verification: ["verification-in-verifiable-computation"],
     transitions: ["transitions-in-state-data"],
     "censorship-resistance": ["censorship-resistance-in-consensus-ordering"],
+    "fault-tolerance": ["fault-tolerance-in-distributed-storage"],
   };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
@@ -882,6 +973,7 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     synchronization: ["synchronization-in-nodes"],
     "reorganization-handling": ["reorganization-handling-in-indexers"],
     "commitment-schemes": ["commitment-schemes-in-cryptographic-commitments"],
+    "content-addressing": ["content-addressing-in-storage-availability"],
   };
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -901,6 +993,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("state-data"), 10 + 59);
   assert.equal(subtreeOf("consensus-ordering"), 10 + 58);
   assert.equal(subtreeOf("networks-infrastructure"), 10 + 58);
+  assert.equal(subtreeOf("cryptography-proofs"), 8 + 48);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1039,11 +1132,13 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["synchronization", "reorganization-handling", "automation-networks"]);
+  // Also placed in Storage & Availability.
+  const placedElsewhere: Record<string, string[]> = { "archive-nodes": ["archive-nodes-in-archival-storage"] };
   for (const [id, conceptId] of [...NETWORKS_LAYER, ...NETWORKS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...NETWORKS_LAYER, ...NETWORKS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -1114,13 +1209,93 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["verifiable-computation", "computation-proofs", "commitment-schemes"]);
+  // Also placed in Storage & Availability.
+  const placedElsewhere: Record<string, string[]> = {
+    "proof-generation": ["proof-generation-in-storage-proofs"],
+    "proof-verification": ["proof-verification-in-storage-proofs"],
+  };
   for (const [id, conceptId] of [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
+  }
+  const ids = [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Storage & Availability has exactly its nine L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("storage-availability").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    STORAGE_LAYER,
+  );
+  for (const [parent, children] of STORAGE_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of STORAGE_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "storage-availability")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...STORAGE_LAYER.map(([id]) => id), ...STORAGE_L2.map(([id]) => id)].sort());
+  assert.equal(STORAGE_L2.length, 51);
+});
+
+test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive Nodes and proof concepts", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Content Addressing: 03's concept, an L1 topic here with its own layer; preferred here.
+  assert.deepEqual(placementsOf("content-addressing"), ["content-addressing", "content-addressing-in-storage-availability"]);
+  assert.equal(resolver.getConcept("content-addressing")?.preferredPlacementId, "content-addressing-in-storage-availability");
+  assert.deepEqual(resolver.getChildren("content-addressing"), []);
+  assert.equal(resolver.getChildren("content-addressing-in-storage-availability").length, 5);
+  // Fault Tolerance, Archive Nodes, Proof Generation and Proof Verification: placed again, preferred at home.
+  for (const [conceptId, home, here] of [
+    ["fault-tolerance", "fault-tolerance", "fault-tolerance-in-distributed-storage"],
+    ["archive-nodes", "archive-nodes", "archive-nodes-in-archival-storage"],
+    ["proof-generation", "proof-generation", "proof-generation-in-storage-proofs"],
+    ["proof-verification", "proof-verification", "proof-verification-in-storage-proofs"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [home, here].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, home, conceptId);
+  }
+  // Reconstruction is Data Reconstruction in contextual wording.
+  assert.equal(resolver.getConcept("data-reconstruction")?.title, "Data Reconstruction");
+  assert.equal(resolver.getConcept("reconstruction"), undefined);
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["state-archiving", "archival-state"],
+    ["storage-layout", "state-layout"],
+    ["state-storage", "contract-state"],
+    ["state-storage", "state"],
+    ["content-hashing", "data-hashing"],
+    ["immutable-references", "data-references"],
+    ["historical-data", "state-history"],
+    ["data-availability", "availability"],
+    ["redundant-encoding", "redundancy"],
+    ["blob-retention", "data-retention"],
+    ["light-client-sampling", "light-nodes"],
+    ["storage-proofs", "state-proofs"],
+    ["data-reconstruction", "state-reconstruction"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["content-addressing", "fault-tolerance", "archive-nodes", "proof-generation", "proof-verification"]);
+  for (const [id, conceptId] of [...STORAGE_LAYER, ...STORAGE_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  const ids = [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2].map(([id]) => id);
+  const ids = [...STORAGE_LAYER, ...STORAGE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 
