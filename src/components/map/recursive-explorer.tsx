@@ -25,6 +25,17 @@ import type { MapExplorerContextStep, MapExplorerRow, MapExplorerView } from "./
 const FOCUSED_ROW = "shadow-[inset_2px_0_0_0_var(--color-accent)]";
 const LABEL_TEXT = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
 const CONTROL_FOCUS = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent";
+// Hover identifies the whole interactive row with the site's grid-cell
+// treatment (/systems, /lab: the cell boundary brightens to white/60 over the
+// page background). MAP rows share 1px seams instead of owning borders, so a
+// layer, transparent at rest, sits 1px outside the row's padding box: exactly
+// over its top seam (its own, or the one above the first row), the seam below,
+// and the region's side borders. The colour is that same white/60-on-background
+// result, opaque, so seams brighten to the identical tone rather than stacking.
+// Nothing moves; the inset cyan context bar lies inside the layer, and keyboard
+// focus keeps its own outline.
+const ROW_HOVER =
+  "relative before:pointer-events-none before:absolute before:-inset-px before:z-10 before:border before:border-transparent before:transition-colors hover:before:border-[color-mix(in_srgb,white_60%,var(--background))]";
 
 /**
  * One source of truth per concern: the URL's `?context=` owns the active
@@ -157,7 +168,7 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
               data-placement-id={header.placementId}
               data-concept-id={header.conceptId}
               data-depth={header.depth}
-              className={`flex min-w-0 items-stretch bg-surface ${
+              className={`flex min-w-0 items-stretch bg-surface ${ROW_HOVER} ${
                 header.placementId === focusedPlacementId ? FOCUSED_ROW : ""
               }`}
             >
@@ -177,7 +188,7 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
                       data-placement-id={row.placementId}
                       data-concept-id={row.conceptId}
                       data-depth={row.depth}
-                      className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${
+                      className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${ROW_HOVER} ${
                         row.placementId === focusedPlacementId ? FOCUSED_ROW : ""
                       }`}
                     >
