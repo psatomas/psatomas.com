@@ -14,9 +14,9 @@ import { LabPreview } from "@/components/sections/lab-preview";
 // Systems (what I build) -> Research (how I reason) -> Lab (what I
 // explore). The environments remain independent siblings; this is only
 // homepage hierarchy. Every section
-// below Hero reads from its own domain's existing source, or (for MAP's
-// intentionally non-canonical territory preview) keeps presentation copy
-// local rather than duplicating ontology data.
+// below Hero reads from its own domain's existing source: MAP's preview
+// derives its L0 domains from the canonical MAP knowledge model rather than
+// duplicating it, without making MAP a layer over Systems, Research, or Lab.
 //
 // force-dynamic for the same reason /research/page.tsx already needs it:
 // ResearchPreview reads the same D1-backed repository, which is only
