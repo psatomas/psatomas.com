@@ -1259,6 +1259,159 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "contagion-risk",
     { placementId: "pause-mechanisms-in-trust-failure-modes", conceptId: "pause-mechanisms" },
   ],
+  // 17 Security, Correctness & Resilience
+  "security-models": [
+    { placementId: "threat-models-in-security-models", conceptId: "threat-models" },
+    { placementId: "adversaries-in-security-models", conceptId: "adversaries" },
+    { placementId: "byzantine-behavior-in-security-models", conceptId: "byzantine-behavior" },
+    { placementId: "trust-boundaries-in-security-models", conceptId: "trust-boundaries" },
+    "security-assumptions",
+    "defense-in-depth",
+  ],
+  "security-properties": [
+    { placementId: "safety-in-security-properties", conceptId: "safety" },
+    { placementId: "liveness-in-security-properties", conceptId: "liveness" },
+    "integrity",
+    { placementId: "confidentiality-in-security-properties", conceptId: "confidentiality" },
+    { placementId: "availability-in-security-properties", conceptId: "availability" },
+    { placementId: "censorship-resistance-in-security-properties", conceptId: "censorship-resistance" },
+  ],
+  "threat-modeling": [
+    "attack-surfaces",
+    "attack-vectors",
+    "threat-analysis",
+    "risk-assessment",
+    "attack-trees",
+    "security-requirements",
+  ],
+  "attack-classes": [
+    "denial-of-service-attacks",
+    { placementId: "sybil-attacks-in-attack-classes", conceptId: "sybil-attacks" },
+    "eclipse-attacks",
+    { placementId: "replay-attacks-in-attack-classes", conceptId: "replay-attacks" },
+    { placementId: "collusion-in-attack-classes", conceptId: "collusion" },
+    { placementId: "griefing-in-attack-classes", conceptId: "griefing" },
+  ],
+  "vulnerabilities-exploits": [
+    "vulnerabilities",
+    "exploits",
+    "vulnerability-classes",
+    "zero-day-vulnerabilities",
+    "vulnerability-disclosure",
+    "bug-bounties",
+  ],
+  "smart-contract-security": [
+    "reentrancy",
+    "arithmetic-errors",
+    "access-control-flaws",
+    "unchecked-external-calls",
+    "flash-loan-attacks",
+    { placementId: "oracle-manipulation-in-smart-contract-security", conceptId: "oracle-manipulation" },
+  ],
+  "protocol-security": [
+    "execution-security",
+    "consensus-attacks",
+    "network-attacks",
+    "cryptographic-failures",
+    "data-integrity-attacks",
+    "identity-attacks",
+    { placementId: "economic-attacks-in-protocol-security", conceptId: "economic-attacks" },
+  ],
+  correctness: [
+    "specifications",
+    "invariants",
+    "functional-correctness",
+    "validation",
+    { placementId: "verification-in-correctness", conceptId: "verification" },
+    "correctness-proofs",
+  ],
+  "formal-methods": [
+    "formal-verification",
+    "model-checking",
+    "theorem-proving",
+    "symbolic-execution",
+    "static-analysis",
+    "formal-specifications",
+  ],
+  testing: [
+    "unit-testing",
+    "integration-testing",
+    "fuzzing",
+    "property-based-testing",
+    "invariant-testing",
+    "adversarial-testing",
+  ],
+  auditing: ["security-audits", "code-review", "audit-scope", "audit-findings", "remediation", "continuous-auditing"],
+  "access-control": [
+    { placementId: "authentication-in-access-control", conceptId: "authentication" },
+    "authorization",
+    { placementId: "permission-models-in-access-control", conceptId: "permission-models" },
+    "least-privilege",
+    "privilege-escalation",
+    "role-based-access-control",
+  ],
+  "key-security": [
+    "key-compromise",
+    "key-custody",
+    "key-rotation",
+    "hardware-security-modules",
+    "blind-signing",
+    "social-engineering",
+  ],
+  "operational-security": [
+    "infrastructure-security",
+    "deployment-security",
+    "configuration-errors",
+    "supply-chain-security",
+    "insider-threats",
+    "operational-failures",
+  ],
+  "security-monitoring": [
+    "threat-detection",
+    "anomaly-detection",
+    { placementId: "alerting-in-security-monitoring", conceptId: "alerting" },
+    "on-chain-monitoring",
+    "security-telemetry",
+    "forensics",
+  ],
+  "incident-response-in-security-correctness-resilience": [
+    "containment",
+    { placementId: "pause-mechanisms-in-incident-response", conceptId: "pause-mechanisms" },
+    { placementId: "circuit-breakers-in-incident-response", conceptId: "circuit-breakers" },
+    "response-coordination",
+    "post-mortems",
+    "incident-disclosure",
+  ],
+  resilience: [
+    { placementId: "fault-tolerance-in-resilience", conceptId: "fault-tolerance" },
+    { placementId: "redundancy-in-resilience", conceptId: "redundancy" },
+    "graceful-degradation",
+    { placementId: "failure-isolation-in-resilience", conceptId: "failure-isolation" },
+    "recovery",
+    "disaster-recovery",
+  ],
+  "security-economics": [
+    { placementId: "economic-security-in-security-economics", conceptId: "economic-security" },
+    "cryptographic-security",
+    { placementId: "attack-cost-in-security-economics", conceptId: "attack-cost" },
+    { placementId: "cost-of-corruption-in-security-economics", conceptId: "cost-of-corruption" },
+    { placementId: "security-inheritance-in-security-economics", conceptId: "security-inheritance" },
+  ],
+  "upgrade-security": [
+    { placementId: "upgrade-keys-in-upgrade-security", conceptId: "upgrade-keys" },
+    { placementId: "timelocks-in-upgrade-security", conceptId: "timelocks" },
+    "proxy-upgrade-risks",
+    "upgrade-verification",
+    { placementId: "emergency-upgrades-in-upgrade-security", conceptId: "emergency-upgrades" },
+  ],
+  "domain-specific-security": [
+    { placementId: "oracle-security-in-domain-specific-security", conceptId: "oracle-security" },
+    { placementId: "governance-attacks-in-domain-specific-security", conceptId: "governance-attacks" },
+    { placementId: "rollup-security-in-domain-specific-security", conceptId: "rollup-security" },
+    { placementId: "bridge-security-in-domain-specific-security", conceptId: "bridge-security" },
+    { placementId: "mev-protection-in-domain-specific-security", conceptId: "mev-protection" },
+    { placementId: "wallet-security-in-domain-specific-security", conceptId: "wallet-security" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1277,8 +1430,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
- * Systems, and Interoperability & Abstraction; and a deliberately small Phase 1
- * proof fixture re-homed beneath its L0 domains.
+ * Systems, Interoperability & Abstraction, and Security, Correctness &
+ * Resilience; and a deliberately small Phase 1 proof fixture re-homed beneath
+ * its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1324,7 +1478,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 09's Oracle Problem; this placement is preferred.
     { id: "trust-assumptions", slug: "trust-assumptions", title: "Trust Assumptions", preferredPlacementId: "trust-assumptions" },
     { id: "trusted-parties", slug: "trusted-parties", title: "Trusted Parties" },
-    { id: "trust-boundaries", slug: "trust-boundaries", title: "Trust Boundaries" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "trust-boundaries",
+      slug: "trust-boundaries",
+      title: "Trust Boundaries",
+      preferredPlacementId: "trust-boundaries",
+    },
     // Also placed under Verifiable Computation: checking a computation's proof
     // is the same act as checking any claim instead of trusting its source.
     { id: "verification", slug: "verification", title: "Verification", preferredPlacementId: "verification" },
@@ -1337,9 +1497,17 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "competition", slug: "competition", title: "Competition" },
     // Also placed under 13's Multi-Party Coordination; this placement is preferred.
     { id: "collective-action", slug: "collective-action", title: "Collective Action", preferredPlacementId: "collective-action" },
-    { id: "adversaries", slug: "adversaries", title: "Adversaries" },
-    { id: "threat-models", slug: "threat-models", title: "Threat Models" },
-    { id: "byzantine-behavior", slug: "byzantine-behavior", title: "Byzantine Behavior" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "adversaries", slug: "adversaries", title: "Adversaries", preferredPlacementId: "adversaries" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "threat-models", slug: "threat-models", title: "Threat Models", preferredPlacementId: "threat-models" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "byzantine-behavior",
+      slug: "byzantine-behavior",
+      title: "Byzantine Behavior",
+      preferredPlacementId: "byzantine-behavior",
+    },
     { id: "censorship", slug: "censorship", title: "Censorship" },
     // Also placed under 09's Oracle Security; this placement is preferred.
     { id: "collusion", slug: "collusion", title: "Collusion", preferredPlacementId: "collusion" },
@@ -1351,9 +1519,12 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Strategic Behavior",
       preferredPlacementId: "strategic-behavior-in-economics-mechanism-design",
     },
-    { id: "safety", slug: "safety", title: "Safety" },
-    { id: "liveness", slug: "liveness", title: "Liveness" },
-    { id: "availability", slug: "availability", title: "Availability" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "safety", slug: "safety", title: "Safety", preferredPlacementId: "safety" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "liveness", slug: "liveness", title: "Liveness", preferredPlacementId: "liveness" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "availability", slug: "availability", title: "Availability", preferredPlacementId: "availability" },
     { id: "consistency", slug: "consistency", title: "Consistency" },
     // Also placed under 07's Distributed Storage; this placement is preferred.
     { id: "fault-tolerance", slug: "fault-tolerance", title: "Fault Tolerance", preferredPlacementId: "fault-tolerance" },
@@ -1742,7 +1913,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "system-logs", slug: "system-logs", title: "System Logs" },
     { id: "distributed-traces", slug: "distributed-traces", title: "Distributed Traces" },
     { id: "health-checks", slug: "health-checks", title: "Health Checks" },
-    { id: "alerting", slug: "alerting", title: "Alerting" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "alerting", slug: "alerting", title: "Alerting", preferredPlacementId: "alerting" },
     { id: "observability", slug: "observability", title: "Observability" },
     { id: "triggers", slug: "triggers", title: "Triggers" },
     { id: "scheduled-execution", slug: "scheduled-execution", title: "Scheduled Execution" },
@@ -1818,7 +1990,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "proof-verification", slug: "proof-verification", title: "Proof Verification", preferredPlacementId: "proof-verification" },
     { id: "succinct-verification", slug: "succinct-verification", title: "Succinct Verification" },
     { id: "proof-carrying-computation", slug: "proof-carrying-computation", title: "Proof-Carrying Computation" },
-    { id: "confidentiality", slug: "confidentiality", title: "Confidentiality" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "confidentiality",
+      slug: "confidentiality",
+      title: "Confidentiality",
+      preferredPlacementId: "confidentiality",
+    },
     { id: "anonymity", slug: "anonymity", title: "Anonymity" },
     { id: "unlinkability", slug: "unlinkability", title: "Unlinkability" },
     { id: "selective-disclosure", slug: "selective-disclosure", title: "Selective Disclosure" },
@@ -1860,7 +2038,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "storage-nodes", slug: "storage-nodes", title: "Storage Nodes" },
     { id: "data-replication", slug: "data-replication", title: "Data Replication" },
     { id: "data-distribution", slug: "data-distribution", title: "Data Distribution" },
-    { id: "redundancy", slug: "redundancy", title: "Redundancy" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "redundancy", slug: "redundancy", title: "Redundancy", preferredPlacementId: "redundancy" },
     { id: "storage-networks", slug: "storage-networks", title: "Storage Networks" },
     // Content Hashing derives an address from content, not 03's Data Hashing (an
     // integrity fingerprint); Immutable References are not Data References.
@@ -1921,7 +2100,8 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Account Abstraction",
       preferredPlacementId: "account-abstraction",
     },
-    { id: "authentication", slug: "authentication", title: "Authentication" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "authentication", slug: "authentication", title: "Authentication", preferredPlacementId: "authentication" },
     { id: "machine-identity", slug: "machine-identity", title: "Machine Identity" },
     // L2 topics (placements in L2_TOPICS). Credentials, Reputation, Ownership,
     // Delegation, Roles and Capabilities are general concepts, for reuse by later
@@ -1943,7 +2123,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "key-management", slug: "key-management", title: "Key Management" },
     { id: "transaction-construction", slug: "transaction-construction", title: "Transaction Construction" },
     { id: "wallet-recovery", slug: "wallet-recovery", title: "Wallet Recovery" },
-    { id: "wallet-security", slug: "wallet-security", title: "Wallet Security" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "wallet-security",
+      slug: "wallet-security",
+      title: "Wallet Security",
+      preferredPlacementId: "wallet-security",
+    },
     // Programmable Accounts is the property; Smart Accounts are the account type.
     { id: "programmable-accounts", slug: "programmable-accounts", title: "Programmable Accounts" },
     { id: "validation-logic", slug: "validation-logic", title: "Validation Logic" },
@@ -1977,7 +2163,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 13's Intents (an intent delegates execution) and 14's
     // Representation (delegating votes); this placement is preferred.
     { id: "delegation", slug: "delegation", title: "Delegation", preferredPlacementId: "delegation" },
-    { id: "permission-models", slug: "permission-models", title: "Permission Models" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "permission-models",
+      slug: "permission-models",
+      title: "Permission Models",
+      preferredPlacementId: "permission-models",
+    },
     { id: "authority-boundaries", slug: "authority-boundaries", title: "Authority Boundaries" },
     // Agent and machine subjects are taught as their own topics, like the
     // fixture's Agent Identity; merging them into the general concepts would put
@@ -1998,7 +2190,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Real-World Attestations are attestations about the physical world, taught
     // with their own layer; the general Attestations concept is 03's.
     { id: "freshness", slug: "freshness", title: "Freshness" },
-    { id: "oracle-security", slug: "oracle-security", title: "Oracle Security" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "oracle-security",
+      slug: "oracle-security",
+      title: "Oracle Security",
+      preferredPlacementId: "oracle-security",
+    },
     { id: "machine-readable-reality", slug: "machine-readable-reality", title: "Machine-Readable Reality" },
     { id: "sensors-external-systems", slug: "sensors-external-systems", title: "Sensors & External Systems" },
     { id: "ai-interpreted-data", slug: "ai-interpreted-data", title: "AI-Interpreted Data" },
@@ -2046,11 +2244,24 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "source-provenance", slug: "source-provenance", title: "Source Provenance" },
     { id: "transformation-history", slug: "transformation-history", title: "Transformation History" },
     { id: "provenance-verification", slug: "provenance-verification", title: "Provenance Verification" },
-    { id: "oracle-manipulation", slug: "oracle-manipulation", title: "Oracle Manipulation" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "oracle-manipulation",
+      slug: "oracle-manipulation",
+      title: "Oracle Manipulation",
+      preferredPlacementId: "oracle-manipulation",
+    },
     { id: "data-poisoning", slug: "data-poisoning", title: "Data Poisoning" },
     { id: "source-compromise", slug: "source-compromise", title: "Source Compromise" },
-    { id: "sybil-attacks", slug: "sybil-attacks", title: "Sybil Attacks" },
-    { id: "economic-attacks", slug: "economic-attacks", title: "Economic Attacks" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "sybil-attacks", slug: "sybil-attacks", title: "Sybil Attacks", preferredPlacementId: "sybil-attacks" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "economic-attacks",
+      slug: "economic-attacks",
+      title: "Economic Attacks",
+      preferredPlacementId: "economic-attacks",
+    },
     // Claims, Machine-Readable Claims and Verifiable Claims are distinct: a
     // statement about a subject, in machine-readable form, and cryptographically
     // checkable.
@@ -2129,7 +2340,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "deviations", slug: "deviations", title: "Deviations" },
     { id: "manipulation", slug: "manipulation", title: "Manipulation" },
     { id: "free-riding", slug: "free-riding", title: "Free Riding" },
-    { id: "griefing", slug: "griefing", title: "Griefing" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "griefing", slug: "griefing", title: "Griefing", preferredPlacementId: "griefing" },
     { id: "bribery", slug: "bribery", title: "Bribery" },
     { id: "token-supply", slug: "token-supply", title: "Token Supply" },
     { id: "token-distribution", slug: "token-distribution", title: "Token Distribution" },
@@ -2170,13 +2382,26 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "slashing", slug: "slashing", title: "Slashing" },
     { id: "validator-economics", slug: "validator-economics", title: "Validator Economics" },
     { id: "delegated-stake", slug: "delegated-stake", title: "Delegated Stake" },
-    { id: "economic-security", slug: "economic-security", title: "Economic Security" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "economic-security",
+      slug: "economic-security",
+      title: "Economic Security",
+      preferredPlacementId: "economic-security",
+    },
     { id: "security-expenditure", slug: "security-expenditure", title: "Security Expenditure" },
     { id: "issuance-funded-security", slug: "issuance-funded-security", title: "Issuance-Funded Security" },
     { id: "fee-funded-security", slug: "fee-funded-security", title: "Fee-Funded Security" },
     { id: "security-subsidies", slug: "security-subsidies", title: "Security Subsidies" },
-    { id: "attack-cost", slug: "attack-cost", title: "Attack Cost" },
-    { id: "cost-of-corruption", slug: "cost-of-corruption", title: "Cost of Corruption" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "attack-cost", slug: "attack-cost", title: "Attack Cost", preferredPlacementId: "attack-cost" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "cost-of-corruption",
+      slug: "cost-of-corruption",
+      title: "Cost of Corruption",
+      preferredPlacementId: "cost-of-corruption",
+    },
     // Economic Finality (reversal made costly) is a kind of finality, like 04's
     // Probabilistic and Deterministic Finality. Incentive Attacks are not 09's
     // Economic Attacks; Cryptoeconomic Assumptions are not Fault or Trust Assumptions.
@@ -2382,7 +2607,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "private-transactions", slug: "private-transactions", title: "Private Transactions" },
     { id: "private-relays", slug: "private-relays", title: "Private Relays" },
     { id: "protected-order-flow", slug: "protected-order-flow", title: "Protected Order Flow" },
-    { id: "mev-protection", slug: "mev-protection", title: "MEV Protection" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "mev-protection", slug: "mev-protection", title: "MEV Protection", preferredPlacementId: "mev-protection" },
     { id: "execution-privacy", slug: "execution-privacy", title: "Execution Privacy" },
     // Batch Execution is not 10's Batch Auctions.
     { id: "mev-redistribution", slug: "mev-redistribution", title: "MEV Redistribution" },
@@ -2535,7 +2761,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "checks-balances", slug: "checks-balances", title: "Checks & Balances" },
     { id: "dispute-resolution", slug: "dispute-resolution", title: "Dispute Resolution" },
     { id: "emergency-governance", slug: "emergency-governance", title: "Emergency Governance" },
-    { id: "governance-attacks", slug: "governance-attacks", title: "Governance Attacks" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "governance-attacks",
+      slug: "governance-attacks",
+      title: "Governance Attacks",
+      preferredPlacementId: "governance-attacks",
+    },
     { id: "institutional-design", slug: "institutional-design", title: "Institutional Design" },
     { id: "on-chain-governance", slug: "on-chain-governance", title: "On-Chain Governance" },
     { id: "off-chain-governance", slug: "off-chain-governance", title: "Off-Chain Governance" },
@@ -2582,7 +2814,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Proposal Execution and Execution Authority turn decisions into actions; not
     // 02's Transaction Execution or 08's Authority.
     { id: "proposal-execution", slug: "proposal-execution", title: "Proposal Execution" },
-    { id: "timelocks", slug: "timelocks", title: "Timelocks" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "timelocks", slug: "timelocks", title: "Timelocks", preferredPlacementId: "timelocks" },
     { id: "parameter-changes", slug: "parameter-changes", title: "Parameter Changes" },
     { id: "protocol-upgrades", slug: "protocol-upgrades", title: "Protocol Upgrades" },
     { id: "execution-authority", slug: "execution-authority", title: "Execution Authority" },
@@ -2629,9 +2862,27 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "pause-mechanisms",
     },
     { id: "guardians", slug: "guardians", title: "Guardians" },
-    { id: "emergency-upgrades", slug: "emergency-upgrades", title: "Emergency Upgrades" },
-    { id: "circuit-breakers", slug: "circuit-breakers", title: "Circuit Breakers" },
-    { id: "incident-response", slug: "incident-response", title: "Incident Response" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "emergency-upgrades",
+      slug: "emergency-upgrades",
+      title: "Emergency Upgrades",
+      preferredPlacementId: "emergency-upgrades",
+    },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "circuit-breakers",
+      slug: "circuit-breakers",
+      title: "Circuit Breakers",
+      preferredPlacementId: "circuit-breakers",
+    },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "incident-response",
+      slug: "incident-response",
+      title: "Incident Response",
+      preferredPlacementId: "incident-response",
+    },
     // Vote Buying is not 10's general Bribery.
     { id: "governance-capture", slug: "governance-capture", title: "Governance Capture" },
     { id: "vote-buying", slug: "vote-buying", title: "Vote Buying" },
@@ -2662,7 +2913,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "rollup-sequencing", slug: "rollup-sequencing", title: "Rollup Sequencing" },
     { id: "batching-compression", slug: "batching-compression", title: "Batching & Compression" },
     { id: "scaling-tradeoffs", slug: "scaling-tradeoffs", title: "Scaling Tradeoffs" },
-    { id: "rollup-security", slug: "rollup-security", title: "Rollup Security" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "rollup-security",
+      slug: "rollup-security",
+      title: "Rollup Security",
+      preferredPlacementId: "rollup-security",
+    },
     // L2 topics (placements in L2_TOPICS). Layer 2 Scaling is the approach;
     // Rollups are one kind of it, and Sidechains (own security) are not rollups.
     { id: "vertical-scaling", slug: "vertical-scaling", title: "Vertical Scaling" },
@@ -2742,9 +2999,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "scalability-trilemma", slug: "scalability-trilemma", title: "Scalability Trilemma" },
     // Upgrade Keys are not 14's Protocol Upgrades; Escape Hatches let users exit
     // without the operator.
-    { id: "security-inheritance", slug: "security-inheritance", title: "Security Inheritance" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "security-inheritance",
+      slug: "security-inheritance",
+      title: "Security Inheritance",
+      preferredPlacementId: "security-inheritance",
+    },
     { id: "rollup-maturity-stages", slug: "rollup-maturity-stages", title: "Rollup Maturity Stages" },
-    { id: "upgrade-keys", slug: "upgrade-keys", title: "Upgrade Keys" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "upgrade-keys", slug: "upgrade-keys", title: "Upgrade Keys", preferredPlacementId: "upgrade-keys" },
     { id: "escape-hatches", slug: "escape-hatches", title: "Escape Hatches" },
     { id: "sequencer-censorship", slug: "sequencer-censorship", title: "Sequencer Censorship" },
     // 16 Interoperability & Abstraction: L1 topics (Cross-Chain Execution,
@@ -2847,15 +3111,159 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Bridge Security is specific to bridges, not protocol security in general;
     // Verifier Compromise is not 09's Source Compromise; Transfer Limits (value
     // caps) are not 05's Rate Limiting.
-    { id: "bridge-security", slug: "bridge-security", title: "Bridge Security" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "bridge-security",
+      slug: "bridge-security",
+      title: "Bridge Security",
+      preferredPlacementId: "bridge-security",
+    },
     { id: "bridge-exploits", slug: "bridge-exploits", title: "Bridge Exploits" },
     { id: "verifier-compromise", slug: "verifier-compromise", title: "Verifier Compromise" },
     { id: "message-forgery", slug: "message-forgery", title: "Message Forgery" },
-    { id: "replay-attacks", slug: "replay-attacks", title: "Replay Attacks" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    { id: "replay-attacks", slug: "replay-attacks", title: "Replay Attacks", preferredPlacementId: "replay-attacks" },
     { id: "transfer-limits", slug: "transfer-limits", title: "Transfer Limits" },
+    // 17 Security, Correctness & Resilience: L1 topics (Incident Response is 14's
+    // concept). Security (against adversaries), Correctness (doing what is
+    // specified) and Resilience (continuing through failure) are distinct
+    // concerns; Smart Contract Security is not Protocol Security; Access Control
+    // is not 08's Authentication; Security Monitoring is not 05's Monitoring.
+    { id: "security-models", slug: "security-models", title: "Security Models" },
+    { id: "security-properties", slug: "security-properties", title: "Security Properties" },
+    { id: "threat-modeling", slug: "threat-modeling", title: "Threat Modeling" },
+    { id: "attack-classes", slug: "attack-classes", title: "Attack Classes" },
+    { id: "vulnerabilities-exploits", slug: "vulnerabilities-exploits", title: "Vulnerabilities & Exploits" },
+    { id: "smart-contract-security", slug: "smart-contract-security", title: "Smart Contract Security" },
+    { id: "protocol-security", slug: "protocol-security", title: "Protocol Security" },
+    { id: "correctness", slug: "correctness", title: "Correctness" },
+    { id: "formal-methods", slug: "formal-methods", title: "Formal Methods" },
+    { id: "testing", slug: "testing", title: "Testing" },
+    { id: "auditing", slug: "auditing", title: "Auditing" },
+    { id: "access-control", slug: "access-control", title: "Access Control" },
+    { id: "key-security", slug: "key-security", title: "Key Security" },
+    { id: "operational-security", slug: "operational-security", title: "Operational Security" },
+    { id: "security-monitoring", slug: "security-monitoring", title: "Security Monitoring" },
+    { id: "resilience", slug: "resilience", title: "Resilience" },
+    { id: "security-economics", slug: "security-economics", title: "Security Economics" },
+    { id: "upgrade-security", slug: "upgrade-security", title: "Upgrade Security" },
+    { id: "domain-specific-security", slug: "domain-specific-security", title: "Domain-Specific Security" },
+    // L2 topics (placements in L2_TOPICS). Security Assumptions are not
+    // Foundations' Trust Assumptions; Defense in Depth layers independent controls.
+    { id: "security-assumptions", slug: "security-assumptions", title: "Security Assumptions" },
+    { id: "defense-in-depth", slug: "defense-in-depth", title: "Defense in Depth" },
+    // Integrity (as a security property) is not 03's Integrity Guarantees.
+    { id: "integrity", slug: "integrity", title: "Integrity" },
+    // Attack Surfaces (what can be attacked) are not Foundations' Trust Boundaries;
+    // Attack Vectors are not Threats; Risk Assessment is not 11's Risk.
+    { id: "attack-surfaces", slug: "attack-surfaces", title: "Attack Surfaces" },
+    { id: "attack-vectors", slug: "attack-vectors", title: "Attack Vectors" },
+    { id: "threat-analysis", slug: "threat-analysis", title: "Threat Analysis" },
+    { id: "risk-assessment", slug: "risk-assessment", title: "Risk Assessment" },
+    { id: "attack-trees", slug: "attack-trees", title: "Attack Trees" },
+    { id: "security-requirements", slug: "security-requirements", title: "Security Requirements" },
+    // Denial-of-Service Attacks are the attack; 02's Denial-of-Service Resistance
+    // the defence. Eclipse Attacks isolate a node's view of the network.
+    { id: "denial-of-service-attacks", slug: "denial-of-service-attacks", title: "Denial-of-Service Attacks" },
+    { id: "eclipse-attacks", slug: "eclipse-attacks", title: "Eclipse Attacks" },
+    // Vulnerabilities are weaknesses; Exploits make use of them.
+    { id: "vulnerabilities", slug: "vulnerabilities", title: "Vulnerabilities" },
+    { id: "exploits", slug: "exploits", title: "Exploits" },
+    { id: "vulnerability-classes", slug: "vulnerability-classes", title: "Vulnerability Classes" },
+    { id: "zero-day-vulnerabilities", slug: "zero-day-vulnerabilities", title: "Zero-Day Vulnerabilities" },
+    { id: "vulnerability-disclosure", slug: "vulnerability-disclosure", title: "Vulnerability Disclosure" },
+    { id: "bug-bounties", slug: "bug-bounties", title: "Bug Bounties" },
+    // Flash Loan Attacks are not 14's Borrowed Voting Power.
+    { id: "reentrancy", slug: "reentrancy", title: "Reentrancy" },
+    { id: "arithmetic-errors", slug: "arithmetic-errors", title: "Arithmetic Errors" },
+    { id: "access-control-flaws", slug: "access-control-flaws", title: "Access Control Flaws" },
+    { id: "unchecked-external-calls", slug: "unchecked-external-calls", title: "Unchecked External Calls" },
+    { id: "flash-loan-attacks", slug: "flash-loan-attacks", title: "Flash Loan Attacks" },
+    // Protocol-level security by layer, each specialised further in its home
+    // domain.
+    { id: "execution-security", slug: "execution-security", title: "Execution Security" },
+    { id: "consensus-attacks", slug: "consensus-attacks", title: "Consensus Attacks" },
+    { id: "network-attacks", slug: "network-attacks", title: "Network Attacks" },
+    { id: "cryptographic-failures", slug: "cryptographic-failures", title: "Cryptographic Failures" },
+    { id: "data-integrity-attacks", slug: "data-integrity-attacks", title: "Data Integrity Attacks" },
+    { id: "identity-attacks", slug: "identity-attacks", title: "Identity Attacks" },
+    // Validation (building the right thing) is not Verification (building it
+    // right), nor 02's Transaction Validation; Invariants are not Foundations'
+    // Protocol Properties.
+    { id: "specifications", slug: "specifications", title: "Specifications" },
+    { id: "invariants", slug: "invariants", title: "Invariants" },
+    { id: "functional-correctness", slug: "functional-correctness", title: "Functional Correctness" },
+    { id: "validation", slug: "validation", title: "Validation" },
+    { id: "correctness-proofs", slug: "correctness-proofs", title: "Correctness Proofs" },
+    // Formal Methods, Testing and Auditing are distinct assurance activities.
+    { id: "formal-verification", slug: "formal-verification", title: "Formal Verification" },
+    { id: "model-checking", slug: "model-checking", title: "Model Checking" },
+    { id: "theorem-proving", slug: "theorem-proving", title: "Theorem Proving" },
+    { id: "symbolic-execution", slug: "symbolic-execution", title: "Symbolic Execution" },
+    { id: "static-analysis", slug: "static-analysis", title: "Static Analysis" },
+    { id: "formal-specifications", slug: "formal-specifications", title: "Formal Specifications" },
+    { id: "unit-testing", slug: "unit-testing", title: "Unit Testing" },
+    { id: "integration-testing", slug: "integration-testing", title: "Integration Testing" },
+    { id: "fuzzing", slug: "fuzzing", title: "Fuzzing" },
+    { id: "property-based-testing", slug: "property-based-testing", title: "Property-Based Testing" },
+    { id: "invariant-testing", slug: "invariant-testing", title: "Invariant Testing" },
+    { id: "adversarial-testing", slug: "adversarial-testing", title: "Adversarial Testing" },
+    { id: "security-audits", slug: "security-audits", title: "Security Audits" },
+    { id: "code-review", slug: "code-review", title: "Code Review" },
+    { id: "audit-scope", slug: "audit-scope", title: "Audit Scope" },
+    { id: "audit-findings", slug: "audit-findings", title: "Audit Findings" },
+    { id: "remediation", slug: "remediation", title: "Remediation" },
+    { id: "continuous-auditing", slug: "continuous-auditing", title: "Continuous Auditing" },
+    // Authorization (what an authenticated party may do) is not 08's
+    // Authentication or Authority.
+    { id: "authorization", slug: "authorization", title: "Authorization" },
+    { id: "least-privilege", slug: "least-privilege", title: "Least Privilege" },
+    { id: "privilege-escalation", slug: "privilege-escalation", title: "Privilege Escalation" },
+    { id: "role-based-access-control", slug: "role-based-access-control", title: "Role-Based Access Control" },
+    // Key Custody is not 08's Key Management; Blind Signing is not 06's Signing.
+    { id: "key-compromise", slug: "key-compromise", title: "Key Compromise" },
+    { id: "key-custody", slug: "key-custody", title: "Key Custody" },
+    { id: "key-rotation", slug: "key-rotation", title: "Key Rotation" },
+    { id: "hardware-security-modules", slug: "hardware-security-modules", title: "Hardware Security Modules" },
+    { id: "blind-signing", slug: "blind-signing", title: "Blind Signing" },
+    { id: "social-engineering", slug: "social-engineering", title: "Social Engineering" },
+    // Operational Failures (non-adversarial) are not adversarial attacks.
+    { id: "infrastructure-security", slug: "infrastructure-security", title: "Infrastructure Security" },
+    { id: "deployment-security", slug: "deployment-security", title: "Deployment Security" },
+    { id: "configuration-errors", slug: "configuration-errors", title: "Configuration Errors" },
+    { id: "supply-chain-security", slug: "supply-chain-security", title: "Supply Chain Security" },
+    { id: "insider-threats", slug: "insider-threats", title: "Insider Threats" },
+    { id: "operational-failures", slug: "operational-failures", title: "Operational Failures" },
+    // Anomaly Detection flags deviations from expected behaviour.
+    { id: "threat-detection", slug: "threat-detection", title: "Threat Detection" },
+    { id: "anomaly-detection", slug: "anomaly-detection", title: "Anomaly Detection" },
+    { id: "on-chain-monitoring", slug: "on-chain-monitoring", title: "On-Chain Monitoring" },
+    { id: "security-telemetry", slug: "security-telemetry", title: "Security Telemetry" },
+    { id: "forensics", slug: "forensics", title: "Forensics" },
+    // Incident Response is not 14's Emergency Governance.
+    { id: "containment", slug: "containment", title: "Containment" },
+    { id: "response-coordination", slug: "response-coordination", title: "Response Coordination" },
+    { id: "post-mortems", slug: "post-mortems", title: "Post-Mortems" },
+    { id: "incident-disclosure", slug: "incident-disclosure", title: "Incident Disclosure" },
+    // Resilience is not Foundations' Fault Tolerance alone; Recovery is not 08's
+    // Account or Wallet Recovery.
+    { id: "graceful-degradation", slug: "graceful-degradation", title: "Graceful Degradation" },
+    { id: "recovery", slug: "recovery", title: "Recovery" },
+    { id: "disaster-recovery", slug: "disaster-recovery", title: "Disaster Recovery" },
+    // Cryptographic Security is not 10's Economic Security.
+    { id: "cryptographic-security", slug: "cryptographic-security", title: "Cryptographic Security" },
+    // Upgrade Verification is not 14's Protocol Upgrades.
+    { id: "proxy-upgrade-risks", slug: "proxy-upgrade-risks", title: "Proxy Upgrade Risks" },
+    { id: "upgrade-verification", slug: "upgrade-verification", title: "Upgrade Verification" },
     { id: "liveness-failures", slug: "liveness-failures", title: "Liveness Failures" },
     { id: "safety-failures", slug: "safety-failures", title: "Safety Failures" },
-    { id: "failure-isolation", slug: "failure-isolation", title: "Failure Isolation" },
+    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    {
+      id: "failure-isolation",
+      slug: "failure-isolation",
+      title: "Failure Isolation",
+      preferredPlacementId: "failure-isolation",
+    },
     { id: "contagion-risk", slug: "contagion-risk", title: "Contagion Risk" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
@@ -3214,6 +3622,102 @@ export const mapKnowledge: MapKnowledgeModel = {
       conceptId: "trust-failure-modes",
       parentPlacementId: "interoperability-abstraction",
       order: 13,
+    },
+    // 17 Security, Correctness & Resilience: L1 topics.
+    {
+      id: "security-models",
+      conceptId: "security-models",
+      parentPlacementId: "security-correctness-resilience",
+      order: 0,
+    },
+    {
+      id: "security-properties",
+      conceptId: "security-properties",
+      parentPlacementId: "security-correctness-resilience",
+      order: 1,
+    },
+    {
+      id: "threat-modeling",
+      conceptId: "threat-modeling",
+      parentPlacementId: "security-correctness-resilience",
+      order: 2,
+    },
+    {
+      id: "attack-classes",
+      conceptId: "attack-classes",
+      parentPlacementId: "security-correctness-resilience",
+      order: 3,
+    },
+    {
+      id: "vulnerabilities-exploits",
+      conceptId: "vulnerabilities-exploits",
+      parentPlacementId: "security-correctness-resilience",
+      order: 4,
+    },
+    {
+      id: "smart-contract-security",
+      conceptId: "smart-contract-security",
+      parentPlacementId: "security-correctness-resilience",
+      order: 5,
+    },
+    {
+      id: "protocol-security",
+      conceptId: "protocol-security",
+      parentPlacementId: "security-correctness-resilience",
+      order: 6,
+    },
+    { id: "correctness", conceptId: "correctness", parentPlacementId: "security-correctness-resilience", order: 7 },
+    {
+      id: "formal-methods",
+      conceptId: "formal-methods",
+      parentPlacementId: "security-correctness-resilience",
+      order: 8,
+    },
+    { id: "testing", conceptId: "testing", parentPlacementId: "security-correctness-resilience", order: 9 },
+    { id: "auditing", conceptId: "auditing", parentPlacementId: "security-correctness-resilience", order: 10 },
+    {
+      id: "access-control",
+      conceptId: "access-control",
+      parentPlacementId: "security-correctness-resilience",
+      order: 11,
+    },
+    { id: "key-security", conceptId: "key-security", parentPlacementId: "security-correctness-resilience", order: 12 },
+    {
+      id: "operational-security",
+      conceptId: "operational-security",
+      parentPlacementId: "security-correctness-resilience",
+      order: 13,
+    },
+    {
+      id: "security-monitoring",
+      conceptId: "security-monitoring",
+      parentPlacementId: "security-correctness-resilience",
+      order: 14,
+    },
+    {
+      id: "incident-response-in-security-correctness-resilience",
+      conceptId: "incident-response",
+      parentPlacementId: "security-correctness-resilience",
+      order: 15,
+    },
+    { id: "resilience", conceptId: "resilience", parentPlacementId: "security-correctness-resilience", order: 16 },
+    {
+      id: "security-economics",
+      conceptId: "security-economics",
+      parentPlacementId: "security-correctness-resilience",
+      order: 17,
+    },
+    {
+      id: "upgrade-security",
+      conceptId: "upgrade-security",
+      parentPlacementId: "security-correctness-resilience",
+      order: 18,
+    },
+    {
+      id: "domain-specific-security",
+      conceptId: "domain-specific-security",
+      parentPlacementId: "security-correctness-resilience",
+      order: 19,
     },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase

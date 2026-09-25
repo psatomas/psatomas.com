@@ -129,6 +129,28 @@ const POPULATED_L0 = {
     "data-availability-sampling",
     "storage-proofs",
   ],
+  "security-correctness-resilience": [
+    "security-models",
+    "security-properties",
+    "threat-modeling",
+    "attack-classes",
+    "vulnerabilities-exploits",
+    "smart-contract-security",
+    "protocol-security",
+    "correctness",
+    "formal-methods",
+    "testing",
+    "auditing",
+    "access-control",
+    "key-security",
+    "operational-security",
+    "security-monitoring",
+    "incident-response-in-security-correctness-resilience",
+    "resilience",
+    "security-economics",
+    "upgrade-security",
+    "domain-specific-security",
+  ],
   "interoperability-abstraction": [
     "interoperability-models",
     "cross-chain-messaging",
@@ -281,7 +303,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 10);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 9);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -449,8 +471,8 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const security = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "security-correctness-resilience")!;
-  assert.equal(activateMapExplorerRow(security, null, new Set()).expandedPlacementIds.size, 0);
+  const architecture = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "protocol-architecture")!;
+  assert.equal(activateMapExplorerRow(architecture, null, new Set()).expandedPlacementIds.size, 0);
 });
 
 test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
@@ -554,8 +576,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[16].rows, []);
-  assert.equal(regions[16].header.hasChildren, false);
+  assert.deepEqual(regions[17].rows, []);
+  assert.equal(regions[17].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -611,8 +633,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "security-correctness-resilience");
-  assert.equal(empty.focusedPlacementId, "security-correctness-resilience");
+  const empty = getInitialMapExplorerState(view, "protocol-architecture");
+  assert.equal(empty.focusedPlacementId, "protocol-architecture");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -669,7 +691,7 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("security-correctness-resilience")?.isExpandable); // neither
+  assert.ok(!byId.get("protocol-architecture")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
@@ -697,6 +719,30 @@ test("Scaling & Modular Systems L2 topics are ordinary placements: context, ance
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "finality") && row.isExpandable === row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "15");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Security, Correctness & Resilience L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("property-based-testing"), ["Security, Correctness & Resilience", "Testing", "Property-Based Testing"]);
+  assert.deepEqual(labels("incident-response-in-security-correctness-resilience"), ["Security, Correctness & Resilience", "Incident Response"]);
+  assert.deepEqual(labels("incident-response"), ["Governance & Institutions", "Emergency Governance", "Incident Response"]);
+  assert.deepEqual(labels("bridge-security-in-domain-specific-security"), ["Security, Correctness & Resilience", "Domain-Specific Security", "Bridge Security"]);
+  assert.deepEqual(labels("safety-in-security-properties"), ["Security, Correctness & Resilience", "Security Properties", "Safety"]);
+  for (const id of ["reentrancy", "incident-response-in-security-correctness-resilience", "verification-in-correctness", "circuit-breakers-in-incident-response"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "fuzzing").expandedPlacementIds].sort(), ["security-correctness-resilience", "testing"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "security-correctness-resilience" && row.depth > 0);
+  assert.equal(subtreeRows.length, 20 + 119);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "17");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });
