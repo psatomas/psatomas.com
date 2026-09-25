@@ -129,7 +129,16 @@ const POPULATED_L0 = {
     "data-availability-sampling",
     "storage-proofs",
   ],
-  "identity-accounts-authority": ["identity", "authority"],
+  "identity-accounts-authority": [
+    "identity",
+    "accounts",
+    "wallets",
+    "smart-accounts",
+    "account-abstraction",
+    "authentication",
+    "authority",
+    "machine-identity",
+  ],
   "scaling-modular-systems": ["scaling"],
   "ai-intelligent-systems": ["ai-agent"],
 } as const;
@@ -547,6 +556,34 @@ test("a concept is expandable when it has exposition or a next layer, never when
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
   assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+});
+
+test("Identity, Accounts & Authority L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("agent-identity"), ["Identity, Accounts & Authority", "Machine Identity", "Agent Identity"]);
+  assert.deepEqual(labels("externally-owned-accounts"), ["Identity, Accounts & Authority", "Accounts", "Externally Owned Accounts"]);
+  assert.deepEqual(labels("credential-authentication"), ["Identity, Accounts & Authority", "Authentication", "Credential Authentication"]);
+  // Shared concepts, each in its own context.
+  assert.deepEqual(labels("attestations-in-identity"), ["Identity, Accounts & Authority", "Identity", "Attestations"]);
+  assert.deepEqual(labels("attestations"), ["State & Data", "Provenance", "Attestations"]);
+  assert.deepEqual(labels("signing-in-wallets"), ["Identity, Accounts & Authority", "Wallets", "Signing"]);
+  assert.deepEqual(labels("transaction-submission-in-wallets"), ["Identity, Accounts & Authority", "Wallets", "Transaction Submission"]);
+  for (const id of ["agent-identity", "paymasters", "attestations-in-identity", "signing-in-wallets"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "session-keys").expandedPlacementIds].sort(), ["identity-accounts-authority", "smart-accounts"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "identity-accounts-authority" && row.depth > 0);
+  assert.equal(subtreeRows.length, 8 + 47);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  // L2 topics are leaves; Agent Identity keeps its canonical exposition, so it opens.
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "agent-identity") && row.isExpandable === row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "08");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
 });
 
 test("Storage & Availability L2 topics are ordinary placements: context, ancestry, containing L0", () => {

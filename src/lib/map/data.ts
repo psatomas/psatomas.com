@@ -451,6 +451,65 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "proof-generation-in-storage-proofs", conceptId: "proof-generation" },
     { placementId: "proof-verification-in-storage-proofs", conceptId: "proof-verification" },
   ],
+  // 08 Identity, Accounts & Authority
+  identity: [
+    "addresses",
+    "decentralized-identifiers",
+    "credentials",
+    { placementId: "attestations-in-identity", conceptId: "attestations" },
+    "reputation",
+  ],
+  accounts: [
+    "externally-owned-accounts",
+    "contract-accounts",
+    "account-state",
+    "account-nonces",
+    "account-permissions",
+    "account-recovery",
+  ],
+  wallets: [
+    "key-management",
+    { placementId: "signing-in-wallets", conceptId: "signing" },
+    "transaction-construction",
+    { placementId: "transaction-submission-in-wallets", conceptId: "transaction-submission" },
+    "wallet-recovery",
+    "wallet-security",
+  ],
+  "smart-accounts": [
+    "programmable-accounts",
+    "validation-logic",
+    "execution-logic",
+    "recovery-logic",
+    "session-keys",
+    "modular-accounts",
+  ],
+  "account-abstraction": [
+    "user-operations",
+    "bundlers",
+    "entry-points",
+    "paymasters",
+    "alternative-mempools",
+    "gas-abstraction",
+  ],
+  authentication: [
+    "authentication-factors",
+    "signature-authentication",
+    "challenge-response",
+    "session-authentication",
+    "credential-authentication",
+    "authentication-policies",
+  ],
+  authority: ["ownership", "roles", "capabilities", "delegation", "permission-models", "authority-boundaries"],
+  // Agent Identity is the Phase 1 fixture's placement (ID unchanged), moved
+  // from Identity to Machine Identity.
+  "machine-identity": [
+    "agent-identity",
+    "agent-credentials",
+    "agent-reputation",
+    "agent-authorization",
+    "machine-credentials",
+    "machine-authentication",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -465,9 +524,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * The complete L0 layer; Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
- * Networks & Infrastructure, Cryptography & Proofs, and Storage &
- * Availability; and a deliberately small Phase 1 proof fixture re-homed
- * beneath its L0 domains.
+ * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
+ * and Identity, Accounts & Authority; and a deliberately small Phase 1 proof
+ * fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -696,7 +755,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "lineage", slug: "lineage", title: "Lineage" },
     { id: "attribution", slug: "attribution", title: "Attribution" },
     { id: "provenance-records", slug: "provenance-records", title: "Provenance Records" },
-    { id: "attestations", slug: "attestations", title: "Attestations" },
+    // A signed statement by an identifiable party vouching for a claim; also
+    // under 08's Identity, its main home, and preferred there.
+    { id: "attestations", slug: "attestations", title: "Attestations", preferredPlacementId: "attestations-in-identity" },
     { id: "traceability", slug: "traceability", title: "Traceability" },
     { id: "data-extraction", slug: "data-extraction", title: "Data Extraction" },
     { id: "data-transformation", slug: "data-transformation", title: "Data Transformation" },
@@ -841,7 +902,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "relay-incentives", slug: "relay-incentives", title: "Relay Incentives" },
     { id: "condition-monitoring", slug: "condition-monitoring", title: "Condition Monitoring" },
     { id: "trigger-evaluation", slug: "trigger-evaluation", title: "Trigger Evaluation" },
-    { id: "transaction-submission", slug: "transaction-submission", title: "Transaction Submission" },
+    // Also placed under 08's Wallets; this placement is preferred.
+    {
+      id: "transaction-submission",
+      slug: "transaction-submission",
+      title: "Transaction Submission",
+      preferredPlacementId: "transaction-submission",
+    },
     { id: "keeper-incentives", slug: "keeper-incentives", title: "Keeper Incentives" },
     { id: "event-driven-bots", slug: "event-driven-bots", title: "Event-Driven Bots" },
     { id: "trading-bots", slug: "trading-bots", title: "Trading Bots" },
@@ -886,7 +953,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Signature, Proof and Succinct Verification are specific checks, not
     // Foundations' Verification (checking a claim instead of trusting).
     { id: "key-pairs", slug: "key-pairs", title: "Key Pairs" },
-    { id: "signing", slug: "signing", title: "Signing" },
+    // Also placed under 08's Wallets; this placement is preferred.
+    { id: "signing", slug: "signing", title: "Signing", preferredPlacementId: "signing" },
     { id: "signature-verification", slug: "signature-verification", title: "Signature Verification" },
     { id: "signature-schemes", slug: "signature-schemes", title: "Signature Schemes" },
     { id: "signature-aggregation", slug: "signature-aggregation", title: "Signature Aggregation" },
@@ -995,6 +1063,69 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "proof-of-replication", slug: "proof-of-replication", title: "Proof of Replication" },
     { id: "proof-of-space", slug: "proof-of-space", title: "Proof of Space" },
     { id: "proof-of-retrievability", slug: "proof-of-retrievability", title: "Proof of Retrievability" },
+    // 08 Identity, Accounts & Authority: L1 topics (Identity and Authority are
+    // the fixture's concepts, below).
+    { id: "accounts", slug: "accounts", title: "Accounts" },
+    { id: "wallets", slug: "wallets", title: "Wallets" },
+    { id: "smart-accounts", slug: "smart-accounts", title: "Smart Accounts" },
+    { id: "account-abstraction", slug: "account-abstraction", title: "Account Abstraction" },
+    { id: "authentication", slug: "authentication", title: "Authentication" },
+    { id: "machine-identity", slug: "machine-identity", title: "Machine Identity" },
+    // L2 topics (placements in L2_TOPICS). Credentials, Reputation, Ownership,
+    // Delegation, Roles and Capabilities are general concepts, for reuse by later
+    // domains.
+    { id: "addresses", slug: "addresses", title: "Addresses" },
+    { id: "decentralized-identifiers", slug: "decentralized-identifiers", title: "Decentralized Identifiers" },
+    { id: "credentials", slug: "credentials", title: "Credentials" },
+    { id: "reputation", slug: "reputation", title: "Reputation" },
+    // Account State (an account's balance, nonce, code and storage root) is not
+    // Contract State. Account, Wallet and Recovery Logic recovery differ:
+    // regaining an account, restoring key material, the code implementing it.
+    { id: "externally-owned-accounts", slug: "externally-owned-accounts", title: "Externally Owned Accounts" },
+    { id: "contract-accounts", slug: "contract-accounts", title: "Contract Accounts" },
+    { id: "account-state", slug: "account-state", title: "Account State" },
+    { id: "account-nonces", slug: "account-nonces", title: "Account Nonces" },
+    { id: "account-permissions", slug: "account-permissions", title: "Account Permissions" },
+    { id: "account-recovery", slug: "account-recovery", title: "Account Recovery" },
+    { id: "key-management", slug: "key-management", title: "Key Management" },
+    { id: "transaction-construction", slug: "transaction-construction", title: "Transaction Construction" },
+    { id: "wallet-recovery", slug: "wallet-recovery", title: "Wallet Recovery" },
+    { id: "wallet-security", slug: "wallet-security", title: "Wallet Security" },
+    // Programmable Accounts is the property; Smart Accounts are the account type.
+    { id: "programmable-accounts", slug: "programmable-accounts", title: "Programmable Accounts" },
+    { id: "validation-logic", slug: "validation-logic", title: "Validation Logic" },
+    { id: "execution-logic", slug: "execution-logic", title: "Execution Logic" },
+    { id: "recovery-logic", slug: "recovery-logic", title: "Recovery Logic" },
+    { id: "session-keys", slug: "session-keys", title: "Session Keys" },
+    { id: "modular-accounts", slug: "modular-accounts", title: "Modular Accounts" },
+    { id: "user-operations", slug: "user-operations", title: "User Operations" },
+    { id: "bundlers", slug: "bundlers", title: "Bundlers" },
+    { id: "entry-points", slug: "entry-points", title: "Entry Points" },
+    { id: "paymasters", slug: "paymasters", title: "Paymasters" },
+    { id: "alternative-mempools", slug: "alternative-mempools", title: "Alternative Mempools" },
+    { id: "gas-abstraction", slug: "gas-abstraction", title: "Gas Abstraction" },
+    // Signature Authentication proves control of a key; it is not 06's
+    // Signature Verification.
+    { id: "authentication-factors", slug: "authentication-factors", title: "Authentication Factors" },
+    { id: "signature-authentication", slug: "signature-authentication", title: "Signature Authentication" },
+    { id: "challenge-response", slug: "challenge-response", title: "Challenge-Response" },
+    { id: "session-authentication", slug: "session-authentication", title: "Session Authentication" },
+    { id: "credential-authentication", slug: "credential-authentication", title: "Credential Authentication" },
+    { id: "authentication-policies", slug: "authentication-policies", title: "Authentication Policies" },
+    { id: "ownership", slug: "ownership", title: "Ownership" },
+    { id: "roles", slug: "roles", title: "Roles" },
+    { id: "capabilities", slug: "capabilities", title: "Capabilities" },
+    { id: "delegation", slug: "delegation", title: "Delegation" },
+    { id: "permission-models", slug: "permission-models", title: "Permission Models" },
+    { id: "authority-boundaries", slug: "authority-boundaries", title: "Authority Boundaries" },
+    // Agent and machine subjects are taught as their own topics, like the
+    // fixture's Agent Identity; merging them into the general concepts would put
+    // two rows of one concept side by side under Machine Identity.
+    { id: "agent-credentials", slug: "agent-credentials", title: "Agent Credentials" },
+    { id: "agent-reputation", slug: "agent-reputation", title: "Agent Reputation" },
+    { id: "agent-authorization", slug: "agent-authorization", title: "Agent Authorization" },
+    { id: "machine-credentials", slug: "machine-credentials", title: "Machine Credentials" },
+    { id: "machine-authentication", slug: "machine-authentication", title: "Machine Authentication" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -1092,6 +1223,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "blobs", conceptId: "blobs", parentPlacementId: "storage-availability", order: 6 },
     { id: "data-availability-sampling", conceptId: "data-availability-sampling", parentPlacementId: "storage-availability", order: 7 },
     { id: "storage-proofs", conceptId: "storage-proofs", parentPlacementId: "storage-availability", order: 8 },
+    // 08 Identity, Accounts & Authority: L1 topics. Identity and Authority are
+    // the Phase 1 fixture's placements, keeping their IDs.
+    { id: "identity", conceptId: "identity", parentPlacementId: "identity-accounts-authority", order: 0 },
+    { id: "accounts", conceptId: "accounts", parentPlacementId: "identity-accounts-authority", order: 1 },
+    { id: "wallets", conceptId: "wallets", parentPlacementId: "identity-accounts-authority", order: 2 },
+    { id: "smart-accounts", conceptId: "smart-accounts", parentPlacementId: "identity-accounts-authority", order: 3 },
+    { id: "account-abstraction", conceptId: "account-abstraction", parentPlacementId: "identity-accounts-authority", order: 4 },
+    { id: "authentication", conceptId: "authentication", parentPlacementId: "identity-accounts-authority", order: 5 },
+    { id: "authority", conceptId: "authority", parentPlacementId: "identity-accounts-authority", order: 6 },
+    { id: "machine-identity", conceptId: "machine-identity", parentPlacementId: "identity-accounts-authority", order: 7 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
@@ -1126,14 +1267,6 @@ export const mapKnowledge: MapKnowledgeModel = {
       order: 0,
       contextualNote: "Finality as a settlement property relevant to rollup systems.",
     },
-    { id: "identity", conceptId: "identity", parentPlacementId: "identity-accounts-authority", order: 0 },
-    {
-      id: "agent-identity",
-      conceptId: "agent-identity",
-      parentPlacementId: "identity",
-      order: 0,
-    },
-    { id: "authority", conceptId: "authority", parentPlacementId: "identity-accounts-authority", order: 1 },
     { id: "ai-agent", conceptId: "ai-agent", parentPlacementId: "ai-intelligent-systems", order: 0 },
   ],
   relationships: [

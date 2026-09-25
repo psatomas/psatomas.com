@@ -591,6 +591,86 @@ const STORAGE_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const STORAGE_L2 = STORAGE_TREE.flatMap(([, children]) => children);
 
+// 08 Identity, Accounts & Authority. Identity, Authority and Agent Identity
+// are the Phase 1 fixture's placements (IDs unchanged); Attestations is 03's
+// concept, Transaction Submission 05's, Signing 06's.
+const IDENTITY_LAYER: Array<[string, string, string]> = [
+  ["identity", "identity", "Identity"],
+  ["accounts", "accounts", "Accounts"],
+  ["wallets", "wallets", "Wallets"],
+  ["smart-accounts", "smart-accounts", "Smart Accounts"],
+  ["account-abstraction", "account-abstraction", "Account Abstraction"],
+  ["authentication", "authentication", "Authentication"],
+  ["authority", "authority", "Authority"],
+  ["machine-identity", "machine-identity", "Machine Identity"],
+];
+const IDENTITY_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["identity", [
+    ["addresses", "addresses", "Addresses"],
+    ["decentralized-identifiers", "decentralized-identifiers", "Decentralized Identifiers"],
+    ["credentials", "credentials", "Credentials"],
+    ["attestations-in-identity", "attestations", "Attestations"],
+    ["reputation", "reputation", "Reputation"],
+  ]],
+  ["accounts", [
+    ["externally-owned-accounts", "externally-owned-accounts", "Externally Owned Accounts"],
+    ["contract-accounts", "contract-accounts", "Contract Accounts"],
+    ["account-state", "account-state", "Account State"],
+    ["account-nonces", "account-nonces", "Account Nonces"],
+    ["account-permissions", "account-permissions", "Account Permissions"],
+    ["account-recovery", "account-recovery", "Account Recovery"],
+  ]],
+  ["wallets", [
+    ["key-management", "key-management", "Key Management"],
+    ["signing-in-wallets", "signing", "Signing"],
+    ["transaction-construction", "transaction-construction", "Transaction Construction"],
+    ["transaction-submission-in-wallets", "transaction-submission", "Transaction Submission"],
+    ["wallet-recovery", "wallet-recovery", "Wallet Recovery"],
+    ["wallet-security", "wallet-security", "Wallet Security"],
+  ]],
+  ["smart-accounts", [
+    ["programmable-accounts", "programmable-accounts", "Programmable Accounts"],
+    ["validation-logic", "validation-logic", "Validation Logic"],
+    ["execution-logic", "execution-logic", "Execution Logic"],
+    ["recovery-logic", "recovery-logic", "Recovery Logic"],
+    ["session-keys", "session-keys", "Session Keys"],
+    ["modular-accounts", "modular-accounts", "Modular Accounts"],
+  ]],
+  ["account-abstraction", [
+    ["user-operations", "user-operations", "User Operations"],
+    ["bundlers", "bundlers", "Bundlers"],
+    ["entry-points", "entry-points", "Entry Points"],
+    ["paymasters", "paymasters", "Paymasters"],
+    ["alternative-mempools", "alternative-mempools", "Alternative Mempools"],
+    ["gas-abstraction", "gas-abstraction", "Gas Abstraction"],
+  ]],
+  ["authentication", [
+    ["authentication-factors", "authentication-factors", "Authentication Factors"],
+    ["signature-authentication", "signature-authentication", "Signature Authentication"],
+    ["challenge-response", "challenge-response", "Challenge-Response"],
+    ["session-authentication", "session-authentication", "Session Authentication"],
+    ["credential-authentication", "credential-authentication", "Credential Authentication"],
+    ["authentication-policies", "authentication-policies", "Authentication Policies"],
+  ]],
+  ["authority", [
+    ["ownership", "ownership", "Ownership"],
+    ["roles", "roles", "Roles"],
+    ["capabilities", "capabilities", "Capabilities"],
+    ["delegation", "delegation", "Delegation"],
+    ["permission-models", "permission-models", "Permission Models"],
+    ["authority-boundaries", "authority-boundaries", "Authority Boundaries"],
+  ]],
+  ["machine-identity", [
+    ["agent-identity", "agent-identity", "Agent Identity"],
+    ["agent-credentials", "agent-credentials", "Agent Credentials"],
+    ["agent-reputation", "agent-reputation", "Agent Reputation"],
+    ["agent-authorization", "agent-authorization", "Agent Authorization"],
+    ["machine-credentials", "machine-credentials", "Machine Credentials"],
+    ["machine-authentication", "machine-authentication", "Machine Authentication"],
+  ]],
+];
+const IDENTITY_L2 = IDENTITY_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -607,6 +687,8 @@ const AUTHORED_TOPICS = new Set([
   ...CRYPTOGRAPHY_L2.map(([id]) => id),
   ...STORAGE_LAYER.map(([id]) => id),
   ...STORAGE_L2.map(([id]) => id),
+  ...IDENTITY_LAYER.map(([id]) => id),
+  ...IDENTITY_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -684,8 +766,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Ordering's 7 new L1 and 56 new L2 concepts, then Networks &
   // Infrastructure's 10 new L1 and 55 new L2 concepts, then Cryptography &
   // Proofs' 7 new L1 and 46 new L2 concepts, then Storage & Availability's
-  // 8 new L1 and 47 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47);
+  // 8 new L1 and 47 new L2 concepts, then Identity, Accounts & Authority's
+  // 6 new L1 and 43 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -698,9 +781,6 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
     scaling: "scaling-modular-systems",
     rollups: "scaling",
     "finality-in-rollups": "rollups",
-    identity: "identity-accounts-authority",
-    "agent-identity": "identity",
-    authority: "identity-accounts-authority",
     "ai-agent": "ai-intelligent-systems",
   });
   // Settlement and Economic Agency stay deliberately unplaced.
@@ -974,6 +1054,7 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     "reorganization-handling": ["reorganization-handling-in-indexers"],
     "commitment-schemes": ["commitment-schemes-in-cryptographic-commitments"],
     "content-addressing": ["content-addressing-in-storage-availability"],
+    attestations: ["attestations-in-identity"],
   };
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -994,6 +1075,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("consensus-ordering"), 10 + 58);
   assert.equal(subtreeOf("networks-infrastructure"), 10 + 58);
   assert.equal(subtreeOf("cryptography-proofs"), 8 + 48);
+  assert.equal(subtreeOf("storage-availability"), 9 + 51);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1133,7 +1215,10 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["synchronization", "reorganization-handling", "automation-networks"]);
   // Also placed in Storage & Availability.
-  const placedElsewhere: Record<string, string[]> = { "archive-nodes": ["archive-nodes-in-archival-storage"] };
+  const placedElsewhere: Record<string, string[]> = {
+    "archive-nodes": ["archive-nodes-in-archival-storage"],
+    "transaction-submission": ["transaction-submission-in-wallets"],
+  };
   for (const [id, conceptId] of [...NETWORKS_LAYER, ...NETWORKS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -1213,6 +1298,7 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
   const placedElsewhere: Record<string, string[]> = {
     "proof-generation": ["proof-generation-in-storage-proofs"],
     "proof-verification": ["proof-verification-in-storage-proofs"],
+    signing: ["signing-in-wallets"],
   };
   for (const [id, conceptId] of [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -1296,6 +1382,82 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...STORAGE_LAYER, ...STORAGE_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Identity, Accounts & Authority has exactly its eight L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("identity-accounts-authority").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    IDENTITY_LAYER,
+  );
+  for (const [parent, children] of IDENTITY_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of IDENTITY_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "identity-accounts-authority")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...IDENTITY_LAYER.map(([id]) => id), ...IDENTITY_L2.map(([id]) => id)].sort());
+  assert.equal(IDENTITY_L2.length, 47);
+});
+
+test("Identity, Accounts & Authority reuses Attestations, Signing and Transaction Submission", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // The fixture's placements keep their IDs; Agent Identity now sits under Machine Identity.
+  assert.equal(resolver.getPlacement("agent-identity")?.parentPlacementId, "machine-identity");
+  assert.equal(resolver.getPlacement("identity")?.parentPlacementId, "identity-accounts-authority");
+  assert.equal(resolver.getPlacement("authority")?.parentPlacementId, "identity-accounts-authority");
+  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity"]);
+  // Attestations: 03's concept, preferred here; Signing and Transaction Submission stay preferred at home.
+  assert.deepEqual(placementsOf("attestations"), ["attestations", "attestations-in-identity"]);
+  assert.equal(resolver.getConcept("attestations")?.preferredPlacementId, "attestations-in-identity");
+  assert.deepEqual(placementsOf("signing"), ["signing", "signing-in-wallets"]);
+  assert.equal(resolver.getConcept("signing")?.preferredPlacementId, "signing");
+  assert.deepEqual(placementsOf("transaction-submission"), ["transaction-submission", "transaction-submission-in-wallets"]);
+  assert.equal(resolver.getConcept("transaction-submission")?.preferredPlacementId, "transaction-submission");
+  // General concepts for later reuse, and agent/machine topics kept as their own concepts.
+  for (const conceptId of ["credentials", "reputation", "ownership", "delegation", "roles", "capabilities"]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
+  }
+  for (const [placementId, related] of [
+    ["agent-credentials", "credentials"],
+    ["machine-credentials", "credentials"],
+    ["agent-reputation", "reputation"],
+    ["machine-authentication", "authentication"],
+    ["agent-identity", "identity"],
+    ["account-recovery", "wallet-recovery"],
+    ["recovery-logic", "account-recovery"],
+    ["programmable-accounts", "smart-accounts"],
+    ["account-state", "contract-state"],
+    ["key-management", "key-pairs"],
+    ["signature-authentication", "signature-verification"],
+    ["alternative-mempools", "private-mempools"],
+    ["gas-abstraction", "gas"],
+    ["authority-boundaries", "trust-boundaries"],
+    ["account-permissions", "permission-models"],
+    ["session-authentication", "session-keys"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once; only Agent Identity keeps its existing content.
+  const shared = new Set(["attestations", "signing", "transaction-submission"]);
+  for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
+    if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 
