@@ -424,6 +424,86 @@ const NETWORKS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const NETWORKS_L2 = NETWORKS_TREE.flatMap(([, children]) => children);
 
+// 06 Cryptography & Proofs. Verifiable Computation and Computation Proofs are
+// 02's concepts, Commitment Schemes is 03's; Commitments is Cryptographic Commitments.
+const CRYPTOGRAPHY_LAYER: Array<[string, string, string]> = [
+  ["hash-functions", "hash-functions", "Hash Functions"],
+  ["digital-signatures", "digital-signatures", "Digital Signatures"],
+  ["cryptographic-commitments", "cryptographic-commitments", "Commitments"],
+  ["threshold-cryptography", "threshold-cryptography", "Threshold Cryptography"],
+  ["zero-knowledge-proofs", "zero-knowledge-proofs", "Zero-Knowledge Proofs"],
+  ["proof-systems", "proof-systems", "Proof Systems"],
+  ["verifiable-computation-in-cryptography-proofs", "verifiable-computation", "Verifiable Computation"],
+  ["privacy", "privacy", "Privacy"],
+];
+const CRYPTOGRAPHY_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["hash-functions", [
+    ["cryptographic-hash-functions", "cryptographic-hash-functions", "Cryptographic Hash Functions"],
+    ["hash-properties", "hash-properties", "Hash Properties"],
+    ["collision-resistance", "collision-resistance", "Collision Resistance"],
+    ["preimage-resistance", "preimage-resistance", "Preimage Resistance"],
+    ["domain-separation", "domain-separation", "Domain Separation"],
+    ["hash-based-data-structures", "hash-based-data-structures", "Hash-Based Data Structures"],
+  ]],
+  ["digital-signatures", [
+    ["key-pairs", "key-pairs", "Key Pairs"],
+    ["signing", "signing", "Signing"],
+    ["signature-verification", "signature-verification", "Signature Verification"],
+    ["signature-schemes", "signature-schemes", "Signature Schemes"],
+    ["signature-aggregation", "signature-aggregation", "Signature Aggregation"],
+    ["multisignatures", "multisignatures", "Multisignatures"],
+  ]],
+  ["cryptographic-commitments", [
+    ["commitment-schemes-in-cryptographic-commitments", "commitment-schemes", "Commitment Schemes"],
+    ["hiding", "hiding", "Hiding"],
+    ["binding", "binding", "Binding"],
+    ["opening", "opening", "Opening"],
+    ["polynomial-commitments", "polynomial-commitments", "Polynomial Commitments"],
+    ["vector-commitments", "vector-commitments", "Vector Commitments"],
+  ]],
+  ["threshold-cryptography", [
+    ["secret-sharing", "secret-sharing", "Secret Sharing"],
+    ["threshold-signatures", "threshold-signatures", "Threshold Signatures"],
+    ["distributed-key-generation", "distributed-key-generation", "Distributed Key Generation"],
+    ["threshold-decryption", "threshold-decryption", "Threshold Decryption"],
+    ["multi-party-computation", "multi-party-computation", "Multi-Party Computation"],
+    ["quorum-cryptography", "quorum-cryptography", "Quorum Cryptography"],
+  ]],
+  ["zero-knowledge-proofs", [
+    ["zero-knowledge", "zero-knowledge", "Zero-Knowledge"],
+    ["completeness", "completeness", "Completeness"],
+    ["soundness", "soundness", "Soundness"],
+    ["provers", "provers", "Provers"],
+    ["verifiers", "verifiers", "Verifiers"],
+    ["witnesses", "witnesses", "Witnesses"],
+  ]],
+  ["proof-systems", [
+    ["interactive-proofs", "interactive-proofs", "Interactive Proofs"],
+    ["non-interactive-proofs", "non-interactive-proofs", "Non-Interactive Proofs"],
+    ["snarks", "snarks", "SNARKs"],
+    ["starks", "starks", "STARKs"],
+    ["recursive-proofs", "recursive-proofs", "Recursive Proofs"],
+    ["proof-composition", "proof-composition", "Proof Composition"],
+  ]],
+  ["verifiable-computation-in-cryptography-proofs", [
+    ["computation-proofs-in-cryptography-proofs", "computation-proofs", "Computation Proofs"],
+    ["verifiable-execution", "verifiable-execution", "Verifiable Execution"],
+    ["proof-generation", "proof-generation", "Proof Generation"],
+    ["proof-verification", "proof-verification", "Proof Verification"],
+    ["succinct-verification", "succinct-verification", "Succinct Verification"],
+    ["proof-carrying-computation", "proof-carrying-computation", "Proof-Carrying Computation"],
+  ]],
+  ["privacy", [
+    ["confidentiality", "confidentiality", "Confidentiality"],
+    ["anonymity", "anonymity", "Anonymity"],
+    ["unlinkability", "unlinkability", "Unlinkability"],
+    ["selective-disclosure", "selective-disclosure", "Selective Disclosure"],
+    ["private-computation", "private-computation", "Private Computation"],
+    ["privacy-preserving-protocols", "privacy-preserving-protocols", "Privacy-Preserving Protocols"],
+  ]],
+];
+const CRYPTOGRAPHY_L2 = CRYPTOGRAPHY_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -436,6 +516,8 @@ const AUTHORED_TOPICS = new Set([
   ...CONSENSUS_L2.map(([id]) => id),
   ...NETWORKS_LAYER.map(([id]) => id),
   ...NETWORKS_L2.map(([id]) => id),
+  ...CRYPTOGRAPHY_LAYER.map(([id]) => id),
+  ...CRYPTOGRAPHY_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -511,8 +593,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // concepts, Computation & Execution's 7 L1 and 38 new L2 concepts, then
   // State & Data's 9 new L1 and 58 new L2 concepts, then Consensus &
   // Ordering's 7 new L1 and 56 new L2 concepts, then Networks &
-  // Infrastructure's 10 new L1 and 55 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55);
+  // Infrastructure's 10 new L1 and 55 new L2 concepts, then Cryptography &
+  // Proofs' 7 new L1 and 46 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -725,9 +808,13 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (conceptId === "verification") continue;
     assert.equal(id, conceptId);
-    // Transaction Ordering is also placed under Consensus & Ordering's Block Building.
-    const elsewhere = conceptId === "transaction-ordering" ? ["transaction-ordering-in-block-building"] : [];
-    assert.deepEqual(placementsOf(conceptId), [id, ...elsewhere].sort(), conceptId);
+    // Later domains place some of these again.
+    const elsewhere: Record<string, string[]> = {
+      "transaction-ordering": ["transaction-ordering-in-block-building"],
+      "verifiable-computation": ["verifiable-computation-in-cryptography-proofs"],
+      "computation-proofs": ["computation-proofs-in-cryptography-proofs"],
+    };
+    assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)];
   assert.equal(new Set(ids).size, ids.length);
@@ -794,6 +881,7 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
   const placedElsewhere: Record<string, string[]> = {
     synchronization: ["synchronization-in-nodes"],
     "reorganization-handling": ["reorganization-handling-in-indexers"],
+    "commitment-schemes": ["commitment-schemes-in-cryptographic-commitments"],
   };
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -812,6 +900,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("computation-execution"), 7 + 39);
   assert.equal(subtreeOf("state-data"), 10 + 59);
   assert.equal(subtreeOf("consensus-ordering"), 10 + 58);
+  assert.equal(subtreeOf("networks-infrastructure"), 10 + 58);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -957,6 +1046,81 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...NETWORKS_LAYER, ...NETWORKS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Cryptography & Proofs has exactly its eight L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("cryptography-proofs").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    CRYPTOGRAPHY_LAYER,
+  );
+  for (const [parent, children] of CRYPTOGRAPHY_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of CRYPTOGRAPHY_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "cryptography-proofs")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...CRYPTOGRAPHY_LAYER.map(([id]) => id), ...CRYPTOGRAPHY_L2.map(([id]) => id)].sort());
+  assert.equal(CRYPTOGRAPHY_L2.length, 48);
+});
+
+test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs and Commitment Schemes", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Verifiable Computation: one concept, an L1 topic in 02 and 06; each placement owns its layer.
+  assert.deepEqual(placementsOf("verifiable-computation"), ["verifiable-computation", "verifiable-computation-in-cryptography-proofs"]);
+  assert.equal(resolver.getConcept("verifiable-computation")?.preferredPlacementId, "verifiable-computation-in-cryptography-proofs");
+  assert.deepEqual(resolver.getChildren("verifiable-computation").map((placement) => placement.id), [
+    "computation-integrity",
+    "execution-traces",
+    "computation-commitments",
+    "computation-proofs",
+    "verification-in-verifiable-computation",
+  ]);
+  assert.equal(resolver.getChildren("verifiable-computation-in-cryptography-proofs").length, 6);
+  // Computation Proofs and Commitment Schemes: one concept each, placed again here and preferred here.
+  assert.deepEqual(placementsOf("computation-proofs"), ["computation-proofs", "computation-proofs-in-cryptography-proofs"]);
+  assert.equal(resolver.getConcept("computation-proofs")?.preferredPlacementId, "computation-proofs-in-cryptography-proofs");
+  assert.deepEqual(placementsOf("commitment-schemes"), ["commitment-schemes", "commitment-schemes-in-cryptographic-commitments"]);
+  assert.equal(resolver.getConcept("commitment-schemes")?.preferredPlacementId, "commitment-schemes-in-cryptographic-commitments");
+  // Commitments is Cryptographic Commitments in contextual wording.
+  assert.equal(resolver.getConcept("cryptographic-commitments")?.title, "Cryptographic Commitments");
+  assert.equal(resolver.getConcept("commitments"), undefined);
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["proof-verification", "verification"],
+    ["signature-verification", "verification"],
+    ["succinct-verification", "verification"],
+    ["verifiers", "verification"],
+    ["quorum-cryptography", "quorums"],
+    ["cryptographic-hash-functions", "hash-functions"],
+    ["zero-knowledge", "zero-knowledge-proofs"],
+    ["verifiable-execution", "verifiable-computation"],
+    ["multi-party-computation", "private-computation"],
+    ["polynomial-commitments", "data-commitments"],
+    ["vector-commitments", "computation-commitments"],
+    ["hash-based-data-structures", "merkle-trees"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["verifiable-computation", "computation-proofs", "commitment-schemes"]);
+  for (const [id, conceptId] of [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

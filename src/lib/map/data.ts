@@ -330,6 +330,64 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "automation-policies",
     "automation-networks",
   ],
+  // 06 Cryptography & Proofs
+  "hash-functions": [
+    "cryptographic-hash-functions",
+    "hash-properties",
+    "collision-resistance",
+    "preimage-resistance",
+    "domain-separation",
+    "hash-based-data-structures",
+  ],
+  "digital-signatures": [
+    "key-pairs",
+    "signing",
+    "signature-verification",
+    "signature-schemes",
+    "signature-aggregation",
+    "multisignatures",
+  ],
+  "cryptographic-commitments": [
+    { placementId: "commitment-schemes-in-cryptographic-commitments", conceptId: "commitment-schemes" },
+    "hiding",
+    "binding",
+    "opening",
+    "polynomial-commitments",
+    "vector-commitments",
+  ],
+  "threshold-cryptography": [
+    "secret-sharing",
+    "threshold-signatures",
+    "distributed-key-generation",
+    "threshold-decryption",
+    "multi-party-computation",
+    "quorum-cryptography",
+  ],
+  "zero-knowledge-proofs": ["zero-knowledge", "completeness", "soundness", "provers", "verifiers", "witnesses"],
+  "proof-systems": [
+    "interactive-proofs",
+    "non-interactive-proofs",
+    "snarks",
+    "starks",
+    "recursive-proofs",
+    "proof-composition",
+  ],
+  "verifiable-computation-in-cryptography-proofs": [
+    { placementId: "computation-proofs-in-cryptography-proofs", conceptId: "computation-proofs" },
+    "verifiable-execution",
+    "proof-generation",
+    "proof-verification",
+    "succinct-verification",
+    "proof-carrying-computation",
+  ],
+  privacy: [
+    "confidentiality",
+    "anonymity",
+    "unlinkability",
+    "selective-disclosure",
+    "private-computation",
+    "privacy-preserving-protocols",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -344,8 +402,8 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * The complete L0 layer; Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
- * and Networks & Infrastructure; and a deliberately small Phase 1 proof
- * fixture re-homed beneath its L0 domains.
+ * Networks & Infrastructure, and Cryptography & Proofs; and a deliberately
+ * small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -426,7 +484,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "transactions", slug: "transactions", title: "Transactions" },
     { id: "virtual-machines", slug: "virtual-machines", title: "Virtual Machines" },
     { id: "smart-contracts", slug: "smart-contracts", title: "Smart Contracts" },
-    { id: "verifiable-computation", slug: "verifiable-computation", title: "Verifiable Computation" },
+    // Also an L1 topic of 06 Cryptography & Proofs, the home of proofs; preferred there.
+    {
+      id: "verifiable-computation",
+      slug: "verifiable-computation",
+      title: "Verifiable Computation",
+      preferredPlacementId: "verifiable-computation-in-cryptography-proofs",
+    },
     { id: "off-chain-computation", slug: "off-chain-computation", title: "Off-Chain Computation" },
     { id: "resource-accounting", slug: "resource-accounting", title: "Resource Accounting" },
     // L2 topics (placements in L2_TOPICS). Deterministic Execution is an
@@ -467,7 +531,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "computation-integrity", slug: "computation-integrity", title: "Computation Integrity" },
     { id: "execution-traces", slug: "execution-traces", title: "Execution Traces" },
     { id: "computation-commitments", slug: "computation-commitments", title: "Computation Commitments" },
-    { id: "computation-proofs", slug: "computation-proofs", title: "Computation Proofs" },
+    // Also under 06's Verifiable Computation; preferred there.
+    {
+      id: "computation-proofs",
+      slug: "computation-proofs",
+      title: "Computation Proofs",
+      preferredPlacementId: "computation-proofs-in-cryptography-proofs",
+    },
     { id: "off-chain-execution", slug: "off-chain-execution", title: "Off-Chain Execution" },
     { id: "on-chain-verification", slug: "on-chain-verification", title: "On-Chain Verification" },
     { id: "trusted-execution", slug: "trusted-execution", title: "Trusted Execution" },
@@ -512,7 +582,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "merkle-trees", slug: "merkle-trees", title: "Merkle Trees" },
     { id: "merkle-patricia-tries", slug: "merkle-patricia-tries", title: "Merkle Patricia Tries" },
     { id: "verkle-trees", slug: "verkle-trees", title: "Verkle Trees" },
-    { id: "commitment-schemes", slug: "commitment-schemes", title: "Commitment Schemes" },
+    // The cryptographic primitive; also under 06's Commitments, preferred there.
+    {
+      id: "commitment-schemes",
+      slug: "commitment-schemes",
+      title: "Commitment Schemes",
+      preferredPlacementId: "commitment-schemes-in-cryptographic-commitments",
+    },
     { id: "state-proofs", slug: "state-proofs", title: "State Proofs" },
     { id: "state-history", slug: "state-history", title: "State History" },
     { id: "historical-queries", slug: "historical-queries", title: "Historical Queries" },
@@ -717,6 +793,69 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Networks of nodes that watch conditions and submit transactions: one
     // concept, also placed as "Keeper Networks" under Keepers.
     { id: "automation-networks", slug: "automation-networks", title: "Automation Networks", preferredPlacementId: "automation-networks" },
+    // 06 Cryptography & Proofs: L1 topics (Verifiable Computation is 02's concept).
+    { id: "hash-functions", slug: "hash-functions", title: "Hash Functions" },
+    { id: "digital-signatures", slug: "digital-signatures", title: "Digital Signatures" },
+    // Shown as "Commitments"; the bare term also names credible commitment in
+    // mechanism design and 04's preconfirmation commitments.
+    { id: "cryptographic-commitments", slug: "cryptographic-commitments", title: "Cryptographic Commitments" },
+    { id: "threshold-cryptography", slug: "threshold-cryptography", title: "Threshold Cryptography" },
+    { id: "zero-knowledge-proofs", slug: "zero-knowledge-proofs", title: "Zero-Knowledge Proofs" },
+    { id: "proof-systems", slug: "proof-systems", title: "Proof Systems" },
+    { id: "privacy", slug: "privacy", title: "Privacy" },
+    // L2 topics (placements in L2_TOPICS). Cryptographic Hash Functions is the
+    // family with security properties, within the general Hash Functions.
+    { id: "cryptographic-hash-functions", slug: "cryptographic-hash-functions", title: "Cryptographic Hash Functions" },
+    { id: "hash-properties", slug: "hash-properties", title: "Hash Properties" },
+    { id: "collision-resistance", slug: "collision-resistance", title: "Collision Resistance" },
+    { id: "preimage-resistance", slug: "preimage-resistance", title: "Preimage Resistance" },
+    { id: "domain-separation", slug: "domain-separation", title: "Domain Separation" },
+    { id: "hash-based-data-structures", slug: "hash-based-data-structures", title: "Hash-Based Data Structures" },
+    // Signature, Proof and Succinct Verification are specific checks, not
+    // Foundations' Verification (checking a claim instead of trusting).
+    { id: "key-pairs", slug: "key-pairs", title: "Key Pairs" },
+    { id: "signing", slug: "signing", title: "Signing" },
+    { id: "signature-verification", slug: "signature-verification", title: "Signature Verification" },
+    { id: "signature-schemes", slug: "signature-schemes", title: "Signature Schemes" },
+    { id: "signature-aggregation", slug: "signature-aggregation", title: "Signature Aggregation" },
+    { id: "multisignatures", slug: "multisignatures", title: "Multisignatures" },
+    { id: "hiding", slug: "hiding", title: "Hiding" },
+    { id: "binding", slug: "binding", title: "Binding" },
+    { id: "opening", slug: "opening", title: "Opening" },
+    { id: "polynomial-commitments", slug: "polynomial-commitments", title: "Polynomial Commitments" },
+    { id: "vector-commitments", slug: "vector-commitments", title: "Vector Commitments" },
+    // Quorum Cryptography (a quorum of key holders) is not 04's Quorums.
+    { id: "secret-sharing", slug: "secret-sharing", title: "Secret Sharing" },
+    { id: "threshold-signatures", slug: "threshold-signatures", title: "Threshold Signatures" },
+    { id: "distributed-key-generation", slug: "distributed-key-generation", title: "Distributed Key Generation" },
+    { id: "threshold-decryption", slug: "threshold-decryption", title: "Threshold Decryption" },
+    { id: "multi-party-computation", slug: "multi-party-computation", title: "Multi-Party Computation" },
+    { id: "quorum-cryptography", slug: "quorum-cryptography", title: "Quorum Cryptography" },
+    // Zero-Knowledge is the property; Zero-Knowledge Proofs have it. Verifiers
+    // are a role, not the act of Verification.
+    { id: "zero-knowledge", slug: "zero-knowledge", title: "Zero-Knowledge" },
+    { id: "completeness", slug: "completeness", title: "Completeness" },
+    { id: "soundness", slug: "soundness", title: "Soundness" },
+    { id: "provers", slug: "provers", title: "Provers" },
+    { id: "verifiers", slug: "verifiers", title: "Verifiers" },
+    { id: "witnesses", slug: "witnesses", title: "Witnesses" },
+    { id: "interactive-proofs", slug: "interactive-proofs", title: "Interactive Proofs" },
+    { id: "non-interactive-proofs", slug: "non-interactive-proofs", title: "Non-Interactive Proofs" },
+    { id: "snarks", slug: "snarks", title: "SNARKs" },
+    { id: "starks", slug: "starks", title: "STARKs" },
+    { id: "recursive-proofs", slug: "recursive-proofs", title: "Recursive Proofs" },
+    { id: "proof-composition", slug: "proof-composition", title: "Proof Composition" },
+    { id: "verifiable-execution", slug: "verifiable-execution", title: "Verifiable Execution" },
+    { id: "proof-generation", slug: "proof-generation", title: "Proof Generation" },
+    { id: "proof-verification", slug: "proof-verification", title: "Proof Verification" },
+    { id: "succinct-verification", slug: "succinct-verification", title: "Succinct Verification" },
+    { id: "proof-carrying-computation", slug: "proof-carrying-computation", title: "Proof-Carrying Computation" },
+    { id: "confidentiality", slug: "confidentiality", title: "Confidentiality" },
+    { id: "anonymity", slug: "anonymity", title: "Anonymity" },
+    { id: "unlinkability", slug: "unlinkability", title: "Unlinkability" },
+    { id: "selective-disclosure", slug: "selective-disclosure", title: "Selective Disclosure" },
+    { id: "private-computation", slug: "private-computation", title: "Private Computation" },
+    { id: "privacy-preserving-protocols", slug: "privacy-preserving-protocols", title: "Privacy-Preserving Protocols" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -779,6 +918,26 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "bots", conceptId: "bots", parentPlacementId: "networks-infrastructure", order: 7 },
     { id: "monitoring", conceptId: "monitoring", parentPlacementId: "networks-infrastructure", order: 8 },
     { id: "automation", conceptId: "automation", parentPlacementId: "networks-infrastructure", order: 9 },
+    // 06 Cryptography & Proofs: L1 topics.
+    { id: "hash-functions", conceptId: "hash-functions", parentPlacementId: "cryptography-proofs", order: 0 },
+    { id: "digital-signatures", conceptId: "digital-signatures", parentPlacementId: "cryptography-proofs", order: 1 },
+    {
+      id: "cryptographic-commitments",
+      conceptId: "cryptographic-commitments",
+      parentPlacementId: "cryptography-proofs",
+      order: 2,
+      contextualLabel: "Commitments",
+    },
+    { id: "threshold-cryptography", conceptId: "threshold-cryptography", parentPlacementId: "cryptography-proofs", order: 3 },
+    { id: "zero-knowledge-proofs", conceptId: "zero-knowledge-proofs", parentPlacementId: "cryptography-proofs", order: 4 },
+    { id: "proof-systems", conceptId: "proof-systems", parentPlacementId: "cryptography-proofs", order: 5 },
+    {
+      id: "verifiable-computation-in-cryptography-proofs",
+      conceptId: "verifiable-computation",
+      parentPlacementId: "cryptography-proofs",
+      order: 6,
+    },
+    { id: "privacy", conceptId: "privacy", parentPlacementId: "cryptography-proofs", order: 7 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
