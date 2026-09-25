@@ -84,6 +84,9 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
         type="button"
         aria-pressed={focused}
         aria-describedby={focusHintId}
+        // Hierarchy and parent context are spoken via the accessible name, never
+        // as hidden text that could surface when styles are unavailable.
+        aria-label={region ? undefined : `${row.label}${parentLabel ? ` in ${parentLabel}` : ""}, level ${row.depth + 1}`}
         onClick={() => toggleFocus(row.placementId)}
         className={`group min-w-0 flex-1 px-5 text-left [overflow-wrap:anywhere] sm:px-6 ${
           region ? "py-4" : "py-3.5"
@@ -109,7 +112,6 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
         >
           {row.label}
         </span>
-        {parentLabel ? <span className="sr-only"> in {parentLabel}</span> : null}
       </button>
     );
   }
@@ -146,9 +148,11 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
 
       {/* Regions are separated by whitespace; rows inside a region stay
           connected. Every row shares the region's full width at any depth. */}
-      <ol aria-label="Protocol Engineering regions" className="flex flex-col gap-10 sm:gap-14">
+      {/* ARIA lists rather than <ol>/<ul>: list semantics without native
+          markers, so no numbering can appear even without styles. */}
+      <div role="list" aria-label="Protocol Engineering regions" className="flex flex-col gap-10 sm:gap-14">
         {regions.map(({ header, rows }) => (
-          <li key={header.placementId} className="border border-border">
+          <div role="listitem" key={header.placementId} className="border border-border">
             <div
               data-placement-id={header.placementId}
               data-concept-id={header.conceptId}
@@ -165,10 +169,11 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
             ) : null}
 
             {rows.length > 0 ? (
-              <ol className="border-t border-border">
+              <div role="list" className="border-t border-border">
                 {rows.map((row) => (
                   <Fragment key={row.placementId}>
-                    <li
+                    <div
+                      role="listitem"
                       data-placement-id={row.placementId}
                       data-concept-id={row.conceptId}
                       data-depth={row.depth}
@@ -176,23 +181,21 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
                         row.placementId === focusedPlacementId ? FOCUSED_ROW : ""
                       }`}
                     >
-                      {/* Hierarchy stays available to assistive technology without visible depth markers. */}
-                      <span className="sr-only">Level {row.depth + 1}: </span>
                       {renderFocusControl(row, false)}
                       {renderDisclosureControl(row)}
-                    </li>
+                    </div>
                     {showsExposition(row) ? (
-                      <li>
+                      <div role="listitem">
                         <ConceptExposition id={expositionId(row)} conceptId={row.conceptId} label={row.label} />
-                      </li>
+                      </div>
                     ) : null}
                   </Fragment>
                 ))}
-              </ol>
+              </div>
             ) : null}
-          </li>
+          </div>
         ))}
-      </ol>
+      </div>
     </div>
   );
 }
@@ -225,9 +228,9 @@ function ContextTrail({
         <>
           {/* Segments wrap onto further lines (and long labels wrap within
               themselves) so any depth stays inside the reading width. */}
-          <ol className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+          <div role="list" className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
             {context.map((step, index) => (
-              <li key={step.placementId} className="flex min-w-0 items-baseline gap-2">
+              <div role="listitem" key={step.placementId} className="flex min-w-0 items-baseline gap-2">
                 {index > 0 ? (
                   <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
                     /
@@ -246,9 +249,9 @@ function ContextTrail({
                     {step.label}
                   </button>
                 )}
-              </li>
+              </div>
             ))}
-          </ol>
+          </div>
           <button
             type="button"
             onClick={() => onNavigate(null)}
