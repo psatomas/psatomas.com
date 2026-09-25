@@ -1013,6 +1013,133 @@ const MARKETS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const MARKETS_L2 = MARKETS_TREE.flatMap(([, children]) => children);
 
+// 12 MEV & Execution Markets. Transaction Ordering (02) and Builders (04) are
+// L1 topics here too; Block Construction, Transaction Selection, Private
+// Mempools and Inclusion Guarantees (04) and Auction Clearing (10) are placed again.
+const MEV_LAYER: Array<[string, string, string]> = [
+  ["mev", "mev", "MEV"],
+  ["searchers", "searchers", "Searchers"],
+  ["arbitrage", "arbitrage", "Arbitrage"],
+  ["liquidation-mev", "liquidation-mev", "Liquidation MEV"],
+  ["sandwiching", "sandwiching", "Sandwiching"],
+  ["transaction-ordering-in-mev-execution-markets", "transaction-ordering", "Transaction Ordering"],
+  ["bundles", "bundles", "Bundles"],
+  ["builders-in-mev-execution-markets", "builders", "Builders"],
+  ["blockspace-markets", "blockspace-markets", "Blockspace Markets"],
+  ["order-flow", "order-flow", "Order Flow"],
+  ["mev-auctions", "mev-auctions", "MEV Auctions"],
+  ["private-execution", "private-execution", "Private Execution"],
+  ["mev-mitigation", "mev-mitigation", "MEV Mitigation"],
+];
+const MEV_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["mev", [
+    ["mev-sources", "mev-sources", "MEV Sources"],
+    ["mev-opportunities", "mev-opportunities", "MEV Opportunities"],
+    ["mev-extraction", "mev-extraction", "MEV Extraction"],
+    ["mev-supply-chain", "mev-supply-chain", "MEV Supply Chain"],
+    ["toxic-mev", "toxic-mev", "Toxic MEV"],
+    ["non-toxic-mev", "non-toxic-mev", "Non-Toxic MEV"],
+  ]],
+  ["searchers", [
+    ["search-strategies", "search-strategies", "Search Strategies"],
+    ["opportunity-detection", "opportunity-detection", "Opportunity Detection"],
+    ["transaction-simulation", "transaction-simulation", "Transaction Simulation"],
+    ["bundle-construction", "bundle-construction", "Bundle Construction"],
+    ["searcher-infrastructure", "searcher-infrastructure", "Searcher Infrastructure"],
+    ["searcher-competition", "searcher-competition", "Searcher Competition"],
+  ]],
+  ["arbitrage", [
+    ["dex-arbitrage", "dex-arbitrage", "DEX Arbitrage"],
+    ["cross-market-arbitrage", "cross-market-arbitrage", "Cross-Market Arbitrage"],
+    ["triangular-arbitrage", "triangular-arbitrage", "Triangular Arbitrage"],
+    ["atomic-arbitrage", "atomic-arbitrage", "Atomic Arbitrage"],
+    ["arbitrage-paths", "arbitrage-paths", "Arbitrage Paths"],
+    ["arbitrage-profit", "arbitrage-profit", "Arbitrage Profit"],
+  ]],
+  ["liquidation-mev", [
+    ["liquidation-opportunities", "liquidation-opportunities", "Liquidation Opportunities"],
+    ["liquidation-searchers", "liquidation-searchers", "Liquidation Searchers"],
+    ["liquidation-transactions", "liquidation-transactions", "Liquidation Transactions"],
+    ["liquidation-competition", "liquidation-competition", "Liquidation Competition"],
+    ["liquidation-profit", "liquidation-profit", "Liquidation Profit"],
+    ["liquidation-risk", "liquidation-risk", "Liquidation Risk"],
+  ]],
+  ["sandwiching", [
+    ["sandwich-attacks", "sandwich-attacks", "Sandwich Attacks"],
+    ["front-running", "front-running", "Front-Running"],
+    ["back-running", "back-running", "Back-Running"],
+    ["victim-transactions", "victim-transactions", "Victim Transactions"],
+    ["price-impact", "price-impact", "Price Impact"],
+    ["slippage-exploitation", "slippage-exploitation", "Slippage Exploitation"],
+  ]],
+  ["transaction-ordering-in-mev-execution-markets", [
+    ["ordering-rights", "ordering-rights", "Ordering Rights"],
+    ["ordering-policies", "ordering-policies", "Ordering Policies"],
+    ["priority-ordering", "priority-ordering", "Priority Ordering"],
+    ["time-ordering", "time-ordering", "Time Ordering"],
+    ["fair-ordering", "fair-ordering", "Fair Ordering"],
+    ["ordering-manipulation", "ordering-manipulation", "Ordering Manipulation"],
+  ]],
+  ["bundles", [
+    ["transaction-bundles", "transaction-bundles", "Transaction Bundles"],
+    ["bundle-ordering", "bundle-ordering", "Bundle Ordering"],
+    ["bundle-atomicity", "bundle-atomicity", "Bundle Atomicity"],
+    ["bundle-simulation", "bundle-simulation", "Bundle Simulation"],
+    ["bundle-submission", "bundle-submission", "Bundle Submission"],
+    ["bundle-inclusion", "bundle-inclusion", "Bundle Inclusion"],
+  ]],
+  ["builders-in-mev-execution-markets", [
+    ["block-construction-in-builders", "block-construction", "Block Construction"],
+    ["transaction-selection-in-builders", "transaction-selection", "Transaction Selection"],
+    ["bundle-selection", "bundle-selection", "Bundle Selection"],
+    ["block-optimization", "block-optimization", "Block Optimization"],
+    ["builder-strategies", "builder-strategies", "Builder Strategies"],
+    ["builder-competition", "builder-competition", "Builder Competition"],
+  ]],
+  ["blockspace-markets", [
+    ["blockspace", "blockspace", "Blockspace"],
+    ["blockspace-demand", "blockspace-demand", "Blockspace Demand"],
+    ["blockspace-supply", "blockspace-supply", "Blockspace Supply"],
+    ["blockspace-pricing", "blockspace-pricing", "Blockspace Pricing"],
+    ["priority-auctions", "priority-auctions", "Priority Auctions"],
+    ["inclusion-markets", "inclusion-markets", "Inclusion Markets"],
+  ]],
+  ["order-flow", [
+    ["public-order-flow", "public-order-flow", "Public Order Flow"],
+    ["private-order-flow", "private-order-flow", "Private Order Flow"],
+    ["order-flow-auctions", "order-flow-auctions", "Order Flow Auctions"],
+    ["order-flow-payments", "order-flow-payments", "Order Flow Payments"],
+    ["exclusive-order-flow", "exclusive-order-flow", "Exclusive Order Flow"],
+    ["order-flow-competition", "order-flow-competition", "Order Flow Competition"],
+  ]],
+  ["mev-auctions", [
+    ["mev-bids", "mev-bids", "MEV Bids"],
+    ["builder-auctions", "builder-auctions", "Builder Auctions"],
+    ["auction-participants", "auction-participants", "Auction Participants"],
+    ["auction-rules", "auction-rules", "Auction Rules"],
+    ["auction-clearing-in-mev-auctions", "auction-clearing", "Auction Clearing"],
+    ["auction-revenue", "auction-revenue", "Auction Revenue"],
+  ]],
+  ["private-execution", [
+    ["private-transactions", "private-transactions", "Private Transactions"],
+    ["private-mempools-in-private-execution", "private-mempools", "Private Mempools"],
+    ["private-relays", "private-relays", "Private Relays"],
+    ["protected-order-flow", "protected-order-flow", "Protected Order Flow"],
+    ["mev-protection", "mev-protection", "MEV Protection"],
+    ["execution-privacy", "execution-privacy", "Execution Privacy"],
+  ]],
+  ["mev-mitigation", [
+    ["mev-redistribution", "mev-redistribution", "MEV Redistribution"],
+    ["mev-smoothing", "mev-smoothing", "MEV Smoothing"],
+    ["encrypted-mempools", "encrypted-mempools", "Encrypted Mempools"],
+    ["commit-reveal", "commit-reveal", "Commit-Reveal"],
+    ["batch-execution", "batch-execution", "Batch Execution"],
+    ["inclusion-guarantees-in-mev-mitigation", "inclusion-guarantees", "Inclusion Guarantees"],
+    ["ordering-guarantees", "ordering-guarantees", "Ordering Guarantees"],
+  ]],
+];
+const MEV_L2 = MEV_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -1037,6 +1164,8 @@ const AUTHORED_TOPICS = new Set([
   ...ECONOMICS_L2.map(([id]) => id),
   ...MARKETS_LAYER.map(([id]) => id),
   ...MARKETS_L2.map(([id]) => id),
+  ...MEV_LAYER.map(([id]) => id),
+  ...MEV_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -1118,8 +1247,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // 6 new L1 and 43 new L2 concepts, then Oracles & External Reality's 11
   // new L1 and 61 new L2 concepts, then Economics & Mechanism Design's 10 new
   // L1 and 65 new L2 concepts, then Markets & Financial Protocols' 12 new L1
-  // and 69 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69);
+  // and 69 new L2 concepts, then MEV & Execution Markets' 11 new L1 and 74
+  // new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1336,7 +1466,7 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
     assert.equal(id, conceptId);
     // Later domains place some of these again.
     const elsewhere: Record<string, string[]> = {
-      "transaction-ordering": ["transaction-ordering-in-block-building"],
+      "transaction-ordering": ["transaction-ordering-in-block-building", "transaction-ordering-in-mev-execution-markets"],
       "verifiable-computation": ["verifiable-computation-in-cryptography-proofs"],
       "computation-proofs": ["computation-proofs-in-cryptography-proofs"],
     };
@@ -1439,6 +1569,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("identity-accounts-authority"), 8 + 47);
   assert.equal(subtreeOf("oracles-external-reality"), 12 + 70);
   assert.equal(subtreeOf("economics-mechanism-design"), 11 + 66);
+  assert.equal(subtreeOf("markets-financial-protocols"), 12 + 72);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1478,7 +1609,11 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   assert.equal(resolver.getConcept("censorship-resistance")?.preferredPlacementId, "censorship-resistance-in-consensus-ordering");
   assert.deepEqual(resolver.getChildren("censorship-resistance"), []);
   // Transaction Ordering: 02's concept, also under Block Building; preferred in the ordering domain.
-  assert.deepEqual(placementsOf("transaction-ordering"), ["transaction-ordering", "transaction-ordering-in-block-building"]);
+  assert.deepEqual(placementsOf("transaction-ordering"), [
+    "transaction-ordering",
+    "transaction-ordering-in-block-building",
+    "transaction-ordering-in-mev-execution-markets",
+  ]);
   assert.equal(resolver.getConcept("transaction-ordering")?.preferredPlacementId, "transaction-ordering-in-block-building");
   // Proposers: one role under Validators and Proposer-Builder Separation.
   assert.deepEqual(placementsOf("proposers"), ["proposers-in-proposer-builder-separation", "proposers-in-validators"]);
@@ -1504,11 +1639,19 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   }
   // Every other topic is a new concept placed once; none gains exposition (Finality keeps its own).
   const shared = new Set(["consensus", "finality", "censorship-resistance", "transaction-ordering", "proposers"]);
+  // Also placed in MEV & Execution Markets.
+  const placedElsewhere: Record<string, string[]> = {
+    builders: ["builders-in-mev-execution-markets"],
+    "block-construction": ["block-construction-in-builders"],
+    "transaction-selection": ["transaction-selection-in-builders"],
+    "private-mempools": ["private-mempools-in-private-execution"],
+    "inclusion-guarantees": ["inclusion-guarantees-in-mev-mitigation"],
+  };
   for (const [id, conceptId] of [...CONSENSUS_LAYER, ...CONSENSUS_L2]) {
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
@@ -1991,7 +2134,10 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["strategic-behavior", "penalties"]);
   // Also placed in Markets & Financial Protocols.
-  const placedElsewhere: Record<string, string[]> = { bids: ["bids-in-order-books"] };
+  const placedElsewhere: Record<string, string[]> = {
+    bids: ["bids-in-order-books"],
+    "auction-clearing": ["auction-clearing-in-mev-auctions"],
+  };
   for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -2072,6 +2218,94 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...MARKETS_LAYER, ...MARKETS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("MEV & Execution Markets has exactly its thirteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("mev-execution-markets").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    MEV_LAYER,
+  );
+  for (const [parent, children] of MEV_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of MEV_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "mev-execution-markets")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...MEV_LAYER.map(([id]) => id), ...MEV_L2.map(([id]) => id)].sort());
+  assert.equal(MEV_L2.length, 79);
+});
+
+test("MEV & Execution Markets reuses ordering, building and auction concepts and keeps MEV-specific ones distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // L1 reuse: each placement owns its own layer; preferred placements are unchanged.
+  assert.equal(resolver.getConcept("transaction-ordering")?.preferredPlacementId, "transaction-ordering-in-block-building");
+  assert.deepEqual(resolver.getChildren("transaction-ordering-in-block-building"), []);
+  assert.equal(resolver.getChildren("transaction-ordering-in-mev-execution-markets").length, 6);
+  assert.deepEqual(placementsOf("builders"), ["builders", "builders-in-mev-execution-markets"]);
+  assert.equal(resolver.getConcept("builders")?.preferredPlacementId, "builders");
+  assert.deepEqual(resolver.getChildren("builders"), []);
+  assert.equal(resolver.getChildren("builders-in-mev-execution-markets").length, 6);
+  // L2 reuse: placed again here, preferred at home.
+  for (const [conceptId, here] of [
+    ["block-construction", "block-construction-in-builders"],
+    ["transaction-selection", "transaction-selection-in-builders"],
+    ["private-mempools", "private-mempools-in-private-execution"],
+    ["inclusion-guarantees", "inclusion-guarantees-in-mev-mitigation"],
+    ["auction-clearing", "auction-clearing-in-mev-auctions"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+  }
+  // Narrower MEV concepts stay distinct where one exposition would mislead.
+  for (const [placementId, related] of [
+    ["mev-auctions", "auctions"],
+    ["mev-bids", "bids"],
+    ["mev-bids", "block-bids"],
+    ["liquidation-mev", "liquidations"],
+    ["liquidation-searchers", "liquidators"],
+    ["liquidation-risk", "liquidity-risk"],
+    ["private-execution", "trusted-execution"],
+    ["private-execution", "off-chain-execution"],
+    ["bundle-atomicity", "transaction-atomicity"],
+    ["atomic-arbitrage", "transaction-atomicity"],
+    ["execution-privacy", "privacy"],
+    ["private-relays", "relays"],
+    ["private-relays", "relayers"],
+    ["ordering-manipulation", "manipulation"],
+    ["priority-auctions", "priority-fees"],
+    ["batch-execution", "batch-auctions"],
+    ["ordering-policies", "sequencing-rules"],
+    ["bundle-simulation", "transaction-simulation"],
+    ["bundle-submission", "transaction-submission"],
+    ["bundle-inclusion", "transaction-inclusion"],
+    ["builder-competition", "builder-markets"],
+    ["builder-auctions", "builder-selection"],
+    ["protected-order-flow", "private-order-flow"],
+    ["arbitrage", "arbitrage-bots"],
+    ["transaction-bundles", "bundles"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["transaction-ordering", "builders", "block-construction", "transaction-selection", "private-mempools", "inclusion-guarantees", "auction-clearing"]);
+  for (const [id, conceptId] of [...MEV_LAYER, ...MEV_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...MEV_LAYER, ...MEV_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

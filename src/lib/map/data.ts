@@ -743,6 +743,105 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "solvency-constraints",
     "loss-absorption",
   ],
+  // 12 MEV & Execution Markets
+  mev: ["mev-sources", "mev-opportunities", "mev-extraction", "mev-supply-chain", "toxic-mev", "non-toxic-mev"],
+  searchers: [
+    "search-strategies",
+    "opportunity-detection",
+    "transaction-simulation",
+    "bundle-construction",
+    "searcher-infrastructure",
+    "searcher-competition",
+  ],
+  arbitrage: [
+    "dex-arbitrage",
+    "cross-market-arbitrage",
+    "triangular-arbitrage",
+    "atomic-arbitrage",
+    "arbitrage-paths",
+    "arbitrage-profit",
+  ],
+  "liquidation-mev": [
+    "liquidation-opportunities",
+    "liquidation-searchers",
+    "liquidation-transactions",
+    "liquidation-competition",
+    "liquidation-profit",
+    "liquidation-risk",
+  ],
+  sandwiching: [
+    "sandwich-attacks",
+    "front-running",
+    "back-running",
+    "victim-transactions",
+    "price-impact",
+    "slippage-exploitation",
+  ],
+  "transaction-ordering-in-mev-execution-markets": [
+    "ordering-rights",
+    "ordering-policies",
+    "priority-ordering",
+    "time-ordering",
+    "fair-ordering",
+    "ordering-manipulation",
+  ],
+  bundles: [
+    "transaction-bundles",
+    "bundle-ordering",
+    "bundle-atomicity",
+    "bundle-simulation",
+    "bundle-submission",
+    "bundle-inclusion",
+  ],
+  "builders-in-mev-execution-markets": [
+    { placementId: "block-construction-in-builders", conceptId: "block-construction" },
+    { placementId: "transaction-selection-in-builders", conceptId: "transaction-selection" },
+    "bundle-selection",
+    "block-optimization",
+    "builder-strategies",
+    "builder-competition",
+  ],
+  "blockspace-markets": [
+    "blockspace",
+    "blockspace-demand",
+    "blockspace-supply",
+    "blockspace-pricing",
+    "priority-auctions",
+    "inclusion-markets",
+  ],
+  "order-flow": [
+    "public-order-flow",
+    "private-order-flow",
+    "order-flow-auctions",
+    "order-flow-payments",
+    "exclusive-order-flow",
+    "order-flow-competition",
+  ],
+  "mev-auctions": [
+    "mev-bids",
+    "builder-auctions",
+    "auction-participants",
+    "auction-rules",
+    { placementId: "auction-clearing-in-mev-auctions", conceptId: "auction-clearing" },
+    "auction-revenue",
+  ],
+  "private-execution": [
+    "private-transactions",
+    { placementId: "private-mempools-in-private-execution", conceptId: "private-mempools" },
+    "private-relays",
+    "protected-order-flow",
+    "mev-protection",
+    "execution-privacy",
+  ],
+  "mev-mitigation": [
+    "mev-redistribution",
+    "mev-smoothing",
+    "encrypted-mempools",
+    "commit-reveal",
+    "batch-execution",
+    { placementId: "inclusion-guarantees-in-mev-mitigation", conceptId: "inclusion-guarantees" },
+    "ordering-guarantees",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -759,8 +858,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
- * Mechanism Design, and Markets & Financial Protocols; and a deliberately
- * small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Mechanism Design, Markets & Financial Protocols, and MEV & Execution
+ * Markets; and a deliberately small Phase 1 proof fixture re-homed beneath
+ * its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -870,7 +970,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "speculative-execution", slug: "speculative-execution", title: "Speculative Execution" },
     { id: "transaction-lifecycle", slug: "transaction-lifecycle", title: "Transaction Lifecycle" },
     { id: "transaction-structure", slug: "transaction-structure", title: "Transaction Structure" },
-    // Also placed under 04's Block Building, the domain of ordering; preferred there.
+    // Also placed under 04's Block Building, the domain of ordering, and as an L1
+    // topic of 12 MEV & Execution Markets; preferred in 04.
     {
       id: "transaction-ordering",
       slug: "transaction-ordering",
@@ -1068,7 +1169,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "transaction-propagation", slug: "transaction-propagation", title: "Transaction Propagation" },
     { id: "transaction-prioritization", slug: "transaction-prioritization", title: "Transaction Prioritization" },
     { id: "mempool-policies", slug: "mempool-policies", title: "Mempool Policies" },
-    { id: "private-mempools", slug: "private-mempools", title: "Private Mempools" },
+    // Also placed under 12's Private Execution; this placement is preferred.
+    { id: "private-mempools", slug: "private-mempools", title: "Private Mempools", preferredPlacementId: "private-mempools" },
     { id: "mempool-synchronization", slug: "mempool-synchronization", title: "Mempool Synchronization" },
     // A sequencer's act of fixing an order, not the order itself (Transaction Ordering).
     { id: "transaction-sequencing", slug: "transaction-sequencing", title: "Transaction Sequencing" },
@@ -1077,12 +1179,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "decentralized-sequencing", slug: "decentralized-sequencing", title: "Decentralized Sequencing" },
     { id: "shared-sequencing", slug: "shared-sequencing", title: "Shared Sequencing" },
     { id: "sequencer-rotation", slug: "sequencer-rotation", title: "Sequencer Rotation" },
-    { id: "block-construction", slug: "block-construction", title: "Block Construction" },
-    { id: "transaction-selection", slug: "transaction-selection", title: "Transaction Selection" },
+    // Also placed under 12's Builders; this placement is preferred.
+    { id: "block-construction", slug: "block-construction", title: "Block Construction", preferredPlacementId: "block-construction" },
+    // Also placed under 12's Builders; this placement is preferred.
+    { id: "transaction-selection", slug: "transaction-selection", title: "Transaction Selection", preferredPlacementId: "transaction-selection" },
     { id: "block-proposals", slug: "block-proposals", title: "Block Proposals" },
     { id: "block-validation", slug: "block-validation", title: "Block Validation" },
     { id: "block-production", slug: "block-production", title: "Block Production" },
-    { id: "builders", slug: "builders", title: "Builders" },
+    // Block builders; also an L1 topic of 12 MEV & Execution Markets with its own
+    // layer. PBS, where the role is defined, stays preferred.
+    { id: "builders", slug: "builders", title: "Builders", preferredPlacementId: "builders" },
     { id: "builder-markets", slug: "builder-markets", title: "Builder Markets" },
     { id: "block-bids", slug: "block-bids", title: "Block Bids" },
     // PBS relays: trusted escrow between builders and proposers, not 05's
@@ -1099,7 +1205,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "forced-inclusion", slug: "forced-inclusion", title: "Forced Inclusion" },
     { id: "censorship-detection", slug: "censorship-detection", title: "Censorship Detection" },
     { id: "censorship-recovery", slug: "censorship-recovery", title: "Censorship Recovery" },
-    { id: "inclusion-guarantees", slug: "inclusion-guarantees", title: "Inclusion Guarantees" },
+    // Also placed under 12's MEV Mitigation; this placement is preferred.
+    { id: "inclusion-guarantees", slug: "inclusion-guarantees", title: "Inclusion Guarantees", preferredPlacementId: "inclusion-guarantees" },
     // 05 Networks & Infrastructure: L1 topics. Indexers (the infrastructure) is
     // not 03's Indexing (the process).
     { id: "p2p-networks", slug: "p2p-networks", title: "P2P Networks" },
@@ -1544,7 +1651,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "second-price-auctions", slug: "second-price-auctions", title: "Second-Price Auctions" },
     { id: "sealed-bid-auctions", slug: "sealed-bid-auctions", title: "Sealed-Bid Auctions" },
     { id: "batch-auctions", slug: "batch-auctions", title: "Batch Auctions" },
-    { id: "auction-clearing", slug: "auction-clearing", title: "Auction Clearing" },
+    // Also placed under 12's MEV Auctions; this placement is preferred.
+    { id: "auction-clearing", slug: "auction-clearing", title: "Auction Clearing", preferredPlacementId: "auction-clearing" },
     { id: "scarce-resources", slug: "scarce-resources", title: "Scarce Resources" },
     { id: "resource-pricing", slug: "resource-pricing", title: "Resource Pricing" },
     { id: "capacity-allocation", slug: "capacity-allocation", title: "Capacity Allocation" },
@@ -1670,6 +1778,114 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "insolvency", slug: "insolvency", title: "Insolvency" },
     { id: "solvency-constraints", slug: "solvency-constraints", title: "Solvency Constraints" },
     { id: "loss-absorption", slug: "loss-absorption", title: "Loss Absorption" },
+    // 12 MEV & Execution Markets: L1 topics (Transaction Ordering and Builders are
+    // existing concepts). Liquidation MEV (value from liquidations) is not 11's
+    // Liquidations (the mechanism); MEV Auctions are not 10's general Auctions;
+    // Private Execution is not 02's Trusted or Off-Chain Execution. Arbitrage is
+    // not 05's Arbitrage Bots.
+    { id: "mev", slug: "mev", title: "MEV" },
+    { id: "searchers", slug: "searchers", title: "Searchers" },
+    { id: "arbitrage", slug: "arbitrage", title: "Arbitrage" },
+    { id: "liquidation-mev", slug: "liquidation-mev", title: "Liquidation MEV" },
+    { id: "sandwiching", slug: "sandwiching", title: "Sandwiching" },
+    { id: "bundles", slug: "bundles", title: "Bundles" },
+    { id: "blockspace-markets", slug: "blockspace-markets", title: "Blockspace Markets" },
+    { id: "order-flow", slug: "order-flow", title: "Order Flow" },
+    { id: "mev-auctions", slug: "mev-auctions", title: "MEV Auctions" },
+    { id: "private-execution", slug: "private-execution", title: "Private Execution" },
+    { id: "mev-mitigation", slug: "mev-mitigation", title: "MEV Mitigation" },
+    // L2 topics (placements in L2_TOPICS). Transaction Simulation predicts one
+    // transaction's outcome; Bundle Simulation checks an ordered, atomic set.
+    { id: "mev-sources", slug: "mev-sources", title: "MEV Sources" },
+    { id: "mev-opportunities", slug: "mev-opportunities", title: "MEV Opportunities" },
+    { id: "mev-extraction", slug: "mev-extraction", title: "MEV Extraction" },
+    { id: "mev-supply-chain", slug: "mev-supply-chain", title: "MEV Supply Chain" },
+    { id: "toxic-mev", slug: "toxic-mev", title: "Toxic MEV" },
+    { id: "non-toxic-mev", slug: "non-toxic-mev", title: "Non-Toxic MEV" },
+    { id: "search-strategies", slug: "search-strategies", title: "Search Strategies" },
+    { id: "opportunity-detection", slug: "opportunity-detection", title: "Opportunity Detection" },
+    { id: "transaction-simulation", slug: "transaction-simulation", title: "Transaction Simulation" },
+    { id: "bundle-construction", slug: "bundle-construction", title: "Bundle Construction" },
+    { id: "searcher-infrastructure", slug: "searcher-infrastructure", title: "Searcher Infrastructure" },
+    { id: "searcher-competition", slug: "searcher-competition", title: "Searcher Competition" },
+    // Atomic Arbitrage is not 02's Transaction Atomicity.
+    { id: "dex-arbitrage", slug: "dex-arbitrage", title: "DEX Arbitrage" },
+    { id: "cross-market-arbitrage", slug: "cross-market-arbitrage", title: "Cross-Market Arbitrage" },
+    { id: "triangular-arbitrage", slug: "triangular-arbitrage", title: "Triangular Arbitrage" },
+    { id: "atomic-arbitrage", slug: "atomic-arbitrage", title: "Atomic Arbitrage" },
+    { id: "arbitrage-paths", slug: "arbitrage-paths", title: "Arbitrage Paths" },
+    { id: "arbitrage-profit", slug: "arbitrage-profit", title: "Arbitrage Profit" },
+    // Liquidation Searchers compete for liquidation MEV; 11's Liquidators perform
+    // liquidations. Liquidation Risk is not 11's Liquidity Risk.
+    { id: "liquidation-opportunities", slug: "liquidation-opportunities", title: "Liquidation Opportunities" },
+    { id: "liquidation-searchers", slug: "liquidation-searchers", title: "Liquidation Searchers" },
+    { id: "liquidation-transactions", slug: "liquidation-transactions", title: "Liquidation Transactions" },
+    { id: "liquidation-competition", slug: "liquidation-competition", title: "Liquidation Competition" },
+    { id: "liquidation-profit", slug: "liquidation-profit", title: "Liquidation Profit" },
+    { id: "liquidation-risk", slug: "liquidation-risk", title: "Liquidation Risk" },
+    { id: "sandwich-attacks", slug: "sandwich-attacks", title: "Sandwich Attacks" },
+    { id: "front-running", slug: "front-running", title: "Front-Running" },
+    { id: "back-running", slug: "back-running", title: "Back-Running" },
+    { id: "victim-transactions", slug: "victim-transactions", title: "Victim Transactions" },
+    { id: "price-impact", slug: "price-impact", title: "Price Impact" },
+    { id: "slippage-exploitation", slug: "slippage-exploitation", title: "Slippage Exploitation" },
+    // Ordering Policies (any orderer's policy) are not 04's Sequencing Rules (a
+    // sequencer's rules); Ordering Manipulation is not 10's general Manipulation.
+    { id: "ordering-rights", slug: "ordering-rights", title: "Ordering Rights" },
+    { id: "ordering-policies", slug: "ordering-policies", title: "Ordering Policies" },
+    { id: "priority-ordering", slug: "priority-ordering", title: "Priority Ordering" },
+    { id: "time-ordering", slug: "time-ordering", title: "Time Ordering" },
+    { id: "fair-ordering", slug: "fair-ordering", title: "Fair Ordering" },
+    { id: "ordering-manipulation", slug: "ordering-manipulation", title: "Ordering Manipulation" },
+    // Transaction Bundles are the object; Bundles is the topic. Bundle Atomicity,
+    // Submission and Inclusion are not the transaction-level concepts.
+    { id: "transaction-bundles", slug: "transaction-bundles", title: "Transaction Bundles" },
+    { id: "bundle-ordering", slug: "bundle-ordering", title: "Bundle Ordering" },
+    { id: "bundle-atomicity", slug: "bundle-atomicity", title: "Bundle Atomicity" },
+    { id: "bundle-simulation", slug: "bundle-simulation", title: "Bundle Simulation" },
+    { id: "bundle-submission", slug: "bundle-submission", title: "Bundle Submission" },
+    { id: "bundle-inclusion", slug: "bundle-inclusion", title: "Bundle Inclusion" },
+    // Builder Competition is not 04's Builder Markets.
+    { id: "bundle-selection", slug: "bundle-selection", title: "Bundle Selection" },
+    { id: "block-optimization", slug: "block-optimization", title: "Block Optimization" },
+    { id: "builder-strategies", slug: "builder-strategies", title: "Builder Strategies" },
+    { id: "builder-competition", slug: "builder-competition", title: "Builder Competition" },
+    // Priority Auctions are not 10's Priority Fees.
+    { id: "blockspace", slug: "blockspace", title: "Blockspace" },
+    { id: "blockspace-demand", slug: "blockspace-demand", title: "Blockspace Demand" },
+    { id: "blockspace-supply", slug: "blockspace-supply", title: "Blockspace Supply" },
+    { id: "blockspace-pricing", slug: "blockspace-pricing", title: "Blockspace Pricing" },
+    { id: "priority-auctions", slug: "priority-auctions", title: "Priority Auctions" },
+    { id: "inclusion-markets", slug: "inclusion-markets", title: "Inclusion Markets" },
+    // Protected Order Flow carries protection guarantees; Private Order Flow is only
+    // kept out of the public mempool.
+    { id: "public-order-flow", slug: "public-order-flow", title: "Public Order Flow" },
+    { id: "private-order-flow", slug: "private-order-flow", title: "Private Order Flow" },
+    { id: "order-flow-auctions", slug: "order-flow-auctions", title: "Order Flow Auctions" },
+    { id: "order-flow-payments", slug: "order-flow-payments", title: "Order Flow Payments" },
+    { id: "exclusive-order-flow", slug: "exclusive-order-flow", title: "Exclusive Order Flow" },
+    { id: "order-flow-competition", slug: "order-flow-competition", title: "Order Flow Competition" },
+    // MEV Bids are not 10's Bids or 04's Block Bids; Builder Auctions are not 04's
+    // Builder Selection.
+    { id: "mev-bids", slug: "mev-bids", title: "MEV Bids" },
+    { id: "builder-auctions", slug: "builder-auctions", title: "Builder Auctions" },
+    { id: "auction-participants", slug: "auction-participants", title: "Auction Participants" },
+    { id: "auction-rules", slug: "auction-rules", title: "Auction Rules" },
+    { id: "auction-revenue", slug: "auction-revenue", title: "Auction Revenue" },
+    // Private Relays are not 04's PBS Relays or 05's Relayers; Execution Privacy
+    // is not 06's Privacy.
+    { id: "private-transactions", slug: "private-transactions", title: "Private Transactions" },
+    { id: "private-relays", slug: "private-relays", title: "Private Relays" },
+    { id: "protected-order-flow", slug: "protected-order-flow", title: "Protected Order Flow" },
+    { id: "mev-protection", slug: "mev-protection", title: "MEV Protection" },
+    { id: "execution-privacy", slug: "execution-privacy", title: "Execution Privacy" },
+    // Batch Execution is not 10's Batch Auctions.
+    { id: "mev-redistribution", slug: "mev-redistribution", title: "MEV Redistribution" },
+    { id: "mev-smoothing", slug: "mev-smoothing", title: "MEV Smoothing" },
+    { id: "encrypted-mempools", slug: "encrypted-mempools", title: "Encrypted Mempools" },
+    { id: "commit-reveal", slug: "commit-reveal", title: "Commit-Reveal" },
+    { id: "batch-execution", slug: "batch-execution", title: "Batch Execution" },
+    { id: "ordering-guarantees", slug: "ordering-guarantees", title: "Ordering Guarantees" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -1834,6 +2050,30 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "derivatives", conceptId: "derivatives", parentPlacementId: "markets-financial-protocols", order: 9 },
     { id: "risk", conceptId: "risk", parentPlacementId: "markets-financial-protocols", order: 10 },
     { id: "solvency", conceptId: "solvency", parentPlacementId: "markets-financial-protocols", order: 11 },
+    // 12 MEV & Execution Markets: L1 topics.
+    { id: "mev", conceptId: "mev", parentPlacementId: "mev-execution-markets", order: 0 },
+    { id: "searchers", conceptId: "searchers", parentPlacementId: "mev-execution-markets", order: 1 },
+    { id: "arbitrage", conceptId: "arbitrage", parentPlacementId: "mev-execution-markets", order: 2 },
+    { id: "liquidation-mev", conceptId: "liquidation-mev", parentPlacementId: "mev-execution-markets", order: 3 },
+    { id: "sandwiching", conceptId: "sandwiching", parentPlacementId: "mev-execution-markets", order: 4 },
+    {
+      id: "transaction-ordering-in-mev-execution-markets",
+      conceptId: "transaction-ordering",
+      parentPlacementId: "mev-execution-markets",
+      order: 5,
+    },
+    { id: "bundles", conceptId: "bundles", parentPlacementId: "mev-execution-markets", order: 6 },
+    {
+      id: "builders-in-mev-execution-markets",
+      conceptId: "builders",
+      parentPlacementId: "mev-execution-markets",
+      order: 7,
+    },
+    { id: "blockspace-markets", conceptId: "blockspace-markets", parentPlacementId: "mev-execution-markets", order: 8 },
+    { id: "order-flow", conceptId: "order-flow", parentPlacementId: "mev-execution-markets", order: 9 },
+    { id: "mev-auctions", conceptId: "mev-auctions", parentPlacementId: "mev-execution-markets", order: 10 },
+    { id: "private-execution", conceptId: "private-execution", parentPlacementId: "mev-execution-markets", order: 11 },
+    { id: "mev-mitigation", conceptId: "mev-mitigation", parentPlacementId: "mev-execution-markets", order: 12 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
