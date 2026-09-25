@@ -1850,9 +1850,123 @@ const SECURITY_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
 ];
 const SECURITY_L2 = SECURITY_TREE.flatMap(([, children]) => children);
-// Earlier domains' concepts that 17 places again, for their placement-list assertions.
-const alsoInSecurity = (conceptId: string) =>
-  [...SECURITY_LAYER, ...SECURITY_L2].filter(([id, concept]) => concept === conceptId && id !== concept).map(([id]) => id);
+
+// 18 Protocol Architecture. Fourteen concepts are placed again at L2, each
+// preferred at its home.
+const ARCHITECTURE_LAYER: Array<[string, string, string]> = [
+  ["architectural-principles", "architectural-principles", "Architectural Principles"],
+  ["protocol-layers", "protocol-layers", "Protocol Layers"],
+  ["components-interfaces", "components-interfaces", "Components & Interfaces"],
+  ["state-architecture", "state-architecture", "State Architecture"],
+  ["execution-architecture", "execution-architecture", "Execution Architecture"],
+  ["contract-architecture", "contract-architecture", "Smart Contract Architecture"],
+  ["client-architecture", "client-architecture", "Client Architecture"],
+  ["network-architecture", "network-architecture", "Network Architecture"],
+  ["data-architecture", "data-architecture", "Data Architecture"],
+  ["trust-architecture", "trust-architecture", "Trust Architecture"],
+  ["composability", "composability", "Composability"],
+  ["architectural-tradeoffs", "architectural-tradeoffs", "Architectural Tradeoffs"],
+];
+const ARCHITECTURE_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["architectural-principles", [
+    ["separation-of-concerns", "separation-of-concerns", "Separation of Concerns"],
+    ["abstraction-boundaries", "abstraction-boundaries", "Abstraction Boundaries"],
+    ["protocol-minimalism", "protocol-minimalism", "Protocol Minimalism"],
+    ["credible-neutrality-in-architectural-principles", "credible-neutrality", "Credible Neutrality"],
+    ["decentralization-in-architectural-principles", "decentralization", "Decentralization"],
+  ]],
+  ["protocol-layers", [
+    ["layered-architecture", "layered-architecture", "Layered Architecture"],
+    ["protocol-stack", "protocol-stack", "Protocol Stack"],
+    ["layer-responsibilities", "layer-responsibilities", "Layer Responsibilities"],
+    ["cross-layer-dependencies", "cross-layer-dependencies", "Cross-Layer Dependencies"],
+    ["modularity-in-protocol-layers", "modularity", "Modularity"],
+    ["layer-separation-in-protocol-layers", "layer-separation", "Layer Separation"],
+  ]],
+  ["components-interfaces", [
+    ["protocol-components", "protocol-components", "Protocol Components"],
+    ["component-interfaces-in-components-interfaces", "component-interfaces", "Component Interfaces"],
+    ["protocol-standards", "protocol-standards", "Protocol Standards"],
+    ["component-dependencies", "component-dependencies", "Component Dependencies"],
+    ["extension-points", "extension-points", "Extension Points"],
+    ["protocol-hooks", "protocol-hooks", "Protocol Hooks"],
+  ]],
+  ["state-architecture", [
+    ["state-models-in-state-architecture", "state-models", "State Models"],
+    ["state-ownership", "state-ownership", "State Ownership"],
+    ["state-partitioning", "state-partitioning", "State Partitioning"],
+    ["state-access-patterns", "state-access-patterns", "State Access Patterns"],
+    ["shared-state", "shared-state", "Shared State"],
+    ["state-isolation", "state-isolation", "State Isolation"],
+  ]],
+  ["execution-architecture", [
+    ["execution-models-in-execution-architecture", "execution-models", "Execution Models"],
+    ["execution-pipelines", "execution-pipelines", "Execution Pipelines"],
+    ["execution-scheduling", "execution-scheduling", "Execution Scheduling"],
+    ["execution-boundaries", "execution-boundaries", "Execution Boundaries"],
+    ["call-graphs", "call-graphs", "Call Graphs"],
+    ["concurrency-models", "concurrency-models", "Concurrency Models"],
+  ]],
+  ["contract-architecture", [
+    ["contract-systems", "contract-systems", "Contract Systems"],
+    ["proxy-patterns", "proxy-patterns", "Proxy Patterns"],
+    ["factory-patterns", "factory-patterns", "Factory Patterns"],
+    ["contract-libraries", "contract-libraries", "Contract Libraries"],
+    ["singleton-contracts", "singleton-contracts", "Singleton Contracts"],
+    ["contract-registries", "contract-registries", "Contract Registries"],
+  ]],
+  ["client-architecture", [
+    ["execution-clients-in-client-architecture", "execution-clients", "Execution Clients"],
+    ["consensus-clients", "consensus-clients", "Consensus Clients"],
+    ["client-diversity", "client-diversity", "Client Diversity"],
+    ["client-separation", "client-separation", "Client Separation"],
+    ["node-roles", "node-roles", "Node Roles"],
+    ["client-interfaces", "client-interfaces", "Client Interfaces"],
+  ]],
+  ["network-architecture", [
+    ["network-topology-in-network-architecture", "network-topology", "Network Topology"],
+    ["overlay-networks", "overlay-networks", "Overlay Networks"],
+    ["network-layers", "network-layers", "Network Layers"],
+    ["peer-roles", "peer-roles", "Peer Roles"],
+    ["network-segmentation", "network-segmentation", "Network Segmentation"],
+  ]],
+  ["data-architecture", [
+    ["data-models", "data-models", "Data Models"],
+    ["data-placement", "data-placement", "Data Placement"],
+    ["storage-architecture", "storage-architecture", "Storage Architecture"],
+    ["data-flows", "data-flows", "Data Flows"],
+    ["data-schemas-in-data-architecture", "data-schemas", "Data Schemas"],
+  ]],
+  ["trust-architecture", [
+    ["trust-boundaries-in-trust-architecture", "trust-boundaries", "Trust Boundaries"],
+    ["trusted-components", "trusted-components", "Trusted Components"],
+    ["trusted-computing-base", "trusted-computing-base", "Trusted Computing Base"],
+    ["trust-minimization-in-trust-architecture", "trust-minimization", "Trust Minimization"],
+    ["trust-dependencies", "trust-dependencies", "Trust Dependencies"],
+  ]],
+  ["composability", [
+    ["synchronous-composability", "synchronous-composability", "Synchronous Composability"],
+    ["asynchronous-composability", "asynchronous-composability", "Asynchronous Composability"],
+    ["atomic-composability", "atomic-composability", "Atomic Composability"],
+    ["cross-chain-composability-in-composability", "cross-chain-composability", "Cross-Chain Composability"],
+    ["protocol-integrations", "protocol-integrations", "Protocol Integrations"],
+    ["composability-risks", "composability-risks", "Composability Risks"],
+  ]],
+  ["architectural-tradeoffs", [
+    ["coupling", "coupling", "Coupling"],
+    ["cohesion", "cohesion", "Cohesion"],
+    ["architectural-complexity", "architectural-complexity", "Architectural Complexity"],
+    ["extensibility", "extensibility", "Extensibility"],
+    ["technical-debt", "technical-debt", "Technical Debt"],
+    ["immutability-in-architectural-tradeoffs", "immutability", "Immutability"],
+  ]],
+];
+const ARCHITECTURE_L2 = ARCHITECTURE_TREE.flatMap(([, children]) => children);
+// Earlier domains' concepts that 17 and 18 place again, for their placement-list assertions.
+const alsoInLaterDomains = (conceptId: string) =>
+  [...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]
+    .filter(([id, concept]) => concept === conceptId && id !== concept)
+    .map(([id]) => id);
 
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
@@ -1890,6 +2004,8 @@ const AUTHORED_TOPICS = new Set([
   ...INTEROP_L2.map(([id]) => id),
   ...SECURITY_LAYER.map(([id]) => id),
   ...SECURITY_L2.map(([id]) => id),
+  ...ARCHITECTURE_LAYER.map(([id]) => id),
+  ...ARCHITECTURE_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -1976,8 +2092,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // concepts, then Governance & Institutions' 15 new L1 and 86 new L2 concepts,
   // then Scaling & Modular Systems' 12 new L1 and 64 new L2 concepts, then
   // Interoperability & Abstraction's 11 new L1 and 72 new L2 concepts, then
-  // Security, Correctness & Resilience's 19 new L1 and 82 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82);
+  // Security, Correctness & Resilience's 19 new L1 and 82 new L2 concepts, then
+  // Protocol Architecture's 12 new L1 and 54 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -2109,7 +2226,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
   }
   assert.equal(resolver.getContentForConcept("state"), undefined);
@@ -2163,7 +2280,7 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Checking a computation's proof is Foundations' Verification: one concept, two placements.
   assert.equal(resolver.getPlacement("verification-in-verifiable-computation")?.conceptId, "verification");
-  assert.deepEqual(placementsOf("verification"), ["verification", "verification-in-verifiable-computation", ...alsoInSecurity("verification")].sort());
+  assert.deepEqual(placementsOf("verification"), ["verification", "verification-in-verifiable-computation", ...alsoInLaterDomains("verification")].sort());
   assert.equal(resolver.getConcept("verification")?.preferredPlacementId, "verification");
   // Related but distinct: an execution model is not the property, contract
   // storage is not State, validating a transaction or verifying on chain is
@@ -2198,7 +2315,7 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
       "parallel-execution": ["parallel-execution-in-execution-layers"],
       "off-chain-execution": ["off-chain-execution-in-off-chain-scaling"],
     };
-    assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? [])].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)];
   assert.equal(new Set(ids).size, ids.length);
@@ -2282,7 +2399,7 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...STATE_DATA_LAYER, ...STATE_DATA_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2307,6 +2424,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("governance-institutions"), 15 + 89);
   assert.equal(subtreeOf("scaling-modular-systems"), 14 + 80);
   assert.equal(subtreeOf("interoperability-abstraction"), 14 + 82);
+  assert.equal(subtreeOf("security-correctness-resilience"), 20 + 119);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -2342,7 +2460,7 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   assert.equal(resolver.getChildren("finality-in-consensus").length, 6);
   assert.deepEqual(resolver.getChildren("finality-in-rollups"), []);
   // Censorship Resistance: Foundations' property, taught here through inclusion; preferred here.
-  assert.deepEqual(placementsOf("censorship-resistance"), ["censorship-resistance", "censorship-resistance-in-consensus-ordering", ...alsoInSecurity("censorship-resistance")].sort());
+  assert.deepEqual(placementsOf("censorship-resistance"), ["censorship-resistance", "censorship-resistance-in-consensus-ordering", ...alsoInLaterDomains("censorship-resistance")].sort());
   assert.equal(resolver.getConcept("censorship-resistance")?.preferredPlacementId, "censorship-resistance-in-consensus-ordering");
   assert.deepEqual(resolver.getChildren("censorship-resistance"), []);
   // Transaction Ordering: 02's concept, also under Block Building; preferred in the ordering domain.
@@ -2396,7 +2514,7 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
@@ -2475,7 +2593,7 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...NETWORKS_LAYER, ...NETWORKS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2558,7 +2676,7 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2600,7 +2718,7 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
     ["proof-generation", "proof-generation", "proof-generation-in-storage-proofs"],
     ["proof-verification", "proof-verification", "proof-verification-in-storage-proofs"],
   ]) {
-    assert.deepEqual(placementsOf(conceptId), [home, here, ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [home, here, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, home, conceptId);
   }
   // Reconstruction is Data Reconstruction in contextual wording.
@@ -2640,7 +2758,7 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...STORAGE_LAYER, ...STORAGE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2724,7 +2842,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
@@ -2819,7 +2937,7 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...ORACLES_LAYER, ...ORACLES_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2864,7 +2982,7 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
   assert.equal(resolver.getConcept("constraints"), undefined);
   // General concepts, each placed once for now, available to later domains.
   for (const conceptId of ["incentives", "mechanism-design", "game-theory", "auctions", "fees", "stake", "slashing", "economic-security", "attack-cost", "cost-of-corruption"]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [conceptId, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   // Related but distinct concepts.
   for (const [placementId, related] of [
@@ -2908,7 +3026,7 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...ECONOMICS_LAYER, ...ECONOMICS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2982,7 +3100,7 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...MARKETS_LAYER, ...MARKETS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3072,7 +3190,7 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...MEV_LAYER, ...MEV_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3172,7 +3290,7 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...INTENTS_LAYER, ...INTENTS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3251,7 +3369,7 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...GOVERNANCE_LAYER, ...GOVERNANCE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3350,7 +3468,7 @@ test("Scaling & Modular Systems reuses existing concepts and keeps scaling-speci
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...SCALING_LAYER, ...SCALING_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3450,7 +3568,7 @@ test("Interoperability & Abstraction reuses existing concepts without moving the
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...INTEROP_LAYER, ...INTEROP_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3574,9 +3692,91 @@ test("Security, Correctness & Resilience reuses existing concepts without moving
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInSecurity(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...SECURITY_LAYER, ...SECURITY_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Protocol Architecture has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("protocol-architecture").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    ARCHITECTURE_LAYER,
+  );
+  for (const [parent, children] of ARCHITECTURE_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of ARCHITECTURE_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "protocol-architecture")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...ARCHITECTURE_LAYER.map(([id]) => id), ...ARCHITECTURE_L2.map(([id]) => id)].sort());
+  assert.equal(ARCHITECTURE_L2.length, 68);
+});
+
+test("Protocol Architecture reuses existing concepts without moving their preferred placements", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  // [concept, placement here, preferred placement (its home, unchanged)]
+  for (const [conceptId, here, home] of [
+    ["credible-neutrality", "credible-neutrality-in-architectural-principles", "credible-neutrality"],
+    ["decentralization", "decentralization-in-architectural-principles", "decentralization"],
+    ["modularity", "modularity-in-protocol-layers", "modularity"],
+    ["layer-separation", "layer-separation-in-protocol-layers", "layer-separation"],
+    ["component-interfaces", "component-interfaces-in-components-interfaces", "component-interfaces"],
+    ["state-models", "state-models-in-state-architecture", "state-models"],
+    ["execution-models", "execution-models-in-execution-architecture", "execution-models"],
+    ["execution-clients", "execution-clients-in-client-architecture", "execution-clients"],
+    ["network-topology", "network-topology-in-network-architecture", "network-topology"],
+    ["data-schemas", "data-schemas-in-data-architecture", "data-schemas"],
+    ["trust-boundaries", "trust-boundaries-in-trust-architecture", "trust-boundaries"],
+    ["trust-minimization", "trust-minimization-in-trust-architecture", "trust-minimization"],
+    ["cross-chain-composability", "cross-chain-composability-in-composability", "cross-chain-composability"],
+    ["immutability", "immutability-in-architectural-tradeoffs", "immutability"],
+  ]) {
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
+    assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, home, conceptId);
+    assert.notEqual(home, here, conceptId);
+  }
+  // Architecture concepts stay distinct from the layer mechanics and neighbouring concepts.
+  for (const [placementId, related] of [
+    ["layered-architecture", "layer-separation"],
+    ["protocol-stack", "modularity"],
+    ["protocol-minimalism", "governance-minimization"],
+    ["protocol-standards", "interoperability-standards"],
+    ["state-partitioning", "state-layout"],
+    ["shared-state", "global-state"],
+    ["concurrency-models", "parallel-execution"],
+    ["execution-boundaries", "authority-boundaries"],
+    ["proxy-patterns", "proxy-upgrade-risks"],
+    ["network-layers", "protocol-layers"],
+    ["data-models", "state-models"],
+    ["storage-architecture", "storage-layout"],
+    ["trusted-computing-base", "trusted-hardware"],
+    ["atomic-composability", "transaction-atomicity"],
+    ["coupling", "layer-coupling"],
+    ["protocol-components", "component-interfaces"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["credible-neutrality", "decentralization", "modularity", "layer-separation", "component-interfaces", "state-models", "execution-models", "execution-clients", "network-topology", "data-schemas", "trust-boundaries", "trust-minimization", "cross-chain-composability", "immutability"]);
+  for (const [id, conceptId] of [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

@@ -1412,6 +1412,99 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "mev-protection-in-domain-specific-security", conceptId: "mev-protection" },
     { placementId: "wallet-security-in-domain-specific-security", conceptId: "wallet-security" },
   ],
+  // 18 Protocol Architecture
+  "architectural-principles": [
+    "separation-of-concerns",
+    "abstraction-boundaries",
+    "protocol-minimalism",
+    { placementId: "credible-neutrality-in-architectural-principles", conceptId: "credible-neutrality" },
+    { placementId: "decentralization-in-architectural-principles", conceptId: "decentralization" },
+  ],
+  "protocol-layers": [
+    "layered-architecture",
+    "protocol-stack",
+    "layer-responsibilities",
+    "cross-layer-dependencies",
+    { placementId: "modularity-in-protocol-layers", conceptId: "modularity" },
+    { placementId: "layer-separation-in-protocol-layers", conceptId: "layer-separation" },
+  ],
+  "components-interfaces": [
+    "protocol-components",
+    { placementId: "component-interfaces-in-components-interfaces", conceptId: "component-interfaces" },
+    "protocol-standards",
+    "component-dependencies",
+    "extension-points",
+    "protocol-hooks",
+  ],
+  "state-architecture": [
+    { placementId: "state-models-in-state-architecture", conceptId: "state-models" },
+    "state-ownership",
+    "state-partitioning",
+    "state-access-patterns",
+    "shared-state",
+    "state-isolation",
+  ],
+  "execution-architecture": [
+    { placementId: "execution-models-in-execution-architecture", conceptId: "execution-models" },
+    "execution-pipelines",
+    "execution-scheduling",
+    "execution-boundaries",
+    "call-graphs",
+    "concurrency-models",
+  ],
+  "contract-architecture": [
+    "contract-systems",
+    "proxy-patterns",
+    "factory-patterns",
+    "contract-libraries",
+    "singleton-contracts",
+    "contract-registries",
+  ],
+  "client-architecture": [
+    { placementId: "execution-clients-in-client-architecture", conceptId: "execution-clients" },
+    "consensus-clients",
+    "client-diversity",
+    "client-separation",
+    "node-roles",
+    "client-interfaces",
+  ],
+  "network-architecture": [
+    { placementId: "network-topology-in-network-architecture", conceptId: "network-topology" },
+    "overlay-networks",
+    "network-layers",
+    "peer-roles",
+    "network-segmentation",
+  ],
+  "data-architecture": [
+    "data-models",
+    "data-placement",
+    "storage-architecture",
+    "data-flows",
+    { placementId: "data-schemas-in-data-architecture", conceptId: "data-schemas" },
+  ],
+  "trust-architecture": [
+    { placementId: "trust-boundaries-in-trust-architecture", conceptId: "trust-boundaries" },
+    "trusted-components",
+    "trusted-computing-base",
+    { placementId: "trust-minimization-in-trust-architecture", conceptId: "trust-minimization" },
+    "trust-dependencies",
+  ],
+  composability: [
+    "synchronous-composability",
+    "asynchronous-composability",
+    "atomic-composability",
+    { placementId: "cross-chain-composability-in-composability", conceptId: "cross-chain-composability" },
+    "protocol-integrations",
+    "composability-risks",
+  ],
+  "architectural-tradeoffs": [
+    "coupling",
+    "cohesion",
+    "architectural-complexity",
+    "extensibility",
+    "technical-debt",
+    { placementId: "immutability-in-architectural-tradeoffs", conceptId: "immutability" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1430,9 +1523,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
- * Systems, Interoperability & Abstraction, and Security, Correctness &
- * Resilience; and a deliberately small Phase 1 proof fixture re-homed beneath
- * its L0 domains.
+ * Systems, Interoperability & Abstraction, Security, Correctness &
+ * Resilience, and Protocol Architecture; and a deliberately small Phase 1
+ * proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1488,7 +1581,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under Verifiable Computation: checking a computation's proof
     // is the same act as checking any claim instead of trusting its source.
     { id: "verification", slug: "verification", title: "Verification", preferredPlacementId: "verification" },
-    { id: "trust-minimization", slug: "trust-minimization", title: "Trust Minimization" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "trust-minimization",
+      slug: "trust-minimization",
+      title: "Trust Minimization",
+      preferredPlacementId: "trust-minimization",
+    },
     { id: "trust-distribution", slug: "trust-distribution", title: "Trust Distribution" },
     { id: "coordination-models", slug: "coordination-models", title: "Coordination Models" },
     { id: "information", slug: "information", title: "Information" },
@@ -1537,7 +1636,13 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "censorship-resistance-in-consensus-ordering",
     },
     // 02 Computation & Execution: L1 topics.
-    { id: "execution-models", slug: "execution-models", title: "Execution Models" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "execution-models",
+      slug: "execution-models",
+      title: "Execution Models",
+      preferredPlacementId: "execution-models",
+    },
     { id: "transactions", slug: "transactions", title: "Transactions" },
     { id: "virtual-machines", slug: "virtual-machines", title: "Virtual Machines" },
     { id: "smart-contracts", slug: "smart-contracts", title: "Smart Contracts" },
@@ -1640,7 +1745,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "provenance", slug: "provenance", title: "Provenance", preferredPlacementId: "provenance" },
     { id: "indexing", slug: "indexing", title: "Indexing" },
     // L2 topics (placements in L2_TOPICS).
-    { id: "state-models", slug: "state-models", title: "State Models" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    { id: "state-models", slug: "state-models", title: "State Models", preferredPlacementId: "state-models" },
     { id: "global-state", slug: "global-state", title: "Global State" },
     { id: "local-state", slug: "local-state", title: "Local State" },
     { id: "state-encoding", slug: "state-encoding", title: "State Encoding" },
@@ -1856,7 +1962,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // is specific to dissemination, not Foundations' Latency.
     { id: "peer-discovery", slug: "peer-discovery", title: "Peer Discovery" },
     { id: "peer-connections", slug: "peer-connections", title: "Peer Connections" },
-    { id: "network-topology", slug: "network-topology", title: "Network Topology" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "network-topology",
+      slug: "network-topology",
+      title: "Network Topology",
+      preferredPlacementId: "network-topology",
+    },
     { id: "peer-management", slug: "peer-management", title: "Peer Management" },
     { id: "gossip", slug: "gossip", title: "Gossip" },
     { id: "network-partitions", slug: "network-partitions", title: "Network Partitions" },
@@ -2269,7 +2381,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "semantic-data", slug: "semantic-data", title: "Semantic Data" },
     { id: "machine-readable-claims", slug: "machine-readable-claims", title: "Machine-Readable Claims" },
     { id: "verifiable-claims", slug: "verifiable-claims", title: "Verifiable Claims" },
-    { id: "data-schemas", slug: "data-schemas", title: "Data Schemas" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    { id: "data-schemas", slug: "data-schemas", title: "Data Schemas", preferredPlacementId: "data-schemas" },
     { id: "reality-interfaces", slug: "reality-interfaces", title: "Reality Interfaces" },
     // Trusted Hardware (a hardware root of trust) is not 02's Trusted Execution.
     { id: "sensors", slug: "sensors", title: "Sensors" },
@@ -2837,7 +2950,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "constitutions", slug: "constitutions", title: "Constitutions" },
     { id: "rule-changes", slug: "rule-changes", title: "Rule Changes" },
     { id: "amendment-processes", slug: "amendment-processes", title: "Amendment Processes" },
-    { id: "immutability", slug: "immutability", title: "Immutability" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    { id: "immutability", slug: "immutability", title: "Immutability", preferredPlacementId: "immutability" },
     { id: "governance-scope", slug: "governance-scope", title: "Governance Scope" },
     { id: "social-consensus", slug: "social-consensus", title: "Social Consensus" },
     { id: "separation-of-powers", slug: "separation-of-powers", title: "Separation of Powers" },
@@ -2893,7 +3007,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Institutional Design reuses 10's Incentive Alignment.
     { id: "institutions", slug: "institutions", title: "Institutions" },
     { id: "legitimacy", slug: "legitimacy", title: "Legitimacy" },
-    { id: "credible-neutrality", slug: "credible-neutrality", title: "Credible Neutrality" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "credible-neutrality",
+      slug: "credible-neutrality",
+      title: "Credible Neutrality",
+      preferredPlacementId: "credible-neutrality",
+    },
     { id: "path-dependence", slug: "path-dependence", title: "Path Dependence" },
     { id: "institutional-evolution", slug: "institutional-evolution", title: "Institutional Evolution" },
     // 15 Scaling & Modular Systems: L1 topics (Scaling and Rollups are the fixture's
@@ -2905,7 +3025,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "optimistic-rollups", slug: "optimistic-rollups", title: "Optimistic Rollups" },
     { id: "zk-rollups", slug: "zk-rollups", title: "ZK Rollups" },
     { id: "off-chain-scaling", slug: "off-chain-scaling", title: "Off-Chain Scaling" },
-    { id: "modularity", slug: "modularity", title: "Modularity" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    { id: "modularity", slug: "modularity", title: "Modularity", preferredPlacementId: "modularity" },
     { id: "execution-layers", slug: "execution-layers", title: "Execution Layers" },
     { id: "settlement-layers", slug: "settlement-layers", title: "Settlement Layers" },
     { id: "data-availability-layers", slug: "data-availability-layers", title: "Data Availability Layers" },
@@ -2955,15 +3076,33 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "validiums", slug: "validiums", title: "Validiums" },
     { id: "modular-blockchains", slug: "modular-blockchains", title: "Modular Blockchains" },
     { id: "monolithic-blockchains", slug: "monolithic-blockchains", title: "Monolithic Blockchains" },
-    { id: "layer-separation", slug: "layer-separation", title: "Layer Separation" },
-    { id: "component-interfaces", slug: "component-interfaces", title: "Component Interfaces" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "layer-separation",
+      slug: "layer-separation",
+      title: "Layer Separation",
+      preferredPlacementId: "layer-separation",
+    },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "component-interfaces",
+      slug: "component-interfaces",
+      title: "Component Interfaces",
+      preferredPlacementId: "component-interfaces",
+    },
     { id: "unbundling", slug: "unbundling", title: "Unbundling" },
     { id: "modular-tradeoffs", slug: "modular-tradeoffs", title: "Modular Tradeoffs" },
     // Execution Layers (a layer of a modular stack) are not execution
     // environments or 02's Execution Models.
     { id: "evm-equivalence", slug: "evm-equivalence", title: "EVM Equivalence" },
     { id: "evm-compatibility", slug: "evm-compatibility", title: "EVM Compatibility" },
-    { id: "execution-clients", slug: "execution-clients", title: "Execution Clients" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "execution-clients",
+      slug: "execution-clients",
+      title: "Execution Clients",
+      preferredPlacementId: "execution-clients",
+    },
     { id: "alternative-vms", slug: "alternative-vms", title: "Alternative VMs" },
     // Rollup Settlement is not 11's Settlement; Rollup Finality (soft, then
     // L1-finalized) is not consensus Finality; Forced Withdrawals are not 04's
@@ -2995,7 +3134,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "throughput", slug: "throughput", title: "Throughput" },
     { id: "confirmation-latency", slug: "confirmation-latency", title: "Confirmation Latency" },
     { id: "scaling-costs", slug: "scaling-costs", title: "Scaling Costs" },
-    { id: "decentralization", slug: "decentralization", title: "Decentralization" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "decentralization",
+      slug: "decentralization",
+      title: "Decentralization",
+      preferredPlacementId: "decentralization",
+    },
     { id: "scalability-trilemma", slug: "scalability-trilemma", title: "Scalability Trilemma" },
     // Upgrade Keys are not 14's Protocol Upgrades; Escape Hatches let users exit
     // without the operator.
@@ -3033,7 +3178,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "trust-minimized-interoperability", slug: "trust-minimized-interoperability", title: "Trust-Minimized Interoperability" },
     { id: "hub-and-spoke-interoperability", slug: "hub-and-spoke-interoperability", title: "Hub-and-Spoke Interoperability" },
     { id: "point-to-point-interoperability", slug: "point-to-point-interoperability", title: "Point-to-Point Interoperability" },
-    { id: "cross-chain-composability", slug: "cross-chain-composability", title: "Cross-Chain Composability" },
+    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    {
+      id: "cross-chain-composability",
+      slug: "cross-chain-composability",
+      title: "Cross-Chain Composability",
+      preferredPlacementId: "cross-chain-composability",
+    },
     // Cross-chain messaging is not 05's Message Propagation (gossip within a
     // network); Message Ordering is not 04's Transaction Ordering; Message
     // Authentication is not 08's Authentication; Replay Protection is the
@@ -3255,6 +3406,94 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Upgrade Verification is not 14's Protocol Upgrades.
     { id: "proxy-upgrade-risks", slug: "proxy-upgrade-risks", title: "Proxy Upgrade Risks" },
     { id: "upgrade-verification", slug: "upgrade-verification", title: "Upgrade Verification" },
+    // 18 Protocol Architecture: L1 topics. How protocol systems are structured,
+    // across layers; the mechanics of each layer stay in their own domains (15
+    // for modular layers), and design process and lifecycle belong to 19.
+    { id: "architectural-principles", slug: "architectural-principles", title: "Architectural Principles" },
+    { id: "protocol-layers", slug: "protocol-layers", title: "Protocol Layers" },
+    { id: "components-interfaces", slug: "components-interfaces", title: "Components & Interfaces" },
+    { id: "state-architecture", slug: "state-architecture", title: "State Architecture" },
+    { id: "execution-architecture", slug: "execution-architecture", title: "Execution Architecture" },
+    { id: "contract-architecture", slug: "contract-architecture", title: "Smart Contract Architecture" },
+    { id: "client-architecture", slug: "client-architecture", title: "Client Architecture" },
+    { id: "network-architecture", slug: "network-architecture", title: "Network Architecture" },
+    { id: "data-architecture", slug: "data-architecture", title: "Data Architecture" },
+    { id: "trust-architecture", slug: "trust-architecture", title: "Trust Architecture" },
+    { id: "composability", slug: "composability", title: "Composability" },
+    { id: "architectural-tradeoffs", slug: "architectural-tradeoffs", title: "Architectural Tradeoffs" },
+    // L2 topics (placements in L2_TOPICS). Protocol Minimalism is not 14's
+    // Governance Minimization.
+    { id: "separation-of-concerns", slug: "separation-of-concerns", title: "Separation of Concerns" },
+    { id: "abstraction-boundaries", slug: "abstraction-boundaries", title: "Abstraction Boundaries" },
+    { id: "protocol-minimalism", slug: "protocol-minimalism", title: "Protocol Minimalism" },
+    // Layered Architecture and the Protocol Stack are general; 15's Execution,
+    // Settlement, Consensus and Data Availability Layers are its modular instance.
+    { id: "layered-architecture", slug: "layered-architecture", title: "Layered Architecture" },
+    { id: "protocol-stack", slug: "protocol-stack", title: "Protocol Stack" },
+    { id: "layer-responsibilities", slug: "layer-responsibilities", title: "Layer Responsibilities" },
+    { id: "cross-layer-dependencies", slug: "cross-layer-dependencies", title: "Cross-Layer Dependencies" },
+    // Protocol Standards are not 16's Interoperability Standards; Protocol Hooks
+    // are extension points in a protocol's own logic.
+    { id: "protocol-components", slug: "protocol-components", title: "Protocol Components" },
+    { id: "protocol-standards", slug: "protocol-standards", title: "Protocol Standards" },
+    { id: "component-dependencies", slug: "component-dependencies", title: "Component Dependencies" },
+    { id: "extension-points", slug: "extension-points", title: "Extension Points" },
+    { id: "protocol-hooks", slug: "protocol-hooks", title: "Protocol Hooks" },
+    // State Partitioning and Shared State are not 03's State Layout or Global
+    // State.
+    { id: "state-ownership", slug: "state-ownership", title: "State Ownership" },
+    { id: "state-partitioning", slug: "state-partitioning", title: "State Partitioning" },
+    { id: "state-access-patterns", slug: "state-access-patterns", title: "State Access Patterns" },
+    { id: "shared-state", slug: "shared-state", title: "Shared State" },
+    { id: "state-isolation", slug: "state-isolation", title: "State Isolation" },
+    // Concurrency Models are not 02's Parallel Execution; Execution Boundaries
+    // are not 08's Authority Boundaries.
+    { id: "execution-pipelines", slug: "execution-pipelines", title: "Execution Pipelines" },
+    { id: "execution-scheduling", slug: "execution-scheduling", title: "Execution Scheduling" },
+    { id: "execution-boundaries", slug: "execution-boundaries", title: "Execution Boundaries" },
+    { id: "call-graphs", slug: "call-graphs", title: "Call Graphs" },
+    { id: "concurrency-models", slug: "concurrency-models", title: "Concurrency Models" },
+    // Proxy Patterns (the architecture) are not 17's Proxy Upgrade Risks.
+    { id: "contract-systems", slug: "contract-systems", title: "Contract Systems" },
+    { id: "proxy-patterns", slug: "proxy-patterns", title: "Proxy Patterns" },
+    { id: "factory-patterns", slug: "factory-patterns", title: "Factory Patterns" },
+    { id: "contract-libraries", slug: "contract-libraries", title: "Contract Libraries" },
+    { id: "singleton-contracts", slug: "singleton-contracts", title: "Singleton Contracts" },
+    { id: "contract-registries", slug: "contract-registries", title: "Contract Registries" },
+    // Client Diversity is not 16's Interoperability; Node Roles are not 05's node
+    // types.
+    { id: "consensus-clients", slug: "consensus-clients", title: "Consensus Clients" },
+    { id: "client-diversity", slug: "client-diversity", title: "Client Diversity" },
+    { id: "client-separation", slug: "client-separation", title: "Client Separation" },
+    { id: "node-roles", slug: "node-roles", title: "Node Roles" },
+    { id: "client-interfaces", slug: "client-interfaces", title: "Client Interfaces" },
+    // Network Layers are not Protocol Layers.
+    { id: "overlay-networks", slug: "overlay-networks", title: "Overlay Networks" },
+    { id: "network-layers", slug: "network-layers", title: "Network Layers" },
+    { id: "peer-roles", slug: "peer-roles", title: "Peer Roles" },
+    { id: "network-segmentation", slug: "network-segmentation", title: "Network Segmentation" },
+    // Data Models are not 03's State Models; Storage Architecture is not 07's
+    // Storage Layout.
+    { id: "data-models", slug: "data-models", title: "Data Models" },
+    { id: "data-placement", slug: "data-placement", title: "Data Placement" },
+    { id: "storage-architecture", slug: "storage-architecture", title: "Storage Architecture" },
+    { id: "data-flows", slug: "data-flows", title: "Data Flows" },
+    // The Trusted Computing Base is not 09's Trusted Hardware.
+    { id: "trusted-components", slug: "trusted-components", title: "Trusted Components" },
+    { id: "trusted-computing-base", slug: "trusted-computing-base", title: "Trusted Computing Base" },
+    { id: "trust-dependencies", slug: "trust-dependencies", title: "Trust Dependencies" },
+    // Atomic Composability is not 02's Transaction Atomicity.
+    { id: "synchronous-composability", slug: "synchronous-composability", title: "Synchronous Composability" },
+    { id: "asynchronous-composability", slug: "asynchronous-composability", title: "Asynchronous Composability" },
+    { id: "atomic-composability", slug: "atomic-composability", title: "Atomic Composability" },
+    { id: "protocol-integrations", slug: "protocol-integrations", title: "Protocol Integrations" },
+    { id: "composability-risks", slug: "composability-risks", title: "Composability Risks" },
+    // Coupling is not 15's Layer Coupling.
+    { id: "coupling", slug: "coupling", title: "Coupling" },
+    { id: "cohesion", slug: "cohesion", title: "Cohesion" },
+    { id: "architectural-complexity", slug: "architectural-complexity", title: "Architectural Complexity" },
+    { id: "extensibility", slug: "extensibility", title: "Extensibility" },
+    { id: "technical-debt", slug: "technical-debt", title: "Technical Debt" },
     { id: "liveness-failures", slug: "liveness-failures", title: "Liveness Failures" },
     { id: "safety-failures", slug: "safety-failures", title: "Safety Failures" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
@@ -3718,6 +3957,54 @@ export const mapKnowledge: MapKnowledgeModel = {
       conceptId: "domain-specific-security",
       parentPlacementId: "security-correctness-resilience",
       order: 19,
+    },
+    // 18 Protocol Architecture: L1 topics.
+    {
+      id: "architectural-principles",
+      conceptId: "architectural-principles",
+      parentPlacementId: "protocol-architecture",
+      order: 0,
+    },
+    { id: "protocol-layers", conceptId: "protocol-layers", parentPlacementId: "protocol-architecture", order: 1 },
+    {
+      id: "components-interfaces",
+      conceptId: "components-interfaces",
+      parentPlacementId: "protocol-architecture",
+      order: 2,
+    },
+    { id: "state-architecture", conceptId: "state-architecture", parentPlacementId: "protocol-architecture", order: 3 },
+    {
+      id: "execution-architecture",
+      conceptId: "execution-architecture",
+      parentPlacementId: "protocol-architecture",
+      order: 4,
+    },
+    {
+      id: "contract-architecture",
+      conceptId: "contract-architecture",
+      parentPlacementId: "protocol-architecture",
+      order: 5,
+    },
+    {
+      id: "client-architecture",
+      conceptId: "client-architecture",
+      parentPlacementId: "protocol-architecture",
+      order: 6,
+    },
+    {
+      id: "network-architecture",
+      conceptId: "network-architecture",
+      parentPlacementId: "protocol-architecture",
+      order: 7,
+    },
+    { id: "data-architecture", conceptId: "data-architecture", parentPlacementId: "protocol-architecture", order: 8 },
+    { id: "trust-architecture", conceptId: "trust-architecture", parentPlacementId: "protocol-architecture", order: 9 },
+    { id: "composability", conceptId: "composability", parentPlacementId: "protocol-architecture", order: 10 },
+    {
+      id: "architectural-tradeoffs",
+      conceptId: "architectural-tradeoffs",
+      parentPlacementId: "protocol-architecture",
+      order: 11,
     },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
