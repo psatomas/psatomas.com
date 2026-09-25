@@ -298,6 +298,12 @@ export function getContainingMapL0(index: MapExplorerIndex, placementId: string 
   return getMapExplorerContext(index, placementId)[0]?.placementId ?? null;
 }
 
+/** The canonical 01–27 ordinal of the L0 domain containing a placement. */
+export function getContainingMapL0Ordinal(index: MapExplorerIndex, placementId: string | null): string | null {
+  const l0 = getContainingMapL0(index, placementId);
+  return l0 ? (index.get(l0)?.node.ordinal ?? null) : null;
+}
+
 /**
  * The /map domain index: the explorer's own canonical roots as L0 entries,
  * identical to getMapL0Entries(resolver) on the homepage (same identities,

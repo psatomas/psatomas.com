@@ -15,6 +15,7 @@ import {
   activateMapExplorerRow,
   enterMapExplorerContext,
   getContainingMapL0,
+  getContainingMapL0Ordinal,
   getMapL0IndexEntries,
   indexMapExplorerView,
   resolveMapContextParam,
@@ -535,4 +536,20 @@ test("the containing L0 domain comes from placement ancestry", () => {
   assert.equal(getContainingMapL0(index, "finality-in-consensus"), "consensus-ordering");
   assert.equal(getContainingMapL0(index, "finality-in-rollups"), "scaling-modular-systems");
   assert.equal(getContainingMapL0(index, null), null);
+});
+
+test("the breadcrumb's ordinal is the containing L0's canonical ordinal, for any depth", () => {
+  const index = indexMapExplorerView(view);
+  const canonical = new Map(getMapL0Entries(resolver).map((entry) => [entry.placementId, entry.ordinal]));
+  assert.equal(getContainingMapL0Ordinal(index, "foundations"), "01");
+  assert.equal(getContainingMapL0Ordinal(index, "protocols"), "01");
+  assert.equal(getContainingMapL0Ordinal(index, "identity-accounts-authority"), "08");
+  assert.equal(getContainingMapL0Ordinal(index, "agent-identity"), "08");
+  assert.equal(getContainingMapL0Ordinal(index, "finality-in-rollups"), "15");
+  assert.equal(getContainingMapL0Ordinal(index, "frontier-systems"), "27");
+  assert.equal(getContainingMapL0Ordinal(index, null), null);
+  // Same coordinate as the homepage and /map index for every placement.
+  for (const placement of mapKnowledge.placements) {
+    assert.equal(getContainingMapL0Ordinal(index, placement.id), canonical.get(getContainingMapL0(index, placement.id)!));
+  }
 });
