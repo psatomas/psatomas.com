@@ -5,8 +5,12 @@ import type { Ref } from "react";
 import { useSearchParams } from "next/navigation";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { ConceptExposition } from "./concept-exposition";
+import { MapDomainIndex } from "./map-domain-index";
 import {
   activateMapExplorerRow,
+  enterMapExplorerContext,
+  getContainingMapL0,
+  getMapL0IndexEntries,
   getInitialMapExplorerState,
   getMapContextHref,
   getMapExplorerContext,
@@ -60,22 +64,24 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
   const [reveal, setReveal] = useState<RevealRequest | null>(() =>
     focusedPlacementId ? { placementId: focusedPlacementId, behavior: "auto", nonce: 0 } : null,
   );
-  // When the URL context changes (a row, the breadcrumb, Back/Forward), open
-  // the placement and its ancestors during render, before paint, and bring it
-  // into view unless that was already requested; open branches stay open.
+  // A reveal asked for by an in-page navigation, issued once its context has
+  // rendered (the CONTEXT trail above can change height with it).
+  const [pendingReveal, setPendingReveal] = useState<Omit<RevealRequest, "nonce"> | null>(null);
+  // When the URL context changes (a row, the index, the breadcrumb,
+  // Back/Forward), open the placement and its ancestors during render, before
+  // paint, and bring it into view; open branches stay open.
   const [revealedFor, setRevealedFor] = useState(focusedPlacementId);
   if (revealedFor !== focusedPlacementId) {
     setRevealedFor(focusedPlacementId);
     setExpandedPlacementIds((current) => revealMapExplorerContext(current, index, focusedPlacementId, true));
     if (focusedPlacementId) {
-      setReveal((current) =>
-        current?.placementId === focusedPlacementId
-          ? current
-          : { placementId: focusedPlacementId, behavior: "auto", nonce: (current?.nonce ?? 0) + 1 },
-      );
+      const behavior = pendingReveal?.placementId === focusedPlacementId ? pendingReveal.behavior : "auto";
+      setReveal((current) => ({ placementId: focusedPlacementId, behavior, nonce: (current?.nonce ?? 0) + 1 }));
     }
+    if (pendingReveal) setPendingReveal(null);
   }
   const regions = getVisibleMapExplorerRegions(view, expandedPlacementIds);
+  const domainEntries = useMemo(() => getMapL0IndexEntries(view), [view]);
   const context = getMapExplorerContext(index, focusedPlacementId);
   const rowHintId = useId();
   const contextRef = useRef<HTMLElement>(null);
@@ -112,21 +118,37 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     row?.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
   }, [reveal]);
 
-  const requestReveal = (placementId: string) =>
-    setReveal((current) => ({ placementId, behavior: "smooth", nonce: (current?.nonce ?? 0) + 1 }));
   // Each explicit context change is its own history entry; Clear returns to /map.
   const navigate = (placementId: string | null) =>
     window.history.pushState(null, "", getMapContextHref(placementId));
+  // Moves to a placement: navigates if the context changes (the reveal then
+  // follows the rendered context) or reveals at once if it does not. Short
+  // in-place moves (a row, the breadcrumb) scroll smoothly; a jump from the
+  // domain index lands at once, like any other entry.
+  const moveTo = (placementId: string, behavior: RevealRequest["behavior"]) => {
+    if (placementId !== focusedPlacementId) {
+      setPendingReveal({ placementId, behavior });
+      navigate(placementId);
+    } else {
+      setReveal((current) => ({ placementId, behavior, nonce: (current?.nonce ?? 0) + 1 }));
+    }
+  };
   const activate = (row: MapExplorerRow) => {
     const next = activateMapExplorerRow(row, focusedPlacementId, expandedPlacementIds);
     setExpandedPlacementIds(next.expandedPlacementIds);
-    if (next.reveal) requestReveal(row.placementId);
-    if (next.contextPlacementId !== focusedPlacementId) navigate(next.contextPlacementId);
+    if (next.reveal && next.contextPlacementId) moveTo(next.contextPlacementId, "smooth");
+  };
+  // Entering from the domain index: the same context contract as a row, but
+  // it never collapses an already-open domain.
+  const enterDomain = (placementId: string) => {
+    const next = enterMapExplorerContext(placementId, expandedPlacementIds, index);
+    setExpandedPlacementIds(next.expandedPlacementIds);
+    moveTo(placementId, "auto");
   };
   const navigateFromTrail = (placementId: string | null) => {
     pendingFocusRef.current = { target: placementId };
-    if (placementId) requestReveal(placementId);
-    navigate(placementId);
+    if (placementId) moveTo(placementId, "smooth");
+    else navigate(null);
   };
 
   // Opening a concept reveals its canonical explanation first, then its next
@@ -199,6 +221,11 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
       <p id={rowHintId} hidden>
         Selects this concept as the current context and shows or hides what it contains.
       </p>
+      <MapDomainIndex
+        entries={domainEntries}
+        containingPlacementId={getContainingMapL0(index, focusedPlacementId)}
+        onEnter={enterDomain}
+      />
       <ContextTrail ref={contextRef} context={context} onNavigate={navigateFromTrail} />
 
       {/* Regions are separated by whitespace; rows inside a region stay
