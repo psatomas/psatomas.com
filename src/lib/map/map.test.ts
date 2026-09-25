@@ -2852,6 +2852,167 @@ const PROTOCOLS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const PROTOCOLS_L2 = PROTOCOLS_TREE.flatMap(([, children]) => children);
 
+// 26 Autonomous Economy. Economic Agency is first placed here; the other
+// reused topics keep their homes: 10's, 11's, 14's, 20's, 21's, 22's and 25's.
+const ECONOMY_LAYER: Array<[string, string, string]> = [
+  ["autonomous-economic-actors", "autonomous-economic-actors", "Autonomous Economic Actors"],
+  ["autonomous-ownership-structures", "autonomous-ownership-structures", "Autonomous Ownership Structures"],
+  ["autonomous-markets", "autonomous-markets", "Autonomous Markets"],
+  ["autonomous-commerce", "autonomous-commerce", "Autonomous Commerce"],
+  ["autonomous-production", "autonomous-production", "Autonomous Production"],
+  ["economic-sectors", "economic-sectors", "Economic Sectors"],
+  ["capital-payment-flows", "capital-payment-flows", "Capital & Payment Flows"],
+  ["economy-wide-allocation", "economy-wide-allocation", "Economy-Wide Allocation"],
+  ["autonomous-credit-systems", "autonomous-credit-systems", "Autonomous Credit Systems"],
+  ["monetary-systems", "monetary-systems", "Monetary Systems"],
+  ["economic-institutions", "economic-institutions", "Economic Institutions"],
+  ["economic-governance", "economic-governance", "Economic Governance"],
+  ["market-power", "market-power", "Market Power"],
+  ["economic-stability", "economic-stability", "Economic Stability"],
+  ["economic-resilience", "economic-resilience", "Economic Resilience"],
+  ["economic-dynamics", "economic-dynamics", "Economic Dynamics"],
+  ["human-machine-economic-interaction", "human-machine-economic-interaction", "Human–Machine Economic Interaction"],
+];
+const ECONOMY_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["autonomous-economic-actors", [
+    ["economic-agency", "economic-agency", "Economic Agency"],
+    ["economic-agents-in-autonomous-economic-actors", "economic-agents", "Economic Agents"],
+    ["actor-populations", "actor-populations", "Actor Populations"],
+    ["actor-heterogeneity", "actor-heterogeneity", "Actor Heterogeneity"],
+    ["actor-specialization", "actor-specialization", "Actor Specialization"],
+    ["actor-entry-exit", "actor-entry-exit", "Actor Entry & Exit"],
+  ]],
+  ["autonomous-ownership-structures", [
+    ["machine-owned-assets", "machine-owned-assets", "Machine-Owned Assets"],
+    ["ownership-chains", "ownership-chains", "Ownership Chains"],
+    ["protocol-owned-resources-in-autonomous-ownership-structures", "protocol-owned-resources", "Protocol-Owned Resources"],
+    ["organizational-ownership-in-autonomous-ownership-structures", "organizational-ownership", "Organizational Ownership"],
+    ["beneficial-ownership-in-autonomous-ownership-structures", "beneficial-ownership", "Beneficial Ownership"],
+    ["ownership-concentration", "ownership-concentration", "Ownership Concentration"],
+  ]],
+  ["autonomous-markets", [
+    ["market-formation", "market-formation", "Market Formation"],
+    ["autonomous-supply-demand", "autonomous-supply-demand", "Autonomous Supply & Demand"],
+    ["autonomous-pricing", "autonomous-pricing", "Autonomous Pricing"],
+    ["price-discovery-in-autonomous-markets", "price-discovery", "Price Discovery"],
+    ["market-clearing", "market-clearing", "Market Clearing"],
+    ["autonomous-market-making", "autonomous-market-making", "Autonomous Market Making"],
+  ]],
+  ["autonomous-commerce", [
+    ["autonomous-contracting", "autonomous-contracting", "Autonomous Contracting"],
+    ["contract-enforcement", "contract-enforcement", "Contract Enforcement"],
+    ["machine-commerce-in-autonomous-commerce", "machine-commerce", "Machine Commerce"],
+    ["autonomous-supply-chains", "autonomous-supply-chains", "Autonomous Supply Chains"],
+    ["commerce-networks", "commerce-networks", "Commerce Networks"],
+    ["settlement-in-autonomous-commerce", "settlement", "Settlement"],
+  ]],
+  ["autonomous-production", [
+    ["autonomous-services", "autonomous-services", "Autonomous Services"],
+    ["service-composition", "service-composition", "Service Composition"],
+    ["value-chains", "value-chains", "Value Chains"],
+    ["production-coordination", "production-coordination", "Production Coordination"],
+    ["task-markets-in-autonomous-production", "task-markets", "Task Markets"],
+    ["machine-productivity", "machine-productivity", "Machine Productivity"],
+  ]],
+  ["economic-sectors", [
+    ["agent-economies", "agent-economies", "Agent Economies"],
+    ["protocol-economies", "protocol-economies", "Protocol Economies"],
+    ["inter-protocol-economies", "inter-protocol-economies", "Inter-Protocol Economies"],
+    ["data-economies", "data-economies", "Data Economies"],
+    ["compute-economies", "compute-economies", "Compute Economies"],
+    ["model-economies", "model-economies", "Model Economies"],
+    ["solver-economies", "solver-economies", "Solver Economies"],
+  ]],
+  ["capital-payment-flows", [
+    ["capital-flows", "capital-flows", "Capital Flows"],
+    ["payment-flows", "payment-flows", "Payment Flows"],
+    ["liquidity-networks", "liquidity-networks", "Liquidity Networks"],
+    ["systemic-liquidity", "systemic-liquidity", "Systemic Liquidity"],
+    ["liquidity-fragmentation-in-capital-payment-flows", "liquidity-fragmentation", "Liquidity Fragmentation"],
+    ["capital-mobility", "capital-mobility", "Capital Mobility"],
+  ]],
+  ["economy-wide-allocation", [
+    ["autonomous-capital-allocation", "autonomous-capital-allocation", "Autonomous Capital Allocation"],
+    ["economy-wide-resource-allocation", "economy-wide-resource-allocation", "Economy-Wide Resource Allocation"],
+    ["capital-formation", "capital-formation", "Capital Formation"],
+    ["allocation-efficiency-in-economy-wide-allocation", "allocation-efficiency", "Allocation Efficiency"],
+    ["public-goods-funding-in-economy-wide-allocation", "public-goods-funding", "Public Goods Funding"],
+  ]],
+  ["autonomous-credit-systems", [
+    ["credit-networks", "credit-networks", "Credit Networks"],
+    ["credit-creation", "credit-creation", "Credit Creation"],
+    ["agent-credit-in-autonomous-credit-systems", "agent-credit", "Agent Credit"],
+    ["lending-markets-in-autonomous-credit-systems", "lending-markets", "Lending Markets"],
+    ["creditworthiness-in-autonomous-credit-systems", "creditworthiness", "Creditworthiness"],
+    ["systemic-leverage", "systemic-leverage", "Systemic Leverage"],
+  ]],
+  ["monetary-systems", [
+    ["machine-money", "machine-money", "Machine Money"],
+    ["unit-of-account", "unit-of-account", "Unit of Account"],
+    ["stablecoins-in-monetary-systems", "stablecoins", "Stablecoins"],
+    ["money-supply", "money-supply", "Money Supply"],
+    ["money-velocity", "money-velocity", "Money Velocity"],
+    ["monetary-policy", "monetary-policy", "Monetary Policy"],
+  ]],
+  ["economic-institutions", [
+    ["institutions-in-economic-institutions", "institutions", "Institutions"],
+    ["property-rights", "property-rights", "Property Rights"],
+    ["reputation-systems", "reputation-systems", "Reputation Systems"],
+    ["trust-infrastructure", "trust-infrastructure", "Trust Infrastructure"],
+    ["credible-neutrality-in-economic-institutions", "credible-neutrality", "Credible Neutrality"],
+    ["dispute-resolution-in-economic-institutions", "dispute-resolution", "Dispute Resolution"],
+  ]],
+  ["economic-governance", [
+    ["economic-policy", "economic-policy", "Economic Policy"],
+    ["incentives-in-economic-governance", "incentives", "Incentives"],
+    ["fees-in-economic-governance", "fees", "Fees"],
+    ["taxation", "taxation", "Taxation"],
+    ["rent-extraction", "rent-extraction", "Rent Extraction"],
+    ["redistribution", "redistribution", "Redistribution"],
+  ]],
+  ["market-power", [
+    ["competition-in-market-power", "competition", "Competition"],
+    ["market-concentration", "market-concentration", "Market Concentration"],
+    ["network-effects", "network-effects", "Network Effects"],
+    ["barriers-to-entry", "barriers-to-entry", "Barriers to Entry"],
+    ["collusion-in-market-power", "collusion", "Collusion"],
+    ["algorithmic-collusion", "algorithmic-collusion", "Algorithmic Collusion"],
+  ]],
+  ["economic-stability", [
+    ["systemic-risk-in-economic-stability", "systemic-risk", "Systemic Risk"],
+    ["contagion", "contagion", "Contagion"],
+    ["economic-shocks", "economic-shocks", "Economic Shocks"],
+    ["procyclicality", "procyclicality", "Procyclicality"],
+    ["flash-crashes", "flash-crashes", "Flash Crashes"],
+    ["automatic-stabilizers", "automatic-stabilizers", "Automatic Stabilizers"],
+  ]],
+  ["economic-resilience", [
+    ["shock-absorption", "shock-absorption", "Shock Absorption"],
+    ["economic-diversification", "economic-diversification", "Economic Diversification"],
+    ["backstops", "backstops", "Backstops"],
+    ["circuit-breakers-in-economic-resilience", "circuit-breakers", "Circuit Breakers"],
+    ["stress-testing-in-economic-resilience", "stress-testing", "Stress Testing"],
+    ["economic-recovery", "economic-recovery", "Economic Recovery"],
+  ]],
+  ["economic-dynamics", [
+    ["economic-feedback-loops", "economic-feedback-loops", "Economic Feedback Loops"],
+    ["emergent-economic-behavior", "emergent-economic-behavior", "Emergent Economic Behavior"],
+    ["competitive-equilibria-in-economic-dynamics", "competitive-equilibria", "Competitive Equilibria"],
+    ["market-cycles", "market-cycles", "Market Cycles"],
+    ["economic-growth", "economic-growth", "Economic Growth"],
+    ["economic-adaptation", "economic-adaptation", "Economic Adaptation"],
+  ]],
+  ["human-machine-economic-interaction", [
+    ["principals-in-human-machine-economic-interaction", "principals", "Principals"],
+    ["human-oversight-in-human-machine-economic-interaction", "human-oversight", "Human Oversight"],
+    ["labor-substitution", "labor-substitution", "Labor Substitution"],
+    ["economic-alignment", "economic-alignment", "Economic Alignment"],
+    ["consumer-protection", "consumer-protection", "Consumer Protection"],
+    ["value-distribution", "value-distribution", "Value Distribution"],
+  ]],
+];
+const ECONOMY_L2 = ECONOMY_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2904,6 +3065,8 @@ const AUTHORED_TOPICS = new Set([
   ...ORGANIZATIONS_L2.map(([id]) => id),
   ...PROTOCOLS_LAYER.map(([id]) => id),
   ...PROTOCOLS_L2.map(([id]) => id),
+  ...ECONOMY_LAYER.map(([id]) => id),
+  ...ECONOMY_L2.map(([id]) => id),
 ]);
 
 // Each domain's tests see the stack as it stood when that domain was authored:
@@ -3039,8 +3202,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Coordination's 5 new L1 and 56 new L2 concepts, then Autonomous
   // Execution's 11 new L1 and 45 new L2 concepts, then Autonomous
   // Organizations' 13 new L1 and 54 new L2 concepts, then Autonomous
-  // Protocols' 17 new L1 and 60 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54 + 17 + 60);
+  // Protocols' 17 new L1 and 60 new L2 concepts, then Autonomous
+  // Economy's 17 new L1 and 73 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54 + 17 + 60 + 17 + 73);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -3341,6 +3505,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("governance-institutions"), GOVERNANCE_LAYER.length + GOVERNANCE_L2.length);
   assert.equal(subtreeOf("autonomous-execution"), EXECUTION_LAYER.length + EXECUTION_L2.length);
   assert.equal(subtreeOf("autonomous-organizations"), ORGANIZATIONS_LAYER.length + ORGANIZATIONS_L2.length);
+  assert.equal(subtreeOf("autonomous-protocols"), PROTOCOLS_LAYER.length + PROTOCOLS_L2.length);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -5484,6 +5649,132 @@ test("Autonomous Protocols leaves 20–24 unchanged", () => {
   }
 });
 
+test("Autonomous Economy has exactly its seventeen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("autonomous-economy").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    ECONOMY_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("autonomous-economy").map((placement) => placement.order), ECONOMY_LAYER.map((_, order) => order));
+  for (const [parent, children] of ECONOMY_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of ECONOMY_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "autonomous-economy")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...ECONOMY_LAYER.map(([id]) => id), ...ECONOMY_L2.map(([id]) => id)].sort());
+  assert.equal(ECONOMY_L2.length, 102);
+  assert.deepEqual(resolver.getAncestors("contagion").map((placement) => placement.id), ["autonomous-economy", "economic-stability"]);
+  assert.deepEqual(resolver.getAncestors("economic-agency").map((placement) => placement.id), ["autonomous-economy", "autonomous-economic-actors"]);
+});
+
+test("Autonomous Economy places Economic Agency, reuses existing concepts at their homes and keeps economy-level concepts distinct", () => {
+  const placementsOf = (conceptId: string) => placementsThrough("autonomous-economy", conceptId);
+  // Economic Agency, unplaced until now, is placed here once, keeping its ID and relationship.
+  assert.deepEqual(placementsOf("economic-agency"), ["economic-agency"]);
+  assert.equal(resolver.getConcept("economic-agency")?.preferredPlacementId, undefined);
+  assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
+  // Every L1 topic is a new concept; every other reused concept gains exactly
+  // this placement here and stays preferred at its home.
+  assert.ok(ECONOMY_LAYER.every(([id, conceptId]) => id === conceptId));
+  const reused = ECONOMY_L2.filter(([id, conceptId]) => id !== conceptId);
+  assert.equal(reused.length, 28);
+  for (const [id, conceptId] of reused) {
+    assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
+    assert.ok(placementsOf(conceptId).includes(id), id);
+    const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
+    assert.ok(preferred && containingL0(preferred) !== "autonomous-economy", `${conceptId} stays preferred at its home`);
+    assertPreferredThrough("autonomous-economy", conceptId, preferred);
+  }
+  // Economy-level concepts kept distinct from the concepts they sit near.
+  for (const [placementId, related] of [
+    ["autonomous-markets", "markets"],
+    ["autonomous-markets", "agent-markets"],
+    ["autonomous-commerce", "machine-commerce"],
+    ["protocol-economies", "protocol-owned-resources"],
+    ["autonomous-capital-allocation", "capital-allocation"],
+    ["economy-wide-resource-allocation", "resource-allocation"],
+    ["production-coordination", "multi-agent-coordination"],
+    ["market-formation", "markets"],
+    ["systemic-liquidity", "liquidity"],
+    ["capital-flows", "machine-payments"],
+    ["payment-flows", "machine-payments"],
+    ["credit-networks", "agent-credit"],
+    ["economic-institutions", "autonomous-organizations"],
+    ["economic-institutions", "institutions"],
+    ["economic-governance", "governance-institutions"],
+    ["economic-policy", "governance-models"],
+    ["monetary-systems", "token-economics"],
+    ["money-supply", "token-supply"],
+    ["monetary-policy", "issuance"],
+    ["economic-stability", "control-stability"],
+    ["contagion", "counterparty-risk"],
+    ["economic-stability", "agent-risk"],
+    ["economic-stability", "autonomous-risk-management"],
+    ["economic-resilience", "execution-recovery"],
+    ["economic-resilience", "self-healing"],
+    ["economic-recovery", "execution-recovery"],
+    ["emergent-economic-behavior", "emergent-coordination"],
+    ["economic-feedback-loops", "feedback-loops"],
+    ["autonomous-ownership-structures", "agent-ownership"],
+    ["ownership-concentration", "market-concentration"],
+    ["autonomous-production", "action-execution"],
+    ["autonomous-services", "service-markets"],
+    ["compute-economies", "compute-markets"],
+    ["solver-economies", "solver-markets"],
+    ["autonomous-pricing", "market-prices"],
+    ["market-clearing", "auction-clearing"],
+    ["autonomous-market-making", "automated-market-makers"],
+    ["autonomous-contracting", "negotiation"],
+    ["contract-enforcement", "ruling-enforcement"],
+    ["reputation-systems", "agent-reputation"],
+    ["trust-infrastructure", "trust-models"],
+    ["taxation", "fees"],
+    ["redistribution", "mev-redistribution"],
+    ["algorithmic-collusion", "collusion"],
+    ["backstops", "loss-absorption"],
+    ["automatic-stabilizers", "feedback-controllers"],
+    ["economic-alignment", "incentive-alignment"],
+    ["actor-specialization", "task-sharing"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  for (const [id, conceptId] of [...ECONOMY_LAYER, ...ECONOMY_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (id !== conceptId) continue;
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...ECONOMY_LAYER, ...ECONOMY_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Autonomous Economy leaves 20–25 unchanged", () => {
+  for (const [root, layer, tree] of [
+    ["ai-intelligent-systems", AI_LAYER, AI_TREE],
+    ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
+    ["autonomous-coordination", COORDINATION_LAYER, COORDINATION_TREE],
+    ["autonomous-execution", EXECUTION_LAYER, EXECUTION_TREE],
+    ["autonomous-organizations", ORGANIZATIONS_LAYER, ORGANIZATIONS_TREE],
+    ["autonomous-protocols", PROTOCOLS_LAYER, PROTOCOLS_TREE],
+  ] as const) {
+    assert.deepEqual(resolver.getChildren(root).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), layer, root);
+    for (const [parent, children] of tree) {
+      assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
+    }
+  }
+});
+
 // Cross-domain invariants, asserted once for the whole stack rather than in each
 // domain's own tests.
 test("a concept has an explicit preferred placement exactly when it is placed more than once, and resolves to it", () => {
@@ -5534,6 +5825,7 @@ const POPULATED_L0 = [
   "autonomous-execution",
   "autonomous-organizations",
   "autonomous-protocols",
+  "autonomous-economy",
 ];
 
 test("L0 domains without authored topics stay empty", () => {
@@ -5601,8 +5893,22 @@ test("agentic concepts use the same concepts, placements, relationships, and res
 });
 
 test("sparse and orphan concepts remain valid", () => {
-  assert.equal(resolver.getConcept("economic-agency")?.title, "Economic Agency");
-  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
+  // Every authored concept is now placed (Economic Agency, the last orphan, is
+  // placed by Autonomous Economy), so an orphan with a relationship but no
+  // placement or content is added to the real model.
+  const withOrphan = createMapResolver({
+    ...mapKnowledge,
+    concepts: [...mapKnowledge.concepts, { id: "unplaced-concept", slug: "unplaced-concept", title: "Unplaced Concept" }],
+    relationships: [
+      ...mapKnowledge.relationships,
+      { id: "agent-identity-enables-unplaced-concept", sourceConceptId: "agent-identity", targetConceptId: "unplaced-concept", typeId: "enables" },
+    ],
+  });
+  assert.equal(withOrphan.getConcept("unplaced-concept")?.title, "Unplaced Concept");
+  assert.deepEqual(withOrphan.getPlacementsForConcept("unplaced-concept"), []);
+  assert.equal(withOrphan.getContentForConcept("unplaced-concept"), undefined);
+  assert.deepEqual(withOrphan.getRelationshipsTo("unplaced-concept").map((relationship) => relationship.typeId), ["enables"]);
+  // Economic Agency itself stays without content, with its relationship unchanged.
   assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.typeId), ["enables"]);
 });

@@ -2226,6 +2226,143 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "ossification-in-protocol-lifecycle-automation", conceptId: "ossification" },
     { placementId: "protocol-sunsetting-in-protocol-lifecycle-automation", conceptId: "protocol-sunsetting" },
   ],
+  // 26 Autonomous Economy
+  "autonomous-economic-actors": [
+    "economic-agency",
+    { placementId: "economic-agents-in-autonomous-economic-actors", conceptId: "economic-agents" },
+    "actor-populations",
+    "actor-heterogeneity",
+    "actor-specialization",
+    "actor-entry-exit",
+  ],
+  "autonomous-ownership-structures": [
+    "machine-owned-assets",
+    "ownership-chains",
+    { placementId: "protocol-owned-resources-in-autonomous-ownership-structures", conceptId: "protocol-owned-resources" },
+    { placementId: "organizational-ownership-in-autonomous-ownership-structures", conceptId: "organizational-ownership" },
+    { placementId: "beneficial-ownership-in-autonomous-ownership-structures", conceptId: "beneficial-ownership" },
+    "ownership-concentration",
+  ],
+  "autonomous-markets": [
+    "market-formation",
+    "autonomous-supply-demand",
+    "autonomous-pricing",
+    { placementId: "price-discovery-in-autonomous-markets", conceptId: "price-discovery" },
+    "market-clearing",
+    "autonomous-market-making",
+  ],
+  "autonomous-commerce": [
+    "autonomous-contracting",
+    "contract-enforcement",
+    { placementId: "machine-commerce-in-autonomous-commerce", conceptId: "machine-commerce" },
+    "autonomous-supply-chains",
+    "commerce-networks",
+    { placementId: "settlement-in-autonomous-commerce", conceptId: "settlement" },
+  ],
+  "autonomous-production": [
+    "autonomous-services",
+    "service-composition",
+    "value-chains",
+    "production-coordination",
+    { placementId: "task-markets-in-autonomous-production", conceptId: "task-markets" },
+    "machine-productivity",
+  ],
+  "economic-sectors": [
+    "agent-economies",
+    "protocol-economies",
+    "inter-protocol-economies",
+    "data-economies",
+    "compute-economies",
+    "model-economies",
+    "solver-economies",
+  ],
+  "capital-payment-flows": [
+    "capital-flows",
+    "payment-flows",
+    "liquidity-networks",
+    "systemic-liquidity",
+    { placementId: "liquidity-fragmentation-in-capital-payment-flows", conceptId: "liquidity-fragmentation" },
+    "capital-mobility",
+  ],
+  "economy-wide-allocation": [
+    "autonomous-capital-allocation",
+    "economy-wide-resource-allocation",
+    "capital-formation",
+    { placementId: "allocation-efficiency-in-economy-wide-allocation", conceptId: "allocation-efficiency" },
+    { placementId: "public-goods-funding-in-economy-wide-allocation", conceptId: "public-goods-funding" },
+  ],
+  "autonomous-credit-systems": [
+    "credit-networks",
+    "credit-creation",
+    { placementId: "agent-credit-in-autonomous-credit-systems", conceptId: "agent-credit" },
+    { placementId: "lending-markets-in-autonomous-credit-systems", conceptId: "lending-markets" },
+    { placementId: "creditworthiness-in-autonomous-credit-systems", conceptId: "creditworthiness" },
+    "systemic-leverage",
+  ],
+  "monetary-systems": [
+    "machine-money",
+    "unit-of-account",
+    { placementId: "stablecoins-in-monetary-systems", conceptId: "stablecoins" },
+    "money-supply",
+    "money-velocity",
+    "monetary-policy",
+  ],
+  "economic-institutions": [
+    { placementId: "institutions-in-economic-institutions", conceptId: "institutions" },
+    "property-rights",
+    "reputation-systems",
+    "trust-infrastructure",
+    { placementId: "credible-neutrality-in-economic-institutions", conceptId: "credible-neutrality" },
+    { placementId: "dispute-resolution-in-economic-institutions", conceptId: "dispute-resolution" },
+  ],
+  "economic-governance": [
+    "economic-policy",
+    { placementId: "incentives-in-economic-governance", conceptId: "incentives" },
+    { placementId: "fees-in-economic-governance", conceptId: "fees" },
+    "taxation",
+    "rent-extraction",
+    "redistribution",
+  ],
+  "market-power": [
+    { placementId: "competition-in-market-power", conceptId: "competition" },
+    "market-concentration",
+    "network-effects",
+    "barriers-to-entry",
+    { placementId: "collusion-in-market-power", conceptId: "collusion" },
+    "algorithmic-collusion",
+  ],
+  "economic-stability": [
+    { placementId: "systemic-risk-in-economic-stability", conceptId: "systemic-risk" },
+    "contagion",
+    "economic-shocks",
+    "procyclicality",
+    "flash-crashes",
+    "automatic-stabilizers",
+  ],
+  "economic-resilience": [
+    "shock-absorption",
+    "economic-diversification",
+    "backstops",
+    { placementId: "circuit-breakers-in-economic-resilience", conceptId: "circuit-breakers" },
+    { placementId: "stress-testing-in-economic-resilience", conceptId: "stress-testing" },
+    "economic-recovery",
+  ],
+  "economic-dynamics": [
+    "economic-feedback-loops",
+    "emergent-economic-behavior",
+    { placementId: "competitive-equilibria-in-economic-dynamics", conceptId: "competitive-equilibria" },
+    "market-cycles",
+    "economic-growth",
+    "economic-adaptation",
+  ],
+  "human-machine-economic-interaction": [
+    { placementId: "principals-in-human-machine-economic-interaction", conceptId: "principals" },
+    { placementId: "human-oversight-in-human-machine-economic-interaction", conceptId: "human-oversight" },
+    "labor-substitution",
+    "economic-alignment",
+    "consumer-protection",
+    "value-distribution",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -2247,8 +2384,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Systems, Interoperability & Abstraction, Security, Correctness &
  * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
  * Intelligent Systems, Machine Economy, Autonomous Coordination, Autonomous
- * Execution, Autonomous Organizations, and Autonomous Protocols; and a
- * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Execution, Autonomous Organizations, Autonomous Protocols, and Autonomous
+ * Economy; and a deliberately small Phase 1 proof fixture re-homed beneath its
+ * L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -3201,7 +3339,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Foundations' concept). Incentives, Mechanism Design, Game Theory, Fees and
     // Auctions are general concepts for reuse by later domains; Cryptoeconomic
     // Security (the approach) is not its L2 Economic Security (the measure).
-    { id: "incentives", slug: "incentives", title: "Incentives" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "incentives", slug: "incentives", title: "Incentives", preferredPlacementId: "incentives" },
     // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
     {
       id: "mechanism-design",
@@ -3211,7 +3350,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     },
     { id: "game-theory", slug: "game-theory", title: "Game Theory" },
     { id: "token-economics", slug: "token-economics", title: "Token Economics" },
-    { id: "fees", slug: "fees", title: "Fees" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "fees", slug: "fees", title: "Fees", preferredPlacementId: "fees" },
     { id: "auctions", slug: "auctions", title: "Auctions" },
     // Also 22 Autonomous Coordination's L1 topic, allocating among agents, with
     // its own layer; this placement is preferred.
@@ -3286,7 +3426,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "scarce-resources", slug: "scarce-resources", title: "Scarce Resources" },
     { id: "resource-pricing", slug: "resource-pricing", title: "Resource Pricing" },
     { id: "capacity-allocation", slug: "capacity-allocation", title: "Capacity Allocation" },
-    { id: "allocation-efficiency", slug: "allocation-efficiency", title: "Allocation Efficiency" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "allocation-efficiency", slug: "allocation-efficiency", title: "Allocation Efficiency", preferredPlacementId: "allocation-efficiency" },
     { id: "congestion", slug: "congestion", title: "Congestion" },
     { id: "rationing", slug: "rationing", title: "Rationing" },
     // Validator Economics (a validator's revenues and costs) is not 04's
@@ -3337,7 +3478,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 21's Agent Credit; this placement is preferred.
     { id: "collateral", slug: "collateral", title: "Collateral", preferredPlacementId: "collateral" },
     { id: "liquidations", slug: "liquidations", title: "Liquidations" },
-    { id: "stablecoins", slug: "stablecoins", title: "Stablecoins" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "stablecoins", slug: "stablecoins", title: "Stablecoins", preferredPlacementId: "stablecoins" },
     { id: "derivatives", slug: "derivatives", title: "Derivatives" },
     { id: "risk", slug: "risk", title: "Risk" },
     { id: "solvency", slug: "solvency", title: "Solvency" },
@@ -3362,7 +3504,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 25 Autonomous Protocols; this placement is preferred.
     { id: "liquidity-provision", slug: "liquidity-provision", title: "Liquidity Provision", preferredPlacementId: "liquidity-provision" },
     { id: "liquidity-depth", slug: "liquidity-depth", title: "Liquidity Depth" },
-    { id: "liquidity-fragmentation", slug: "liquidity-fragmentation", title: "Liquidity Fragmentation" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "liquidity-fragmentation", slug: "liquidity-fragmentation", title: "Liquidity Fragmentation", preferredPlacementId: "liquidity-fragmentation" },
     { id: "capital-efficiency", slug: "capital-efficiency", title: "Capital Efficiency" },
     // One concept under Liquidity and Risk; preferred under Risk, as a kind of risk.
     { id: "liquidity-risk", slug: "liquidity-risk", title: "Liquidity Risk", preferredPlacementId: "liquidity-risk-in-risk" },
@@ -3380,7 +3523,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "market-orders", slug: "market-orders", title: "Market Orders" },
     { id: "asks", slug: "asks", title: "Asks" },
     { id: "order-matching", slug: "order-matching", title: "Order Matching" },
-    { id: "lending-markets", slug: "lending-markets", title: "Lending Markets" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "lending-markets", slug: "lending-markets", title: "Lending Markets", preferredPlacementId: "lending-markets" },
     { id: "borrowers", slug: "borrowers", title: "Borrowers" },
     { id: "lenders", slug: "lenders", title: "Lenders" },
     { id: "interest-rates", slug: "interest-rates", title: "Interest Rates" },
@@ -3417,7 +3561,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "credit-risk", slug: "credit-risk", title: "Credit Risk" },
     // Also placed under 21's Agent Risk; this placement is preferred.
     { id: "counterparty-risk", slug: "counterparty-risk", title: "Counterparty Risk", preferredPlacementId: "counterparty-risk" },
-    { id: "systemic-risk", slug: "systemic-risk", title: "Systemic Risk" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "systemic-risk", slug: "systemic-risk", title: "Systemic Risk", preferredPlacementId: "systemic-risk" },
     // Also placed under 25 Autonomous Protocols; this placement is preferred.
     { id: "risk-parameters", slug: "risk-parameters", title: "Risk Parameters", preferredPlacementId: "risk-parameters" },
     // Assets and Liabilities is the balance-sheet view, not Assets; Solvency
@@ -3784,7 +3929,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "budget-allocation", slug: "budget-allocation", title: "Budget Allocation", preferredPlacementId: "budget-allocation" },
     // Also placed under 24 Autonomous Organizations; this placement is preferred.
     { id: "grants", slug: "grants", title: "Grants", preferredPlacementId: "grants" },
-    { id: "public-goods-funding", slug: "public-goods-funding", title: "Public Goods Funding" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "public-goods-funding", slug: "public-goods-funding", title: "Public Goods Funding", preferredPlacementId: "public-goods-funding" },
     // Also placed under 24 Autonomous Organizations; this placement is preferred.
     { id: "spending-controls", slug: "spending-controls", title: "Spending Controls", preferredPlacementId: "spending-controls" },
     // Social Consensus (a community's off-chain agreement) is not 04's Consensus.
@@ -3855,9 +4001,11 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "plutocracy", slug: "plutocracy", title: "Plutocracy" },
     { id: "hostile-takeovers", slug: "hostile-takeovers", title: "Hostile Takeovers" },
     // Institutional Design reuses 10's Incentive Alignment.
-    { id: "institutions", slug: "institutions", title: "Institutions" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "institutions", slug: "institutions", title: "Institutions", preferredPlacementId: "institutions" },
     { id: "legitimacy", slug: "legitimacy", title: "Legitimacy" },
-    // Also placed in 18 Protocol Architecture; this placement is preferred.
+    // Also placed in 18 Protocol Architecture and under 26 Autonomous Economy; this
+    // placement is preferred.
     {
       id: "credible-neutrality",
       slug: "credible-neutrality",
@@ -4573,7 +4721,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // authority, execution, organization and autonomy domains; not
     // Foundations' Participants or 10's Players. Autonomy Levels leaves the
     // general Autonomy to 22–26.
-    { id: "principals", slug: "principals", title: "Principals" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "principals", slug: "principals", title: "Principals", preferredPlacementId: "principals" },
     { id: "agent-loops", slug: "agent-loops", title: "Agent Loops" },
     // Also placed under 23 Autonomous Execution; this placement is preferred.
     { id: "agent-actions", slug: "agent-actions", title: "Agent Actions", preferredPlacementId: "agent-actions" },
@@ -4623,16 +4772,19 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Permissions (the grants an agent holds) are not 08's Agent Authorization
     // (deciding what an authenticated agent may do); Agent Risk and Agent
     // Incentives are not 11's Risk or 10's Incentives.
-    { id: "economic-agents", slug: "economic-agents", title: "Economic Agents" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "economic-agents", slug: "economic-agents", title: "Economic Agents", preferredPlacementId: "economic-agents" },
     { id: "agent-ownership", slug: "agent-ownership", title: "Agent Ownership" },
     { id: "agent-wallets", slug: "agent-wallets", title: "Agent Wallets" },
     { id: "agent-capital", slug: "agent-capital", title: "Agent Capital" },
     { id: "agent-budgets", slug: "agent-budgets", title: "Agent Budgets" },
     { id: "agent-permissions", slug: "agent-permissions", title: "Agent Permissions" },
     { id: "machine-payments", slug: "machine-payments", title: "Machine Payments" },
-    { id: "machine-commerce", slug: "machine-commerce", title: "Machine Commerce" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "machine-commerce", slug: "machine-commerce", title: "Machine Commerce", preferredPlacementId: "machine-commerce" },
     { id: "agent-markets", slug: "agent-markets", title: "Agent Markets" },
-    { id: "agent-credit", slug: "agent-credit", title: "Agent Credit" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "agent-credit", slug: "agent-credit", title: "Agent Credit", preferredPlacementId: "agent-credit" },
     { id: "agent-risk", slug: "agent-risk", title: "Agent Risk" },
     { id: "agent-incentives", slug: "agent-incentives", title: "Agent Incentives" },
     // L2 topics (placements in L2_TOPICS). AI Agents is 20's AI Agent and
@@ -4646,10 +4798,12 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Kinds of owner of an agent, not 08's Ownership (control of an asset or
     // contract) in general.
     { id: "human-ownership", slug: "human-ownership", title: "Human Ownership" },
-    { id: "organizational-ownership", slug: "organizational-ownership", title: "Organizational Ownership" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "organizational-ownership", slug: "organizational-ownership", title: "Organizational Ownership", preferredPlacementId: "organizational-ownership" },
     { id: "shared-ownership", slug: "shared-ownership", title: "Shared Ownership" },
     { id: "protocol-ownership", slug: "protocol-ownership", title: "Protocol Ownership" },
-    { id: "beneficial-ownership", slug: "beneficial-ownership", title: "Beneficial Ownership" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "beneficial-ownership", slug: "beneficial-ownership", title: "Beneficial Ownership", preferredPlacementId: "beneficial-ownership" },
     { id: "ownership-transfer", slug: "ownership-transfer", title: "Ownership Transfer" },
     // Identity Recovery (regaining control of an identity) is not 08's Account
     // or Wallet Recovery.
@@ -4703,7 +4857,8 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Service Discovery",
       preferredPlacementId: "service-discovery-in-agent-discovery",
     },
-    { id: "price-discovery", slug: "price-discovery", title: "Price Discovery" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "price-discovery", slug: "price-discovery", title: "Price Discovery", preferredPlacementId: "price-discovery" },
     {
       id: "negotiation",
       slug: "negotiation",
@@ -4728,7 +4883,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "reputation-attacks", slug: "reputation-attacks", title: "Reputation Attacks" },
     // A borrower failing to repay, shown as "Default"; not 11's Bad Debt (the
     // loss left behind) or Insolvency. Creditworthiness is not 11's Credit Risk.
-    { id: "creditworthiness", slug: "creditworthiness", title: "Creditworthiness" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "creditworthiness", slug: "creditworthiness", title: "Creditworthiness", preferredPlacementId: "creditworthiness" },
     { id: "credit-limits", slug: "credit-limits", title: "Credit Limits" },
     { id: "unsecured-credit", slug: "unsecured-credit", title: "Unsecured Credit" },
     { id: "credit-default", slug: "credit-default", title: "Credit Default" },
@@ -4755,7 +4911,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "agent-to-agent-communication", slug: "agent-to-agent-communication", title: "Agent-to-Agent Communication" },
     { id: "agent-discovery", slug: "agent-discovery", title: "Agent Discovery" },
     { id: "coalition-formation", slug: "coalition-formation", title: "Coalition Formation" },
-    { id: "task-markets", slug: "task-markets", title: "Task Markets" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "task-markets", slug: "task-markets", title: "Task Markets", preferredPlacementId: "task-markets" },
     { id: "multi-agent-coordination", slug: "multi-agent-coordination", title: "Multi-Agent Coordination" },
     // L2 topics (placements in L2_TOPICS). Message Protocols are not
     // Foundations' Protocols or 20's Tool Protocols; Message Routing is not 05's
@@ -4807,7 +4964,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "bidding", slug: "bidding", title: "Bidding" },
     { id: "competitive-selection", slug: "competitive-selection", title: "Competitive Selection" },
     { id: "rivalry", slug: "rivalry", title: "Rivalry" },
-    { id: "competitive-equilibria", slug: "competitive-equilibria", title: "Competitive Equilibria" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "competitive-equilibria", slug: "competitive-equilibria", title: "Competitive Equilibria", preferredPlacementId: "competitive-equilibria" },
     // Coalitions agents form deliberately, not Foundations' Collusion; Coalition
     // Incentives are not 10's Incentives.
     { id: "coalition-membership", slug: "coalition-membership", title: "Coalition Membership" },
@@ -5083,7 +5241,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "protocol-adaptation", slug: "protocol-adaptation", title: "Protocol Adaptation" },
     { id: "self-healing", slug: "self-healing", title: "Self-Healing" },
     { id: "autonomous-security-responses", slug: "autonomous-security-responses", title: "Autonomous Security Responses" },
-    { id: "protocol-owned-resources", slug: "protocol-owned-resources", title: "Protocol-Owned Resources" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "protocol-owned-resources", slug: "protocol-owned-resources", title: "Protocol-Owned Resources", preferredPlacementId: "protocol-owned-resources" },
     { id: "autonomous-liquidity-management", slug: "autonomous-liquidity-management", title: "Autonomous Liquidity Management" },
     { id: "autonomous-risk-management", slug: "autonomous-risk-management", title: "Autonomous Risk Management" },
     { id: "governance-human-override", slug: "governance-human-override", title: "Governance & Human Override" },
@@ -5185,7 +5344,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Liquidations.
     { id: "risk-models", slug: "risk-models", title: "Risk Models" },
     { id: "dynamic-risk-parameters", slug: "dynamic-risk-parameters", title: "Dynamic Risk Parameters" },
-    { id: "stress-testing", slug: "stress-testing", title: "Stress Testing" },
+    // Also placed under 26 Autonomous Economy; this placement is preferred.
+    { id: "stress-testing", slug: "stress-testing", title: "Stress Testing", preferredPlacementId: "stress-testing" },
     { id: "automated-deleveraging", slug: "automated-deleveraging", title: "Automated Deleveraging" },
     // Governance decides in 14; here its decisions take effect without a human
     // executor, and humans can override autonomous operation. Override
@@ -5203,6 +5363,152 @@ export const mapKnowledge: MapKnowledgeModel = {
     // (decided by governance); Protocol Bootstrapping is not 24's Organizational
     // Bootstrapping.
     { id: "automated-upgrades", slug: "automated-upgrades", title: "Automated Upgrades" },
+    // 26 Autonomous Economy: L1 topics. The economy that emerges when many
+    // autonomous agents, organizations and protocols own assets, transact,
+    // coordinate, compete and form institutions: not 21's Machine Economy (one
+    // agent's economic capabilities), 22's coordination, 24's organizations or
+    // 25's single self-managing protocol. Autonomous Markets are not 11's Markets
+    // or 21's Agent Markets; Autonomous Commerce is not 21's Machine Commerce;
+    // Economy-Wide Allocation is not 10's Resource or 21's Capital Allocation;
+    // Autonomous Credit Systems are not 21's Agent Credit; Economic Institutions
+    // are not 24's Autonomous Organizations; Economic Governance is not 14's;
+    // Monetary Systems are not 10's Token Economics; Economic Stability is not
+    // 25's Control Stability; Economic Resilience is not 23's Execution Recovery
+    // or 25's Self-Healing; Autonomous Ownership Structures are not 21's Agent
+    // Ownership.
+    { id: "autonomous-economic-actors", slug: "autonomous-economic-actors", title: "Autonomous Economic Actors" },
+    { id: "autonomous-ownership-structures", slug: "autonomous-ownership-structures", title: "Autonomous Ownership Structures" },
+    { id: "autonomous-markets", slug: "autonomous-markets", title: "Autonomous Markets" },
+    { id: "autonomous-commerce", slug: "autonomous-commerce", title: "Autonomous Commerce" },
+    { id: "autonomous-production", slug: "autonomous-production", title: "Autonomous Production" },
+    { id: "economic-sectors", slug: "economic-sectors", title: "Economic Sectors" },
+    { id: "capital-payment-flows", slug: "capital-payment-flows", title: "Capital & Payment Flows" },
+    { id: "economy-wide-allocation", slug: "economy-wide-allocation", title: "Economy-Wide Allocation" },
+    { id: "autonomous-credit-systems", slug: "autonomous-credit-systems", title: "Autonomous Credit Systems" },
+    { id: "monetary-systems", slug: "monetary-systems", title: "Monetary Systems" },
+    { id: "economic-institutions", slug: "economic-institutions", title: "Economic Institutions" },
+    { id: "economic-governance", slug: "economic-governance", title: "Economic Governance" },
+    { id: "market-power", slug: "market-power", title: "Market Power" },
+    { id: "economic-stability", slug: "economic-stability", title: "Economic Stability" },
+    { id: "economic-resilience", slug: "economic-resilience", title: "Economic Resilience" },
+    { id: "economic-dynamics", slug: "economic-dynamics", title: "Economic Dynamics" },
+    { id: "human-machine-economic-interaction", slug: "human-machine-economic-interaction", title: "Human–Machine Economic Interaction" },
+    // L2 topics (placements in L2_TOPICS). Economic Agency (the capacity to act
+    // economically) is first placed here; Economic Agents are 21's. Actor
+    // Specialization is not 22's Task Sharing.
+    { id: "actor-populations", slug: "actor-populations", title: "Actor Populations" },
+    { id: "actor-heterogeneity", slug: "actor-heterogeneity", title: "Actor Heterogeneity" },
+    { id: "actor-specialization", slug: "actor-specialization", title: "Actor Specialization" },
+    { id: "actor-entry-exit", slug: "actor-entry-exit", title: "Actor Entry & Exit" },
+    // Protocol-Owned Resources (25) and Organizational and Beneficial Ownership
+    // (21) are placed again. Ownership Concentration is not Market
+    // Concentration.
+    { id: "machine-owned-assets", slug: "machine-owned-assets", title: "Machine-Owned Assets" },
+    { id: "ownership-chains", slug: "ownership-chains", title: "Ownership Chains" },
+    { id: "ownership-concentration", slug: "ownership-concentration", title: "Ownership Concentration" },
+    // Market Formation (markets arising among autonomous actors) is not 11's
+    // Markets; Autonomous Pricing is not 11's Market Prices; Market Clearing is
+    // not 10's Auction Clearing; Autonomous Market Making is not 11's Automated
+    // Market Makers.
+    { id: "market-formation", slug: "market-formation", title: "Market Formation" },
+    { id: "autonomous-supply-demand", slug: "autonomous-supply-demand", title: "Autonomous Supply & Demand" },
+    { id: "autonomous-pricing", slug: "autonomous-pricing", title: "Autonomous Pricing" },
+    { id: "market-clearing", slug: "market-clearing", title: "Market Clearing" },
+    { id: "autonomous-market-making", slug: "autonomous-market-making", title: "Autonomous Market Making" },
+    // Autonomous Contracting is not 22's Negotiation; Contract Enforcement is
+    // not 14's Ruling Enforcement; Commerce Networks are not 22's Agent
+    // Discovery.
+    { id: "autonomous-contracting", slug: "autonomous-contracting", title: "Autonomous Contracting" },
+    { id: "contract-enforcement", slug: "contract-enforcement", title: "Contract Enforcement" },
+    { id: "autonomous-supply-chains", slug: "autonomous-supply-chains", title: "Autonomous Supply Chains" },
+    { id: "commerce-networks", slug: "commerce-networks", title: "Commerce Networks" },
+    // Autonomous production is not 23's execution of one task: Autonomous
+    // Services are not 21's Service Markets; Production Coordination is not 22's
+    // Multi-Agent Coordination.
+    { id: "autonomous-services", slug: "autonomous-services", title: "Autonomous Services" },
+    { id: "service-composition", slug: "service-composition", title: "Service Composition" },
+    { id: "value-chains", slug: "value-chains", title: "Value Chains" },
+    { id: "production-coordination", slug: "production-coordination", title: "Production Coordination" },
+    { id: "machine-productivity", slug: "machine-productivity", title: "Machine Productivity" },
+    // Whole economies, not 21's Compute, Data, Model or Solver Markets; Protocol
+    // Economies are not 25's Protocol-Owned Resources.
+    { id: "agent-economies", slug: "agent-economies", title: "Agent Economies" },
+    { id: "protocol-economies", slug: "protocol-economies", title: "Protocol Economies" },
+    { id: "inter-protocol-economies", slug: "inter-protocol-economies", title: "Inter-Protocol Economies" },
+    { id: "data-economies", slug: "data-economies", title: "Data Economies" },
+    { id: "compute-economies", slug: "compute-economies", title: "Compute Economies" },
+    { id: "model-economies", slug: "model-economies", title: "Model Economies" },
+    { id: "solver-economies", slug: "solver-economies", title: "Solver Economies" },
+    // Capital Flows are not 21's Machine Payments; Payment Flows are not 21's
+    // Streaming Payments; Systemic Liquidity is not 11's Liquidity; Liquidity
+    // Networks are not 11's Liquidity Pools.
+    { id: "capital-flows", slug: "capital-flows", title: "Capital Flows" },
+    { id: "payment-flows", slug: "payment-flows", title: "Payment Flows" },
+    { id: "liquidity-networks", slug: "liquidity-networks", title: "Liquidity Networks" },
+    { id: "systemic-liquidity", slug: "systemic-liquidity", title: "Systemic Liquidity" },
+    { id: "capital-mobility", slug: "capital-mobility", title: "Capital Mobility" },
+    // Economy-wide, not 21's Capital Allocation or 10's Resource Allocation;
+    // Capital Formation is not 24's Organizational Bootstrapping.
+    { id: "autonomous-capital-allocation", slug: "autonomous-capital-allocation", title: "Autonomous Capital Allocation" },
+    { id: "economy-wide-resource-allocation", slug: "economy-wide-resource-allocation", title: "Economy-Wide Resource Allocation" },
+    { id: "capital-formation", slug: "capital-formation", title: "Capital Formation" },
+    // Credit Networks are not 21's Agent Credit; Systemic Leverage is not 11's
+    // Collateral Ratios.
+    { id: "credit-networks", slug: "credit-networks", title: "Credit Networks" },
+    { id: "credit-creation", slug: "credit-creation", title: "Credit Creation" },
+    { id: "systemic-leverage", slug: "systemic-leverage", title: "Systemic Leverage" },
+    // Money Supply is not 10's Token Supply; Monetary Policy is not 10's
+    // Issuance; Unit of Account is not 11's Market Prices.
+    { id: "machine-money", slug: "machine-money", title: "Machine Money" },
+    { id: "unit-of-account", slug: "unit-of-account", title: "Unit of Account" },
+    { id: "money-supply", slug: "money-supply", title: "Money Supply" },
+    { id: "money-velocity", slug: "money-velocity", title: "Money Velocity" },
+    { id: "monetary-policy", slug: "monetary-policy", title: "Monetary Policy" },
+    // Institutions, Credible Neutrality and Dispute Resolution are 14's.
+    // Reputation Systems are not 08's Reputation or 21's Agent Reputation; Trust
+    // Infrastructure is not Foundations' Trust Models.
+    { id: "property-rights", slug: "property-rights", title: "Property Rights" },
+    { id: "reputation-systems", slug: "reputation-systems", title: "Reputation Systems" },
+    { id: "trust-infrastructure", slug: "trust-infrastructure", title: "Trust Infrastructure" },
+    // Economic Policy is not 14's Governance Models; Taxation is not 10's Fees;
+    // Redistribution is not 12's MEV Redistribution; Rent Extraction is not 12's
+    // MEV Extraction.
+    { id: "economic-policy", slug: "economic-policy", title: "Economic Policy" },
+    { id: "taxation", slug: "taxation", title: "Taxation" },
+    { id: "rent-extraction", slug: "rent-extraction", title: "Rent Extraction" },
+    { id: "redistribution", slug: "redistribution", title: "Redistribution" },
+    // Algorithmic Collusion (arising among autonomous pricing agents without an
+    // agreement) is not Foundations' Collusion.
+    { id: "market-concentration", slug: "market-concentration", title: "Market Concentration" },
+    { id: "network-effects", slug: "network-effects", title: "Network Effects" },
+    { id: "barriers-to-entry", slug: "barriers-to-entry", title: "Barriers to Entry" },
+    { id: "algorithmic-collusion", slug: "algorithmic-collusion", title: "Algorithmic Collusion" },
+    // Contagion is not 11's Counterparty Risk; Flash Crashes are not 11's
+    // Depegging; Automatic Stabilizers are not 25's Feedback Controllers.
+    { id: "contagion", slug: "contagion", title: "Contagion" },
+    { id: "economic-shocks", slug: "economic-shocks", title: "Economic Shocks" },
+    { id: "procyclicality", slug: "procyclicality", title: "Procyclicality" },
+    { id: "flash-crashes", slug: "flash-crashes", title: "Flash Crashes" },
+    { id: "automatic-stabilizers", slug: "automatic-stabilizers", title: "Automatic Stabilizers" },
+    // Circuit Breakers are 14's and Stress Testing 25's. Backstops are not 11's
+    // Loss Absorption; Economic Recovery is not 23's Execution Recovery.
+    { id: "shock-absorption", slug: "shock-absorption", title: "Shock Absorption" },
+    { id: "economic-diversification", slug: "economic-diversification", title: "Economic Diversification" },
+    { id: "backstops", slug: "backstops", title: "Backstops" },
+    { id: "economic-recovery", slug: "economic-recovery", title: "Economic Recovery" },
+    // Economic Feedback Loops are not 25's Feedback Loops (one protocol's
+    // control); Emergent Economic Behavior is not 22's Emergent Coordination.
+    { id: "economic-feedback-loops", slug: "economic-feedback-loops", title: "Economic Feedback Loops" },
+    { id: "emergent-economic-behavior", slug: "emergent-economic-behavior", title: "Emergent Economic Behavior" },
+    { id: "market-cycles", slug: "market-cycles", title: "Market Cycles" },
+    { id: "economic-growth", slug: "economic-growth", title: "Economic Growth" },
+    { id: "economic-adaptation", slug: "economic-adaptation", title: "Economic Adaptation" },
+    // Principals and Human Oversight are 20's. Economic Alignment is not 10's
+    // Incentive Alignment.
+    { id: "labor-substitution", slug: "labor-substitution", title: "Labor Substitution" },
+    { id: "economic-alignment", slug: "economic-alignment", title: "Economic Alignment" },
+    { id: "consumer-protection", slug: "consumer-protection", title: "Consumer Protection" },
+    { id: "value-distribution", slug: "value-distribution", title: "Value Distribution" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -5225,9 +5531,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "authority", slug: "authority", title: "Authority" },
     // Also placed as 21's "AI Agents" under Economic Agents; 20's placement is preferred.
     { id: "ai-agent", slug: "ai-agent", title: "AI Agent", preferredPlacementId: "ai-agent" },
-    // Intentionally unplaced and without content: sparse/orphan concepts are
-    // valid. The capacity to act economically, not 21's Economic Agents (the
-    // kinds of actor that exercise it).
+    // The capacity to act economically, not 21's Economic Agents (the kinds of
+    // actor that exercise it); first placed under 26's Autonomous Economic
+    // Actors. Without content.
     { id: "economic-agency", slug: "economic-agency", title: "Economic Agency" },
   ],
   placements: [
@@ -5886,6 +6192,24 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "governance-human-override", conceptId: "governance-human-override", parentPlacementId: "autonomous-protocols", order: 14 },
     { id: "verifiable-autonomous-operation", conceptId: "verifiable-autonomous-operation", parentPlacementId: "autonomous-protocols", order: 15 },
     { id: "protocol-lifecycle-automation", conceptId: "protocol-lifecycle-automation", parentPlacementId: "autonomous-protocols", order: 16 },
+    // 26 Autonomous Economy: L1 topics.
+    { id: "autonomous-economic-actors", conceptId: "autonomous-economic-actors", parentPlacementId: "autonomous-economy", order: 0 },
+    { id: "autonomous-ownership-structures", conceptId: "autonomous-ownership-structures", parentPlacementId: "autonomous-economy", order: 1 },
+    { id: "autonomous-markets", conceptId: "autonomous-markets", parentPlacementId: "autonomous-economy", order: 2 },
+    { id: "autonomous-commerce", conceptId: "autonomous-commerce", parentPlacementId: "autonomous-economy", order: 3 },
+    { id: "autonomous-production", conceptId: "autonomous-production", parentPlacementId: "autonomous-economy", order: 4 },
+    { id: "economic-sectors", conceptId: "economic-sectors", parentPlacementId: "autonomous-economy", order: 5 },
+    { id: "capital-payment-flows", conceptId: "capital-payment-flows", parentPlacementId: "autonomous-economy", order: 6 },
+    { id: "economy-wide-allocation", conceptId: "economy-wide-allocation", parentPlacementId: "autonomous-economy", order: 7 },
+    { id: "autonomous-credit-systems", conceptId: "autonomous-credit-systems", parentPlacementId: "autonomous-economy", order: 8 },
+    { id: "monetary-systems", conceptId: "monetary-systems", parentPlacementId: "autonomous-economy", order: 9 },
+    { id: "economic-institutions", conceptId: "economic-institutions", parentPlacementId: "autonomous-economy", order: 10 },
+    { id: "economic-governance", conceptId: "economic-governance", parentPlacementId: "autonomous-economy", order: 11 },
+    { id: "market-power", conceptId: "market-power", parentPlacementId: "autonomous-economy", order: 12 },
+    { id: "economic-stability", conceptId: "economic-stability", parentPlacementId: "autonomous-economy", order: 13 },
+    { id: "economic-resilience", conceptId: "economic-resilience", parentPlacementId: "autonomous-economy", order: 14 },
+    { id: "economic-dynamics", conceptId: "economic-dynamics", parentPlacementId: "autonomous-economy", order: 15 },
+    { id: "human-machine-economic-interaction", conceptId: "human-machine-economic-interaction", parentPlacementId: "autonomous-economy", order: 16 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

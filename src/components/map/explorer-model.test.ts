@@ -412,6 +412,25 @@ const POPULATED_L0 = {
     "verifiable-autonomous-operation",
     "protocol-lifecycle-automation",
   ],
+  "autonomous-economy": [
+    "autonomous-economic-actors",
+    "autonomous-ownership-structures",
+    "autonomous-markets",
+    "autonomous-commerce",
+    "autonomous-production",
+    "economic-sectors",
+    "capital-payment-flows",
+    "economy-wide-allocation",
+    "autonomous-credit-systems",
+    "monetary-systems",
+    "economic-institutions",
+    "economic-governance",
+    "market-power",
+    "economic-stability",
+    "economic-resilience",
+    "economic-dynamics",
+    "human-machine-economic-interaction",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -1055,6 +1074,32 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Autonomous Economy L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("contagion"), ["Autonomous Economy", "Economic Stability", "Contagion"]);
+  assert.deepEqual(labels("economic-agency"), ["Autonomous Economy", "Autonomous Economic Actors", "Economic Agency"]);
+  assert.deepEqual(labels("human-machine-economic-interaction"), ["Autonomous Economy", "Human–Machine Economic Interaction"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("machine-commerce-in-autonomous-commerce"), ["Autonomous Economy", "Autonomous Commerce", "Machine Commerce"]);
+  assert.deepEqual(labels("machine-commerce"), ["Machine Economy", "Machine Commerce"]);
+  assert.deepEqual(labels("systemic-risk-in-economic-stability"), ["Autonomous Economy", "Economic Stability", "Systemic Risk"]);
+  for (const id of ["economic-agency", "monetary-systems", "stablecoins-in-monetary-systems", "algorithmic-collusion"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "flash-crashes").expandedPlacementIds].sort(), ["autonomous-economy", "economic-stability"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-economy" && row.depth > 0);
+  assert.equal(subtreeRows.length, 17 + 102);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "26");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });
