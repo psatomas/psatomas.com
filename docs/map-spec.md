@@ -266,6 +266,13 @@ Content must remain data/structured prose, never React component definitions.
 Presentation components decide how a definition, section, mechanism, or
 diagram is rendered.
 
+Richer exposition is an ordered `body` of typed blocks following the
+definition, which leads: paragraphs, conceptual flows (ordered stages of one
+or more elements), distinctions ("A ≠ B"), and tensions (pairs of forces).
+Blocks carry meaning and order only. Authoring prompts such as "why it
+matters" may guide writing but are never rendered as labelled sections: the
+reader meets continuous technical exposition, not a template.
+
 ## 12. Mechanism and process model
 
 Some concepts explain a process, such as a Transaction Lifecycle, Intent
@@ -362,6 +369,16 @@ Three reader intentions stay separate:
   optionally with `?context=[placementId]`). It is not offered until concept
   routes exist; the explorer never presents unavailable navigation.
 
+### Collapsed identity, expanded knowledge
+
+A collapsed concept is its identity only. Opening a concept reveals its
+canonical exposition first and its next conceptual layer (child placements)
+beneath: explanation before decomposition, and decomposition only where it
+improves understanding. A concept is expandable when it has exposition or
+children; a concept with neither shows no disclosure control. Domains begin
+collapsed; an entry context opens its own placement. Every placement of a
+concept shows the same canonical exposition.
+
 Root placements render as structural regions: a graphite region identity
 plane, connected rows within the region, and whitespace between regions.
 Visual meanings remain distinct: graphite marks structural region identity, a
@@ -442,6 +459,11 @@ ancestor path, immediate children, relevant relationship summaries, relevant
 path information, and required content. It must not render the full ontology
 into the DOM or require the full graph in the client bundle simply because it
 exists.
+
+The explorer's client taxonomy carries identity and a has-content flag, never
+exposition. A concept's exposition is served as a prerendered per-concept
+document and loaded when a reader first opens that concept, so /map does not
+grow with the ontology's prose.
 
 Phase 1 can remain static TypeScript data and pure resolver/validation logic.
 Later loading, indexing, or bundling tactics must be selected from measured
