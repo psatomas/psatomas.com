@@ -73,7 +73,11 @@ export type MapRelationship = {
  */
 export type MapContentBlock =
   | { kind: "paragraph"; text: string }
-  /** A conceptual model: ordered stages, each holding one or more elements. */
+  /**
+   * A conceptual model: ordered stages, each holding one or more elements. A
+   * multi-element stage is a parallel set: the stage before branches into it
+   * and it converges into the stage after (never two parallel sets in a row).
+   */
   | { kind: "flow"; label: string; stages: readonly (readonly string[])[] }
   /** Two notions that must not be conflated ("left ≠ right"). */
   | { kind: "distinction"; left: string; right: string }
