@@ -1400,6 +1400,137 @@ const GOVERNANCE_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const GOVERNANCE_L2 = GOVERNANCE_TREE.flatMap(([, children]) => children);
 
+// 15 Scaling & Modular Systems. Scaling, Rollups and Rollups' Finality are the
+// Phase 1 fixture's placements (IDs unchanged); fifteen further concepts are
+// placed again at L2.
+const SCALING_LAYER: Array<[string, string, string]> = [
+  ["scaling", "scaling", "Scaling"],
+  ["rollups", "rollups", "Rollups"],
+  ["optimistic-rollups", "optimistic-rollups", "Optimistic Rollups"],
+  ["zk-rollups", "zk-rollups", "ZK Rollups"],
+  ["off-chain-scaling", "off-chain-scaling", "Off-Chain Scaling"],
+  ["modularity", "modularity", "Modularity"],
+  ["execution-layers", "execution-layers", "Execution Layers"],
+  ["settlement-layers", "settlement-layers", "Settlement Layers"],
+  ["data-availability-layers", "data-availability-layers", "Data Availability Layers"],
+  ["consensus-layers", "consensus-layers", "Consensus Layers"],
+  ["rollup-sequencing", "rollup-sequencing", "Rollup Sequencing"],
+  ["batching-compression", "batching-compression", "Batching & Compression"],
+  ["scaling-tradeoffs", "scaling-tradeoffs", "Scaling Tradeoffs"],
+  ["rollup-security", "rollup-security", "Rollup Security"],
+];
+const SCALING_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["scaling", [
+    ["vertical-scaling", "vertical-scaling", "Vertical Scaling"],
+    ["horizontal-scaling", "horizontal-scaling", "Horizontal Scaling"],
+    ["execution-scaling", "execution-scaling", "Execution Scaling"],
+    ["state-growth", "state-growth", "State Growth"],
+    ["scaling-bottlenecks", "scaling-bottlenecks", "Scaling Bottlenecks"],
+    ["layer-2-scaling", "layer-2-scaling", "Layer 2 Scaling"],
+  ]],
+  ["rollups", [
+    ["rollup-architecture", "rollup-architecture", "Rollup Architecture"],
+    ["based-rollups", "based-rollups", "Based Rollups"],
+    ["sovereign-rollups", "sovereign-rollups", "Sovereign Rollups"],
+    ["rollup-state", "rollup-state", "Rollup State"],
+    ["rollup-interoperability", "rollup-interoperability", "Rollup Interoperability"],
+    ["finality-in-rollups", "finality", "Finality"],
+  ]],
+  ["optimistic-rollups", [
+    ["fraud-proofs", "fraud-proofs", "Fraud Proofs"],
+    ["challenge-periods", "challenge-periods", "Challenge Periods"],
+    ["interactive-fraud-proofs", "interactive-fraud-proofs", "Interactive Fraud Proofs"],
+    ["dispute-games", "dispute-games", "Dispute Games"],
+    ["state-proposers", "state-proposers", "State Proposers"],
+    ["withdrawal-delays", "withdrawal-delays", "Withdrawal Delays"],
+  ]],
+  ["zk-rollups", [
+    ["validity-proofs", "validity-proofs", "Validity Proofs"],
+    ["provers-in-zk-rollups", "provers", "Provers"],
+    ["proof-aggregation", "proof-aggregation", "Proof Aggregation"],
+    ["recursive-proofs-in-zk-rollups", "recursive-proofs", "Recursive Proofs"],
+    ["proving-costs", "proving-costs", "Proving Costs"],
+    ["zkevms", "zkevms", "zkEVMs"],
+  ]],
+  ["off-chain-scaling", [
+    ["sidechains", "sidechains", "Sidechains"],
+    ["state-channels", "state-channels", "State Channels"],
+    ["payment-channels", "payment-channels", "Payment Channels"],
+    ["plasma", "plasma", "Plasma"],
+    ["validiums", "validiums", "Validiums"],
+    ["off-chain-execution-in-off-chain-scaling", "off-chain-execution", "Off-Chain Execution"],
+  ]],
+  ["modularity", [
+    ["modular-blockchains", "modular-blockchains", "Modular Blockchains"],
+    ["monolithic-blockchains", "monolithic-blockchains", "Monolithic Blockchains"],
+    ["layer-separation", "layer-separation", "Layer Separation"],
+    ["component-interfaces", "component-interfaces", "Component Interfaces"],
+    ["unbundling", "unbundling", "Unbundling"],
+    ["modular-tradeoffs", "modular-tradeoffs", "Modular Tradeoffs"],
+  ]],
+  ["execution-layers", [
+    ["evm-equivalence", "evm-equivalence", "EVM Equivalence"],
+    ["evm-compatibility", "evm-compatibility", "EVM Compatibility"],
+    ["parallel-execution-in-execution-layers", "parallel-execution", "Parallel Execution"],
+    ["transition-functions-in-execution-layers", "transition-functions", "Transition Functions"],
+    ["execution-clients", "execution-clients", "Execution Clients"],
+    ["alternative-vms", "alternative-vms", "Alternative VMs"],
+  ]],
+  ["settlement-layers", [
+    ["rollup-settlement", "rollup-settlement", "Rollup Settlement"],
+    ["rollup-finality", "rollup-finality", "Rollup Finality"],
+    ["state-commitments-in-settlement-layers", "state-commitments", "State Commitments"],
+    ["withdrawals", "withdrawals", "Withdrawals"],
+    ["forced-withdrawals", "forced-withdrawals", "Forced Withdrawals"],
+    ["withdrawal-proofs", "withdrawal-proofs", "Withdrawal Proofs"],
+  ]],
+  ["data-availability-layers", [
+    ["data-availability-in-data-availability-layers", "data-availability", "Data Availability"],
+    ["blobs-in-data-availability-layers", "blobs", "Blobs"],
+    ["data-availability-sampling-in-data-availability-layers", "data-availability-sampling", "Data Availability Sampling"],
+    ["availability-committees-in-data-availability-layers", "availability-committees", "Availability Committees"],
+    ["calldata-in-data-availability-layers", "calldata", "Calldata"],
+    ["alternative-data-availability", "alternative-data-availability", "Alternative Data Availability"],
+  ]],
+  ["consensus-layers", [
+    ["base-layers", "base-layers", "Base Layers"],
+    ["shared-security", "shared-security", "Shared Security"],
+    ["restaking", "restaking", "Restaking"],
+    ["layer-coupling", "layer-coupling", "Layer Coupling"],
+  ]],
+  ["rollup-sequencing", [
+    ["sequencers", "sequencers", "Sequencers"],
+    ["centralized-sequencing-in-rollup-sequencing", "centralized-sequencing", "Centralized Sequencing"],
+    ["decentralized-sequencing-in-rollup-sequencing", "decentralized-sequencing", "Decentralized Sequencing"],
+    ["shared-sequencing-in-rollup-sequencing", "shared-sequencing", "Shared Sequencing"],
+    ["based-sequencing", "based-sequencing", "Based Sequencing"],
+    ["sequencer-liveness", "sequencer-liveness", "Sequencer Liveness"],
+  ]],
+  ["batching-compression", [
+    ["transaction-batching", "transaction-batching", "Transaction Batching"],
+    ["batch-posting", "batch-posting", "Batch Posting"],
+    ["data-compression", "data-compression", "Data Compression"],
+    ["state-diffs", "state-diffs", "State Diffs"],
+    ["cost-amortization", "cost-amortization", "Cost Amortization"],
+  ]],
+  ["scaling-tradeoffs", [
+    ["throughput", "throughput", "Throughput"],
+    ["confirmation-latency", "confirmation-latency", "Confirmation Latency"],
+    ["scaling-costs", "scaling-costs", "Scaling Costs"],
+    ["decentralization", "decentralization", "Decentralization"],
+    ["scalability-trilemma", "scalability-trilemma", "Scalability Trilemma"],
+  ]],
+  ["rollup-security", [
+    ["security-inheritance", "security-inheritance", "Security Inheritance"],
+    ["rollup-maturity-stages", "rollup-maturity-stages", "Rollup Maturity Stages"],
+    ["upgrade-keys", "upgrade-keys", "Upgrade Keys"],
+    ["escape-hatches", "escape-hatches", "Escape Hatches"],
+    ["sequencer-censorship", "sequencer-censorship", "Sequencer Censorship"],
+    ["trust-assumptions-in-rollup-security", "trust-assumptions", "Trust Assumptions"],
+  ]],
+];
+const SCALING_L2 = SCALING_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -1430,6 +1561,8 @@ const AUTHORED_TOPICS = new Set([
   ...INTENTS_L2.map(([id]) => id),
   ...GOVERNANCE_LAYER.map(([id]) => id),
   ...GOVERNANCE_L2.map(([id]) => id),
+  ...SCALING_LAYER.map(([id]) => id),
+  ...SCALING_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -1513,8 +1646,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // L1 and 65 new L2 concepts, then Markets & Financial Protocols' 12 new L1
   // and 69 new L2 concepts, then MEV & Execution Markets' 11 new L1 and 74
   // new L2 concepts, then Intents & Coordination's 12 new L1 and 64 new L2
-  // concepts, then Governance & Institutions' 15 new L1 and 86 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86);
+  // concepts, then Governance & Institutions' 15 new L1 and 86 new L2 concepts,
+  // then Scaling & Modular Systems' 12 new L1 and 64 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1524,9 +1658,6 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
       .map((placement) => [placement.id, placement.parentPlacementId]),
   );
   assert.deepEqual(parents, {
-    scaling: "scaling-modular-systems",
-    rollups: "scaling",
-    "finality-in-rollups": "rollups",
     "ai-agent": "ai-intelligent-systems",
   });
   // Settlement is placed by Markets & Financial Protocols and Intents &
@@ -1641,7 +1772,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     transitions: ["transitions-in-state-data"],
     "censorship-resistance": ["censorship-resistance-in-consensus-ordering"],
     "fault-tolerance": ["fault-tolerance-in-distributed-storage"],
-    "trust-assumptions": ["trust-assumptions-in-oracle-problem"],
+    "trust-assumptions": ["trust-assumptions-in-oracle-problem", "trust-assumptions-in-rollup-security"],
     collusion: ["collusion-in-oracle-security"],
     "strategic-behavior": ["strategic-behavior-in-economics-mechanism-design"],
     "collective-action": ["collective-action-in-multi-party-coordination"],
@@ -1735,6 +1866,8 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
       "transaction-ordering": ["transaction-ordering-in-block-building", "transaction-ordering-in-mev-execution-markets"],
       "verifiable-computation": ["verifiable-computation-in-cryptography-proofs"],
       "computation-proofs": ["computation-proofs-in-cryptography-proofs"],
+      "parallel-execution": ["parallel-execution-in-execution-layers"],
+      "off-chain-execution": ["off-chain-execution-in-off-chain-scaling"],
     };
     assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? [])].sort(), conceptId);
   }
@@ -1806,6 +1939,9 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     "commitment-schemes": ["commitment-schemes-in-cryptographic-commitments"],
     "content-addressing": ["content-addressing-in-storage-availability"],
     attestations: ["attestations-in-identity"],
+    "state-commitments": ["state-commitments-in-settlement-layers"],
+    "transition-functions": ["transition-functions-in-execution-layers"],
+    calldata: ["calldata-in-data-availability-layers"],
     provenance: ["provenance-in-oracles-external-reality"],
     "external-data": ["external-data-in-oracle-problem"],
     authenticity: ["authenticity-in-oracle-problem"],
@@ -1838,6 +1974,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("markets-financial-protocols"), 12 + 72);
   assert.equal(subtreeOf("mev-execution-markets"), 13 + 79);
   assert.equal(subtreeOf("intents-coordination"), 12 + 71);
+  assert.equal(subtreeOf("governance-institutions"), 15 + 89);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1915,7 +2052,9 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
     "private-mempools": ["private-mempools-in-private-execution"],
     "inclusion-guarantees": ["inclusion-guarantees-in-mev-mitigation"],
     preconfirmations: ["preconfirmations-in-intent-commitments"],
-    "shared-sequencing": ["shared-sequencing-in-cross-domain-coordination"],
+    "shared-sequencing": ["shared-sequencing-in-cross-domain-coordination", "shared-sequencing-in-rollup-sequencing"],
+    "centralized-sequencing": ["centralized-sequencing-in-rollup-sequencing"],
+    "decentralized-sequencing": ["decentralized-sequencing-in-rollup-sequencing"],
   };
   for (const [id, conceptId] of [...CONSENSUS_LAYER, ...CONSENSUS_L2]) {
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -2075,6 +2214,8 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
     "proof-generation": ["proof-generation-in-storage-proofs"],
     "proof-verification": ["proof-verification-in-storage-proofs"],
     signing: ["signing-in-wallets"],
+    provers: ["provers-in-zk-rollups"],
+    "recursive-proofs": ["recursive-proofs-in-zk-rollups"],
   };
   for (const [id, conceptId] of [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -2151,11 +2292,18 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["content-addressing", "fault-tolerance", "archive-nodes", "proof-generation", "proof-verification"]);
+  // Also placed in Scaling & Modular Systems.
+  const placedElsewhere: Record<string, string[]> = {
+    "data-availability": ["data-availability-in-data-availability-layers"],
+    blobs: ["blobs-in-data-availability-layers"],
+    "data-availability-sampling": ["data-availability-sampling-in-data-availability-layers"],
+    "availability-committees": ["availability-committees-in-data-availability-layers"],
+  };
   for (const [id, conceptId] of [...STORAGE_LAYER, ...STORAGE_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...STORAGE_LAYER, ...STORAGE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -2276,7 +2424,7 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     ["lineage", "lineage-in-oracles-external-reality"],
     ["attribution", "attribution-in-oracles-external-reality"],
   ]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
   }
   assert.deepEqual(placementsOf("consensus"), ["consensus", "consensus-in-oracle-networks"]);
@@ -2538,7 +2686,7 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
     ["inclusion-guarantees", "inclusion-guarantees-in-mev-mitigation"],
     ["auction-clearing", "auction-clearing-in-mev-auctions"],
   ]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
   }
   // Narrower MEV concepts stay distinct where one exposition would mislead.
@@ -2624,7 +2772,7 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     ["collective-action", "collective-action-in-multi-party-coordination"],
     ["shared-sequencing", "shared-sequencing-in-cross-domain-coordination"],
   ]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
     assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
   }
@@ -2711,7 +2859,7 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
     ["evidence", "evidence-in-dispute-resolution"],
     ["incentive-alignment", "incentive-alignment-in-institutional-design"],
   ]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
   }
   for (const conceptId of ["delegation", "evidence", "incentive-alignment"]) {
     assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
@@ -2758,6 +2906,105 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
   assert.equal(new Set(ids).size, ids.length);
 });
 
+test("Scaling & Modular Systems has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("scaling-modular-systems").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    SCALING_LAYER,
+  );
+  for (const [parent, children] of SCALING_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of SCALING_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "scaling-modular-systems")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...SCALING_LAYER.map(([id]) => id), ...SCALING_L2.map(([id]) => id)].sort());
+  assert.equal(SCALING_L2.length, 80);
+});
+
+test("Scaling & Modular Systems reuses existing concepts and keeps scaling-specific concepts distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  // The fixture's placements keep their IDs; Rollups is an L1 topic and its Finality an L2 topic.
+  assert.equal(resolver.getPlacement("rollups")?.parentPlacementId, "scaling-modular-systems");
+  assert.equal(resolver.getPlacement("finality-in-rollups")?.parentPlacementId, "rollups");
+  assert.equal(resolver.getPreferredPlacementForConcept("finality")?.id, "finality-in-consensus");
+  assert.deepEqual(resolver.getRelationshipsTo("finality").map((relationship) => relationship.id), ["rollups-depend-on-finality"]);
+  // Reused concepts are placed again here; their existing home stays preferred.
+  for (const [conceptId, here] of [
+    ["provers", "provers-in-zk-rollups"],
+    ["recursive-proofs", "recursive-proofs-in-zk-rollups"],
+    ["off-chain-execution", "off-chain-execution-in-off-chain-scaling"],
+    ["parallel-execution", "parallel-execution-in-execution-layers"],
+    ["transition-functions", "transition-functions-in-execution-layers"],
+    ["state-commitments", "state-commitments-in-settlement-layers"],
+    ["data-availability", "data-availability-in-data-availability-layers"],
+    ["blobs", "blobs-in-data-availability-layers"],
+    ["data-availability-sampling", "data-availability-sampling-in-data-availability-layers"],
+    ["availability-committees", "availability-committees-in-data-availability-layers"],
+    ["calldata", "calldata-in-data-availability-layers"],
+    ["centralized-sequencing", "centralized-sequencing-in-rollup-sequencing"],
+    ["decentralized-sequencing", "decentralized-sequencing-in-rollup-sequencing"],
+    ["shared-sequencing", "shared-sequencing-in-rollup-sequencing"],
+    ["trust-assumptions", "trust-assumptions-in-rollup-security"],
+  ]) {
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
+    assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
+    assert.notEqual(resolver.getPreferredPlacementForConcept(conceptId)?.id, here, conceptId);
+  }
+  // Scaling-specific concepts stay distinct from their general or neighbouring counterparts.
+  for (const [placementId, related] of [
+    ["scaling", "cross-domain-coordination"],
+    ["sidechains", "rollups"],
+    ["optimistic-rollups", "optimistic-execution"],
+    ["zk-rollups", "zero-knowledge-proofs"],
+    ["validity-proofs", "computation-proofs"],
+    ["fraud-proofs", "validity-proofs"],
+    ["rollup-sequencing", "sequencing"],
+    ["sequencers", "proposers"],
+    ["state-proposers", "proposers"],
+    ["rollup-settlement", "settlement"],
+    ["settlement-layers", "settlement"],
+    ["rollup-finality", "finality"],
+    ["data-availability-layers", "state-storage"],
+    ["execution-layers", "execution-models"],
+    ["security-inheritance", "economic-security"],
+    ["shared-security", "economic-security"],
+    ["restaking", "stake"],
+    ["throughput", "confirmation-latency"],
+    ["confirmation-latency", "latency"],
+    ["transaction-batching", "batch-auctions"],
+    ["transaction-batching", "transaction-bundles"],
+    ["transaction-batching", "batch-execution"],
+    ["proof-aggregation", "signature-aggregation"],
+    ["zkevms", "zkvms"],
+    ["forced-withdrawals", "forced-inclusion"],
+    ["upgrade-keys", "protocol-upgrades"],
+    ["sequencer-censorship", "censorship"],
+    ["based-sequencing", "based-rollups"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition (Finality keeps its own).
+  const shared = new Set(["scaling", "rollups", "finality", "provers", "recursive-proofs", "off-chain-execution", "parallel-execution", "transition-functions", "state-commitments", "data-availability", "blobs", "data-availability-sampling", "availability-committees", "calldata", "centralized-sequencing", "decentralized-sequencing", "shared-sequencing", "trust-assumptions"]);
+  for (const [id, conceptId] of [...SCALING_LAYER, ...SCALING_L2]) {
+    if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...SCALING_LAYER, ...SCALING_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
 test("one canonical Finality concept resolves through independent placements", () => {
   const consensusFinality = resolver.getPlacement("finality-in-consensus");
   const rollupFinality = resolver.getPlacement("finality-in-rollups");
@@ -2774,7 +3021,7 @@ test("one canonical Finality concept resolves through independent placements", (
   );
   assert.deepEqual(
     resolver.getAncestors("finality-in-rollups").map((placement) => placement.id),
-    ["scaling-modular-systems", "scaling", "rollups"],
+    ["scaling-modular-systems", "rollups"],
   );
 });
 

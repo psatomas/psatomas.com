@@ -226,7 +226,22 @@ const POPULATED_L0 = {
     "authority",
     "machine-identity",
   ],
-  "scaling-modular-systems": ["scaling"],
+  "scaling-modular-systems": [
+    "scaling",
+    "rollups",
+    "optimistic-rollups",
+    "zk-rollups",
+    "off-chain-scaling",
+    "modularity",
+    "execution-layers",
+    "settlement-layers",
+    "data-availability-layers",
+    "consensus-layers",
+    "rollup-sequencing",
+    "batching-compression",
+    "scaling-tradeoffs",
+    "rollup-security",
+  ],
   "ai-intelligent-systems": ["ai-agent"],
 } as const;
 
@@ -368,7 +383,7 @@ test("a context change reveals only its ancestors and never closes a branch", ()
   const open = new Set(["foundations", "ai-intelligent-systems", "consensus-ordering"]);
 
   const revealed = revealMapExplorerContext(open, index, "finality-in-rollups");
-  assert.deepEqual([...revealed].sort(), [...open, "scaling-modular-systems", "scaling", "rollups"].sort());
+  assert.deepEqual([...revealed].sort(), [...open, "scaling-modular-systems", "rollups"].sort());
   // Already-visible context: nothing changes (same set instance).
   assert.equal(revealMapExplorerContext(revealed, index, "rollups"), revealed);
   // Clearing context reveals nothing and closes nothing.
@@ -491,7 +506,7 @@ test("the two Finality placements produce distinct contexts for one canonical co
   const inRollups = getMapExplorerContext(index, "finality-in-rollups");
 
   assert.deepEqual(inConsensus.map((step) => step.label), ["Consensus & Ordering", "Finality"]);
-  assert.deepEqual(inRollups.map((step) => step.label), ["Scaling & Modular Systems", "Scaling", "Rollups", "Finality"]);
+  assert.deepEqual(inRollups.map((step) => step.label), ["Scaling & Modular Systems", "Rollups", "Finality"]);
   assert.equal(inConsensus.at(-1)?.conceptId, "finality");
   assert.equal(inRollups.at(-1)?.conceptId, "finality");
   assert.notEqual(inConsensus.at(-1)?.placementId, inRollups.at(-1)?.placementId);
@@ -587,10 +602,10 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
 
 test("a deep entry context reveals its full ancestor chain from the L0 domain", () => {
   const state = getInitialMapExplorerState(view, "finality-in-rollups");
-  for (const id of ["scaling-modular-systems", "scaling", "rollups"]) assert.ok(state.expandedPlacementIds.has(id), id);
+  for (const id of ["scaling-modular-systems", "rollups"]) assert.ok(state.expandedPlacementIds.has(id), id);
   assert.deepEqual(
     getMapExplorerContext(indexMapExplorerView(view), state.focusedPlacementId).map((step) => step.placementId),
-    ["scaling-modular-systems", "scaling", "rollups", "finality-in-rollups"],
+    ["scaling-modular-systems", "rollups", "finality-in-rollups"],
   );
 });
 
@@ -643,6 +658,31 @@ test("a concept is expandable when it has exposition or a next layer, never when
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
   assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+});
+
+test("Scaling & Modular Systems L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("finality-in-rollups"), ["Scaling & Modular Systems", "Rollups", "Finality"]);
+  assert.deepEqual(labels("interactive-fraud-proofs"), ["Scaling & Modular Systems", "Optimistic Rollups", "Interactive Fraud Proofs"]);
+  assert.deepEqual(labels("data-availability-sampling-in-data-availability-layers"), ["Scaling & Modular Systems", "Data Availability Layers", "Data Availability Sampling"]);
+  assert.deepEqual(labels("data-availability-sampling"), ["Storage & Availability", "Data Availability Sampling"]);
+  assert.deepEqual(labels("shared-sequencing-in-rollup-sequencing"), ["Scaling & Modular Systems", "Rollup Sequencing", "Shared Sequencing"]);
+  for (const id of ["rollups", "finality-in-rollups", "blobs-in-data-availability-layers", "security-inheritance"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "fraud-proofs").expandedPlacementIds].sort(), ["optimistic-rollups", "scaling-modular-systems"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "scaling-modular-systems" && row.depth > 0);
+  assert.equal(subtreeRows.length, 14 + 80);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  // L2 topics are leaves; the fixture's Finality keeps its canonical exposition, so it opens.
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "finality") && row.isExpandable === row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "15");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
 });
 
 test("Governance & Institutions L2 topics are ordinary placements: context, ancestry, containing L0", () => {

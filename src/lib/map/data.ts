@@ -1051,6 +1051,103 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "path-dependence",
     "institutional-evolution",
   ],
+  // 15 Scaling & Modular Systems (Rollups' Finality is the fixture's placement, order 5)
+  scaling: [
+    "vertical-scaling",
+    "horizontal-scaling",
+    "execution-scaling",
+    "state-growth",
+    "scaling-bottlenecks",
+    "layer-2-scaling",
+  ],
+  rollups: ["rollup-architecture", "based-rollups", "sovereign-rollups", "rollup-state", "rollup-interoperability"],
+  "optimistic-rollups": [
+    "fraud-proofs",
+    "challenge-periods",
+    "interactive-fraud-proofs",
+    "dispute-games",
+    "state-proposers",
+    "withdrawal-delays",
+  ],
+  "zk-rollups": [
+    "validity-proofs",
+    { placementId: "provers-in-zk-rollups", conceptId: "provers" },
+    "proof-aggregation",
+    { placementId: "recursive-proofs-in-zk-rollups", conceptId: "recursive-proofs" },
+    "proving-costs",
+    "zkevms",
+  ],
+  "off-chain-scaling": [
+    "sidechains",
+    "state-channels",
+    "payment-channels",
+    "plasma",
+    "validiums",
+    { placementId: "off-chain-execution-in-off-chain-scaling", conceptId: "off-chain-execution" },
+  ],
+  modularity: [
+    "modular-blockchains",
+    "monolithic-blockchains",
+    "layer-separation",
+    "component-interfaces",
+    "unbundling",
+    "modular-tradeoffs",
+  ],
+  "execution-layers": [
+    "evm-equivalence",
+    "evm-compatibility",
+    { placementId: "parallel-execution-in-execution-layers", conceptId: "parallel-execution" },
+    { placementId: "transition-functions-in-execution-layers", conceptId: "transition-functions" },
+    "execution-clients",
+    "alternative-vms",
+  ],
+  "settlement-layers": [
+    "rollup-settlement",
+    "rollup-finality",
+    { placementId: "state-commitments-in-settlement-layers", conceptId: "state-commitments" },
+    "withdrawals",
+    "forced-withdrawals",
+    "withdrawal-proofs",
+  ],
+  "data-availability-layers": [
+    { placementId: "data-availability-in-data-availability-layers", conceptId: "data-availability" },
+    { placementId: "blobs-in-data-availability-layers", conceptId: "blobs" },
+    { placementId: "data-availability-sampling-in-data-availability-layers", conceptId: "data-availability-sampling" },
+    { placementId: "availability-committees-in-data-availability-layers", conceptId: "availability-committees" },
+    { placementId: "calldata-in-data-availability-layers", conceptId: "calldata" },
+    "alternative-data-availability",
+  ],
+  "consensus-layers": ["base-layers", "shared-security", "restaking", "layer-coupling"],
+  "rollup-sequencing": [
+    "sequencers",
+    { placementId: "centralized-sequencing-in-rollup-sequencing", conceptId: "centralized-sequencing" },
+    { placementId: "decentralized-sequencing-in-rollup-sequencing", conceptId: "decentralized-sequencing" },
+    { placementId: "shared-sequencing-in-rollup-sequencing", conceptId: "shared-sequencing" },
+    "based-sequencing",
+    "sequencer-liveness",
+  ],
+  "batching-compression": [
+    "transaction-batching",
+    "batch-posting",
+    "data-compression",
+    "state-diffs",
+    "cost-amortization",
+  ],
+  "scaling-tradeoffs": [
+    "throughput",
+    "confirmation-latency",
+    "scaling-costs",
+    "decentralization",
+    "scalability-trilemma",
+  ],
+  "rollup-security": [
+    "security-inheritance",
+    "rollup-maturity-stages",
+    "upgrade-keys",
+    "escape-hatches",
+    "sequencer-censorship",
+    { placementId: "trust-assumptions-in-rollup-security", conceptId: "trust-assumptions" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1068,8 +1165,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
- * Intents & Coordination, and Governance & Institutions; and a deliberately
- * small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Intents & Coordination, Governance & Institutions, and Scaling & Modular
+ * Systems; and a deliberately small Phase 1 proof fixture re-homed beneath its
+ * L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1175,7 +1273,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "deterministic-execution", slug: "deterministic-execution", title: "Deterministic Execution" },
     { id: "non-deterministic-execution", slug: "non-deterministic-execution", title: "Non-Deterministic Execution" },
     { id: "sequential-execution", slug: "sequential-execution", title: "Sequential Execution" },
-    { id: "parallel-execution", slug: "parallel-execution", title: "Parallel Execution" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "parallel-execution",
+      slug: "parallel-execution",
+      title: "Parallel Execution",
+      preferredPlacementId: "parallel-execution",
+    },
     { id: "optimistic-execution", slug: "optimistic-execution", title: "Optimistic Execution" },
     { id: "speculative-execution", slug: "speculative-execution", title: "Speculative Execution" },
     { id: "transaction-lifecycle", slug: "transaction-lifecycle", title: "Transaction Lifecycle" },
@@ -1216,7 +1320,13 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Computation Proofs",
       preferredPlacementId: "computation-proofs-in-cryptography-proofs",
     },
-    { id: "off-chain-execution", slug: "off-chain-execution", title: "Off-Chain Execution" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "off-chain-execution",
+      slug: "off-chain-execution",
+      title: "Off-Chain Execution",
+      preferredPlacementId: "off-chain-execution",
+    },
     { id: "on-chain-verification", slug: "on-chain-verification", title: "On-Chain Verification" },
     { id: "trusted-execution", slug: "trusted-execution", title: "Trusted Execution" },
     { id: "untrusted-execution", slug: "untrusted-execution", title: "Untrusted Execution" },
@@ -1229,7 +1339,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "denial-of-service-resistance", slug: "denial-of-service-resistance", title: "Denial-of-Service Resistance" },
     // 03 State & Data: L1 topics (State Transitions is Foundations' Transitions).
     { id: "state-representation", slug: "state-representation", title: "State Representation" },
-    { id: "state-commitments", slug: "state-commitments", title: "State Commitments" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "state-commitments",
+      slug: "state-commitments",
+      title: "State Commitments",
+      preferredPlacementId: "state-commitments",
+    },
     { id: "historical-state", slug: "historical-state", title: "Historical State" },
     // A node bringing itself up to date with the network; also placed as 05's
     // "Node Synchronization". This placement is preferred.
@@ -1253,7 +1369,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Transition Functions compute a transition; Foundations' Transition Rules
     // govern which are allowed. Atomic State Transitions (indivisible state
     // change) is not Transaction Atomicity (a transaction's all-or-nothing effects).
-    { id: "transition-functions", slug: "transition-functions", title: "Transition Functions" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "transition-functions",
+      slug: "transition-functions",
+      title: "Transition Functions",
+      preferredPlacementId: "transition-functions",
+    },
     { id: "valid-transitions", slug: "valid-transitions", title: "Valid Transitions" },
     { id: "invalid-transitions", slug: "invalid-transitions", title: "Invalid Transitions" },
     { id: "transition-preconditions", slug: "transition-preconditions", title: "Transition Preconditions" },
@@ -1284,7 +1406,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "state-sync", slug: "state-sync", title: "State Sync" },
     { id: "incremental-synchronization", slug: "incremental-synchronization", title: "Incremental Synchronization" },
     { id: "synchronization-verification", slug: "synchronization-verification", title: "Synchronization Verification" },
-    { id: "calldata", slug: "calldata", title: "Calldata" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    { id: "calldata", slug: "calldata", title: "Calldata", preferredPlacementId: "calldata" },
     { id: "logs", slug: "logs", title: "Logs" },
     { id: "events", slug: "events", title: "Events" },
     { id: "transaction-data", slug: "transaction-data", title: "Transaction Data" },
@@ -1387,8 +1510,20 @@ export const mapKnowledge: MapKnowledgeModel = {
     // A sequencer's act of fixing an order, not the order itself (Transaction Ordering).
     { id: "transaction-sequencing", slug: "transaction-sequencing", title: "Transaction Sequencing" },
     { id: "sequencing-rules", slug: "sequencing-rules", title: "Sequencing Rules" },
-    { id: "centralized-sequencing", slug: "centralized-sequencing", title: "Centralized Sequencing" },
-    { id: "decentralized-sequencing", slug: "decentralized-sequencing", title: "Decentralized Sequencing" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "centralized-sequencing",
+      slug: "centralized-sequencing",
+      title: "Centralized Sequencing",
+      preferredPlacementId: "centralized-sequencing",
+    },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "decentralized-sequencing",
+      slug: "decentralized-sequencing",
+      title: "Decentralized Sequencing",
+      preferredPlacementId: "decentralized-sequencing",
+    },
     // Also placed under 13's Cross-Domain Coordination; this placement is preferred.
     { id: "shared-sequencing", slug: "shared-sequencing", title: "Shared Sequencing", preferredPlacementId: "shared-sequencing" },
     { id: "sequencer-rotation", slug: "sequencer-rotation", title: "Sequencer Rotation" },
@@ -1548,14 +1683,21 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "zero-knowledge", slug: "zero-knowledge", title: "Zero-Knowledge" },
     { id: "completeness", slug: "completeness", title: "Completeness" },
     { id: "soundness", slug: "soundness", title: "Soundness" },
-    { id: "provers", slug: "provers", title: "Provers" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    { id: "provers", slug: "provers", title: "Provers", preferredPlacementId: "provers" },
     { id: "verifiers", slug: "verifiers", title: "Verifiers" },
     { id: "witnesses", slug: "witnesses", title: "Witnesses" },
     { id: "interactive-proofs", slug: "interactive-proofs", title: "Interactive Proofs" },
     { id: "non-interactive-proofs", slug: "non-interactive-proofs", title: "Non-Interactive Proofs" },
     { id: "snarks", slug: "snarks", title: "SNARKs" },
     { id: "starks", slug: "starks", title: "STARKs" },
-    { id: "recursive-proofs", slug: "recursive-proofs", title: "Recursive Proofs" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "recursive-proofs",
+      slug: "recursive-proofs",
+      title: "Recursive Proofs",
+      preferredPlacementId: "recursive-proofs",
+    },
     { id: "proof-composition", slug: "proof-composition", title: "Proof Composition" },
     { id: "verifiable-execution", slug: "verifiable-execution", title: "Verifiable Execution" },
     // Producing and checking a proof; also placed under 07's Storage Proofs.
@@ -1575,10 +1717,23 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "on-chain-storage", slug: "on-chain-storage", title: "On-Chain Storage" },
     { id: "distributed-storage", slug: "distributed-storage", title: "Distributed Storage" },
     { id: "archival-storage", slug: "archival-storage", title: "Archival Storage" },
-    { id: "data-availability", slug: "data-availability", title: "Data Availability" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "data-availability",
+      slug: "data-availability",
+      title: "Data Availability",
+      preferredPlacementId: "data-availability",
+    },
     { id: "erasure-coding", slug: "erasure-coding", title: "Erasure Coding" },
-    { id: "blobs", slug: "blobs", title: "Blobs" },
-    { id: "data-availability-sampling", slug: "data-availability-sampling", title: "Data Availability Sampling" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    { id: "blobs", slug: "blobs", title: "Blobs", preferredPlacementId: "blobs" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "data-availability-sampling",
+      slug: "data-availability-sampling",
+      title: "Data Availability Sampling",
+      preferredPlacementId: "data-availability-sampling",
+    },
     { id: "storage-proofs", slug: "storage-proofs", title: "Storage Proofs" },
     // L2 topics (placements in L2_TOPICS). Storage Layout (a contract's storage
     // slots) is not 03's State Layout; State Storage (where state is persisted)
@@ -1612,7 +1767,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "data-retrieval", slug: "data-retrieval", title: "Data Retrieval" },
     { id: "availability-verification", slug: "availability-verification", title: "Availability Verification" },
     { id: "data-withholding", slug: "data-withholding", title: "Data Withholding" },
-    { id: "availability-committees", slug: "availability-committees", title: "Availability Committees" },
+    // Also placed in 15 Scaling & Modular Systems; this placement is preferred.
+    {
+      id: "availability-committees",
+      slug: "availability-committees",
+      title: "Availability Committees",
+      preferredPlacementId: "availability-committees",
+    },
     { id: "data-shards", slug: "data-shards", title: "Data Shards" },
     { id: "redundant-encoding", slug: "redundant-encoding", title: "Redundant Encoding" },
     // Recovering data from coded shards, shown as "Reconstruction"; not 03's
@@ -2325,6 +2486,108 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "credible-neutrality", slug: "credible-neutrality", title: "Credible Neutrality" },
     { id: "path-dependence", slug: "path-dependence", title: "Path Dependence" },
     { id: "institutional-evolution", slug: "institutional-evolution", title: "Institutional Evolution" },
+    // 15 Scaling & Modular Systems: L1 topics (Scaling and Rollups are the fixture's
+    // concepts). Scaling is not interoperability; Optimistic Rollups are not 02's
+    // Optimistic Execution; ZK Rollups are not 06's Zero-Knowledge Proofs; Rollup
+    // Sequencing is not 04's Sequencing; Settlement Layers are not 11's
+    // Settlement; Data Availability Layers are not 07's State Storage; Rollup
+    // Security (security inheritance) is not protocol security in general.
+    { id: "optimistic-rollups", slug: "optimistic-rollups", title: "Optimistic Rollups" },
+    { id: "zk-rollups", slug: "zk-rollups", title: "ZK Rollups" },
+    { id: "off-chain-scaling", slug: "off-chain-scaling", title: "Off-Chain Scaling" },
+    { id: "modularity", slug: "modularity", title: "Modularity" },
+    { id: "execution-layers", slug: "execution-layers", title: "Execution Layers" },
+    { id: "settlement-layers", slug: "settlement-layers", title: "Settlement Layers" },
+    { id: "data-availability-layers", slug: "data-availability-layers", title: "Data Availability Layers" },
+    { id: "consensus-layers", slug: "consensus-layers", title: "Consensus Layers" },
+    { id: "rollup-sequencing", slug: "rollup-sequencing", title: "Rollup Sequencing" },
+    { id: "batching-compression", slug: "batching-compression", title: "Batching & Compression" },
+    { id: "scaling-tradeoffs", slug: "scaling-tradeoffs", title: "Scaling Tradeoffs" },
+    { id: "rollup-security", slug: "rollup-security", title: "Rollup Security" },
+    // L2 topics (placements in L2_TOPICS). Layer 2 Scaling is the approach;
+    // Rollups are one kind of it, and Sidechains (own security) are not rollups.
+    { id: "vertical-scaling", slug: "vertical-scaling", title: "Vertical Scaling" },
+    { id: "horizontal-scaling", slug: "horizontal-scaling", title: "Horizontal Scaling" },
+    { id: "execution-scaling", slug: "execution-scaling", title: "Execution Scaling" },
+    { id: "state-growth", slug: "state-growth", title: "State Growth" },
+    { id: "scaling-bottlenecks", slug: "scaling-bottlenecks", title: "Scaling Bottlenecks" },
+    { id: "layer-2-scaling", slug: "layer-2-scaling", title: "Layer 2 Scaling" },
+    { id: "rollup-architecture", slug: "rollup-architecture", title: "Rollup Architecture" },
+    { id: "based-rollups", slug: "based-rollups", title: "Based Rollups" },
+    { id: "sovereign-rollups", slug: "sovereign-rollups", title: "Sovereign Rollups" },
+    { id: "rollup-state", slug: "rollup-state", title: "Rollup State" },
+    { id: "rollup-interoperability", slug: "rollup-interoperability", title: "Rollup Interoperability" },
+    // Fraud Proofs (showing a claimed result wrong) are not Validity Proofs
+    // (showing it right), which are not 02's Computation Proofs; State Proposers
+    // are not 04's Proposers.
+    { id: "fraud-proofs", slug: "fraud-proofs", title: "Fraud Proofs" },
+    { id: "challenge-periods", slug: "challenge-periods", title: "Challenge Periods" },
+    { id: "interactive-fraud-proofs", slug: "interactive-fraud-proofs", title: "Interactive Fraud Proofs" },
+    { id: "dispute-games", slug: "dispute-games", title: "Dispute Games" },
+    { id: "state-proposers", slug: "state-proposers", title: "State Proposers" },
+    { id: "withdrawal-delays", slug: "withdrawal-delays", title: "Withdrawal Delays" },
+    { id: "validity-proofs", slug: "validity-proofs", title: "Validity Proofs" },
+    // Proof Aggregation is not 06's Signature Aggregation; zkEVMs are not 02's
+    // zkVMs.
+    { id: "proof-aggregation", slug: "proof-aggregation", title: "Proof Aggregation" },
+    { id: "proving-costs", slug: "proving-costs", title: "Proving Costs" },
+    { id: "zkevms", slug: "zkevms", title: "zkEVMs" },
+    { id: "sidechains", slug: "sidechains", title: "Sidechains" },
+    { id: "state-channels", slug: "state-channels", title: "State Channels" },
+    { id: "payment-channels", slug: "payment-channels", title: "Payment Channels" },
+    { id: "plasma", slug: "plasma", title: "Plasma" },
+    { id: "validiums", slug: "validiums", title: "Validiums" },
+    { id: "modular-blockchains", slug: "modular-blockchains", title: "Modular Blockchains" },
+    { id: "monolithic-blockchains", slug: "monolithic-blockchains", title: "Monolithic Blockchains" },
+    { id: "layer-separation", slug: "layer-separation", title: "Layer Separation" },
+    { id: "component-interfaces", slug: "component-interfaces", title: "Component Interfaces" },
+    { id: "unbundling", slug: "unbundling", title: "Unbundling" },
+    { id: "modular-tradeoffs", slug: "modular-tradeoffs", title: "Modular Tradeoffs" },
+    // Execution Layers (a layer of a modular stack) are not execution
+    // environments or 02's Execution Models.
+    { id: "evm-equivalence", slug: "evm-equivalence", title: "EVM Equivalence" },
+    { id: "evm-compatibility", slug: "evm-compatibility", title: "EVM Compatibility" },
+    { id: "execution-clients", slug: "execution-clients", title: "Execution Clients" },
+    { id: "alternative-vms", slug: "alternative-vms", title: "Alternative VMs" },
+    // Rollup Settlement is not 11's Settlement; Rollup Finality (soft, then
+    // L1-finalized) is not consensus Finality; Forced Withdrawals are not 04's
+    // Forced Inclusion.
+    { id: "rollup-settlement", slug: "rollup-settlement", title: "Rollup Settlement" },
+    { id: "rollup-finality", slug: "rollup-finality", title: "Rollup Finality" },
+    { id: "withdrawals", slug: "withdrawals", title: "Withdrawals" },
+    { id: "forced-withdrawals", slug: "forced-withdrawals", title: "Forced Withdrawals" },
+    { id: "withdrawal-proofs", slug: "withdrawal-proofs", title: "Withdrawal Proofs" },
+    { id: "alternative-data-availability", slug: "alternative-data-availability", title: "Alternative Data Availability" },
+    { id: "base-layers", slug: "base-layers", title: "Base Layers" },
+    { id: "shared-security", slug: "shared-security", title: "Shared Security" },
+    // Shared Security is not 10's Economic Security; Restaking is not 10's Stake.
+    { id: "restaking", slug: "restaking", title: "Restaking" },
+    { id: "layer-coupling", slug: "layer-coupling", title: "Layer Coupling" },
+    // Sequencers are the role; Based Sequencing (by L1 proposers) is not Based
+    // Rollups; Sequencer Censorship is not Foundations' Censorship.
+    { id: "sequencers", slug: "sequencers", title: "Sequencers" },
+    { id: "based-sequencing", slug: "based-sequencing", title: "Based Sequencing" },
+    { id: "sequencer-liveness", slug: "sequencer-liveness", title: "Sequencer Liveness" },
+    // Transaction Batching is not 10's Batch Auctions, 12's Transaction Bundles
+    // or 12's Batch Execution.
+    { id: "transaction-batching", slug: "transaction-batching", title: "Transaction Batching" },
+    { id: "batch-posting", slug: "batch-posting", title: "Batch Posting" },
+    { id: "data-compression", slug: "data-compression", title: "Data Compression" },
+    { id: "state-diffs", slug: "state-diffs", title: "State Diffs" },
+    { id: "cost-amortization", slug: "cost-amortization", title: "Cost Amortization" },
+    // Throughput is not Confirmation Latency, which is not Foundations' Latency.
+    { id: "throughput", slug: "throughput", title: "Throughput" },
+    { id: "confirmation-latency", slug: "confirmation-latency", title: "Confirmation Latency" },
+    { id: "scaling-costs", slug: "scaling-costs", title: "Scaling Costs" },
+    { id: "decentralization", slug: "decentralization", title: "Decentralization" },
+    { id: "scalability-trilemma", slug: "scalability-trilemma", title: "Scalability Trilemma" },
+    // Upgrade Keys are not 14's Protocol Upgrades; Escape Hatches let users exit
+    // without the operator.
+    { id: "security-inheritance", slug: "security-inheritance", title: "Security Inheritance" },
+    { id: "rollup-maturity-stages", slug: "rollup-maturity-stages", title: "Rollup Maturity Stages" },
+    { id: "upgrade-keys", slug: "upgrade-keys", title: "Upgrade Keys" },
+    { id: "escape-hatches", slug: "escape-hatches", title: "Escape Hatches" },
+    { id: "sequencer-censorship", slug: "sequencer-censorship", title: "Sequencer Censorship" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -2630,13 +2893,53 @@ export const mapKnowledge: MapKnowledgeModel = {
       parentPlacementId: "consensus-ordering",
       order: 9,
     },
+    // 15 Scaling & Modular Systems: L1 topics. Scaling and Rollups are the Phase 1
+    // fixture's placements (IDs unchanged); Rollups is now an L1 topic, and the
+    // fixture's Finality beneath it an L2 topic (it closes Rollups' layer).
     { id: "scaling", conceptId: "scaling", parentPlacementId: "scaling-modular-systems", order: 0 },
-    { id: "rollups", conceptId: "rollups", parentPlacementId: "scaling", order: 0 },
+    { id: "rollups", conceptId: "rollups", parentPlacementId: "scaling-modular-systems", order: 1 },
+    {
+      id: "optimistic-rollups",
+      conceptId: "optimistic-rollups",
+      parentPlacementId: "scaling-modular-systems",
+      order: 2,
+    },
+    { id: "zk-rollups", conceptId: "zk-rollups", parentPlacementId: "scaling-modular-systems", order: 3 },
+    { id: "off-chain-scaling", conceptId: "off-chain-scaling", parentPlacementId: "scaling-modular-systems", order: 4 },
+    { id: "modularity", conceptId: "modularity", parentPlacementId: "scaling-modular-systems", order: 5 },
+    { id: "execution-layers", conceptId: "execution-layers", parentPlacementId: "scaling-modular-systems", order: 6 },
+    { id: "settlement-layers", conceptId: "settlement-layers", parentPlacementId: "scaling-modular-systems", order: 7 },
+    {
+      id: "data-availability-layers",
+      conceptId: "data-availability-layers",
+      parentPlacementId: "scaling-modular-systems",
+      order: 8,
+    },
+    { id: "consensus-layers", conceptId: "consensus-layers", parentPlacementId: "scaling-modular-systems", order: 9 },
+    {
+      id: "rollup-sequencing",
+      conceptId: "rollup-sequencing",
+      parentPlacementId: "scaling-modular-systems",
+      order: 10,
+    },
+    {
+      id: "batching-compression",
+      conceptId: "batching-compression",
+      parentPlacementId: "scaling-modular-systems",
+      order: 11,
+    },
+    {
+      id: "scaling-tradeoffs",
+      conceptId: "scaling-tradeoffs",
+      parentPlacementId: "scaling-modular-systems",
+      order: 12,
+    },
+    { id: "rollup-security", conceptId: "rollup-security", parentPlacementId: "scaling-modular-systems", order: 13 },
     {
       id: "finality-in-rollups",
       conceptId: "finality",
       parentPlacementId: "rollups",
-      order: 0,
+      order: 5,
       contextualNote: "Finality as a settlement property relevant to rollup systems.",
     },
     { id: "ai-agent", conceptId: "ai-agent", parentPlacementId: "ai-intelligent-systems", order: 0 },
