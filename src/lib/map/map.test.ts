@@ -327,6 +327,103 @@ const CONSENSUS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const CONSENSUS_L2 = CONSENSUS_TREE.flatMap(([, children]) => children);
 
+// 05 Networks & Infrastructure. Node Synchronization and Reorganization
+// Handling are State & Data's concepts; Keeper Networks is Automation Networks;
+// Logs and Traces are the observability concepts System Logs and Distributed Traces.
+const NETWORKS_LAYER: Array<[string, string, string]> = [
+  ["p2p-networks", "p2p-networks", "P2P Networks"],
+  ["message-propagation", "message-propagation", "Message Propagation"],
+  ["nodes", "nodes", "Nodes"],
+  ["rpc", "rpc", "RPC"],
+  ["indexers", "indexers", "Indexers"],
+  ["relayers", "relayers", "Relayers"],
+  ["keepers", "keepers", "Keepers"],
+  ["bots", "bots", "Bots"],
+  ["monitoring", "monitoring", "Monitoring"],
+  ["automation", "automation", "Automation"],
+];
+const NETWORKS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["p2p-networks", [
+    ["peer-discovery", "peer-discovery", "Peer Discovery"],
+    ["peer-connections", "peer-connections", "Peer Connections"],
+    ["network-topology", "network-topology", "Network Topology"],
+    ["peer-management", "peer-management", "Peer Management"],
+    ["gossip", "gossip", "Gossip"],
+    ["network-partitions", "network-partitions", "Network Partitions"],
+  ]],
+  ["message-propagation", [
+    ["message-dissemination", "message-dissemination", "Message Dissemination"],
+    ["gossip-propagation", "gossip-propagation", "Gossip Propagation"],
+    ["propagation-latency", "propagation-latency", "Propagation Latency"],
+    ["message-validation", "message-validation", "Message Validation"],
+    ["duplicate-suppression", "duplicate-suppression", "Duplicate Suppression"],
+    ["flooding", "flooding", "Flooding"],
+  ]],
+  ["nodes", [
+    ["full-nodes", "full-nodes", "Full Nodes"],
+    ["light-nodes", "light-nodes", "Light Nodes"],
+    ["archive-nodes", "archive-nodes", "Archive Nodes"],
+    ["validator-nodes", "validator-nodes", "Validator Nodes"],
+    ["bootnodes", "bootnodes", "Bootnodes"],
+    ["synchronization-in-nodes", "synchronization", "Node Synchronization"],
+  ]],
+  ["rpc", [
+    ["rpc-interfaces", "rpc-interfaces", "RPC Interfaces"],
+    ["rpc-methods", "rpc-methods", "RPC Methods"],
+    ["rpc-providers", "rpc-providers", "RPC Providers"],
+    ["rpc-endpoints", "rpc-endpoints", "RPC Endpoints"],
+    ["request-routing", "request-routing", "Request Routing"],
+    ["rate-limiting", "rate-limiting", "Rate Limiting"],
+  ]],
+  ["indexers", [
+    ["chain-indexers", "chain-indexers", "Chain Indexers"],
+    ["event-indexing", "event-indexing", "Event Indexing"],
+    ["state-indexing", "state-indexing", "State Indexing"],
+    ["indexer-pipelines", "indexer-pipelines", "Indexer Pipelines"],
+    ["query-services", "query-services", "Query Services"],
+    ["reorganization-handling-in-indexers", "reorganization-handling", "Reorganization Handling"],
+  ]],
+  ["relayers", [
+    ["transaction-relaying", "transaction-relaying", "Transaction Relaying"],
+    ["message-relaying", "message-relaying", "Message Relaying"],
+    ["relay-networks", "relay-networks", "Relay Networks"],
+    ["relay-policies", "relay-policies", "Relay Policies"],
+    ["relay-incentives", "relay-incentives", "Relay Incentives"],
+  ]],
+  ["keepers", [
+    ["condition-monitoring", "condition-monitoring", "Condition Monitoring"],
+    ["trigger-evaluation", "trigger-evaluation", "Trigger Evaluation"],
+    ["transaction-submission", "transaction-submission", "Transaction Submission"],
+    ["automation-networks-in-keepers", "automation-networks", "Keeper Networks"],
+    ["keeper-incentives", "keeper-incentives", "Keeper Incentives"],
+  ]],
+  ["bots", [
+    ["event-driven-bots", "event-driven-bots", "Event-Driven Bots"],
+    ["trading-bots", "trading-bots", "Trading Bots"],
+    ["liquidation-bots", "liquidation-bots", "Liquidation Bots"],
+    ["arbitrage-bots", "arbitrage-bots", "Arbitrage Bots"],
+    ["governance-bots", "governance-bots", "Governance Bots"],
+    ["execution-bots", "execution-bots", "Execution Bots"],
+  ]],
+  ["monitoring", [
+    ["metrics", "metrics", "Metrics"],
+    ["system-logs", "system-logs", "Logs"],
+    ["distributed-traces", "distributed-traces", "Traces"],
+    ["health-checks", "health-checks", "Health Checks"],
+    ["alerting", "alerting", "Alerting"],
+    ["observability", "observability", "Observability"],
+  ]],
+  ["automation", [
+    ["triggers", "triggers", "Triggers"],
+    ["scheduled-execution", "scheduled-execution", "Scheduled Execution"],
+    ["event-driven-execution", "event-driven-execution", "Event-Driven Execution"],
+    ["conditional-execution", "conditional-execution", "Conditional Execution"],
+    ["automation-policies", "automation-policies", "Automation Policies"],
+    ["automation-networks", "automation-networks", "Automation Networks"],
+  ]],
+];
+const NETWORKS_L2 = NETWORKS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -337,6 +434,8 @@ const AUTHORED_TOPICS = new Set([
   ...STATE_DATA_L2.map(([id]) => id),
   ...CONSENSUS_LAYER.map(([id]) => id),
   ...CONSENSUS_L2.map(([id]) => id),
+  ...NETWORKS_LAYER.map(([id]) => id),
+  ...NETWORKS_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -411,8 +510,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // L0, the Phase 1 fixture, Foundations' L1 layer and its 40 new L2
   // concepts, Computation & Execution's 7 L1 and 38 new L2 concepts, then
   // State & Data's 9 new L1 and 58 new L2 concepts, then Consensus &
-  // Ordering's 7 new L1 and 56 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56);
+  // Ordering's 7 new L1 and 56 new L2 concepts, then Networks &
+  // Infrastructure's 10 new L1 and 55 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -690,11 +790,16 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
   }
   // Every other topic is a new concept placed once, without exposition; placement IDs are unique.
   const shared = new Set(["transitions", "state-roots"]);
+  // Also placed in Networks & Infrastructure.
+  const placedElsewhere: Record<string, string[]> = {
+    synchronization: ["synchronization-in-nodes"],
+    "reorganization-handling": ["reorganization-handling-in-indexers"],
+  };
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
   }
   const ids = [...STATE_DATA_LAYER, ...STATE_DATA_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -706,6 +811,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("foundations"), 7 + 43);
   assert.equal(subtreeOf("computation-execution"), 7 + 39);
   assert.equal(subtreeOf("state-data"), 10 + 59);
+  assert.equal(subtreeOf("consensus-ordering"), 10 + 58);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -779,6 +885,78 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Networks & Infrastructure has exactly its ten L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("networks-infrastructure").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    NETWORKS_LAYER,
+  );
+  for (const [parent, children] of NETWORKS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of NETWORKS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "networks-infrastructure")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...NETWORKS_LAYER.map(([id]) => id), ...NETWORKS_L2.map(([id]) => id)].sort());
+  assert.equal(NETWORKS_L2.length, 58);
+});
+
+test("Networks & Infrastructure reuses Synchronization, Reorganization Handling and Automation Networks", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Node Synchronization is State & Data's Synchronization in contextual wording; preferred there.
+  assert.deepEqual(placementsOf("synchronization"), ["synchronization", "synchronization-in-nodes"]);
+  assert.equal(resolver.getConcept("synchronization")?.preferredPlacementId, "synchronization");
+  assert.deepEqual(resolver.getChildren("synchronization-in-nodes"), []);
+  assert.equal(resolver.getChildren("synchronization").length, 6);
+  // Reorganization Handling: one concept under Indexing (03) and Indexers (05).
+  assert.deepEqual(placementsOf("reorganization-handling"), ["reorganization-handling", "reorganization-handling-in-indexers"]);
+  assert.equal(resolver.getConcept("reorganization-handling")?.preferredPlacementId, "reorganization-handling");
+  // Keeper Networks is Automation Networks under Keepers.
+  assert.deepEqual(placementsOf("automation-networks"), ["automation-networks", "automation-networks-in-keepers"]);
+  assert.equal(resolver.getConcept("automation-networks")?.preferredPlacementId, "automation-networks");
+  assert.equal(resolver.getConcept("keeper-networks"), undefined);
+  // Observability Logs and Traces are their own concepts in contextual wording.
+  assert.equal(resolver.getConcept("system-logs")?.title, "System Logs");
+  assert.equal(resolver.getConcept("distributed-traces")?.title, "Distributed Traces");
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["relayers", "relays"],
+    ["relay-networks", "relays"],
+    ["system-logs", "logs"],
+    ["distributed-traces", "execution-traces"],
+    ["indexers", "indexing"],
+    ["gossip-propagation", "gossip"],
+    ["propagation-latency", "latency"],
+    ["message-validation", "transaction-validation"],
+    ["validator-nodes", "validators"],
+    ["archive-nodes", "archival-state"],
+    ["query-services", "query-models"],
+    ["transaction-relaying", "transaction-propagation"],
+    ["rate-limiting", "denial-of-service-resistance"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["synchronization", "reorganization-handling", "automation-networks"]);
+  for (const [id, conceptId] of [...NETWORKS_LAYER, ...NETWORKS_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...NETWORKS_LAYER, ...NETWORKS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

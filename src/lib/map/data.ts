@@ -278,6 +278,58 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "censorship-recovery",
     "inclusion-guarantees",
   ],
+  // 05 Networks & Infrastructure
+  "p2p-networks": ["peer-discovery", "peer-connections", "network-topology", "peer-management", "gossip", "network-partitions"],
+  "message-propagation": [
+    "message-dissemination",
+    "gossip-propagation",
+    "propagation-latency",
+    "message-validation",
+    "duplicate-suppression",
+    "flooding",
+  ],
+  nodes: [
+    "full-nodes",
+    "light-nodes",
+    "archive-nodes",
+    "validator-nodes",
+    "bootnodes",
+    { placementId: "synchronization-in-nodes", conceptId: "synchronization", contextualLabel: "Node Synchronization" },
+  ],
+  rpc: ["rpc-interfaces", "rpc-methods", "rpc-providers", "rpc-endpoints", "request-routing", "rate-limiting"],
+  indexers: [
+    "chain-indexers",
+    "event-indexing",
+    "state-indexing",
+    "indexer-pipelines",
+    "query-services",
+    { placementId: "reorganization-handling-in-indexers", conceptId: "reorganization-handling" },
+  ],
+  relayers: ["transaction-relaying", "message-relaying", "relay-networks", "relay-policies", "relay-incentives"],
+  keepers: [
+    "condition-monitoring",
+    "trigger-evaluation",
+    "transaction-submission",
+    { placementId: "automation-networks-in-keepers", conceptId: "automation-networks", contextualLabel: "Keeper Networks" },
+    "keeper-incentives",
+  ],
+  bots: ["event-driven-bots", "trading-bots", "liquidation-bots", "arbitrage-bots", "governance-bots", "execution-bots"],
+  monitoring: [
+    "metrics",
+    { placementId: "system-logs", conceptId: "system-logs", contextualLabel: "Logs" },
+    { placementId: "distributed-traces", conceptId: "distributed-traces", contextualLabel: "Traces" },
+    "health-checks",
+    "alerting",
+    "observability",
+  ],
+  automation: [
+    "triggers",
+    "scheduled-execution",
+    "event-driven-execution",
+    "conditional-execution",
+    "automation-policies",
+    "automation-networks",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -291,9 +343,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
 /**
  * The complete L0 layer; Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
- * L2 topics of Computation & Execution, State & Data, and Consensus &
- * Ordering; and a deliberately small Phase 1 proof fixture re-homed beneath
- * its L0 domains.
+ * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
+ * and Networks & Infrastructure; and a deliberately small Phase 1 proof
+ * fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -431,7 +483,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "state-representation", slug: "state-representation", title: "State Representation" },
     { id: "state-commitments", slug: "state-commitments", title: "State Commitments" },
     { id: "historical-state", slug: "historical-state", title: "Historical State" },
-    { id: "synchronization", slug: "synchronization", title: "Synchronization" },
+    // A node bringing itself up to date with the network; also placed as 05's
+    // "Node Synchronization". This placement is preferred.
+    { id: "synchronization", slug: "synchronization", title: "Synchronization", preferredPlacementId: "synchronization" },
     { id: "on-chain-data", slug: "on-chain-data", title: "On-Chain Data" },
     { id: "off-chain-data", slug: "off-chain-data", title: "Off-Chain Data" },
     { id: "data-integrity", slug: "data-integrity", title: "Data Integrity" },
@@ -502,7 +556,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "derived-state", slug: "derived-state", title: "Derived State" },
     { id: "index-construction", slug: "index-construction", title: "Index Construction" },
     { id: "query-models", slug: "query-models", title: "Query Models" },
-    { id: "reorganization-handling", slug: "reorganization-handling", title: "Reorganization Handling" },
+    // Also placed under 05's Indexers: the same handling of reorgs in derived data.
+    {
+      id: "reorganization-handling",
+      slug: "reorganization-handling",
+      title: "Reorganization Handling",
+      preferredPlacementId: "reorganization-handling",
+    },
     // 04 Consensus & Ordering: L1 topics (Consensus, Finality and Censorship
     // Resistance are existing concepts).
     { id: "validators", slug: "validators", title: "Validators" },
@@ -565,6 +625,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "builders", slug: "builders", title: "Builders" },
     { id: "builder-markets", slug: "builder-markets", title: "Builder Markets" },
     { id: "block-bids", slug: "block-bids", title: "Block Bids" },
+    // PBS relays: trusted escrow between builders and proposers, not 05's
+    // Relayers (parties forwarding transactions and messages for others).
     { id: "relays", slug: "relays", title: "Relays" },
     { id: "builder-selection", slug: "builder-selection", title: "Builder Selection" },
     { id: "execution-preconfirmations", slug: "execution-preconfirmations", title: "Execution Preconfirmations" },
@@ -578,6 +640,83 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "censorship-detection", slug: "censorship-detection", title: "Censorship Detection" },
     { id: "censorship-recovery", slug: "censorship-recovery", title: "Censorship Recovery" },
     { id: "inclusion-guarantees", slug: "inclusion-guarantees", title: "Inclusion Guarantees" },
+    // 05 Networks & Infrastructure: L1 topics. Indexers (the infrastructure) is
+    // not 03's Indexing (the process).
+    { id: "p2p-networks", slug: "p2p-networks", title: "P2P Networks" },
+    { id: "message-propagation", slug: "message-propagation", title: "Message Propagation" },
+    { id: "nodes", slug: "nodes", title: "Nodes" },
+    { id: "rpc", slug: "rpc", title: "RPC" },
+    { id: "indexers", slug: "indexers", title: "Indexers" },
+    { id: "relayers", slug: "relayers", title: "Relayers" },
+    { id: "keepers", slug: "keepers", title: "Keepers" },
+    { id: "bots", slug: "bots", title: "Bots" },
+    { id: "monitoring", slug: "monitoring", title: "Monitoring" },
+    { id: "automation", slug: "automation", title: "Automation" },
+    // L2 topics (placements in L2_TOPICS). Gossip is the peer-to-peer mechanism;
+    // Gossip Propagation is how messages spread through it. Propagation Latency
+    // is specific to dissemination, not Foundations' Latency.
+    { id: "peer-discovery", slug: "peer-discovery", title: "Peer Discovery" },
+    { id: "peer-connections", slug: "peer-connections", title: "Peer Connections" },
+    { id: "network-topology", slug: "network-topology", title: "Network Topology" },
+    { id: "peer-management", slug: "peer-management", title: "Peer Management" },
+    { id: "gossip", slug: "gossip", title: "Gossip" },
+    { id: "network-partitions", slug: "network-partitions", title: "Network Partitions" },
+    { id: "message-dissemination", slug: "message-dissemination", title: "Message Dissemination" },
+    { id: "gossip-propagation", slug: "gossip-propagation", title: "Gossip Propagation" },
+    { id: "propagation-latency", slug: "propagation-latency", title: "Propagation Latency" },
+    { id: "message-validation", slug: "message-validation", title: "Message Validation" },
+    { id: "duplicate-suppression", slug: "duplicate-suppression", title: "Duplicate Suppression" },
+    { id: "flooding", slug: "flooding", title: "Flooding" },
+    // Validator Nodes are the infrastructure running 04's Validators (a role).
+    { id: "full-nodes", slug: "full-nodes", title: "Full Nodes" },
+    { id: "light-nodes", slug: "light-nodes", title: "Light Nodes" },
+    { id: "archive-nodes", slug: "archive-nodes", title: "Archive Nodes" },
+    { id: "validator-nodes", slug: "validator-nodes", title: "Validator Nodes" },
+    { id: "bootnodes", slug: "bootnodes", title: "Bootnodes" },
+    { id: "rpc-interfaces", slug: "rpc-interfaces", title: "RPC Interfaces" },
+    { id: "rpc-methods", slug: "rpc-methods", title: "RPC Methods" },
+    { id: "rpc-providers", slug: "rpc-providers", title: "RPC Providers" },
+    { id: "rpc-endpoints", slug: "rpc-endpoints", title: "RPC Endpoints" },
+    { id: "request-routing", slug: "request-routing", title: "Request Routing" },
+    { id: "rate-limiting", slug: "rate-limiting", title: "Rate Limiting" },
+    { id: "chain-indexers", slug: "chain-indexers", title: "Chain Indexers" },
+    { id: "event-indexing", slug: "event-indexing", title: "Event Indexing" },
+    { id: "state-indexing", slug: "state-indexing", title: "State Indexing" },
+    { id: "indexer-pipelines", slug: "indexer-pipelines", title: "Indexer Pipelines" },
+    { id: "query-services", slug: "query-services", title: "Query Services" },
+    // Transaction Relaying (submitting on someone's behalf) is not 04's
+    // Transaction Propagation (gossip through mempools).
+    { id: "transaction-relaying", slug: "transaction-relaying", title: "Transaction Relaying" },
+    { id: "message-relaying", slug: "message-relaying", title: "Message Relaying" },
+    { id: "relay-networks", slug: "relay-networks", title: "Relay Networks" },
+    { id: "relay-policies", slug: "relay-policies", title: "Relay Policies" },
+    { id: "relay-incentives", slug: "relay-incentives", title: "Relay Incentives" },
+    { id: "condition-monitoring", slug: "condition-monitoring", title: "Condition Monitoring" },
+    { id: "trigger-evaluation", slug: "trigger-evaluation", title: "Trigger Evaluation" },
+    { id: "transaction-submission", slug: "transaction-submission", title: "Transaction Submission" },
+    { id: "keeper-incentives", slug: "keeper-incentives", title: "Keeper Incentives" },
+    { id: "event-driven-bots", slug: "event-driven-bots", title: "Event-Driven Bots" },
+    { id: "trading-bots", slug: "trading-bots", title: "Trading Bots" },
+    { id: "liquidation-bots", slug: "liquidation-bots", title: "Liquidation Bots" },
+    { id: "arbitrage-bots", slug: "arbitrage-bots", title: "Arbitrage Bots" },
+    { id: "governance-bots", slug: "governance-bots", title: "Governance Bots" },
+    { id: "execution-bots", slug: "execution-bots", title: "Execution Bots" },
+    { id: "metrics", slug: "metrics", title: "Metrics" },
+    // Observability data, shown as "Logs" and "Traces" under Monitoring: not
+    // 03's Logs (EVM receipt logs) or 02's Execution Traces.
+    { id: "system-logs", slug: "system-logs", title: "System Logs" },
+    { id: "distributed-traces", slug: "distributed-traces", title: "Distributed Traces" },
+    { id: "health-checks", slug: "health-checks", title: "Health Checks" },
+    { id: "alerting", slug: "alerting", title: "Alerting" },
+    { id: "observability", slug: "observability", title: "Observability" },
+    { id: "triggers", slug: "triggers", title: "Triggers" },
+    { id: "scheduled-execution", slug: "scheduled-execution", title: "Scheduled Execution" },
+    { id: "event-driven-execution", slug: "event-driven-execution", title: "Event-Driven Execution" },
+    { id: "conditional-execution", slug: "conditional-execution", title: "Conditional Execution" },
+    { id: "automation-policies", slug: "automation-policies", title: "Automation Policies" },
+    // Networks of nodes that watch conditions and submit transactions: one
+    // concept, also placed as "Keeper Networks" under Keepers.
+    { id: "automation-networks", slug: "automation-networks", title: "Automation Networks", preferredPlacementId: "automation-networks" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -629,6 +768,17 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "data-integrity", conceptId: "data-integrity", parentPlacementId: "state-data", order: 7 },
     { id: "provenance", conceptId: "provenance", parentPlacementId: "state-data", order: 8 },
     { id: "indexing", conceptId: "indexing", parentPlacementId: "state-data", order: 9 },
+    // 05 Networks & Infrastructure: L1 topics.
+    { id: "p2p-networks", conceptId: "p2p-networks", parentPlacementId: "networks-infrastructure", order: 0 },
+    { id: "message-propagation", conceptId: "message-propagation", parentPlacementId: "networks-infrastructure", order: 1 },
+    { id: "nodes", conceptId: "nodes", parentPlacementId: "networks-infrastructure", order: 2 },
+    { id: "rpc", conceptId: "rpc", parentPlacementId: "networks-infrastructure", order: 3 },
+    { id: "indexers", conceptId: "indexers", parentPlacementId: "networks-infrastructure", order: 4 },
+    { id: "relayers", conceptId: "relayers", parentPlacementId: "networks-infrastructure", order: 5 },
+    { id: "keepers", conceptId: "keepers", parentPlacementId: "networks-infrastructure", order: 6 },
+    { id: "bots", conceptId: "bots", parentPlacementId: "networks-infrastructure", order: 7 },
+    { id: "monitoring", conceptId: "monitoring", parentPlacementId: "networks-infrastructure", order: 8 },
+    { id: "automation", conceptId: "automation", parentPlacementId: "networks-infrastructure", order: 9 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
