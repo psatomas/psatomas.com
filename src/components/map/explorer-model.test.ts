@@ -84,7 +84,18 @@ const POPULATED_L0 = {
     "provenance",
     "indexing",
   ],
-  "consensus-ordering": ["consensus"],
+  "consensus-ordering": [
+    "consensus",
+    "validators",
+    "fork-choice",
+    "finality-in-consensus",
+    "mempools",
+    "sequencing",
+    "block-building",
+    "proposer-builder-separation",
+    "preconfirmations",
+    "censorship-resistance-in-consensus-ordering",
+  ],
   "identity-accounts-authority": ["identity", "authority"],
   "scaling-modular-systems": ["scaling"],
   "ai-intelligent-systems": ["ai-agent"],
@@ -285,7 +296,7 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
 test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
   const index = indexMapExplorerView(view);
   const opened = revealMapExplorerContext(new Set(), index, "finality-in-consensus", true);
-  assert.deepEqual([...opened].sort(), ["consensus", "consensus-ordering", "finality-in-consensus"]);
+  assert.deepEqual([...opened].sort(), ["consensus-ordering", "finality-in-consensus"]);
   // Collapsing is a disclosure change: the URL-owned context is untouched.
   const finality = getVisibleMapExplorerRows(view, opened).find((row) => row.placementId === "finality-in-consensus")!;
   const collapsed = activateMapExplorerRow(finality, "finality-in-consensus", opened);
@@ -350,7 +361,7 @@ test("the two Finality placements produce distinct contexts for one canonical co
   const inConsensus = getMapExplorerContext(index, "finality-in-consensus");
   const inRollups = getMapExplorerContext(index, "finality-in-rollups");
 
-  assert.deepEqual(inConsensus.map((step) => step.label), ["Consensus & Ordering", "Consensus", "Finality"]);
+  assert.deepEqual(inConsensus.map((step) => step.label), ["Consensus & Ordering", "Finality"]);
   assert.deepEqual(inRollups.map((step) => step.label), ["Scaling & Modular Systems", "Scaling", "Rollups", "Finality"]);
   assert.equal(inConsensus.at(-1)?.conceptId, "finality");
   assert.equal(inRollups.at(-1)?.conceptId, "finality");
@@ -372,10 +383,14 @@ test("root placements become structural regions holding their visible descendant
   assert.deepEqual(regions.map((region) => region.header.placementId), view.roots.map((root) => root.placementId));
   assert.deepEqual(regions[0].rows.map((row) => row.placementId), POPULATED_L0.foundations);
   assert.ok(regions[0].rows.every((row) => row.parentLabel === "Foundations"));
-  assert.deepEqual(regions[3].rows.map((row) => [row.placementId, row.parentLabel]), [
+  // Consensus is open: its own layer follows it, then the rest of the domain's L1 topics.
+  const consensusRows = regions[3].rows.map((row) => [row.placementId, row.parentLabel]);
+  assert.deepEqual(consensusRows.slice(0, 2), [
     ["consensus", "Consensus & Ordering"],
-    ["finality-in-consensus", "Consensus"],
+    ["consensus-models", "Consensus"],
   ]);
+  assert.deepEqual(consensusRows.find(([id]) => id === "finality-in-consensus"), ["finality-in-consensus", "Consensus & Ordering"]);
+  assert.equal(consensusRows.length, 10 + 6);
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
@@ -499,6 +514,36 @@ test("a concept is expandable when it has exposition or a next layer, never when
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
   assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+});
+
+test("Consensus & Ordering L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("checkpoints"), ["Consensus & Ordering", "Finality", "Checkpoints"]);
+  assert.deepEqual(labels("preconfirmation-guarantees"), ["Consensus & Ordering", "Preconfirmations", "Preconfirmation Guarantees"]);
+  assert.deepEqual(labels("inclusion-lists"), ["Consensus & Ordering", "Censorship Resistance", "Inclusion Lists"]);
+  assert.deepEqual(labels("proposers-in-validators"), ["Consensus & Ordering", "Validators", "Proposers"]);
+  assert.deepEqual(labels("proposers-in-proposer-builder-separation"), ["Consensus & Ordering", "Proposer-Builder Separation", "Proposers"]);
+  assert.deepEqual(labels("transaction-ordering-in-block-building"), ["Consensus & Ordering", "Block Building", "Transaction Ordering"]);
+  // The same concepts elsewhere keep their own contexts.
+  assert.deepEqual(labels("censorship-resistance"), ["Foundations", "Protocol Properties", "Censorship Resistance"]);
+  assert.deepEqual(labels("transaction-ordering"), ["Computation & Execution", "Transactions", "Transaction Ordering"]);
+  for (const id of ["checkpoints", "proposers-in-proposer-builder-separation", "censorship-resistance-in-consensus-ordering", "finality-in-consensus"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.equal(resolveMapContextParam(index, ["proposers"]), null);
+  assert.deepEqual([...getInitialMapExplorerState(view, "justification").expandedPlacementIds].sort(), ["consensus-ordering", "finality-in-consensus"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "consensus-ordering" && row.depth > 0);
+  assert.equal(subtreeRows.length, 10 + 58);
+  // Finality carries its canonical exposition as well as its layer; everything else here has none.
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && row.hasContent === (row.conceptId === "finality")));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "04");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
 });
 
 test("State & Data L2 topics are ordinary placements: context, ancestry, containing L0", () => {

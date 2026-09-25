@@ -212,6 +212,72 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "query-models",
     "reorganization-handling",
   ],
+  // 04 Consensus & Ordering
+  consensus: ["consensus-models", "consensus-participants", "consensus-rules", "agreement", "quorums", "fault-assumptions"],
+  validators: [
+    "validator-selection",
+    "validator-sets",
+    { placementId: "proposers-in-validators", conceptId: "proposers" },
+    "attesters",
+    "validator-duties",
+    "validator-incentives",
+  ],
+  "fork-choice": ["fork-choice-rules", "chain-selection", "competing-forks", "reorganizations", "head-selection"],
+  "finality-in-consensus": [
+    "probabilistic-finality",
+    "deterministic-finality",
+    "finality-gadgets",
+    "checkpoints",
+    "justification",
+    "finalization",
+  ],
+  mempools: [
+    "transaction-admission",
+    "transaction-propagation",
+    "transaction-prioritization",
+    "mempool-policies",
+    "private-mempools",
+    "mempool-synchronization",
+  ],
+  sequencing: [
+    "transaction-sequencing",
+    "sequencing-rules",
+    "centralized-sequencing",
+    "decentralized-sequencing",
+    "shared-sequencing",
+    "sequencer-rotation",
+  ],
+  "block-building": [
+    "block-construction",
+    "transaction-selection",
+    { placementId: "transaction-ordering-in-block-building", conceptId: "transaction-ordering" },
+    "block-proposals",
+    "block-validation",
+    "block-production",
+  ],
+  "proposer-builder-separation": [
+    { placementId: "proposers-in-proposer-builder-separation", conceptId: "proposers" },
+    "builders",
+    "builder-markets",
+    "block-bids",
+    "relays",
+    "builder-selection",
+  ],
+  preconfirmations: [
+    "execution-preconfirmations",
+    "inclusion-preconfirmations",
+    "preconfirmation-commitments",
+    "preconfirmation-providers",
+    "preconfirmation-guarantees",
+  ],
+  "censorship-resistance-in-consensus-ordering": [
+    "transaction-inclusion",
+    "inclusion-lists",
+    "forced-inclusion",
+    "censorship-detection",
+    "censorship-recovery",
+    "inclusion-guarantees",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -225,8 +291,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
 /**
  * The complete L0 layer; Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
- * L2 topics of Computation & Execution and of State & Data; and a
- * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * L2 topics of Computation & Execution, State & Data, and Consensus &
+ * Ordering; and a deliberately small Phase 1 proof fixture re-homed beneath
+ * its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -294,7 +361,14 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "availability", slug: "availability", title: "Availability" },
     { id: "consistency", slug: "consistency", title: "Consistency" },
     { id: "fault-tolerance", slug: "fault-tolerance", title: "Fault Tolerance" },
-    { id: "censorship-resistance", slug: "censorship-resistance", title: "Censorship Resistance" },
+    // Also 04 Consensus & Ordering's L1 topic, where the property is taught
+    // through its inclusion mechanisms; that placement is preferred.
+    {
+      id: "censorship-resistance",
+      slug: "censorship-resistance",
+      title: "Censorship Resistance",
+      preferredPlacementId: "censorship-resistance-in-consensus-ordering",
+    },
     // 02 Computation & Execution: L1 topics.
     { id: "execution-models", slug: "execution-models", title: "Execution Models" },
     { id: "transactions", slug: "transactions", title: "Transactions" },
@@ -313,7 +387,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "speculative-execution", slug: "speculative-execution", title: "Speculative Execution" },
     { id: "transaction-lifecycle", slug: "transaction-lifecycle", title: "Transaction Lifecycle" },
     { id: "transaction-structure", slug: "transaction-structure", title: "Transaction Structure" },
-    { id: "transaction-ordering", slug: "transaction-ordering", title: "Transaction Ordering" },
+    // Also placed under 04's Block Building, the domain of ordering; preferred there.
+    {
+      id: "transaction-ordering",
+      slug: "transaction-ordering",
+      title: "Transaction Ordering",
+      preferredPlacementId: "transaction-ordering-in-block-building",
+    },
     { id: "transaction-validation", slug: "transaction-validation", title: "Transaction Validation" },
     { id: "transaction-execution", slug: "transaction-execution", title: "Transaction Execution" },
     { id: "transaction-atomicity", slug: "transaction-atomicity", title: "Transaction Atomicity" },
@@ -423,6 +503,81 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "index-construction", slug: "index-construction", title: "Index Construction" },
     { id: "query-models", slug: "query-models", title: "Query Models" },
     { id: "reorganization-handling", slug: "reorganization-handling", title: "Reorganization Handling" },
+    // 04 Consensus & Ordering: L1 topics (Consensus, Finality and Censorship
+    // Resistance are existing concepts).
+    { id: "validators", slug: "validators", title: "Validators" },
+    { id: "fork-choice", slug: "fork-choice", title: "Fork Choice" },
+    { id: "mempools", slug: "mempools", title: "Mempools" },
+    { id: "sequencing", slug: "sequencing", title: "Sequencing" },
+    { id: "block-building", slug: "block-building", title: "Block Building" },
+    { id: "proposer-builder-separation", slug: "proposer-builder-separation", title: "Proposer-Builder Separation" },
+    { id: "preconfirmations", slug: "preconfirmations", title: "Preconfirmations" },
+    // L2 topics (placements in L2_TOPICS). Fault Assumptions (what a protocol
+    // assumes about how many and which faults occur) is not Foundations' Fault
+    // Models (the kinds of fault); Consensus Participants and Consensus Rules
+    // are specific to consensus.
+    { id: "consensus-models", slug: "consensus-models", title: "Consensus Models" },
+    { id: "consensus-participants", slug: "consensus-participants", title: "Consensus Participants" },
+    { id: "consensus-rules", slug: "consensus-rules", title: "Consensus Rules" },
+    { id: "agreement", slug: "agreement", title: "Agreement" },
+    { id: "quorums", slug: "quorums", title: "Quorums" },
+    { id: "fault-assumptions", slug: "fault-assumptions", title: "Fault Assumptions" },
+    { id: "validator-selection", slug: "validator-selection", title: "Validator Selection" },
+    { id: "validator-sets", slug: "validator-sets", title: "Validator Sets" },
+    // One role under Validators and Proposer-Builder Separation; preferred where
+    // it is defined, among the validators.
+    { id: "proposers", slug: "proposers", title: "Proposers", preferredPlacementId: "proposers-in-validators" },
+    { id: "attesters", slug: "attesters", title: "Attesters" },
+    { id: "validator-duties", slug: "validator-duties", title: "Validator Duties" },
+    { id: "validator-incentives", slug: "validator-incentives", title: "Validator Incentives" },
+    { id: "fork-choice-rules", slug: "fork-choice-rules", title: "Fork Choice Rules" },
+    { id: "chain-selection", slug: "chain-selection", title: "Chain Selection" },
+    { id: "competing-forks", slug: "competing-forks", title: "Competing Forks" },
+    { id: "reorganizations", slug: "reorganizations", title: "Reorganizations" },
+    { id: "head-selection", slug: "head-selection", title: "Head Selection" },
+    { id: "probabilistic-finality", slug: "probabilistic-finality", title: "Probabilistic Finality" },
+    { id: "deterministic-finality", slug: "deterministic-finality", title: "Deterministic Finality" },
+    { id: "finality-gadgets", slug: "finality-gadgets", title: "Finality Gadgets" },
+    // Consensus checkpoints (the blocks justification and finalization act on),
+    // not State & Data's State Checkpoints (stored state to restore from).
+    { id: "checkpoints", slug: "checkpoints", title: "Checkpoints" },
+    // Finalization is the process; Finality is the property it establishes.
+    { id: "justification", slug: "justification", title: "Justification" },
+    { id: "finalization", slug: "finalization", title: "Finalization" },
+    { id: "transaction-admission", slug: "transaction-admission", title: "Transaction Admission" },
+    { id: "transaction-propagation", slug: "transaction-propagation", title: "Transaction Propagation" },
+    { id: "transaction-prioritization", slug: "transaction-prioritization", title: "Transaction Prioritization" },
+    { id: "mempool-policies", slug: "mempool-policies", title: "Mempool Policies" },
+    { id: "private-mempools", slug: "private-mempools", title: "Private Mempools" },
+    { id: "mempool-synchronization", slug: "mempool-synchronization", title: "Mempool Synchronization" },
+    // A sequencer's act of fixing an order, not the order itself (Transaction Ordering).
+    { id: "transaction-sequencing", slug: "transaction-sequencing", title: "Transaction Sequencing" },
+    { id: "sequencing-rules", slug: "sequencing-rules", title: "Sequencing Rules" },
+    { id: "centralized-sequencing", slug: "centralized-sequencing", title: "Centralized Sequencing" },
+    { id: "decentralized-sequencing", slug: "decentralized-sequencing", title: "Decentralized Sequencing" },
+    { id: "shared-sequencing", slug: "shared-sequencing", title: "Shared Sequencing" },
+    { id: "sequencer-rotation", slug: "sequencer-rotation", title: "Sequencer Rotation" },
+    { id: "block-construction", slug: "block-construction", title: "Block Construction" },
+    { id: "transaction-selection", slug: "transaction-selection", title: "Transaction Selection" },
+    { id: "block-proposals", slug: "block-proposals", title: "Block Proposals" },
+    { id: "block-validation", slug: "block-validation", title: "Block Validation" },
+    { id: "block-production", slug: "block-production", title: "Block Production" },
+    { id: "builders", slug: "builders", title: "Builders" },
+    { id: "builder-markets", slug: "builder-markets", title: "Builder Markets" },
+    { id: "block-bids", slug: "block-bids", title: "Block Bids" },
+    { id: "relays", slug: "relays", title: "Relays" },
+    { id: "builder-selection", slug: "builder-selection", title: "Builder Selection" },
+    { id: "execution-preconfirmations", slug: "execution-preconfirmations", title: "Execution Preconfirmations" },
+    { id: "inclusion-preconfirmations", slug: "inclusion-preconfirmations", title: "Inclusion Preconfirmations" },
+    { id: "preconfirmation-commitments", slug: "preconfirmation-commitments", title: "Preconfirmation Commitments" },
+    { id: "preconfirmation-providers", slug: "preconfirmation-providers", title: "Preconfirmation Providers" },
+    { id: "preconfirmation-guarantees", slug: "preconfirmation-guarantees", title: "Preconfirmation Guarantees" },
+    { id: "transaction-inclusion", slug: "transaction-inclusion", title: "Transaction Inclusion" },
+    { id: "inclusion-lists", slug: "inclusion-lists", title: "Inclusion Lists" },
+    { id: "forced-inclusion", slug: "forced-inclusion", title: "Forced Inclusion" },
+    { id: "censorship-detection", slug: "censorship-detection", title: "Censorship Detection" },
+    { id: "censorship-recovery", slug: "censorship-recovery", title: "Censorship Recovery" },
+    { id: "inclusion-guarantees", slug: "inclusion-guarantees", title: "Inclusion Guarantees" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -475,13 +630,29 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "provenance", conceptId: "provenance", parentPlacementId: "state-data", order: 8 },
     { id: "indexing", conceptId: "indexing", parentPlacementId: "state-data", order: 9 },
     ...l2Placements,
+    // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
+    // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
+    // of its own rather than a child of Consensus.
     { id: "consensus", conceptId: "consensus", parentPlacementId: "consensus-ordering", order: 0 },
+    { id: "validators", conceptId: "validators", parentPlacementId: "consensus-ordering", order: 1 },
+    { id: "fork-choice", conceptId: "fork-choice", parentPlacementId: "consensus-ordering", order: 2 },
     {
       id: "finality-in-consensus",
       conceptId: "finality",
-      parentPlacementId: "consensus",
-      order: 0,
+      parentPlacementId: "consensus-ordering",
+      order: 3,
       contextualNote: "Finality as the point at which consensus no longer reverses a result.",
+    },
+    { id: "mempools", conceptId: "mempools", parentPlacementId: "consensus-ordering", order: 4 },
+    { id: "sequencing", conceptId: "sequencing", parentPlacementId: "consensus-ordering", order: 5 },
+    { id: "block-building", conceptId: "block-building", parentPlacementId: "consensus-ordering", order: 6 },
+    { id: "proposer-builder-separation", conceptId: "proposer-builder-separation", parentPlacementId: "consensus-ordering", order: 7 },
+    { id: "preconfirmations", conceptId: "preconfirmations", parentPlacementId: "consensus-ordering", order: 8 },
+    {
+      id: "censorship-resistance-in-consensus-ordering",
+      conceptId: "censorship-resistance",
+      parentPlacementId: "consensus-ordering",
+      order: 9,
     },
     { id: "scaling", conceptId: "scaling", parentPlacementId: "scaling-modular-systems", order: 0 },
     { id: "rollups", conceptId: "rollups", parentPlacementId: "scaling", order: 0 },

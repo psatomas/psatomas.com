@@ -231,6 +231,102 @@ const STATE_DATA_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const STATE_DATA_L2 = STATE_DATA_TREE.flatMap(([, children]) => children);
 
+// 04 Consensus & Ordering. Consensus and Finality are the Phase 1 fixture's
+// placements (IDs unchanged); Censorship Resistance is Foundations' concept.
+const CONSENSUS_LAYER: Array<[string, string, string]> = [
+  ["consensus", "consensus", "Consensus"],
+  ["validators", "validators", "Validators"],
+  ["fork-choice", "fork-choice", "Fork Choice"],
+  ["finality-in-consensus", "finality", "Finality"],
+  ["mempools", "mempools", "Mempools"],
+  ["sequencing", "sequencing", "Sequencing"],
+  ["block-building", "block-building", "Block Building"],
+  ["proposer-builder-separation", "proposer-builder-separation", "Proposer-Builder Separation"],
+  ["preconfirmations", "preconfirmations", "Preconfirmations"],
+  ["censorship-resistance-in-consensus-ordering", "censorship-resistance", "Censorship Resistance"],
+];
+const CONSENSUS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["consensus", [
+    ["consensus-models", "consensus-models", "Consensus Models"],
+    ["consensus-participants", "consensus-participants", "Consensus Participants"],
+    ["consensus-rules", "consensus-rules", "Consensus Rules"],
+    ["agreement", "agreement", "Agreement"],
+    ["quorums", "quorums", "Quorums"],
+    ["fault-assumptions", "fault-assumptions", "Fault Assumptions"],
+  ]],
+  ["validators", [
+    ["validator-selection", "validator-selection", "Validator Selection"],
+    ["validator-sets", "validator-sets", "Validator Sets"],
+    ["proposers-in-validators", "proposers", "Proposers"],
+    ["attesters", "attesters", "Attesters"],
+    ["validator-duties", "validator-duties", "Validator Duties"],
+    ["validator-incentives", "validator-incentives", "Validator Incentives"],
+  ]],
+  ["fork-choice", [
+    ["fork-choice-rules", "fork-choice-rules", "Fork Choice Rules"],
+    ["chain-selection", "chain-selection", "Chain Selection"],
+    ["competing-forks", "competing-forks", "Competing Forks"],
+    ["reorganizations", "reorganizations", "Reorganizations"],
+    ["head-selection", "head-selection", "Head Selection"],
+  ]],
+  ["finality-in-consensus", [
+    ["probabilistic-finality", "probabilistic-finality", "Probabilistic Finality"],
+    ["deterministic-finality", "deterministic-finality", "Deterministic Finality"],
+    ["finality-gadgets", "finality-gadgets", "Finality Gadgets"],
+    ["checkpoints", "checkpoints", "Checkpoints"],
+    ["justification", "justification", "Justification"],
+    ["finalization", "finalization", "Finalization"],
+  ]],
+  ["mempools", [
+    ["transaction-admission", "transaction-admission", "Transaction Admission"],
+    ["transaction-propagation", "transaction-propagation", "Transaction Propagation"],
+    ["transaction-prioritization", "transaction-prioritization", "Transaction Prioritization"],
+    ["mempool-policies", "mempool-policies", "Mempool Policies"],
+    ["private-mempools", "private-mempools", "Private Mempools"],
+    ["mempool-synchronization", "mempool-synchronization", "Mempool Synchronization"],
+  ]],
+  ["sequencing", [
+    ["transaction-sequencing", "transaction-sequencing", "Transaction Sequencing"],
+    ["sequencing-rules", "sequencing-rules", "Sequencing Rules"],
+    ["centralized-sequencing", "centralized-sequencing", "Centralized Sequencing"],
+    ["decentralized-sequencing", "decentralized-sequencing", "Decentralized Sequencing"],
+    ["shared-sequencing", "shared-sequencing", "Shared Sequencing"],
+    ["sequencer-rotation", "sequencer-rotation", "Sequencer Rotation"],
+  ]],
+  ["block-building", [
+    ["block-construction", "block-construction", "Block Construction"],
+    ["transaction-selection", "transaction-selection", "Transaction Selection"],
+    ["transaction-ordering-in-block-building", "transaction-ordering", "Transaction Ordering"],
+    ["block-proposals", "block-proposals", "Block Proposals"],
+    ["block-validation", "block-validation", "Block Validation"],
+    ["block-production", "block-production", "Block Production"],
+  ]],
+  ["proposer-builder-separation", [
+    ["proposers-in-proposer-builder-separation", "proposers", "Proposers"],
+    ["builders", "builders", "Builders"],
+    ["builder-markets", "builder-markets", "Builder Markets"],
+    ["block-bids", "block-bids", "Block Bids"],
+    ["relays", "relays", "Relays"],
+    ["builder-selection", "builder-selection", "Builder Selection"],
+  ]],
+  ["preconfirmations", [
+    ["execution-preconfirmations", "execution-preconfirmations", "Execution Preconfirmations"],
+    ["inclusion-preconfirmations", "inclusion-preconfirmations", "Inclusion Preconfirmations"],
+    ["preconfirmation-commitments", "preconfirmation-commitments", "Preconfirmation Commitments"],
+    ["preconfirmation-providers", "preconfirmation-providers", "Preconfirmation Providers"],
+    ["preconfirmation-guarantees", "preconfirmation-guarantees", "Preconfirmation Guarantees"],
+  ]],
+  ["censorship-resistance-in-consensus-ordering", [
+    ["transaction-inclusion", "transaction-inclusion", "Transaction Inclusion"],
+    ["inclusion-lists", "inclusion-lists", "Inclusion Lists"],
+    ["forced-inclusion", "forced-inclusion", "Forced Inclusion"],
+    ["censorship-detection", "censorship-detection", "Censorship Detection"],
+    ["censorship-recovery", "censorship-recovery", "Censorship Recovery"],
+    ["inclusion-guarantees", "inclusion-guarantees", "Inclusion Guarantees"],
+  ]],
+];
+const CONSENSUS_L2 = CONSENSUS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -239,6 +335,8 @@ const AUTHORED_TOPICS = new Set([
   ...COMPUTATION_L2.map(([id]) => id),
   ...STATE_DATA_LAYER.map(([id]) => id),
   ...STATE_DATA_L2.map(([id]) => id),
+  ...CONSENSUS_LAYER.map(([id]) => id),
+  ...CONSENSUS_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -312,8 +410,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   assert.equal(new Set(ids).size, ids.length);
   // L0, the Phase 1 fixture, Foundations' L1 layer and its 40 new L2
   // concepts, Computation & Execution's 7 L1 and 38 new L2 concepts, then
-  // State & Data's 9 new L1 and 58 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58);
+  // State & Data's 9 new L1 and 58 new L2 concepts, then Consensus &
+  // Ordering's 7 new L1 and 56 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -323,8 +422,6 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
       .map((placement) => [placement.id, placement.parentPlacementId]),
   );
   assert.deepEqual(parents, {
-    consensus: "consensus-ordering",
-    "finality-in-consensus": "consensus",
     scaling: "scaling-modular-systems",
     rollups: "scaling",
     "finality-in-rollups": "rollups",
@@ -442,6 +539,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
   const placedElsewhere: Record<string, string[]> = {
     verification: ["verification-in-verifiable-computation"],
     transitions: ["transitions-in-state-data"],
+    "censorship-resistance": ["censorship-resistance-in-consensus-ordering"],
   };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
@@ -527,7 +625,9 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (conceptId === "verification") continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    // Transaction Ordering is also placed under Consensus & Ordering's Block Building.
+    const elsewhere = conceptId === "transaction-ordering" ? ["transaction-ordering-in-block-building"] : [];
+    assert.deepEqual(placementsOf(conceptId), [id, ...elsewhere].sort(), conceptId);
   }
   const ids = [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)];
   assert.equal(new Set(ids).size, ids.length);
@@ -567,9 +667,10 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
   assert.equal(resolver.getConcept("transitions")?.preferredPlacementId, "transitions");
   assert.deepEqual(resolver.getChildren("transitions"), []);
   assert.equal(resolver.getChildren("transitions-in-state-data").length, 6);
-  // Checkpoints is State Checkpoints; the bare term stays free for consensus checkpoints.
+  // Checkpoints is State Checkpoints; the bare term is Consensus & Ordering's
+  // consensus checkpoints, a different concept.
   assert.equal(resolver.getConcept("state-checkpoints")?.title, "State Checkpoints");
-  assert.equal(resolver.getConcept("checkpoints"), undefined);
+  assert.notEqual(resolver.getPlacement("state-checkpoints")?.conceptId, resolver.getPlacement("checkpoints")?.conceptId);
   // Related but distinct concepts.
   for (const [placementId, related] of [
     ["transition-functions", "transition-rules"],
@@ -604,8 +705,81 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   const subtreeOf = (root: string) => mapKnowledge.placements.filter((placement) => resolver.getAncestors(placement.id)[0]?.id === root).length;
   assert.equal(subtreeOf("foundations"), 7 + 43);
   assert.equal(subtreeOf("computation-execution"), 7 + 39);
+  assert.equal(subtreeOf("state-data"), 10 + 59);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
+});
+
+test("Consensus & Ordering has exactly its ten L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("consensus-ordering").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    CONSENSUS_LAYER,
+  );
+  for (const [parent, children] of CONSENSUS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of CONSENSUS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "consensus-ordering")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...CONSENSUS_LAYER.map(([id]) => id), ...CONSENSUS_L2.map(([id]) => id)].sort());
+  assert.equal(CONSENSUS_L2.length, 58);
+});
+
+test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction Ordering and Proposers", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Finality: the fixture placement keeps its ID and preferred role, now an L1 topic with its own layer.
+  assert.equal(resolver.getPlacement("finality-in-consensus")?.parentPlacementId, "consensus-ordering");
+  assert.equal(resolver.getConcept("finality")?.preferredPlacementId, "finality-in-consensus");
+  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-protocol-properties", "finality-in-rollups"]);
+  assert.equal(resolver.getChildren("finality-in-consensus").length, 6);
+  assert.deepEqual(resolver.getChildren("finality-in-rollups"), []);
+  // Censorship Resistance: Foundations' property, taught here through inclusion; preferred here.
+  assert.deepEqual(placementsOf("censorship-resistance"), ["censorship-resistance", "censorship-resistance-in-consensus-ordering"]);
+  assert.equal(resolver.getConcept("censorship-resistance")?.preferredPlacementId, "censorship-resistance-in-consensus-ordering");
+  assert.deepEqual(resolver.getChildren("censorship-resistance"), []);
+  // Transaction Ordering: 02's concept, also under Block Building; preferred in the ordering domain.
+  assert.deepEqual(placementsOf("transaction-ordering"), ["transaction-ordering", "transaction-ordering-in-block-building"]);
+  assert.equal(resolver.getConcept("transaction-ordering")?.preferredPlacementId, "transaction-ordering-in-block-building");
+  // Proposers: one role under Validators and Proposer-Builder Separation.
+  assert.deepEqual(placementsOf("proposers"), ["proposers-in-proposer-builder-separation", "proposers-in-validators"]);
+  assert.equal(resolver.getConcept("proposers")?.preferredPlacementId, "proposers-in-validators");
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["checkpoints", "state-checkpoints"],
+    ["transaction-sequencing", "transaction-ordering"],
+    ["fault-assumptions", "fault-models"],
+    ["consensus-participants", "participants"],
+    ["consensus-rules", "rules"],
+    ["finalization", "finality"],
+    ["reorganizations", "reorganization-handling"],
+    ["mempool-synchronization", "synchronization"],
+    ["block-validation", "transaction-validation"],
+    ["censorship-detection", "censorship"],
+    ["inclusion-guarantees", "preconfirmation-guarantees"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once; none gains exposition (Finality keeps its own).
+  const shared = new Set(["consensus", "finality", "censorship-resistance", "transaction-ordering", "proposers"]);
+  for (const [id, conceptId] of [...CONSENSUS_LAYER, ...CONSENSUS_L2]) {
+    if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
 });
 
 test("one canonical Finality concept resolves through independent placements", () => {
@@ -629,8 +803,8 @@ test("one canonical Finality concept resolves through independent placements", (
 });
 
 test("taxonomy nesting does not create semantic relationships", () => {
-  assert.deepEqual(resolver.getChildren("consensus").map((placement) => placement.conceptId), ["finality"]);
-  assert.deepEqual(resolver.getChildren("consensus-ordering").map((placement) => placement.conceptId), ["consensus"]);
+  assert.deepEqual(resolver.getChildren("consensus").map((placement) => placement.conceptId), CONSENSUS_TREE[0][1].map(([, conceptId]) => conceptId));
+  assert.deepEqual(resolver.getChildren("consensus-ordering").map((placement) => placement.conceptId), CONSENSUS_LAYER.map(([, conceptId]) => conceptId));
   assert.deepEqual(resolver.getRelationshipsFrom("consensus-ordering"), []);
   assert.deepEqual(resolver.getRelationshipsTo("consensus"), []);
   assert.deepEqual(resolver.getRelationshipsFrom("consensus"), []);
