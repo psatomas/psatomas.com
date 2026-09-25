@@ -6,16 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { ConceptExposition } from "./concept-exposition";
 import {
+  activateMapExplorerRow,
   getInitialMapExplorerState,
   getMapContextHref,
   getMapExplorerContext,
-  getNextMapContext,
   getVisibleMapExplorerRegions,
   indexMapExplorerView,
   MAP_CONTEXT_PARAM,
   resolveMapContextParam,
   revealMapExplorerContext,
-  toggleMapExplorerPlacement,
 } from "./explorer-model";
 import type { MapExplorerContextStep, MapExplorerRow, MapExplorerView } from "./explorer-model";
 
@@ -36,11 +35,20 @@ const CONTROL_FOCUS = "focus-visible:outline-2 focus-visible:-outline-offset-2 f
 // focus keeps its own outline.
 const ROW_HOVER =
   "relative before:pointer-events-none before:absolute before:-inset-px before:z-10 before:border before:border-transparent before:transition-colors hover:before:border-[color-mix(in_srgb,white_60%,var(--background))]";
+// A revealed row lands just below the sticky navbar with 24px of room above
+// it: the navbar is up to 117px while its items wrap below sm (three lines at
+// 320px) and 65px from sm.
+const REVEAL_MARGIN = "scroll-mt-[141px] sm:scroll-mt-[89px]";
+
+/** A request to bring a placement's row into view; the nonce makes each request distinct. */
+type RevealRequest = { placementId: string; behavior: "auto" | "smooth"; nonce: number };
 
 /**
  * One source of truth per concern: the URL's `?context=` owns the active
  * placement (so refresh, sharing, and Back/Forward reconstruct it), while
- * disclosure is local state that no context change ever closes.
+ * disclosure is local state that no context change ever closes. Each row is
+ * one control whose activation combines the two (activateMapExplorerRow);
+ * bringing a row into view is a separate, explicit request.
  */
 export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
   const index = useMemo(() => indexMapExplorerView(view), [view]);
@@ -48,16 +56,28 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
   const [expandedPlacementIds, setExpandedPlacementIds] = useState(
     () => getInitialMapExplorerState(view, focusedPlacementId).expandedPlacementIds,
   );
-  // When the URL context changes (a selection, Back/Forward), reveal its
-  // ancestors during render, before paint; open branches stay open.
+  // An entry context (direct link, homepage, refresh) is brought into view once.
+  const [reveal, setReveal] = useState<RevealRequest | null>(() =>
+    focusedPlacementId ? { placementId: focusedPlacementId, behavior: "auto", nonce: 0 } : null,
+  );
+  // When the URL context changes (a row, the breadcrumb, Back/Forward), open
+  // the placement and its ancestors during render, before paint, and bring it
+  // into view unless that was already requested; open branches stay open.
   const [revealedFor, setRevealedFor] = useState(focusedPlacementId);
   if (revealedFor !== focusedPlacementId) {
     setRevealedFor(focusedPlacementId);
-    setExpandedPlacementIds((current) => revealMapExplorerContext(current, index, focusedPlacementId));
+    setExpandedPlacementIds((current) => revealMapExplorerContext(current, index, focusedPlacementId, true));
+    if (focusedPlacementId) {
+      setReveal((current) =>
+        current?.placementId === focusedPlacementId
+          ? current
+          : { placementId: focusedPlacementId, behavior: "auto", nonce: (current?.nonce ?? 0) + 1 },
+      );
+    }
   }
   const regions = getVisibleMapExplorerRegions(view, expandedPlacementIds);
   const context = getMapExplorerContext(index, focusedPlacementId);
-  const focusHintId = useId();
+  const rowHintId = useId();
   const contextRef = useRef<HTMLElement>(null);
   // Where keyboard focus goes once a breadcrumb move or Clear has rendered,
   // since both remove the control that was activated.
@@ -68,23 +88,58 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     if (!pending) return;
     pendingFocusRef.current = null;
     const control = pending.target
-      ? document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(pending.target)}"] button[aria-pressed]`)
+      ? document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(pending.target)}"] [data-row-control]`)
       : null;
-    (control ?? contextRef.current)?.focus();
+    (control ?? contextRef.current)?.focus({ preventScroll: true });
   }, [focusedPlacementId]);
 
-  const toggle = (placementId: string) =>
-    setExpandedPlacementIds((current) => toggleMapExplorerPlacement(current, placementId));
+  // The URL's context decides what is brought into view, so the browser's own
+  // scroll restoration (a remembered offset for each history entry) must not
+  // override it on Back/Forward. Restored to its previous value on unmount.
+  useEffect(() => {
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
+
+  // Scrolling happens only for an explicit request, never on other renders.
+  useEffect(() => {
+    if (!reveal) return;
+    const row = document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(reveal.placementId)}"]`);
+    const smooth = reveal.behavior === "smooth" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row?.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
+  }, [reveal]);
+
+  const requestReveal = (placementId: string) =>
+    setReveal((current) => ({ placementId, behavior: "smooth", nonce: (current?.nonce ?? 0) + 1 }));
   // Each explicit context change is its own history entry; Clear returns to /map.
   const navigate = (placementId: string | null) =>
     window.history.pushState(null, "", getMapContextHref(placementId));
-  const toggleFocus = (placementId: string) => navigate(getNextMapContext(focusedPlacementId, placementId));
+  const activate = (row: MapExplorerRow) => {
+    const next = activateMapExplorerRow(row, focusedPlacementId, expandedPlacementIds);
+    setExpandedPlacementIds(next.expandedPlacementIds);
+    if (next.reveal) requestReveal(row.placementId);
+    if (next.contextPlacementId !== focusedPlacementId) navigate(next.contextPlacementId);
+  };
   const navigateFromTrail = (placementId: string | null) => {
     pendingFocusRef.current = { target: placementId };
+    if (placementId) requestReveal(placementId);
     navigate(placementId);
   };
 
-  function renderFocusControl(row: MapExplorerRow, region: boolean) {
+  // Opening a concept reveals its canonical explanation first, then its next
+  // conceptual layer; the exposition panel sits between the two.
+  const expositionId = (row: MapExplorerRow) => `map-exposition-${row.placementId}`;
+  const showsExposition = (row: MapExplorerRow) => row.isExpanded && row.hasContent;
+
+  /**
+   * The row's single control. It carries both state dimensions: disclosure
+   * (aria-expanded, only when there is something to disclose) and context
+   * (aria-current). The +/− cell is a decorative indicator inside it.
+   */
+  function renderRowControl(row: MapExplorerRow, region: boolean) {
     const focused = row.placementId === focusedPlacementId;
     // A row's own parent is only shown below region level; the region plane
     // already names the parent of its first-level rows.
@@ -93,67 +148,55 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     return (
       <button
         type="button"
-        aria-pressed={focused}
-        aria-describedby={focusHintId}
+        data-row-control=""
+        aria-expanded={row.isExpandable ? row.isExpanded : undefined}
+        aria-controls={showsExposition(row) ? expositionId(row) : undefined}
+        aria-current={focused ? "true" : undefined}
+        aria-describedby={rowHintId}
         // Hierarchy and parent context are spoken via the accessible name, never
         // as hidden text that could surface when styles are unavailable.
         aria-label={region ? undefined : `${row.label}${parentLabel ? ` in ${parentLabel}` : ""}, level ${row.depth + 1}`}
-        onClick={() => toggleFocus(row.placementId)}
-        className={`group min-w-0 flex-1 px-5 text-left [overflow-wrap:anywhere] sm:px-6 ${
-          region ? "py-4" : "py-3.5"
-        } ${CONTROL_FOCUS}`}
+        onClick={() => activate(row)}
+        className={`group flex min-w-0 flex-1 items-stretch text-left ${CONTROL_FOCUS}`}
       >
-        {/* L0 ordinal: secondary to the title, muted rather than cyan (cyan
-            marks the current context here); the ordered list already
-            announces position to assistive technology. */}
-        {row.ordinal ? (
-          <span aria-hidden="true" className={`${LABEL_TEXT} mr-3 text-muted`}>
-            {row.ordinal}
+        <span className={`min-w-0 flex-1 px-5 [overflow-wrap:anywhere] sm:px-6 ${region ? "py-4" : "py-3.5"}`}>
+          {/* L0 ordinal: secondary to the title, muted rather than cyan (cyan
+              marks the current context here); the list already announces
+              position to assistive technology. */}
+          {row.ordinal ? (
+            <span aria-hidden="true" className={`${LABEL_TEXT} mr-3 text-muted`}>
+              {row.ordinal}
+            </span>
+          ) : null}
+          {parentLabel ? (
+            <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
+              {parentLabel} ›{" "}
+            </span>
+          ) : null}
+          <span
+            className={`${LABEL_TEXT} transition-colors group-hover:text-accent ${region ? "font-semibold" : ""} ${
+              focused ? "text-accent" : "text-foreground"
+            }`}
+          >
+            {row.label}
           </span>
-        ) : null}
-        {parentLabel ? (
-          <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
-            {parentLabel} ›{" "}
-          </span>
-        ) : null}
+        </span>
+        {/* Disclosure indicator (not a control): +/− only when there is something to disclose. */}
         <span
-          className={`${LABEL_TEXT} transition-colors group-hover:text-accent ${region ? "font-semibold" : ""} ${
-            focused ? "text-accent" : "text-foreground"
-          }`}
+          aria-hidden="true"
+          className="flex w-12 shrink-0 items-center justify-center border-l border-border font-mono text-base leading-none text-muted transition-colors group-hover:text-accent"
         >
-          {row.label}
+          {row.isExpandable ? (row.isExpanded ? "−" : "+") : null}
         </span>
       </button>
-    );
-  }
-
-  // Opening a concept reveals its canonical explanation first, then its next
-  // conceptual layer; the exposition panel sits between the two.
-  const expositionId = (row: MapExplorerRow) => `map-exposition-${row.placementId}`;
-  const showsExposition = (row: MapExplorerRow) => row.isExpanded && row.hasContent;
-
-  function renderDisclosureControl(row: MapExplorerRow) {
-    return row.isExpandable ? (
-      <button
-        type="button"
-        aria-expanded={row.isExpanded}
-        aria-controls={showsExposition(row) ? expositionId(row) : undefined}
-        aria-label={`${row.label} details`}
-        onClick={() => toggle(row.placementId)}
-        className={`flex w-12 shrink-0 items-center justify-center border-l border-border font-mono text-base leading-none text-muted transition-colors hover:text-accent ${CONTROL_FOCUS}`}
-      >
-        <span aria-hidden="true">{row.isExpanded ? "−" : "+"}</span>
-      </button>
-    ) : (
-      <span aria-hidden="true" className="w-12 shrink-0 border-l border-border" />
     );
   }
 
   return (
     <div className="flex flex-col gap-10 sm:gap-12">
       {/* Description only (via aria-describedby); hidden from reading order. */}
-      <p id={focusHintId} hidden>
-        Sets this concept as the current context.
+      <p id={rowHintId} hidden>
+        Selects this concept as the current context and shows or hides what it contains.
       </p>
       <ContextTrail ref={contextRef} context={context} onNavigate={navigateFromTrail} />
 
@@ -168,12 +211,11 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
               data-placement-id={header.placementId}
               data-concept-id={header.conceptId}
               data-depth={header.depth}
-              className={`flex min-w-0 items-stretch bg-surface ${ROW_HOVER} ${
+              className={`flex min-w-0 items-stretch bg-surface ${ROW_HOVER} ${REVEAL_MARGIN} ${
                 header.placementId === focusedPlacementId ? FOCUSED_ROW : ""
               }`}
             >
-              <h3 className="flex min-w-0 flex-1">{renderFocusControl(header, true)}</h3>
-              {renderDisclosureControl(header)}
+              <h3 className="flex min-w-0 flex-1">{renderRowControl(header, true)}</h3>
             </div>
             {showsExposition(header) ? (
               <ConceptExposition id={expositionId(header)} conceptId={header.conceptId} label={header.label} />
@@ -188,12 +230,11 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
                       data-placement-id={row.placementId}
                       data-concept-id={row.conceptId}
                       data-depth={row.depth}
-                      className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${ROW_HOVER} ${
+                      className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${ROW_HOVER} ${REVEAL_MARGIN} ${
                         row.placementId === focusedPlacementId ? FOCUSED_ROW : ""
                       }`}
                     >
-                      {renderFocusControl(row, false)}
-                      {renderDisclosureControl(row)}
+                      {renderRowControl(row, false)}
                     </div>
                     {showsExposition(row) ? (
                       <div role="listitem">
