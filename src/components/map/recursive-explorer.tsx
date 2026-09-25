@@ -131,12 +131,51 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     };
   }, []);
 
+  // The latest context, for a pending reveal to tell whether it is obsolete.
+  const focusedRef = useRef(focusedPlacementId);
+  useLayoutEffect(() => {
+    focusedRef.current = focusedPlacementId;
+  }, [focusedPlacementId]);
+
   // Scrolling happens only for an explicit request, never on other renders.
+  // A reveal is a bounded operation: the expositions it opened load after it
+  // (aria-busy until they settle), and any that sit above the target push it
+  // down when they appear. While any exposition in the explorer is still
+  // loading, a layout change that moves the target is corrected (before
+  // paint, so it never shows), and the reveal completes once none is. It is
+  // abandoned as soon as the reader takes over (wheel, touch, pointer, key),
+  // the context moves on, another reveal starts, or the explorer unmounts.
   useEffect(() => {
-    if (!reveal) return;
-    const row = document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(reveal.placementId)}"]`);
+    const root = rootRef.current;
+    if (!reveal || !root) return;
+    const find = () => document.querySelector<HTMLElement>(`[data-placement-id="${CSS.escape(reveal.placementId)}"]`);
     const smooth = reveal.behavior === "smooth" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    row?.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
+    find()?.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
+
+    const loading = () => root.querySelector('[aria-busy="true"]') !== null;
+    if (!loading()) return;
+    const documentTop = () => {
+      const row = find();
+      return row ? row.getBoundingClientRect().top + window.scrollY : null;
+    };
+    let anchor = documentTop();
+    const observer = new ResizeObserver(() => {
+      if (focusedRef.current !== reveal.placementId) return complete();
+      const top = documentTop();
+      // Only a shift of the target itself is corrected; content settling
+      // below it, or the reveal's own scrolling, never re-scrolls.
+      if (top !== null && anchor !== null && Math.abs(top - anchor) > 0.5) find()?.scrollIntoView({ block: "start" });
+      anchor = top;
+      if (!loading()) complete();
+    });
+    const TAKEOVER = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
+    function complete() {
+      observer.disconnect();
+      for (const type of TAKEOVER) window.removeEventListener(type, complete, true);
+    }
+    observer.observe(root);
+    for (const type of TAKEOVER) window.addEventListener(type, complete, { capture: true, passive: true });
+    return complete;
   }, [reveal]);
 
   // Each explicit context change is its own history entry.
