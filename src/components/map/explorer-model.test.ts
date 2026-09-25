@@ -352,6 +352,19 @@ const POPULATED_L0 = {
     "task-markets",
     "multi-agent-coordination",
   ],
+  "autonomous-execution": [
+    "objectives-intents",
+    "execution-planning",
+    "action-selection",
+    "simulation",
+    "execution-policies",
+    "execution-authorization",
+    "execution-environments",
+    "action-execution",
+    "verification-settlement",
+    "execution-monitoring",
+    "execution-recovery",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -374,7 +387,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 5);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 4);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -542,7 +555,7 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "autonomous-execution")!;
+  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "autonomous-organizations")!;
   assert.equal(activateMapExplorerRow(machineEconomy, null, new Set()).expandedPlacementIds.size, 0);
 });
 
@@ -647,8 +660,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[22].rows, []);
-  assert.equal(regions[22].header.hasChildren, false);
+  assert.deepEqual(regions[23].rows, []);
+  assert.equal(regions[23].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -704,8 +717,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "autonomous-execution");
-  assert.equal(empty.focusedPlacementId, "autonomous-execution");
+  const empty = getInitialMapExplorerState(view, "autonomous-organizations");
+  assert.equal(empty.focusedPlacementId, "autonomous-organizations");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -762,7 +775,7 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("autonomous-execution")?.isExpandable); // neither
+  assert.ok(!byId.get("autonomous-organizations")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
@@ -992,6 +1005,31 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Autonomous Execution L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("human-approval"), ["Autonomous Execution", "Execution Authorization", "Human Approval"]);
+  assert.deepEqual(labels("transaction-simulation"), ["Autonomous Execution", "Simulation", "Transaction Simulation"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("plans-in-execution-planning"), ["Autonomous Execution", "Execution Planning", "Plans"]);
+  assert.deepEqual(labels("plans"), ["AI & Intelligent Systems", "Goals & Planning", "Plans"]);
+  assert.deepEqual(labels("settlement-in-verification-settlement"), ["Autonomous Execution", "Verification & Settlement", "Settlement"]);
+  for (const id of ["simulation", "policy-constraints-in-execution-policies", "kill-switches"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "sandboxing").expandedPlacementIds].sort(), ["autonomous-execution", "execution-environments"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-execution" && row.depth > 0);
+  assert.equal(subtreeRows.length, 11 + 66);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "23");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });
@@ -1451,7 +1489,7 @@ test("entering a domain from the index sets context, opens it, and never collaps
   const again = enterMapExplorerContext("foundations", open, index);
   assert.equal(again.expandedPlacementIds, open);
   // An empty domain is entered without fabricated disclosure.
-  assert.deepEqual([...enterMapExplorerContext("autonomous-execution", new Set(), index).expandedPlacementIds], []);
+  assert.deepEqual([...enterMapExplorerContext("autonomous-organizations", new Set(), index).expandedPlacementIds], []);
   assert.equal(getMapContextHref(closed.contextPlacementId), "/map?context=foundations");
 });
 

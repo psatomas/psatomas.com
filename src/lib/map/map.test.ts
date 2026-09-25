@@ -2093,11 +2093,12 @@ const LIFECYCLE_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
 ];
 const LIFECYCLE_L2 = LIFECYCLE_TREE.flatMap(([, children]) => children);
-// Earlier domains' concepts that 17–22 place again, for their placement-list assertions.
+// Earlier domains' concepts that 17–23 place again, for their placement-list assertions.
 const alsoInLaterDomains = (conceptId: string) =>
   [
     ...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2, ...LIFECYCLE_LAYER, ...LIFECYCLE_L2,
     ...AI_LAYER, ...AI_L2, ...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2, ...COORDINATION_LAYER, ...COORDINATION_L2,
+    ...EXECUTION_LAYER, ...EXECUTION_L2,
   ]
     .filter(([id, concept]) => concept === conceptId && id !== concept)
     .map(([id]) => id);
@@ -2450,6 +2451,116 @@ const COORDINATION_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const COORDINATION_L2 = COORDINATION_TREE.flatMap(([, children]) => children);
 
+// 23 Autonomous Execution. Goals, Plans, Replanning, Tool Selection, Agent
+// Actions, Tool Calling and Human Oversight are 20's; Policy Constraints 21's;
+// Capabilities and Transaction Construction 08's; Transaction Submission,
+// Observability and Alerting 05's; Trusted Execution 02's; Verifiable
+// Execution 06's; Settlement the general concept.
+const EXECUTION_LAYER: Array<[string, string, string]> = [
+  ["objectives-intents", "objectives-intents", "Objectives & Intents"],
+  ["execution-planning", "execution-planning", "Execution Planning"],
+  ["action-selection", "action-selection", "Action Selection"],
+  ["simulation", "simulation", "Simulation"],
+  ["execution-policies", "execution-policies", "Execution Policies"],
+  ["execution-authorization", "execution-authorization", "Execution Authorization"],
+  ["execution-environments", "execution-environments", "Execution Environments"],
+  ["action-execution", "action-execution", "Action Execution"],
+  ["verification-settlement", "verification-settlement", "Verification & Settlement"],
+  ["execution-monitoring", "execution-monitoring", "Execution Monitoring"],
+  ["execution-recovery", "execution-recovery", "Execution Recovery"],
+];
+const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["objectives-intents", [
+    ["goals-in-objectives-intents", "goals", "Goals"],
+    ["execution-requests", "execution-requests", "Execution Requests"],
+    ["objective-interpretation", "objective-interpretation", "Objective Interpretation"],
+    ["intent-generation", "intent-generation", "Intent Generation"],
+    ["success-criteria", "success-criteria", "Success Criteria"],
+    ["execution-constraints", "execution-constraints", "Execution Constraints"],
+  ]],
+  ["execution-planning", [
+    ["plans-in-execution-planning", "plans", "Plans"],
+    ["action-sequencing", "action-sequencing", "Action Sequencing"],
+    ["action-dependencies", "action-dependencies", "Action Dependencies"],
+    ["resource-estimation", "resource-estimation", "Resource Estimation"],
+    ["contingency-planning", "contingency-planning", "Contingency Planning"],
+    ["replanning-in-execution-planning", "replanning", "Replanning"],
+  ]],
+  ["action-selection", [
+    ["candidate-generation", "candidate-generation", "Candidate Generation"],
+    ["candidate-evaluation", "candidate-evaluation", "Candidate Evaluation"],
+    ["cost-estimation", "cost-estimation", "Cost Estimation"],
+    ["tool-selection-in-action-selection", "tool-selection", "Tool Selection"],
+    ["execution-routing", "execution-routing", "Execution Routing"],
+    ["execution-optimization", "execution-optimization", "Execution Optimization"],
+  ]],
+  ["simulation", [
+    ["transaction-simulation", "transaction-simulation", "Transaction Simulation"],
+    ["state-forking", "state-forking", "State Forking"],
+    ["dry-runs", "dry-runs", "Dry Runs"],
+    ["outcome-prediction", "outcome-prediction", "Outcome Prediction"],
+    ["simulation-fidelity", "simulation-fidelity", "Simulation Fidelity"],
+    ["simulation-divergence", "simulation-divergence", "Simulation Divergence"],
+  ]],
+  ["execution-policies", [
+    ["policy-constraints-in-execution-policies", "policy-constraints", "Policy Constraints"],
+    ["policy-evaluation", "policy-evaluation", "Policy Evaluation"],
+    ["policy-engines", "policy-engines", "Policy Engines"],
+    ["policy-enforcement", "policy-enforcement", "Policy Enforcement"],
+    ["policy-violations", "policy-violations", "Policy Violations"],
+    ["risk-checks", "risk-checks", "Risk Checks"],
+  ]],
+  ["execution-authorization", [
+    ["runtime-authorization", "runtime-authorization", "Runtime Authorization"],
+    ["capabilities-in-execution-authorization", "capabilities", "Capabilities"],
+    ["human-approval", "human-approval", "Human Approval"],
+    ["approval-thresholds", "approval-thresholds", "Approval Thresholds"],
+    ["multi-party-approval", "multi-party-approval", "Multi-Party Approval"],
+    ["authorization-scopes", "authorization-scopes", "Authorization Scopes"],
+  ]],
+  ["execution-environments", [
+    ["sandboxing", "sandboxing", "Sandboxing"],
+    ["execution-isolation", "execution-isolation", "Execution Isolation"],
+    ["trusted-execution-in-execution-environments", "trusted-execution", "Trusted Execution"],
+    ["tool-permissions", "tool-permissions", "Tool Permissions"],
+    ["environment-access", "environment-access", "Environment Access"],
+    ["ephemeral-environments", "ephemeral-environments", "Ephemeral Environments"],
+  ]],
+  ["action-execution", [
+    ["agent-actions-in-action-execution", "agent-actions", "Agent Actions"],
+    ["tool-calling-in-action-execution", "tool-calling", "Tool Calling"],
+    ["transaction-construction-in-action-execution", "transaction-construction", "Transaction Construction"],
+    ["transaction-submission-in-action-execution", "transaction-submission", "Transaction Submission"],
+    ["partial-execution", "partial-execution", "Partial Execution"],
+    ["idempotency", "idempotency", "Idempotency"],
+  ]],
+  ["verification-settlement", [
+    ["outcome-verification", "outcome-verification", "Outcome Verification"],
+    ["postconditions", "postconditions", "Postconditions"],
+    ["execution-receipts", "execution-receipts", "Execution Receipts"],
+    ["verifiable-execution-in-verification-settlement", "verifiable-execution", "Verifiable Execution"],
+    ["settlement-in-verification-settlement", "settlement", "Settlement"],
+    ["execution-disputes", "execution-disputes", "Execution Disputes"],
+  ]],
+  ["execution-monitoring", [
+    ["progress-tracking", "progress-tracking", "Progress Tracking"],
+    ["observability-in-execution-monitoring", "observability", "Observability"],
+    ["audit-trails", "audit-trails", "Audit Trails"],
+    ["anomaly-detection", "anomaly-detection", "Anomaly Detection"],
+    ["alerting-in-execution-monitoring", "alerting", "Alerting"],
+    ["human-oversight-in-execution-monitoring", "human-oversight", "Human Oversight"],
+  ]],
+  ["execution-recovery", [
+    ["execution-failures", "execution-failures", "Execution Failures"],
+    ["retries", "retries", "Retries"],
+    ["rollbacks", "rollbacks", "Rollbacks"],
+    ["compensating-actions", "compensating-actions", "Compensating Actions"],
+    ["circuit-breakers", "circuit-breakers", "Circuit Breakers"],
+    ["kill-switches", "kill-switches", "Kill Switches"],
+  ]],
+];
+const EXECUTION_L2 = EXECUTION_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2496,6 +2607,8 @@ const AUTHORED_TOPICS = new Set([
   ...MACHINE_ECONOMY_L2.map(([id]) => id),
   ...COORDINATION_LAYER.map(([id]) => id),
   ...COORDINATION_L2.map(([id]) => id),
+  ...EXECUTION_LAYER.map(([id]) => id),
+  ...EXECUTION_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -2587,8 +2700,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Design & Lifecycle's 14 new L1 and 60 new L2 concepts, then AI &
   // Intelligent Systems' 10 new L1 and 65 new L2 concepts, then Machine
   // Economy's 12 new L1 and 60 new L2 concepts, then Autonomous
-  // Coordination's 5 new L1 and 56 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56);
+  // Coordination's 5 new L1 and 56 new L2 concepts, then Autonomous
+  // Execution's 11 new L1 and 50 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 50);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -2602,8 +2716,8 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
   // AI Agent is now an authored L1 topic of AI & Intelligent Systems, keeping its placement ID.
   assert.equal(resolver.getPlacement("ai-agent")?.parentPlacementId, "ai-intelligent-systems");
   // Settlement is placed by Markets & Financial Protocols (preferred), Intents &
-  // Coordination and Machine Economy; Economic Agency stays deliberately unplaced.
-  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce"]);
+  // Coordination, Machine Economy and Autonomous Execution; Economic Agency stays deliberately unplaced.
+  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce", "settlement-in-verification-settlement"]);
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
 });
 
@@ -2923,6 +3037,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("protocol-architecture"), 12 + 68);
   assert.equal(subtreeOf("ai-intelligent-systems"), 12 + 69);
   assert.equal(subtreeOf("machine-economy"), 14 + 84);
+  assert.equal(subtreeOf("autonomous-coordination"), 10 + 60);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -3300,7 +3415,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   assert.equal(resolver.getConcept("attestations")?.preferredPlacementId, "attestations-in-identity");
   assert.deepEqual(placementsOf("signing"), ["signing", "signing-in-wallets"]);
   assert.equal(resolver.getConcept("signing")?.preferredPlacementId, "signing");
-  assert.deepEqual(placementsOf("transaction-submission"), ["transaction-submission", "transaction-submission-in-wallets"]);
+  assert.deepEqual(placementsOf("transaction-submission"), ["transaction-submission", "transaction-submission-in-action-execution", "transaction-submission-in-wallets"]);
   assert.equal(resolver.getConcept("transaction-submission")?.preferredPlacementId, "transaction-submission");
   // General concepts for later reuse (Credentials is already placed again by
   // Oracles & External Reality), and agent/machine topics kept as their own concepts.
@@ -3315,8 +3430,12 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   assert.equal(resolver.getConcept("delegation")?.preferredPlacementId, "delegation-in-autonomous-coordination");
   // Machine Economy places these again; each stays preferred here, except Agent
   // Reputation, which Machine Economy teaches with its own layer.
+  // (Autonomous Execution places Capabilities and Transaction Construction again.)
+  assert.deepEqual(placementsOf("capabilities"), ["capabilities", "capabilities-in-agent-permissions", "capabilities-in-execution-authorization"]);
+  assert.equal(resolver.getConcept("capabilities")?.preferredPlacementId, "capabilities");
+  assert.deepEqual(placementsOf("transaction-construction"), ["transaction-construction", "transaction-construction-in-action-execution"]);
+  assert.equal(resolver.getConcept("transaction-construction")?.preferredPlacementId, "transaction-construction");
   for (const [conceptId, later] of [
-    ["capabilities", "capabilities-in-agent-permissions"],
     ["permission-models", "permission-models-in-agent-permissions"],
     ["key-management", "key-management-in-agent-wallets"],
     ["smart-accounts", "smart-accounts-in-agent-wallets"],
@@ -3368,6 +3487,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     "agent-identity",
     "delegation",
     "capabilities",
+    "transaction-construction",
     "permission-models",
     "key-management",
     "smart-accounts",
@@ -3617,8 +3737,8 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
   assert.deepEqual(placementsOf("bids"), ["bids", "bids-in-order-books"]);
   assert.equal(resolver.getConcept("bids")?.preferredPlacementId, "bids");
   // Settlement: the fixture's general concept, first placed here; its relationship and mechanism step are unchanged.
-  // Intents & Coordination and Machine Economy place it again; this placement stays preferred.
-  assert.deepEqual(placementsOf("settlement"), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce"]);
+  // Intents & Coordination, Machine Economy and Autonomous Execution place it again; this placement stays preferred.
+  assert.deepEqual(placementsOf("settlement"), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce", "settlement-in-verification-settlement"]);
   assert.equal(resolver.getConcept("settlement")?.preferredPlacementId, "settlement");
   assert.equal(resolver.getPlacement("settlement")?.parentPlacementId, "derivatives");
   assert.deepEqual(resolver.getRelationshipsTo("settlement").map((relationship) => relationship.id), ["finality-finalizes-settlement"]);
@@ -4498,7 +4618,7 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   for (const [conceptId, here, others, preferred] of [
     ["delegation", "delegation-in-ai-agents", ["delegation-in-intents", "delegation-in-representation", "delegation-in-agent-permissions", "delegation-in-autonomous-coordination"], "delegation-in-autonomous-coordination"],
     ["agent-identity", "agent-identity-in-ai-agents", ["agent-identity-in-machine-economy"], "agent-identity"],
-    ["trusted-execution", "trusted-execution-in-verifiable-ai", [], "trusted-execution"],
+    ["trusted-execution", "trusted-execution-in-verifiable-ai", ["trusted-execution-in-execution-environments"], "trusted-execution"],
   ] as const) {
     assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...others].sort(), conceptId);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
@@ -4538,7 +4658,26 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   }
   // Every other topic is a new concept placed once, without exposition; only
   // Agent Identity keeps its existing content.
-  const shared = new Set(["ai-inference", "ai-agent", "delegation", "agent-identity", "inference-confidence", "trusted-execution"]);
+  // Autonomous Execution places these again; each stays preferred here.
+  for (const conceptId of ["goals", "plans", "replanning", "tool-selection", "tool-calling", "agent-actions", "human-oversight"]) {
+    assert.equal(placementsOf(conceptId).length, 2, conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+  }
+  const shared = new Set([
+    "ai-inference",
+    "ai-agent",
+    "delegation",
+    "agent-identity",
+    "inference-confidence",
+    "trusted-execution",
+    "goals",
+    "plans",
+    "replanning",
+    "tool-selection",
+    "tool-calling",
+    "agent-actions",
+    "human-oversight",
+  ]);
   for (const [id, conceptId] of [...AI_LAYER, ...AI_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -4573,7 +4712,7 @@ test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 23–27's
   // Economic Agency stays unplaced; 23–27 remain empty; the bare Autonomy and
   // Agents concepts are left to later domains.
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
-  for (const l0 of ["autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
     assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
   assert.equal(resolver.getConcept("autonomy"), undefined);
@@ -4720,8 +4859,12 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
     "service-discovery",
     "negotiation",
     "capital-allocation",
+    "policy-constraints",
     ...reused.map(([conceptId]) => conceptId),
   ]);
+  // Autonomous Execution places Policy Constraints again, enforced at execution; this placement stays preferred.
+  assert.deepEqual(placementsOf("policy-constraints"), ["policy-constraints", "policy-constraints-in-execution-policies"]);
+  assert.equal(resolver.getConcept("policy-constraints")?.preferredPlacementId, "policy-constraints");
   for (const [id, conceptId] of [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -4739,7 +4882,7 @@ test("Machine Economy leaves Economic Agency unplaced and 23–27 empty, and 20 
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
   assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
-  for (const l0 of ["autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
     assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
   // 20's tree is exactly as authored.
@@ -4882,7 +5025,114 @@ test("Autonomous Coordination leaves 20 and 21 unchanged and 23–27 empty", () 
       assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
     }
   }
-  for (const l0 of ["autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+    assert.deepEqual(resolver.getChildren(l0), [], l0);
+  }
+});
+
+test("Autonomous Execution has exactly its eleven L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("autonomous-execution").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    EXECUTION_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("autonomous-execution").map((placement) => placement.order), EXECUTION_LAYER.map((_, order) => order));
+  for (const [parent, children] of EXECUTION_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of EXECUTION_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "autonomous-execution")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...EXECUTION_LAYER.map(([id]) => id), ...EXECUTION_L2.map(([id]) => id)].sort());
+  assert.equal(EXECUTION_L2.length, 66);
+  assert.deepEqual(resolver.getAncestors("human-approval").map((placement) => placement.id), ["autonomous-execution", "execution-authorization"]);
+  assert.deepEqual(resolver.getAncestors("settlement-in-verification-settlement").map((placement) => placement.id), ["autonomous-execution", "verification-settlement"]);
+});
+
+test("Autonomous Execution reuses existing concepts at their homes and keeps execution-time controls distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  // Each reused concept gains exactly this placement here and stays preferred at its home.
+  const reused = EXECUTION_L2.filter(([id, conceptId]) => id !== conceptId);
+  assert.deepEqual(reused.map(([, conceptId]) => conceptId), [
+    "goals", "plans", "replanning", "tool-selection", "policy-constraints", "capabilities", "trusted-execution", "agent-actions",
+    "tool-calling", "transaction-construction", "transaction-submission", "verifiable-execution", "settlement", "observability",
+    "alerting", "human-oversight",
+  ]);
+  for (const [id, conceptId] of reused) {
+    assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
+    assert.ok(placementsOf(conceptId).includes(id), id);
+    const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
+    assert.ok(preferred && resolver.getAncestors(preferred)[0]?.id !== "autonomous-execution", `${conceptId} stays preferred at home`);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  // Simulation is a new general concept, an L1 topic here.
+  assert.equal(resolver.getConcept("simulation")?.title, "Simulation");
+  assert.equal(resolver.getConcept("intents"), undefined);
+  // Execution-specific concepts kept distinct from the concepts they sit near.
+  for (const [placementId, related] of [
+    ["runtime-authorization", "agent-authorization"],
+    ["runtime-authorization", "spending-authority"],
+    ["authorization-scopes", "agent-permissions"],
+    ["multi-party-approval", "multisignatures"],
+    ["human-approval", "human-oversight"],
+    ["policy-enforcement", "budget-enforcement"],
+    ["risk-checks", "risk-limits"],
+    ["execution-constraints", "policy-constraints"],
+    ["execution-constraints", "mechanism-constraints"],
+    ["success-criteria", "goal-specification"],
+    ["action-dependencies", "delegation-chains"],
+    ["resource-estimation", "resource-budgets"],
+    ["cost-estimation", "inference-cost"],
+    ["cost-estimation", "execution-cost"],
+    ["execution-routing", "request-routing"],
+    ["candidate-evaluation", "ai-evaluation"],
+    ["state-forking", "competing-forks"],
+    ["simulation-divergence", "distribution-shift"],
+    ["tool-permissions", "agent-permissions"],
+    ["execution-isolation", "execution-context"],
+    ["partial-execution", "transaction-atomicity"],
+    ["rollbacks", "transaction-reversion"],
+    ["rollbacks", "reorganizations"],
+    ["outcome-verification", "verification"],
+    ["execution-receipts", "logs"],
+    ["audit-trails", "traceability"],
+    ["execution-failures", "failures"],
+    ["circuit-breakers", "kill-switches"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  for (const [id, conceptId] of [...EXECUTION_LAYER, ...EXECUTION_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (id !== conceptId) continue;
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...EXECUTION_LAYER, ...EXECUTION_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Autonomous Execution leaves 20–22 unchanged and 24–27 empty", () => {
+  for (const [root, layer, tree] of [
+    ["ai-intelligent-systems", AI_LAYER, AI_TREE],
+    ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
+    ["autonomous-coordination", COORDINATION_LAYER, COORDINATION_TREE],
+  ] as const) {
+    assert.deepEqual(resolver.getChildren(root).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), layer, root);
+    for (const [parent, children] of tree) {
+      assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
+    }
+  }
+  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
     assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
 });

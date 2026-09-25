@@ -1884,6 +1884,95 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "collective-decision-making",
     "emergent-coordination",
   ],
+  // 23 Autonomous Execution
+  "objectives-intents": [
+    { placementId: "goals-in-objectives-intents", conceptId: "goals" },
+    "execution-requests",
+    "objective-interpretation",
+    "intent-generation",
+    "success-criteria",
+    "execution-constraints",
+  ],
+  "execution-planning": [
+    { placementId: "plans-in-execution-planning", conceptId: "plans" },
+    "action-sequencing",
+    "action-dependencies",
+    "resource-estimation",
+    "contingency-planning",
+    { placementId: "replanning-in-execution-planning", conceptId: "replanning" },
+  ],
+  "action-selection": [
+    "candidate-generation",
+    "candidate-evaluation",
+    "cost-estimation",
+    { placementId: "tool-selection-in-action-selection", conceptId: "tool-selection" },
+    "execution-routing",
+    "execution-optimization",
+  ],
+  simulation: [
+    "transaction-simulation",
+    "state-forking",
+    "dry-runs",
+    "outcome-prediction",
+    "simulation-fidelity",
+    "simulation-divergence",
+  ],
+  "execution-policies": [
+    { placementId: "policy-constraints-in-execution-policies", conceptId: "policy-constraints" },
+    "policy-evaluation",
+    "policy-engines",
+    "policy-enforcement",
+    "policy-violations",
+    "risk-checks",
+  ],
+  "execution-authorization": [
+    "runtime-authorization",
+    { placementId: "capabilities-in-execution-authorization", conceptId: "capabilities" },
+    "human-approval",
+    "approval-thresholds",
+    "multi-party-approval",
+    "authorization-scopes",
+  ],
+  "execution-environments": [
+    "sandboxing",
+    "execution-isolation",
+    { placementId: "trusted-execution-in-execution-environments", conceptId: "trusted-execution" },
+    "tool-permissions",
+    "environment-access",
+    "ephemeral-environments",
+  ],
+  "action-execution": [
+    { placementId: "agent-actions-in-action-execution", conceptId: "agent-actions" },
+    { placementId: "tool-calling-in-action-execution", conceptId: "tool-calling" },
+    { placementId: "transaction-construction-in-action-execution", conceptId: "transaction-construction" },
+    { placementId: "transaction-submission-in-action-execution", conceptId: "transaction-submission" },
+    "partial-execution",
+    "idempotency",
+  ],
+  "verification-settlement": [
+    "outcome-verification",
+    "postconditions",
+    "execution-receipts",
+    { placementId: "verifiable-execution-in-verification-settlement", conceptId: "verifiable-execution" },
+    { placementId: "settlement-in-verification-settlement", conceptId: "settlement" },
+    "execution-disputes",
+  ],
+  "execution-monitoring": [
+    "progress-tracking",
+    { placementId: "observability-in-execution-monitoring", conceptId: "observability" },
+    "audit-trails",
+    "anomaly-detection",
+    { placementId: "alerting-in-execution-monitoring", conceptId: "alerting" },
+    { placementId: "human-oversight-in-execution-monitoring", conceptId: "human-oversight" },
+  ],
+  "execution-recovery": [
+    "execution-failures",
+    "retries",
+    "rollbacks",
+    "compensating-actions",
+    "circuit-breakers",
+    "kill-switches",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1904,8 +1993,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
  * Systems, Interoperability & Abstraction, Security, Correctness &
  * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
- * Intelligent Systems, Machine Economy, and Autonomous Coordination; and a
- * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Intelligent Systems, Machine Economy, Autonomous Coordination, and
+ * Autonomous Execution; and a deliberately small Phase 1 proof fixture
+ * re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -2422,9 +2512,11 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "system-logs", slug: "system-logs", title: "System Logs" },
     { id: "distributed-traces", slug: "distributed-traces", title: "Distributed Traces" },
     { id: "health-checks", slug: "health-checks", title: "Health Checks" },
-    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    // Also placed in 17 Security, Correctness & Resilience and under 23 Autonomous
+    // Execution; this placement is preferred.
     { id: "alerting", slug: "alerting", title: "Alerting", preferredPlacementId: "alerting" },
-    { id: "observability", slug: "observability", title: "Observability" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "observability", slug: "observability", title: "Observability", preferredPlacementId: "observability" },
     { id: "triggers", slug: "triggers", title: "Triggers" },
     { id: "scheduled-execution", slug: "scheduled-execution", title: "Scheduled Execution" },
     { id: "event-driven-execution", slug: "event-driven-execution", title: "Event-Driven Execution" },
@@ -2493,7 +2585,8 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "recursive-proofs",
     },
     { id: "proof-composition", slug: "proof-composition", title: "Proof Composition" },
-    { id: "verifiable-execution", slug: "verifiable-execution", title: "Verifiable Execution" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "verifiable-execution", slug: "verifiable-execution", title: "Verifiable Execution", preferredPlacementId: "verifiable-execution" },
     // Producing and checking a proof; also placed under 07's Storage Proofs.
     { id: "proof-generation", slug: "proof-generation", title: "Proof Generation", preferredPlacementId: "proof-generation" },
     { id: "proof-verification", slug: "proof-verification", title: "Proof Verification", preferredPlacementId: "proof-verification" },
@@ -2632,7 +2725,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "account-recovery", slug: "account-recovery", title: "Account Recovery" },
     // Also placed under 21's Agent Wallets; this placement is preferred.
     { id: "key-management", slug: "key-management", title: "Key Management", preferredPlacementId: "key-management" },
-    { id: "transaction-construction", slug: "transaction-construction", title: "Transaction Construction" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "transaction-construction", slug: "transaction-construction", title: "Transaction Construction", preferredPlacementId: "transaction-construction" },
     // Also placed under 21's Agent Wallets; this placement is preferred.
     { id: "wallet-recovery", slug: "wallet-recovery", title: "Wallet Recovery", preferredPlacementId: "wallet-recovery" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
@@ -4150,11 +4244,14 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "reasoning-faithfulness", slug: "reasoning-faithfulness", title: "Reasoning Faithfulness" },
     { id: "world-models", slug: "world-models", title: "World Models" },
     // An agent's Goals are not 10's Mechanism Objectives.
-    { id: "goals", slug: "goals", title: "Goals" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "goals", slug: "goals", title: "Goals", preferredPlacementId: "goals" },
     { id: "task-decomposition", slug: "task-decomposition", title: "Task Decomposition" },
-    { id: "plans", slug: "plans", title: "Plans" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "plans", slug: "plans", title: "Plans", preferredPlacementId: "plans" },
     { id: "planning-horizons", slug: "planning-horizons", title: "Planning Horizons" },
-    { id: "replanning", slug: "replanning", title: "Replanning" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "replanning", slug: "replanning", title: "Replanning", preferredPlacementId: "replanning" },
     { id: "context-windows", slug: "context-windows", title: "Context Windows" },
     { id: "context-management", slug: "context-management", title: "Context Management" },
     { id: "long-term-memory", slug: "long-term-memory", title: "Long-Term Memory" },
@@ -4163,10 +4260,12 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "retrieval-augmented-generation", slug: "retrieval-augmented-generation", title: "Retrieval-Augmented Generation" },
     // Tool Protocols (how models discover and call tools) are not Foundations' Protocols.
     { id: "tools", slug: "tools", title: "Tools" },
-    { id: "tool-calling", slug: "tool-calling", title: "Tool Calling" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "tool-calling", slug: "tool-calling", title: "Tool Calling", preferredPlacementId: "tool-calling" },
     { id: "tool-schemas", slug: "tool-schemas", title: "Tool Schemas" },
     { id: "tool-results", slug: "tool-results", title: "Tool Results" },
-    { id: "tool-selection", slug: "tool-selection", title: "Tool Selection" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "tool-selection", slug: "tool-selection", title: "Tool Selection", preferredPlacementId: "tool-selection" },
     { id: "tool-protocols", slug: "tool-protocols", title: "Tool Protocols" },
     // Principals (the party an agent acts for) are a general concept for later
     // authority, execution, organization and autonomy domains; not
@@ -4174,7 +4273,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // general Autonomy to 22–26.
     { id: "principals", slug: "principals", title: "Principals" },
     { id: "agent-loops", slug: "agent-loops", title: "Agent Loops" },
-    { id: "agent-actions", slug: "agent-actions", title: "Agent Actions" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "agent-actions", slug: "agent-actions", title: "Agent Actions", preferredPlacementId: "agent-actions" },
     { id: "autonomy-levels", slug: "autonomy-levels", title: "Autonomy Levels" },
     // Model Robustness is not Foundations' Fault Tolerance.
     { id: "model-uncertainty", slug: "model-uncertainty", title: "Model Uncertainty" },
@@ -4194,7 +4294,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "goal-specification", slug: "goal-specification", title: "Goal Specification" },
     { id: "specification-gaming", slug: "specification-gaming", title: "Specification Gaming" },
     { id: "guardrails", slug: "guardrails", title: "Guardrails" },
-    { id: "human-oversight", slug: "human-oversight", title: "Human Oversight" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "human-oversight", slug: "human-oversight", title: "Human Oversight", preferredPlacementId: "human-oversight" },
     { id: "interpretability", slug: "interpretability", title: "Interpretability" },
     { id: "corrigibility", slug: "corrigibility", title: "Corrigibility" },
     // Training Data Poisoning (corrupting what a model learns from) is not 09's
@@ -4275,7 +4376,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Referring a request beyond a grant to a higher authority, shown as
     // "Escalation"; not privilege escalation (an attack). Policy Constraints are
     // not 10's Mechanism Constraints; policy enforcement in execution is 23's.
-    { id: "policy-constraints", slug: "policy-constraints", title: "Policy Constraints" },
+    // Also placed under 23 Autonomous Execution; this placement is preferred.
+    { id: "policy-constraints", slug: "policy-constraints", title: "Policy Constraints", preferredPlacementId: "policy-constraints" },
     { id: "authority-escalation", slug: "authority-escalation", title: "Authority Escalation" },
     // Automated Settlement (settling without a human step) is not Settlement itself.
     // Payment Channels are 15's (a state channel specialized for payments), placed
@@ -4433,6 +4535,105 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "conflict-resolution", slug: "conflict-resolution", title: "Conflict Resolution" },
     { id: "collective-decision-making", slug: "collective-decision-making", title: "Collective Decision-Making" },
     { id: "emergent-coordination", slug: "emergent-coordination", title: "Emergent Coordination" },
+    // 23 Autonomous Execution: L1 topics, the lifecycle of carrying out one
+    // autonomous action. Simulation is the general concept (not only pre-trade
+    // simulation). Execution Policies, Authorization and Environments are the
+    // execution-time control plane: 21 defines an agent's permissions and
+    // budgets, 22 how agents delegate and coordinate, and 24–26 organization-,
+    // protocol- and economy-level autonomy.
+    { id: "objectives-intents", slug: "objectives-intents", title: "Objectives & Intents" },
+    { id: "execution-planning", slug: "execution-planning", title: "Execution Planning" },
+    { id: "action-selection", slug: "action-selection", title: "Action Selection" },
+    { id: "simulation", slug: "simulation", title: "Simulation" },
+    { id: "execution-policies", slug: "execution-policies", title: "Execution Policies" },
+    { id: "execution-authorization", slug: "execution-authorization", title: "Execution Authorization" },
+    { id: "execution-environments", slug: "execution-environments", title: "Execution Environments" },
+    { id: "action-execution", slug: "action-execution", title: "Action Execution" },
+    { id: "verification-settlement", slug: "verification-settlement", title: "Verification & Settlement" },
+    { id: "execution-monitoring", slug: "execution-monitoring", title: "Execution Monitoring" },
+    { id: "execution-recovery", slug: "execution-recovery", title: "Execution Recovery" },
+    // L2 topics (placements in L2_TOPICS). Goals are 20's. Intent Generation
+    // (turning an objective into a declarative intent) leaves Intents to 13;
+    // Execution Constraints are not 10's Mechanism, 21's Policy or 22's
+    // Negotiation Constraints; Success Criteria are not 20's Goal Specification.
+    { id: "execution-requests", slug: "execution-requests", title: "Execution Requests" },
+    { id: "objective-interpretation", slug: "objective-interpretation", title: "Objective Interpretation" },
+    { id: "intent-generation", slug: "intent-generation", title: "Intent Generation" },
+    { id: "success-criteria", slug: "success-criteria", title: "Success Criteria" },
+    { id: "execution-constraints", slug: "execution-constraints", title: "Execution Constraints" },
+    // Plans and Replanning are 20's. Action Dependencies are not 22's Delegation
+    // Chains; Resource Estimation is not 21's Resource Budgets.
+    { id: "action-sequencing", slug: "action-sequencing", title: "Action Sequencing" },
+    { id: "action-dependencies", slug: "action-dependencies", title: "Action Dependencies" },
+    { id: "resource-estimation", slug: "resource-estimation", title: "Resource Estimation" },
+    { id: "contingency-planning", slug: "contingency-planning", title: "Contingency Planning" },
+    // Tool Selection is 20's. Cost Estimation is not 20's Inference Cost or 02's
+    // Execution Cost; Execution Routing is not 05's Request Routing or 22's
+    // Message Routing; Candidate Evaluation is not 20's AI Evaluation.
+    { id: "candidate-generation", slug: "candidate-generation", title: "Candidate Generation" },
+    { id: "candidate-evaluation", slug: "candidate-evaluation", title: "Candidate Evaluation" },
+    { id: "cost-estimation", slug: "cost-estimation", title: "Cost Estimation" },
+    { id: "execution-routing", slug: "execution-routing", title: "Execution Routing" },
+    { id: "execution-optimization", slug: "execution-optimization", title: "Execution Optimization" },
+    // State Forking (running against a copy of live state) is not 04's Competing
+    // Forks; Simulation Divergence (simulated and real outcomes differing) is
+    // not 20's Distribution Shift.
+    { id: "transaction-simulation", slug: "transaction-simulation", title: "Transaction Simulation" },
+    { id: "state-forking", slug: "state-forking", title: "State Forking" },
+    { id: "dry-runs", slug: "dry-runs", title: "Dry Runs" },
+    { id: "outcome-prediction", slug: "outcome-prediction", title: "Outcome Prediction" },
+    { id: "simulation-fidelity", slug: "simulation-fidelity", title: "Simulation Fidelity" },
+    { id: "simulation-divergence", slug: "simulation-divergence", title: "Simulation Divergence" },
+    // Policy Constraints are 21's. Policy Enforcement at execution is not 21's
+    // Budget Enforcement; Risk Checks apply 21's Risk Limits and are not them.
+    { id: "policy-evaluation", slug: "policy-evaluation", title: "Policy Evaluation" },
+    { id: "policy-engines", slug: "policy-engines", title: "Policy Engines" },
+    { id: "policy-enforcement", slug: "policy-enforcement", title: "Policy Enforcement" },
+    { id: "policy-violations", slug: "policy-violations", title: "Policy Violations" },
+    { id: "risk-checks", slug: "risk-checks", title: "Risk Checks" },
+    // Runtime Authorization (approving one action as it runs) is not 08's Agent
+    // Authorization or 21's Spending and Session Authority; Multi-Party Approval
+    // is not 06's Multisignatures; Authorization Scopes are not 21's Agent
+    // Permissions. Capabilities are 08's.
+    { id: "runtime-authorization", slug: "runtime-authorization", title: "Runtime Authorization" },
+    { id: "human-approval", slug: "human-approval", title: "Human Approval" },
+    { id: "approval-thresholds", slug: "approval-thresholds", title: "Approval Thresholds" },
+    { id: "multi-party-approval", slug: "multi-party-approval", title: "Multi-Party Approval" },
+    { id: "authorization-scopes", slug: "authorization-scopes", title: "Authorization Scopes" },
+    // Trusted Execution is 02's. Tool Permissions are not 21's Agent Permissions
+    // in general; Execution Isolation is not 02's Execution Context.
+    { id: "sandboxing", slug: "sandboxing", title: "Sandboxing" },
+    { id: "execution-isolation", slug: "execution-isolation", title: "Execution Isolation" },
+    { id: "tool-permissions", slug: "tool-permissions", title: "Tool Permissions" },
+    { id: "environment-access", slug: "environment-access", title: "Environment Access" },
+    { id: "ephemeral-environments", slug: "ephemeral-environments", title: "Ephemeral Environments" },
+    // Agent Actions and Tool Calling are 20's; Transaction Construction and
+    // Submission 08's and 05's. Partial Execution (some steps done, others not)
+    // is not 02's Transaction Atomicity or Reversion.
+    { id: "partial-execution", slug: "partial-execution", title: "Partial Execution" },
+    { id: "idempotency", slug: "idempotency", title: "Idempotency" },
+    // Verifiable Execution is 06's and Settlement the general concept. Outcome
+    // Verification (the result meets the success criteria) is not Foundations'
+    // Verification in general; Execution Receipts are not 03's Logs.
+    { id: "outcome-verification", slug: "outcome-verification", title: "Outcome Verification" },
+    { id: "postconditions", slug: "postconditions", title: "Postconditions" },
+    { id: "execution-receipts", slug: "execution-receipts", title: "Execution Receipts" },
+    { id: "execution-disputes", slug: "execution-disputes", title: "Execution Disputes" },
+    // Observability and Alerting are 05's; Human Oversight 20's. Audit Trails
+    // (a record of what an agent did and why) are not 03's Traceability.
+    { id: "progress-tracking", slug: "progress-tracking", title: "Progress Tracking" },
+    { id: "audit-trails", slug: "audit-trails", title: "Audit Trails" },
+    { id: "anomaly-detection", slug: "anomaly-detection", title: "Anomaly Detection" },
+    // Execution Failures are not Foundations' Failures (process faults);
+    // Rollbacks are not 02's Transaction Reversion or 04's Reorganizations;
+    // Circuit Breakers (automatic halts on a condition) are not Kill Switches
+    // (a deliberate stop).
+    { id: "execution-failures", slug: "execution-failures", title: "Execution Failures" },
+    { id: "retries", slug: "retries", title: "Retries" },
+    { id: "rollbacks", slug: "rollbacks", title: "Rollbacks" },
+    { id: "compensating-actions", slug: "compensating-actions", title: "Compensating Actions" },
+    { id: "circuit-breakers", slug: "circuit-breakers", title: "Circuit Breakers" },
+    { id: "kill-switches", slug: "kill-switches", title: "Kill Switches" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -5070,6 +5271,18 @@ export const mapKnowledge: MapKnowledgeModel = {
     },
     { id: "task-markets", conceptId: "task-markets", parentPlacementId: "autonomous-coordination", order: 8 },
     { id: "multi-agent-coordination", conceptId: "multi-agent-coordination", parentPlacementId: "autonomous-coordination", order: 9 },
+    // 23 Autonomous Execution: L1 topics.
+    { id: "objectives-intents", conceptId: "objectives-intents", parentPlacementId: "autonomous-execution", order: 0 },
+    { id: "execution-planning", conceptId: "execution-planning", parentPlacementId: "autonomous-execution", order: 1 },
+    { id: "action-selection", conceptId: "action-selection", parentPlacementId: "autonomous-execution", order: 2 },
+    { id: "simulation", conceptId: "simulation", parentPlacementId: "autonomous-execution", order: 3 },
+    { id: "execution-policies", conceptId: "execution-policies", parentPlacementId: "autonomous-execution", order: 4 },
+    { id: "execution-authorization", conceptId: "execution-authorization", parentPlacementId: "autonomous-execution", order: 5 },
+    { id: "execution-environments", conceptId: "execution-environments", parentPlacementId: "autonomous-execution", order: 6 },
+    { id: "action-execution", conceptId: "action-execution", parentPlacementId: "autonomous-execution", order: 7 },
+    { id: "verification-settlement", conceptId: "verification-settlement", parentPlacementId: "autonomous-execution", order: 8 },
+    { id: "execution-monitoring", conceptId: "execution-monitoring", parentPlacementId: "autonomous-execution", order: 9 },
+    { id: "execution-recovery", conceptId: "execution-recovery", parentPlacementId: "autonomous-execution", order: 10 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
