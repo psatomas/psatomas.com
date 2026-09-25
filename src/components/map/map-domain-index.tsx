@@ -41,7 +41,9 @@ export function MapDomainIndex({
   return (
     // One bordered surface: the identity plane and the grid share its outer
     // edges; the grid draws only the seam between them.
-    <nav aria-label="MAP domains" className="border border-border">
+    // isolate keeps the cells' hover layers (z-10) below the sticky
+    // breadcrumb and the navbar.
+    <nav aria-label="MAP domains" className="isolate border border-border">
       <div className="flex flex-col gap-3 bg-surface p-6 sm:p-8">
         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Protocol Engineering</h2>
         <p className="max-w-2xl text-muted">
