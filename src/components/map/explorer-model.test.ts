@@ -310,7 +310,20 @@ const POPULATED_L0 = {
     "scaling-tradeoffs",
     "rollup-security",
   ],
-  "ai-intelligent-systems": ["ai-agent"],
+  "ai-intelligent-systems": [
+    "ai-models",
+    "ai-inference-in-ai-intelligent-systems",
+    "reasoning",
+    "goals-planning",
+    "memory-context",
+    "tool-use",
+    "ai-agent",
+    "uncertainty-reliability",
+    "ai-evaluation",
+    "alignment-control",
+    "ai-security",
+    "verifiable-ai",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -951,6 +964,43 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("AI & Intelligent Systems L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("zkml"), ["AI & Intelligent Systems", "Verifiable AI", "zkML"]);
+  assert.deepEqual(labels("retrieval-augmented-generation"), ["AI & Intelligent Systems", "Memory & Context", "Retrieval-Augmented Generation"]);
+  // The fixture's AI Agent placement shows as "AI Agents".
+  assert.deepEqual(labels("ai-agent"), ["AI & Intelligent Systems", "AI Agents"]);
+  assert.deepEqual(labels("principals"), ["AI & Intelligent Systems", "AI Agents", "Principals"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("ai-inference-in-ai-intelligent-systems"), ["AI & Intelligent Systems", "AI Inference"]);
+  assert.deepEqual(labels("ai-inference"), ["Oracles & External Reality", "AI-Interpreted Data", "AI Inference"]);
+  assert.deepEqual(labels("inference-confidence-in-uncertainty-reliability"), ["AI & Intelligent Systems", "Uncertainty & Reliability", "Inference Confidence"]);
+  assert.deepEqual(labels("inference-confidence"), ["Oracles & External Reality", "AI-Interpreted Data", "Confidence"]);
+  assert.deepEqual(labels("delegation-in-ai-agents"), ["AI & Intelligent Systems", "AI Agents", "Delegation"]);
+  assert.deepEqual(labels("delegation"), ["Identity, Accounts & Authority", "Authority", "Delegation"]);
+  assert.deepEqual(labels("agent-identity-in-ai-agents"), ["AI & Intelligent Systems", "AI Agents", "Agent Identity"]);
+  assert.deepEqual(labels("trusted-execution-in-verifiable-ai"), ["AI & Intelligent Systems", "Verifiable AI", "Trusted Execution"]);
+  assert.deepEqual(labels("trusted-execution"), ["Computation & Execution", "Off-Chain Computation", "Trusted Execution"]);
+  for (const id of ["ai-agent", "zkml", "delegation-in-ai-agents", "inference-confidence-in-uncertainty-reliability", "ai-inference-in-ai-intelligent-systems"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "prompt-injection").expandedPlacementIds].sort(), ["ai-intelligent-systems", "ai-security"]);
+  // A context with exposition also opens itself to reveal it.
+  assert.deepEqual([...getInitialMapExplorerState(view, "agent-identity-in-ai-agents").expandedPlacementIds].sort(), ["agent-identity-in-ai-agents", "ai-agent", "ai-intelligent-systems"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "ai-intelligent-systems" && row.depth > 0);
+  assert.equal(subtreeRows.length, 12 + 69);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  // Only the reused Agent Identity brings its canonical exposition.
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "agent-identity") && row.isExpandable === row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "20");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });

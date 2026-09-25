@@ -1615,6 +1615,81 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "migration-paths",
     "legacy-support",
   ],
+  // 20 AI & Intelligent Systems
+  "ai-models": [
+    "training-data",
+    "model-training",
+    "model-weights",
+    "foundation-models",
+    "fine-tuning",
+    "model-capabilities",
+  ],
+  "ai-inference-in-ai-intelligent-systems": [
+    "model-inputs",
+    "model-outputs",
+    "decoding",
+    "inference-reproducibility",
+    "inference-cost",
+    "inference-providers",
+  ],
+  reasoning: ["reasoning-traces", "test-time-compute", "self-correction", "reasoning-faithfulness", "world-models"],
+  "goals-planning": ["goals", "task-decomposition", "plans", "planning-horizons", "replanning"],
+  "memory-context": [
+    "context-windows",
+    "context-management",
+    "long-term-memory",
+    "embeddings",
+    "retrieval-augmented-generation",
+  ],
+  "tool-use": ["tools", "tool-calling", "tool-schemas", "tool-results", "tool-selection", "tool-protocols"],
+  "ai-agent": [
+    "principals",
+    "agent-loops",
+    "agent-actions",
+    "autonomy-levels",
+    { placementId: "delegation-in-ai-agents", conceptId: "delegation" },
+    { placementId: "agent-identity-in-ai-agents", conceptId: "agent-identity" },
+  ],
+  "uncertainty-reliability": [
+    "model-uncertainty",
+    "model-calibration",
+    { placementId: "inference-confidence-in-uncertainty-reliability", conceptId: "inference-confidence" },
+    "hallucinations",
+    "model-robustness",
+    "distribution-shift",
+  ],
+  "ai-evaluation": [
+    "benchmarks",
+    "capability-evaluations",
+    "safety-evaluations",
+    "red-teaming",
+    "benchmark-contamination",
+    "model-graded-evaluation",
+  ],
+  "alignment-control": [
+    "goal-specification",
+    "specification-gaming",
+    "guardrails",
+    "human-oversight",
+    "interpretability",
+    "corrigibility",
+  ],
+  "ai-security": [
+    "prompt-injection",
+    "jailbreaks",
+    "adversarial-examples",
+    "training-data-poisoning",
+    "model-backdoors",
+    "model-extraction",
+  ],
+  "verifiable-ai": [
+    "verifiable-inference",
+    "zkml",
+    { placementId: "trusted-execution-in-verifiable-ai", conceptId: "trusted-execution" },
+    "model-commitments",
+    "model-provenance",
+    "verifiable-agents",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1634,8 +1709,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
  * Systems, Interoperability & Abstraction, Security, Correctness &
- * Resilience, Protocol Architecture, and Protocol Design & Lifecycle; and a
- * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * Resilience, Protocol Architecture, Protocol Design & Lifecycle, and AI &
+ * Intelligent Systems; and a deliberately small Phase 1 proof fixture
+ * re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1827,7 +1903,9 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "off-chain-execution",
     },
     { id: "on-chain-verification", slug: "on-chain-verification", title: "On-Chain Verification" },
-    { id: "trusted-execution", slug: "trusted-execution", title: "Trusted Execution" },
+    // Also placed under 20's Verifiable AI (inference run in an enclave); this
+    // placement is preferred.
+    { id: "trusted-execution", slug: "trusted-execution", title: "Trusted Execution", preferredPlacementId: "trusted-execution" },
     { id: "untrusted-execution", slug: "untrusted-execution", title: "Untrusted Execution" },
     { id: "off-chain-workers", slug: "off-chain-workers", title: "Off-Chain Workers" },
     { id: "gas", slug: "gas", title: "Gas" },
@@ -2384,8 +2462,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "ownership", slug: "ownership", title: "Ownership" },
     { id: "roles", slug: "roles", title: "Roles" },
     { id: "capabilities", slug: "capabilities", title: "Capabilities" },
-    // Also placed under 13's Intents (an intent delegates execution) and 14's
-    // Representation (delegating votes); this placement is preferred.
+    // Also placed under 13's Intents (an intent delegates execution), 14's
+    // Representation (delegating votes) and 20's AI Agents (an agent acting on
+    // its principal's authority); this placement is preferred.
     { id: "delegation", slug: "delegation", title: "Delegation", preferredPlacementId: "delegation" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
     {
@@ -2508,8 +2587,21 @@ export const mapKnowledge: MapKnowledgeModel = {
     // "Confidence"; not 07's statistical Availability Confidence.
     { id: "information-extraction", slug: "information-extraction", title: "Information Extraction" },
     { id: "classification", slug: "classification", title: "Classification" },
-    { id: "ai-inference", slug: "ai-inference", title: "AI Inference" },
-    { id: "inference-confidence", slug: "inference-confidence", title: "Inference Confidence" },
+    // AI Inference and Inference Confidence are consumed here to interpret
+    // external reality; 20 AI & Intelligent Systems, their conceptual home,
+    // places them again and is preferred.
+    {
+      id: "ai-inference",
+      slug: "ai-inference",
+      title: "AI Inference",
+      preferredPlacementId: "ai-inference-in-ai-intelligent-systems",
+    },
+    {
+      id: "inference-confidence",
+      slug: "inference-confidence",
+      title: "Inference Confidence",
+      preferredPlacementId: "inference-confidence-in-uncertainty-reliability",
+    },
     { id: "interpretation-verification", slug: "interpretation-verification", title: "Interpretation Verification" },
     // Parties attesting to real-world facts, shown as "Attesters"; not 04's
     // Attesters (validators).
@@ -3776,6 +3868,110 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "failure-isolation",
     },
     { id: "contagion-risk", slug: "contagion-risk", title: "Contagion Risk" },
+    // 20 AI & Intelligent Systems: L1 topics (AI Inference is 09's concept; AI
+    // Agents is the fixture's AI Agent, below). Verifiable AI's home is here;
+    // the proof primitives it builds on stay 06's. Economic agency, multi-agent
+    // coordination, execution environments, organizations, autonomous protocols
+    // and economies are 21–26's.
+    { id: "ai-models", slug: "ai-models", title: "AI Models" },
+    { id: "reasoning", slug: "reasoning", title: "Reasoning" },
+    { id: "goals-planning", slug: "goals-planning", title: "Goals & Planning" },
+    { id: "memory-context", slug: "memory-context", title: "Memory & Context" },
+    { id: "tool-use", slug: "tool-use", title: "Tool Use" },
+    { id: "uncertainty-reliability", slug: "uncertainty-reliability", title: "Uncertainty & Reliability" },
+    { id: "ai-evaluation", slug: "ai-evaluation", title: "AI Evaluation" },
+    // AI Alignment (a model's behaviour matching intent) is not 10's Incentive
+    // Alignment; AI Security is not 17's system-wide security.
+    { id: "alignment-control", slug: "alignment-control", title: "Alignment & Control" },
+    { id: "ai-security", slug: "ai-security", title: "AI Security" },
+    { id: "verifiable-ai", slug: "verifiable-ai", title: "Verifiable AI" },
+    // L2 topics (placements in L2_TOPICS).
+    { id: "training-data", slug: "training-data", title: "Training Data" },
+    { id: "model-training", slug: "model-training", title: "Model Training" },
+    { id: "model-weights", slug: "model-weights", title: "Model Weights" },
+    { id: "foundation-models", slug: "foundation-models", title: "Foundation Models" },
+    { id: "fine-tuning", slug: "fine-tuning", title: "Fine-Tuning" },
+    { id: "model-capabilities", slug: "model-capabilities", title: "Model Capabilities" },
+    // Decoding (choosing output tokens) is not 07's Sampling; Inference
+    // Reproducibility (the same output across runs and hardware) is not
+    // Foundations' Determinism or 02's Non-Deterministic Execution; Inference
+    // Cost is not 02's Execution Cost.
+    { id: "model-inputs", slug: "model-inputs", title: "Model Inputs" },
+    { id: "model-outputs", slug: "model-outputs", title: "Model Outputs" },
+    { id: "decoding", slug: "decoding", title: "Decoding" },
+    { id: "inference-reproducibility", slug: "inference-reproducibility", title: "Inference Reproducibility" },
+    { id: "inference-cost", slug: "inference-cost", title: "Inference Cost" },
+    { id: "inference-providers", slug: "inference-providers", title: "Inference Providers" },
+    // Reasoning Traces are not 02's Execution Traces or 05's Traces.
+    { id: "reasoning-traces", slug: "reasoning-traces", title: "Reasoning Traces" },
+    { id: "test-time-compute", slug: "test-time-compute", title: "Test-Time Compute" },
+    { id: "self-correction", slug: "self-correction", title: "Self-Correction" },
+    { id: "reasoning-faithfulness", slug: "reasoning-faithfulness", title: "Reasoning Faithfulness" },
+    { id: "world-models", slug: "world-models", title: "World Models" },
+    // An agent's Goals are not 10's Mechanism Objectives.
+    { id: "goals", slug: "goals", title: "Goals" },
+    { id: "task-decomposition", slug: "task-decomposition", title: "Task Decomposition" },
+    { id: "plans", slug: "plans", title: "Plans" },
+    { id: "planning-horizons", slug: "planning-horizons", title: "Planning Horizons" },
+    { id: "replanning", slug: "replanning", title: "Replanning" },
+    { id: "context-windows", slug: "context-windows", title: "Context Windows" },
+    { id: "context-management", slug: "context-management", title: "Context Management" },
+    { id: "long-term-memory", slug: "long-term-memory", title: "Long-Term Memory" },
+    { id: "embeddings", slug: "embeddings", title: "Embeddings" },
+    // Retrieving knowledge into a model's context, not 07's Data or Content Retrieval.
+    { id: "retrieval-augmented-generation", slug: "retrieval-augmented-generation", title: "Retrieval-Augmented Generation" },
+    // Tool Protocols (how models discover and call tools) are not Foundations' Protocols.
+    { id: "tools", slug: "tools", title: "Tools" },
+    { id: "tool-calling", slug: "tool-calling", title: "Tool Calling" },
+    { id: "tool-schemas", slug: "tool-schemas", title: "Tool Schemas" },
+    { id: "tool-results", slug: "tool-results", title: "Tool Results" },
+    { id: "tool-selection", slug: "tool-selection", title: "Tool Selection" },
+    { id: "tool-protocols", slug: "tool-protocols", title: "Tool Protocols" },
+    // Principals (the party an agent acts for) are a general concept for later
+    // authority, execution, organization and autonomy domains; not
+    // Foundations' Participants or 10's Players. Autonomy Levels leaves the
+    // general Autonomy to 22–26.
+    { id: "principals", slug: "principals", title: "Principals" },
+    { id: "agent-loops", slug: "agent-loops", title: "Agent Loops" },
+    { id: "agent-actions", slug: "agent-actions", title: "Agent Actions" },
+    { id: "autonomy-levels", slug: "autonomy-levels", title: "Autonomy Levels" },
+    // Model Robustness is not Foundations' Fault Tolerance.
+    { id: "model-uncertainty", slug: "model-uncertainty", title: "Model Uncertainty" },
+    { id: "model-calibration", slug: "model-calibration", title: "Model Calibration" },
+    { id: "hallucinations", slug: "hallucinations", title: "Hallucinations" },
+    { id: "model-robustness", slug: "model-robustness", title: "Model Robustness" },
+    { id: "distribution-shift", slug: "distribution-shift", title: "Distribution Shift" },
+    { id: "benchmarks", slug: "benchmarks", title: "Benchmarks" },
+    { id: "capability-evaluations", slug: "capability-evaluations", title: "Capability Evaluations" },
+    { id: "safety-evaluations", slug: "safety-evaluations", title: "Safety Evaluations" },
+    { id: "red-teaming", slug: "red-teaming", title: "Red Teaming" },
+    { id: "benchmark-contamination", slug: "benchmark-contamination", title: "Benchmark Contamination" },
+    { id: "model-graded-evaluation", slug: "model-graded-evaluation", title: "Model-Graded Evaluation" },
+    // Specification Gaming is not 10's Manipulation. Guardrails constrain a
+    // model's inputs and outputs, and Human Oversight is the general concept;
+    // policy enforcement and human approval in execution are 23's.
+    { id: "goal-specification", slug: "goal-specification", title: "Goal Specification" },
+    { id: "specification-gaming", slug: "specification-gaming", title: "Specification Gaming" },
+    { id: "guardrails", slug: "guardrails", title: "Guardrails" },
+    { id: "human-oversight", slug: "human-oversight", title: "Human Oversight" },
+    { id: "interpretability", slug: "interpretability", title: "Interpretability" },
+    { id: "corrigibility", slug: "corrigibility", title: "Corrigibility" },
+    // Training Data Poisoning (corrupting what a model learns from) is not 09's
+    // Data Poisoning (corrupting an oracle's sources): different attack surfaces.
+    { id: "prompt-injection", slug: "prompt-injection", title: "Prompt Injection" },
+    { id: "jailbreaks", slug: "jailbreaks", title: "Jailbreaks" },
+    { id: "adversarial-examples", slug: "adversarial-examples", title: "Adversarial Examples" },
+    { id: "training-data-poisoning", slug: "training-data-poisoning", title: "Training Data Poisoning" },
+    { id: "model-backdoors", slug: "model-backdoors", title: "Model Backdoors" },
+    { id: "model-extraction", slug: "model-extraction", title: "Model Extraction" },
+    // Verifiable Inference is not 06's Verifiable Execution or Computation
+    // Proofs; Model Commitments are not Commitment Schemes; Model Provenance
+    // is not 03's Provenance or 09's Source Provenance.
+    { id: "verifiable-inference", slug: "verifiable-inference", title: "Verifiable Inference" },
+    { id: "zkml", slug: "zkml", title: "zkML" },
+    { id: "model-commitments", slug: "model-commitments", title: "Model Commitments" },
+    { id: "model-provenance", slug: "model-provenance", title: "Model Provenance" },
+    { id: "verifiable-agents", slug: "verifiable-agents", title: "Verifiable Agents" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -3792,7 +3988,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     // (preferred) and 13's Intent Settlement.
     { id: "settlement", slug: "settlement", title: "Settlement", preferredPlacementId: "settlement" },
     { id: "identity", slug: "identity", title: "Identity" },
-    { id: "agent-identity", slug: "agent-identity", title: "Agent Identity" },
+    // Also placed under 20's AI Agents; this placement (08's Machine Identity)
+    // is preferred.
+    { id: "agent-identity", slug: "agent-identity", title: "Agent Identity", preferredPlacementId: "agent-identity" },
     { id: "authority", slug: "authority", title: "Authority" },
     { id: "ai-agent", slug: "ai-agent", title: "AI Agent" },
     // Intentionally unplaced and without content: sparse/orphan concepts are valid.
@@ -4358,6 +4556,25 @@ export const mapKnowledge: MapKnowledgeModel = {
       parentPlacementId: "protocol-design-lifecycle",
       order: 13,
     },
+    // 20 AI & Intelligent Systems: L1 topics. AI Agents is the Phase 1
+    // fixture's AI Agent placement, keeping its ID.
+    { id: "ai-models", conceptId: "ai-models", parentPlacementId: "ai-intelligent-systems", order: 0 },
+    {
+      id: "ai-inference-in-ai-intelligent-systems",
+      conceptId: "ai-inference",
+      parentPlacementId: "ai-intelligent-systems",
+      order: 1,
+    },
+    { id: "reasoning", conceptId: "reasoning", parentPlacementId: "ai-intelligent-systems", order: 2 },
+    { id: "goals-planning", conceptId: "goals-planning", parentPlacementId: "ai-intelligent-systems", order: 3 },
+    { id: "memory-context", conceptId: "memory-context", parentPlacementId: "ai-intelligent-systems", order: 4 },
+    { id: "tool-use", conceptId: "tool-use", parentPlacementId: "ai-intelligent-systems", order: 5 },
+    { id: "ai-agent", conceptId: "ai-agent", parentPlacementId: "ai-intelligent-systems", order: 6, contextualLabel: "AI Agents" },
+    { id: "uncertainty-reliability", conceptId: "uncertainty-reliability", parentPlacementId: "ai-intelligent-systems", order: 7 },
+    { id: "ai-evaluation", conceptId: "ai-evaluation", parentPlacementId: "ai-intelligent-systems", order: 8 },
+    { id: "alignment-control", conceptId: "alignment-control", parentPlacementId: "ai-intelligent-systems", order: 9 },
+    { id: "ai-security", conceptId: "ai-security", parentPlacementId: "ai-intelligent-systems", order: 10 },
+    { id: "verifiable-ai", conceptId: "verifiable-ai", parentPlacementId: "ai-intelligent-systems", order: 11 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
@@ -4432,7 +4649,6 @@ export const mapKnowledge: MapKnowledgeModel = {
       order: 5,
       contextualNote: "Finality as a settlement property relevant to rollup systems.",
     },
-    { id: "ai-agent", conceptId: "ai-agent", parentPlacementId: "ai-intelligent-systems", order: 0 },
   ],
   relationships: [
     {

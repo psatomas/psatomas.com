@@ -2099,6 +2099,120 @@ const alsoInLaterDomains = (conceptId: string) =>
     .filter(([id, concept]) => concept === conceptId && id !== concept)
     .map(([id]) => id);
 
+// 20 AI & Intelligent Systems. AI Inference is 09's concept; AI Agents is the
+// Phase 1 fixture's AI Agent placement; Delegation and Agent Identity are 08's,
+// Inference Confidence 09's and Trusted Execution 02's.
+const AI_LAYER: Array<[string, string, string]> = [
+  ["ai-models", "ai-models", "AI Models"],
+  ["ai-inference-in-ai-intelligent-systems", "ai-inference", "AI Inference"],
+  ["reasoning", "reasoning", "Reasoning"],
+  ["goals-planning", "goals-planning", "Goals & Planning"],
+  ["memory-context", "memory-context", "Memory & Context"],
+  ["tool-use", "tool-use", "Tool Use"],
+  ["ai-agent", "ai-agent", "AI Agents"],
+  ["uncertainty-reliability", "uncertainty-reliability", "Uncertainty & Reliability"],
+  ["ai-evaluation", "ai-evaluation", "AI Evaluation"],
+  ["alignment-control", "alignment-control", "Alignment & Control"],
+  ["ai-security", "ai-security", "AI Security"],
+  ["verifiable-ai", "verifiable-ai", "Verifiable AI"],
+];
+const AI_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["ai-models", [
+    ["training-data", "training-data", "Training Data"],
+    ["model-training", "model-training", "Model Training"],
+    ["model-weights", "model-weights", "Model Weights"],
+    ["foundation-models", "foundation-models", "Foundation Models"],
+    ["fine-tuning", "fine-tuning", "Fine-Tuning"],
+    ["model-capabilities", "model-capabilities", "Model Capabilities"],
+  ]],
+  ["ai-inference-in-ai-intelligent-systems", [
+    ["model-inputs", "model-inputs", "Model Inputs"],
+    ["model-outputs", "model-outputs", "Model Outputs"],
+    ["decoding", "decoding", "Decoding"],
+    ["inference-reproducibility", "inference-reproducibility", "Inference Reproducibility"],
+    ["inference-cost", "inference-cost", "Inference Cost"],
+    ["inference-providers", "inference-providers", "Inference Providers"],
+  ]],
+  ["reasoning", [
+    ["reasoning-traces", "reasoning-traces", "Reasoning Traces"],
+    ["test-time-compute", "test-time-compute", "Test-Time Compute"],
+    ["self-correction", "self-correction", "Self-Correction"],
+    ["reasoning-faithfulness", "reasoning-faithfulness", "Reasoning Faithfulness"],
+    ["world-models", "world-models", "World Models"],
+  ]],
+  ["goals-planning", [
+    ["goals", "goals", "Goals"],
+    ["task-decomposition", "task-decomposition", "Task Decomposition"],
+    ["plans", "plans", "Plans"],
+    ["planning-horizons", "planning-horizons", "Planning Horizons"],
+    ["replanning", "replanning", "Replanning"],
+  ]],
+  ["memory-context", [
+    ["context-windows", "context-windows", "Context Windows"],
+    ["context-management", "context-management", "Context Management"],
+    ["long-term-memory", "long-term-memory", "Long-Term Memory"],
+    ["embeddings", "embeddings", "Embeddings"],
+    ["retrieval-augmented-generation", "retrieval-augmented-generation", "Retrieval-Augmented Generation"],
+  ]],
+  ["tool-use", [
+    ["tools", "tools", "Tools"],
+    ["tool-calling", "tool-calling", "Tool Calling"],
+    ["tool-schemas", "tool-schemas", "Tool Schemas"],
+    ["tool-results", "tool-results", "Tool Results"],
+    ["tool-selection", "tool-selection", "Tool Selection"],
+    ["tool-protocols", "tool-protocols", "Tool Protocols"],
+  ]],
+  ["ai-agent", [
+    ["principals", "principals", "Principals"],
+    ["agent-loops", "agent-loops", "Agent Loops"],
+    ["agent-actions", "agent-actions", "Agent Actions"],
+    ["autonomy-levels", "autonomy-levels", "Autonomy Levels"],
+    ["delegation-in-ai-agents", "delegation", "Delegation"],
+    ["agent-identity-in-ai-agents", "agent-identity", "Agent Identity"],
+  ]],
+  ["uncertainty-reliability", [
+    ["model-uncertainty", "model-uncertainty", "Model Uncertainty"],
+    ["model-calibration", "model-calibration", "Model Calibration"],
+    ["inference-confidence-in-uncertainty-reliability", "inference-confidence", "Inference Confidence"],
+    ["hallucinations", "hallucinations", "Hallucinations"],
+    ["model-robustness", "model-robustness", "Model Robustness"],
+    ["distribution-shift", "distribution-shift", "Distribution Shift"],
+  ]],
+  ["ai-evaluation", [
+    ["benchmarks", "benchmarks", "Benchmarks"],
+    ["capability-evaluations", "capability-evaluations", "Capability Evaluations"],
+    ["safety-evaluations", "safety-evaluations", "Safety Evaluations"],
+    ["red-teaming", "red-teaming", "Red Teaming"],
+    ["benchmark-contamination", "benchmark-contamination", "Benchmark Contamination"],
+    ["model-graded-evaluation", "model-graded-evaluation", "Model-Graded Evaluation"],
+  ]],
+  ["alignment-control", [
+    ["goal-specification", "goal-specification", "Goal Specification"],
+    ["specification-gaming", "specification-gaming", "Specification Gaming"],
+    ["guardrails", "guardrails", "Guardrails"],
+    ["human-oversight", "human-oversight", "Human Oversight"],
+    ["interpretability", "interpretability", "Interpretability"],
+    ["corrigibility", "corrigibility", "Corrigibility"],
+  ]],
+  ["ai-security", [
+    ["prompt-injection", "prompt-injection", "Prompt Injection"],
+    ["jailbreaks", "jailbreaks", "Jailbreaks"],
+    ["adversarial-examples", "adversarial-examples", "Adversarial Examples"],
+    ["training-data-poisoning", "training-data-poisoning", "Training Data Poisoning"],
+    ["model-backdoors", "model-backdoors", "Model Backdoors"],
+    ["model-extraction", "model-extraction", "Model Extraction"],
+  ]],
+  ["verifiable-ai", [
+    ["verifiable-inference", "verifiable-inference", "Verifiable Inference"],
+    ["zkml", "zkml", "zkML"],
+    ["trusted-execution-in-verifiable-ai", "trusted-execution", "Trusted Execution"],
+    ["model-commitments", "model-commitments", "Model Commitments"],
+    ["model-provenance", "model-provenance", "Model Provenance"],
+    ["verifiable-agents", "verifiable-agents", "Verifiable Agents"],
+  ]],
+];
+const AI_L2 = AI_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2139,6 +2253,8 @@ const AUTHORED_TOPICS = new Set([
   ...ARCHITECTURE_L2.map(([id]) => id),
   ...LIFECYCLE_LAYER.map(([id]) => id),
   ...LIFECYCLE_L2.map(([id]) => id),
+  ...AI_LAYER.map(([id]) => id),
+  ...AI_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -2227,8 +2343,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Interoperability & Abstraction's 11 new L1 and 72 new L2 concepts, then
   // Security, Correctness & Resilience's 19 new L1 and 82 new L2 concepts, then
   // Protocol Architecture's 12 new L1 and 54 new L2 concepts, then Protocol
-  // Design & Lifecycle's 14 new L1 and 60 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60);
+  // Design & Lifecycle's 14 new L1 and 60 new L2 concepts, then AI &
+  // Intelligent Systems' 10 new L1 and 65 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -2238,8 +2355,9 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
       .map((placement) => [placement.id, placement.parentPlacementId]),
   );
   assert.deepEqual(parents, {
-    "ai-agent": "ai-intelligent-systems",
   });
+  // AI Agent is now an authored L1 topic of AI & Intelligent Systems, keeping its placement ID.
+  assert.equal(resolver.getPlacement("ai-agent")?.parentPlacementId, "ai-intelligent-systems");
   // Settlement is placed by Markets & Financial Protocols and Intents &
   // Coordination (its record is unchanged); Economic Agency stays deliberately unplaced.
   assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement"]);
@@ -2448,6 +2566,7 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
       "computation-proofs": ["computation-proofs-in-cryptography-proofs"],
       "parallel-execution": ["parallel-execution-in-execution-layers"],
       "off-chain-execution": ["off-chain-execution-in-off-chain-scaling"],
+      "trusted-execution": ["trusted-execution-in-verifiable-ai"],
     };
     assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
@@ -2927,7 +3046,9 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   assert.equal(resolver.getPlacement("agent-identity")?.parentPlacementId, "machine-identity");
   assert.equal(resolver.getPlacement("identity")?.parentPlacementId, "identity-accounts-authority");
   assert.equal(resolver.getPlacement("authority")?.parentPlacementId, "identity-accounts-authority");
-  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity"]);
+  // AI & Intelligent Systems places Agent Identity again under AI Agents; this placement stays preferred.
+  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity", "agent-identity-in-ai-agents"]);
+  assert.equal(resolver.getConcept("agent-identity")?.preferredPlacementId, "agent-identity");
   // Attestations: 03's concept, preferred here; Signing and Transaction Submission stay preferred at home.
   assert.deepEqual(placementsOf("attestations"), ["attestations", "attestations-in-identity"]);
   assert.equal(resolver.getConcept("attestations")?.preferredPlacementId, "attestations-in-identity");
@@ -2938,11 +3059,13 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   // General concepts for later reuse (Credentials is already placed again by
   // Oracles & External Reality), and agent/machine topics kept as their own concepts.
   assert.deepEqual(placementsOf("credentials"), ["credentials", "credentials-in-real-world-attestations"]);
-  // Delegation is also placed under Intents & Coordination's Intents.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
   for (const conceptId of ["reputation", "ownership", "roles", "capabilities"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
+  // Delegation is placed again by Intents & Coordination, Governance &
+  // Institutions and AI & Intelligent Systems; this placement stays preferred.
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
+  assert.equal(resolver.getConcept("delegation")?.preferredPlacementId, "delegation");
   for (const [placementId, related] of [
     ["agent-credentials", "credentials"],
     ["machine-credentials", "credentials"],
@@ -2972,7 +3095,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     "account-abstraction": ["account-abstraction-in-chain-abstraction"],
     "gas-abstraction": ["gas-abstraction-in-abstraction-layers"],
   };
-  const shared = new Set(["attestations", "signing", "transaction-submission", "credentials", "delegation"]);
+  const shared = new Set(["attestations", "signing", "transaction-submission", "credentials", "agent-identity", "delegation"]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -3030,6 +3153,12 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
   // APIs and External APIs are one concept within this domain.
   assert.deepEqual(placementsOf("external-apis"), ["external-apis", "external-apis-in-data-sources"]);
   assert.equal(resolver.getConcept("external-apis")?.preferredPlacementId, "external-apis");
+  // AI Inference and Inference Confidence are consumed here; AI & Intelligent
+  // Systems places them again and is preferred, as their conceptual home.
+  assert.deepEqual(placementsOf("ai-inference"), ["ai-inference", "ai-inference-in-ai-intelligent-systems"]);
+  assert.equal(resolver.getConcept("ai-inference")?.preferredPlacementId, "ai-inference-in-ai-intelligent-systems");
+  assert.deepEqual(placementsOf("inference-confidence"), ["inference-confidence", "inference-confidence-in-uncertainty-reliability"]);
+  assert.equal(resolver.getConcept("inference-confidence")?.preferredPlacementId, "inference-confidence-in-uncertainty-reliability");
   // Same wording, different concepts: distinct concepts shown with the given labels.
   for (const [placementId, title, existing] of [
     ["external-data-availability", "External Data Availability", "data-availability"],
@@ -3065,7 +3194,7 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis"]);
+  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis", "ai-inference", "inference-confidence"]);
   // Also placed in Governance & Institutions.
   const placedElsewhere: Record<string, string[]> = { evidence: ["evidence-in-dispute-resolution"] };
   for (const [id, conceptId] of [...ORACLES_LAYER, ...ORACLES_L2]) {
@@ -3357,7 +3486,7 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Each reused concept is placed again here; its existing home stays preferred.
   // Delegation is also placed by Governance & Institutions.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
   assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation");
   for (const [conceptId, here] of [
     ["batch-auctions", "batch-auctions-in-solver-competition"],
@@ -3456,7 +3585,7 @@ test("Governance & Institutions has exactly its fifteen L1 topics and their L2 p
 test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignment and keeps governance mechanisms distinct", () => {
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Reused concepts keep their existing home as the preferred placement.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
   for (const [conceptId, here] of [
     ["evidence", "evidence-in-dispute-resolution"],
     ["incentive-alignment", "incentive-alignment-in-institutional-design"],
@@ -4013,6 +4142,148 @@ test("Protocol Design & Lifecycle reuses existing concepts without moving their 
   }
   const ids = [...LIFECYCLE_LAYER, ...LIFECYCLE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("AI & Intelligent Systems has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("ai-intelligent-systems").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    AI_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("ai-intelligent-systems").map((placement) => placement.order), AI_LAYER.map((_, order) => order));
+  for (const [parent, children] of AI_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of AI_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "ai-intelligent-systems")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...AI_LAYER.map(([id]) => id), ...AI_L2.map(([id]) => id)].sort());
+  assert.equal(AI_L2.length, 69);
+  // Ancestry runs through the L1 placement to the L0 domain.
+  assert.deepEqual(resolver.getAncestors("zkml").map((placement) => placement.id), ["ai-intelligent-systems", "verifiable-ai"]);
+  assert.deepEqual(resolver.getAncestors("delegation-in-ai-agents").map((placement) => placement.id), ["ai-intelligent-systems", "ai-agent"]);
+  assert.deepEqual(resolver.getAncestors("model-inputs").map((placement) => placement.id), ["ai-intelligent-systems", "ai-inference-in-ai-intelligent-systems"]);
+});
+
+test("AI & Intelligent Systems reuses existing concepts where the meaning is the same and keeps related concepts distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // AI Inference and Inference Confidence: 09's concepts, preferred here, their conceptual home.
+  assert.deepEqual(placementsOf("ai-inference"), ["ai-inference", "ai-inference-in-ai-intelligent-systems"]);
+  assert.equal(resolver.getConcept("ai-inference")?.preferredPlacementId, "ai-inference-in-ai-intelligent-systems");
+  assert.equal(resolver.getChildren("ai-inference-in-ai-intelligent-systems").length, 6);
+  assert.deepEqual(resolver.getChildren("ai-inference"), []);
+  assert.deepEqual(placementsOf("inference-confidence"), ["inference-confidence", "inference-confidence-in-uncertainty-reliability"]);
+  assert.equal(resolver.getConcept("inference-confidence")?.preferredPlacementId, "inference-confidence-in-uncertainty-reliability");
+  // 09 keeps its contextual wording; here the concept title is shown.
+  assert.equal(placementLabel("inference-confidence"), "Confidence");
+  assert.equal(placementLabel("inference-confidence-in-uncertainty-reliability"), "Inference Confidence");
+  // Delegation, Agent Identity and Trusted Execution stay preferred at home
+  // (13 and 14 also place Delegation).
+  for (const [conceptId, here] of [
+    ["delegation", "delegation-in-ai-agents"],
+    ["agent-identity", "agent-identity-in-ai-agents"],
+    ["trusted-execution", "trusted-execution-in-verifiable-ai"],
+  ]) {
+    const earlier = conceptId === "delegation" ? ["delegation-in-intents", "delegation-in-representation"] : [];
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...earlier].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+  }
+  // Principals is a general concept, titled without an AI qualifier.
+  assert.equal(resolver.getConcept("principals")?.title, "Principals");
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["training-data-poisoning", "data-poisoning"],
+    ["reasoning-traces", "execution-traces"],
+    ["reasoning-traces", "distributed-traces"],
+    ["decoding", "sampling"],
+    ["inference-reproducibility", "determinism"],
+    ["inference-reproducibility", "non-deterministic-execution"],
+    ["inference-cost", "execution-cost"],
+    ["goals", "mechanism-objectives"],
+    ["goal-specification", "mechanism-objectives"],
+    ["alignment-control", "incentive-alignment"],
+    ["specification-gaming", "manipulation"],
+    ["principals", "participants"],
+    ["principals", "players"],
+    ["model-robustness", "fault-tolerance"],
+    ["model-provenance", "provenance"],
+    ["model-provenance", "source-provenance"],
+    ["model-commitments", "commitment-schemes"],
+    ["verifiable-inference", "verifiable-execution"],
+    ["verifiable-inference", "computation-proofs"],
+    ["retrieval-augmented-generation", "data-retrieval"],
+    ["retrieval-augmented-generation", "content-retrieval"],
+    ["tool-protocols", "protocols"],
+    ["verifiable-agents", "agent-identity"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition; only
+  // Agent Identity keeps its existing content.
+  const shared = new Set(["ai-inference", "ai-agent", "delegation", "agent-identity", "inference-confidence", "trusted-execution"]);
+  for (const [id, conceptId] of [...AI_LAYER, ...AI_L2]) {
+    if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...AI_LAYER, ...AI_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 21–27's scope to them", () => {
+  // The fixture's concept, placement ID and relationships are unchanged; only
+  // its position and contextual wording change.
+  assert.equal(resolver.getConcept("ai-agent")?.title, "AI Agent");
+  assert.equal(resolver.getConcept("ai-agent")?.preferredPlacementId, undefined);
+  assert.deepEqual(placementsOf("ai-agent"), ["ai-agent"]);
+  const placement = resolver.getPlacement("ai-agent");
+  assert.equal(placement?.parentPlacementId, "ai-intelligent-systems");
+  assert.equal(placement?.order, 6);
+  assert.equal(placement?.contextualLabel, "AI Agents");
+  assert.equal(resolver.getContentForConcept("ai-agent"), undefined);
+  assert.deepEqual(
+    resolver.getRelationshipsTo("ai-agent").map((relationship) => [relationship.id, relationship.sourceConceptId, relationship.typeId]),
+    [
+      ["agent-identity-authenticates-ai-agent", "agent-identity", "authenticates"],
+      ["authority-constrains-ai-agent", "authority", "constrains"],
+    ],
+  );
+  assert.equal(resolver.getPreferredPlacementForConcept("ai-agent")?.id, "ai-agent");
+  // Economic Agency stays unplaced for 21; 21–27 remain empty; the bare
+  // Autonomy and Agents concepts are left to later domains.
+  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
+  for (const l0 of ["machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+    assert.deepEqual(resolver.getChildren(l0), [], l0);
+  }
+  assert.equal(resolver.getConcept("autonomy"), undefined);
+  assert.equal(resolver.getConcept("agents"), undefined);
+
+  function placementsOf(conceptId: string) {
+    return resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  }
+});
+
+test("reused concepts resolve to their preferred placements", () => {
+  for (const [conceptId, preferred] of [
+    ["ai-inference", "ai-inference-in-ai-intelligent-systems"],
+    ["inference-confidence", "inference-confidence-in-uncertainty-reliability"],
+    ["delegation", "delegation"],
+    ["agent-identity", "agent-identity"],
+    ["trusted-execution", "trusted-execution"],
+  ]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
 });
 
 test("one canonical Finality concept resolves through independent placements", () => {
