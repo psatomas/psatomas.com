@@ -181,10 +181,11 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
             {row.label}
           </span>
         </span>
-        {/* Disclosure indicator (not a control): +/− only when there is something to disclose. */}
+        {/* Disclosure indicator (not a control): +/− only when there is something to
+            disclose. No divider: it is state belonging to the row, not a separate cell. */}
         <span
           aria-hidden="true"
-          className="flex w-12 shrink-0 items-center justify-center border-l border-border font-mono text-base leading-none text-muted transition-colors group-hover:text-accent"
+          className="flex w-12 shrink-0 items-center justify-center font-mono text-base leading-none text-muted transition-colors group-hover:text-accent"
         >
           {row.isExpandable ? (row.isExpanded ? "−" : "+") : null}
         </span>
