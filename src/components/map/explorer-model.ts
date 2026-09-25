@@ -41,7 +41,8 @@ export type MapExplorerRegion = {
 
 /**
  * Disclosure and context are independent reader intentions: many placements
- * may be expanded while at most one placement is the focused context.
+ * may be expanded (local state) while at most one placement is the focused
+ * context, which is owned by the URL's `?context=` value.
  */
 export type MapExplorerState = {
   expandedPlacementIds: ReadonlySet<string>;
@@ -55,12 +56,43 @@ export type MapExplorerContextStep = {
   label: string;
 };
 
-/** Query parameter carrying an entry placement context (MAP spec §14). */
+/** Query parameter carrying the active pedagogical placement (MAP spec §14). */
 export const MAP_CONTEXT_PARAM = "context";
 
-/** `/map` opened at one placement context; placement identity, never display text. */
-export function getMapContextHref(placementId: string): string {
-  return `/map?${new URLSearchParams({ [MAP_CONTEXT_PARAM]: placementId })}`;
+/**
+ * `/map` at one placement context, or plain `/map` without one. Built from
+ * placement identity, never display text; disclosure is never encoded.
+ */
+export function getMapContextHref(placementId: string | null): string {
+  return placementId ? `/map?${new URLSearchParams({ [MAP_CONTEXT_PARAM]: placementId })}` : "/map";
+}
+
+/** Two-digit ordinal for a 1-based L0 position. */
+export function formatMapL0Ordinal(position: number): string {
+  return String(position).padStart(2, "0");
+}
+
+/** One L0 domain as an entry point into /map, derived from canonical root placements. */
+export type MapL0Entry = {
+  placementId: string;
+  conceptId: string;
+  label: string;
+  ordinal: string;
+  href: string;
+};
+
+export function getMapL0Entries(resolver: MapResolver): MapL0Entry[] {
+  return resolver.getRootPlacements().map((placement, index) => {
+    const concept = resolver.getConcept(placement.conceptId);
+    if (!concept) throw new Error(`MAP L0 placement "${placement.id}" has no concept "${placement.conceptId}"`);
+    return {
+      placementId: placement.id,
+      conceptId: concept.id,
+      label: placement.contextualLabel ?? concept.title,
+      ordinal: formatMapL0Ordinal(index + 1),
+      href: getMapContextHref(placement.id),
+    };
+  });
 }
 
 type IndexedPlacement = { node: MapExplorerNode; parentPlacementId?: string };
@@ -97,7 +129,7 @@ export function buildMapExplorerView(
     roots: rootPlacementIds.map((placementId) => {
       const position = canonicalRoots.indexOf(placementId);
       const node = resolveNode(resolver, placementId);
-      return position < 0 ? node : { ...node, ordinal: String(position + 1).padStart(2, "0") };
+      return position < 0 ? node : { ...node, ordinal: formatMapL0Ordinal(position + 1) };
     }),
   };
 }
@@ -111,40 +143,73 @@ export function getInitialExpandedPlacementIds(view: MapExplorerView): string[] 
 }
 
 /**
- * An entry context (e.g. `/map?context=<placementId>`) becomes the focused
- * placement and is revealed: its ancestors and the placement itself open, so
- * its immediate children are visible, but nothing deeper is expanded. An
- * unknown context is ignored and yields the default state.
+ * The URL's context value as a known placement, or null. Anything other than
+ * exactly one value naming a placement in this view (unknown, empty,
+ * repeated, or a concept rather than a placement identifier) is ignored.
+ */
+export function resolveMapContextParam(
+  index: MapExplorerIndex,
+  values: readonly string[] | string | null | undefined,
+): string | null {
+  const list = typeof values === "string" ? [values] : (values ?? []);
+  return list.length === 1 && index.has(list[0]) ? list[0] : null;
+}
+
+/**
+ * Opens the ancestors of a context placement (and, with `includeSelf`, the
+ * placement itself when it has children) so it is visible. It only ever
+ * adds to disclosure: no unrelated branch is closed.
+ */
+export function revealMapExplorerContext(
+  expandedPlacementIds: ReadonlySet<string>,
+  index: MapExplorerIndex,
+  placementId: string | null,
+  includeSelf = false,
+): ReadonlySet<string> {
+  const context = getMapExplorerContext(index, placementId);
+  const steps = includeSelf ? context : context.slice(0, -1);
+  const missing = steps.filter(
+    ({ placementId: id }) => index.get(id)?.node.children.length && !expandedPlacementIds.has(id),
+  );
+  if (missing.length === 0) return expandedPlacementIds;
+  return new Set([...expandedPlacementIds, ...missing.map((step) => step.placementId)]);
+}
+
+/**
+ * Initial state for an entry context (e.g. `/map?context=<placementId>`): the
+ * context is focused and revealed, its ancestors and the placement itself
+ * open so its immediate children are visible, and nothing deeper expands.
+ * An unknown context yields the default state.
  */
 export function getInitialMapExplorerState(
   view: MapExplorerView,
   contextPlacementId: string | null = null,
 ): MapExplorerState {
-  const expandedPlacementIds = new Set(getInitialExpandedPlacementIds(view));
   const index = indexMapExplorerView(view);
-  const context = getMapExplorerContext(index, contextPlacementId);
-  if (context.length === 0) return { expandedPlacementIds, focusedPlacementId: null };
-
-  for (const { placementId } of context) {
-    if (index.get(placementId)?.node.children.length) expandedPlacementIds.add(placementId);
-  }
-  return { expandedPlacementIds, focusedPlacementId: context[context.length - 1].placementId };
+  const focusedPlacementId = resolveMapContextParam(index, contextPlacementId);
+  const expandedPlacementIds = revealMapExplorerContext(
+    new Set(getInitialExpandedPlacementIds(view)),
+    index,
+    focusedPlacementId,
+    true,
+  );
+  return { expandedPlacementIds, focusedPlacementId };
 }
 
-/** Disclosure only: never changes the focused context. */
-export function toggleMapExplorerPlacement(state: MapExplorerState, placementId: string): MapExplorerState {
-  const expandedPlacementIds = new Set(state.expandedPlacementIds);
-  if (expandedPlacementIds.has(placementId)) expandedPlacementIds.delete(placementId);
-  else expandedPlacementIds.add(placementId);
-  return { ...state, expandedPlacementIds };
+/** Disclosure only: a pure change to the expanded set; context lives in the URL. */
+export function toggleMapExplorerPlacement(
+  expandedPlacementIds: ReadonlySet<string>,
+  placementId: string,
+): ReadonlySet<string> {
+  const next = new Set(expandedPlacementIds);
+  if (next.has(placementId)) next.delete(placementId);
+  else next.add(placementId);
+  return next;
 }
 
-/** Context only: never opens or closes any branch. `null` clears the context. */
-export function focusMapExplorerPlacement(
-  state: MapExplorerState,
-  placementId: string | null,
-): MapExplorerState {
-  return { ...state, focusedPlacementId: placementId };
+/** Selecting the active placement again clears context; any other selection moves to it. */
+export function getNextMapContext(current: string | null, selected: string): string | null {
+  return current === selected ? null : selected;
 }
 
 /** Placement lookup with parent links, derived from the view's placement tree. */

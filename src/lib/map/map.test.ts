@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { mapKnowledge } from "./data.ts";
 import { createMapResolver } from "./resolver.ts";
 import { MapKnowledgeValidationError, validateMapKnowledge } from "./validation.ts";
 import type { MapKnowledgeModel } from "./types.ts";
+import { staticSocial } from "../social/content.ts";
+import { buildSocialMetadata } from "../social/metadata.ts";
 
 const resolver = createMapResolver(mapKnowledge);
 
@@ -51,6 +54,20 @@ test("the taxonomy root is exactly the 27 L0 domains in agreed order", () => {
     assert.equal(resolver.getConcept(id)?.title, title);
     assert.deepEqual(resolver.getPlacementsForConcept(id).map((entry) => entry.id), [id]);
   }
+});
+
+test("the root taxonomy agrees with the L0 domains in the MAP specification", () => {
+  const spec = readFileSync(new URL("../../../docs/map-spec.md", import.meta.url), "utf8");
+  const scope = spec.slice(spec.indexOf("## 5. Long-term knowledge scope"), spec.indexOf("## 6."));
+  const specDomains = [...scope.matchAll(/^\d+\. (.+)$/gm)].map((match) => match[1]);
+
+  assert.deepEqual(specDomains, L0_DOMAINS.map(([, title]) => title));
+});
+
+test("/map canonical metadata is the environment URL, never a context query", () => {
+  const metadata = buildSocialMetadata(staticSocial.map);
+  assert.equal(metadata.alternates?.canonical, "https://psatomas.com/map");
+  assert.equal(metadata.openGraph?.url, "https://psatomas.com/map");
 });
 
 test("canonical concept identities stay unique after adding the L0 layer", () => {
