@@ -13,6 +13,9 @@ import {
   getVisibleMapExplorerRegions,
   getVisibleMapExplorerRows,
   activateMapExplorerRow,
+  enterMapExplorerContext,
+  getContainingMapL0,
+  getMapL0IndexEntries,
   indexMapExplorerView,
   resolveMapContextParam,
   revealMapExplorerContext,
@@ -496,4 +499,40 @@ test("exposition is normalized to ordered blocks: definition leads, no labelled 
   assert.equal(foundations.blocks[0].kind, "paragraph");
   assert.equal(foundations.blocks.length, 1 + (mapKnowledge.content[0].body?.length ?? 0));
   assert.equal(getMapConceptContentHref("foundations"), "/api/map/content/foundations");
+});
+
+test("the /map domain index is the canonical 27 L0 entries, identical to the homepage's", () => {
+  const entries = getMapL0IndexEntries(view);
+  assert.equal(entries.length, 27);
+  assert.deepEqual(entries, getMapL0Entries(resolver));
+  assert.deepEqual(entries.map((entry) => entry.ordinal), Array.from({ length: 27 }, (_, i) => String(i + 1).padStart(2, "0")));
+  for (const entry of entries) {
+    assert.equal(entry.href, `/map?context=${entry.placementId}`);
+    // Navigation entries only: no disclosure state of their own.
+    assert.deepEqual(Object.keys(entry).sort(), ["conceptId", "href", "label", "ordinal", "placementId"]);
+  }
+});
+
+test("entering a domain from the index sets context, opens it, and never collapses it", () => {
+  const index = indexMapExplorerView(view);
+  const closed = enterMapExplorerContext("foundations", new Set(), index);
+  assert.equal(closed.contextPlacementId, "foundations");
+  assert.deepEqual([...closed.expandedPlacementIds], ["foundations"]);
+  assert.equal(closed.reveal, true);
+  // Already open (unlike activating the open row): stays open.
+  const open = new Set(["foundations", "scaling-modular-systems"]);
+  const again = enterMapExplorerContext("foundations", open, index);
+  assert.equal(again.expandedPlacementIds, open);
+  // An empty domain is entered without fabricated disclosure.
+  assert.deepEqual([...enterMapExplorerContext("machine-economy", new Set(), index).expandedPlacementIds], []);
+  assert.equal(getMapContextHref(closed.contextPlacementId), "/map?context=foundations");
+});
+
+test("the containing L0 domain comes from placement ancestry", () => {
+  const index = indexMapExplorerView(view);
+  assert.equal(getContainingMapL0(index, "foundations"), "foundations");
+  assert.equal(getContainingMapL0(index, "protocols"), "foundations");
+  assert.equal(getContainingMapL0(index, "finality-in-consensus"), "consensus-ordering");
+  assert.equal(getContainingMapL0(index, "finality-in-rollups"), "scaling-modular-systems");
+  assert.equal(getContainingMapL0(index, null), null);
 });

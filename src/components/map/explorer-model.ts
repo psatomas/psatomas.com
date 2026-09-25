@@ -276,6 +276,43 @@ export function activateMapExplorerRow(
   };
 }
 
+/**
+ * Entering a placement as the context (from the /map domain index or any
+ * other navigation into a place): it becomes the context and it and its
+ * ancestors open. Unlike activating an open row, entering never collapses.
+ */
+export function enterMapExplorerContext(
+  placementId: string,
+  expandedPlacementIds: ReadonlySet<string>,
+  index: MapExplorerIndex,
+): MapRowActivation {
+  return {
+    contextPlacementId: placementId,
+    expandedPlacementIds: revealMapExplorerContext(expandedPlacementIds, index, placementId, true),
+    reveal: true,
+  };
+}
+
+/** The L0 domain containing a placement, from its placement ancestry. */
+export function getContainingMapL0(index: MapExplorerIndex, placementId: string | null): string | null {
+  return getMapExplorerContext(index, placementId)[0]?.placementId ?? null;
+}
+
+/**
+ * The /map domain index: the explorer's own canonical roots as L0 entries,
+ * identical to getMapL0Entries(resolver) on the homepage (same identities,
+ * labels, ordinals, and targets), without a second list.
+ */
+export function getMapL0IndexEntries(view: MapExplorerView): MapL0Entry[] {
+  return view.roots.map((root, position) => ({
+    placementId: root.placementId,
+    conceptId: root.conceptId,
+    label: root.label,
+    ordinal: root.ordinal ?? formatMapL0Ordinal(position + 1),
+    href: getMapContextHref(root.placementId),
+  }));
+}
+
 /** Placement lookup with parent links, derived from the view's placement tree. */
 export function indexMapExplorerView(view: MapExplorerView): MapExplorerIndex {
   const index = new Map<string, IndexedPlacement>();
