@@ -10,6 +10,8 @@ export type MapExplorerNode = {
   placementId: string;
   conceptId: string;
   label: string;
+  /** Two-digit L0 ordinal ("01"…) from the canonical root order; roots only. */
+  ordinal?: string;
   children: readonly MapExplorerNode[];
 };
 
@@ -22,6 +24,8 @@ export type MapExplorerRow = {
   conceptId: string;
   label: string;
   depth: number;
+  /** Two-digit L0 ordinal, present on root rows only. */
+  ordinal?: string;
   /** Immediate parent placement, absent for region (root) rows. */
   parentPlacementId?: string;
   parentLabel?: string;
@@ -86,8 +90,15 @@ export function buildMapExplorerView(
   resolver: MapResolver,
   rootPlacementIds: readonly string[],
 ): MapExplorerView {
+  // Ordinals follow the canonical root sequence, not the selection, so a
+  // bounded view of some roots still shows each domain's own number.
+  const canonicalRoots = resolver.getRootPlacements().map((placement) => placement.id);
   return {
-    roots: rootPlacementIds.map((placementId) => resolveNode(resolver, placementId)),
+    roots: rootPlacementIds.map((placementId) => {
+      const position = canonicalRoots.indexOf(placementId);
+      const node = resolveNode(resolver, placementId);
+      return position < 0 ? node : { ...node, ordinal: String(position + 1).padStart(2, "0") };
+    }),
   };
 }
 
@@ -186,6 +197,7 @@ export function getVisibleMapExplorerRows(
       conceptId: node.conceptId,
       label: node.label,
       depth,
+      ordinal: depth === 0 ? node.ordinal : undefined,
       parentPlacementId: parent?.placementId,
       parentLabel: parent?.label,
       hasChildren,

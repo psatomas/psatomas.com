@@ -320,3 +320,21 @@ test("a deep entry context reveals its full ancestor chain from the L0 domain", 
     ["scaling-modular-systems", "scaling", "rollups", "finality-in-rollups"],
   );
 });
+
+test("L0 rows carry ordinals 01 → 27 from the canonical root order; nested rows carry none", () => {
+  const everyPlacement = new Set(mapKnowledge.placements.map((placement) => placement.id));
+  const rows = getVisibleMapExplorerRows(view, everyPlacement);
+  const roots = rows.filter((row) => row.depth === 0);
+
+  assert.deepEqual(roots.map((row) => row.ordinal), Array.from({ length: 27 }, (_, i) => String(i + 1).padStart(2, "0")));
+  assert.deepEqual(roots.map((row) => row.placementId), resolver.getRootPlacements().map((placement) => placement.id));
+  assert.ok(rows.some((row) => row.depth > 0));
+  assert.deepEqual(rows.filter((row) => row.depth > 0).map((row) => row.ordinal), rows.filter((row) => row.depth > 0).map(() => undefined));
+  // Ordinals are presentation only: identities and labels stay unnumbered.
+  assert.ok(roots.every((row) => !/\d/.test(row.placementId + row.conceptId + row.label)));
+});
+
+test("a bounded view of some roots keeps each domain's canonical ordinal", () => {
+  const bounded = buildMapExplorerView(resolver, ["state-data", "frontier-systems"]);
+  assert.deepEqual(bounded.roots.map((root) => root.ordinal), ["03", "27"]);
+});
