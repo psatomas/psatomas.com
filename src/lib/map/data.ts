@@ -510,6 +510,95 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "machine-credentials",
     "machine-authentication",
   ],
+  // 09 Oracles & External Reality
+  "oracle-problem": [
+    { placementId: "external-data-in-oracle-problem", conceptId: "external-data", contextualLabel: "External Information" },
+    { placementId: "trust-assumptions-in-oracle-problem", conceptId: "trust-assumptions" },
+    "verification-limits",
+    { placementId: "authenticity-in-oracle-problem", conceptId: "authenticity", contextualLabel: "Data Authenticity" },
+    { placementId: "external-data-availability", conceptId: "external-data-availability", contextualLabel: "Data Availability" },
+    "oracle-failure",
+  ],
+  "data-sources": [
+    "primary-sources",
+    "secondary-sources",
+    { placementId: "external-apis-in-data-sources", conceptId: "external-apis", contextualLabel: "APIs" },
+    "market-data",
+    "sensor-data",
+    "source-diversity",
+  ],
+  "oracle-networks": [
+    "oracle-nodes",
+    "node-selection",
+    "data-collection",
+    "data-reporting",
+    { placementId: "consensus-in-oracle-networks", conceptId: "consensus" },
+    "oracle-incentives",
+  ],
+  "push-pull-oracles": ["push-oracles", "pull-oracles", "update-models", "request-response", "on-demand-updates"],
+  "oracle-aggregation": [
+    "data-aggregation",
+    "medianization",
+    "weighted-aggregation",
+    "outlier-filtering",
+    "quorum-aggregation",
+    "aggregation-rules",
+  ],
+  freshness: [
+    "update-frequency",
+    "staleness",
+    "timestamps",
+    "freshness-thresholds",
+    "heartbeats",
+    "deviation-thresholds",
+  ],
+  "provenance-in-oracles-external-reality": [
+    "source-provenance",
+    { placementId: "lineage-in-oracles-external-reality", conceptId: "lineage", contextualLabel: "Data Lineage" },
+    { placementId: "attribution-in-oracles-external-reality", conceptId: "attribution", contextualLabel: "Source Attribution" },
+    "transformation-history",
+    "provenance-verification",
+  ],
+  "oracle-security": [
+    "oracle-manipulation",
+    "data-poisoning",
+    "source-compromise",
+    "sybil-attacks",
+    { placementId: "collusion-in-oracle-security", conceptId: "collusion" },
+    "economic-attacks",
+  ],
+  "machine-readable-reality": [
+    "structured-data",
+    "semantic-data",
+    "machine-readable-claims",
+    "verifiable-claims",
+    "data-schemas",
+    "reality-interfaces",
+  ],
+  "sensors-external-systems": [
+    "sensors",
+    "iot-devices",
+    "external-apis",
+    "trusted-hardware",
+    "physical-events",
+    "cyber-physical-interfaces",
+  ],
+  "ai-interpreted-data": [
+    "unstructured-data",
+    { placementId: "information-extraction", conceptId: "information-extraction", contextualLabel: "Data Extraction" },
+    "classification",
+    "ai-inference",
+    { placementId: "inference-confidence", conceptId: "inference-confidence", contextualLabel: "Confidence" },
+    "interpretation-verification",
+  ],
+  "real-world-attestations": [
+    { placementId: "real-world-attesters", conceptId: "real-world-attesters", contextualLabel: "Attesters" },
+    "claims",
+    "evidence",
+    { placementId: "credentials-in-real-world-attestations", conceptId: "credentials" },
+    "attestation-verification",
+    "revocation",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -525,8 +614,8 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
- * and Identity, Accounts & Authority; and a deliberately small Phase 1 proof
- * fixture re-homed beneath its L0 domains.
+ * Identity, Accounts & Authority, and Oracles & External Reality; and a
+ * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -569,7 +658,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "transition-rules", slug: "transition-rules", title: "Transition Rules" },
     { id: "determinism", slug: "determinism", title: "Determinism" },
     { id: "state-machine-replication", slug: "state-machine-replication", title: "State Machine Replication" },
-    { id: "trust-assumptions", slug: "trust-assumptions", title: "Trust Assumptions" },
+    // Also placed under 09's Oracle Problem; this placement is preferred.
+    { id: "trust-assumptions", slug: "trust-assumptions", title: "Trust Assumptions", preferredPlacementId: "trust-assumptions" },
     { id: "trusted-parties", slug: "trusted-parties", title: "Trusted Parties" },
     { id: "trust-boundaries", slug: "trust-boundaries", title: "Trust Boundaries" },
     // Also placed under Verifiable Computation: checking a computation's proof
@@ -587,7 +677,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "threat-models", slug: "threat-models", title: "Threat Models" },
     { id: "byzantine-behavior", slug: "byzantine-behavior", title: "Byzantine Behavior" },
     { id: "censorship", slug: "censorship", title: "Censorship" },
-    { id: "collusion", slug: "collusion", title: "Collusion" },
+    // Also placed under 09's Oracle Security; this placement is preferred.
+    { id: "collusion", slug: "collusion", title: "Collusion", preferredPlacementId: "collusion" },
     { id: "strategic-behavior", slug: "strategic-behavior", title: "Strategic Behavior" },
     { id: "safety", slug: "safety", title: "Safety" },
     { id: "liveness", slug: "liveness", title: "Liveness" },
@@ -683,7 +774,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "on-chain-data", slug: "on-chain-data", title: "On-Chain Data" },
     { id: "off-chain-data", slug: "off-chain-data", title: "Off-Chain Data" },
     { id: "data-integrity", slug: "data-integrity", title: "Data Integrity" },
-    { id: "provenance", slug: "provenance", title: "Provenance" },
+    // The origin and history of data; also an L1 topic of 09 Oracles & External
+    // Reality with its own layer. This placement is preferred.
+    { id: "provenance", slug: "provenance", title: "Provenance", preferredPlacementId: "provenance" },
     { id: "indexing", slug: "indexing", title: "Indexing" },
     // L2 topics (placements in L2_TOPICS).
     { id: "state-models", slug: "state-models", title: "State Models" },
@@ -734,7 +827,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "transaction-data", slug: "transaction-data", title: "Transaction Data" },
     { id: "block-data", slug: "block-data", title: "Block Data" },
     { id: "protocol-state", slug: "protocol-state", title: "Protocol State" },
-    { id: "external-data", slug: "external-data", title: "External Data" },
+    // Also placed as 09's "External Information" (what an oracle brings on
+    // chain); this placement is preferred.
+    { id: "external-data", slug: "external-data", title: "External Data", preferredPlacementId: "external-data" },
     { id: "metadata", slug: "metadata", title: "Metadata" },
     { id: "off-chain-state", slug: "off-chain-state", title: "Off-Chain State" },
     { id: "data-references", slug: "data-references", title: "Data References" },
@@ -750,15 +845,19 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "data-commitments", slug: "data-commitments", title: "Data Commitments" },
     { id: "integrity-verification", slug: "integrity-verification", title: "Integrity Verification" },
     { id: "tamper-evidence", slug: "tamper-evidence", title: "Tamper Evidence" },
-    { id: "authenticity", slug: "authenticity", title: "Authenticity" },
+    // Also placed as 09's "Data Authenticity"; this placement is preferred.
+    { id: "authenticity", slug: "authenticity", title: "Authenticity", preferredPlacementId: "authenticity" },
     { id: "data-origin", slug: "data-origin", title: "Data Origin" },
-    { id: "lineage", slug: "lineage", title: "Lineage" },
-    { id: "attribution", slug: "attribution", title: "Attribution" },
+    // Also placed as 09's "Data Lineage"; this placement is preferred.
+    { id: "lineage", slug: "lineage", title: "Lineage", preferredPlacementId: "lineage" },
+    // Also placed as 09's "Source Attribution"; this placement is preferred.
+    { id: "attribution", slug: "attribution", title: "Attribution", preferredPlacementId: "attribution" },
     { id: "provenance-records", slug: "provenance-records", title: "Provenance Records" },
     // A signed statement by an identifiable party vouching for a claim; also
     // under 08's Identity, its main home, and preferred there.
     { id: "attestations", slug: "attestations", title: "Attestations", preferredPlacementId: "attestations-in-identity" },
     { id: "traceability", slug: "traceability", title: "Traceability" },
+    // Extracting chain data for indexing, not 09's Information Extraction.
     { id: "data-extraction", slug: "data-extraction", title: "Data Extraction" },
     { id: "data-transformation", slug: "data-transformation", title: "Data Transformation" },
     { id: "derived-state", slug: "derived-state", title: "Derived State" },
@@ -795,6 +894,7 @@ export const mapKnowledge: MapKnowledgeModel = {
     // One role under Validators and Proposer-Builder Separation; preferred where
     // it is defined, among the validators.
     { id: "proposers", slug: "proposers", title: "Proposers", preferredPlacementId: "proposers-in-validators" },
+    // Validators attesting to the chain, not 09's Real-World Attesters.
     { id: "attesters", slug: "attesters", title: "Attesters" },
     { id: "validator-duties", slug: "validator-duties", title: "Validator Duties" },
     { id: "validator-incentives", slug: "validator-incentives", title: "Validator Incentives" },
@@ -1076,7 +1176,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // domains.
     { id: "addresses", slug: "addresses", title: "Addresses" },
     { id: "decentralized-identifiers", slug: "decentralized-identifiers", title: "Decentralized Identifiers" },
-    { id: "credentials", slug: "credentials", title: "Credentials" },
+    // Also placed under 09's Real-World Attestations; this placement is preferred.
+    { id: "credentials", slug: "credentials", title: "Credentials", preferredPlacementId: "credentials" },
     { id: "reputation", slug: "reputation", title: "Reputation" },
     // Account State (an account's balance, nonce, code and storage root) is not
     // Contract State. Account, Wallet and Recovery Logic recovery differ:
@@ -1126,7 +1227,104 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "agent-authorization", slug: "agent-authorization", title: "Agent Authorization" },
     { id: "machine-credentials", slug: "machine-credentials", title: "Machine Credentials" },
     { id: "machine-authentication", slug: "machine-authentication", title: "Machine Authentication" },
-    { id: "consensus", slug: "consensus", title: "Consensus" },
+    // 09 Oracles & External Reality: L1 topics (Provenance is 03's concept).
+    { id: "oracle-problem", slug: "oracle-problem", title: "Oracle Problem" },
+    { id: "data-sources", slug: "data-sources", title: "Data Sources" },
+    { id: "oracle-networks", slug: "oracle-networks", title: "Oracle Networks" },
+    { id: "push-pull-oracles", slug: "push-pull-oracles", title: "Push / Pull Oracles" },
+    // Shown as "Aggregation"; the bare term also names signature and liquidity
+    // aggregation.
+    { id: "oracle-aggregation", slug: "oracle-aggregation", title: "Oracle Aggregation" },
+    // Real-World Attestations are attestations about the physical world, taught
+    // with their own layer; the general Attestations concept is 03's.
+    { id: "freshness", slug: "freshness", title: "Freshness" },
+    { id: "oracle-security", slug: "oracle-security", title: "Oracle Security" },
+    { id: "machine-readable-reality", slug: "machine-readable-reality", title: "Machine-Readable Reality" },
+    { id: "sensors-external-systems", slug: "sensors-external-systems", title: "Sensors & External Systems" },
+    { id: "ai-interpreted-data", slug: "ai-interpreted-data", title: "AI-Interpreted Data" },
+    { id: "real-world-attestations", slug: "real-world-attestations", title: "Real-World Attestations" },
+    // L2 topics (placements in L2_TOPICS).
+    { id: "verification-limits", slug: "verification-limits", title: "Verification Limits" },
+    // Whether an external source's data is there when needed, shown as "Data
+    // Availability"; not 07's Data Availability (published block data).
+    { id: "external-data-availability", slug: "external-data-availability", title: "External Data Availability" },
+    { id: "oracle-failure", slug: "oracle-failure", title: "Oracle Failure" },
+    { id: "primary-sources", slug: "primary-sources", title: "Primary Sources" },
+    { id: "secondary-sources", slug: "secondary-sources", title: "Secondary Sources" },
+    // Off-chain systems' interfaces: shown as "APIs" under Data Sources, and
+    // preferred under Sensors & External Systems.
+    { id: "external-apis", slug: "external-apis", title: "External APIs", preferredPlacementId: "external-apis" },
+    // Node Selection (choosing oracle nodes) is not 04's Validator Selection.
+    { id: "market-data", slug: "market-data", title: "Market Data" },
+    { id: "sensor-data", slug: "sensor-data", title: "Sensor Data" },
+    { id: "source-diversity", slug: "source-diversity", title: "Source Diversity" },
+    { id: "oracle-nodes", slug: "oracle-nodes", title: "Oracle Nodes" },
+    { id: "node-selection", slug: "node-selection", title: "Node Selection" },
+    { id: "data-collection", slug: "data-collection", title: "Data Collection" },
+    { id: "data-reporting", slug: "data-reporting", title: "Data Reporting" },
+    { id: "oracle-incentives", slug: "oracle-incentives", title: "Oracle Incentives" },
+    { id: "push-oracles", slug: "push-oracles", title: "Push Oracles" },
+    { id: "pull-oracles", slug: "pull-oracles", title: "Pull Oracles" },
+    { id: "update-models", slug: "update-models", title: "Update Models" },
+    { id: "request-response", slug: "request-response", title: "Request-Response" },
+    { id: "on-demand-updates", slug: "on-demand-updates", title: "On-Demand Updates" },
+    { id: "data-aggregation", slug: "data-aggregation", title: "Data Aggregation" },
+    { id: "medianization", slug: "medianization", title: "Medianization" },
+    { id: "weighted-aggregation", slug: "weighted-aggregation", title: "Weighted Aggregation" },
+    { id: "outlier-filtering", slug: "outlier-filtering", title: "Outlier Filtering" },
+    { id: "quorum-aggregation", slug: "quorum-aggregation", title: "Quorum Aggregation" },
+    { id: "aggregation-rules", slug: "aggregation-rules", title: "Aggregation Rules" },
+    // Heartbeats are scheduled oracle updates, not 05's Health Checks.
+    { id: "update-frequency", slug: "update-frequency", title: "Update Frequency" },
+    { id: "staleness", slug: "staleness", title: "Staleness" },
+    { id: "timestamps", slug: "timestamps", title: "Timestamps" },
+    { id: "freshness-thresholds", slug: "freshness-thresholds", title: "Freshness Thresholds" },
+    { id: "heartbeats", slug: "heartbeats", title: "Heartbeats" },
+    { id: "deviation-thresholds", slug: "deviation-thresholds", title: "Deviation Thresholds" },
+    // Source Provenance (the origin record of a source's data) is not 03's Data
+    // Origin; Transformation History is one part of Lineage.
+    { id: "source-provenance", slug: "source-provenance", title: "Source Provenance" },
+    { id: "transformation-history", slug: "transformation-history", title: "Transformation History" },
+    { id: "provenance-verification", slug: "provenance-verification", title: "Provenance Verification" },
+    { id: "oracle-manipulation", slug: "oracle-manipulation", title: "Oracle Manipulation" },
+    { id: "data-poisoning", slug: "data-poisoning", title: "Data Poisoning" },
+    { id: "source-compromise", slug: "source-compromise", title: "Source Compromise" },
+    { id: "sybil-attacks", slug: "sybil-attacks", title: "Sybil Attacks" },
+    { id: "economic-attacks", slug: "economic-attacks", title: "Economic Attacks" },
+    // Claims, Machine-Readable Claims and Verifiable Claims are distinct: a
+    // statement about a subject, in machine-readable form, and cryptographically
+    // checkable.
+    { id: "structured-data", slug: "structured-data", title: "Structured Data" },
+    { id: "semantic-data", slug: "semantic-data", title: "Semantic Data" },
+    { id: "machine-readable-claims", slug: "machine-readable-claims", title: "Machine-Readable Claims" },
+    { id: "verifiable-claims", slug: "verifiable-claims", title: "Verifiable Claims" },
+    { id: "data-schemas", slug: "data-schemas", title: "Data Schemas" },
+    { id: "reality-interfaces", slug: "reality-interfaces", title: "Reality Interfaces" },
+    // Trusted Hardware (a hardware root of trust) is not 02's Trusted Execution.
+    { id: "sensors", slug: "sensors", title: "Sensors" },
+    { id: "iot-devices", slug: "iot-devices", title: "IoT Devices" },
+    { id: "trusted-hardware", slug: "trusted-hardware", title: "Trusted Hardware" },
+    { id: "physical-events", slug: "physical-events", title: "Physical Events" },
+    { id: "cyber-physical-interfaces", slug: "cyber-physical-interfaces", title: "Cyber-Physical Interfaces" },
+    { id: "unstructured-data", slug: "unstructured-data", title: "Unstructured Data" },
+    // Pulling facts from unstructured data, shown as "Data Extraction"; not 03's
+    // Data Extraction (indexing). Inference Confidence is a model's, shown as
+    // "Confidence"; not 07's statistical Availability Confidence.
+    { id: "information-extraction", slug: "information-extraction", title: "Information Extraction" },
+    { id: "classification", slug: "classification", title: "Classification" },
+    { id: "ai-inference", slug: "ai-inference", title: "AI Inference" },
+    { id: "inference-confidence", slug: "inference-confidence", title: "Inference Confidence" },
+    { id: "interpretation-verification", slug: "interpretation-verification", title: "Interpretation Verification" },
+    // Parties attesting to real-world facts, shown as "Attesters"; not 04's
+    // Attesters (validators).
+    { id: "real-world-attesters", slug: "real-world-attesters", title: "Real-World Attesters" },
+    { id: "claims", slug: "claims", title: "Claims" },
+    { id: "evidence", slug: "evidence", title: "Evidence" },
+    { id: "attestation-verification", slug: "attestation-verification", title: "Attestation Verification" },
+    { id: "revocation", slug: "revocation", title: "Revocation" },
+    // Also placed under 09's Oracle Networks (nodes agreeing on a reported
+    // value); this placement is preferred.
+    { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
     {
       id: "finality",
       slug: "finality",
@@ -1233,6 +1431,30 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "authentication", conceptId: "authentication", parentPlacementId: "identity-accounts-authority", order: 5 },
     { id: "authority", conceptId: "authority", parentPlacementId: "identity-accounts-authority", order: 6 },
     { id: "machine-identity", conceptId: "machine-identity", parentPlacementId: "identity-accounts-authority", order: 7 },
+    // 09 Oracles & External Reality: L1 topics.
+    { id: "oracle-problem", conceptId: "oracle-problem", parentPlacementId: "oracles-external-reality", order: 0 },
+    { id: "data-sources", conceptId: "data-sources", parentPlacementId: "oracles-external-reality", order: 1 },
+    { id: "oracle-networks", conceptId: "oracle-networks", parentPlacementId: "oracles-external-reality", order: 2 },
+    { id: "push-pull-oracles", conceptId: "push-pull-oracles", parentPlacementId: "oracles-external-reality", order: 3 },
+    {
+      id: "oracle-aggregation",
+      conceptId: "oracle-aggregation",
+      parentPlacementId: "oracles-external-reality",
+      order: 4,
+      contextualLabel: "Aggregation",
+    },
+    { id: "freshness", conceptId: "freshness", parentPlacementId: "oracles-external-reality", order: 5 },
+    {
+      id: "provenance-in-oracles-external-reality",
+      conceptId: "provenance",
+      parentPlacementId: "oracles-external-reality",
+      order: 6,
+    },
+    { id: "oracle-security", conceptId: "oracle-security", parentPlacementId: "oracles-external-reality", order: 7 },
+    { id: "machine-readable-reality", conceptId: "machine-readable-reality", parentPlacementId: "oracles-external-reality", order: 8 },
+    { id: "sensors-external-systems", conceptId: "sensors-external-systems", parentPlacementId: "oracles-external-reality", order: 9 },
+    { id: "ai-interpreted-data", conceptId: "ai-interpreted-data", parentPlacementId: "oracles-external-reality", order: 10 },
+    { id: "real-world-attestations", conceptId: "real-world-attestations", parentPlacementId: "oracles-external-reality", order: 11 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

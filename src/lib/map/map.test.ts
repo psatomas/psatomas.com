@@ -671,6 +671,123 @@ const IDENTITY_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const IDENTITY_L2 = IDENTITY_TREE.flatMap(([, children]) => children);
 
+// 09 Oracles & External Reality. Provenance (03), Trust Assumptions and
+// Collusion (01), Consensus (04) and Credentials (08) are reused as they are;
+// External Data, Authenticity, Lineage and Attribution (03) in contextual
+// wording; APIs is External APIs. Data Availability, Aggregation, Data
+// Extraction, Confidence and Attesters are distinct concepts in contextual wording.
+const ORACLES_LAYER: Array<[string, string, string]> = [
+  ["oracle-problem", "oracle-problem", "Oracle Problem"],
+  ["data-sources", "data-sources", "Data Sources"],
+  ["oracle-networks", "oracle-networks", "Oracle Networks"],
+  ["push-pull-oracles", "push-pull-oracles", "Push / Pull Oracles"],
+  ["oracle-aggregation", "oracle-aggregation", "Aggregation"],
+  ["freshness", "freshness", "Freshness"],
+  ["provenance-in-oracles-external-reality", "provenance", "Provenance"],
+  ["oracle-security", "oracle-security", "Oracle Security"],
+  ["machine-readable-reality", "machine-readable-reality", "Machine-Readable Reality"],
+  ["sensors-external-systems", "sensors-external-systems", "Sensors & External Systems"],
+  ["ai-interpreted-data", "ai-interpreted-data", "AI-Interpreted Data"],
+  ["real-world-attestations", "real-world-attestations", "Real-World Attestations"],
+];
+const ORACLES_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["oracle-problem", [
+    ["external-data-in-oracle-problem", "external-data", "External Information"],
+    ["trust-assumptions-in-oracle-problem", "trust-assumptions", "Trust Assumptions"],
+    ["verification-limits", "verification-limits", "Verification Limits"],
+    ["authenticity-in-oracle-problem", "authenticity", "Data Authenticity"],
+    ["external-data-availability", "external-data-availability", "Data Availability"],
+    ["oracle-failure", "oracle-failure", "Oracle Failure"],
+  ]],
+  ["data-sources", [
+    ["primary-sources", "primary-sources", "Primary Sources"],
+    ["secondary-sources", "secondary-sources", "Secondary Sources"],
+    ["external-apis-in-data-sources", "external-apis", "APIs"],
+    ["market-data", "market-data", "Market Data"],
+    ["sensor-data", "sensor-data", "Sensor Data"],
+    ["source-diversity", "source-diversity", "Source Diversity"],
+  ]],
+  ["oracle-networks", [
+    ["oracle-nodes", "oracle-nodes", "Oracle Nodes"],
+    ["node-selection", "node-selection", "Node Selection"],
+    ["data-collection", "data-collection", "Data Collection"],
+    ["data-reporting", "data-reporting", "Data Reporting"],
+    ["consensus-in-oracle-networks", "consensus", "Consensus"],
+    ["oracle-incentives", "oracle-incentives", "Oracle Incentives"],
+  ]],
+  ["push-pull-oracles", [
+    ["push-oracles", "push-oracles", "Push Oracles"],
+    ["pull-oracles", "pull-oracles", "Pull Oracles"],
+    ["update-models", "update-models", "Update Models"],
+    ["request-response", "request-response", "Request-Response"],
+    ["on-demand-updates", "on-demand-updates", "On-Demand Updates"],
+  ]],
+  ["oracle-aggregation", [
+    ["data-aggregation", "data-aggregation", "Data Aggregation"],
+    ["medianization", "medianization", "Medianization"],
+    ["weighted-aggregation", "weighted-aggregation", "Weighted Aggregation"],
+    ["outlier-filtering", "outlier-filtering", "Outlier Filtering"],
+    ["quorum-aggregation", "quorum-aggregation", "Quorum Aggregation"],
+    ["aggregation-rules", "aggregation-rules", "Aggregation Rules"],
+  ]],
+  ["freshness", [
+    ["update-frequency", "update-frequency", "Update Frequency"],
+    ["staleness", "staleness", "Staleness"],
+    ["timestamps", "timestamps", "Timestamps"],
+    ["freshness-thresholds", "freshness-thresholds", "Freshness Thresholds"],
+    ["heartbeats", "heartbeats", "Heartbeats"],
+    ["deviation-thresholds", "deviation-thresholds", "Deviation Thresholds"],
+  ]],
+  ["provenance-in-oracles-external-reality", [
+    ["source-provenance", "source-provenance", "Source Provenance"],
+    ["lineage-in-oracles-external-reality", "lineage", "Data Lineage"],
+    ["attribution-in-oracles-external-reality", "attribution", "Source Attribution"],
+    ["transformation-history", "transformation-history", "Transformation History"],
+    ["provenance-verification", "provenance-verification", "Provenance Verification"],
+  ]],
+  ["oracle-security", [
+    ["oracle-manipulation", "oracle-manipulation", "Oracle Manipulation"],
+    ["data-poisoning", "data-poisoning", "Data Poisoning"],
+    ["source-compromise", "source-compromise", "Source Compromise"],
+    ["sybil-attacks", "sybil-attacks", "Sybil Attacks"],
+    ["collusion-in-oracle-security", "collusion", "Collusion"],
+    ["economic-attacks", "economic-attacks", "Economic Attacks"],
+  ]],
+  ["machine-readable-reality", [
+    ["structured-data", "structured-data", "Structured Data"],
+    ["semantic-data", "semantic-data", "Semantic Data"],
+    ["machine-readable-claims", "machine-readable-claims", "Machine-Readable Claims"],
+    ["verifiable-claims", "verifiable-claims", "Verifiable Claims"],
+    ["data-schemas", "data-schemas", "Data Schemas"],
+    ["reality-interfaces", "reality-interfaces", "Reality Interfaces"],
+  ]],
+  ["sensors-external-systems", [
+    ["sensors", "sensors", "Sensors"],
+    ["iot-devices", "iot-devices", "IoT Devices"],
+    ["external-apis", "external-apis", "External APIs"],
+    ["trusted-hardware", "trusted-hardware", "Trusted Hardware"],
+    ["physical-events", "physical-events", "Physical Events"],
+    ["cyber-physical-interfaces", "cyber-physical-interfaces", "Cyber-Physical Interfaces"],
+  ]],
+  ["ai-interpreted-data", [
+    ["unstructured-data", "unstructured-data", "Unstructured Data"],
+    ["information-extraction", "information-extraction", "Data Extraction"],
+    ["classification", "classification", "Classification"],
+    ["ai-inference", "ai-inference", "AI Inference"],
+    ["inference-confidence", "inference-confidence", "Confidence"],
+    ["interpretation-verification", "interpretation-verification", "Interpretation Verification"],
+  ]],
+  ["real-world-attestations", [
+    ["real-world-attesters", "real-world-attesters", "Attesters"],
+    ["claims", "claims", "Claims"],
+    ["evidence", "evidence", "Evidence"],
+    ["credentials-in-real-world-attestations", "credentials", "Credentials"],
+    ["attestation-verification", "attestation-verification", "Attestation Verification"],
+    ["revocation", "revocation", "Revocation"],
+  ]],
+];
+const ORACLES_L2 = ORACLES_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -689,6 +806,8 @@ const AUTHORED_TOPICS = new Set([
   ...STORAGE_L2.map(([id]) => id),
   ...IDENTITY_LAYER.map(([id]) => id),
   ...IDENTITY_L2.map(([id]) => id),
+  ...ORACLES_LAYER.map(([id]) => id),
+  ...ORACLES_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -767,8 +886,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Infrastructure's 10 new L1 and 55 new L2 concepts, then Cryptography &
   // Proofs' 7 new L1 and 46 new L2 concepts, then Storage & Availability's
   // 8 new L1 and 47 new L2 concepts, then Identity, Accounts & Authority's
-  // 6 new L1 and 43 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43);
+  // 6 new L1 and 43 new L2 concepts, then Oracles & External Reality's 11
+  // new L1 and 61 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -894,6 +1014,8 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     transitions: ["transitions-in-state-data"],
     "censorship-resistance": ["censorship-resistance-in-consensus-ordering"],
     "fault-tolerance": ["fault-tolerance-in-distributed-storage"],
+    "trust-assumptions": ["trust-assumptions-in-oracle-problem"],
+    collusion: ["collusion-in-oracle-security"],
   };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
@@ -1055,6 +1177,11 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     "commitment-schemes": ["commitment-schemes-in-cryptographic-commitments"],
     "content-addressing": ["content-addressing-in-storage-availability"],
     attestations: ["attestations-in-identity"],
+    provenance: ["provenance-in-oracles-external-reality"],
+    "external-data": ["external-data-in-oracle-problem"],
+    authenticity: ["authenticity-in-oracle-problem"],
+    lineage: ["lineage-in-oracles-external-reality"],
+    attribution: ["attribution-in-oracles-external-reality"],
   };
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -1076,6 +1203,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("networks-infrastructure"), 10 + 58);
   assert.equal(subtreeOf("cryptography-proofs"), 8 + 48);
   assert.equal(subtreeOf("storage-availability"), 9 + 51);
+  assert.equal(subtreeOf("identity-accounts-authority"), 8 + 47);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1421,8 +1549,10 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   assert.equal(resolver.getConcept("signing")?.preferredPlacementId, "signing");
   assert.deepEqual(placementsOf("transaction-submission"), ["transaction-submission", "transaction-submission-in-wallets"]);
   assert.equal(resolver.getConcept("transaction-submission")?.preferredPlacementId, "transaction-submission");
-  // General concepts for later reuse, and agent/machine topics kept as their own concepts.
-  for (const conceptId of ["credentials", "reputation", "ownership", "delegation", "roles", "capabilities"]) {
+  // General concepts for later reuse (Credentials is already placed again by
+  // Oracles & External Reality), and agent/machine topics kept as their own concepts.
+  assert.deepEqual(placementsOf("credentials"), ["credentials", "credentials-in-real-world-attestations"]);
+  for (const conceptId of ["reputation", "ownership", "delegation", "roles", "capabilities"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
   for (const [placementId, related] of [
@@ -1449,7 +1579,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once; only Agent Identity keeps its existing content.
-  const shared = new Set(["attestations", "signing", "transaction-submission"]);
+  const shared = new Set(["attestations", "signing", "transaction-submission", "credentials"]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -1458,6 +1588,98 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Oracles & External Reality has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("oracles-external-reality").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    ORACLES_LAYER,
+  );
+  for (const [parent, children] of ORACLES_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of ORACLES_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "oracles-external-reality")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...ORACLES_LAYER.map(([id]) => id), ...ORACLES_L2.map(([id]) => id)].sort());
+  assert.equal(ORACLES_L2.length, 70);
+});
+
+test("Oracles & External Reality reuses existing concepts where the meaning is the same", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Existing concepts placed again, each preferred at its home.
+  for (const [conceptId, here] of [
+    ["provenance", "provenance-in-oracles-external-reality"],
+    ["trust-assumptions", "trust-assumptions-in-oracle-problem"],
+    ["collusion", "collusion-in-oracle-security"],
+    ["credentials", "credentials-in-real-world-attestations"],
+    ["external-data", "external-data-in-oracle-problem"],
+    ["authenticity", "authenticity-in-oracle-problem"],
+    ["lineage", "lineage-in-oracles-external-reality"],
+    ["attribution", "attribution-in-oracles-external-reality"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+  }
+  assert.deepEqual(placementsOf("consensus"), ["consensus", "consensus-in-oracle-networks"]);
+  assert.equal(resolver.getConcept("consensus")?.preferredPlacementId, "consensus");
+  // Provenance owns a layer in each domain.
+  assert.equal(resolver.getChildren("provenance").length, 6);
+  assert.equal(resolver.getChildren("provenance-in-oracles-external-reality").length, 5);
+  // APIs and External APIs are one concept within this domain.
+  assert.deepEqual(placementsOf("external-apis"), ["external-apis", "external-apis-in-data-sources"]);
+  assert.equal(resolver.getConcept("external-apis")?.preferredPlacementId, "external-apis");
+  // Same wording, different concepts: distinct concepts shown with the given labels.
+  for (const [placementId, title, existing] of [
+    ["external-data-availability", "External Data Availability", "data-availability"],
+    ["oracle-aggregation", "Oracle Aggregation", "signature-aggregation"],
+    ["information-extraction", "Information Extraction", "data-extraction"],
+    ["inference-confidence", "Inference Confidence", "availability-confidence"],
+    ["real-world-attesters", "Real-World Attesters", "attesters"],
+  ]) {
+    assert.equal(resolver.getConcept(placementId)?.title, title);
+    assert.ok(resolver.getPlacement(placementId)?.contextualLabel, placementId);
+    assert.ok(resolver.getConcept(existing), existing);
+    assert.notEqual(placementId, existing);
+  }
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["real-world-attestations", "attestations"],
+    ["source-provenance", "data-origin"],
+    ["transformation-history", "lineage"],
+    ["transformation-history", "data-transformation"],
+    ["verifiable-claims", "credentials"],
+    ["machine-readable-claims", "claims"],
+    ["trusted-hardware", "trusted-execution"],
+    ["quorum-aggregation", "quorums"],
+    ["heartbeats", "health-checks"],
+    ["node-selection", "validator-selection"],
+    ["request-response", "challenge-response"],
+    ["sensor-data", "sensors"],
+    ["attestation-verification", "verification"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis"]);
+  for (const [id, conceptId] of [...ORACLES_LAYER, ...ORACLES_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...ORACLES_LAYER, ...ORACLES_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 
