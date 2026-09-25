@@ -45,12 +45,13 @@ function Relation({ className = "" }: { className?: string }) {
   );
 }
 
-// A parallel set stacks beside a rail on narrow screens and becomes
+// A parallel set stacks beside a rail on narrow screens (indented equally on
+// both sides so stacked nodes stay on the model's axis) and becomes
 // side-by-side columns once they can hold their labels: up to three at sm,
 // more at lg. Every class is spelled out so Tailwind generates it.
 const PARALLEL = {
   sm: {
-    set: "sm:grid sm:gap-y-0 sm:border-l-0 sm:pl-0",
+    set: "sm:grid sm:gap-y-0 sm:border-l-0 sm:px-0",
     tick: "sm:before:hidden",
     node: "sm:mx-auto sm:w-fit sm:max-w-full",
     wideBlock: "hidden sm:block",
@@ -59,7 +60,7 @@ const PARALLEL = {
     narrow: "sm:hidden",
   },
   lg: {
-    set: "lg:grid lg:gap-y-0 lg:border-l-0 lg:pl-0",
+    set: "lg:grid lg:gap-y-0 lg:border-l-0 lg:px-0",
     tick: "lg:before:hidden",
     node: "lg:mx-auto lg:w-fit lg:max-w-full",
     wideBlock: "hidden lg:block",
@@ -97,7 +98,7 @@ function Fan({ count, direction, className }: { count: number; direction: "branc
  */
 export function FlowModel({ label, stages }: { label: string; stages: readonly (readonly string[])[] }) {
   return (
-    <div role="img" aria-label={describeFlow(label, stages)} className="flex w-full flex-col py-2">
+    <div role="img" aria-label={describeFlow(label, stages)} className="flex w-full flex-col">
       {stages.map((stage, index) => {
         const previous = stages[index - 1];
         const next = stages[index + 1];
@@ -118,7 +119,7 @@ export function FlowModel({ label, stages }: { label: string; stages: readonly (
             <Relation className={`-ml-[3.5px] self-start ${size.narrow}`} />
             <span aria-hidden="true" className={`mx-auto h-3 w-px ${LINE} ${size.wideBlock}`} />
             <Fan count={stage.length} direction="branch" className={size.wideGrid} />
-            <span className={`flex flex-col gap-y-2 border-l border-border pl-4 ${size.set}`} style={columns(stage.length)}>
+            <span className={`flex flex-col gap-y-2 border-l border-border px-4 ${size.set}`} style={columns(stage.length)}>
               {stage.map((element) => (
                 <span
                   key={element}
