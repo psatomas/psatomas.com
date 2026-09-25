@@ -1962,9 +1962,140 @@ const ARCHITECTURE_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
 ];
 const ARCHITECTURE_L2 = ARCHITECTURE_TREE.flatMap(([, children]) => children);
-// Earlier domains' concepts that 17 and 18 place again, for their placement-list assertions.
+
+// 19 Protocol Design & Lifecycle. Twenty-one concepts are placed again at L2,
+// each preferred at its home.
+const LIFECYCLE_LAYER: Array<[string, string, string]> = [
+  ["protocol-requirements", "protocol-requirements", "Protocol Requirements"],
+  ["design-goals-constraints", "design-goals-constraints", "Design Goals & Constraints"],
+  ["protocol-specification", "protocol-specification", "Protocol Specification"],
+  ["protocol-modeling", "protocol-modeling", "Protocol Modeling"],
+  ["prototyping-simulation", "prototyping-simulation", "Prototyping & Simulation"],
+  ["protocol-implementation", "protocol-implementation", "Protocol Implementation"],
+  ["pre-launch-validation", "pre-launch-validation", "Pre-Launch Validation"],
+  ["deployment-launch", "deployment-launch", "Deployment & Launch"],
+  ["parameterization", "parameterization", "Parameterization"],
+  ["protocol-operations", "protocol-operations", "Protocol Operations"],
+  ["change-management", "change-management", "Change Management"],
+  ["versioning-compatibility", "versioning-compatibility", "Versioning & Compatibility"],
+  ["protocol-evolution", "protocol-evolution", "Protocol Evolution"],
+  ["deprecation-retirement", "deprecation-retirement", "Deprecation & Retirement"],
+];
+const LIFECYCLE_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["protocol-requirements", [
+    ["problem-definition", "problem-definition", "Problem Definition"],
+    ["stakeholders-in-protocol-requirements", "stakeholders", "Stakeholders"],
+    ["functional-requirements", "functional-requirements", "Functional Requirements"],
+    ["non-functional-requirements", "non-functional-requirements", "Non-Functional Requirements"],
+    ["security-requirements-in-protocol-requirements", "security-requirements", "Security Requirements"],
+    ["requirements-traceability", "requirements-traceability", "Requirements Traceability"],
+  ]],
+  ["design-goals-constraints", [
+    ["design-goals", "design-goals", "Design Goals"],
+    ["non-goals", "non-goals", "Non-Goals"],
+    ["design-constraints", "design-constraints", "Design Constraints"],
+    ["design-assumptions", "design-assumptions", "Design Assumptions"],
+    ["success-criteria", "success-criteria", "Success Criteria"],
+    ["invariants-in-design-goals-constraints", "invariants", "Invariants"],
+  ]],
+  ["protocol-specification", [
+    ["specifications-in-protocol-specification", "specifications", "Specifications"],
+    ["formal-specifications-in-protocol-specification", "formal-specifications", "Formal Specifications"],
+    ["specification-languages", "specification-languages", "Specification Languages"],
+    ["rules-in-protocol-specification", "rules", "Rules"],
+    ["specification-ambiguity", "specification-ambiguity", "Specification Ambiguity"],
+  ]],
+  ["protocol-modeling", [
+    ["reference-models", "reference-models", "Reference Models"],
+    ["state-machines-in-protocol-modeling", "state-machines", "State Machines"],
+    ["mechanism-design-in-protocol-modeling", "mechanism-design", "Mechanism Design"],
+    ["economic-modeling", "economic-modeling", "Economic Modeling"],
+    ["threat-modeling-in-protocol-modeling", "threat-modeling", "Threat Modeling"],
+    ["agent-based-modeling", "agent-based-modeling", "Agent-Based Modeling"],
+  ]],
+  ["prototyping-simulation", [
+    ["prototyping", "prototyping", "Prototyping"],
+    ["protocol-simulation", "protocol-simulation", "Protocol Simulation"],
+    ["proof-of-concepts", "proof-of-concepts", "Proof of Concepts"],
+    ["devnets", "devnets", "Devnets"],
+    ["testnets", "testnets", "Testnets"],
+    ["shadow-forks", "shadow-forks", "Shadow Forks"],
+  ]],
+  ["protocol-implementation", [
+    ["reference-implementations", "reference-implementations", "Reference Implementations"],
+    ["production-implementations", "production-implementations", "Production Implementations"],
+    ["client-diversity-in-protocol-implementation", "client-diversity", "Client Diversity"],
+    ["specification-conformance", "specification-conformance", "Specification Conformance"],
+    ["conformance-testing", "conformance-testing", "Conformance Testing"],
+    ["implementation-drift", "implementation-drift", "Implementation Drift"],
+  ]],
+  ["pre-launch-validation", [
+    ["validation-in-pre-launch-validation", "validation", "Validation"],
+    ["testing-in-pre-launch-validation", "testing", "Testing"],
+    ["formal-methods-in-pre-launch-validation", "formal-methods", "Formal Methods"],
+    ["auditing-in-pre-launch-validation", "auditing", "Auditing"],
+    ["bug-bounties-in-pre-launch-validation", "bug-bounties", "Bug Bounties"],
+    ["launch-readiness", "launch-readiness", "Launch Readiness"],
+  ]],
+  ["deployment-launch", [
+    ["protocol-deployment", "protocol-deployment", "Protocol Deployment"],
+    ["genesis", "genesis", "Genesis"],
+    ["deployment-security-in-deployment-launch", "deployment-security", "Deployment Security"],
+    ["protocol-launch", "protocol-launch", "Protocol Launch"],
+    ["protocol-bootstrapping", "protocol-bootstrapping", "Protocol Bootstrapping"],
+    ["phased-rollouts", "phased-rollouts", "Phased Rollouts"],
+  ]],
+  ["parameterization", [
+    ["protocol-parameters", "protocol-parameters", "Protocol Parameters"],
+    ["initial-parameters", "initial-parameters", "Initial Parameters"],
+    ["parameter-tuning", "parameter-tuning", "Parameter Tuning"],
+    ["parameter-bounds", "parameter-bounds", "Parameter Bounds"],
+    ["parameter-changes-in-parameterization", "parameter-changes", "Parameter Changes"],
+    ["configuration-management", "configuration-management", "Configuration Management"],
+  ]],
+  ["protocol-operations", [
+    ["post-launch-monitoring", "post-launch-monitoring", "Post-Launch Monitoring"],
+    ["maintenance-releases", "maintenance-releases", "Maintenance Releases"],
+    ["client-updates", "client-updates", "Client Updates"],
+    ["operational-runbooks", "operational-runbooks", "Operational Runbooks"],
+    ["incident-response-in-protocol-operations", "incident-response", "Incident Response"],
+    ["network-health", "network-health", "Network Health"],
+  ]],
+  ["change-management", [
+    ["improvement-proposals", "improvement-proposals", "Improvement Proposals"],
+    ["protocol-upgrades-in-change-management", "protocol-upgrades", "Protocol Upgrades"],
+    ["hard-forks", "hard-forks", "Hard Forks"],
+    ["soft-forks", "soft-forks", "Soft Forks"],
+    ["rule-changes-in-change-management", "rule-changes", "Rule Changes"],
+    ["upgrade-coordination", "upgrade-coordination", "Upgrade Coordination"],
+  ]],
+  ["versioning-compatibility", [
+    ["protocol-versioning", "protocol-versioning", "Protocol Versioning"],
+    ["backward-compatibility", "backward-compatibility", "Backward Compatibility"],
+    ["forward-compatibility", "forward-compatibility", "Forward Compatibility"],
+    ["migrations", "migrations", "Migrations"],
+    ["state-migrations", "state-migrations", "State Migrations"],
+    ["breaking-changes", "breaking-changes", "Breaking Changes"],
+  ]],
+  ["protocol-evolution", [
+    ["evolutionary-paths", "evolutionary-paths", "Evolutionary Paths"],
+    ["progressive-decentralization", "progressive-decentralization", "Progressive Decentralization"],
+    ["ossification", "ossification", "Ossification"],
+    ["technical-debt-in-protocol-evolution", "technical-debt", "Technical Debt"],
+    ["lifecycle-risks", "lifecycle-risks", "Lifecycle Risks"],
+  ]],
+  ["deprecation-retirement", [
+    ["deprecation", "deprecation", "Deprecation"],
+    ["protocol-sunsetting", "protocol-sunsetting", "Protocol Sunsetting"],
+    ["protocol-retirement", "protocol-retirement", "Protocol Retirement"],
+    ["migration-paths", "migration-paths", "Migration Paths"],
+    ["legacy-support", "legacy-support", "Legacy Support"],
+  ]],
+];
+const LIFECYCLE_L2 = LIFECYCLE_TREE.flatMap(([, children]) => children);
+// Earlier domains' concepts that 17–19 place again, for their placement-list assertions.
 const alsoInLaterDomains = (conceptId: string) =>
-  [...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]
+  [...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2, ...LIFECYCLE_LAYER, ...LIFECYCLE_L2]
     .filter(([id, concept]) => concept === conceptId && id !== concept)
     .map(([id]) => id);
 
@@ -2006,6 +2137,8 @@ const AUTHORED_TOPICS = new Set([
   ...SECURITY_L2.map(([id]) => id),
   ...ARCHITECTURE_LAYER.map(([id]) => id),
   ...ARCHITECTURE_L2.map(([id]) => id),
+  ...LIFECYCLE_LAYER.map(([id]) => id),
+  ...LIFECYCLE_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -2093,8 +2226,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // then Scaling & Modular Systems' 12 new L1 and 64 new L2 concepts, then
   // Interoperability & Abstraction's 11 new L1 and 72 new L2 concepts, then
   // Security, Correctness & Resilience's 19 new L1 and 82 new L2 concepts, then
-  // Protocol Architecture's 12 new L1 and 54 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54);
+  // Protocol Architecture's 12 new L1 and 54 new L2 concepts, then Protocol
+  // Design & Lifecycle's 14 new L1 and 60 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -2425,6 +2559,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("scaling-modular-systems"), 14 + 80);
   assert.equal(subtreeOf("interoperability-abstraction"), 14 + 82);
   assert.equal(subtreeOf("security-correctness-resilience"), 20 + 119);
+  assert.equal(subtreeOf("protocol-architecture"), 12 + 68);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -3774,9 +3909,109 @@ test("Protocol Architecture reuses existing concepts without moving their prefer
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
   }
   const ids = [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Protocol Design & Lifecycle has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("protocol-design-lifecycle").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    LIFECYCLE_LAYER,
+  );
+  for (const [parent, children] of LIFECYCLE_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of LIFECYCLE_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "protocol-design-lifecycle")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...LIFECYCLE_LAYER.map(([id]) => id), ...LIFECYCLE_L2.map(([id]) => id)].sort());
+  assert.equal(LIFECYCLE_L2.length, 81);
+});
+
+test("Protocol Design & Lifecycle reuses existing concepts without moving their preferred placements", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  // [concept, placement here, preferred placement (its home, unchanged)]
+  for (const [conceptId, here, home] of [
+    ["stakeholders", "stakeholders-in-protocol-requirements", "stakeholders"],
+    ["security-requirements", "security-requirements-in-protocol-requirements", "security-requirements"],
+    ["invariants", "invariants-in-design-goals-constraints", "invariants"],
+    ["specifications", "specifications-in-protocol-specification", "specifications"],
+    ["formal-specifications", "formal-specifications-in-protocol-specification", "formal-specifications"],
+    ["rules", "rules-in-protocol-specification", "rules"],
+    ["state-machines", "state-machines-in-protocol-modeling", "state-machines"],
+    ["mechanism-design", "mechanism-design-in-protocol-modeling", "mechanism-design"],
+    ["threat-modeling", "threat-modeling-in-protocol-modeling", "threat-modeling"],
+    ["client-diversity", "client-diversity-in-protocol-implementation", "client-diversity"],
+    ["validation", "validation-in-pre-launch-validation", "validation"],
+    ["testing", "testing-in-pre-launch-validation", "testing"],
+    ["formal-methods", "formal-methods-in-pre-launch-validation", "formal-methods"],
+    ["auditing", "auditing-in-pre-launch-validation", "auditing"],
+    ["bug-bounties", "bug-bounties-in-pre-launch-validation", "bug-bounties"],
+    ["deployment-security", "deployment-security-in-deployment-launch", "deployment-security"],
+    ["parameter-changes", "parameter-changes-in-parameterization", "parameter-changes"],
+    ["incident-response", "incident-response-in-protocol-operations", "incident-response"],
+    ["protocol-upgrades", "protocol-upgrades-in-change-management", "protocol-upgrades"],
+    ["rule-changes", "rule-changes-in-change-management", "rule-changes"],
+    ["technical-debt", "technical-debt-in-protocol-evolution", "technical-debt"],
+  ]) {
+    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
+    assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, home, conceptId);
+    assert.notEqual(home, here, conceptId);
+  }
+  // Lifecycle concepts stay distinct from the design-time, architecture, security and governance ones they sit near.
+  for (const [placementId, related] of [
+    ["protocol-design-lifecycle", "protocol-architecture"],
+    ["protocol-requirements", "security-requirements"],
+    ["design-goals", "mechanism-objectives"],
+    ["design-constraints", "mechanism-constraints"],
+    ["design-assumptions", "trust-assumptions"],
+    ["design-assumptions", "security-assumptions"],
+    ["protocol-specification", "specifications"],
+    ["protocol-modeling", "state-models"],
+    ["economic-modeling", "mechanism-design"],
+    ["prototyping", "protocol-simulation"],
+    ["reference-implementations", "production-implementations"],
+    ["protocol-deployment", "contract-deployment"],
+    ["protocol-launch", "protocol-deployment"],
+    ["protocol-parameters", "parameter-changes"],
+    ["change-management", "governance-institutions"],
+    ["protocol-evolution", "institutional-evolution"],
+    ["protocol-versioning", "protocol-upgrades"],
+    ["migrations", "protocol-upgrades"],
+    ["backward-compatibility", "interoperability-models"],
+    ["deprecation", "protocol-sunsetting"],
+    ["ossification", "governance-minimization"],
+    ["protocol-retirement", "operational-failures"],
+    ["pre-launch-validation", "verification"],
+    ["lifecycle-risks", "technical-debt"],
+    ["hard-forks", "competing-forks"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Protocol rules are Foundations' Rules, not a lifecycle-qualified duplicate.
+  assert.equal(resolver.getConcept("protocol-rules"), undefined);
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["stakeholders", "security-requirements", "invariants", "specifications", "formal-specifications", "rules", "state-machines", "mechanism-design", "threat-modeling", "client-diversity", "validation", "testing", "formal-methods", "auditing", "bug-bounties", "deployment-security", "parameter-changes", "incident-response", "protocol-upgrades", "rule-changes", "technical-debt"]);
+  for (const [id, conceptId] of [...LIFECYCLE_LAYER, ...LIFECYCLE_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+  }
+  const ids = [...LIFECYCLE_LAYER, ...LIFECYCLE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

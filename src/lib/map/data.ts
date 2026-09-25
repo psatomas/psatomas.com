@@ -1505,6 +1505,116 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "technical-debt",
     { placementId: "immutability-in-architectural-tradeoffs", conceptId: "immutability" },
   ],
+  // 19 Protocol Design & Lifecycle
+  "protocol-requirements": [
+    "problem-definition",
+    { placementId: "stakeholders-in-protocol-requirements", conceptId: "stakeholders" },
+    "functional-requirements",
+    "non-functional-requirements",
+    { placementId: "security-requirements-in-protocol-requirements", conceptId: "security-requirements" },
+    "requirements-traceability",
+  ],
+  "design-goals-constraints": [
+    "design-goals",
+    "non-goals",
+    "design-constraints",
+    "design-assumptions",
+    "success-criteria",
+    { placementId: "invariants-in-design-goals-constraints", conceptId: "invariants" },
+  ],
+  "protocol-specification": [
+    { placementId: "specifications-in-protocol-specification", conceptId: "specifications" },
+    { placementId: "formal-specifications-in-protocol-specification", conceptId: "formal-specifications" },
+    "specification-languages",
+    { placementId: "rules-in-protocol-specification", conceptId: "rules" },
+    "specification-ambiguity",
+  ],
+  "protocol-modeling": [
+    "reference-models",
+    { placementId: "state-machines-in-protocol-modeling", conceptId: "state-machines" },
+    { placementId: "mechanism-design-in-protocol-modeling", conceptId: "mechanism-design" },
+    "economic-modeling",
+    { placementId: "threat-modeling-in-protocol-modeling", conceptId: "threat-modeling" },
+    "agent-based-modeling",
+  ],
+  "prototyping-simulation": [
+    "prototyping",
+    "protocol-simulation",
+    "proof-of-concepts",
+    "devnets",
+    "testnets",
+    "shadow-forks",
+  ],
+  "protocol-implementation": [
+    "reference-implementations",
+    "production-implementations",
+    { placementId: "client-diversity-in-protocol-implementation", conceptId: "client-diversity" },
+    "specification-conformance",
+    "conformance-testing",
+    "implementation-drift",
+  ],
+  "pre-launch-validation": [
+    { placementId: "validation-in-pre-launch-validation", conceptId: "validation" },
+    { placementId: "testing-in-pre-launch-validation", conceptId: "testing" },
+    { placementId: "formal-methods-in-pre-launch-validation", conceptId: "formal-methods" },
+    { placementId: "auditing-in-pre-launch-validation", conceptId: "auditing" },
+    { placementId: "bug-bounties-in-pre-launch-validation", conceptId: "bug-bounties" },
+    "launch-readiness",
+  ],
+  "deployment-launch": [
+    "protocol-deployment",
+    "genesis",
+    { placementId: "deployment-security-in-deployment-launch", conceptId: "deployment-security" },
+    "protocol-launch",
+    "protocol-bootstrapping",
+    "phased-rollouts",
+  ],
+  parameterization: [
+    "protocol-parameters",
+    "initial-parameters",
+    "parameter-tuning",
+    "parameter-bounds",
+    { placementId: "parameter-changes-in-parameterization", conceptId: "parameter-changes" },
+    "configuration-management",
+  ],
+  "protocol-operations": [
+    "post-launch-monitoring",
+    "maintenance-releases",
+    "client-updates",
+    "operational-runbooks",
+    { placementId: "incident-response-in-protocol-operations", conceptId: "incident-response" },
+    "network-health",
+  ],
+  "change-management": [
+    "improvement-proposals",
+    { placementId: "protocol-upgrades-in-change-management", conceptId: "protocol-upgrades" },
+    "hard-forks",
+    "soft-forks",
+    { placementId: "rule-changes-in-change-management", conceptId: "rule-changes" },
+    "upgrade-coordination",
+  ],
+  "versioning-compatibility": [
+    "protocol-versioning",
+    "backward-compatibility",
+    "forward-compatibility",
+    "migrations",
+    "state-migrations",
+    "breaking-changes",
+  ],
+  "protocol-evolution": [
+    "evolutionary-paths",
+    "progressive-decentralization",
+    "ossification",
+    { placementId: "technical-debt-in-protocol-evolution", conceptId: "technical-debt" },
+    "lifecycle-risks",
+  ],
+  "deprecation-retirement": [
+    "deprecation",
+    "protocol-sunsetting",
+    "protocol-retirement",
+    "migration-paths",
+    "legacy-support",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1524,15 +1634,16 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
  * Systems, Interoperability & Abstraction, Security, Correctness &
- * Resilience, and Protocol Architecture; and a deliberately small Phase 1
- * proof fixture re-homed beneath its L0 domains.
+ * Resilience, Protocol Architecture, and Protocol Design & Lifecycle; and a
+ * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
     ...l0Concepts,
     // Foundations' conceptual layer (Distributed Systems is shared with the fixture).
     { id: "protocols", slug: "protocols", title: "Protocols" },
-    { id: "state-machines", slug: "state-machines", title: "State Machines" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "state-machines", slug: "state-machines", title: "State Machines", preferredPlacementId: "state-machines" },
     { id: "trust-models", slug: "trust-models", title: "Trust Models" },
     { id: "coordination", slug: "coordination", title: "Coordination" },
     { id: "adversarial-environments", slug: "adversarial-environments", title: "Adversarial Environments" },
@@ -1547,7 +1658,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // concept placed under Protocols and State Machines; Protocol Properties
     // and Finality gain further placements.
     { id: "state", slug: "state", title: "State", preferredPlacementId: "state-in-state-machines" },
-    { id: "rules", slug: "rules", title: "Rules" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "rules", slug: "rules", title: "Rules", preferredPlacementId: "rules" },
     { id: "participants", slug: "participants", title: "Participants" },
     { id: "interactions", slug: "interactions", title: "Interactions" },
     { id: "assumptions", slug: "assumptions", title: "Assumptions" },
@@ -2412,7 +2524,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Auctions are general concepts for reuse by later domains; Cryptoeconomic
     // Security (the approach) is not its L2 Economic Security (the measure).
     { id: "incentives", slug: "incentives", title: "Incentives" },
-    { id: "mechanism-design", slug: "mechanism-design", title: "Mechanism Design" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "mechanism-design",
+      slug: "mechanism-design",
+      title: "Mechanism Design",
+      preferredPlacementId: "mechanism-design",
+    },
     { id: "game-theory", slug: "game-theory", title: "Game Theory" },
     { id: "token-economics", slug: "token-economics", title: "Token Economics" },
     { id: "fees", slug: "fees", title: "Fees" },
@@ -2894,7 +3012,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "voters", slug: "voters", title: "Voters" },
     { id: "delegates", slug: "delegates", title: "Delegates" },
     { id: "stewards", slug: "stewards", title: "Stewards" },
-    { id: "stakeholders", slug: "stakeholders", title: "Stakeholders" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "stakeholders", slug: "stakeholders", title: "Stakeholders", preferredPlacementId: "stakeholders" },
     { id: "voter-participation", slug: "voter-participation", title: "Voter Participation" },
     // Proposal Thresholds (to submit) are not Approval Thresholds (to pass) or
     // 06's Threshold Cryptography.
@@ -2929,8 +3048,20 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "proposal-execution", slug: "proposal-execution", title: "Proposal Execution" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
     { id: "timelocks", slug: "timelocks", title: "Timelocks", preferredPlacementId: "timelocks" },
-    { id: "parameter-changes", slug: "parameter-changes", title: "Parameter Changes" },
-    { id: "protocol-upgrades", slug: "protocol-upgrades", title: "Protocol Upgrades" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "parameter-changes",
+      slug: "parameter-changes",
+      title: "Parameter Changes",
+      preferredPlacementId: "parameter-changes",
+    },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "protocol-upgrades",
+      slug: "protocol-upgrades",
+      title: "Protocol Upgrades",
+      preferredPlacementId: "protocol-upgrades",
+    },
     { id: "execution-authority", slug: "execution-authority", title: "Execution Authority" },
     // Security Councils and Committee Selection are not 07's Availability
     // Committees; Signer Sets are not 04's Validator Sets or 06's Multisignatures.
@@ -2948,7 +3079,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "spending-controls", slug: "spending-controls", title: "Spending Controls" },
     // Social Consensus (a community's off-chain agreement) is not 04's Consensus.
     { id: "constitutions", slug: "constitutions", title: "Constitutions" },
-    { id: "rule-changes", slug: "rule-changes", title: "Rule Changes" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "rule-changes", slug: "rule-changes", title: "Rule Changes", preferredPlacementId: "rule-changes" },
     { id: "amendment-processes", slug: "amendment-processes", title: "Amendment Processes" },
     // Also placed in 18 Protocol Architecture; this placement is preferred.
     { id: "immutability", slug: "immutability", title: "Immutability", preferredPlacementId: "immutability" },
@@ -3282,15 +3414,24 @@ export const mapKnowledge: MapKnowledgeModel = {
     // is not 08's Authentication; Security Monitoring is not 05's Monitoring.
     { id: "security-models", slug: "security-models", title: "Security Models" },
     { id: "security-properties", slug: "security-properties", title: "Security Properties" },
-    { id: "threat-modeling", slug: "threat-modeling", title: "Threat Modeling" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "threat-modeling",
+      slug: "threat-modeling",
+      title: "Threat Modeling",
+      preferredPlacementId: "threat-modeling",
+    },
     { id: "attack-classes", slug: "attack-classes", title: "Attack Classes" },
     { id: "vulnerabilities-exploits", slug: "vulnerabilities-exploits", title: "Vulnerabilities & Exploits" },
     { id: "smart-contract-security", slug: "smart-contract-security", title: "Smart Contract Security" },
     { id: "protocol-security", slug: "protocol-security", title: "Protocol Security" },
     { id: "correctness", slug: "correctness", title: "Correctness" },
-    { id: "formal-methods", slug: "formal-methods", title: "Formal Methods" },
-    { id: "testing", slug: "testing", title: "Testing" },
-    { id: "auditing", slug: "auditing", title: "Auditing" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "formal-methods", slug: "formal-methods", title: "Formal Methods", preferredPlacementId: "formal-methods" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "testing", slug: "testing", title: "Testing", preferredPlacementId: "testing" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "auditing", slug: "auditing", title: "Auditing", preferredPlacementId: "auditing" },
     { id: "access-control", slug: "access-control", title: "Access Control" },
     { id: "key-security", slug: "key-security", title: "Key Security" },
     { id: "operational-security", slug: "operational-security", title: "Operational Security" },
@@ -3312,7 +3453,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "threat-analysis", slug: "threat-analysis", title: "Threat Analysis" },
     { id: "risk-assessment", slug: "risk-assessment", title: "Risk Assessment" },
     { id: "attack-trees", slug: "attack-trees", title: "Attack Trees" },
-    { id: "security-requirements", slug: "security-requirements", title: "Security Requirements" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "security-requirements",
+      slug: "security-requirements",
+      title: "Security Requirements",
+      preferredPlacementId: "security-requirements",
+    },
     // Denial-of-Service Attacks are the attack; 02's Denial-of-Service Resistance
     // the defence. Eclipse Attacks isolate a node's view of the network.
     { id: "denial-of-service-attacks", slug: "denial-of-service-attacks", title: "Denial-of-Service Attacks" },
@@ -3323,7 +3470,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "vulnerability-classes", slug: "vulnerability-classes", title: "Vulnerability Classes" },
     { id: "zero-day-vulnerabilities", slug: "zero-day-vulnerabilities", title: "Zero-Day Vulnerabilities" },
     { id: "vulnerability-disclosure", slug: "vulnerability-disclosure", title: "Vulnerability Disclosure" },
-    { id: "bug-bounties", slug: "bug-bounties", title: "Bug Bounties" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "bug-bounties", slug: "bug-bounties", title: "Bug Bounties", preferredPlacementId: "bug-bounties" },
     // Flash Loan Attacks are not 14's Borrowed Voting Power.
     { id: "reentrancy", slug: "reentrancy", title: "Reentrancy" },
     { id: "arithmetic-errors", slug: "arithmetic-errors", title: "Arithmetic Errors" },
@@ -3341,10 +3489,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Validation (building the right thing) is not Verification (building it
     // right), nor 02's Transaction Validation; Invariants are not Foundations'
     // Protocol Properties.
-    { id: "specifications", slug: "specifications", title: "Specifications" },
-    { id: "invariants", slug: "invariants", title: "Invariants" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "specifications", slug: "specifications", title: "Specifications", preferredPlacementId: "specifications" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "invariants", slug: "invariants", title: "Invariants", preferredPlacementId: "invariants" },
     { id: "functional-correctness", slug: "functional-correctness", title: "Functional Correctness" },
-    { id: "validation", slug: "validation", title: "Validation" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "validation", slug: "validation", title: "Validation", preferredPlacementId: "validation" },
     { id: "correctness-proofs", slug: "correctness-proofs", title: "Correctness Proofs" },
     // Formal Methods, Testing and Auditing are distinct assurance activities.
     { id: "formal-verification", slug: "formal-verification", title: "Formal Verification" },
@@ -3352,7 +3503,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "theorem-proving", slug: "theorem-proving", title: "Theorem Proving" },
     { id: "symbolic-execution", slug: "symbolic-execution", title: "Symbolic Execution" },
     { id: "static-analysis", slug: "static-analysis", title: "Static Analysis" },
-    { id: "formal-specifications", slug: "formal-specifications", title: "Formal Specifications" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "formal-specifications",
+      slug: "formal-specifications",
+      title: "Formal Specifications",
+      preferredPlacementId: "formal-specifications",
+    },
     { id: "unit-testing", slug: "unit-testing", title: "Unit Testing" },
     { id: "integration-testing", slug: "integration-testing", title: "Integration Testing" },
     { id: "fuzzing", slug: "fuzzing", title: "Fuzzing" },
@@ -3380,7 +3537,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "social-engineering", slug: "social-engineering", title: "Social Engineering" },
     // Operational Failures (non-adversarial) are not adversarial attacks.
     { id: "infrastructure-security", slug: "infrastructure-security", title: "Infrastructure Security" },
-    { id: "deployment-security", slug: "deployment-security", title: "Deployment Security" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "deployment-security",
+      slug: "deployment-security",
+      title: "Deployment Security",
+      preferredPlacementId: "deployment-security",
+    },
     { id: "configuration-errors", slug: "configuration-errors", title: "Configuration Errors" },
     { id: "supply-chain-security", slug: "supply-chain-security", title: "Supply Chain Security" },
     { id: "insider-threats", slug: "insider-threats", title: "Insider Threats" },
@@ -3463,7 +3626,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Client Diversity is not 16's Interoperability; Node Roles are not 05's node
     // types.
     { id: "consensus-clients", slug: "consensus-clients", title: "Consensus Clients" },
-    { id: "client-diversity", slug: "client-diversity", title: "Client Diversity" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    {
+      id: "client-diversity",
+      slug: "client-diversity",
+      title: "Client Diversity",
+      preferredPlacementId: "client-diversity",
+    },
     { id: "client-separation", slug: "client-separation", title: "Client Separation" },
     { id: "node-roles", slug: "node-roles", title: "Node Roles" },
     { id: "client-interfaces", slug: "client-interfaces", title: "Client Interfaces" },
@@ -3493,7 +3662,110 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "cohesion", slug: "cohesion", title: "Cohesion" },
     { id: "architectural-complexity", slug: "architectural-complexity", title: "Architectural Complexity" },
     { id: "extensibility", slug: "extensibility", title: "Extensibility" },
-    { id: "technical-debt", slug: "technical-debt", title: "Technical Debt" },
+    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    { id: "technical-debt", slug: "technical-debt", title: "Technical Debt", preferredPlacementId: "technical-debt" },
+    // 19 Protocol Design & Lifecycle: L1 topics. How protocols are conceived,
+    // specified, designed, implemented, validated, launched, operated, changed and
+    // retired; not 18's structure, 17's security, or organisational governance.
+    // Change Management is not 14's Governance; Protocol Evolution is not 14's
+    // Institutional Evolution; Pre-Launch Validation is not runtime Verification.
+    { id: "protocol-requirements", slug: "protocol-requirements", title: "Protocol Requirements" },
+    { id: "design-goals-constraints", slug: "design-goals-constraints", title: "Design Goals & Constraints" },
+    { id: "protocol-specification", slug: "protocol-specification", title: "Protocol Specification" },
+    { id: "protocol-modeling", slug: "protocol-modeling", title: "Protocol Modeling" },
+    { id: "prototyping-simulation", slug: "prototyping-simulation", title: "Prototyping & Simulation" },
+    { id: "protocol-implementation", slug: "protocol-implementation", title: "Protocol Implementation" },
+    { id: "pre-launch-validation", slug: "pre-launch-validation", title: "Pre-Launch Validation" },
+    { id: "deployment-launch", slug: "deployment-launch", title: "Deployment & Launch" },
+    { id: "parameterization", slug: "parameterization", title: "Parameterization" },
+    { id: "protocol-operations", slug: "protocol-operations", title: "Protocol Operations" },
+    { id: "change-management", slug: "change-management", title: "Change Management" },
+    { id: "versioning-compatibility", slug: "versioning-compatibility", title: "Versioning & Compatibility" },
+    { id: "protocol-evolution", slug: "protocol-evolution", title: "Protocol Evolution" },
+    { id: "deprecation-retirement", slug: "deprecation-retirement", title: "Deprecation & Retirement" },
+    // L2 topics (placements in L2_TOPICS). Protocol Requirements are not 17's
+    // Security Requirements, which are one kind of them.
+    { id: "problem-definition", slug: "problem-definition", title: "Problem Definition" },
+    { id: "functional-requirements", slug: "functional-requirements", title: "Functional Requirements" },
+    { id: "non-functional-requirements", slug: "non-functional-requirements", title: "Non-Functional Requirements" },
+    { id: "requirements-traceability", slug: "requirements-traceability", title: "Requirements Traceability" },
+    // Design Goals are not 10's Mechanism Objectives; Design Constraints are not
+    // 10's Mechanism Constraints; Design Assumptions are not Foundations' Trust
+    // Assumptions or 17's Security Assumptions.
+    { id: "design-goals", slug: "design-goals", title: "Design Goals" },
+    { id: "non-goals", slug: "non-goals", title: "Non-Goals" },
+    { id: "design-constraints", slug: "design-constraints", title: "Design Constraints" },
+    { id: "design-assumptions", slug: "design-assumptions", title: "Design Assumptions" },
+    { id: "success-criteria", slug: "success-criteria", title: "Success Criteria" },
+    // Protocol rules are Foundations' Rules, placed under Protocol Specification.
+    { id: "specification-languages", slug: "specification-languages", title: "Specification Languages" },
+    { id: "specification-ambiguity", slug: "specification-ambiguity", title: "Specification Ambiguity" },
+    // Protocol Modeling is not 03's State Models; Economic Modeling is not 10's
+    // Mechanism Design.
+    { id: "reference-models", slug: "reference-models", title: "Reference Models" },
+    { id: "economic-modeling", slug: "economic-modeling", title: "Economic Modeling" },
+    { id: "agent-based-modeling", slug: "agent-based-modeling", title: "Agent-Based Modeling" },
+    // Prototyping is not Protocol Simulation (modelling system behaviour before
+    // it exists); Devnets and Testnets are not production networks.
+    { id: "prototyping", slug: "prototyping", title: "Prototyping" },
+    { id: "protocol-simulation", slug: "protocol-simulation", title: "Protocol Simulation" },
+    { id: "proof-of-concepts", slug: "proof-of-concepts", title: "Proof of Concepts" },
+    { id: "devnets", slug: "devnets", title: "Devnets" },
+    { id: "testnets", slug: "testnets", title: "Testnets" },
+    { id: "shadow-forks", slug: "shadow-forks", title: "Shadow Forks" },
+    // Reference Implementations are not Production Implementations.
+    { id: "reference-implementations", slug: "reference-implementations", title: "Reference Implementations" },
+    { id: "production-implementations", slug: "production-implementations", title: "Production Implementations" },
+    { id: "specification-conformance", slug: "specification-conformance", title: "Specification Conformance" },
+    { id: "conformance-testing", slug: "conformance-testing", title: "Conformance Testing" },
+    { id: "implementation-drift", slug: "implementation-drift", title: "Implementation Drift" },
+    { id: "launch-readiness", slug: "launch-readiness", title: "Launch Readiness" },
+    // Protocol Deployment is not 02's Contract Deployment; Protocol Launch is not
+    // deployment; Protocol Bootstrapping is not organisational bootstrapping.
+    { id: "protocol-deployment", slug: "protocol-deployment", title: "Protocol Deployment" },
+    { id: "genesis", slug: "genesis", title: "Genesis" },
+    { id: "protocol-launch", slug: "protocol-launch", title: "Protocol Launch" },
+    { id: "protocol-bootstrapping", slug: "protocol-bootstrapping", title: "Protocol Bootstrapping" },
+    { id: "phased-rollouts", slug: "phased-rollouts", title: "Phased Rollouts" },
+    // Protocol Parameters are not 14's Parameter Changes (changing them).
+    { id: "protocol-parameters", slug: "protocol-parameters", title: "Protocol Parameters" },
+    { id: "initial-parameters", slug: "initial-parameters", title: "Initial Parameters" },
+    { id: "parameter-tuning", slug: "parameter-tuning", title: "Parameter Tuning" },
+    { id: "parameter-bounds", slug: "parameter-bounds", title: "Parameter Bounds" },
+    { id: "configuration-management", slug: "configuration-management", title: "Configuration Management" },
+    // Protocol Operations (maintaining a live protocol) are not automated protocol
+    // maintenance by agents.
+    { id: "post-launch-monitoring", slug: "post-launch-monitoring", title: "Post-Launch Monitoring" },
+    { id: "maintenance-releases", slug: "maintenance-releases", title: "Maintenance Releases" },
+    { id: "client-updates", slug: "client-updates", title: "Client Updates" },
+    { id: "operational-runbooks", slug: "operational-runbooks", title: "Operational Runbooks" },
+    { id: "network-health", slug: "network-health", title: "Network Health" },
+    // Hard and Soft Forks are protocol changes, not 04's Competing Forks.
+    { id: "improvement-proposals", slug: "improvement-proposals", title: "Improvement Proposals" },
+    { id: "hard-forks", slug: "hard-forks", title: "Hard Forks" },
+    { id: "soft-forks", slug: "soft-forks", title: "Soft Forks" },
+    { id: "upgrade-coordination", slug: "upgrade-coordination", title: "Upgrade Coordination" },
+    // Migrations move state or users to a new version, not upgrades in place;
+    // Backward Compatibility is not 16's interoperability.
+    { id: "protocol-versioning", slug: "protocol-versioning", title: "Protocol Versioning" },
+    { id: "backward-compatibility", slug: "backward-compatibility", title: "Backward Compatibility" },
+    { id: "forward-compatibility", slug: "forward-compatibility", title: "Forward Compatibility" },
+    { id: "migrations", slug: "migrations", title: "Migrations" },
+    { id: "state-migrations", slug: "state-migrations", title: "State Migrations" },
+    { id: "breaking-changes", slug: "breaking-changes", title: "Breaking Changes" },
+    // Ossification is not 14's Governance Minimization; Lifecycle Risks are not
+    // 18's Technical Debt.
+    { id: "evolutionary-paths", slug: "evolutionary-paths", title: "Evolutionary Paths" },
+    { id: "progressive-decentralization", slug: "progressive-decentralization", title: "Progressive Decentralization" },
+    { id: "ossification", slug: "ossification", title: "Ossification" },
+    { id: "lifecycle-risks", slug: "lifecycle-risks", title: "Lifecycle Risks" },
+    // Deprecation (discouraging use) precedes Protocol Sunsetting (winding down);
+    // Protocol Retirement is a planned end, not a failure.
+    { id: "deprecation", slug: "deprecation", title: "Deprecation" },
+    { id: "protocol-sunsetting", slug: "protocol-sunsetting", title: "Protocol Sunsetting" },
+    { id: "protocol-retirement", slug: "protocol-retirement", title: "Protocol Retirement" },
+    { id: "migration-paths", slug: "migration-paths", title: "Migration Paths" },
+    { id: "legacy-support", slug: "legacy-support", title: "Legacy Support" },
     { id: "liveness-failures", slug: "liveness-failures", title: "Liveness Failures" },
     { id: "safety-failures", slug: "safety-failures", title: "Safety Failures" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
@@ -4005,6 +4277,86 @@ export const mapKnowledge: MapKnowledgeModel = {
       conceptId: "architectural-tradeoffs",
       parentPlacementId: "protocol-architecture",
       order: 11,
+    },
+    // 19 Protocol Design & Lifecycle: L1 topics.
+    {
+      id: "protocol-requirements",
+      conceptId: "protocol-requirements",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 0,
+    },
+    {
+      id: "design-goals-constraints",
+      conceptId: "design-goals-constraints",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 1,
+    },
+    {
+      id: "protocol-specification",
+      conceptId: "protocol-specification",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 2,
+    },
+    {
+      id: "protocol-modeling",
+      conceptId: "protocol-modeling",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 3,
+    },
+    {
+      id: "prototyping-simulation",
+      conceptId: "prototyping-simulation",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 4,
+    },
+    {
+      id: "protocol-implementation",
+      conceptId: "protocol-implementation",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 5,
+    },
+    {
+      id: "pre-launch-validation",
+      conceptId: "pre-launch-validation",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 6,
+    },
+    {
+      id: "deployment-launch",
+      conceptId: "deployment-launch",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 7,
+    },
+    { id: "parameterization", conceptId: "parameterization", parentPlacementId: "protocol-design-lifecycle", order: 8 },
+    {
+      id: "protocol-operations",
+      conceptId: "protocol-operations",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 9,
+    },
+    {
+      id: "change-management",
+      conceptId: "change-management",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 10,
+    },
+    {
+      id: "versioning-compatibility",
+      conceptId: "versioning-compatibility",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 11,
+    },
+    {
+      id: "protocol-evolution",
+      conceptId: "protocol-evolution",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 12,
+    },
+    {
+      id: "deprecation-retirement",
+      conceptId: "deprecation-retirement",
+      parentPlacementId: "protocol-design-lifecycle",
+      order: 13,
     },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
