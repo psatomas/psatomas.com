@@ -2092,6 +2092,140 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "shared-services",
     "cross-organizational-governance",
   ],
+  // 25 Autonomous Protocols
+  "protocol-autonomy": [
+    "bounded-autonomy",
+    "protocol-autonomy-levels",
+    "self-management",
+    "protocol-invariants",
+    { placementId: "governance-minimization-in-protocol-autonomy", conceptId: "governance-minimization" },
+  ],
+  "protocol-objectives": [
+    "objective-functions",
+    "setpoints",
+    "protocol-health",
+    "objective-trade-offs",
+    "objective-drift",
+  ],
+  "protocol-monitoring": [
+    { placementId: "protocol-state-in-protocol-monitoring", conceptId: "protocol-state" },
+    "protocol-telemetry",
+    "state-estimation",
+    { placementId: "condition-monitoring-in-protocol-monitoring", conceptId: "condition-monitoring" },
+    "invariant-monitoring",
+    { placementId: "anomaly-detection-in-protocol-monitoring", conceptId: "anomaly-detection" },
+  ],
+  "control-loops": [
+    "feedback-loops",
+    "feedback-controllers",
+    "pid-control",
+    { placementId: "triggers-in-control-loops", conceptId: "triggers" },
+    "control-stability",
+    "control-latency",
+  ],
+  "adaptive-parameters": [
+    "adjustment-rules",
+    { placementId: "parameter-bounds-in-adaptive-parameters", conceptId: "parameter-bounds" },
+    "adjustment-rate-limits",
+    "dynamic-fees",
+    "adaptive-interest-rates",
+    "parameter-sensitivity",
+  ],
+  "protocol-policies": [
+    "policy-driven-operation",
+    "operating-envelopes",
+    { placementId: "policy-constraints-in-protocol-policies", conceptId: "policy-constraints" },
+    { placementId: "policy-evaluation-in-protocol-policies", conceptId: "policy-evaluation" },
+    "response-policies",
+    { placementId: "authority-escalation-in-protocol-policies", conceptId: "authority-escalation", contextualLabel: "Escalation" },
+  ],
+  "protocol-agents": [
+    "on-chain-agents",
+    "ai-operated-protocols",
+    { placementId: "automation-networks-in-protocol-agents", conceptId: "automation-networks" },
+    { placementId: "execution-bots-in-protocol-agents", conceptId: "execution-bots" },
+    { placementId: "off-chain-workers-in-protocol-agents", conceptId: "off-chain-workers" },
+  ],
+  "protocol-maintenance": [
+    "maintenance-tasks",
+    { placementId: "keepers-in-protocol-maintenance", conceptId: "keepers" },
+    { placementId: "keeper-incentives-in-protocol-maintenance", conceptId: "keeper-incentives" },
+    { placementId: "scheduled-execution-in-protocol-maintenance", conceptId: "scheduled-execution" },
+    "state-cleanup",
+    "dependency-management",
+  ],
+  "protocol-adaptation": [
+    "adaptive-mechanisms",
+    "regime-detection",
+    "mode-switching",
+    "learning-mechanisms",
+    "adaptation-limits",
+    "adaptation-evaluation",
+  ],
+  "self-healing": [
+    "fault-detection",
+    "automatic-failover",
+    { placementId: "graceful-degradation-in-self-healing", conceptId: "graceful-degradation" },
+    "recovery-modes",
+    "state-repair",
+    { placementId: "fault-tolerance-in-self-healing", conceptId: "fault-tolerance" },
+  ],
+  "autonomous-security-responses": [
+    "exploit-detection",
+    "automated-containment",
+    { placementId: "circuit-breakers-in-autonomous-security-responses", conceptId: "circuit-breakers" },
+    { placementId: "pause-mechanisms-in-autonomous-security-responses", conceptId: "pause-mechanisms" },
+    "outflow-limits",
+    { placementId: "incident-response-in-autonomous-security-responses", conceptId: "incident-response" },
+  ],
+  "protocol-owned-resources": [
+    "protocol-owned-liquidity",
+    { placementId: "reserves-in-protocol-owned-resources", conceptId: "reserves" },
+    "insurance-funds",
+    { placementId: "revenue-in-protocol-owned-resources", conceptId: "revenue" },
+    "buybacks",
+    { placementId: "resource-allocation-in-protocol-owned-resources", conceptId: "resource-allocation" },
+  ],
+  "autonomous-liquidity-management": [
+    "liquidity-targets",
+    "liquidity-rebalancing",
+    "liquidity-range-management",
+    "liquidity-incentive-adjustment",
+    "peg-defense",
+    { placementId: "liquidity-provision-in-autonomous-liquidity-management", conceptId: "liquidity-provision" },
+  ],
+  "autonomous-risk-management": [
+    "risk-models",
+    { placementId: "risk-parameters-in-autonomous-risk-management", conceptId: "risk-parameters" },
+    "dynamic-risk-parameters",
+    { placementId: "risk-limits-in-autonomous-risk-management", conceptId: "risk-limits" },
+    "stress-testing",
+    "automated-deleveraging",
+  ],
+  "governance-human-override": [
+    "automatic-enactment",
+    { placementId: "proposal-execution-in-governance-human-override", conceptId: "proposal-execution" },
+    { placementId: "parameter-changes-in-governance-human-override", conceptId: "parameter-changes" },
+    { placementId: "human-oversight-in-governance-human-override", conceptId: "human-oversight" },
+    "override-mechanisms",
+    { placementId: "kill-switches-in-governance-human-override", conceptId: "kill-switches" },
+  ],
+  "verifiable-autonomous-operation": [
+    { placementId: "verifiable-execution-in-verifiable-autonomous-operation", conceptId: "verifiable-execution" },
+    "operation-proofs",
+    "invariant-verification",
+    { placementId: "audit-trails-in-verifiable-autonomous-operation", conceptId: "audit-trails" },
+    { placementId: "decision-records-in-verifiable-autonomous-operation", conceptId: "decision-records" },
+    { placementId: "transparency-in-verifiable-autonomous-operation", conceptId: "transparency" },
+  ],
+  "protocol-lifecycle-automation": [
+    { placementId: "protocol-bootstrapping-in-protocol-lifecycle-automation", conceptId: "protocol-bootstrapping" },
+    { placementId: "progressive-decentralization-in-protocol-lifecycle-automation", conceptId: "progressive-decentralization" },
+    "automated-upgrades",
+    { placementId: "protocol-upgrades-in-protocol-lifecycle-automation", conceptId: "protocol-upgrades" },
+    { placementId: "ossification-in-protocol-lifecycle-automation", conceptId: "ossification" },
+    { placementId: "protocol-sunsetting-in-protocol-lifecycle-automation", conceptId: "protocol-sunsetting" },
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -2113,8 +2247,8 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Systems, Interoperability & Abstraction, Security, Correctness &
  * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
  * Intelligent Systems, Machine Economy, Autonomous Coordination, Autonomous
- * Execution, and Autonomous Organizations; and a deliberately small Phase 1
- * proof fixture re-homed beneath its L0 domains.
+ * Execution, Autonomous Organizations, and Autonomous Protocols; and a
+ * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -2323,7 +2457,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // placement is preferred.
     { id: "trusted-execution", slug: "trusted-execution", title: "Trusted Execution", preferredPlacementId: "trusted-execution" },
     { id: "untrusted-execution", slug: "untrusted-execution", title: "Untrusted Execution" },
-    { id: "off-chain-workers", slug: "off-chain-workers", title: "Off-Chain Workers" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "off-chain-workers", slug: "off-chain-workers", title: "Off-Chain Workers", preferredPlacementId: "off-chain-workers" },
     { id: "gas", slug: "gas", title: "Gas" },
     { id: "execution-cost", slug: "execution-cost", title: "Execution Cost" },
     { id: "metering", slug: "metering", title: "Metering" },
@@ -2407,7 +2542,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "events", slug: "events", title: "Events" },
     { id: "transaction-data", slug: "transaction-data", title: "Transaction Data" },
     { id: "block-data", slug: "block-data", title: "Block Data" },
-    { id: "protocol-state", slug: "protocol-state", title: "Protocol State" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "protocol-state", slug: "protocol-state", title: "Protocol State", preferredPlacementId: "protocol-state" },
     // Also placed as 09's "External Information" (what an oracle brings on
     // chain); this placement is preferred.
     { id: "external-data", slug: "external-data", title: "External Data", preferredPlacementId: "external-data" },
@@ -2559,7 +2695,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "indexers", slug: "indexers", title: "Indexers" },
     // Also placed under 16's Cross-Chain Messaging; this placement is preferred.
     { id: "relayers", slug: "relayers", title: "Relayers", preferredPlacementId: "relayers" },
-    { id: "keepers", slug: "keepers", title: "Keepers" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "keepers", slug: "keepers", title: "Keepers", preferredPlacementId: "keepers" },
     { id: "bots", slug: "bots", title: "Bots" },
     { id: "monitoring", slug: "monitoring", title: "Monitoring" },
     { id: "automation", slug: "automation", title: "Automation" },
@@ -2609,7 +2746,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "relay-networks", slug: "relay-networks", title: "Relay Networks" },
     { id: "relay-policies", slug: "relay-policies", title: "Relay Policies" },
     { id: "relay-incentives", slug: "relay-incentives", title: "Relay Incentives" },
-    { id: "condition-monitoring", slug: "condition-monitoring", title: "Condition Monitoring" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "condition-monitoring", slug: "condition-monitoring", title: "Condition Monitoring", preferredPlacementId: "condition-monitoring" },
     { id: "trigger-evaluation", slug: "trigger-evaluation", title: "Trigger Evaluation" },
     // Also placed under 08's Wallets; this placement is preferred.
     {
@@ -2618,13 +2756,15 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Transaction Submission",
       preferredPlacementId: "transaction-submission",
     },
-    { id: "keeper-incentives", slug: "keeper-incentives", title: "Keeper Incentives" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "keeper-incentives", slug: "keeper-incentives", title: "Keeper Incentives", preferredPlacementId: "keeper-incentives" },
     { id: "event-driven-bots", slug: "event-driven-bots", title: "Event-Driven Bots" },
     { id: "trading-bots", slug: "trading-bots", title: "Trading Bots" },
     { id: "liquidation-bots", slug: "liquidation-bots", title: "Liquidation Bots" },
     { id: "arbitrage-bots", slug: "arbitrage-bots", title: "Arbitrage Bots" },
     { id: "governance-bots", slug: "governance-bots", title: "Governance Bots" },
-    { id: "execution-bots", slug: "execution-bots", title: "Execution Bots" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "execution-bots", slug: "execution-bots", title: "Execution Bots", preferredPlacementId: "execution-bots" },
     { id: "metrics", slug: "metrics", title: "Metrics" },
     // Observability data, shown as "Logs" and "Traces" under Monitoring: not
     // 03's Logs (EVM receipt logs) or 02's Execution Traces.
@@ -2636,8 +2776,10 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "alerting", slug: "alerting", title: "Alerting", preferredPlacementId: "alerting" },
     // Also placed under 23 Autonomous Execution; this placement is preferred.
     { id: "observability", slug: "observability", title: "Observability", preferredPlacementId: "observability" },
-    { id: "triggers", slug: "triggers", title: "Triggers" },
-    { id: "scheduled-execution", slug: "scheduled-execution", title: "Scheduled Execution" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "triggers", slug: "triggers", title: "Triggers", preferredPlacementId: "triggers" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "scheduled-execution", slug: "scheduled-execution", title: "Scheduled Execution", preferredPlacementId: "scheduled-execution" },
     { id: "event-driven-execution", slug: "event-driven-execution", title: "Event-Driven Execution" },
     { id: "conditional-execution", slug: "conditional-execution", title: "Conditional Execution" },
     { id: "automation-policies", slug: "automation-policies", title: "Automation Policies" },
@@ -3217,7 +3359,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "market-efficiency", slug: "market-efficiency", title: "Market Efficiency" },
     { id: "market-structure", slug: "market-structure", title: "Market Structure" },
     { id: "liquidity-providers", slug: "liquidity-providers", title: "Liquidity Providers" },
-    { id: "liquidity-provision", slug: "liquidity-provision", title: "Liquidity Provision" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "liquidity-provision", slug: "liquidity-provision", title: "Liquidity Provision", preferredPlacementId: "liquidity-provision" },
     { id: "liquidity-depth", slug: "liquidity-depth", title: "Liquidity Depth" },
     { id: "liquidity-fragmentation", slug: "liquidity-fragmentation", title: "Liquidity Fragmentation" },
     { id: "capital-efficiency", slug: "capital-efficiency", title: "Capital Efficiency" },
@@ -3275,11 +3418,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 21's Agent Risk; this placement is preferred.
     { id: "counterparty-risk", slug: "counterparty-risk", title: "Counterparty Risk", preferredPlacementId: "counterparty-risk" },
     { id: "systemic-risk", slug: "systemic-risk", title: "Systemic Risk" },
-    { id: "risk-parameters", slug: "risk-parameters", title: "Risk Parameters" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "risk-parameters", slug: "risk-parameters", title: "Risk Parameters", preferredPlacementId: "risk-parameters" },
     // Assets and Liabilities is the balance-sheet view, not Assets; Solvency
     // Constraints are not 10's Mechanism Constraints.
     { id: "assets-and-liabilities", slug: "assets-and-liabilities", title: "Assets and Liabilities" },
-    { id: "reserves", slug: "reserves", title: "Reserves" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "reserves", slug: "reserves", title: "Reserves", preferredPlacementId: "reserves" },
     { id: "capitalization", slug: "capitalization", title: "Capitalization" },
     { id: "insolvency", slug: "insolvency", title: "Insolvency" },
     { id: "solvency-constraints", slug: "solvency-constraints", title: "Solvency Constraints" },
@@ -3558,7 +3703,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "token-based-governance", slug: "token-based-governance", title: "Token-Based Governance" },
     { id: "reputation-based-governance", slug: "reputation-based-governance", title: "Reputation-Based Governance" },
     { id: "futarchy", slug: "futarchy", title: "Futarchy" },
-    { id: "governance-minimization", slug: "governance-minimization", title: "Governance Minimization" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "governance-minimization", slug: "governance-minimization", title: "Governance Minimization", preferredPlacementId: "governance-minimization" },
     { id: "token-holders", slug: "token-holders", title: "Token Holders" },
     // L2 topics (placements in L2_TOPICS). Voters and Delegates are governance
     // roles, not 04's Validators; Stakeholders are not Foundations' Participants.
@@ -3599,17 +3745,20 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "tie-breaking", slug: "tie-breaking", title: "Tie-Breaking" },
     // Proposal Execution and Execution Authority turn decisions into actions; not
     // 02's Transaction Execution or 08's Authority.
-    { id: "proposal-execution", slug: "proposal-execution", title: "Proposal Execution" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "proposal-execution", slug: "proposal-execution", title: "Proposal Execution", preferredPlacementId: "proposal-execution" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
     { id: "timelocks", slug: "timelocks", title: "Timelocks", preferredPlacementId: "timelocks" },
-    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    // Also placed in 19 Protocol Design & Lifecycle and under 25 Autonomous Protocols;
+    // this placement is preferred.
     {
       id: "parameter-changes",
       slug: "parameter-changes",
       title: "Parameter Changes",
       preferredPlacementId: "parameter-changes",
     },
-    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    // Also placed in 19 Protocol Design & Lifecycle and under 25 Autonomous Protocols;
+    // this placement is preferred.
     {
       id: "protocol-upgrades",
       slug: "protocol-upgrades",
@@ -4121,7 +4270,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "operational-failures", slug: "operational-failures", title: "Operational Failures" },
     // Anomaly Detection flags deviations from expected behaviour.
     { id: "threat-detection", slug: "threat-detection", title: "Threat Detection" },
-    // Also placed under 23's Execution Monitoring; this placement is preferred.
+    // Also placed under 23's Execution Monitoring and 25's Protocol Monitoring; this
+    // placement is preferred.
     { id: "anomaly-detection", slug: "anomaly-detection", title: "Anomaly Detection", preferredPlacementId: "anomaly-detection" },
     { id: "on-chain-monitoring", slug: "on-chain-monitoring", title: "On-Chain Monitoring" },
     { id: "security-telemetry", slug: "security-telemetry", title: "Security Telemetry" },
@@ -4133,7 +4283,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "incident-disclosure", slug: "incident-disclosure", title: "Incident Disclosure" },
     // Resilience is not Foundations' Fault Tolerance alone; Recovery is not 08's
     // Account or Wallet Recovery.
-    { id: "graceful-degradation", slug: "graceful-degradation", title: "Graceful Degradation" },
+    // Also placed under 25's Self-Healing; this placement is preferred.
+    { id: "graceful-degradation", slug: "graceful-degradation", title: "Graceful Degradation", preferredPlacementId: "graceful-degradation" },
     { id: "recovery", slug: "recovery", title: "Recovery" },
     { id: "disaster-recovery", slug: "disaster-recovery", title: "Disaster Recovery" },
     // Cryptographic Security is not 10's Economic Security.
@@ -4298,13 +4449,15 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "protocol-deployment", slug: "protocol-deployment", title: "Protocol Deployment" },
     { id: "genesis", slug: "genesis", title: "Genesis" },
     { id: "protocol-launch", slug: "protocol-launch", title: "Protocol Launch" },
-    { id: "protocol-bootstrapping", slug: "protocol-bootstrapping", title: "Protocol Bootstrapping" },
+    // Also placed under 25's Protocol Lifecycle Automation; this placement is preferred.
+    { id: "protocol-bootstrapping", slug: "protocol-bootstrapping", title: "Protocol Bootstrapping", preferredPlacementId: "protocol-bootstrapping" },
     { id: "phased-rollouts", slug: "phased-rollouts", title: "Phased Rollouts" },
     // Protocol Parameters are not 14's Parameter Changes (changing them).
     { id: "protocol-parameters", slug: "protocol-parameters", title: "Protocol Parameters" },
     { id: "initial-parameters", slug: "initial-parameters", title: "Initial Parameters" },
     { id: "parameter-tuning", slug: "parameter-tuning", title: "Parameter Tuning" },
-    { id: "parameter-bounds", slug: "parameter-bounds", title: "Parameter Bounds" },
+    // Also placed under 25's Adaptive Parameters; this placement is preferred.
+    { id: "parameter-bounds", slug: "parameter-bounds", title: "Parameter Bounds", preferredPlacementId: "parameter-bounds" },
     { id: "configuration-management", slug: "configuration-management", title: "Configuration Management" },
     // Protocol Operations (maintaining a live protocol) are not automated protocol
     // maintenance by agents.
@@ -4329,13 +4482,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Ossification is not 14's Governance Minimization; Lifecycle Risks are not
     // 18's Technical Debt.
     { id: "evolutionary-paths", slug: "evolutionary-paths", title: "Evolutionary Paths" },
-    { id: "progressive-decentralization", slug: "progressive-decentralization", title: "Progressive Decentralization" },
-    { id: "ossification", slug: "ossification", title: "Ossification" },
+    // Also placed under 25's Protocol Lifecycle Automation; this placement is preferred.
+    { id: "progressive-decentralization", slug: "progressive-decentralization", title: "Progressive Decentralization", preferredPlacementId: "progressive-decentralization" },
+    // Also placed under 25's Protocol Lifecycle Automation; this placement is preferred.
+    { id: "ossification", slug: "ossification", title: "Ossification", preferredPlacementId: "ossification" },
     { id: "lifecycle-risks", slug: "lifecycle-risks", title: "Lifecycle Risks" },
     // Deprecation (discouraging use) precedes Protocol Sunsetting (winding down);
     // Protocol Retirement is a planned end, not a failure.
     { id: "deprecation", slug: "deprecation", title: "Deprecation" },
-    { id: "protocol-sunsetting", slug: "protocol-sunsetting", title: "Protocol Sunsetting" },
+    // Also placed under 25's Protocol Lifecycle Automation; this placement is preferred.
+    { id: "protocol-sunsetting", slug: "protocol-sunsetting", title: "Protocol Sunsetting", preferredPlacementId: "protocol-sunsetting" },
     { id: "protocol-retirement", slug: "protocol-retirement", title: "Protocol Retirement" },
     { id: "migration-paths", slug: "migration-paths", title: "Migration Paths" },
     { id: "legacy-support", slug: "legacy-support", title: "Legacy Support" },
@@ -4582,7 +4738,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "financial-risk", slug: "financial-risk", title: "Financial Risk" },
     { id: "policy-risk", slug: "policy-risk", title: "Policy Risk" },
     { id: "model-risk", slug: "model-risk", title: "Model Risk" },
-    { id: "risk-limits", slug: "risk-limits", title: "Risk Limits" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "risk-limits", slug: "risk-limits", title: "Risk Limits", preferredPlacementId: "risk-limits" },
     // What an economic agent optimizes, shown as "Objectives": not 20's Goals
     // (what a plan pursues) or 10's Mechanism Objectives. Principal-Agent
     // Problems build on 20's Principals.
@@ -4737,7 +4894,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "simulation-divergence", slug: "simulation-divergence", title: "Simulation Divergence" },
     // Policy Constraints are 21's. Policy Enforcement at execution is not 21's
     // Budget Enforcement; Risk Checks apply 21's Risk Limits and are not them.
-    { id: "policy-evaluation", slug: "policy-evaluation", title: "Policy Evaluation" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "policy-evaluation", slug: "policy-evaluation", title: "Policy Evaluation", preferredPlacementId: "policy-evaluation" },
     { id: "policy-engines", slug: "policy-engines", title: "Policy Engines" },
     { id: "policy-enforcement", slug: "policy-enforcement", title: "Policy Enforcement" },
     { id: "policy-violations", slug: "policy-violations", title: "Policy Violations" },
@@ -4786,7 +4944,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "retries", slug: "retries", title: "Retries" },
     { id: "rollbacks", slug: "rollbacks", title: "Rollbacks" },
     { id: "compensating-actions", slug: "compensating-actions", title: "Compensating Actions" },
-    { id: "kill-switches", slug: "kill-switches", title: "Kill Switches" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "kill-switches", slug: "kill-switches", title: "Kill Switches", preferredPlacementId: "kill-switches" },
     // 24 Autonomous Organizations: L1 topics. Organizations (21's concept) and
     // Treasuries (14's) are L1 topics here with their own layers, preferred here.
     // Organizational Governance, Policies and Workflows are an organization's
@@ -4841,7 +5000,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Decision-Making.
     { id: "decision-rights", slug: "decision-rights", title: "Decision Rights" },
     { id: "automated-decisions", slug: "automated-decisions", title: "Automated Decisions" },
-    { id: "decision-records", slug: "decision-records", title: "Decision Records" },
+    // Also placed under 25 Autonomous Protocols; this placement is preferred.
+    { id: "decision-records", slug: "decision-records", title: "Decision Records", preferredPlacementId: "decision-records" },
     // Organizational Compliance is not 21's Policy Constraints; Policy Updates
     // are not 14's Rule Changes (to constitutional rules).
     { id: "policy-setting", slug: "policy-setting", title: "Policy Setting" },
@@ -4899,6 +5059,150 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "joint-ventures", slug: "joint-ventures", title: "Joint Ventures" },
     { id: "shared-services", slug: "shared-services", title: "Shared Services" },
     { id: "cross-organizational-governance", slug: "cross-organizational-governance", title: "Cross-Organizational Governance" },
+    // 25 Autonomous Protocols: L1 topics. A protocol whose own operation is
+    // closed-loop or policy-driven: it observes itself, decides within bounds,
+    // acts and adapts with reduced human intervention. Not 23's execution of one
+    // action, 24's organizations, or 26's economy-level systems; governance stays
+    // 14's. Protocol Autonomy is not 20's Autonomy Levels or 24's Organizational
+    // Autonomy; Protocol Objectives are not 10's Mechanism or 21's Agent
+    // Objectives; Protocol Monitoring is not 05's Monitoring; Protocol Policies
+    // are not 24's Organizational or 23's Execution Policies; Protocol Agents are
+    // not 20's AI Agents; Self-Healing is not 23's Execution Recovery; Autonomous
+    // Security Responses are not 14's Emergency Governance; Protocol-Owned
+    // Resources are not Treasuries; Autonomous Liquidity and Risk Management are
+    // not 11's Liquidity and Risk; Protocol Maintenance is not Protocol Lifecycle
+    // Automation.
+    { id: "protocol-autonomy", slug: "protocol-autonomy", title: "Protocol Autonomy" },
+    { id: "protocol-objectives", slug: "protocol-objectives", title: "Protocol Objectives" },
+    { id: "protocol-monitoring", slug: "protocol-monitoring", title: "Protocol Monitoring" },
+    { id: "control-loops", slug: "control-loops", title: "Control Loops" },
+    { id: "adaptive-parameters", slug: "adaptive-parameters", title: "Adaptive Parameters" },
+    { id: "protocol-policies", slug: "protocol-policies", title: "Protocol Policies" },
+    { id: "protocol-agents", slug: "protocol-agents", title: "Protocol Agents" },
+    { id: "protocol-maintenance", slug: "protocol-maintenance", title: "Protocol Maintenance" },
+    { id: "protocol-adaptation", slug: "protocol-adaptation", title: "Protocol Adaptation" },
+    { id: "self-healing", slug: "self-healing", title: "Self-Healing" },
+    { id: "autonomous-security-responses", slug: "autonomous-security-responses", title: "Autonomous Security Responses" },
+    { id: "protocol-owned-resources", slug: "protocol-owned-resources", title: "Protocol-Owned Resources" },
+    { id: "autonomous-liquidity-management", slug: "autonomous-liquidity-management", title: "Autonomous Liquidity Management" },
+    { id: "autonomous-risk-management", slug: "autonomous-risk-management", title: "Autonomous Risk Management" },
+    { id: "governance-human-override", slug: "governance-human-override", title: "Governance & Human Override" },
+    { id: "verifiable-autonomous-operation", slug: "verifiable-autonomous-operation", title: "Verifiable Autonomous Operation" },
+    { id: "protocol-lifecycle-automation", slug: "protocol-lifecycle-automation", title: "Protocol Lifecycle Automation" },
+    // L2 topics (placements in L2_TOPICS). Bounded Autonomy (hard limits on what
+    // a protocol may do by itself) is not 20's Human Oversight; Protocol
+    // Invariants are not Foundations' Safety or 11's Invariant Functions.
+    { id: "bounded-autonomy", slug: "bounded-autonomy", title: "Bounded Autonomy" },
+    { id: "protocol-autonomy-levels", slug: "protocol-autonomy-levels", title: "Protocol Autonomy Levels" },
+    { id: "self-management", slug: "self-management", title: "Self-Management" },
+    { id: "protocol-invariants", slug: "protocol-invariants", title: "Protocol Invariants" },
+    // Objective Functions are not 10's Mechanism Objectives; Setpoints are the
+    // target values a controller holds; Protocol Health is not 05's Health Checks.
+    { id: "objective-functions", slug: "objective-functions", title: "Objective Functions" },
+    { id: "setpoints", slug: "setpoints", title: "Setpoints" },
+    { id: "protocol-health", slug: "protocol-health", title: "Protocol Health" },
+    { id: "objective-trade-offs", slug: "objective-trade-offs", title: "Objective Trade-offs" },
+    { id: "objective-drift", slug: "objective-drift", title: "Objective Drift" },
+    // Protocol State (03), Condition Monitoring (05) and Anomaly Detection (23)
+    // are placed again. Protocol Telemetry is not 05's Metrics; State Estimation
+    // is not 03's State Reconstruction; Invariant Monitoring is not 05's Health
+    // Checks.
+    { id: "protocol-telemetry", slug: "protocol-telemetry", title: "Protocol Telemetry" },
+    { id: "state-estimation", slug: "state-estimation", title: "State Estimation" },
+    { id: "invariant-monitoring", slug: "invariant-monitoring", title: "Invariant Monitoring" },
+    // Feedback Loops (a protocol reacting to its own outputs) are not 09's Update
+    // Models or Heartbeats (oracle updates); Control Latency is not Foundations'
+    // Latency.
+    { id: "feedback-loops", slug: "feedback-loops", title: "Feedback Loops" },
+    { id: "feedback-controllers", slug: "feedback-controllers", title: "Feedback Controllers" },
+    { id: "pid-control", slug: "pid-control", title: "PID Control" },
+    { id: "control-stability", slug: "control-stability", title: "Control Stability" },
+    { id: "control-latency", slug: "control-latency", title: "Control Latency" },
+    // Adaptive parameters change by rule within bounds, not by vote: not 14's
+    // Parameter Changes. Parameter Bounds are 19's (a parameter's permitted range,
+    // whoever or whatever sets it). Dynamic Fees are not 10's Congestion Pricing; Adaptive
+    // Interest Rates are not 11's Interest Rates; Adjustment Rate Limits are not
+    // 05's Rate Limiting.
+    { id: "adjustment-rules", slug: "adjustment-rules", title: "Adjustment Rules" },
+    { id: "adjustment-rate-limits", slug: "adjustment-rate-limits", title: "Adjustment Rate Limits" },
+    { id: "dynamic-fees", slug: "dynamic-fees", title: "Dynamic Fees" },
+    { id: "adaptive-interest-rates", slug: "adaptive-interest-rates", title: "Adaptive Interest Rates" },
+    { id: "parameter-sensitivity", slug: "parameter-sensitivity", title: "Parameter Sensitivity" },
+    // Policy Constraints (21), Policy Evaluation (23) and Escalation (21) are
+    // placed again. Operating Envelopes are not 21's Risk Limits; Response
+    // Policies are not 14's Incident Response.
+    { id: "policy-driven-operation", slug: "policy-driven-operation", title: "Policy-Driven Operation" },
+    { id: "operating-envelopes", slug: "operating-envelopes", title: "Operating Envelopes" },
+    { id: "response-policies", slug: "response-policies", title: "Response Policies" },
+    // On-Chain Agents (agent logic executed by the protocol) are not 20's AI
+    // Agents; AI-Operated Protocols are not 20's AI Agents either.
+    { id: "on-chain-agents", slug: "on-chain-agents", title: "On-Chain Agents" },
+    { id: "ai-operated-protocols", slug: "ai-operated-protocols", title: "AI-Operated Protocols" },
+    // Keepers, Keeper Incentives and Scheduled Execution are 05's. State Cleanup
+    // is not 07's Data Pruning; Dependency Management (the contracts and feeds a
+    // protocol relies on) is not 02's Contract Calls.
+    { id: "maintenance-tasks", slug: "maintenance-tasks", title: "Maintenance Tasks" },
+    { id: "state-cleanup", slug: "state-cleanup", title: "State Cleanup" },
+    { id: "dependency-management", slug: "dependency-management", title: "Dependency Management" },
+    // Adaptation (behaviour changing with conditions) is not an upgrade (changed
+    // code); Regime Detection is not 20's Distribution Shift; Learning
+    // Mechanisms are not 20's Model Training.
+    { id: "adaptive-mechanisms", slug: "adaptive-mechanisms", title: "Adaptive Mechanisms" },
+    { id: "regime-detection", slug: "regime-detection", title: "Regime Detection" },
+    { id: "mode-switching", slug: "mode-switching", title: "Mode Switching" },
+    { id: "learning-mechanisms", slug: "learning-mechanisms", title: "Learning Mechanisms" },
+    { id: "adaptation-limits", slug: "adaptation-limits", title: "Adaptation Limits" },
+    { id: "adaptation-evaluation", slug: "adaptation-evaluation", title: "Adaptation Evaluation" },
+    // Self-healing restores the protocol's own operation: not 23's Execution
+    // Recovery (one action) or 14's Incident Response. Graceful Degradation is
+    // 17's. Fault Detection is not
+    // Foundations' Failures; State Repair is not 03's State Reconstruction;
+    // Automatic Failover is not 04's Sequencer Rotation.
+    { id: "fault-detection", slug: "fault-detection", title: "Fault Detection" },
+    { id: "automatic-failover", slug: "automatic-failover", title: "Automatic Failover" },
+    { id: "recovery-modes", slug: "recovery-modes", title: "Recovery Modes" },
+    { id: "state-repair", slug: "state-repair", title: "State Repair" },
+    // Responses the protocol takes itself, not 14's Emergency Powers or
+    // Guardians. Circuit Breakers and Pause Mechanisms are 14's, Incident
+    // Response the hand-off to it. Outflow Limits are not 21's Spending Limits.
+    { id: "exploit-detection", slug: "exploit-detection", title: "Exploit Detection" },
+    { id: "automated-containment", slug: "automated-containment", title: "Automated Containment" },
+    { id: "outflow-limits", slug: "outflow-limits", title: "Outflow Limits" },
+    // Reserves (11), Revenue (21) and Resource Allocation (10) are placed again.
+    // Insurance Funds are not 11's Loss Absorption; Buybacks are not 10's Burns.
+    { id: "protocol-owned-liquidity", slug: "protocol-owned-liquidity", title: "Protocol-Owned Liquidity" },
+    { id: "insurance-funds", slug: "insurance-funds", title: "Insurance Funds" },
+    { id: "buybacks", slug: "buybacks", title: "Buybacks" },
+    // Managing liquidity, not 11's Liquidity itself; Peg Defense is not 11's
+    // Peg Stability; Liquidity Rebalancing is not 11's Liquidity Provision.
+    { id: "liquidity-targets", slug: "liquidity-targets", title: "Liquidity Targets" },
+    { id: "liquidity-rebalancing", slug: "liquidity-rebalancing", title: "Liquidity Rebalancing" },
+    { id: "liquidity-range-management", slug: "liquidity-range-management", title: "Liquidity Range Management" },
+    { id: "liquidity-incentive-adjustment", slug: "liquidity-incentive-adjustment", title: "Liquidity Incentive Adjustment" },
+    { id: "peg-defense", slug: "peg-defense", title: "Peg Defense" },
+    // Dynamic Risk Parameters are 11's Risk Parameters adjusted by rule; Stress
+    // Testing is not 23's Simulation; Automated Deleveraging is not 11's
+    // Liquidations.
+    { id: "risk-models", slug: "risk-models", title: "Risk Models" },
+    { id: "dynamic-risk-parameters", slug: "dynamic-risk-parameters", title: "Dynamic Risk Parameters" },
+    { id: "stress-testing", slug: "stress-testing", title: "Stress Testing" },
+    { id: "automated-deleveraging", slug: "automated-deleveraging", title: "Automated Deleveraging" },
+    // Governance decides in 14; here its decisions take effect without a human
+    // executor, and humans can override autonomous operation. Override
+    // Mechanisms are not 14's Veto Rights.
+    { id: "automatic-enactment", slug: "automatic-enactment", title: "Automatic Enactment" },
+    { id: "override-mechanisms", slug: "override-mechanisms", title: "Override Mechanisms" },
+    // Operation Proofs are not 06's Computation Proofs in general; Invariant
+    // Verification is not Foundations' Verification.
+    { id: "operation-proofs", slug: "operation-proofs", title: "Operation Proofs" },
+    { id: "invariant-verification", slug: "invariant-verification", title: "Invariant Verification" },
+    // Protocol Lifecycle Automation is not 02's Contract Lifecycle or 24's
+    // Organizational Lifecycle. Protocol Bootstrapping, Progressive
+    // Decentralization, Ossification and Protocol Sunsetting are 19's, here as
+    // automated lifecycle stages; Automated Upgrades are not 14's Protocol Upgrades
+    // (decided by governance); Protocol Bootstrapping is not 24's Organizational
+    // Bootstrapping.
+    { id: "automated-upgrades", slug: "automated-upgrades", title: "Automated Upgrades" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -5564,6 +5868,24 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "disputes-emergency-controls", conceptId: "disputes-emergency-controls", parentPlacementId: "autonomous-organizations", order: 12 },
     { id: "organizational-lifecycle", conceptId: "organizational-lifecycle", parentPlacementId: "autonomous-organizations", order: 13 },
     { id: "inter-organizational-coordination", conceptId: "inter-organizational-coordination", parentPlacementId: "autonomous-organizations", order: 14 },
+    // 25 Autonomous Protocols: L1 topics.
+    { id: "protocol-autonomy", conceptId: "protocol-autonomy", parentPlacementId: "autonomous-protocols", order: 0 },
+    { id: "protocol-objectives", conceptId: "protocol-objectives", parentPlacementId: "autonomous-protocols", order: 1 },
+    { id: "protocol-monitoring", conceptId: "protocol-monitoring", parentPlacementId: "autonomous-protocols", order: 2 },
+    { id: "control-loops", conceptId: "control-loops", parentPlacementId: "autonomous-protocols", order: 3 },
+    { id: "adaptive-parameters", conceptId: "adaptive-parameters", parentPlacementId: "autonomous-protocols", order: 4 },
+    { id: "protocol-policies", conceptId: "protocol-policies", parentPlacementId: "autonomous-protocols", order: 5 },
+    { id: "protocol-agents", conceptId: "protocol-agents", parentPlacementId: "autonomous-protocols", order: 6 },
+    { id: "protocol-maintenance", conceptId: "protocol-maintenance", parentPlacementId: "autonomous-protocols", order: 7 },
+    { id: "protocol-adaptation", conceptId: "protocol-adaptation", parentPlacementId: "autonomous-protocols", order: 8 },
+    { id: "self-healing", conceptId: "self-healing", parentPlacementId: "autonomous-protocols", order: 9 },
+    { id: "autonomous-security-responses", conceptId: "autonomous-security-responses", parentPlacementId: "autonomous-protocols", order: 10 },
+    { id: "protocol-owned-resources", conceptId: "protocol-owned-resources", parentPlacementId: "autonomous-protocols", order: 11 },
+    { id: "autonomous-liquidity-management", conceptId: "autonomous-liquidity-management", parentPlacementId: "autonomous-protocols", order: 12 },
+    { id: "autonomous-risk-management", conceptId: "autonomous-risk-management", parentPlacementId: "autonomous-protocols", order: 13 },
+    { id: "governance-human-override", conceptId: "governance-human-override", parentPlacementId: "autonomous-protocols", order: 14 },
+    { id: "verifiable-autonomous-operation", conceptId: "verifiable-autonomous-operation", parentPlacementId: "autonomous-protocols", order: 15 },
+    { id: "protocol-lifecycle-automation", conceptId: "protocol-lifecycle-automation", parentPlacementId: "autonomous-protocols", order: 16 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

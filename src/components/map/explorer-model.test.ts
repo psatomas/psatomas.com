@@ -393,6 +393,25 @@ const POPULATED_L0 = {
     "organizational-lifecycle",
     "inter-organizational-coordination",
   ],
+  "autonomous-protocols": [
+    "protocol-autonomy",
+    "protocol-objectives",
+    "protocol-monitoring",
+    "control-loops",
+    "adaptive-parameters",
+    "protocol-policies",
+    "protocol-agents",
+    "protocol-maintenance",
+    "protocol-adaptation",
+    "self-healing",
+    "autonomous-security-responses",
+    "protocol-owned-resources",
+    "autonomous-liquidity-management",
+    "autonomous-risk-management",
+    "governance-human-override",
+    "verifiable-autonomous-operation",
+    "protocol-lifecycle-automation",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -1036,6 +1055,32 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Autonomous Protocols L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("pid-control"), ["Autonomous Protocols", "Control Loops", "PID Control"]);
+  assert.deepEqual(labels("authority-escalation-in-protocol-policies"), ["Autonomous Protocols", "Protocol Policies", "Escalation"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("circuit-breakers-in-autonomous-security-responses"), ["Autonomous Protocols", "Autonomous Security Responses", "Circuit Breakers"]);
+  assert.deepEqual(labels("circuit-breakers"), ["Governance & Institutions", "Emergency Governance", "Circuit Breakers"]);
+  assert.deepEqual(labels("keepers-in-protocol-maintenance"), ["Autonomous Protocols", "Protocol Maintenance", "Keepers"]);
+  assert.deepEqual(labels("keepers"), ["Networks & Infrastructure", "Keepers"]);
+  for (const id of ["protocol-autonomy", "feedback-loops", "keepers-in-protocol-maintenance", "protocol-sunsetting"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "peg-defense").expandedPlacementIds].sort(), ["autonomous-liquidity-management", "autonomous-protocols"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-protocols" && row.depth > 0);
+  assert.equal(subtreeRows.length, 17 + 99);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "25");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });

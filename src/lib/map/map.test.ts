@@ -2694,6 +2694,164 @@ const ORGANIZATIONS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const ORGANIZATIONS_L2 = ORGANIZATIONS_TREE.flatMap(([, children]) => children);
 
+// 25 Autonomous Protocols. Reused topics keep their homes: 02's, 03's, 05's,
+// 06's, 10's, 11's, 14's, 20's, 21's, 23's and 24's.
+const PROTOCOLS_LAYER: Array<[string, string, string]> = [
+  ["protocol-autonomy", "protocol-autonomy", "Protocol Autonomy"],
+  ["protocol-objectives", "protocol-objectives", "Protocol Objectives"],
+  ["protocol-monitoring", "protocol-monitoring", "Protocol Monitoring"],
+  ["control-loops", "control-loops", "Control Loops"],
+  ["adaptive-parameters", "adaptive-parameters", "Adaptive Parameters"],
+  ["protocol-policies", "protocol-policies", "Protocol Policies"],
+  ["protocol-agents", "protocol-agents", "Protocol Agents"],
+  ["protocol-maintenance", "protocol-maintenance", "Protocol Maintenance"],
+  ["protocol-adaptation", "protocol-adaptation", "Protocol Adaptation"],
+  ["self-healing", "self-healing", "Self-Healing"],
+  ["autonomous-security-responses", "autonomous-security-responses", "Autonomous Security Responses"],
+  ["protocol-owned-resources", "protocol-owned-resources", "Protocol-Owned Resources"],
+  ["autonomous-liquidity-management", "autonomous-liquidity-management", "Autonomous Liquidity Management"],
+  ["autonomous-risk-management", "autonomous-risk-management", "Autonomous Risk Management"],
+  ["governance-human-override", "governance-human-override", "Governance & Human Override"],
+  ["verifiable-autonomous-operation", "verifiable-autonomous-operation", "Verifiable Autonomous Operation"],
+  ["protocol-lifecycle-automation", "protocol-lifecycle-automation", "Protocol Lifecycle Automation"],
+];
+const PROTOCOLS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["protocol-autonomy", [
+    ["bounded-autonomy", "bounded-autonomy", "Bounded Autonomy"],
+    ["protocol-autonomy-levels", "protocol-autonomy-levels", "Protocol Autonomy Levels"],
+    ["self-management", "self-management", "Self-Management"],
+    ["protocol-invariants", "protocol-invariants", "Protocol Invariants"],
+    ["governance-minimization-in-protocol-autonomy", "governance-minimization", "Governance Minimization"],
+  ]],
+  ["protocol-objectives", [
+    ["objective-functions", "objective-functions", "Objective Functions"],
+    ["setpoints", "setpoints", "Setpoints"],
+    ["protocol-health", "protocol-health", "Protocol Health"],
+    ["objective-trade-offs", "objective-trade-offs", "Objective Trade-offs"],
+    ["objective-drift", "objective-drift", "Objective Drift"],
+  ]],
+  ["protocol-monitoring", [
+    ["protocol-state-in-protocol-monitoring", "protocol-state", "Protocol State"],
+    ["protocol-telemetry", "protocol-telemetry", "Protocol Telemetry"],
+    ["state-estimation", "state-estimation", "State Estimation"],
+    ["condition-monitoring-in-protocol-monitoring", "condition-monitoring", "Condition Monitoring"],
+    ["invariant-monitoring", "invariant-monitoring", "Invariant Monitoring"],
+    ["anomaly-detection-in-protocol-monitoring", "anomaly-detection", "Anomaly Detection"],
+  ]],
+  ["control-loops", [
+    ["feedback-loops", "feedback-loops", "Feedback Loops"],
+    ["feedback-controllers", "feedback-controllers", "Feedback Controllers"],
+    ["pid-control", "pid-control", "PID Control"],
+    ["triggers-in-control-loops", "triggers", "Triggers"],
+    ["control-stability", "control-stability", "Control Stability"],
+    ["control-latency", "control-latency", "Control Latency"],
+  ]],
+  ["adaptive-parameters", [
+    ["adjustment-rules", "adjustment-rules", "Adjustment Rules"],
+    ["parameter-bounds-in-adaptive-parameters", "parameter-bounds", "Parameter Bounds"],
+    ["adjustment-rate-limits", "adjustment-rate-limits", "Adjustment Rate Limits"],
+    ["dynamic-fees", "dynamic-fees", "Dynamic Fees"],
+    ["adaptive-interest-rates", "adaptive-interest-rates", "Adaptive Interest Rates"],
+    ["parameter-sensitivity", "parameter-sensitivity", "Parameter Sensitivity"],
+  ]],
+  ["protocol-policies", [
+    ["policy-driven-operation", "policy-driven-operation", "Policy-Driven Operation"],
+    ["operating-envelopes", "operating-envelopes", "Operating Envelopes"],
+    ["policy-constraints-in-protocol-policies", "policy-constraints", "Policy Constraints"],
+    ["policy-evaluation-in-protocol-policies", "policy-evaluation", "Policy Evaluation"],
+    ["response-policies", "response-policies", "Response Policies"],
+    ["authority-escalation-in-protocol-policies", "authority-escalation", "Escalation"],
+  ]],
+  ["protocol-agents", [
+    ["on-chain-agents", "on-chain-agents", "On-Chain Agents"],
+    ["ai-operated-protocols", "ai-operated-protocols", "AI-Operated Protocols"],
+    ["automation-networks-in-protocol-agents", "automation-networks", "Automation Networks"],
+    ["execution-bots-in-protocol-agents", "execution-bots", "Execution Bots"],
+    ["off-chain-workers-in-protocol-agents", "off-chain-workers", "Off-Chain Workers"],
+  ]],
+  ["protocol-maintenance", [
+    ["maintenance-tasks", "maintenance-tasks", "Maintenance Tasks"],
+    ["keepers-in-protocol-maintenance", "keepers", "Keepers"],
+    ["keeper-incentives-in-protocol-maintenance", "keeper-incentives", "Keeper Incentives"],
+    ["scheduled-execution-in-protocol-maintenance", "scheduled-execution", "Scheduled Execution"],
+    ["state-cleanup", "state-cleanup", "State Cleanup"],
+    ["dependency-management", "dependency-management", "Dependency Management"],
+  ]],
+  ["protocol-adaptation", [
+    ["adaptive-mechanisms", "adaptive-mechanisms", "Adaptive Mechanisms"],
+    ["regime-detection", "regime-detection", "Regime Detection"],
+    ["mode-switching", "mode-switching", "Mode Switching"],
+    ["learning-mechanisms", "learning-mechanisms", "Learning Mechanisms"],
+    ["adaptation-limits", "adaptation-limits", "Adaptation Limits"],
+    ["adaptation-evaluation", "adaptation-evaluation", "Adaptation Evaluation"],
+  ]],
+  ["self-healing", [
+    ["fault-detection", "fault-detection", "Fault Detection"],
+    ["automatic-failover", "automatic-failover", "Automatic Failover"],
+    ["graceful-degradation-in-self-healing", "graceful-degradation", "Graceful Degradation"],
+    ["recovery-modes", "recovery-modes", "Recovery Modes"],
+    ["state-repair", "state-repair", "State Repair"],
+    ["fault-tolerance-in-self-healing", "fault-tolerance", "Fault Tolerance"],
+  ]],
+  ["autonomous-security-responses", [
+    ["exploit-detection", "exploit-detection", "Exploit Detection"],
+    ["automated-containment", "automated-containment", "Automated Containment"],
+    ["circuit-breakers-in-autonomous-security-responses", "circuit-breakers", "Circuit Breakers"],
+    ["pause-mechanisms-in-autonomous-security-responses", "pause-mechanisms", "Pause Mechanisms"],
+    ["outflow-limits", "outflow-limits", "Outflow Limits"],
+    ["incident-response-in-autonomous-security-responses", "incident-response", "Incident Response"],
+  ]],
+  ["protocol-owned-resources", [
+    ["protocol-owned-liquidity", "protocol-owned-liquidity", "Protocol-Owned Liquidity"],
+    ["reserves-in-protocol-owned-resources", "reserves", "Reserves"],
+    ["insurance-funds", "insurance-funds", "Insurance Funds"],
+    ["revenue-in-protocol-owned-resources", "revenue", "Revenue"],
+    ["buybacks", "buybacks", "Buybacks"],
+    ["resource-allocation-in-protocol-owned-resources", "resource-allocation", "Resource Allocation"],
+  ]],
+  ["autonomous-liquidity-management", [
+    ["liquidity-targets", "liquidity-targets", "Liquidity Targets"],
+    ["liquidity-rebalancing", "liquidity-rebalancing", "Liquidity Rebalancing"],
+    ["liquidity-range-management", "liquidity-range-management", "Liquidity Range Management"],
+    ["liquidity-incentive-adjustment", "liquidity-incentive-adjustment", "Liquidity Incentive Adjustment"],
+    ["peg-defense", "peg-defense", "Peg Defense"],
+    ["liquidity-provision-in-autonomous-liquidity-management", "liquidity-provision", "Liquidity Provision"],
+  ]],
+  ["autonomous-risk-management", [
+    ["risk-models", "risk-models", "Risk Models"],
+    ["risk-parameters-in-autonomous-risk-management", "risk-parameters", "Risk Parameters"],
+    ["dynamic-risk-parameters", "dynamic-risk-parameters", "Dynamic Risk Parameters"],
+    ["risk-limits-in-autonomous-risk-management", "risk-limits", "Risk Limits"],
+    ["stress-testing", "stress-testing", "Stress Testing"],
+    ["automated-deleveraging", "automated-deleveraging", "Automated Deleveraging"],
+  ]],
+  ["governance-human-override", [
+    ["automatic-enactment", "automatic-enactment", "Automatic Enactment"],
+    ["proposal-execution-in-governance-human-override", "proposal-execution", "Proposal Execution"],
+    ["parameter-changes-in-governance-human-override", "parameter-changes", "Parameter Changes"],
+    ["human-oversight-in-governance-human-override", "human-oversight", "Human Oversight"],
+    ["override-mechanisms", "override-mechanisms", "Override Mechanisms"],
+    ["kill-switches-in-governance-human-override", "kill-switches", "Kill Switches"],
+  ]],
+  ["verifiable-autonomous-operation", [
+    ["verifiable-execution-in-verifiable-autonomous-operation", "verifiable-execution", "Verifiable Execution"],
+    ["operation-proofs", "operation-proofs", "Operation Proofs"],
+    ["invariant-verification", "invariant-verification", "Invariant Verification"],
+    ["audit-trails-in-verifiable-autonomous-operation", "audit-trails", "Audit Trails"],
+    ["decision-records-in-verifiable-autonomous-operation", "decision-records", "Decision Records"],
+    ["transparency-in-verifiable-autonomous-operation", "transparency", "Transparency"],
+  ]],
+  ["protocol-lifecycle-automation", [
+    ["protocol-bootstrapping-in-protocol-lifecycle-automation", "protocol-bootstrapping", "Protocol Bootstrapping"],
+    ["progressive-decentralization-in-protocol-lifecycle-automation", "progressive-decentralization", "Progressive Decentralization"],
+    ["automated-upgrades", "automated-upgrades", "Automated Upgrades"],
+    ["protocol-upgrades-in-protocol-lifecycle-automation", "protocol-upgrades", "Protocol Upgrades"],
+    ["ossification-in-protocol-lifecycle-automation", "ossification", "Ossification"],
+    ["protocol-sunsetting-in-protocol-lifecycle-automation", "protocol-sunsetting", "Protocol Sunsetting"],
+  ]],
+];
+const PROTOCOLS_L2 = PROTOCOLS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2744,6 +2902,8 @@ const AUTHORED_TOPICS = new Set([
   ...EXECUTION_L2.map(([id]) => id),
   ...ORGANIZATIONS_LAYER.map(([id]) => id),
   ...ORGANIZATIONS_L2.map(([id]) => id),
+  ...PROTOCOLS_LAYER.map(([id]) => id),
+  ...PROTOCOLS_L2.map(([id]) => id),
 ]);
 
 // Each domain's tests see the stack as it stood when that domain was authored:
@@ -2878,8 +3038,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Economy's 12 new L1 and 60 new L2 concepts, then Autonomous
   // Coordination's 5 new L1 and 56 new L2 concepts, then Autonomous
   // Execution's 11 new L1 and 45 new L2 concepts, then Autonomous
-  // Organizations' 13 new L1 and 54 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54);
+  // Organizations' 13 new L1 and 54 new L2 concepts, then Autonomous
+  // Protocols' 17 new L1 and 60 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54 + 17 + 60);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -3179,6 +3340,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("autonomous-coordination"), 10 + 60);
   assert.equal(subtreeOf("governance-institutions"), GOVERNANCE_LAYER.length + GOVERNANCE_L2.length);
   assert.equal(subtreeOf("autonomous-execution"), EXECUTION_LAYER.length + EXECUTION_L2.length);
+  assert.equal(subtreeOf("autonomous-organizations"), ORGANIZATIONS_LAYER.length + ORGANIZATIONS_L2.length);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -5195,6 +5357,133 @@ test("Autonomous Organizations leaves 20–23 unchanged", () => {
   }
 });
 
+test("Autonomous Protocols has exactly its seventeen L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("autonomous-protocols").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    PROTOCOLS_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("autonomous-protocols").map((placement) => placement.order), PROTOCOLS_LAYER.map((_, order) => order));
+  for (const [parent, children] of PROTOCOLS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of PROTOCOLS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "autonomous-protocols")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...PROTOCOLS_LAYER.map(([id]) => id), ...PROTOCOLS_L2.map(([id]) => id)].sort());
+  assert.equal(PROTOCOLS_L2.length, 99);
+  assert.deepEqual(resolver.getAncestors("pid-control").map((placement) => placement.id), ["autonomous-protocols", "control-loops"]);
+  assert.deepEqual(resolver.getAncestors("keepers-in-protocol-maintenance").map((placement) => placement.id), ["autonomous-protocols", "protocol-maintenance"]);
+});
+
+test("Autonomous Protocols reuses existing concepts at their homes and keeps protocol autonomy distinct", () => {
+  const placementsOf = (conceptId: string) => placementsThrough("autonomous-protocols", conceptId);
+  // Every L1 topic is a new concept; each reused concept gains exactly this
+  // placement here and stays preferred at its home.
+  assert.ok(PROTOCOLS_LAYER.every(([id, conceptId]) => id === conceptId));
+  const reused = PROTOCOLS_L2.filter(([id, conceptId]) => id !== conceptId);
+  assert.equal(reused.length, 39);
+  for (const [id, conceptId] of reused) {
+    assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
+    assert.ok(placementsOf(conceptId).includes(id), id);
+    const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
+    assert.ok(preferred && containingL0(preferred) !== "autonomous-protocols", `${conceptId} stays preferred at its home`);
+    assertPreferredThrough("autonomous-protocols", conceptId, preferred);
+  }
+  // Governance stays 14's: its concepts are placed here, not moved.
+  for (const conceptId of ["proposal-execution", "parameter-changes", "protocol-upgrades", "governance-minimization", "circuit-breakers", "pause-mechanisms", "incident-response"]) {
+    assert.equal(containingL0(resolver.getConcept(conceptId)!.preferredPlacementId!), "governance-institutions", conceptId);
+  }
+  // Protocol autonomy kept distinct from the concepts it sits near.
+  for (const [placementId, related] of [
+    ["protocol-autonomy", "autonomous-organizations"],
+    ["protocol-autonomy", "organizational-autonomy"],
+    ["protocol-autonomy-levels", "autonomy-levels"],
+    ["protocol-objectives", "mechanism-objectives"],
+    ["protocol-objectives", "agent-objectives"],
+    ["objective-functions", "mechanism-objectives"],
+    ["protocol-monitoring", "monitoring"],
+    ["protocol-telemetry", "metrics"],
+    ["protocol-health", "health-checks"],
+    ["protocol-policies", "organizational-policies"],
+    ["protocol-policies", "execution-policies"],
+    ["adaptive-parameters", "parameter-changes"],
+    ["automated-upgrades", "protocol-upgrades"],
+    ["self-healing", "execution-recovery"],
+    ["recovery-modes", "incident-response"],
+    ["autonomous-security-responses", "emergency-governance"],
+    ["protocol-owned-resources", "treasuries"],
+    ["autonomous-liquidity-management", "liquidity"],
+    ["liquidity-rebalancing", "liquidity-provision"],
+    ["peg-defense", "peg-stability"],
+    ["autonomous-risk-management", "risk"],
+    ["dynamic-risk-parameters", "risk-parameters"],
+    ["autonomous-risk-management", "risk-checks"],
+    ["protocol-adaptation", "protocol-upgrades"],
+    ["adaptive-mechanisms", "protocol-upgrades"],
+    ["feedback-loops", "update-models"],
+    ["feedback-loops", "heartbeats"],
+    ["bounded-autonomy", "human-oversight"],
+    ["protocol-agents", "ai-agent"],
+    ["on-chain-agents", "ai-agent"],
+    ["protocol-maintenance", "protocol-lifecycle-automation"],
+    ["protocol-lifecycle-automation", "contract-lifecycle"],
+    ["protocol-lifecycle-automation", "organizational-lifecycle"],
+    ["protocol-bootstrapping", "organizational-bootstrapping"],
+    ["protocol-invariants", "safety"],
+    ["protocol-invariants", "invariant-functions"],
+    ["dynamic-fees", "congestion-pricing"],
+    ["adaptive-interest-rates", "interest-rates"],
+    ["state-estimation", "state-reconstruction"],
+    ["state-repair", "state-reconstruction"],
+    ["fault-detection", "failures"],
+    ["outflow-limits", "spending-limits"],
+    ["operating-envelopes", "risk-limits"],
+    ["override-mechanisms", "veto-rights"],
+    ["automated-deleveraging", "liquidations"],
+    ["stress-testing", "simulation"],
+    ["buybacks", "burns"],
+    ["insurance-funds", "loss-absorption"],
+    ["operation-proofs", "computation-proofs"],
+    ["invariant-verification", "verification"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  for (const [id, conceptId] of [...PROTOCOLS_LAYER, ...PROTOCOLS_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (id !== conceptId) continue;
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...PROTOCOLS_LAYER, ...PROTOCOLS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Autonomous Protocols leaves 20–24 unchanged", () => {
+  for (const [root, layer, tree] of [
+    ["ai-intelligent-systems", AI_LAYER, AI_TREE],
+    ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
+    ["autonomous-coordination", COORDINATION_LAYER, COORDINATION_TREE],
+    ["autonomous-execution", EXECUTION_LAYER, EXECUTION_TREE],
+    ["autonomous-organizations", ORGANIZATIONS_LAYER, ORGANIZATIONS_TREE],
+  ] as const) {
+    assert.deepEqual(resolver.getChildren(root).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), layer, root);
+    for (const [parent, children] of tree) {
+      assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
+    }
+  }
+});
+
 // Cross-domain invariants, asserted once for the whole stack rather than in each
 // domain's own tests.
 test("a concept has an explicit preferred placement exactly when it is placed more than once, and resolves to it", () => {
@@ -5244,6 +5533,7 @@ const POPULATED_L0 = [
   "autonomous-coordination",
   "autonomous-execution",
   "autonomous-organizations",
+  "autonomous-protocols",
 ];
 
 test("L0 domains without authored topics stay empty", () => {
