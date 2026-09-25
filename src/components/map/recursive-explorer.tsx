@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Ref } from "react";
 import { useSearchParams } from "next/navigation";
 import { MonoLabel } from "@/components/ui/mono-label";
+import { ConceptExposition } from "./concept-exposition";
 import {
   getInitialMapExplorerState,
   getMapContextHref,
@@ -113,12 +114,18 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
     );
   }
 
+  // Opening a concept reveals its canonical explanation first, then its next
+  // conceptual layer; the exposition panel sits between the two.
+  const expositionId = (row: MapExplorerRow) => `map-exposition-${row.placementId}`;
+  const showsExposition = (row: MapExplorerRow) => row.isExpanded && row.hasContent;
+
   function renderDisclosureControl(row: MapExplorerRow) {
-    return row.hasChildren ? (
+    return row.isExpandable ? (
       <button
         type="button"
         aria-expanded={row.isExpanded}
-        aria-label={`${row.label} subtopics`}
+        aria-controls={showsExposition(row) ? expositionId(row) : undefined}
+        aria-label={`${row.label} details`}
         onClick={() => toggle(row.placementId)}
         className={`flex w-12 shrink-0 items-center justify-center border-l border-border font-mono text-base leading-none text-muted transition-colors hover:text-accent ${CONTROL_FOCUS}`}
       >
@@ -153,24 +160,33 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
               <h3 className="flex min-w-0 flex-1">{renderFocusControl(header, true)}</h3>
               {renderDisclosureControl(header)}
             </div>
+            {showsExposition(header) ? (
+              <ConceptExposition id={expositionId(header)} conceptId={header.conceptId} label={header.label} />
+            ) : null}
 
             {rows.length > 0 ? (
               <ol className="border-t border-border">
                 {rows.map((row) => (
-                  <li
-                    key={row.placementId}
-                    data-placement-id={row.placementId}
-                    data-concept-id={row.conceptId}
-                    data-depth={row.depth}
-                    className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${
-                      row.placementId === focusedPlacementId ? FOCUSED_ROW : ""
-                    }`}
-                  >
-                    {/* Hierarchy stays available to assistive technology without visible depth markers. */}
-                    <span className="sr-only">Level {row.depth + 1}: </span>
-                    {renderFocusControl(row, false)}
-                    {renderDisclosureControl(row)}
-                  </li>
+                  <Fragment key={row.placementId}>
+                    <li
+                      data-placement-id={row.placementId}
+                      data-concept-id={row.conceptId}
+                      data-depth={row.depth}
+                      className={`flex min-w-0 items-stretch border-t border-border first:border-t-0 ${
+                        row.placementId === focusedPlacementId ? FOCUSED_ROW : ""
+                      }`}
+                    >
+                      {/* Hierarchy stays available to assistive technology without visible depth markers. */}
+                      <span className="sr-only">Level {row.depth + 1}: </span>
+                      {renderFocusControl(row, false)}
+                      {renderDisclosureControl(row)}
+                    </li>
+                    {showsExposition(row) ? (
+                      <li>
+                        <ConceptExposition id={expositionId(row)} conceptId={row.conceptId} label={row.label} />
+                      </li>
+                    ) : null}
+                  </Fragment>
                 ))}
               </ol>
             ) : null}
