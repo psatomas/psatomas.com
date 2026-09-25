@@ -1,4 +1,3 @@
-import { MonoLabel } from "@/components/ui/mono-label";
 import { buildMapExplorerView } from "@/components/map/explorer-model";
 import { RecursiveMapExplorer } from "@/components/map/recursive-explorer";
 import { createMapResolver, mapKnowledge } from "@/lib/map";
@@ -26,30 +25,20 @@ export default function MapPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-6 py-16 md:gap-16">
       <header className="flex max-w-3xl flex-col gap-4">
-        <MonoLabel>Map / Protocol Engineering</MonoLabel>
+        {/* Not MonoLabel: its hardcoded text-muted wins the cascade over a
+            colour override (see lab-preview.tsx), so its classes are used
+            directly with the accent colour. */}
+        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">Map / Protocol Engineering</p>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Map</h1>
         <p className="text-lg text-muted">
-          A structured knowledge environment for the foundations of
-          programmable and increasingly autonomous digital systems.
+          A structured knowledge environment for exploring the systems,
+          mechanisms, trust models, economics, coordination structures, and
+          intelligent agents behind programmable and increasingly autonomous
+          digital systems.
         </p>
       </header>
 
-      <section aria-labelledby="exploration-surface-heading" className="flex flex-col gap-8">
-        {/* Plain intro rather than a graphite plane: inside the explorer,
-            graphite is reserved for structural region identity. */}
-        <div className="flex max-w-2xl flex-col gap-3">
-          <h2 id="exploration-surface-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Protocol Engineering
-          </h2>
-          <p className="text-muted">
-            Explore the systems, mechanisms, trust models, economics,
-            coordination structures, and intelligent agents behind them.
-            Open as many regions and branches as you like; select a concept
-            to set your context.
-          </p>
-        </div>
-        <RecursiveMapExplorer view={explorerView} />
-      </section>
+      <RecursiveMapExplorer view={explorerView} />
     </main>
   );
 }
