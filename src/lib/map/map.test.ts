@@ -357,6 +357,7 @@ test("exposition validation reports every malformed block", () => {
         { kind: "flow", label: "One stage", stages: [["Only"]] },
         { kind: "distinction", left: "Local", right: "" },
         { kind: "tensions", label: "Pairs", pairs: [["Safety", ""]] },
+        { kind: "flow", label: "Ambiguous", stages: [["A"], ["B", "C"], ["D", "E"]] },
       ],
     }],
   }));
@@ -365,6 +366,7 @@ test("exposition validation reports every malformed block", () => {
     'Content "malformed-exposition" block 1 (flow) must contain at least two stages',
     'Content "malformed-exposition" block 2 (distinction) must name both sides',
     'Content "malformed-exposition" block 3 (tensions) has an incomplete pair',
+    'Content "malformed-exposition" block 4 (flow) has consecutive parallel stages',
   ]);
 });
 

@@ -39,7 +39,12 @@ function contentBlockProblems(block: MapContentBlock): string[] {
     case "flow":
       if (blank(block.label)) return ["has no label"];
       if (block.stages.length < 2) return ["must contain at least two stages"];
-      return block.stages.some((stage) => stage.length === 0 || stage.some(blank)) ? ["has an empty stage or element"] : [];
+      if (block.stages.some((stage) => stage.length === 0 || stage.some(blank))) return ["has an empty stage or element"];
+      // A multi-element stage is a parallel set reached by branching and
+      // left by converging; two in a row would leave the pairing ambiguous.
+      return block.stages.some((stage, index) => index > 0 && stage.length > 1 && block.stages[index - 1].length > 1)
+        ? ["has consecutive parallel stages"]
+        : [];
     case "distinction":
       return blank(block.left) || blank(block.right) ? ["must name both sides"] : [];
     case "tensions":
