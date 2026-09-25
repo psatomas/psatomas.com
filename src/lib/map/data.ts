@@ -39,14 +39,19 @@ const L0_DOMAINS: ReadonlyArray<{ id: string; title: string }> = [
 const l0Concepts: MapConcept[] = L0_DOMAINS.map(({ id, title }) => ({ id, slug: id, title }));
 const l0Placements: MapPlacement[] = L0_DOMAINS.map(({ id }, order) => ({ id, conceptId: id, order }));
 
+/** An L2 topic whose placement differs from its concept: a further placement, or contextual wording. */
+type L2Topic = { placementId: string; conceptId: string; contextualLabel?: string };
+
 /**
- * Foundations' L2 layer, beneath each of its seven L1 topics, in sibling
- * order. A plain entry is a concept taught only here (placement ID = concept
- * ID); an object is a further placement of a concept that already has one,
- * so a repeated label is one canonical concept only where one canonical
- * exposition serves both contexts.
+ * The L2 layer beneath each authored L1 topic, keyed by L1 placement, in
+ * sibling order. A plain entry is a concept taught only here (placement ID =
+ * concept ID). An object is a further placement of a concept that already
+ * has one (a repeated label is one canonical concept only where one
+ * canonical exposition serves every context), or a placement whose wording
+ * in context is shorter than the concept title.
  */
-const FOUNDATIONS_L2: Readonly<Record<string, ReadonlyArray<string | { placementId: string; conceptId: string }>>> = {
+const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
+  // 01 Foundations
   protocols: [
     "rules",
     "participants",
@@ -97,20 +102,71 @@ const FOUNDATIONS_L2: Readonly<Record<string, ReadonlyArray<string | { placement
     "fault-tolerance",
     "censorship-resistance",
   ],
+  // 02 Computation & Execution
+  "execution-models": [
+    "deterministic-execution",
+    "non-deterministic-execution",
+    "sequential-execution",
+    "parallel-execution",
+    "optimistic-execution",
+    "speculative-execution",
+  ],
+  transactions: [
+    "transaction-lifecycle",
+    "transaction-structure",
+    "transaction-ordering",
+    "transaction-validation",
+    "transaction-execution",
+    "transaction-atomicity",
+    "transaction-reversion",
+  ],
+  "virtual-machines": ["evm", "wasm", "zkvms"],
+  "smart-contracts": [
+    "contract-state",
+    "contract-execution",
+    "contract-calls",
+    "message-calls",
+    { placementId: "contract-deployment", conceptId: "contract-deployment", contextualLabel: "Deployment" },
+    "execution-context",
+    "contract-lifecycle",
+  ],
+  "verifiable-computation": [
+    "computation-integrity",
+    "execution-traces",
+    "computation-commitments",
+    "computation-proofs",
+    { placementId: "verification-in-verifiable-computation", conceptId: "verification" },
+  ],
+  "off-chain-computation": [
+    "off-chain-execution",
+    "on-chain-verification",
+    "trusted-execution",
+    "untrusted-execution",
+    "off-chain-workers",
+  ],
+  "resource-accounting": [
+    "gas",
+    "execution-cost",
+    "metering",
+    "resource-limits",
+    "fee-accounting",
+    "denial-of-service-resistance",
+  ],
 };
 
-const foundationsL2Placements: MapPlacement[] = Object.entries(FOUNDATIONS_L2).flatMap(([parentPlacementId, children]) =>
+const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
   children.map((child, order) =>
     typeof child === "string"
       ? { id: child, conceptId: child, parentPlacementId, order }
-      : { id: child.placementId, conceptId: child.conceptId, parentPlacementId, order },
+      : { id: child.placementId, conceptId: child.conceptId, parentPlacementId, order, ...(child.contextualLabel ? { contextualLabel: child.contextualLabel } : {}) },
   ),
 );
 
 /**
- * The complete L0 layer, Foundations as the reference implementation of a
- * taught domain (canonical exposition plus its next conceptual layer), and a
- * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
+ * The complete L0 layer; Foundations as the reference implementation of a
+ * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
+ * L2 topics of Computation & Execution; and a deliberately small Phase 1
+ * proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -128,7 +184,7 @@ export const mapKnowledge: MapKnowledgeModel = {
       preferredPlacementId: "protocol-properties",
     },
     { id: "distributed-systems", slug: "distributed-systems", title: "Distributed Systems" },
-    // Foundations' L2 layer (placements in FOUNDATIONS_L2). State is one
+    // Foundations' L2 layer (placements in L2_TOPICS). State is one
     // concept placed under Protocols and State Machines; Protocol Properties
     // and Finality gain further placements.
     { id: "state", slug: "state", title: "State", preferredPlacementId: "state-in-state-machines" },
@@ -154,7 +210,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "trust-assumptions", slug: "trust-assumptions", title: "Trust Assumptions" },
     { id: "trusted-parties", slug: "trusted-parties", title: "Trusted Parties" },
     { id: "trust-boundaries", slug: "trust-boundaries", title: "Trust Boundaries" },
-    { id: "verification", slug: "verification", title: "Verification" },
+    // Also placed under Verifiable Computation: checking a computation's proof
+    // is the same act as checking any claim instead of trusting its source.
+    { id: "verification", slug: "verification", title: "Verification", preferredPlacementId: "verification" },
     { id: "trust-minimization", slug: "trust-minimization", title: "Trust Minimization" },
     { id: "trust-distribution", slug: "trust-distribution", title: "Trust Distribution" },
     { id: "coordination-models", slug: "coordination-models", title: "Coordination Models" },
@@ -175,6 +233,58 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "consistency", slug: "consistency", title: "Consistency" },
     { id: "fault-tolerance", slug: "fault-tolerance", title: "Fault Tolerance" },
     { id: "censorship-resistance", slug: "censorship-resistance", title: "Censorship Resistance" },
+    // 02 Computation & Execution: L1 topics.
+    { id: "execution-models", slug: "execution-models", title: "Execution Models" },
+    { id: "transactions", slug: "transactions", title: "Transactions" },
+    { id: "virtual-machines", slug: "virtual-machines", title: "Virtual Machines" },
+    { id: "smart-contracts", slug: "smart-contracts", title: "Smart Contracts" },
+    { id: "verifiable-computation", slug: "verifiable-computation", title: "Verifiable Computation" },
+    { id: "off-chain-computation", slug: "off-chain-computation", title: "Off-Chain Computation" },
+    { id: "resource-accounting", slug: "resource-accounting", title: "Resource Accounting" },
+    // L2 topics (placements in L2_TOPICS). Deterministic Execution is an
+    // execution model, not Foundations' Determinism (the property it relies on).
+    { id: "deterministic-execution", slug: "deterministic-execution", title: "Deterministic Execution" },
+    { id: "non-deterministic-execution", slug: "non-deterministic-execution", title: "Non-Deterministic Execution" },
+    { id: "sequential-execution", slug: "sequential-execution", title: "Sequential Execution" },
+    { id: "parallel-execution", slug: "parallel-execution", title: "Parallel Execution" },
+    { id: "optimistic-execution", slug: "optimistic-execution", title: "Optimistic Execution" },
+    { id: "speculative-execution", slug: "speculative-execution", title: "Speculative Execution" },
+    { id: "transaction-lifecycle", slug: "transaction-lifecycle", title: "Transaction Lifecycle" },
+    { id: "transaction-structure", slug: "transaction-structure", title: "Transaction Structure" },
+    { id: "transaction-ordering", slug: "transaction-ordering", title: "Transaction Ordering" },
+    { id: "transaction-validation", slug: "transaction-validation", title: "Transaction Validation" },
+    { id: "transaction-execution", slug: "transaction-execution", title: "Transaction Execution" },
+    { id: "transaction-atomicity", slug: "transaction-atomicity", title: "Transaction Atomicity" },
+    { id: "transaction-reversion", slug: "transaction-reversion", title: "Transaction Reversion" },
+    { id: "evm", slug: "evm", title: "EVM" },
+    { id: "wasm", slug: "wasm", title: "WASM" },
+    { id: "zkvms", slug: "zkvms", title: "zkVMs" },
+    // Contract State is a contract's own persistent storage, not Foundations'
+    // general State.
+    { id: "contract-state", slug: "contract-state", title: "Contract State" },
+    { id: "contract-execution", slug: "contract-execution", title: "Contract Execution" },
+    { id: "contract-calls", slug: "contract-calls", title: "Contract Calls" },
+    { id: "message-calls", slug: "message-calls", title: "Message Calls" },
+    // Deploying a contract, shown as "Deployment" under Smart Contracts; the
+    // generic word stays free for protocol deployment elsewhere.
+    { id: "contract-deployment", slug: "contract-deployment", title: "Contract Deployment" },
+    { id: "execution-context", slug: "execution-context", title: "Execution Context" },
+    { id: "contract-lifecycle", slug: "contract-lifecycle", title: "Contract Lifecycle" },
+    { id: "computation-integrity", slug: "computation-integrity", title: "Computation Integrity" },
+    { id: "execution-traces", slug: "execution-traces", title: "Execution Traces" },
+    { id: "computation-commitments", slug: "computation-commitments", title: "Computation Commitments" },
+    { id: "computation-proofs", slug: "computation-proofs", title: "Computation Proofs" },
+    { id: "off-chain-execution", slug: "off-chain-execution", title: "Off-Chain Execution" },
+    { id: "on-chain-verification", slug: "on-chain-verification", title: "On-Chain Verification" },
+    { id: "trusted-execution", slug: "trusted-execution", title: "Trusted Execution" },
+    { id: "untrusted-execution", slug: "untrusted-execution", title: "Untrusted Execution" },
+    { id: "off-chain-workers", slug: "off-chain-workers", title: "Off-Chain Workers" },
+    { id: "gas", slug: "gas", title: "Gas" },
+    { id: "execution-cost", slug: "execution-cost", title: "Execution Cost" },
+    { id: "metering", slug: "metering", title: "Metering" },
+    { id: "resource-limits", slug: "resource-limits", title: "Resource Limits" },
+    { id: "fee-accounting", slug: "fee-accounting", title: "Fee Accounting" },
+    { id: "denial-of-service-resistance", slug: "denial-of-service-resistance", title: "Denial-of-Service Resistance" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -203,7 +313,14 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "coordination", conceptId: "coordination", parentPlacementId: "foundations", order: 4 },
     { id: "adversarial-environments", conceptId: "adversarial-environments", parentPlacementId: "foundations", order: 5 },
     { id: "protocol-properties", conceptId: "protocol-properties", parentPlacementId: "foundations", order: 6 },
-    ...foundationsL2Placements,
+    { id: "execution-models", conceptId: "execution-models", parentPlacementId: "computation-execution", order: 0 },
+    { id: "transactions", conceptId: "transactions", parentPlacementId: "computation-execution", order: 1 },
+    { id: "virtual-machines", conceptId: "virtual-machines", parentPlacementId: "computation-execution", order: 2 },
+    { id: "smart-contracts", conceptId: "smart-contracts", parentPlacementId: "computation-execution", order: 3 },
+    { id: "verifiable-computation", conceptId: "verifiable-computation", parentPlacementId: "computation-execution", order: 4 },
+    { id: "off-chain-computation", conceptId: "off-chain-computation", parentPlacementId: "computation-execution", order: 5 },
+    { id: "resource-accounting", conceptId: "resource-accounting", parentPlacementId: "computation-execution", order: 6 },
+    ...l2Placements,
     { id: "consensus", conceptId: "consensus", parentPlacementId: "consensus-ordering", order: 0 },
     {
       id: "finality-in-consensus",

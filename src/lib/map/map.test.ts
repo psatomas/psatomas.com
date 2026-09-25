@@ -75,6 +75,68 @@ const FOUNDATIONS_TREE: Array<[string, Array<[string, string, string]>]> = [
 const FOUNDATIONS_LAYER = FOUNDATIONS_TREE.map(([id]) => id);
 const FOUNDATIONS_L2 = FOUNDATIONS_TREE.flatMap(([, children]) => children);
 
+// 02 Computation & Execution, in the same form. Deployment is the concept
+// Contract Deployment in contextual wording; Verification is Foundations'.
+const COMPUTATION_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["execution-models", [
+    ["deterministic-execution", "deterministic-execution", "Deterministic Execution"],
+    ["non-deterministic-execution", "non-deterministic-execution", "Non-Deterministic Execution"],
+    ["sequential-execution", "sequential-execution", "Sequential Execution"],
+    ["parallel-execution", "parallel-execution", "Parallel Execution"],
+    ["optimistic-execution", "optimistic-execution", "Optimistic Execution"],
+    ["speculative-execution", "speculative-execution", "Speculative Execution"],
+  ]],
+  ["transactions", [
+    ["transaction-lifecycle", "transaction-lifecycle", "Transaction Lifecycle"],
+    ["transaction-structure", "transaction-structure", "Transaction Structure"],
+    ["transaction-ordering", "transaction-ordering", "Transaction Ordering"],
+    ["transaction-validation", "transaction-validation", "Transaction Validation"],
+    ["transaction-execution", "transaction-execution", "Transaction Execution"],
+    ["transaction-atomicity", "transaction-atomicity", "Transaction Atomicity"],
+    ["transaction-reversion", "transaction-reversion", "Transaction Reversion"],
+  ]],
+  ["virtual-machines", [
+    ["evm", "evm", "EVM"],
+    ["wasm", "wasm", "WASM"],
+    ["zkvms", "zkvms", "zkVMs"],
+  ]],
+  ["smart-contracts", [
+    ["contract-state", "contract-state", "Contract State"],
+    ["contract-execution", "contract-execution", "Contract Execution"],
+    ["contract-calls", "contract-calls", "Contract Calls"],
+    ["message-calls", "message-calls", "Message Calls"],
+    ["contract-deployment", "contract-deployment", "Deployment"],
+    ["execution-context", "execution-context", "Execution Context"],
+    ["contract-lifecycle", "contract-lifecycle", "Contract Lifecycle"],
+  ]],
+  ["verifiable-computation", [
+    ["computation-integrity", "computation-integrity", "Computation Integrity"],
+    ["execution-traces", "execution-traces", "Execution Traces"],
+    ["computation-commitments", "computation-commitments", "Computation Commitments"],
+    ["computation-proofs", "computation-proofs", "Computation Proofs"],
+    ["verification-in-verifiable-computation", "verification", "Verification"],
+  ]],
+  ["off-chain-computation", [
+    ["off-chain-execution", "off-chain-execution", "Off-Chain Execution"],
+    ["on-chain-verification", "on-chain-verification", "On-Chain Verification"],
+    ["trusted-execution", "trusted-execution", "Trusted Execution"],
+    ["untrusted-execution", "untrusted-execution", "Untrusted Execution"],
+    ["off-chain-workers", "off-chain-workers", "Off-Chain Workers"],
+  ]],
+  ["resource-accounting", [
+    ["gas", "gas", "Gas"],
+    ["execution-cost", "execution-cost", "Execution Cost"],
+    ["metering", "metering", "Metering"],
+    ["resource-limits", "resource-limits", "Resource Limits"],
+    ["fee-accounting", "fee-accounting", "Fee Accounting"],
+    ["denial-of-service-resistance", "denial-of-service-resistance", "Denial-of-Service Resistance"],
+  ]],
+];
+const COMPUTATION_LAYER = COMPUTATION_TREE.map(([id]) => id);
+const COMPUTATION_L2 = COMPUTATION_TREE.flatMap(([, children]) => children);
+// The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
+const AUTHORED_TOPICS = new Set([...FOUNDATIONS_LAYER, ...FOUNDATIONS_L2.map(([id]) => id), ...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)]);
+
 function errorsFor(mutator: (model: MapKnowledgeModel) => MapKnowledgeModel): string[] {
   return validateMapKnowledge(mutator(mapKnowledge));
 }
@@ -138,25 +200,18 @@ test("/map canonical metadata is the environment URL, never a context query", ()
 test("canonical concept identities stay unique after adding the L0 layer", () => {
   const ids = mapKnowledge.concepts.map((concept) => concept.id);
   assert.equal(new Set(ids).size, ids.length);
-  // L0, the Phase 1 fixture, Foundations' L1 layer, and its 40 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40);
+  // L0, the Phase 1 fixture, Foundations' L1 layer and its 40 new L2
+  // concepts, then Computation & Execution's 7 L1 and 38 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
   const parents = Object.fromEntries(
     mapKnowledge.placements
-      // Foundations' L2 layer is asserted on its own below.
-      .filter((placement) => placement.parentPlacementId && !FOUNDATIONS_LAYER.includes(placement.parentPlacementId))
+      .filter((placement) => placement.parentPlacementId && !AUTHORED_TOPICS.has(placement.id))
       .map((placement) => [placement.id, placement.parentPlacementId]),
   );
   assert.deepEqual(parents, {
-    protocols: "foundations",
-    "distributed-systems": "foundations",
-    "state-machines": "foundations",
-    "trust-models": "foundations",
-    coordination: "foundations",
-    "adversarial-environments": "foundations",
-    "protocol-properties": "foundations",
     consensus: "consensus-ordering",
     "finality-in-consensus": "consensus",
     scaling: "scaling-modular-systems",
@@ -270,12 +325,14 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
   assert.equal(resolver.getAncestors("communication").at(-1)?.id, "distributed-systems");
   assert.equal(resolver.getAncestors("coordination-communication").at(-1)?.id, "coordination");
 
-  // Every other L2 topic is a new concept placed once, and none has exposition yet.
+  // Every other L2 topic is a new concept placed once here (Verification is
+  // also placed in Computation & Execution), and none has exposition yet.
   const reused = new Set(["state", "protocol-properties", "finality"]);
+  const placedElsewhere: Record<string, string[]> = { verification: ["verification-in-verifiable-computation"] };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
   }
   assert.equal(resolver.getContentForConcept("state"), undefined);
@@ -296,6 +353,71 @@ test("Foundations exposition is canonical data: models, a distinction, and tensi
   const strings: string[] = [];
   JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
   assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Computation & Execution has exactly its seven L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(resolver.getChildren("computation-execution").map((placement) => placement.id), COMPUTATION_LAYER);
+  for (const id of COMPUTATION_LAYER) {
+    assert.equal(resolver.getPlacement(id)?.conceptId, id);
+    assert.equal(resolver.getContentForConcept(id), undefined);
+  }
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)?.title;
+  };
+  for (const [parent, children] of COMPUTATION_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, label(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of COMPUTATION_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "computation-execution")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)].sort());
+  assert.equal(COMPUTATION_L2.length, 39);
+});
+
+test("Computation & Execution reuses Verification and keeps overlapping labels distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Checking a computation's proof is Foundations' Verification: one concept, two placements.
+  assert.equal(resolver.getPlacement("verification-in-verifiable-computation")?.conceptId, "verification");
+  assert.deepEqual(placementsOf("verification"), ["verification", "verification-in-verifiable-computation"]);
+  assert.equal(resolver.getConcept("verification")?.preferredPlacementId, "verification");
+  // Related but distinct: an execution model is not the property, contract
+  // storage is not State, validating a transaction or verifying on chain is
+  // not Verification itself, trusted execution is not a trusted party.
+  for (const [placementId, foundations] of [
+    ["deterministic-execution", "determinism"],
+    ["contract-state", "state"],
+    ["transaction-validation", "verification"],
+    ["on-chain-verification", "verification"],
+    ["trusted-execution", "trusted-parties"],
+    ["denial-of-service-resistance", "censorship-resistance"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(foundations), foundations);
+    assert.notEqual(conceptId, foundations, placementId);
+  }
+  // Contextual wording: Contract Deployment is shown as "Deployment" under Smart Contracts.
+  assert.equal(resolver.getConcept("contract-deployment")?.title, "Contract Deployment");
+  assert.equal(resolver.getPlacement("contract-deployment")?.contextualLabel, "Deployment");
+  assert.equal(resolver.getConcept("deployment"), undefined);
+  // Every other topic is a new concept placed once, without exposition; placement IDs are unique.
+  for (const [id, conceptId] of [...COMPUTATION_TREE.map(([id]): [string, string, string] => [id, id, ""]), ...COMPUTATION_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (conceptId === "verification") continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  const ids = [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)];
+  assert.equal(new Set(ids).size, ids.length);
+  assert.ok(ids.every((id) => !FOUNDATIONS_L2.some(([foundationsId]) => foundationsId === id)));
 });
 
 test("one canonical Finality concept resolves through independent placements", () => {
