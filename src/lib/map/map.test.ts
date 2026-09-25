@@ -10,6 +10,71 @@ import { buildSocialMetadata } from "../social/metadata.ts";
 
 const resolver = createMapResolver(mapKnowledge);
 
+// Foundations' intended L1 → L2 hierarchy, written out independently of the
+// data: [placement ID, concept ID, title]. Repeated labels are listed with
+// the concept they resolve to.
+const FOUNDATIONS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["protocols", [
+    ["rules", "rules", "Rules"],
+    ["participants", "participants", "Participants"],
+    ["interactions", "interactions", "Interactions"],
+    ["assumptions", "assumptions", "Assumptions"],
+    ["state-in-protocols", "state", "State"],
+    ["protocol-properties-in-protocols", "protocol-properties", "Protocol Properties"],
+  ]],
+  ["distributed-systems", [
+    ["processes", "processes", "Processes"],
+    ["communication", "communication", "Communication"],
+    ["partial-knowledge", "partial-knowledge", "Partial Knowledge"],
+    ["latency", "latency", "Latency"],
+    ["failures", "failures", "Failures"],
+    ["fault-models", "fault-models", "Fault Models"],
+  ]],
+  ["state-machines", [
+    ["state-in-state-machines", "state", "State"],
+    ["inputs", "inputs", "Inputs"],
+    ["transitions", "transitions", "Transitions"],
+    ["transition-rules", "transition-rules", "Transition Rules"],
+    ["determinism", "determinism", "Determinism"],
+    ["state-machine-replication", "state-machine-replication", "State Machine Replication"],
+  ]],
+  ["trust-models", [
+    ["trust-assumptions", "trust-assumptions", "Trust Assumptions"],
+    ["trusted-parties", "trusted-parties", "Trusted Parties"],
+    ["trust-boundaries", "trust-boundaries", "Trust Boundaries"],
+    ["verification", "verification", "Verification"],
+    ["trust-minimization", "trust-minimization", "Trust Minimization"],
+    ["trust-distribution", "trust-distribution", "Trust Distribution"],
+  ]],
+  ["coordination", [
+    ["coordination-models", "coordination-models", "Coordination Models"],
+    ["information", "information", "Information"],
+    ["coordination-communication", "coordination-communication", "Communication"],
+    ["cooperation", "cooperation", "Cooperation"],
+    ["competition", "competition", "Competition"],
+    ["collective-action", "collective-action", "Collective Action"],
+  ]],
+  ["adversarial-environments", [
+    ["adversaries", "adversaries", "Adversaries"],
+    ["threat-models", "threat-models", "Threat Models"],
+    ["byzantine-behavior", "byzantine-behavior", "Byzantine Behavior"],
+    ["censorship", "censorship", "Censorship"],
+    ["collusion", "collusion", "Collusion"],
+    ["strategic-behavior", "strategic-behavior", "Strategic Behavior"],
+  ]],
+  ["protocol-properties", [
+    ["safety", "safety", "Safety"],
+    ["liveness", "liveness", "Liveness"],
+    ["finality-in-protocol-properties", "finality", "Finality"],
+    ["availability", "availability", "Availability"],
+    ["consistency", "consistency", "Consistency"],
+    ["fault-tolerance", "fault-tolerance", "Fault Tolerance"],
+    ["censorship-resistance", "censorship-resistance", "Censorship Resistance"],
+  ]],
+];
+const FOUNDATIONS_LAYER = FOUNDATIONS_TREE.map(([id]) => id);
+const FOUNDATIONS_L2 = FOUNDATIONS_TREE.flatMap(([, children]) => children);
+
 function errorsFor(mutator: (model: MapKnowledgeModel) => MapKnowledgeModel): string[] {
   return validateMapKnowledge(mutator(mapKnowledge));
 }
@@ -73,12 +138,16 @@ test("/map canonical metadata is the environment URL, never a context query", ()
 test("canonical concept identities stay unique after adding the L0 layer", () => {
   const ids = mapKnowledge.concepts.map((concept) => concept.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(ids.length, 27 + 11 + 6);
+  // L0, the Phase 1 fixture, Foundations' L1 layer, and its 40 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
   const parents = Object.fromEntries(
-    mapKnowledge.placements.filter((placement) => placement.parentPlacementId).map((placement) => [placement.id, placement.parentPlacementId]),
+    mapKnowledge.placements
+      // Foundations' L2 layer is asserted on its own below.
+      .filter((placement) => placement.parentPlacementId && !FOUNDATIONS_LAYER.includes(placement.parentPlacementId))
+      .map((placement) => [placement.id, placement.parentPlacementId]),
   );
   assert.deepEqual(parents, {
     protocols: "foundations",
@@ -125,16 +194,6 @@ test("re-homing changes no relationship, content, mechanism, or path record", ()
   assert.deepEqual(referenced.filter((conceptId) => l0.has(conceptId)), []);
 });
 
-const FOUNDATIONS_LAYER = [
-  "protocols",
-  "distributed-systems",
-  "state-machines",
-  "trust-models",
-  "coordination",
-  "adversarial-environments",
-  "protocol-properties",
-];
-
 test("Foundations owns exactly one canonical content record, which its placement does not duplicate", () => {
   const owned = mapKnowledge.content.filter((content) => content.conceptId === "foundations");
   assert.equal(owned.length, 1);
@@ -162,10 +221,67 @@ test("Foundations' next conceptual layer is its seven child placements, each its
   for (const id of FOUNDATIONS_LAYER) {
     assert.equal(resolver.getPlacement(id)?.conceptId, id);
     assert.ok(resolver.getConcept(id));
-    // Explanation before decomposition: the children are identities for now.
+    // Structure only: the L1 topics carry no exposition yet.
     assert.equal(resolver.getContentForConcept(id), undefined);
-    assert.deepEqual(resolver.getChildren(id), []);
   }
+});
+
+test("every Foundations L1 topic has exactly its intended L2 placements, in order, and nothing deeper", () => {
+  for (const [parent, children] of FOUNDATIONS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, resolver.getConcept(placement.conceptId)?.title]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of FOUNDATIONS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  // No placement anywhere else lands in the Foundations subtree.
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "foundations")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...FOUNDATIONS_LAYER, ...FOUNDATIONS_L2.map(([id]) => id)].sort());
+  assert.equal(FOUNDATIONS_L2.length, 43);
+});
+
+test("repeated Foundations labels reuse a canonical concept only where one exposition serves both", () => {
+  // Same concept, distinct placements.
+  // Sorted: placements of one concept under different parents have no mutual order.
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  assert.deepEqual(placementsOf("state"), ["state-in-protocols", "state-in-state-machines"]);
+  assert.equal(resolver.getConcept("state")?.preferredPlacementId, "state-in-state-machines");
+  assert.deepEqual(placementsOf("protocol-properties"), ["protocol-properties", "protocol-properties-in-protocols"]);
+  assert.equal(resolver.getConcept("protocol-properties")?.preferredPlacementId, "protocol-properties");
+  // Children belong to placements: only the L1 occurrence carries the properties.
+  assert.equal(resolver.getChildren("protocol-properties").length, 7);
+  assert.deepEqual(resolver.getChildren("protocol-properties-in-protocols"), []);
+  // Finality is the existing canonical concept: one content record for every placement.
+  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-protocol-properties", "finality-in-rollups"]);
+  assert.equal(resolver.getConcept("finality")?.preferredPlacementId, "finality-in-consensus");
+  assert.equal(mapKnowledge.content.filter((content) => content.conceptId === "finality").length, 1);
+
+  // Same wording, different concepts: message exchange between processes is
+  // not participants exchanging information and intent to coordinate.
+  const communication = mapKnowledge.concepts.filter((concept) => concept.title === "Communication");
+  assert.deepEqual(communication.map((concept) => concept.id), ["communication", "coordination-communication"]);
+  assert.deepEqual(placementsOf("communication"), ["communication"]);
+  assert.deepEqual(placementsOf("coordination-communication"), ["coordination-communication"]);
+  assert.equal(resolver.getAncestors("communication").at(-1)?.id, "distributed-systems");
+  assert.equal(resolver.getAncestors("coordination-communication").at(-1)?.id, "coordination");
+
+  // Every other L2 topic is a new concept placed once, and none has exposition yet.
+  const reused = new Set(["state", "protocol-properties", "finality"]);
+  for (const [id, conceptId] of FOUNDATIONS_L2) {
+    if (reused.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+  }
+  assert.equal(resolver.getContentForConcept("state"), undefined);
+  // Placement identity stays unique across the repeated labels.
+  const ids = FOUNDATIONS_L2.map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
 });
 
 test("Foundations exposition is canonical data: models, a distinction, and tensions", () => {
@@ -182,7 +298,7 @@ test("Foundations exposition is canonical data: models, a distinction, and tensi
   assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
 });
 
-test("one canonical Finality concept resolves through two independent placements", () => {
+test("one canonical Finality concept resolves through independent placements", () => {
   const consensusFinality = resolver.getPlacement("finality-in-consensus");
   const rollupFinality = resolver.getPlacement("finality-in-rollups");
 
@@ -193,8 +309,8 @@ test("one canonical Finality concept resolves through two independent placements
   assert.equal(rollupFinality.conceptId, "finality");
   assert.equal(resolver.getConcept(consensusFinality.conceptId), resolver.getConcept(rollupFinality.conceptId));
   assert.deepEqual(
-    resolver.getPlacementsForConcept("finality").map((placement) => placement.id),
-    ["finality-in-consensus", "finality-in-rollups"],
+    resolver.getPlacementsForConcept("finality").map((placement) => placement.id).sort(),
+    ["finality-in-consensus", "finality-in-protocol-properties", "finality-in-rollups"],
   );
   assert.deepEqual(
     resolver.getAncestors("finality-in-rollups").map((placement) => placement.id),

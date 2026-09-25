@@ -249,11 +249,11 @@ test("row activation: an open non-active row collapses without taking the contex
 });
 
 test("row activation: a leaf becomes the context without fabricated disclosure", () => {
-  const open = new Set(["foundations"]);
-  const protocols = getVisibleMapExplorerRows(view, open).find((row) => row.placementId === "protocols")!;
-  assert.equal(protocols.isExpandable, false);
-  const result = activateMapExplorerRow(protocols, "foundations", open);
-  assert.equal(result.contextPlacementId, "protocols");
+  const open = new Set(["foundations", "protocols"]);
+  const rules = getVisibleMapExplorerRows(view, open).find((row) => row.placementId === "rules")!;
+  assert.equal(rules.isExpandable, false);
+  const result = activateMapExplorerRow(rules, "protocols", open);
+  assert.equal(result.contextPlacementId, "rules");
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
@@ -464,8 +464,8 @@ test("collapsed Foundations is identity only; opening it reveals its exposition 
     "Adversarial Environments",
     "Protocol Properties",
   ]);
-  // The seven are the next layer only: identities, not yet expandable.
-  assert.ok(region.rows.every((row) => row.depth === 1 && !row.isExpandable));
+  // The seven are the next layer: closed, without exposition, each opening onto its own topics.
+  assert.ok(region.rows.every((row) => row.depth === 1 && !row.hasContent && row.hasChildren && row.isExpandable && !row.isExpanded));
 });
 
 test("a concept is expandable when it has exposition or a next layer, never when empty", () => {
@@ -474,7 +474,37 @@ test("a concept is expandable when it has exposition or a next layer, never when
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
   assert.ok(!byId.get("state-data")?.isExpandable); // neither
-  assert.ok(!byId.get("protocols")?.isExpandable);
+  assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
+  assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
+  assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
+  assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+});
+
+test("Foundations L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("state-machine-replication"), ["Foundations", "State Machines", "State Machine Replication"]);
+  assert.deepEqual(labels("censorship-resistance"), ["Foundations", "Protocol Properties", "Censorship Resistance"]);
+  assert.deepEqual(labels("state-in-protocols"), ["Foundations", "Protocols", "State"]);
+  assert.deepEqual(labels("state-in-state-machines"), ["Foundations", "State Machines", "State"]);
+  assert.deepEqual(labels("coordination-communication"), ["Foundations", "Coordination", "Communication"]);
+  assert.deepEqual(labels("finality-in-protocol-properties"), ["Foundations", "Protocol Properties", "Finality"]);
+  for (const id of ["state-machine-replication", "state-in-protocols", "coordination-communication", "finality-in-protocol-properties"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  // Placement, not concept: State resolves per placement, never by concept id.
+  assert.equal(resolveMapContextParam(index, ["state"]), null);
+  // Entering an L2 context opens exactly its ancestry.
+  assert.deepEqual([...getInitialMapExplorerState(view, "state-in-state-machines").expandedPlacementIds].sort(), ["foundations", "state-machines"]);
+  // Every placement in the subtree sits in 01 Foundations.
+  const subtree = mapKnowledge.placements.filter((placement) => getMapExplorerContext(index, placement.id).length > 1 && getMapExplorerContext(index, placement.id)[0].placementId === "foundations");
+  assert.equal(subtree.length, 7 + 43);
+  for (const placement of subtree) {
+    assert.equal(getContainingMapL0(index, placement.id), "foundations");
+    assert.equal(getContainingMapL0Ordinal(index, placement.id), "01");
+    assert.ok(getMapExplorerContext(index, placement.id).length <= 3, `${placement.id} is at most L2`);
+  }
 });
 
 test("the explorer view carries only a content flag, never exposition text", () => {

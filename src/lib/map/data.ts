@@ -40,6 +40,74 @@ const l0Concepts: MapConcept[] = L0_DOMAINS.map(({ id, title }) => ({ id, slug: 
 const l0Placements: MapPlacement[] = L0_DOMAINS.map(({ id }, order) => ({ id, conceptId: id, order }));
 
 /**
+ * Foundations' L2 layer, beneath each of its seven L1 topics, in sibling
+ * order. A plain entry is a concept taught only here (placement ID = concept
+ * ID); an object is a further placement of a concept that already has one,
+ * so a repeated label is one canonical concept only where one canonical
+ * exposition serves both contexts.
+ */
+const FOUNDATIONS_L2: Readonly<Record<string, ReadonlyArray<string | { placementId: string; conceptId: string }>>> = {
+  protocols: [
+    "rules",
+    "participants",
+    "interactions",
+    "assumptions",
+    { placementId: "state-in-protocols", conceptId: "state" },
+    { placementId: "protocol-properties-in-protocols", conceptId: "protocol-properties" },
+  ],
+  "distributed-systems": ["processes", "communication", "partial-knowledge", "latency", "failures", "fault-models"],
+  "state-machines": [
+    { placementId: "state-in-state-machines", conceptId: "state" },
+    "inputs",
+    "transitions",
+    "transition-rules",
+    "determinism",
+    "state-machine-replication",
+  ],
+  "trust-models": [
+    "trust-assumptions",
+    "trusted-parties",
+    "trust-boundaries",
+    "verification",
+    "trust-minimization",
+    "trust-distribution",
+  ],
+  coordination: [
+    "coordination-models",
+    "information",
+    "coordination-communication",
+    "cooperation",
+    "competition",
+    "collective-action",
+  ],
+  "adversarial-environments": [
+    "adversaries",
+    "threat-models",
+    "byzantine-behavior",
+    "censorship",
+    "collusion",
+    "strategic-behavior",
+  ],
+  "protocol-properties": [
+    "safety",
+    "liveness",
+    { placementId: "finality-in-protocol-properties", conceptId: "finality" },
+    "availability",
+    "consistency",
+    "fault-tolerance",
+    "censorship-resistance",
+  ],
+};
+
+const foundationsL2Placements: MapPlacement[] = Object.entries(FOUNDATIONS_L2).flatMap(([parentPlacementId, children]) =>
+  children.map((child, order) =>
+    typeof child === "string"
+      ? { id: child, conceptId: child, parentPlacementId, order }
+      : { id: child.placementId, conceptId: child.conceptId, parentPlacementId, order },
+  ),
+);
+
+/**
  * The complete L0 layer, Foundations as the reference implementation of a
  * taught domain (canonical exposition plus its next conceptual layer), and a
  * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
@@ -53,8 +121,60 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "trust-models", slug: "trust-models", title: "Trust Models" },
     { id: "coordination", slug: "coordination", title: "Coordination" },
     { id: "adversarial-environments", slug: "adversarial-environments", title: "Adversarial Environments" },
-    { id: "protocol-properties", slug: "protocol-properties", title: "Protocol Properties" },
+    {
+      id: "protocol-properties",
+      slug: "protocol-properties",
+      title: "Protocol Properties",
+      preferredPlacementId: "protocol-properties",
+    },
     { id: "distributed-systems", slug: "distributed-systems", title: "Distributed Systems" },
+    // Foundations' L2 layer (placements in FOUNDATIONS_L2). State is one
+    // concept placed under Protocols and State Machines; Protocol Properties
+    // and Finality gain further placements.
+    { id: "state", slug: "state", title: "State", preferredPlacementId: "state-in-state-machines" },
+    { id: "rules", slug: "rules", title: "Rules" },
+    { id: "participants", slug: "participants", title: "Participants" },
+    { id: "interactions", slug: "interactions", title: "Interactions" },
+    { id: "assumptions", slug: "assumptions", title: "Assumptions" },
+    { id: "processes", slug: "processes", title: "Processes" },
+    // Two concepts share the title "Communication": message exchange between
+    // processes (channels, delivery, synchrony) is not participants exchanging
+    // information and intent to align action (signalling, commitment), and
+    // one canonical exposition could not teach both.
+    { id: "communication", slug: "communication", title: "Communication" },
+    { id: "partial-knowledge", slug: "partial-knowledge", title: "Partial Knowledge" },
+    { id: "latency", slug: "latency", title: "Latency" },
+    { id: "failures", slug: "failures", title: "Failures" },
+    { id: "fault-models", slug: "fault-models", title: "Fault Models" },
+    { id: "inputs", slug: "inputs", title: "Inputs" },
+    { id: "transitions", slug: "transitions", title: "Transitions" },
+    { id: "transition-rules", slug: "transition-rules", title: "Transition Rules" },
+    { id: "determinism", slug: "determinism", title: "Determinism" },
+    { id: "state-machine-replication", slug: "state-machine-replication", title: "State Machine Replication" },
+    { id: "trust-assumptions", slug: "trust-assumptions", title: "Trust Assumptions" },
+    { id: "trusted-parties", slug: "trusted-parties", title: "Trusted Parties" },
+    { id: "trust-boundaries", slug: "trust-boundaries", title: "Trust Boundaries" },
+    { id: "verification", slug: "verification", title: "Verification" },
+    { id: "trust-minimization", slug: "trust-minimization", title: "Trust Minimization" },
+    { id: "trust-distribution", slug: "trust-distribution", title: "Trust Distribution" },
+    { id: "coordination-models", slug: "coordination-models", title: "Coordination Models" },
+    { id: "information", slug: "information", title: "Information" },
+    { id: "coordination-communication", slug: "coordination-communication", title: "Communication" },
+    { id: "cooperation", slug: "cooperation", title: "Cooperation" },
+    { id: "competition", slug: "competition", title: "Competition" },
+    { id: "collective-action", slug: "collective-action", title: "Collective Action" },
+    { id: "adversaries", slug: "adversaries", title: "Adversaries" },
+    { id: "threat-models", slug: "threat-models", title: "Threat Models" },
+    { id: "byzantine-behavior", slug: "byzantine-behavior", title: "Byzantine Behavior" },
+    { id: "censorship", slug: "censorship", title: "Censorship" },
+    { id: "collusion", slug: "collusion", title: "Collusion" },
+    { id: "strategic-behavior", slug: "strategic-behavior", title: "Strategic Behavior" },
+    { id: "safety", slug: "safety", title: "Safety" },
+    { id: "liveness", slug: "liveness", title: "Liveness" },
+    { id: "availability", slug: "availability", title: "Availability" },
+    { id: "consistency", slug: "consistency", title: "Consistency" },
+    { id: "fault-tolerance", slug: "fault-tolerance", title: "Fault Tolerance" },
+    { id: "censorship-resistance", slug: "censorship-resistance", title: "Censorship Resistance" },
     { id: "consensus", slug: "consensus", title: "Consensus" },
     {
       id: "finality",
@@ -83,6 +203,7 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "coordination", conceptId: "coordination", parentPlacementId: "foundations", order: 4 },
     { id: "adversarial-environments", conceptId: "adversarial-environments", parentPlacementId: "foundations", order: 5 },
     { id: "protocol-properties", conceptId: "protocol-properties", parentPlacementId: "foundations", order: 6 },
+    ...foundationsL2Placements,
     { id: "consensus", conceptId: "consensus", parentPlacementId: "consensus-ordering", order: 0 },
     {
       id: "finality-in-consensus",
