@@ -8,6 +8,14 @@ import type { MapContentBlock } from "@/lib/map";
 
 const MONO = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
 
+// MAP knowledge composition: one frame, two roles. Prose runs left-aligned on
+// a wide editorial measure; structures (models, axioms, tension matrices)
+// centre on the frame's axis. The frame is plain block flow so vertical
+// margins collapse: prose-to-prose transitions share one spacing, and any
+// transition into or out of a structure shares a larger one.
+const PROSE = "my-6 max-w-[54rem] first:mt-0 last:mb-0";
+const STRUCTURE = "my-10 first:mt-0 last:mb-0";
+
 // One request per concept for the page's lifetime; failures are not cached.
 const expositions = new Map<string, Promise<MapConceptExposition>>();
 
@@ -57,9 +65,7 @@ export function ConceptExposition({ id, conceptId, label }: { id: string; concep
       className="border-t border-border px-5 py-7 sm:px-6 sm:py-9"
     >
       {current?.exposition ? (
-        <div className="flex flex-col gap-6">
-          {/* Prose keeps a readable measure; conceptual models may use the
-              panel's full width so parallel sets never break labels. */}
+        <div>
           {current.exposition.blocks.map((block, index) => (
             <ExpositionBlock key={index} block={block} lead={index === 0} />
           ))}
@@ -82,30 +88,40 @@ function ExpositionBlock({ block, lead }: { block: MapContentBlock; lead: boolea
   switch (block.kind) {
     case "paragraph":
       return (
-        <p className={`max-w-3xl ${lead ? "text-lg leading-8 text-foreground" : "leading-7 text-foreground/80"}`}>{block.text}</p>
+        <p className={`${PROSE} ${lead ? "text-lg leading-8 text-foreground" : "leading-7 text-foreground/80"}`}>{block.text}</p>
       );
     case "flow":
-      return <FlowModel label={block.label} stages={block.stages} />;
-    case "distinction":
-      // Visible symbol; spoken wording lives only in the text alternative.
       return (
-        <p
-          role="img"
-          aria-label={`${block.left} is not the same as ${block.right}`}
-          className={`${MONO} max-w-3xl border-y border-border py-4 text-center text-foreground`}
-        >
-          {block.left} <span className="px-2 align-middle text-base leading-none text-muted">≠</span> {block.right}
-        </p>
+        <div className={STRUCTURE}>
+          <FlowModel label={block.label} stages={block.stages} />
+        </div>
+      );
+    case "distinction":
+      // An axiom on the structural axis. Visible symbol; spoken wording lives
+      // only in the text alternative.
+      return (
+        <div className={STRUCTURE}>
+          <p
+            role="img"
+            aria-label={`${block.left} is not the same as ${block.right}`}
+            className={`${MONO} mx-auto max-w-2xl border-y border-border py-4 text-center text-foreground`}
+          >
+            {block.left} <span className="px-2 align-middle text-base leading-none text-muted">≠</span> {block.right}
+          </p>
+        </div>
       );
     case "tensions":
-      // Six relationship rows, each [concept] ↔ [concept]; not a table.
+      // Relationship rows centred on the structural axis; each pair splits the
+      // matrix width evenly, so every [concept] ↔ [concept] has the same geometry.
       return (
-        <div role="list" aria-label={block.label} className="flex max-w-xl flex-col gap-2 py-1">
-          {block.pairs.map(([left, right]) => (
-            <div role="listitem" key={`${left}-${right}`}>
-              <TensionPair left={left} right={right} />
-            </div>
-          ))}
+        <div className={STRUCTURE}>
+          <div role="list" aria-label={block.label} className="mx-auto flex max-w-lg flex-col gap-2">
+            {block.pairs.map(([left, right]) => (
+              <div role="listitem" key={`${left}-${right}`}>
+                <TensionPair left={left} right={right} />
+              </div>
+            ))}
+          </div>
         </div>
       );
   }
