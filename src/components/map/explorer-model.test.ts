@@ -340,6 +340,18 @@ const POPULATED_L0 = {
     "agent-risk",
     "agent-incentives",
   ],
+  "autonomous-coordination": [
+    "agent-to-agent-communication",
+    "agent-discovery",
+    "negotiation-in-autonomous-coordination",
+    "delegation-in-autonomous-coordination",
+    "cooperation-in-autonomous-coordination",
+    "competition-in-autonomous-coordination",
+    "coalition-formation",
+    "resource-allocation-in-autonomous-coordination",
+    "task-markets",
+    "multi-agent-coordination",
+  ],
 } as const;
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
@@ -362,7 +374,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 6);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, 5);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -530,7 +542,7 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "autonomous-coordination")!;
+  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "autonomous-execution")!;
   assert.equal(activateMapExplorerRow(machineEconomy, null, new Set()).expandedPlacementIds.size, 0);
 });
 
@@ -635,8 +647,8 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[21].rows, []);
-  assert.equal(regions[21].header.hasChildren, false);
+  assert.deepEqual(regions[22].rows, []);
+  assert.equal(regions[22].header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -692,8 +704,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "autonomous-coordination");
-  assert.equal(empty.focusedPlacementId, "autonomous-coordination");
+  const empty = getInitialMapExplorerState(view, "autonomous-execution");
+  assert.equal(empty.focusedPlacementId, "autonomous-execution");
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -750,7 +762,7 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("autonomous-coordination")?.isExpandable); // neither
+  assert.ok(!byId.get("autonomous-execution")?.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
@@ -980,6 +992,43 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
+    assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
+  }
+});
+
+test("Autonomous Coordination L2 topics are ordinary placements: context, ancestry, containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
+  assert.deepEqual(labels("communication-semantics"), ["Autonomous Coordination", "Agent-to-Agent Communication", "Communication Semantics"]);
+  assert.deepEqual(labels("collective-decision-making"), ["Autonomous Coordination", "Multi-Agent Coordination", "Collective Decision-Making"]);
+  // Contextual wording.
+  assert.deepEqual(labels("negotiated-agreement"), ["Autonomous Coordination", "Negotiation", "Agreement"]);
+  assert.deepEqual(labels("competitive-selection"), ["Autonomous Coordination", "Competition", "Selection"]);
+  assert.deepEqual(labels("agent-synchronization"), ["Autonomous Coordination", "Multi-Agent Coordination", "Synchronization"]);
+  // Reused concepts: each placement keeps its own context.
+  assert.deepEqual(labels("negotiation-in-autonomous-coordination"), ["Autonomous Coordination", "Negotiation"]);
+  assert.deepEqual(labels("negotiation"), ["Machine Economy", "Machine Commerce", "Negotiation"]);
+  assert.deepEqual(labels("delegation-in-autonomous-coordination"), ["Autonomous Coordination", "Delegation"]);
+  assert.deepEqual(labels("delegation"), ["Identity, Accounts & Authority", "Authority", "Delegation"]);
+  assert.deepEqual(labels("cooperation-in-autonomous-coordination"), ["Autonomous Coordination", "Cooperation"]);
+  assert.deepEqual(labels("cooperation"), ["Foundations", "Coordination", "Cooperation"]);
+  assert.deepEqual(labels("resource-allocation-in-autonomous-coordination"), ["Autonomous Coordination", "Resource Allocation"]);
+  assert.deepEqual(labels("resource-allocation"), ["Economics & Mechanism Design", "Resource Allocation"]);
+  assert.deepEqual(labels("service-discovery-in-agent-discovery"), ["Autonomous Coordination", "Agent Discovery", "Service Discovery"]);
+  assert.deepEqual(labels("strategic-behavior-in-competition"), ["Autonomous Coordination", "Competition", "Strategic Behavior"]);
+  assert.deepEqual(labels("revocation-in-delegation"), ["Autonomous Coordination", "Delegation", "Revocation"]);
+  for (const id of ["negotiation-in-autonomous-coordination", "delegation-in-autonomous-coordination", "agent-synchronization", "revocation-in-delegation", "task-settlement"]) {
+    assert.equal(resolveMapContextParam(index, [id]), id);
+    assert.equal(getMapContextHref(id), `/map?context=${id}`);
+  }
+  assert.deepEqual([...getInitialMapExplorerState(view, "coalition-stability").expandedPlacementIds].sort(), ["autonomous-coordination", "coalition-formation"]);
+  const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-coordination" && row.depth > 0);
+  assert.equal(subtreeRows.length, 10 + 60);
+  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
+  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  for (const row of subtreeRows) {
+    assert.equal(getContainingMapL0Ordinal(index, row.placementId), "22");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
   }
 });
@@ -1402,7 +1451,7 @@ test("entering a domain from the index sets context, opens it, and never collaps
   const again = enterMapExplorerContext("foundations", open, index);
   assert.equal(again.expandedPlacementIds, open);
   // An empty domain is entered without fabricated disclosure.
-  assert.deepEqual([...enterMapExplorerContext("autonomous-coordination", new Set(), index).expandedPlacementIds], []);
+  assert.deepEqual([...enterMapExplorerContext("autonomous-execution", new Set(), index).expandedPlacementIds], []);
   assert.equal(getMapContextHref(closed.contextPlacementId), "/map?context=foundations");
 });
 

@@ -1803,6 +1803,87 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "principal-agent-problems",
     { placementId: "incentive-compatibility-in-agent-incentives", conceptId: "incentive-compatibility" },
   ],
+  // 22 Autonomous Coordination
+  "agent-to-agent-communication": [
+    "agent-messages",
+    "message-protocols",
+    "communication-semantics",
+    "secure-communication",
+    "message-routing",
+    "communication-policies",
+  ],
+  "agent-discovery": [
+    "agent-registries",
+    "capability-discovery",
+    { placementId: "service-discovery-in-agent-discovery", conceptId: "service-discovery" },
+    "discovery-protocols",
+    "matching",
+    "discovery-trust",
+  ],
+  "negotiation-in-autonomous-coordination": [
+    "offers",
+    "counteroffers",
+    "negotiation-constraints",
+    "negotiation-strategies",
+    { placementId: "negotiated-agreement", conceptId: "negotiated-agreement", contextualLabel: "Agreement" },
+    "negotiation-failure",
+  ],
+  "delegation-in-autonomous-coordination": [
+    "task-delegation",
+    "authority-delegation",
+    "delegation-constraints",
+    "delegation-policies",
+    "delegation-chains",
+    { placementId: "revocation-in-delegation", conceptId: "revocation" },
+  ],
+  "cooperation-in-autonomous-coordination": [
+    "shared-objectives",
+    "task-sharing",
+    "resource-sharing",
+    "information-sharing",
+    "benefit-sharing",
+    "cooperative-strategies",
+  ],
+  "competition-in-autonomous-coordination": [
+    "competitive-strategies",
+    "bidding",
+    { placementId: "competitive-selection", conceptId: "competitive-selection", contextualLabel: "Selection" },
+    "rivalry",
+    { placementId: "strategic-behavior-in-competition", conceptId: "strategic-behavior" },
+    "competitive-equilibria",
+  ],
+  "coalition-formation": [
+    "coalition-membership",
+    "coalition-objectives",
+    "coalition-rules",
+    "coalition-incentives",
+    "coalition-stability",
+    "coalition-dissolution",
+  ],
+  "resource-allocation-in-autonomous-coordination": [
+    "compute-allocation",
+    { placementId: "capital-allocation-in-resource-allocation", conceptId: "capital-allocation" },
+    "data-allocation",
+    "service-allocation",
+    "allocation-policies",
+    "allocation-conflicts",
+  ],
+  "task-markets": [
+    "task-publication",
+    "task-discovery",
+    "task-providers",
+    "task-bidding",
+    "task-assignment",
+    "task-settlement",
+  ],
+  "multi-agent-coordination": [
+    "shared-plans",
+    "coordination-protocols",
+    { placementId: "agent-synchronization", conceptId: "agent-synchronization", contextualLabel: "Synchronization" },
+    "conflict-resolution",
+    "collective-decision-making",
+    "emergent-coordination",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -1823,8 +1904,8 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * Intents & Coordination, Governance & Institutions, Scaling & Modular
  * Systems, Interoperability & Abstraction, Security, Correctness &
  * Resilience, Protocol Architecture, Protocol Design & Lifecycle, AI &
- * Intelligent Systems, and Machine Economy; and a deliberately small Phase 1
- * proof fixture re-homed beneath its L0 domains.
+ * Intelligent Systems, Machine Economy, and Autonomous Coordination; and a
+ * deliberately small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1894,8 +1975,20 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "coordination-models", slug: "coordination-models", title: "Coordination Models" },
     { id: "information", slug: "information", title: "Information" },
     { id: "coordination-communication", slug: "coordination-communication", title: "Communication" },
-    { id: "cooperation", slug: "cooperation", title: "Cooperation" },
-    { id: "competition", slug: "competition", title: "Competition" },
+    // Cooperation and Competition are also 22 Autonomous Coordination's L1
+    // topics, each with its own layer; preferred there.
+    {
+      id: "cooperation",
+      slug: "cooperation",
+      title: "Cooperation",
+      preferredPlacementId: "cooperation-in-autonomous-coordination",
+    },
+    {
+      id: "competition",
+      slug: "competition",
+      title: "Competition",
+      preferredPlacementId: "competition-in-autonomous-coordination",
+    },
     // Also placed under 13's Multi-Party Coordination; this placement is preferred.
     { id: "collective-action", slug: "collective-action", title: "Collective Action", preferredPlacementId: "collective-action" },
     // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
@@ -2580,10 +2673,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "roles", slug: "roles", title: "Roles" },
     // Also placed under 21's Agent Permissions; this placement is preferred.
     { id: "capabilities", slug: "capabilities", title: "Capabilities", preferredPlacementId: "capabilities" },
-    // Also placed under 13's Intents (an intent delegates execution), 14's
-    // Representation (delegating votes), 20's AI Agents (an agent acting on its
-    // principal's authority) and 21's Agent Permissions; this placement is preferred.
-    { id: "delegation", slug: "delegation", title: "Delegation", preferredPlacementId: "delegation" },
+    // One party entrusting another to act on its behalf. Also placed under 13's
+    // Intents, 14's Representation, 20's AI Agents and 21's Agent Permissions,
+    // and 22 Autonomous Coordination's L1 topic with its own layer (Task and
+    // Authority Delegation are its narrower kinds); preferred there.
+    {
+      id: "delegation",
+      slug: "delegation",
+      title: "Delegation",
+      preferredPlacementId: "delegation-in-autonomous-coordination",
+    },
     // Also placed in 17 Security, Correctness & Resilience and under 21's Agent
     // Permissions; this placement is preferred.
     {
@@ -2738,7 +2837,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Also placed under 14's Dispute Resolution; this placement is preferred.
     { id: "evidence", slug: "evidence", title: "Evidence", preferredPlacementId: "evidence" },
     { id: "attestation-verification", slug: "attestation-verification", title: "Attestation Verification" },
-    // Withdrawing something issued or granted before it expires; also under 21's Agent Permissions. Preferred here.
+    // Withdrawing something issued or granted before it expires; also under 21's
+    // Agent Permissions and 22's Delegation. Preferred here.
     { id: "revocation", slug: "revocation", title: "Revocation", preferredPlacementId: "revocation" },
     // 10 Economics & Mechanism Design: L1 topics (Strategic Behavior is
     // Foundations' concept). Incentives, Mechanism Design, Game Theory, Fees and
@@ -2756,7 +2856,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "token-economics", slug: "token-economics", title: "Token Economics" },
     { id: "fees", slug: "fees", title: "Fees" },
     { id: "auctions", slug: "auctions", title: "Auctions" },
-    { id: "resource-allocation", slug: "resource-allocation", title: "Resource Allocation" },
+    // Also 22 Autonomous Coordination's L1 topic, allocating among agents, with
+    // its own layer; this placement is preferred.
+    { id: "resource-allocation", slug: "resource-allocation", title: "Resource Allocation", preferredPlacementId: "resource-allocation" },
     { id: "staking-economics", slug: "staking-economics", title: "Staking Economics" },
     { id: "security-budgets", slug: "security-budgets", title: "Security Budgets" },
     { id: "cryptoeconomic-security", slug: "cryptoeconomic-security", title: "Cryptoeconomic Security" },
@@ -4159,7 +4261,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Capital Constraints are not 11's Solvency Constraints; Capital Allocation
     // is not 10's Capacity Allocation.
     { id: "revenue", slug: "revenue", title: "Revenue" },
-    { id: "capital-allocation", slug: "capital-allocation", title: "Capital Allocation" },
+    // Also placed under 22's Resource Allocation; this placement is preferred.
+    { id: "capital-allocation", slug: "capital-allocation", title: "Capital Allocation", preferredPlacementId: "capital-allocation" },
     { id: "working-capital", slug: "working-capital", title: "Working Capital" },
     { id: "capital-constraints", slug: "capital-constraints", title: "Capital Constraints" },
     // Resource Budgets are not 02's Resource Limits (per-transaction execution limits).
@@ -4184,9 +4287,22 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "automated-settlement", slug: "automated-settlement", title: "Automated Settlement" },
     // Service Discovery, Price Discovery and Negotiation are general concepts for
     // 22; Price Discovery is not 11's Market Prices (its result).
-    { id: "service-discovery", slug: "service-discovery", title: "Service Discovery" },
+    // Service Discovery is also placed under 22's Agent Discovery, and
+    // Negotiation is 22's L1 topic with its own layer; each is preferred in 22,
+    // where discovery and negotiation are taught.
+    {
+      id: "service-discovery",
+      slug: "service-discovery",
+      title: "Service Discovery",
+      preferredPlacementId: "service-discovery-in-agent-discovery",
+    },
     { id: "price-discovery", slug: "price-discovery", title: "Price Discovery" },
-    { id: "negotiation", slug: "negotiation", title: "Negotiation" },
+    {
+      id: "negotiation",
+      slug: "negotiation",
+      title: "Negotiation",
+      preferredPlacementId: "negotiation-in-autonomous-coordination",
+    },
     { id: "purchasing", slug: "purchasing", title: "Purchasing" },
     { id: "subscriptions", slug: "subscriptions", title: "Subscriptions" },
     // Markets in what agents buy and sell, each a kind of 11's Markets.
@@ -4221,6 +4337,102 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Problems build on 20's Principals.
     { id: "agent-objectives", slug: "agent-objectives", title: "Agent Objectives" },
     { id: "principal-agent-problems", slug: "principal-agent-problems", title: "Principal-Agent Problems" },
+    // 22 Autonomous Coordination: L1 topics (Negotiation is 21's concept;
+    // Delegation 08's; Cooperation and Competition Foundations'; Resource
+    // Allocation 10's). Agent-to-Agent Communication is not Foundations'
+    // Communication (participants signalling to align action) in general; Agent
+    // Discovery is not 05's Peer Discovery; Multi-Agent Coordination is not
+    // Foundations' Coordination; Task Markets (allocating work) are not 21's
+    // Service Markets. Executing a coordinated task is 23's.
+    { id: "agent-to-agent-communication", slug: "agent-to-agent-communication", title: "Agent-to-Agent Communication" },
+    { id: "agent-discovery", slug: "agent-discovery", title: "Agent Discovery" },
+    { id: "coalition-formation", slug: "coalition-formation", title: "Coalition Formation" },
+    { id: "task-markets", slug: "task-markets", title: "Task Markets" },
+    { id: "multi-agent-coordination", slug: "multi-agent-coordination", title: "Multi-Agent Coordination" },
+    // L2 topics (placements in L2_TOPICS). Message Protocols are not
+    // Foundations' Protocols or 20's Tool Protocols; Message Routing is not 05's
+    // Request Routing or Message Propagation; Secure Communication is not 06's
+    // Confidentiality.
+    { id: "agent-messages", slug: "agent-messages", title: "Agent Messages" },
+    { id: "message-protocols", slug: "message-protocols", title: "Message Protocols" },
+    { id: "communication-semantics", slug: "communication-semantics", title: "Communication Semantics" },
+    { id: "secure-communication", slug: "secure-communication", title: "Secure Communication" },
+    { id: "message-routing", slug: "message-routing", title: "Message Routing" },
+    { id: "communication-policies", slug: "communication-policies", title: "Communication Policies" },
+    // Capability Discovery (finding what an agent can do) is not 08's
+    // Capabilities (rights conferred); Matching (pairing requesters with
+    // providers) is not 11's Order Matching.
+    { id: "agent-registries", slug: "agent-registries", title: "Agent Registries" },
+    { id: "capability-discovery", slug: "capability-discovery", title: "Capability Discovery" },
+    { id: "discovery-protocols", slug: "discovery-protocols", title: "Discovery Protocols" },
+    { id: "matching", slug: "matching", title: "Matching" },
+    { id: "discovery-trust", slug: "discovery-trust", title: "Discovery Trust" },
+    // Offers (proposed terms) are not 10's Bids. Terms two parties accept, shown
+    // as "Agreement"; not 04's Agreement (nodes deciding one value).
+    { id: "offers", slug: "offers", title: "Offers" },
+    { id: "counteroffers", slug: "counteroffers", title: "Counteroffers" },
+    { id: "negotiation-constraints", slug: "negotiation-constraints", title: "Negotiation Constraints" },
+    { id: "negotiation-strategies", slug: "negotiation-strategies", title: "Negotiation Strategies" },
+    { id: "negotiated-agreement", slug: "negotiated-agreement", title: "Negotiated Agreement" },
+    { id: "negotiation-failure", slug: "negotiation-failure", title: "Negotiation Failure" },
+    // Task Delegation (handing over work) and Authority Delegation (handing
+    // over rights) are the narrower kinds of Delegation.
+    { id: "task-delegation", slug: "task-delegation", title: "Task Delegation" },
+    { id: "authority-delegation", slug: "authority-delegation", title: "Authority Delegation" },
+    { id: "delegation-constraints", slug: "delegation-constraints", title: "Delegation Constraints" },
+    { id: "delegation-policies", slug: "delegation-policies", title: "Delegation Policies" },
+    { id: "delegation-chains", slug: "delegation-chains", title: "Delegation Chains" },
+    // Shared Objectives are not 21's Agent Objectives (one agent's); Information
+    // Sharing is not Foundations' Information.
+    { id: "shared-objectives", slug: "shared-objectives", title: "Shared Objectives" },
+    { id: "task-sharing", slug: "task-sharing", title: "Task Sharing" },
+    { id: "resource-sharing", slug: "resource-sharing", title: "Resource Sharing" },
+    { id: "information-sharing", slug: "information-sharing", title: "Information Sharing" },
+    { id: "benefit-sharing", slug: "benefit-sharing", title: "Benefit Sharing" },
+    { id: "cooperative-strategies", slug: "cooperative-strategies", title: "Cooperative Strategies" },
+    // Competitive Strategies are not 10's Strategies; Bidding (competing through
+    // bids) is not 10's Bids (the offers); Competitive Equilibria are not 10's
+    // Nash Equilibrium. Choosing among competing agents, shown as "Selection";
+    // not 04's Validator or Builder Selection.
+    { id: "competitive-strategies", slug: "competitive-strategies", title: "Competitive Strategies" },
+    { id: "bidding", slug: "bidding", title: "Bidding" },
+    { id: "competitive-selection", slug: "competitive-selection", title: "Competitive Selection" },
+    { id: "rivalry", slug: "rivalry", title: "Rivalry" },
+    { id: "competitive-equilibria", slug: "competitive-equilibria", title: "Competitive Equilibria" },
+    // Coalitions agents form deliberately, not Foundations' Collusion; Coalition
+    // Incentives are not 10's Incentives.
+    { id: "coalition-membership", slug: "coalition-membership", title: "Coalition Membership" },
+    { id: "coalition-objectives", slug: "coalition-objectives", title: "Coalition Objectives" },
+    { id: "coalition-rules", slug: "coalition-rules", title: "Coalition Rules" },
+    { id: "coalition-incentives", slug: "coalition-incentives", title: "Coalition Incentives" },
+    { id: "coalition-stability", slug: "coalition-stability", title: "Coalition Stability" },
+    { id: "coalition-dissolution", slug: "coalition-dissolution", title: "Coalition Dissolution" },
+    // Compute Allocation is not 10's Capacity Allocation (blockspace).
+    { id: "compute-allocation", slug: "compute-allocation", title: "Compute Allocation" },
+    { id: "data-allocation", slug: "data-allocation", title: "Data Allocation" },
+    { id: "service-allocation", slug: "service-allocation", title: "Service Allocation" },
+    { id: "allocation-policies", slug: "allocation-policies", title: "Allocation Policies" },
+    { id: "allocation-conflicts", slug: "allocation-conflicts", title: "Allocation Conflicts" },
+    // Task Discovery is not Service Discovery; Task Bidding is not Bidding or
+    // Bids; Task Settlement is not Settlement; Task Assignment is not 20's Task
+    // Decomposition.
+    { id: "task-publication", slug: "task-publication", title: "Task Publication" },
+    { id: "task-discovery", slug: "task-discovery", title: "Task Discovery" },
+    { id: "task-providers", slug: "task-providers", title: "Task Providers" },
+    { id: "task-bidding", slug: "task-bidding", title: "Task Bidding" },
+    { id: "task-assignment", slug: "task-assignment", title: "Task Assignment" },
+    { id: "task-settlement", slug: "task-settlement", title: "Task Settlement" },
+    // Shared Plans are not 20's Plans (one agent's); Coordination Protocols are
+    // not Protocols. Agents aligning their timing and actions, shown as
+    // "Synchronization"; not 03's Synchronization (a node catching up on state).
+    // Collective Decision-Making is not 04's Consensus or Foundations'
+    // Collective Action; Emergent Coordination is not Coordination.
+    { id: "shared-plans", slug: "shared-plans", title: "Shared Plans" },
+    { id: "coordination-protocols", slug: "coordination-protocols", title: "Coordination Protocols" },
+    { id: "agent-synchronization", slug: "agent-synchronization", title: "Agent Synchronization" },
+    { id: "conflict-resolution", slug: "conflict-resolution", title: "Conflict Resolution" },
+    { id: "collective-decision-making", slug: "collective-decision-making", title: "Collective Decision-Making" },
+    { id: "emergent-coordination", slug: "emergent-coordination", title: "Emergent Coordination" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -4842,6 +5054,22 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "agent-credit", conceptId: "agent-credit", parentPlacementId: "machine-economy", order: 11 },
     { id: "agent-risk", conceptId: "agent-risk", parentPlacementId: "machine-economy", order: 12 },
     { id: "agent-incentives", conceptId: "agent-incentives", parentPlacementId: "machine-economy", order: 13 },
+    // 22 Autonomous Coordination: L1 topics.
+    { id: "agent-to-agent-communication", conceptId: "agent-to-agent-communication", parentPlacementId: "autonomous-coordination", order: 0 },
+    { id: "agent-discovery", conceptId: "agent-discovery", parentPlacementId: "autonomous-coordination", order: 1 },
+    { id: "negotiation-in-autonomous-coordination", conceptId: "negotiation", parentPlacementId: "autonomous-coordination", order: 2 },
+    { id: "delegation-in-autonomous-coordination", conceptId: "delegation", parentPlacementId: "autonomous-coordination", order: 3 },
+    { id: "cooperation-in-autonomous-coordination", conceptId: "cooperation", parentPlacementId: "autonomous-coordination", order: 4 },
+    { id: "competition-in-autonomous-coordination", conceptId: "competition", parentPlacementId: "autonomous-coordination", order: 5 },
+    { id: "coalition-formation", conceptId: "coalition-formation", parentPlacementId: "autonomous-coordination", order: 6 },
+    {
+      id: "resource-allocation-in-autonomous-coordination",
+      conceptId: "resource-allocation",
+      parentPlacementId: "autonomous-coordination",
+      order: 7,
+    },
+    { id: "task-markets", conceptId: "task-markets", parentPlacementId: "autonomous-coordination", order: 8 },
+    { id: "multi-agent-coordination", conceptId: "multi-agent-coordination", parentPlacementId: "autonomous-coordination", order: 9 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

@@ -2093,11 +2093,11 @@ const LIFECYCLE_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
 ];
 const LIFECYCLE_L2 = LIFECYCLE_TREE.flatMap(([, children]) => children);
-// Earlier domains' concepts that 17–21 place again, for their placement-list assertions.
+// Earlier domains' concepts that 17–22 place again, for their placement-list assertions.
 const alsoInLaterDomains = (conceptId: string) =>
   [
     ...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2, ...LIFECYCLE_LAYER, ...LIFECYCLE_L2,
-    ...AI_LAYER, ...AI_L2, ...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2,
+    ...AI_LAYER, ...AI_L2, ...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2, ...COORDINATION_LAYER, ...COORDINATION_L2,
   ]
     .filter(([id, concept]) => concept === conceptId && id !== concept)
     .map(([id]) => id);
@@ -2351,6 +2351,105 @@ const MACHINE_ECONOMY_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const MACHINE_ECONOMY_L2 = MACHINE_ECONOMY_TREE.flatMap(([, children]) => children);
 
+// 22 Autonomous Coordination. Negotiation and Service Discovery are 21's
+// concepts; Delegation 08's; Cooperation, Competition and Strategic Behavior
+// Foundations'; Resource Allocation 10's; Revocation 09's; Capital Allocation 21's.
+const COORDINATION_LAYER: Array<[string, string, string]> = [
+  ["agent-to-agent-communication", "agent-to-agent-communication", "Agent-to-Agent Communication"],
+  ["agent-discovery", "agent-discovery", "Agent Discovery"],
+  ["negotiation-in-autonomous-coordination", "negotiation", "Negotiation"],
+  ["delegation-in-autonomous-coordination", "delegation", "Delegation"],
+  ["cooperation-in-autonomous-coordination", "cooperation", "Cooperation"],
+  ["competition-in-autonomous-coordination", "competition", "Competition"],
+  ["coalition-formation", "coalition-formation", "Coalition Formation"],
+  ["resource-allocation-in-autonomous-coordination", "resource-allocation", "Resource Allocation"],
+  ["task-markets", "task-markets", "Task Markets"],
+  ["multi-agent-coordination", "multi-agent-coordination", "Multi-Agent Coordination"],
+];
+const COORDINATION_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["agent-to-agent-communication", [
+    ["agent-messages", "agent-messages", "Agent Messages"],
+    ["message-protocols", "message-protocols", "Message Protocols"],
+    ["communication-semantics", "communication-semantics", "Communication Semantics"],
+    ["secure-communication", "secure-communication", "Secure Communication"],
+    ["message-routing", "message-routing", "Message Routing"],
+    ["communication-policies", "communication-policies", "Communication Policies"],
+  ]],
+  ["agent-discovery", [
+    ["agent-registries", "agent-registries", "Agent Registries"],
+    ["capability-discovery", "capability-discovery", "Capability Discovery"],
+    ["service-discovery-in-agent-discovery", "service-discovery", "Service Discovery"],
+    ["discovery-protocols", "discovery-protocols", "Discovery Protocols"],
+    ["matching", "matching", "Matching"],
+    ["discovery-trust", "discovery-trust", "Discovery Trust"],
+  ]],
+  ["negotiation-in-autonomous-coordination", [
+    ["offers", "offers", "Offers"],
+    ["counteroffers", "counteroffers", "Counteroffers"],
+    ["negotiation-constraints", "negotiation-constraints", "Negotiation Constraints"],
+    ["negotiation-strategies", "negotiation-strategies", "Negotiation Strategies"],
+    ["negotiated-agreement", "negotiated-agreement", "Agreement"],
+    ["negotiation-failure", "negotiation-failure", "Negotiation Failure"],
+  ]],
+  ["delegation-in-autonomous-coordination", [
+    ["task-delegation", "task-delegation", "Task Delegation"],
+    ["authority-delegation", "authority-delegation", "Authority Delegation"],
+    ["delegation-constraints", "delegation-constraints", "Delegation Constraints"],
+    ["delegation-policies", "delegation-policies", "Delegation Policies"],
+    ["delegation-chains", "delegation-chains", "Delegation Chains"],
+    ["revocation-in-delegation", "revocation", "Revocation"],
+  ]],
+  ["cooperation-in-autonomous-coordination", [
+    ["shared-objectives", "shared-objectives", "Shared Objectives"],
+    ["task-sharing", "task-sharing", "Task Sharing"],
+    ["resource-sharing", "resource-sharing", "Resource Sharing"],
+    ["information-sharing", "information-sharing", "Information Sharing"],
+    ["benefit-sharing", "benefit-sharing", "Benefit Sharing"],
+    ["cooperative-strategies", "cooperative-strategies", "Cooperative Strategies"],
+  ]],
+  ["competition-in-autonomous-coordination", [
+    ["competitive-strategies", "competitive-strategies", "Competitive Strategies"],
+    ["bidding", "bidding", "Bidding"],
+    ["competitive-selection", "competitive-selection", "Selection"],
+    ["rivalry", "rivalry", "Rivalry"],
+    ["strategic-behavior-in-competition", "strategic-behavior", "Strategic Behavior"],
+    ["competitive-equilibria", "competitive-equilibria", "Competitive Equilibria"],
+  ]],
+  ["coalition-formation", [
+    ["coalition-membership", "coalition-membership", "Coalition Membership"],
+    ["coalition-objectives", "coalition-objectives", "Coalition Objectives"],
+    ["coalition-rules", "coalition-rules", "Coalition Rules"],
+    ["coalition-incentives", "coalition-incentives", "Coalition Incentives"],
+    ["coalition-stability", "coalition-stability", "Coalition Stability"],
+    ["coalition-dissolution", "coalition-dissolution", "Coalition Dissolution"],
+  ]],
+  ["resource-allocation-in-autonomous-coordination", [
+    ["compute-allocation", "compute-allocation", "Compute Allocation"],
+    ["capital-allocation-in-resource-allocation", "capital-allocation", "Capital Allocation"],
+    ["data-allocation", "data-allocation", "Data Allocation"],
+    ["service-allocation", "service-allocation", "Service Allocation"],
+    ["allocation-policies", "allocation-policies", "Allocation Policies"],
+    ["allocation-conflicts", "allocation-conflicts", "Allocation Conflicts"],
+  ]],
+  ["task-markets", [
+    ["task-publication", "task-publication", "Task Publication"],
+    ["task-discovery", "task-discovery", "Task Discovery"],
+    ["task-providers", "task-providers", "Task Providers"],
+    ["task-bidding", "task-bidding", "Task Bidding"],
+    ["task-assignment", "task-assignment", "Task Assignment"],
+    ["task-settlement", "task-settlement", "Task Settlement"],
+  ]],
+  ["multi-agent-coordination", [
+    ["shared-plans", "shared-plans", "Shared Plans"],
+    ["coordination-protocols", "coordination-protocols", "Coordination Protocols"],
+    ["agent-synchronization", "agent-synchronization", "Synchronization"],
+    ["conflict-resolution", "conflict-resolution", "Conflict Resolution"],
+    ["collective-decision-making", "collective-decision-making", "Collective Decision-Making"],
+    ["emergent-coordination", "emergent-coordination", "Emergent Coordination"],
+  ]],
+];
+const COORDINATION_L2 = COORDINATION_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -2395,6 +2494,8 @@ const AUTHORED_TOPICS = new Set([
   ...AI_L2.map(([id]) => id),
   ...MACHINE_ECONOMY_LAYER.map(([id]) => id),
   ...MACHINE_ECONOMY_L2.map(([id]) => id),
+  ...COORDINATION_LAYER.map(([id]) => id),
+  ...COORDINATION_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -2485,8 +2586,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Protocol Architecture's 12 new L1 and 54 new L2 concepts, then Protocol
   // Design & Lifecycle's 14 new L1 and 60 new L2 concepts, then AI &
   // Intelligent Systems' 10 new L1 and 65 new L2 concepts, then Machine
-  // Economy's 12 new L1 and 60 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60);
+  // Economy's 12 new L1 and 60 new L2 concepts, then Autonomous
+  // Coordination's 5 new L1 and 56 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -2820,6 +2922,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("security-correctness-resilience"), 20 + 119);
   assert.equal(subtreeOf("protocol-architecture"), 12 + 68);
   assert.equal(subtreeOf("ai-intelligent-systems"), 12 + 69);
+  assert.equal(subtreeOf("machine-economy"), 14 + 84);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -3206,9 +3309,10 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
   // Delegation is placed again by Intents & Coordination, Governance &
-  // Institutions, AI & Intelligent Systems and Machine Economy; this placement stays preferred.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
-  assert.equal(resolver.getConcept("delegation")?.preferredPlacementId, "delegation");
+  // Institutions, AI & Intelligent Systems and Machine Economy; Autonomous
+  // Coordination teaches it with its own layer and is preferred.
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-autonomous-coordination", "delegation-in-intents", "delegation-in-representation"]);
+  assert.equal(resolver.getConcept("delegation")?.preferredPlacementId, "delegation-in-autonomous-coordination");
   // Machine Economy places these again; each stays preferred here, except Agent
   // Reputation, which Machine Economy teaches with its own layer.
   for (const [conceptId, later] of [
@@ -3371,7 +3475,7 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
   }
   // Every other topic is a new concept placed once, without exposition.
   // Revocation is placed again by Machine Economy (withdrawing a grant); this placement stays preferred.
-  assert.deepEqual(placementsOf("revocation"), ["revocation", "revocation-in-agent-permissions"]);
+  assert.deepEqual(placementsOf("revocation"), ["revocation", "revocation-in-agent-permissions", "revocation-in-delegation"]);
   assert.equal(resolver.getConcept("revocation")?.preferredPlacementId, "revocation");
   const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis", "ai-inference", "inference-confidence", "revocation"]);
   // Also placed in Governance & Institutions.
@@ -3411,7 +3515,8 @@ test("Economics & Mechanism Design has exactly its eleven L1 topics and their L2
 test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and keeps related concepts distinct", () => {
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Strategic Behavior: Foundations' concept, an L1 topic here with its own layer; preferred here.
-  assert.deepEqual(placementsOf("strategic-behavior"), ["strategic-behavior", "strategic-behavior-in-economics-mechanism-design"]);
+  // (Autonomous Coordination places it again under Competition.)
+  assert.deepEqual(placementsOf("strategic-behavior"), ["strategic-behavior", "strategic-behavior-in-competition", "strategic-behavior-in-economics-mechanism-design"]);
   assert.equal(resolver.getConcept("strategic-behavior")?.preferredPlacementId, "strategic-behavior-in-economics-mechanism-design");
   assert.deepEqual(resolver.getChildren("strategic-behavior"), []);
   assert.equal(resolver.getChildren("strategic-behavior-in-economics-mechanism-design").length, 6);
@@ -3463,7 +3568,10 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
     assert.deepEqual(placementsOf(conceptId), [conceptId, `${conceptId}-in-agent-incentives`, ...governance].sort(), conceptId);
     assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
   }
-  const shared = new Set(["strategic-behavior", "penalties", "rewards", "incentive-alignment", "incentive-compatibility"]);
+  // Autonomous Coordination teaches Resource Allocation again, among agents; this placement stays preferred.
+  assert.deepEqual(placementsOf("resource-allocation"), ["resource-allocation", "resource-allocation-in-autonomous-coordination"]);
+  assert.equal(resolver.getConcept("resource-allocation")?.preferredPlacementId, "resource-allocation");
+  const shared = new Set(["strategic-behavior", "penalties", "rewards", "incentive-alignment", "incentive-compatibility", "resource-allocation"]);
   // Also placed in Markets & Financial Protocols.
   const placedElsewhere: Record<string, string[]> = {
     bids: ["bids-in-order-books"],
@@ -3683,8 +3791,9 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Each reused concept is placed again here; its existing home stays preferred.
   // Delegation is also placed by Governance & Institutions.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
-  assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation");
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-autonomous-coordination", "delegation-in-intents", "delegation-in-representation"]);
+  // Autonomous Coordination later takes Delegation's preferred placement.
+  assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation-in-autonomous-coordination");
   for (const [conceptId, here] of [
     ["batch-auctions", "batch-auctions-in-solver-competition"],
     ["order-flow-auctions", "order-flow-auctions-in-solver-competition"],
@@ -3782,16 +3891,18 @@ test("Governance & Institutions has exactly its fifteen L1 topics and their L2 p
 test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignment and keeps governance mechanisms distinct", () => {
   const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
   // Reused concepts keep their existing home as the preferred placement.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-intents", "delegation-in-representation"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-autonomous-coordination", "delegation-in-intents", "delegation-in-representation"]);
   for (const [conceptId, here] of [
     ["evidence", "evidence-in-dispute-resolution"],
     ["incentive-alignment", "incentive-alignment-in-institutional-design"],
   ]) {
     assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
   }
-  for (const conceptId of ["delegation", "evidence", "incentive-alignment"]) {
+  for (const conceptId of ["evidence", "incentive-alignment"]) {
     assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
   }
+  // Autonomous Coordination later takes Delegation's preferred placement.
+  assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation-in-autonomous-coordination");
   // Governance mechanisms stay distinct from technically similar ones.
   for (const [placementId, related] of [
     ["voting", "agreement"],
@@ -4380,16 +4491,17 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   // 09 keeps its contextual wording; here the concept title is shown.
   assert.equal(placementLabel("inference-confidence"), "Confidence");
   assert.equal(placementLabel("inference-confidence-in-uncertainty-reliability"), "Inference Confidence");
-  // Delegation, Agent Identity and Trusted Execution stay preferred at home.
+  // Agent Identity and Trusted Execution stay preferred at home; Delegation is
+  // preferred in Autonomous Coordination, which teaches it with its own layer.
   // (13 and 14 also place Delegation; Machine Economy places Delegation and
   // Agent Identity again.)
-  for (const [conceptId, here, others] of [
-    ["delegation", "delegation-in-ai-agents", ["delegation-in-intents", "delegation-in-representation", "delegation-in-agent-permissions"]],
-    ["agent-identity", "agent-identity-in-ai-agents", ["agent-identity-in-machine-economy"]],
-    ["trusted-execution", "trusted-execution-in-verifiable-ai", []],
+  for (const [conceptId, here, others, preferred] of [
+    ["delegation", "delegation-in-ai-agents", ["delegation-in-intents", "delegation-in-representation", "delegation-in-agent-permissions", "delegation-in-autonomous-coordination"], "delegation-in-autonomous-coordination"],
+    ["agent-identity", "agent-identity-in-ai-agents", ["agent-identity-in-machine-economy"], "agent-identity"],
+    ["trusted-execution", "trusted-execution-in-verifiable-ai", [], "trusted-execution"],
   ] as const) {
     assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...others].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
   }
   // Principals is a general concept, titled without an AI qualifier.
   assert.equal(resolver.getConcept("principals")?.title, "Principals");
@@ -4438,7 +4550,7 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 22–27's scope to them", () => {
+test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 23–27's scope to them", () => {
   // The fixture's concept, placement ID and relationships are unchanged; only
   // its position and contextual wording change. Machine Economy places it again
   // as one kind of economic agent; this placement stays preferred.
@@ -4458,10 +4570,10 @@ test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 22–27's
     ],
   );
   assert.equal(resolver.getPreferredPlacementForConcept("ai-agent")?.id, "ai-agent");
-  // Economic Agency stays unplaced; 22–27 remain empty; the bare Autonomy and
+  // Economic Agency stays unplaced; 23–27 remain empty; the bare Autonomy and
   // Agents concepts are left to later domains.
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
-  for (const l0 of ["autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+  for (const l0 of ["autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
     assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
   assert.equal(resolver.getConcept("autonomy"), undefined);
@@ -4524,7 +4636,7 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
     ["assets", "assets"],
     ["liquidity", "liquidity"],
     ["capabilities", "capabilities"],
-    ["delegation", "delegation"],
+    ["delegation", "delegation-in-autonomous-coordination"],
     ["permission-models", "permission-models"],
     ["revocation", "revocation"],
     ["settlement", "settlement"],
@@ -4592,7 +4704,24 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
   }
   // Every other topic is a new concept placed once, without exposition; only
   // Agent Identity keeps its existing content.
-  const shared = new Set(["agent-identity", "agent-reputation", ...reused.map(([conceptId]) => conceptId)]);
+  // Autonomous Coordination places Service Discovery, Negotiation and Capital
+  // Allocation again; it is preferred for the first two, where they are taught.
+  for (const [conceptId, later, preferred] of [
+    ["service-discovery", "service-discovery-in-agent-discovery", "service-discovery-in-agent-discovery"],
+    ["negotiation", "negotiation-in-autonomous-coordination", "negotiation-in-autonomous-coordination"],
+    ["capital-allocation", "capital-allocation-in-resource-allocation", "capital-allocation"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, later].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
+  }
+  const shared = new Set([
+    "agent-identity",
+    "agent-reputation",
+    "service-discovery",
+    "negotiation",
+    "capital-allocation",
+    ...reused.map(([conceptId]) => conceptId),
+  ]);
   for (const [id, conceptId] of [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -4604,13 +4733,13 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("Machine Economy leaves Economic Agency unplaced and 22–27 empty, and 20 unchanged", () => {
+test("Machine Economy leaves Economic Agency unplaced and 23–27 empty, and 20 unchanged", () => {
   // Economic Agency (the capacity to act economically) is not Economic Agents
   // (the kinds of actor); its relationship from Agent Identity is unchanged.
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
   assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
-  for (const l0 of ["autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+  for (const l0 of ["autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
     assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
   // 20's tree is exactly as authored.
@@ -4621,11 +4750,148 @@ test("Machine Economy leaves Economic Agency unplaced and 22–27 empty, and 20 
   assert.equal(placementLabel("ai-agent"), "AI Agents");
 });
 
+test("Autonomous Coordination has exactly its ten L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("autonomous-coordination").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    COORDINATION_LAYER,
+  );
+  assert.deepEqual(resolver.getChildren("autonomous-coordination").map((placement) => placement.order), COORDINATION_LAYER.map((_, order) => order));
+  for (const [parent, children] of COORDINATION_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of COORDINATION_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "autonomous-coordination")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...COORDINATION_LAYER.map(([id]) => id), ...COORDINATION_L2.map(([id]) => id)].sort());
+  assert.equal(COORDINATION_L2.length, 60);
+  // Ancestry runs through the L1 placement to the L0 domain.
+  assert.deepEqual(resolver.getAncestors("task-bidding").map((placement) => placement.id), ["autonomous-coordination", "task-markets"]);
+  assert.deepEqual(resolver.getAncestors("revocation-in-delegation").map((placement) => placement.id), ["autonomous-coordination", "delegation-in-autonomous-coordination"]);
+  assert.deepEqual(resolver.getAncestors("agent-synchronization").map((placement) => placement.id), ["autonomous-coordination", "multi-agent-coordination"]);
+});
+
+test("Autonomous Coordination reuses existing concepts where the meaning is the same and keeps narrower concepts distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // L1 topics that are existing concepts, each with its own layer here. Taught
+  // here, Negotiation, Delegation, Cooperation and Competition are preferred
+  // here; Resource Allocation stays preferred in 10, its economic home.
+  for (const [conceptId, elsewhere, preferred] of [
+    ["negotiation", ["negotiation"], "negotiation-in-autonomous-coordination"],
+    ["delegation", ["delegation", "delegation-in-intents", "delegation-in-representation", "delegation-in-ai-agents", "delegation-in-agent-permissions"], "delegation-in-autonomous-coordination"],
+    ["cooperation", ["cooperation"], "cooperation-in-autonomous-coordination"],
+    ["competition", ["competition"], "competition-in-autonomous-coordination"],
+    ["resource-allocation", ["resource-allocation"], "resource-allocation"],
+  ] as const) {
+    const here = `${conceptId}-in-autonomous-coordination`;
+    assert.deepEqual(placementsOf(conceptId), [...elsewhere, here].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+    assert.equal(resolver.getChildren(here).length, 6, here);
+  }
+  // The same concepts elsewhere keep their own (empty or separate) layers.
+  assert.deepEqual(resolver.getChildren("negotiation"), []);
+  assert.deepEqual(resolver.getChildren("delegation"), []);
+  assert.deepEqual(resolver.getChildren("cooperation"), []);
+  assert.equal(resolver.getChildren("resource-allocation").length, 6);
+  // L2 topics that are existing concepts.
+  for (const [conceptId, here, preferred] of [
+    ["service-discovery", "service-discovery-in-agent-discovery", "service-discovery-in-agent-discovery"],
+    ["revocation", "revocation-in-delegation", "revocation"],
+    ["strategic-behavior", "strategic-behavior-in-competition", "strategic-behavior-in-economics-mechanism-design"],
+    ["capital-allocation", "capital-allocation-in-resource-allocation", "capital-allocation"],
+  ]) {
+    assert.ok(placementsOf(conceptId).includes(here), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
+  }
+  // Contextual wording over new concepts, leaving the bare terms free.
+  assert.equal(resolver.getConcept("negotiated-agreement")?.title, "Negotiated Agreement");
+  assert.equal(resolver.getConcept("competitive-selection")?.title, "Competitive Selection");
+  assert.equal(resolver.getConcept("agent-synchronization")?.title, "Agent Synchronization");
+  for (const bare of ["selection", "messages", "discovery", "coordination-protocol"]) assert.equal(resolver.getConcept(bare), undefined, bare);
+  // Narrower coordination concepts kept distinct from the general ones, and other near pairs.
+  for (const [placementId, related] of [
+    ["task-delegation", "delegation"],
+    ["authority-delegation", "delegation"],
+    ["capability-discovery", "capabilities"],
+    ["message-protocols", "protocols"],
+    ["message-protocols", "tool-protocols"],
+    ["coordination-protocols", "protocols"],
+    ["competitive-strategies", "strategies"],
+    ["cooperative-strategies", "strategies"],
+    ["negotiation-strategies", "strategies"],
+    ["coalition-incentives", "incentives"],
+    ["bidding", "bids"],
+    ["task-bidding", "bids"],
+    ["task-bidding", "bidding"],
+    ["task-settlement", "settlement"],
+    ["emergent-coordination", "coordination"],
+    ["multi-agent-coordination", "coordination"],
+    ["agent-to-agent-communication", "coordination-communication"],
+    ["agent-to-agent-communication", "communication"],
+    ["agent-discovery", "peer-discovery"],
+    ["message-routing", "request-routing"],
+    ["negotiated-agreement", "agreement"],
+    ["offers", "bids"],
+    ["matching", "order-matching"],
+    ["agent-synchronization", "synchronization"],
+    ["competitive-selection", "validator-selection"],
+    ["competitive-equilibria", "nash-equilibrium"],
+    ["collective-decision-making", "consensus"],
+    ["collective-decision-making", "collective-action"],
+    ["shared-plans", "plans"],
+    ["shared-objectives", "agent-objectives"],
+    ["information-sharing", "information"],
+    ["coalition-formation", "collusion"],
+    ["compute-allocation", "capacity-allocation"],
+    ["task-discovery", "service-discovery"],
+    ["task-assignment", "task-decomposition"],
+    ["task-markets", "service-markets"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["negotiation", "delegation", "cooperation", "competition", "resource-allocation", "service-discovery", "revocation", "strategic-behavior", "capital-allocation"]);
+  for (const [id, conceptId] of [...COORDINATION_LAYER, ...COORDINATION_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
+  }
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  const ids = [...COORDINATION_LAYER, ...COORDINATION_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Autonomous Coordination leaves 20 and 21 unchanged and 23–27 empty", () => {
+  for (const [root, layer, tree] of [
+    ["ai-intelligent-systems", AI_LAYER, AI_TREE],
+    ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
+  ] as const) {
+    assert.deepEqual(resolver.getChildren(root).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), layer, root);
+    for (const [parent, children] of tree) {
+      assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
+    }
+  }
+  for (const l0 of ["autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
+    assert.deepEqual(resolver.getChildren(l0), [], l0);
+  }
+});
+
 test("reused concepts resolve to their preferred placements", () => {
   for (const [conceptId, preferred] of [
     ["ai-inference", "ai-inference-in-ai-intelligent-systems"],
     ["inference-confidence", "inference-confidence-in-uncertainty-reliability"],
-    ["delegation", "delegation"],
+    ["delegation", "delegation-in-autonomous-coordination"],
     ["agent-identity", "agent-identity"],
     ["trusted-execution", "trusted-execution"],
   ]) {
