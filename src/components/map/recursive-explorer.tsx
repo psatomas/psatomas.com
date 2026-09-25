@@ -57,6 +57,14 @@ export function RecursiveMapExplorer({
           region ? "py-4" : "py-3.5"
         } ${CONTROL_FOCUS}`}
       >
+        {/* L0 ordinal: secondary to the title, muted rather than cyan (cyan
+            marks the current context here); the ordered list already
+            announces position to assistive technology. */}
+        {row.ordinal ? (
+          <span aria-hidden="true" className={`${LABEL_TEXT} mr-3 text-muted`}>
+            {row.ordinal}
+          </span>
+        ) : null}
         {parentLabel ? (
           <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
             {parentLabel} ›{" "}
