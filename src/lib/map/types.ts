@@ -66,14 +66,31 @@ export type MapRelationship = {
   typeId: MapRelationshipTypeId;
 };
 
+/**
+ * One unit of canonical exposition. Blocks carry meaning and order only:
+ * no markup, styling, layout, or component instructions. Presentation decides
+ * how each kind is rendered.
+ */
+export type MapContentBlock =
+  | { kind: "paragraph"; text: string }
+  /** A conceptual model: ordered stages, each holding one or more elements. */
+  | { kind: "flow"; label: string; stages: readonly (readonly string[])[] }
+  /** Two notions that must not be conflated ("left ≠ right"). */
+  | { kind: "distinction"; left: string; right: string }
+  /** Recurring pairs of forces that pull against each other. */
+  | { kind: "tensions"; label: string; pairs: readonly (readonly [string, string])[] };
+
 /** Canonical educational content, owned by at most one record per concept. */
 export type MapConceptContent = {
   id: string;
   conceptId: string;
+  /** The lead statement; exposition in `body` continues from it. */
   definition: string;
   summary?: string;
   explanation?: string;
   whyItMatters?: string;
+  /** Ordered exposition following the definition, for richer teaching content. */
+  body?: readonly MapContentBlock[];
 };
 
 /** A conceptual process step, not a UI or animation instruction. */

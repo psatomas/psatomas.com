@@ -284,6 +284,27 @@ test("validation rejects malformed references, cycles, and semantic edges", () =
   }
 });
 
+test("exposition validation reports every malformed block", () => {
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "malformed-exposition", conceptId: "economic-agency", definition: "Defined.",
+      body: [
+        { kind: "paragraph", text: "  " },
+        { kind: "flow", label: "One stage", stages: [["Only"]] },
+        { kind: "distinction", left: "Local", right: "" },
+        { kind: "tensions", label: "Pairs", pairs: [["Safety", ""]] },
+      ],
+    }],
+  }));
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "malformed-exposition"')), [
+    'Content "malformed-exposition" block 0 (paragraph) is empty',
+    'Content "malformed-exposition" block 1 (flow) must contain at least two stages',
+    'Content "malformed-exposition" block 2 (distinction) must name both sides',
+    'Content "malformed-exposition" block 3 (tensions) has an incomplete pair',
+  ]);
+});
+
 test("resolver rejects invalid models rather than repairing them", () => {
   const invalid = { ...mapKnowledge, concepts: [...mapKnowledge.concepts, mapKnowledge.concepts[0]] };
   assert.throws(() => createMapResolver(invalid), MapKnowledgeValidationError);
