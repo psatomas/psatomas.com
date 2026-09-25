@@ -842,6 +842,95 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "inclusion-guarantees-in-mev-mitigation", conceptId: "inclusion-guarantees" },
     "ordering-guarantees",
   ],
+  // 13 Intents & Coordination
+  intents: [
+    "declarative-execution",
+    "intent-expression",
+    "intent-languages",
+    "intent-standards",
+    { placementId: "delegation-in-intents", conceptId: "delegation" },
+    "intent-lifecycle",
+  ],
+  "intent-specification": [
+    "intent-constraints",
+    "user-preferences",
+    "outcome-conditions",
+    "validity-windows",
+    "limit-prices",
+    "partial-fills",
+  ],
+  "intent-discovery": [
+    "intent-pools",
+    "intent-propagation",
+    "intent-visibility",
+    "intent-privacy",
+    "intent-aggregation",
+    "solver-access",
+  ],
+  solvers: ["solver-networks", "solution-search", "solver-strategies", "solver-liquidity", "solver-bonds", "solver-reputation"],
+  "solver-competition": [
+    "solver-auctions",
+    "solution-scoring",
+    "winner-selection",
+    { placementId: "batch-auctions-in-solver-competition", conceptId: "batch-auctions" },
+    { placementId: "order-flow-auctions-in-solver-competition", conceptId: "order-flow-auctions" },
+    "surplus-maximization",
+  ],
+  "intent-matching": [
+    "coincidence-of-wants",
+    "ring-trades",
+    "batch-matching",
+    "partial-matching",
+    "peer-to-peer-matching",
+    "matching-efficiency",
+  ],
+  "intent-resolution": [
+    "solution-validity",
+    "execution-paths",
+    "execution-selection",
+    "fulfillment",
+    "fulfillment-verification",
+    "failed-intents",
+  ],
+  "execution-routing": [
+    "order-routing",
+    "liquidity-routing",
+    "route-optimization",
+    "split-routing",
+    "dex-aggregation",
+    "cross-venue-routing",
+  ],
+  "intent-commitments": [
+    "solver-commitments",
+    "execution-guarantees",
+    "price-guarantees",
+    { placementId: "preconfirmations-in-intent-commitments", conceptId: "preconfirmations" },
+    "intent-cancellation",
+    "commitment-enforcement",
+  ],
+  "intent-settlement": [
+    { placementId: "settlement-in-intent-settlement", conceptId: "settlement" },
+    "atomic-settlement",
+    "settlement-contracts",
+    "batch-settlement",
+    "net-settlement",
+    "settlement-failure",
+  ],
+  "multi-party-coordination": [
+    "multi-party-intents",
+    "joint-execution",
+    "coordination-mechanisms",
+    { placementId: "collective-action-in-multi-party-coordination", conceptId: "collective-action" },
+    "commitment-devices",
+    "coordination-failures",
+  ],
+  "cross-domain-coordination": [
+    "cross-chain-intents",
+    "cross-domain-execution",
+    "cross-domain-settlement",
+    { placementId: "shared-sequencing-in-cross-domain-coordination", conceptId: "shared-sequencing" },
+    "cross-domain-atomicity",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -858,9 +947,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
  * Identity, Accounts & Authority, Oracles & External Reality, Economics &
- * Mechanism Design, Markets & Financial Protocols, and MEV & Execution
- * Markets; and a deliberately small Phase 1 proof fixture re-homed beneath
- * its L0 domains.
+ * Mechanism Design, Markets & Financial Protocols, MEV & Execution Markets,
+ * and Intents & Coordination; and a deliberately small Phase 1 proof fixture
+ * re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -917,7 +1006,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "coordination-communication", slug: "coordination-communication", title: "Communication" },
     { id: "cooperation", slug: "cooperation", title: "Cooperation" },
     { id: "competition", slug: "competition", title: "Competition" },
-    { id: "collective-action", slug: "collective-action", title: "Collective Action" },
+    // Also placed under 13's Multi-Party Coordination; this placement is preferred.
+    { id: "collective-action", slug: "collective-action", title: "Collective Action", preferredPlacementId: "collective-action" },
     { id: "adversaries", slug: "adversaries", title: "Adversaries" },
     { id: "threat-models", slug: "threat-models", title: "Threat Models" },
     { id: "byzantine-behavior", slug: "byzantine-behavior", title: "Byzantine Behavior" },
@@ -1131,7 +1221,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "sequencing", slug: "sequencing", title: "Sequencing" },
     { id: "block-building", slug: "block-building", title: "Block Building" },
     { id: "proposer-builder-separation", slug: "proposer-builder-separation", title: "Proposer-Builder Separation" },
-    { id: "preconfirmations", slug: "preconfirmations", title: "Preconfirmations" },
+    // Also placed under 13's Commitments (a solver's pre-inclusion commitment);
+    // this placement is preferred.
+    { id: "preconfirmations", slug: "preconfirmations", title: "Preconfirmations", preferredPlacementId: "preconfirmations" },
     // L2 topics (placements in L2_TOPICS). Fault Assumptions (what a protocol
     // assumes about how many and which faults occur) is not Foundations' Fault
     // Models (the kinds of fault); Consensus Participants and Consensus Rules
@@ -1177,7 +1269,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "sequencing-rules", slug: "sequencing-rules", title: "Sequencing Rules" },
     { id: "centralized-sequencing", slug: "centralized-sequencing", title: "Centralized Sequencing" },
     { id: "decentralized-sequencing", slug: "decentralized-sequencing", title: "Decentralized Sequencing" },
-    { id: "shared-sequencing", slug: "shared-sequencing", title: "Shared Sequencing" },
+    // Also placed under 13's Cross-Domain Coordination; this placement is preferred.
+    { id: "shared-sequencing", slug: "shared-sequencing", title: "Shared Sequencing", preferredPlacementId: "shared-sequencing" },
     { id: "sequencer-rotation", slug: "sequencer-rotation", title: "Sequencer Rotation" },
     // Also placed under 12's Builders; this placement is preferred.
     { id: "block-construction", slug: "block-construction", title: "Block Construction", preferredPlacementId: "block-construction" },
@@ -1475,7 +1568,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "ownership", slug: "ownership", title: "Ownership" },
     { id: "roles", slug: "roles", title: "Roles" },
     { id: "capabilities", slug: "capabilities", title: "Capabilities" },
-    { id: "delegation", slug: "delegation", title: "Delegation" },
+    // Also placed under 13's Intents (an intent delegates execution); this
+    // placement is preferred.
+    { id: "delegation", slug: "delegation", title: "Delegation", preferredPlacementId: "delegation" },
     { id: "permission-models", slug: "permission-models", title: "Permission Models" },
     { id: "authority-boundaries", slug: "authority-boundaries", title: "Authority Boundaries" },
     // Agent and machine subjects are taught as their own topics, like the
@@ -1650,7 +1745,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "first-price-auctions", slug: "first-price-auctions", title: "First-Price Auctions" },
     { id: "second-price-auctions", slug: "second-price-auctions", title: "Second-Price Auctions" },
     { id: "sealed-bid-auctions", slug: "sealed-bid-auctions", title: "Sealed-Bid Auctions" },
-    { id: "batch-auctions", slug: "batch-auctions", title: "Batch Auctions" },
+    // Also placed under 13's Solver Competition; this placement is preferred.
+    { id: "batch-auctions", slug: "batch-auctions", title: "Batch Auctions", preferredPlacementId: "batch-auctions" },
     // Also placed under 12's MEV Auctions; this placement is preferred.
     { id: "auction-clearing", slug: "auction-clearing", title: "Auction Clearing", preferredPlacementId: "auction-clearing" },
     { id: "scarce-resources", slug: "scarce-resources", title: "Scarce Resources" },
@@ -1861,7 +1957,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // kept out of the public mempool.
     { id: "public-order-flow", slug: "public-order-flow", title: "Public Order Flow" },
     { id: "private-order-flow", slug: "private-order-flow", title: "Private Order Flow" },
-    { id: "order-flow-auctions", slug: "order-flow-auctions", title: "Order Flow Auctions" },
+    // Also placed under 13's Solver Competition; this placement is preferred.
+    { id: "order-flow-auctions", slug: "order-flow-auctions", title: "Order Flow Auctions", preferredPlacementId: "order-flow-auctions" },
     { id: "order-flow-payments", slug: "order-flow-payments", title: "Order Flow Payments" },
     { id: "exclusive-order-flow", slug: "exclusive-order-flow", title: "Exclusive Order Flow" },
     { id: "order-flow-competition", slug: "order-flow-competition", title: "Order Flow Competition" },
@@ -1886,6 +1983,107 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "commit-reveal", slug: "commit-reveal", title: "Commit-Reveal" },
     { id: "batch-execution", slug: "batch-execution", title: "Batch Execution" },
     { id: "ordering-guarantees", slug: "ordering-guarantees", title: "Ordering Guarantees" },
+    // 13 Intents & Coordination: L1 topics. Multi-Party Coordination (parties
+    // jointly executing) is not Foundations' general Coordination.
+    { id: "intents", slug: "intents", title: "Intents" },
+    { id: "intent-specification", slug: "intent-specification", title: "Intent Specification" },
+    { id: "intent-discovery", slug: "intent-discovery", title: "Intent Discovery" },
+    { id: "solvers", slug: "solvers", title: "Solvers" },
+    { id: "solver-competition", slug: "solver-competition", title: "Solver Competition" },
+    // Matching compatible intents, shown as "Matching"; not 11's Order Matching
+    // (bids against asks).
+    { id: "intent-matching", slug: "intent-matching", title: "Intent Matching" },
+    { id: "intent-resolution", slug: "intent-resolution", title: "Intent Resolution" },
+    // Routing execution across venues, shown as "Routing"; not 05's Request
+    // Routing (RPC).
+    { id: "execution-routing", slug: "execution-routing", title: "Execution Routing" },
+    // What solvers and systems commit to, shown as "Commitments"; not 06's
+    // Cryptographic Commitments or 04's Preconfirmation Commitments.
+    { id: "intent-commitments", slug: "intent-commitments", title: "Intent Commitments" },
+    { id: "intent-settlement", slug: "intent-settlement", title: "Intent Settlement" },
+    { id: "multi-party-coordination", slug: "multi-party-coordination", title: "Multi-Party Coordination" },
+    { id: "cross-domain-coordination", slug: "cross-domain-coordination", title: "Cross-Domain Coordination" },
+    // L2 topics (placements in L2_TOPICS). Declarative Execution (stating an
+    // outcome) is not 02's Deterministic Execution.
+    { id: "declarative-execution", slug: "declarative-execution", title: "Declarative Execution" },
+    { id: "intent-expression", slug: "intent-expression", title: "Intent Expression" },
+    { id: "intent-languages", slug: "intent-languages", title: "Intent Languages" },
+    { id: "intent-standards", slug: "intent-standards", title: "Intent Standards" },
+    { id: "intent-lifecycle", slug: "intent-lifecycle", title: "Intent Lifecycle" },
+    // Intent Constraints are not 10's Mechanism or 11's Solvency Constraints.
+    { id: "intent-constraints", slug: "intent-constraints", title: "Intent Constraints" },
+    { id: "user-preferences", slug: "user-preferences", title: "User Preferences" },
+    { id: "outcome-conditions", slug: "outcome-conditions", title: "Outcome Conditions" },
+    { id: "validity-windows", slug: "validity-windows", title: "Validity Windows" },
+    { id: "limit-prices", slug: "limit-prices", title: "Limit Prices" },
+    { id: "partial-fills", slug: "partial-fills", title: "Partial Fills" },
+    // Intent Pools are not 04's Mempools; Intent Privacy is not 12's Execution
+    // Privacy.
+    { id: "intent-pools", slug: "intent-pools", title: "Intent Pools" },
+    { id: "intent-propagation", slug: "intent-propagation", title: "Intent Propagation" },
+    { id: "intent-visibility", slug: "intent-visibility", title: "Intent Visibility" },
+    { id: "intent-privacy", slug: "intent-privacy", title: "Intent Privacy" },
+    { id: "intent-aggregation", slug: "intent-aggregation", title: "Intent Aggregation" },
+    { id: "solver-access", slug: "solver-access", title: "Solver Access" },
+    // Solver Networks are not 05's Automation Networks; Solver Bonds are not 10's
+    // Stake; Solver Reputation is its own topic, like 08's Agent Reputation.
+    { id: "solver-networks", slug: "solver-networks", title: "Solver Networks" },
+    { id: "solution-search", slug: "solution-search", title: "Solution Search" },
+    { id: "solver-strategies", slug: "solver-strategies", title: "Solver Strategies" },
+    { id: "solver-liquidity", slug: "solver-liquidity", title: "Solver Liquidity" },
+    { id: "solver-bonds", slug: "solver-bonds", title: "Solver Bonds" },
+    { id: "solver-reputation", slug: "solver-reputation", title: "Solver Reputation" },
+    // Solver Auctions are not 10's Auctions or 12's MEV Auctions.
+    { id: "solver-auctions", slug: "solver-auctions", title: "Solver Auctions" },
+    { id: "solution-scoring", slug: "solution-scoring", title: "Solution Scoring" },
+    { id: "winner-selection", slug: "winner-selection", title: "Winner Selection" },
+    { id: "surplus-maximization", slug: "surplus-maximization", title: "Surplus Maximization" },
+    { id: "coincidence-of-wants", slug: "coincidence-of-wants", title: "Coincidence of Wants" },
+    { id: "ring-trades", slug: "ring-trades", title: "Ring Trades" },
+    { id: "batch-matching", slug: "batch-matching", title: "Batch Matching" },
+    { id: "partial-matching", slug: "partial-matching", title: "Partial Matching" },
+    { id: "peer-to-peer-matching", slug: "peer-to-peer-matching", title: "Peer-to-Peer Matching" },
+    { id: "matching-efficiency", slug: "matching-efficiency", title: "Matching Efficiency" },
+    // Execution Selection is not 04's Transaction Selection; Execution Paths are
+    // not 12's Arbitrage Paths; Fulfillment Verification is a specific check,
+    // not Foundations' Verification.
+    { id: "solution-validity", slug: "solution-validity", title: "Solution Validity" },
+    { id: "execution-paths", slug: "execution-paths", title: "Execution Paths" },
+    { id: "execution-selection", slug: "execution-selection", title: "Execution Selection" },
+    { id: "fulfillment", slug: "fulfillment", title: "Fulfillment" },
+    { id: "fulfillment-verification", slug: "fulfillment-verification", title: "Fulfillment Verification" },
+    { id: "failed-intents", slug: "failed-intents", title: "Failed Intents" },
+    { id: "order-routing", slug: "order-routing", title: "Order Routing" },
+    { id: "liquidity-routing", slug: "liquidity-routing", title: "Liquidity Routing" },
+    { id: "route-optimization", slug: "route-optimization", title: "Route Optimization" },
+    { id: "split-routing", slug: "split-routing", title: "Split Routing" },
+    { id: "dex-aggregation", slug: "dex-aggregation", title: "DEX Aggregation" },
+    { id: "cross-venue-routing", slug: "cross-venue-routing", title: "Cross-Venue Routing" },
+    // Execution and Price Guarantees are not 04's Inclusion or 12's Ordering
+    // Guarantees; Intent Cancellation is not 09's Revocation.
+    { id: "solver-commitments", slug: "solver-commitments", title: "Solver Commitments" },
+    { id: "execution-guarantees", slug: "execution-guarantees", title: "Execution Guarantees" },
+    { id: "price-guarantees", slug: "price-guarantees", title: "Price Guarantees" },
+    { id: "intent-cancellation", slug: "intent-cancellation", title: "Intent Cancellation" },
+    { id: "commitment-enforcement", slug: "commitment-enforcement", title: "Commitment Enforcement" },
+    // Atomic Settlement is not 03's Atomic State Transitions.
+    { id: "atomic-settlement", slug: "atomic-settlement", title: "Atomic Settlement" },
+    { id: "settlement-contracts", slug: "settlement-contracts", title: "Settlement Contracts" },
+    { id: "batch-settlement", slug: "batch-settlement", title: "Batch Settlement" },
+    { id: "net-settlement", slug: "net-settlement", title: "Net Settlement" },
+    { id: "settlement-failure", slug: "settlement-failure", title: "Settlement Failure" },
+    // Coordination Mechanisms are not Foundations' Coordination Models; Commitment
+    // Devices (game-theoretic) are not Intent Commitments.
+    { id: "multi-party-intents", slug: "multi-party-intents", title: "Multi-Party Intents" },
+    { id: "joint-execution", slug: "joint-execution", title: "Joint Execution" },
+    { id: "coordination-mechanisms", slug: "coordination-mechanisms", title: "Coordination Mechanisms" },
+    { id: "commitment-devices", slug: "commitment-devices", title: "Commitment Devices" },
+    { id: "coordination-failures", slug: "coordination-failures", title: "Coordination Failures" },
+    // Cross-Domain Atomicity is not 02's Transaction or 12's Bundle Atomicity.
+    { id: "cross-chain-intents", slug: "cross-chain-intents", title: "Cross-Chain Intents" },
+    { id: "cross-domain-execution", slug: "cross-domain-execution", title: "Cross-Domain Execution" },
+    { id: "cross-domain-settlement", slug: "cross-domain-settlement", title: "Cross-Domain Settlement" },
+    { id: "cross-domain-atomicity", slug: "cross-domain-atomicity", title: "Cross-Domain Atomicity" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -1898,9 +2096,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "scaling", slug: "scaling", title: "Scaling" },
     { id: "rollups", slug: "rollups", title: "Rollups" },
     // The general concept (a transaction's obligations discharged and done): a
-    // relationship target and mechanism step, first placed under 11's
-    // Derivatives, for later domains to place again.
-    { id: "settlement", slug: "settlement", title: "Settlement" },
+    // relationship target and mechanism step, placed under 11's Derivatives
+    // (preferred) and 13's Intent Settlement.
+    { id: "settlement", slug: "settlement", title: "Settlement", preferredPlacementId: "settlement" },
     { id: "identity", slug: "identity", title: "Identity" },
     { id: "agent-identity", slug: "agent-identity", title: "Agent Identity" },
     { id: "authority", slug: "authority", title: "Authority" },
@@ -2074,6 +2272,37 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "mev-auctions", conceptId: "mev-auctions", parentPlacementId: "mev-execution-markets", order: 10 },
     { id: "private-execution", conceptId: "private-execution", parentPlacementId: "mev-execution-markets", order: 11 },
     { id: "mev-mitigation", conceptId: "mev-mitigation", parentPlacementId: "mev-execution-markets", order: 12 },
+    // 13 Intents & Coordination: L1 topics.
+    { id: "intents", conceptId: "intents", parentPlacementId: "intents-coordination", order: 0 },
+    { id: "intent-specification", conceptId: "intent-specification", parentPlacementId: "intents-coordination", order: 1 },
+    { id: "intent-discovery", conceptId: "intent-discovery", parentPlacementId: "intents-coordination", order: 2 },
+    { id: "solvers", conceptId: "solvers", parentPlacementId: "intents-coordination", order: 3 },
+    { id: "solver-competition", conceptId: "solver-competition", parentPlacementId: "intents-coordination", order: 4 },
+    {
+      id: "intent-matching",
+      conceptId: "intent-matching",
+      parentPlacementId: "intents-coordination",
+      order: 5,
+      contextualLabel: "Matching",
+    },
+    { id: "intent-resolution", conceptId: "intent-resolution", parentPlacementId: "intents-coordination", order: 6 },
+    {
+      id: "execution-routing",
+      conceptId: "execution-routing",
+      parentPlacementId: "intents-coordination",
+      order: 7,
+      contextualLabel: "Routing",
+    },
+    {
+      id: "intent-commitments",
+      conceptId: "intent-commitments",
+      parentPlacementId: "intents-coordination",
+      order: 8,
+      contextualLabel: "Commitments",
+    },
+    { id: "intent-settlement", conceptId: "intent-settlement", parentPlacementId: "intents-coordination", order: 9 },
+    { id: "multi-party-coordination", conceptId: "multi-party-coordination", parentPlacementId: "intents-coordination", order: 10 },
+    { id: "cross-domain-coordination", conceptId: "cross-domain-coordination", parentPlacementId: "intents-coordination", order: 11 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic

@@ -1140,6 +1140,123 @@ const MEV_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const MEV_L2 = MEV_TREE.flatMap(([, children]) => children);
 
+// 13 Intents & Coordination. Delegation (08), Batch Auctions (10), Order Flow
+// Auctions (12), Preconfirmations (04), Settlement (11), Collective Action (01)
+// and Shared Sequencing (04) are reused; Matching, Routing and Commitments are
+// Intent Matching, Execution Routing and Intent Commitments.
+const INTENTS_LAYER: Array<[string, string, string]> = [
+  ["intents", "intents", "Intents"],
+  ["intent-specification", "intent-specification", "Intent Specification"],
+  ["intent-discovery", "intent-discovery", "Intent Discovery"],
+  ["solvers", "solvers", "Solvers"],
+  ["solver-competition", "solver-competition", "Solver Competition"],
+  ["intent-matching", "intent-matching", "Matching"],
+  ["intent-resolution", "intent-resolution", "Intent Resolution"],
+  ["execution-routing", "execution-routing", "Routing"],
+  ["intent-commitments", "intent-commitments", "Commitments"],
+  ["intent-settlement", "intent-settlement", "Intent Settlement"],
+  ["multi-party-coordination", "multi-party-coordination", "Multi-Party Coordination"],
+  ["cross-domain-coordination", "cross-domain-coordination", "Cross-Domain Coordination"],
+];
+const INTENTS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["intents", [
+    ["declarative-execution", "declarative-execution", "Declarative Execution"],
+    ["intent-expression", "intent-expression", "Intent Expression"],
+    ["intent-languages", "intent-languages", "Intent Languages"],
+    ["intent-standards", "intent-standards", "Intent Standards"],
+    ["delegation-in-intents", "delegation", "Delegation"],
+    ["intent-lifecycle", "intent-lifecycle", "Intent Lifecycle"],
+  ]],
+  ["intent-specification", [
+    ["intent-constraints", "intent-constraints", "Intent Constraints"],
+    ["user-preferences", "user-preferences", "User Preferences"],
+    ["outcome-conditions", "outcome-conditions", "Outcome Conditions"],
+    ["validity-windows", "validity-windows", "Validity Windows"],
+    ["limit-prices", "limit-prices", "Limit Prices"],
+    ["partial-fills", "partial-fills", "Partial Fills"],
+  ]],
+  ["intent-discovery", [
+    ["intent-pools", "intent-pools", "Intent Pools"],
+    ["intent-propagation", "intent-propagation", "Intent Propagation"],
+    ["intent-visibility", "intent-visibility", "Intent Visibility"],
+    ["intent-privacy", "intent-privacy", "Intent Privacy"],
+    ["intent-aggregation", "intent-aggregation", "Intent Aggregation"],
+    ["solver-access", "solver-access", "Solver Access"],
+  ]],
+  ["solvers", [
+    ["solver-networks", "solver-networks", "Solver Networks"],
+    ["solution-search", "solution-search", "Solution Search"],
+    ["solver-strategies", "solver-strategies", "Solver Strategies"],
+    ["solver-liquidity", "solver-liquidity", "Solver Liquidity"],
+    ["solver-bonds", "solver-bonds", "Solver Bonds"],
+    ["solver-reputation", "solver-reputation", "Solver Reputation"],
+  ]],
+  ["solver-competition", [
+    ["solver-auctions", "solver-auctions", "Solver Auctions"],
+    ["solution-scoring", "solution-scoring", "Solution Scoring"],
+    ["winner-selection", "winner-selection", "Winner Selection"],
+    ["batch-auctions-in-solver-competition", "batch-auctions", "Batch Auctions"],
+    ["order-flow-auctions-in-solver-competition", "order-flow-auctions", "Order Flow Auctions"],
+    ["surplus-maximization", "surplus-maximization", "Surplus Maximization"],
+  ]],
+  ["intent-matching", [
+    ["coincidence-of-wants", "coincidence-of-wants", "Coincidence of Wants"],
+    ["ring-trades", "ring-trades", "Ring Trades"],
+    ["batch-matching", "batch-matching", "Batch Matching"],
+    ["partial-matching", "partial-matching", "Partial Matching"],
+    ["peer-to-peer-matching", "peer-to-peer-matching", "Peer-to-Peer Matching"],
+    ["matching-efficiency", "matching-efficiency", "Matching Efficiency"],
+  ]],
+  ["intent-resolution", [
+    ["solution-validity", "solution-validity", "Solution Validity"],
+    ["execution-paths", "execution-paths", "Execution Paths"],
+    ["execution-selection", "execution-selection", "Execution Selection"],
+    ["fulfillment", "fulfillment", "Fulfillment"],
+    ["fulfillment-verification", "fulfillment-verification", "Fulfillment Verification"],
+    ["failed-intents", "failed-intents", "Failed Intents"],
+  ]],
+  ["execution-routing", [
+    ["order-routing", "order-routing", "Order Routing"],
+    ["liquidity-routing", "liquidity-routing", "Liquidity Routing"],
+    ["route-optimization", "route-optimization", "Route Optimization"],
+    ["split-routing", "split-routing", "Split Routing"],
+    ["dex-aggregation", "dex-aggregation", "DEX Aggregation"],
+    ["cross-venue-routing", "cross-venue-routing", "Cross-Venue Routing"],
+  ]],
+  ["intent-commitments", [
+    ["solver-commitments", "solver-commitments", "Solver Commitments"],
+    ["execution-guarantees", "execution-guarantees", "Execution Guarantees"],
+    ["price-guarantees", "price-guarantees", "Price Guarantees"],
+    ["preconfirmations-in-intent-commitments", "preconfirmations", "Preconfirmations"],
+    ["intent-cancellation", "intent-cancellation", "Intent Cancellation"],
+    ["commitment-enforcement", "commitment-enforcement", "Commitment Enforcement"],
+  ]],
+  ["intent-settlement", [
+    ["settlement-in-intent-settlement", "settlement", "Settlement"],
+    ["atomic-settlement", "atomic-settlement", "Atomic Settlement"],
+    ["settlement-contracts", "settlement-contracts", "Settlement Contracts"],
+    ["batch-settlement", "batch-settlement", "Batch Settlement"],
+    ["net-settlement", "net-settlement", "Net Settlement"],
+    ["settlement-failure", "settlement-failure", "Settlement Failure"],
+  ]],
+  ["multi-party-coordination", [
+    ["multi-party-intents", "multi-party-intents", "Multi-Party Intents"],
+    ["joint-execution", "joint-execution", "Joint Execution"],
+    ["coordination-mechanisms", "coordination-mechanisms", "Coordination Mechanisms"],
+    ["collective-action-in-multi-party-coordination", "collective-action", "Collective Action"],
+    ["commitment-devices", "commitment-devices", "Commitment Devices"],
+    ["coordination-failures", "coordination-failures", "Coordination Failures"],
+  ]],
+  ["cross-domain-coordination", [
+    ["cross-chain-intents", "cross-chain-intents", "Cross-Chain Intents"],
+    ["cross-domain-execution", "cross-domain-execution", "Cross-Domain Execution"],
+    ["cross-domain-settlement", "cross-domain-settlement", "Cross-Domain Settlement"],
+    ["shared-sequencing-in-cross-domain-coordination", "shared-sequencing", "Shared Sequencing"],
+    ["cross-domain-atomicity", "cross-domain-atomicity", "Cross-Domain Atomicity"],
+  ]],
+];
+const INTENTS_L2 = INTENTS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -1166,6 +1283,8 @@ const AUTHORED_TOPICS = new Set([
   ...MARKETS_L2.map(([id]) => id),
   ...MEV_LAYER.map(([id]) => id),
   ...MEV_L2.map(([id]) => id),
+  ...INTENTS_LAYER.map(([id]) => id),
+  ...INTENTS_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -1248,8 +1367,8 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // new L1 and 61 new L2 concepts, then Economics & Mechanism Design's 10 new
   // L1 and 65 new L2 concepts, then Markets & Financial Protocols' 12 new L1
   // and 69 new L2 concepts, then MEV & Execution Markets' 11 new L1 and 74
-  // new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74);
+  // new L2 concepts, then Intents & Coordination's 12 new L1 and 64 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1264,9 +1383,9 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
     "finality-in-rollups": "rollups",
     "ai-agent": "ai-intelligent-systems",
   });
-  // Settlement is first placed by Markets & Financial Protocols (its record is
-  // unchanged); Economic Agency stays deliberately unplaced.
-  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id), ["settlement"]);
+  // Settlement is placed by Markets & Financial Protocols and Intents &
+  // Coordination (its record is unchanged); Economic Agency stays deliberately unplaced.
+  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement"]);
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
 });
 
@@ -1379,6 +1498,7 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     "trust-assumptions": ["trust-assumptions-in-oracle-problem"],
     collusion: ["collusion-in-oracle-security"],
     "strategic-behavior": ["strategic-behavior-in-economics-mechanism-design"],
+    "collective-action": ["collective-action-in-multi-party-coordination"],
   };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
@@ -1570,6 +1690,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("oracles-external-reality"), 12 + 70);
   assert.equal(subtreeOf("economics-mechanism-design"), 11 + 66);
   assert.equal(subtreeOf("markets-financial-protocols"), 12 + 72);
+  assert.equal(subtreeOf("mev-execution-markets"), 13 + 79);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1646,6 +1767,8 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
     "transaction-selection": ["transaction-selection-in-builders"],
     "private-mempools": ["private-mempools-in-private-execution"],
     "inclusion-guarantees": ["inclusion-guarantees-in-mev-mitigation"],
+    preconfirmations: ["preconfirmations-in-intent-commitments"],
+    "shared-sequencing": ["shared-sequencing-in-cross-domain-coordination"],
   };
   for (const [id, conceptId] of [...CONSENSUS_LAYER, ...CONSENSUS_L2]) {
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -1930,7 +2053,9 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   // General concepts for later reuse (Credentials is already placed again by
   // Oracles & External Reality), and agent/machine topics kept as their own concepts.
   assert.deepEqual(placementsOf("credentials"), ["credentials", "credentials-in-real-world-attestations"]);
-  for (const conceptId of ["reputation", "ownership", "delegation", "roles", "capabilities"]) {
+  // Delegation is also placed under Intents & Coordination's Intents.
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents"]);
+  for (const conceptId of ["reputation", "ownership", "roles", "capabilities"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
   for (const [placementId, related] of [
@@ -1957,7 +2082,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once; only Agent Identity keeps its existing content.
-  const shared = new Set(["attestations", "signing", "transaction-submission", "credentials"]);
+  const shared = new Set(["attestations", "signing", "transaction-submission", "credentials", "delegation"]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -2137,6 +2262,7 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
   const placedElsewhere: Record<string, string[]> = {
     bids: ["bids-in-order-books"],
     "auction-clearing": ["auction-clearing-in-mev-auctions"],
+    "batch-auctions": ["batch-auctions-in-solver-competition"],
   };
   for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
@@ -2176,7 +2302,8 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
   assert.deepEqual(placementsOf("bids"), ["bids", "bids-in-order-books"]);
   assert.equal(resolver.getConcept("bids")?.preferredPlacementId, "bids");
   // Settlement: the fixture's general concept, first placed here; its relationship and mechanism step are unchanged.
-  assert.deepEqual(placementsOf("settlement"), ["settlement"]);
+  assert.deepEqual(placementsOf("settlement"), ["settlement", "settlement-in-intent-settlement"]);
+  assert.equal(resolver.getConcept("settlement")?.preferredPlacementId, "settlement");
   assert.equal(resolver.getPlacement("settlement")?.parentPlacementId, "derivatives");
   assert.deepEqual(resolver.getRelationshipsTo("settlement").map((relationship) => relationship.id), ["finality-finalizes-settlement"]);
   // Liquidity Risk: one concept under Liquidity and Risk; preferred under Risk.
@@ -2210,7 +2337,7 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  const shared = new Set(["bids", "liquidity-risk"]);
+  const shared = new Set(["bids", "liquidity-risk", "settlement"]);
   for (const [id, conceptId] of [...MARKETS_LAYER, ...MARKETS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -2299,13 +2426,106 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["transaction-ordering", "builders", "block-construction", "transaction-selection", "private-mempools", "inclusion-guarantees", "auction-clearing"]);
+  // Also placed in Intents & Coordination.
+  const placedElsewhere: Record<string, string[]> = { "order-flow-auctions": ["order-flow-auctions-in-solver-competition"] };
   for (const [id, conceptId] of [...MEV_LAYER, ...MEV_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
+  }
+  const ids = [...MEV_LAYER, ...MEV_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Intents & Coordination has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("intents-coordination").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    INTENTS_LAYER,
+  );
+  for (const [parent, children] of INTENTS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of INTENTS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "intents-coordination")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...INTENTS_LAYER.map(([id]) => id), ...INTENTS_L2.map(([id]) => id)].sort());
+  assert.equal(INTENTS_L2.length, 71);
+});
+
+test("Intents & Coordination reuses existing concepts without moving their preferred placements", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Each reused concept is placed again here; its existing home stays preferred.
+  for (const [conceptId, here] of [
+    ["delegation", "delegation-in-intents"],
+    ["batch-auctions", "batch-auctions-in-solver-competition"],
+    ["order-flow-auctions", "order-flow-auctions-in-solver-competition"],
+    ["preconfirmations", "preconfirmations-in-intent-commitments"],
+    ["settlement", "settlement-in-intent-settlement"],
+    ["collective-action", "collective-action-in-multi-party-coordination"],
+    ["shared-sequencing", "shared-sequencing-in-cross-domain-coordination"],
+  ]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
+  }
+  // Preconfirmations keeps its own layer only where it is an L1 topic.
+  assert.equal(resolver.getChildren("preconfirmations").length, 5);
+  assert.deepEqual(resolver.getChildren("preconfirmations-in-intent-commitments"), []);
+  // Matching, Routing and Commitments are precise concepts in contextual wording.
+  for (const [placementId, title] of [["intent-matching", "Intent Matching"], ["execution-routing", "Execution Routing"], ["intent-commitments", "Intent Commitments"]]) {
+    assert.equal(resolver.getConcept(placementId)?.title, title);
+    assert.ok(resolver.getPlacement(placementId)?.contextualLabel, placementId);
+  }
+  // Related but distinct concepts.
+  for (const [placementId, related] of [
+    ["intent-matching", "order-matching"],
+    ["execution-routing", "request-routing"],
+    ["intent-commitments", "cryptographic-commitments"],
+    ["intent-commitments", "preconfirmation-commitments"],
+    ["multi-party-coordination", "coordination"],
+    ["coordination-mechanisms", "coordination-models"],
+    ["declarative-execution", "deterministic-execution"],
+    ["intent-constraints", "mechanism-constraints"],
+    ["intent-pools", "mempools"],
+    ["intent-privacy", "execution-privacy"],
+    ["solver-networks", "automation-networks"],
+    ["solver-bonds", "stake"],
+    ["solver-reputation", "reputation"],
+    ["solver-auctions", "auctions"],
+    ["solver-auctions", "mev-auctions"],
+    ["execution-selection", "transaction-selection"],
+    ["execution-paths", "arbitrage-paths"],
+    ["fulfillment-verification", "verification"],
+    ["execution-guarantees", "inclusion-guarantees"],
+    ["price-guarantees", "ordering-guarantees"],
+    ["intent-cancellation", "revocation"],
+    ["atomic-settlement", "atomic-state-transitions"],
+    ["commitment-devices", "intent-commitments"],
+    ["cross-domain-atomicity", "transaction-atomicity"],
+    ["cross-domain-atomicity", "bundle-atomicity"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["delegation", "batch-auctions", "order-flow-auctions", "preconfirmations", "settlement", "collective-action", "shared-sequencing"]);
+  for (const [id, conceptId] of [...INTENTS_LAYER, ...INTENTS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  const ids = [...MEV_LAYER, ...MEV_L2].map(([id]) => id);
+  const ids = [...INTENTS_LAYER, ...INTENTS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 
