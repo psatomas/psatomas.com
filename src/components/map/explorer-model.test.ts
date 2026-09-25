@@ -48,7 +48,15 @@ const view = buildMapExplorerView(resolver, rootPlacementIds(resolver));
 
 // L0 domains that currently hold re-homed proof-fixture placements.
 const POPULATED_L0 = {
-  foundations: ["distributed-systems"],
+  foundations: [
+    "protocols",
+    "distributed-systems",
+    "state-machines",
+    "trust-models",
+    "coordination",
+    "adversarial-environments",
+    "protocol-properties",
+  ],
   "consensus-ordering": ["consensus"],
   "identity-accounts-authority": ["identity", "authority"],
   "scaling-modular-systems": ["scaling"],
@@ -286,9 +294,8 @@ test("root placements become structural regions holding their visible descendant
   const regions = getVisibleMapExplorerRegions(view, new Set(["foundations", "consensus-ordering", "consensus"]));
 
   assert.deepEqual(regions.map((region) => region.header.placementId), view.roots.map((root) => root.placementId));
-  assert.deepEqual(regions[0].rows.map((row) => [row.placementId, row.parentLabel]), [
-    ["distributed-systems", "Foundations"],
-  ]);
+  assert.deepEqual(regions[0].rows.map((row) => row.placementId), POPULATED_L0.foundations);
+  assert.ok(regions[0].rows.every((row) => row.parentLabel === "Foundations"));
   assert.deepEqual(regions[3].rows.map((row) => [row.placementId, row.parentLabel]), [
     ["consensus", "Consensus & Ordering"],
     ["finality-in-consensus", "Consensus"],
