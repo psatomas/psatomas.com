@@ -896,6 +896,123 @@ const ECONOMICS_TREE: Array<[string, Array<[string, string, string]>]> = [
 ];
 const ECONOMICS_L2 = ECONOMICS_TREE.flatMap(([, children]) => children);
 
+// 11 Markets & Financial Protocols. Bids is 10's concept; Settlement is the
+// fixture's general concept, first placed here; Liquidity Risk is one concept
+// under Liquidity and Risk.
+const MARKETS_LAYER: Array<[string, string, string]> = [
+  ["assets", "assets", "Assets"],
+  ["markets", "markets", "Markets"],
+  ["liquidity", "liquidity", "Liquidity"],
+  ["automated-market-makers", "automated-market-makers", "Automated Market Makers"],
+  ["order-books", "order-books", "Order Books"],
+  ["lending-borrowing", "lending-borrowing", "Lending & Borrowing"],
+  ["collateral", "collateral", "Collateral"],
+  ["liquidations", "liquidations", "Liquidations"],
+  ["stablecoins", "stablecoins", "Stablecoins"],
+  ["derivatives", "derivatives", "Derivatives"],
+  ["risk", "risk", "Risk"],
+  ["solvency", "solvency", "Solvency"],
+];
+const MARKETS_TREE: Array<[string, Array<[string, string, string]>]> = [
+  ["assets", [
+    ["fungible-assets", "fungible-assets", "Fungible Assets"],
+    ["non-fungible-assets", "non-fungible-assets", "Non-Fungible Assets"],
+    ["native-assets", "native-assets", "Native Assets"],
+    ["tokenized-assets", "tokenized-assets", "Tokenized Assets"],
+    ["synthetic-assets", "synthetic-assets", "Synthetic Assets"],
+    ["asset-properties", "asset-properties", "Asset Properties"],
+  ]],
+  ["markets", [
+    ["market-participants", "market-participants", "Market Participants"],
+    ["buyers", "buyers", "Buyers"],
+    ["sellers", "sellers", "Sellers"],
+    ["market-prices", "market-prices", "Market Prices"],
+    ["market-efficiency", "market-efficiency", "Market Efficiency"],
+    ["market-structure", "market-structure", "Market Structure"],
+  ]],
+  ["liquidity", [
+    ["liquidity-providers", "liquidity-providers", "Liquidity Providers"],
+    ["liquidity-provision", "liquidity-provision", "Liquidity Provision"],
+    ["liquidity-depth", "liquidity-depth", "Liquidity Depth"],
+    ["liquidity-fragmentation", "liquidity-fragmentation", "Liquidity Fragmentation"],
+    ["capital-efficiency", "capital-efficiency", "Capital Efficiency"],
+    ["liquidity-risk-in-liquidity", "liquidity-risk", "Liquidity Risk"],
+  ]],
+  ["automated-market-makers", [
+    ["liquidity-pools", "liquidity-pools", "Liquidity Pools"],
+    ["constant-product", "constant-product", "Constant Product"],
+    ["invariant-functions", "invariant-functions", "Invariant Functions"],
+    ["pool-reserves", "pool-reserves", "Pool Reserves"],
+    ["lp-tokens", "lp-tokens", "LP Tokens"],
+    ["impermanent-loss", "impermanent-loss", "Impermanent Loss"],
+  ]],
+  ["order-books", [
+    ["orders", "orders", "Orders"],
+    ["limit-orders", "limit-orders", "Limit Orders"],
+    ["market-orders", "market-orders", "Market Orders"],
+    ["bids-in-order-books", "bids", "Bids"],
+    ["asks", "asks", "Asks"],
+    ["order-matching", "order-matching", "Order Matching"],
+  ]],
+  ["lending-borrowing", [
+    ["lending-markets", "lending-markets", "Lending Markets"],
+    ["borrowers", "borrowers", "Borrowers"],
+    ["lenders", "lenders", "Lenders"],
+    ["interest-rates", "interest-rates", "Interest Rates"],
+    ["utilization", "utilization", "Utilization"],
+    ["repayment", "repayment", "Repayment"],
+  ]],
+  ["collateral", [
+    ["collateralization", "collateralization", "Collateralization"],
+    ["collateral-ratios", "collateral-ratios", "Collateral Ratios"],
+    ["overcollateralization", "overcollateralization", "Overcollateralization"],
+    ["undercollateralization", "undercollateralization", "Undercollateralization"],
+    ["collateral-valuation", "collateral-valuation", "Collateral Valuation"],
+    ["collateral-risk", "collateral-risk", "Collateral Risk"],
+  ]],
+  ["liquidations", [
+    ["liquidation-thresholds", "liquidation-thresholds", "Liquidation Thresholds"],
+    ["liquidators", "liquidators", "Liquidators"],
+    ["liquidation-incentives", "liquidation-incentives", "Liquidation Incentives"],
+    ["liquidation-penalties", "liquidation-penalties", "Liquidation Penalties"],
+    ["liquidation-auctions", "liquidation-auctions", "Liquidation Auctions"],
+    ["bad-debt", "bad-debt", "Bad Debt"],
+  ]],
+  ["stablecoins", [
+    ["fiat-backed-stablecoins", "fiat-backed-stablecoins", "Fiat-Backed Stablecoins"],
+    ["crypto-backed-stablecoins", "crypto-backed-stablecoins", "Crypto-Backed Stablecoins"],
+    ["algorithmic-stablecoins", "algorithmic-stablecoins", "Algorithmic Stablecoins"],
+    ["pegs", "pegs", "Pegs"],
+    ["peg-stability", "peg-stability", "Peg Stability"],
+    ["depegging", "depegging", "Depegging"],
+  ]],
+  ["derivatives", [
+    ["futures", "futures", "Futures"],
+    ["options", "options", "Options"],
+    ["perpetuals", "perpetuals", "Perpetuals"],
+    ["derivative-pricing", "derivative-pricing", "Derivative Pricing"],
+    ["margin", "margin", "Margin"],
+    ["settlement", "settlement", "Settlement"],
+  ]],
+  ["risk", [
+    ["market-risk", "market-risk", "Market Risk"],
+    ["credit-risk", "credit-risk", "Credit Risk"],
+    ["liquidity-risk-in-risk", "liquidity-risk", "Liquidity Risk"],
+    ["counterparty-risk", "counterparty-risk", "Counterparty Risk"],
+    ["systemic-risk", "systemic-risk", "Systemic Risk"],
+    ["risk-parameters", "risk-parameters", "Risk Parameters"],
+  ]],
+  ["solvency", [
+    ["assets-and-liabilities", "assets-and-liabilities", "Assets and Liabilities"],
+    ["reserves", "reserves", "Reserves"],
+    ["capitalization", "capitalization", "Capitalization"],
+    ["insolvency", "insolvency", "Insolvency"],
+    ["solvency-constraints", "solvency-constraints", "Solvency Constraints"],
+    ["loss-absorption", "loss-absorption", "Loss Absorption"],
+  ]],
+];
+const MARKETS_L2 = MARKETS_TREE.flatMap(([, children]) => children);
+
 // The authored L1/L2 trees are asserted on their own; the fixture test covers the rest.
 const AUTHORED_TOPICS = new Set([
   ...FOUNDATIONS_LAYER,
@@ -918,6 +1035,8 @@ const AUTHORED_TOPICS = new Set([
   ...ORACLES_L2.map(([id]) => id),
   ...ECONOMICS_LAYER.map(([id]) => id),
   ...ECONOMICS_L2.map(([id]) => id),
+  ...MARKETS_LAYER.map(([id]) => id),
+  ...MARKETS_L2.map(([id]) => id),
 ]);
 
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
@@ -998,8 +1117,9 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // 8 new L1 and 47 new L2 concepts, then Identity, Accounts & Authority's
   // 6 new L1 and 43 new L2 concepts, then Oracles & External Reality's 11
   // new L1 and 61 new L2 concepts, then Economics & Mechanism Design's 10 new
-  // L1 and 65 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65);
+  // L1 and 65 new L2 concepts, then Markets & Financial Protocols' 12 new L1
+  // and 69 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -1014,8 +1134,9 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
     "finality-in-rollups": "rollups",
     "ai-agent": "ai-intelligent-systems",
   });
-  // Settlement and Economic Agency stay deliberately unplaced.
-  assert.deepEqual(resolver.getPlacementsForConcept("settlement"), []);
+  // Settlement is first placed by Markets & Financial Protocols (its record is
+  // unchanged); Economic Agency stays deliberately unplaced.
+  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id), ["settlement"]);
   assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
 });
 
@@ -1317,6 +1438,7 @@ test("preceding domain hierarchies are unchanged by later domains", () => {
   assert.equal(subtreeOf("storage-availability"), 9 + 51);
   assert.equal(subtreeOf("identity-accounts-authority"), 8 + 47);
   assert.equal(subtreeOf("oracles-external-reality"), 12 + 70);
+  assert.equal(subtreeOf("economics-mechanism-design"), 11 + 66);
   assert.equal(placementLabel("transitions"), "Transitions");
   assert.equal(resolver.getAncestors("transitions").map((placement) => placement.id).join("/"), "foundations/state-machines");
 });
@@ -1868,13 +1990,88 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["strategic-behavior", "penalties"]);
+  // Also placed in Markets & Financial Protocols.
+  const placedElsewhere: Record<string, string[]> = { bids: ["bids-in-order-books"] };
   for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
+    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (shared.has(conceptId)) continue;
+    assert.equal(id, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id, ...(placedElsewhere[conceptId] ?? [])].sort(), conceptId);
+  }
+  const ids = [...ECONOMICS_LAYER, ...ECONOMICS_L2].map(([id]) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Markets & Financial Protocols has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
+  assert.deepEqual(
+    resolver.getChildren("markets-financial-protocols").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+    MARKETS_LAYER,
+  );
+  for (const [parent, children] of MARKETS_TREE) {
+    assert.deepEqual(
+      resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
+      children,
+      parent,
+    );
+    assert.deepEqual(resolver.getChildren(parent).map((placement) => placement.order), children.map((_, order) => order), parent);
+  }
+  for (const [id] of MARKETS_L2) assert.deepEqual(resolver.getChildren(id), [], `${id} has no L3`);
+  const subtree = mapKnowledge.placements
+    .filter((placement) => resolver.getAncestors(placement.id)[0]?.id === "markets-financial-protocols")
+    .map((placement) => placement.id)
+    .sort();
+  assert.deepEqual(subtree, [...MARKETS_LAYER.map(([id]) => id), ...MARKETS_L2.map(([id]) => id)].sort());
+  assert.equal(MARKETS_L2.length, 72);
+});
+
+test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk and keeps financial mechanisms distinct", () => {
+  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  // Bids: 10's concept, placed again under Order Books; 10 stays preferred.
+  assert.deepEqual(placementsOf("bids"), ["bids", "bids-in-order-books"]);
+  assert.equal(resolver.getConcept("bids")?.preferredPlacementId, "bids");
+  // Settlement: the fixture's general concept, first placed here; its relationship and mechanism step are unchanged.
+  assert.deepEqual(placementsOf("settlement"), ["settlement"]);
+  assert.equal(resolver.getPlacement("settlement")?.parentPlacementId, "derivatives");
+  assert.deepEqual(resolver.getRelationshipsTo("settlement").map((relationship) => relationship.id), ["finality-finalizes-settlement"]);
+  // Liquidity Risk: one concept under Liquidity and Risk; preferred under Risk.
+  assert.deepEqual(placementsOf("liquidity-risk"), ["liquidity-risk-in-liquidity", "liquidity-risk-in-risk"]);
+  assert.equal(resolver.getConcept("liquidity-risk")?.preferredPlacementId, "liquidity-risk-in-risk");
+  // General concepts, each placed once for now, available to later domains.
+  for (const conceptId of ["assets", "markets", "liquidity", "collateral", "risk", "reserves", "solvency"]) {
+    assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
+  }
+  // Financial mechanisms stay distinct from their general economic primitives, and other near pairs.
+  for (const [placementId, related] of [
+    ["liquidation-incentives", "incentives"],
+    ["liquidation-penalties", "penalties"],
+    ["liquidation-auctions", "auctions"],
+    ["pool-reserves", "reserves"],
+    ["market-prices", "market-data"],
+    ["market-efficiency", "allocation-efficiency"],
+    ["capital-efficiency", "allocation-efficiency"],
+    ["market-participants", "participants"],
+    ["liquidators", "liquidation-bots"],
+    ["order-matching", "transaction-ordering"],
+    ["solvency-constraints", "mechanism-constraints"],
+    ["asset-properties", "protocol-properties"],
+    ["assets-and-liabilities", "assets"],
+    ["collateral-risk", "credit-risk"],
+    ["interest-rates", "payment-rules"],
+  ]) {
+    const conceptId = resolver.getPlacement(placementId)?.conceptId;
+    assert.equal(conceptId, placementId);
+    assert.ok(resolver.getConcept(related), related);
+    assert.notEqual(conceptId, related, placementId);
+  }
+  // Every other topic is a new concept placed once, without exposition.
+  const shared = new Set(["bids", "liquidity-risk"]);
+  for (const [id, conceptId] of [...MARKETS_LAYER, ...MARKETS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  const ids = [...ECONOMICS_LAYER, ...ECONOMICS_L2].map(([id]) => id);
+  const ids = [...MARKETS_LAYER, ...MARKETS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
 

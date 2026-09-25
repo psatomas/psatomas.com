@@ -667,6 +667,82 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     { placementId: "penalties-in-cryptoeconomic-security", conceptId: "penalties", contextualLabel: "Economic Penalties" },
     "cryptoeconomic-assumptions",
   ],
+  // 11 Markets & Financial Protocols
+  assets: [
+    "fungible-assets",
+    "non-fungible-assets",
+    "native-assets",
+    "tokenized-assets",
+    "synthetic-assets",
+    "asset-properties",
+  ],
+  markets: ["market-participants", "buyers", "sellers", "market-prices", "market-efficiency", "market-structure"],
+  liquidity: [
+    "liquidity-providers",
+    "liquidity-provision",
+    "liquidity-depth",
+    "liquidity-fragmentation",
+    "capital-efficiency",
+    { placementId: "liquidity-risk-in-liquidity", conceptId: "liquidity-risk" },
+  ],
+  "automated-market-makers": [
+    "liquidity-pools",
+    "constant-product",
+    "invariant-functions",
+    "pool-reserves",
+    "lp-tokens",
+    "impermanent-loss",
+  ],
+  "order-books": [
+    "orders",
+    "limit-orders",
+    "market-orders",
+    { placementId: "bids-in-order-books", conceptId: "bids" },
+    "asks",
+    "order-matching",
+  ],
+  "lending-borrowing": ["lending-markets", "borrowers", "lenders", "interest-rates", "utilization", "repayment"],
+  collateral: [
+    "collateralization",
+    "collateral-ratios",
+    "overcollateralization",
+    "undercollateralization",
+    "collateral-valuation",
+    "collateral-risk",
+  ],
+  liquidations: [
+    "liquidation-thresholds",
+    "liquidators",
+    "liquidation-incentives",
+    "liquidation-penalties",
+    "liquidation-auctions",
+    "bad-debt",
+  ],
+  stablecoins: [
+    "fiat-backed-stablecoins",
+    "crypto-backed-stablecoins",
+    "algorithmic-stablecoins",
+    "pegs",
+    "peg-stability",
+    "depegging",
+  ],
+  derivatives: ["futures", "options", "perpetuals", "derivative-pricing", "margin", "settlement"],
+  risk: [
+    "market-risk",
+    "credit-risk",
+    { placementId: "liquidity-risk-in-risk", conceptId: "liquidity-risk" },
+    "counterparty-risk",
+    "systemic-risk",
+    "risk-parameters",
+  ],
+  solvency: [
+    "assets-and-liabilities",
+    "reserves",
+    "capitalization",
+    "insolvency",
+    "solvency-constraints",
+    "loss-absorption",
+  ],
 };
 
 const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentPlacementId, children]) =>
@@ -682,9 +758,9 @@ const l2Placements: MapPlacement[] = Object.entries(L2_TOPICS).flatMap(([parentP
  * taught domain (canonical exposition plus its L1 and L2 topics); the L1 and
  * L2 topics of Computation & Execution, State & Data, Consensus & Ordering,
  * Networks & Infrastructure, Cryptography & Proofs, Storage & Availability,
- * Identity, Accounts & Authority, Oracles & External Reality, and Economics &
- * Mechanism Design; and a deliberately small Phase 1 proof fixture re-homed
- * beneath its L0 domains.
+ * Identity, Accounts & Authority, Oracles & External Reality, Economics &
+ * Mechanism Design, and Markets & Financial Protocols; and a deliberately
+ * small Phase 1 proof fixture re-homed beneath its L0 domains.
  */
 export const mapKnowledge: MapKnowledgeModel = {
   concepts: [
@@ -1461,7 +1537,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "priority-fees", slug: "priority-fees", title: "Priority Fees" },
     { id: "congestion-pricing", slug: "congestion-pricing", title: "Congestion Pricing" },
     // Bids in general, not 04's Block Bids.
-    { id: "bids", slug: "bids", title: "Bids" },
+    // An offer to buy or pay at a stated price; also placed under 11's Order
+    // Books. This placement is preferred.
+    { id: "bids", slug: "bids", title: "Bids", preferredPlacementId: "bids" },
     { id: "first-price-auctions", slug: "first-price-auctions", title: "First-Price Auctions" },
     { id: "second-price-auctions", slug: "second-price-auctions", title: "Second-Price Auctions" },
     { id: "sealed-bid-auctions", slug: "sealed-bid-auctions", title: "Sealed-Bid Auctions" },
@@ -1495,6 +1573,103 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "incentive-attacks", slug: "incentive-attacks", title: "Incentive Attacks" },
     { id: "stake-based-security", slug: "stake-based-security", title: "Stake-Based Security" },
     { id: "cryptoeconomic-assumptions", slug: "cryptoeconomic-assumptions", title: "Cryptoeconomic Assumptions" },
+    // 11 Markets & Financial Protocols: L1 topics. Assets, Markets, Liquidity,
+    // Collateral, Risk and Solvency are general concepts for reuse by later domains.
+    { id: "assets", slug: "assets", title: "Assets" },
+    { id: "markets", slug: "markets", title: "Markets" },
+    { id: "liquidity", slug: "liquidity", title: "Liquidity" },
+    { id: "automated-market-makers", slug: "automated-market-makers", title: "Automated Market Makers" },
+    { id: "order-books", slug: "order-books", title: "Order Books" },
+    { id: "lending-borrowing", slug: "lending-borrowing", title: "Lending & Borrowing" },
+    { id: "collateral", slug: "collateral", title: "Collateral" },
+    { id: "liquidations", slug: "liquidations", title: "Liquidations" },
+    { id: "stablecoins", slug: "stablecoins", title: "Stablecoins" },
+    { id: "derivatives", slug: "derivatives", title: "Derivatives" },
+    { id: "risk", slug: "risk", title: "Risk" },
+    { id: "solvency", slug: "solvency", title: "Solvency" },
+    // L2 topics (placements in L2_TOPICS). Asset Properties are not Protocol or
+    // Mechanism Properties.
+    { id: "fungible-assets", slug: "fungible-assets", title: "Fungible Assets" },
+    { id: "non-fungible-assets", slug: "non-fungible-assets", title: "Non-Fungible Assets" },
+    { id: "native-assets", slug: "native-assets", title: "Native Assets" },
+    { id: "tokenized-assets", slug: "tokenized-assets", title: "Tokenized Assets" },
+    { id: "synthetic-assets", slug: "synthetic-assets", title: "Synthetic Assets" },
+    { id: "asset-properties", slug: "asset-properties", title: "Asset Properties" },
+    // Market Participants are not Foundations' Participants; Market Prices are
+    // not 09's Market Data; Market and Capital Efficiency are not 10's
+    // Allocation Efficiency.
+    { id: "market-participants", slug: "market-participants", title: "Market Participants" },
+    { id: "buyers", slug: "buyers", title: "Buyers" },
+    { id: "sellers", slug: "sellers", title: "Sellers" },
+    { id: "market-prices", slug: "market-prices", title: "Market Prices" },
+    { id: "market-efficiency", slug: "market-efficiency", title: "Market Efficiency" },
+    { id: "market-structure", slug: "market-structure", title: "Market Structure" },
+    { id: "liquidity-providers", slug: "liquidity-providers", title: "Liquidity Providers" },
+    { id: "liquidity-provision", slug: "liquidity-provision", title: "Liquidity Provision" },
+    { id: "liquidity-depth", slug: "liquidity-depth", title: "Liquidity Depth" },
+    { id: "liquidity-fragmentation", slug: "liquidity-fragmentation", title: "Liquidity Fragmentation" },
+    { id: "capital-efficiency", slug: "capital-efficiency", title: "Capital Efficiency" },
+    // One concept under Liquidity and Risk; preferred under Risk, as a kind of risk.
+    { id: "liquidity-risk", slug: "liquidity-risk", title: "Liquidity Risk", preferredPlacementId: "liquidity-risk-in-risk" },
+    // Pool Reserves (a pool's token balances) are not Solvency's Reserves (assets
+    // backing liabilities).
+    { id: "liquidity-pools", slug: "liquidity-pools", title: "Liquidity Pools" },
+    { id: "constant-product", slug: "constant-product", title: "Constant Product" },
+    { id: "invariant-functions", slug: "invariant-functions", title: "Invariant Functions" },
+    { id: "pool-reserves", slug: "pool-reserves", title: "Pool Reserves" },
+    { id: "lp-tokens", slug: "lp-tokens", title: "LP Tokens" },
+    { id: "impermanent-loss", slug: "impermanent-loss", title: "Impermanent Loss" },
+    // Order Matching is not 04's Transaction Ordering.
+    { id: "orders", slug: "orders", title: "Orders" },
+    { id: "limit-orders", slug: "limit-orders", title: "Limit Orders" },
+    { id: "market-orders", slug: "market-orders", title: "Market Orders" },
+    { id: "asks", slug: "asks", title: "Asks" },
+    { id: "order-matching", slug: "order-matching", title: "Order Matching" },
+    { id: "lending-markets", slug: "lending-markets", title: "Lending Markets" },
+    { id: "borrowers", slug: "borrowers", title: "Borrowers" },
+    { id: "lenders", slug: "lenders", title: "Lenders" },
+    { id: "interest-rates", slug: "interest-rates", title: "Interest Rates" },
+    { id: "utilization", slug: "utilization", title: "Utilization" },
+    { id: "repayment", slug: "repayment", title: "Repayment" },
+    { id: "collateralization", slug: "collateralization", title: "Collateralization" },
+    { id: "collateral-ratios", slug: "collateral-ratios", title: "Collateral Ratios" },
+    { id: "overcollateralization", slug: "overcollateralization", title: "Overcollateralization" },
+    { id: "undercollateralization", slug: "undercollateralization", title: "Undercollateralization" },
+    { id: "collateral-valuation", slug: "collateral-valuation", title: "Collateral Valuation" },
+    { id: "collateral-risk", slug: "collateral-risk", title: "Collateral Risk" },
+    // Liquidation mechanisms are taught as their own concepts, not collapsed into
+    // 10's Incentives, Penalties and Auctions; Liquidators (a role) are not 05's
+    // Liquidation Bots.
+    { id: "liquidation-thresholds", slug: "liquidation-thresholds", title: "Liquidation Thresholds" },
+    { id: "liquidators", slug: "liquidators", title: "Liquidators" },
+    { id: "liquidation-incentives", slug: "liquidation-incentives", title: "Liquidation Incentives" },
+    { id: "liquidation-penalties", slug: "liquidation-penalties", title: "Liquidation Penalties" },
+    { id: "liquidation-auctions", slug: "liquidation-auctions", title: "Liquidation Auctions" },
+    { id: "bad-debt", slug: "bad-debt", title: "Bad Debt" },
+    { id: "fiat-backed-stablecoins", slug: "fiat-backed-stablecoins", title: "Fiat-Backed Stablecoins" },
+    { id: "crypto-backed-stablecoins", slug: "crypto-backed-stablecoins", title: "Crypto-Backed Stablecoins" },
+    { id: "algorithmic-stablecoins", slug: "algorithmic-stablecoins", title: "Algorithmic Stablecoins" },
+    { id: "pegs", slug: "pegs", title: "Pegs" },
+    { id: "peg-stability", slug: "peg-stability", title: "Peg Stability" },
+    { id: "depegging", slug: "depegging", title: "Depegging" },
+    { id: "futures", slug: "futures", title: "Futures" },
+    { id: "options", slug: "options", title: "Options" },
+    { id: "perpetuals", slug: "perpetuals", title: "Perpetuals" },
+    { id: "derivative-pricing", slug: "derivative-pricing", title: "Derivative Pricing" },
+    { id: "margin", slug: "margin", title: "Margin" },
+    { id: "market-risk", slug: "market-risk", title: "Market Risk" },
+    { id: "credit-risk", slug: "credit-risk", title: "Credit Risk" },
+    { id: "counterparty-risk", slug: "counterparty-risk", title: "Counterparty Risk" },
+    { id: "systemic-risk", slug: "systemic-risk", title: "Systemic Risk" },
+    { id: "risk-parameters", slug: "risk-parameters", title: "Risk Parameters" },
+    // Assets and Liabilities is the balance-sheet view, not Assets; Solvency
+    // Constraints are not 10's Mechanism Constraints.
+    { id: "assets-and-liabilities", slug: "assets-and-liabilities", title: "Assets and Liabilities" },
+    { id: "reserves", slug: "reserves", title: "Reserves" },
+    { id: "capitalization", slug: "capitalization", title: "Capitalization" },
+    { id: "insolvency", slug: "insolvency", title: "Insolvency" },
+    { id: "solvency-constraints", slug: "solvency-constraints", title: "Solvency Constraints" },
+    { id: "loss-absorption", slug: "loss-absorption", title: "Loss Absorption" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
     { id: "consensus", slug: "consensus", title: "Consensus", preferredPlacementId: "consensus" },
@@ -1506,8 +1681,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     },
     { id: "scaling", slug: "scaling", title: "Scaling" },
     { id: "rollups", slug: "rollups", title: "Rollups" },
-    // Intentionally unplaced for now: a relationship target and mechanism step
-    // whose pedagogical homes are authored when its domains are populated.
+    // The general concept (a transaction's obligations discharged and done): a
+    // relationship target and mechanism step, first placed under 11's
+    // Derivatives, for later domains to place again.
     { id: "settlement", slug: "settlement", title: "Settlement" },
     { id: "identity", slug: "identity", title: "Identity" },
     { id: "agent-identity", slug: "agent-identity", title: "Agent Identity" },
@@ -1645,6 +1821,19 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "staking-economics", conceptId: "staking-economics", parentPlacementId: "economics-mechanism-design", order: 8 },
     { id: "security-budgets", conceptId: "security-budgets", parentPlacementId: "economics-mechanism-design", order: 9 },
     { id: "cryptoeconomic-security", conceptId: "cryptoeconomic-security", parentPlacementId: "economics-mechanism-design", order: 10 },
+    // 11 Markets & Financial Protocols: L1 topics.
+    { id: "assets", conceptId: "assets", parentPlacementId: "markets-financial-protocols", order: 0 },
+    { id: "markets", conceptId: "markets", parentPlacementId: "markets-financial-protocols", order: 1 },
+    { id: "liquidity", conceptId: "liquidity", parentPlacementId: "markets-financial-protocols", order: 2 },
+    { id: "automated-market-makers", conceptId: "automated-market-makers", parentPlacementId: "markets-financial-protocols", order: 3 },
+    { id: "order-books", conceptId: "order-books", parentPlacementId: "markets-financial-protocols", order: 4 },
+    { id: "lending-borrowing", conceptId: "lending-borrowing", parentPlacementId: "markets-financial-protocols", order: 5 },
+    { id: "collateral", conceptId: "collateral", parentPlacementId: "markets-financial-protocols", order: 6 },
+    { id: "liquidations", conceptId: "liquidations", parentPlacementId: "markets-financial-protocols", order: 7 },
+    { id: "stablecoins", conceptId: "stablecoins", parentPlacementId: "markets-financial-protocols", order: 8 },
+    { id: "derivatives", conceptId: "derivatives", parentPlacementId: "markets-financial-protocols", order: 9 },
+    { id: "risk", conceptId: "risk", parentPlacementId: "markets-financial-protocols", order: 10 },
+    { id: "solvency", conceptId: "solvency", parentPlacementId: "markets-financial-protocols", order: 11 },
     ...l2Placements,
     // 04 Consensus & Ordering: L1 topics. Consensus and Finality are the Phase
     // 1 fixture's placements, keeping their IDs; Finality is now an L1 topic
