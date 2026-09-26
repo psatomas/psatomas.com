@@ -3495,18 +3495,18 @@ test("Foundations exposition is canonical data: models, a distinction, and tensi
     "Protocols begin before implementation. They define how independent participants interact, which actions are valid, how state can change, and which properties the system is expected to preserve.",
   );
   assert.deepEqual(body.map((block) => block.kind), [
-    "paragraph", "flow", "paragraph", "flow", "paragraph",
+    "paragraph", "flow", "paragraph", "flow", "paragraph", "terms",
     "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
     "heading", "paragraph", "flow", "paragraph", "paragraph", "flow", "paragraph", "terms",
     "heading", "paragraph", "paragraph", "terms", "paragraph", "paragraph", "terms", "paragraph",
     "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
     "heading", "distinction", "paragraph", "flow", "paragraph", "paragraph", "paragraph", "terms",
-    "tensions", "paragraph", "terms",
+    "paragraph", "tensions", "paragraph", "terms",
   ]);
   // Sections follow the ontology's order: distributed systems, state machines,
   // trust and coordination, adversarial environments, protocol properties.
   assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
-    "No participant sees the whole system",
+    "No participant can assume it sees the whole system",
     "Protocols define valid state transitions",
     "Trust and coordination are redistributed, not removed",
     "Protocols must hold outside the ideal case",
@@ -3514,7 +3514,7 @@ test("Foundations exposition is canonical data: models, a distinction, and tensi
   ]);
   const flows = body.flatMap((block) => (block.kind === "flow" ? [block.stages] : []));
   assert.deepEqual(flows, [
-    [["Participants"], ["Rules"], ["Actions", "Messages"], ["State transitions"], ["System state"]],
+    [["Participants"], ["Actions", "Messages"], ["Rules"], ["State transitions"], ["System state"]],
     [
       ["Protocol System"],
       [["Mechanisms", "Rules / State"], ["Participants", "Authority / Incentives"], ["Environment", "Network / Dependencies"]],
@@ -3526,7 +3526,7 @@ test("Foundations exposition is canonical data: models, a distinction, and tensi
     [["Ordered Inputs"], ["Replica A", "Replica B", "Replica C"], ["Compatible System State"]],
     [
       ["Expected Environment"],
-      ["Latency", "Failure", "Faults", "Byzantine behavior", "Strategic behavior"],
+      ["Latency", "Failures", "Byzantine behavior", "Strategic behavior"],
       ["Protocol under stress"],
       ["Which properties still hold?"],
     ],
@@ -3553,25 +3553,24 @@ test("Foundations exposition is canonical data: models, a distinction, and tensi
   const paragraphs = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : []));
   for (const text of [
     "At this level a protocol is not primarily code. It is a system of rules, participants, state, and assumptions whose interactions produce behavior.",
-    "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, or act strategically against the protocol.",
+    "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, act strategically, or act against the protocol.",
     "A component can behave exactly as specified while the system around it produces an unintended outcome. Protocol properties emerge from interactions between mechanisms, participants, and assumptions, not from isolated components.",
-    "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable.",
+    "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable under their own assumptions.",
     "Decentralization likewise does not remove coordination: it changes how coordination is achieved and which assumptions it requires.",
     "Protocol Engineering is therefore concerned with more than implementing rules correctly. It examines how rules, state, participants, incentives, authority, dependencies, and failure interact, and which properties continue to hold when the environment stops being ideal.",
   ]) assert.ok(paragraphs.includes(text), text);
 
-  // Each section's vocabulary is its L1 topic's L2 concepts; the last strip names the L1 topics.
-  const title = (placementId: string) => resolver.getConcept(resolver.getPlacement(placementId)!.conceptId)!.title.toLowerCase();
-  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
-  const l2 = (id: string) => resolver.getChildren(id).map((placement) => title(placement.id));
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
   const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
-  assert.deepEqual(lower(strips[0]), l2("distributed-systems"));
-  assert.deepEqual(lower(strips[1]), l2("state-machines"));
-  assert.deepEqual(lower(strips[2]), l2("trust-models"));
-  assert.deepEqual(lower(strips[3]), l2("coordination"));
-  assert.deepEqual(lower(strips[4]), l2("adversarial-environments"));
-  assert.deepEqual(lower(strips[5]), l2("protocol-properties"));
-  assert.deepEqual(strips.at(-1), resolver.getChildren("foundations").map((placement) => resolver.getConcept(placement.conceptId)?.title));
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("foundations").map((placement) => placement.id);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
 
   // Diagram labels stay exposition, not ontology.
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
