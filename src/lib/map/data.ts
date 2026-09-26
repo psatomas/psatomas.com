@@ -8284,6 +8284,294 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "storage-availability-content",
+      conceptId: "storage-availability",
+      definition:
+        "Storage and availability are different protocol properties. Storing data means some system retains it; availability means the participants who need it can retrieve it when they need it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocols produce data and depend on it: state, transactions, history, and data referenced from elsewhere. Not all of it needs the same guarantees. Some must be kept by every validating participant indefinitely; some only needs to be retrievable for a period; some only needs to be checkable when someone produces it.",
+        },
+        {
+          kind: "flow",
+          label: "What protocol data passes through before it is usable",
+          stages: [["Protocol Data"], ["Storage Strategy"], ["Retention"], ["Retrieval"], ["Verification"], ["Usable Data"]],
+        },
+        {
+          kind: "paragraph",
+          text: "A storage architecture has to answer several independent questions: where the data is stored, for how long, by whom, whether it can be retrieved, whether storage or retrieval can be verified, and what happens when those storing it fail. A commitment can show that particular data is the data being referred to. It does not make that data available.",
+        },
+        { kind: "distinction", left: "Stored", right: "Available" },
+        { kind: "heading", text: "Protocol state is the most expensive place to keep data" },
+        {
+          kind: "paragraph",
+          text: "On-chain storage is data held in protocol state itself. Persistent storage survives across transactions, and state storage is kept by every participant that maintains full state, so writing to it is part of the protocol's execution and state model rather than a separate service. That makes it unusually strong: its availability is as good as the protocol's own. It also makes it costly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Storage layout and storage slots determine how that data is organized within state, building on the representation described under State & Data. Storage costs price the burden each write places on everyone who must keep it, and storage optimization, such as packing values or removing what is no longer needed, reduces that burden. On-chain storage is not free, and persistent is not permanent in every sense: data lasts until the protocol's rules or the owning contract remove it.",
+        },
+        {
+          kind: "terms",
+          terms: ["Persistent storage", "Storage layout", "Storage slots", "Storage costs", "State storage", "Storage optimization"],
+        },
+        { kind: "heading", text: "Distributed storage survives failures, within limits" },
+        {
+          kind: "paragraph",
+          text: "Data that does not need to live in protocol state can be kept across independent storage nodes. Data distribution decides which nodes hold which data; data replication keeps copies on several of them, and redundancy more generally keeps more than the minimum needed, so that the data survives some node failures. Storage networks coordinate this across many operators.",
+        },
+        {
+          kind: "flow",
+          label: "How distributing and replicating data lets it survive some node failures",
+          stages: [
+            ["Data"],
+            ["Data Distribution"],
+            ["Storage Node A", "Storage Node B", "Storage Node C"],
+            ["Replication or Redundancy"],
+            ["Survives some node failures"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Fault tolerance here is the Foundations property applied to storage: it holds only up to the number and kind of failures the design assumes. Replication is not an availability guarantee either. It improves resilience, but the data is available only if enough replicas are reachable, and willing and able to serve it, when asked.",
+        },
+        {
+          kind: "terms",
+          terms: ["Storage nodes", "Data replication", "Data distribution", "Redundancy", "Fault tolerance", "Storage networks"],
+        },
+        { kind: "heading", text: "Knowing what data is does not say where it is" },
+        {
+          kind: "paragraph",
+          text: "A location-based reference says where to find data: a server, a path, a storage slot. Content addressing refers to data by what it is instead. Content hashing derives a content identifier from the data itself, so the identifier is an immutable reference: it can only ever refer to that content, and whatever is retrieved can be checked against it.",
+        },
+        {
+          kind: "flow",
+          label: "How content is found by what it is and checked when it arrives",
+          stages: [
+            ["Content"],
+            ["Content Hashing"],
+            ["Content Identifier"],
+            ["Address Resolution"],
+            ["Content Retrieval"],
+            ["Hash Verification"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Address resolution turns an identifier into someone who can supply the content, and content retrieval fetches it. The hash properties described under Cryptography & Proofs make the check meaningful, but the check can only run once the data arrives.",
+        },
+        { kind: "distinction", left: "Identity of data", right: "Availability of data" },
+        {
+          kind: "paragraph",
+          text: "Knowing the correct identifier does not mean anyone currently stores or serves the content.",
+        },
+        {
+          kind: "terms",
+          terms: ["Content identifiers", "Content hashing", "Immutable references", "Address resolution", "Content retrieval"],
+        },
+        { kind: "heading", text: "Current operation and history need different storage" },
+        {
+          kind: "paragraph",
+          text: "Operating a protocol requires current state and recent data; preserving it requires history. These are different requirements, and most participants do not need to meet both. Data pruning lets a node discard historical data it no longer needs to operate, while archive nodes, long-term storage, and state archiving keep that data elsewhere, under data retention rules that decide what is kept and for how long.",
+        },
+        {
+          kind: "flow",
+          label: "How history is pruned by operating nodes and retained by archives",
+          stages: [
+            ["Historical Data"],
+            [
+              ["Operating Node", "Data Pruning", "Current state only"],
+              ["Archive Node", "Data Retention", "Full history"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Pruned data is not necessarily lost to the system, as long as someone retains it. If nobody does, pruning becomes loss. Historical data is what the historical queries and reconstruction of State & Data depend on, and archive nodes are the infrastructure role described under Networks & Infrastructure.",
+        },
+        {
+          kind: "terms",
+          terms: ["Historical data", "Long-term storage", "Archive nodes", "Data retention", "Data pruning", "State archiving"],
+        },
+        { kind: "heading", text: "Committed is not available" },
+        {
+          kind: "paragraph",
+          text: "A protocol can know about data, and commit to it, without every participant possessing it. A block may carry only a commitment to data that others must fetch; an off-chain system may post a commitment and keep the data. Data availability asks whether the participants who need that data can actually obtain it.",
+        },
+        {
+          kind: "flow",
+          label: "What happens to committed data when it is published, and when it is withheld",
+          stages: [
+            ["Data Committed"],
+            [
+              ["Data Publication", "Data Retrieval", "Availability Verification", "Available to participants"],
+              ["Data Withholding", "Commitment without data", "Cannot reconstruct or verify"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Data publication makes data obtainable, and data retrieval obtains it. Availability verification is how participants check that retrieval is possible instead of assuming it. Data withholding is the failure these mechanisms exist to catch: data is committed to but not released, so participants cannot reconstruct the state, re-execute the computation, or check a claim that depends on it.",
+        },
+        { kind: "distinction", left: "Committed", right: "Available" },
+        {
+          kind: "paragraph",
+          text: "Availability guarantees differ in what they rely on. Availability committees are one approach: a designated set of participants attests that it holds the data and will serve it, which makes availability depend on that committee's honesty and liveness. Other approaches publish the data to the protocol itself, or rely on the sampling described below.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Availability guarantees",
+            "Data publication",
+            "Data retrieval",
+            "Availability verification",
+            "Data withholding",
+            "Availability committees",
+          ],
+        },
+        { kind: "heading", text: "Encoding lets availability be checked without downloading everything" },
+        {
+          kind: "paragraph",
+          text: "Availability does not require every participant to receive the whole original data. Erasure coding adds redundant encoding: the data is expanded into data shards such that any sufficient subset of them can reconstruct the original.",
+        },
+        {
+          kind: "flow",
+          label: "How erasure coding lets a sufficient subset of shards reconstruct the data",
+          stages: [
+            ["Original Data"],
+            ["Redundant Encoding"],
+            ["Shard 1", "Shard 2", "Shard 3", "Shard 4"],
+            ["Sufficient Subset"],
+            ["Reconstruction"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Coding parameters set how much redundancy is added and how many shards reconstruction needs. Fault recovery is what that redundancy buys: the data survives the loss of some shards, up to the limit the parameters set.",
+        },
+        { kind: "distinction", left: "Shard", right: "Replica" },
+        {
+          kind: "paragraph",
+          text: "A replica is a full copy. A shard may carry only part, or an encoding, of the data, and is useful only together with enough others.",
+        },
+        {
+          kind: "terms",
+          terms: ["Data shards", "Redundant encoding", "Reconstruction", "Coding parameters", "Fault recovery"],
+        },
+        {
+          kind: "paragraph",
+          text: "Encoding also changes what it takes to check availability. When data is encoded so that preventing reconstruction requires withholding a large fraction of the shards, a participant can sample: request a few randomly selected pieces and verify each against a commitment.",
+        },
+        {
+          kind: "flow",
+          label: "How random samples build confidence that encoded data is available",
+          stages: [
+            ["Encoded Dataset"],
+            ["Random Samples"],
+            ["Sample Retrieval"],
+            ["Sample Verification"],
+            ["Availability Confidence"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Each successful sample raises availability confidence, and enough of them make it very unlikely that the data is being withheld, under the assumptions of the scheme. Light-client sampling lets participants that cannot download everything gain that confidence, and collectively contribute to it. The result is probabilistic, not certain, and rests on sample verification in the sense of Cryptography & Proofs.",
+        },
+        { kind: "distinction", left: "Availability confidence", right: "Every byte retrieved" },
+        {
+          kind: "terms",
+          terms: ["Sampling", "Random sampling", "Sample verification", "Availability confidence", "Light-client sampling"],
+        },
+        { kind: "heading", text: "Published data need not become permanent state" },
+        {
+          kind: "paragraph",
+          text: "Some data only needs to be available for long enough to be checked, not kept forever. Blob-like designs carry such data in protocol-visible objects: a blob transaction carries blob data, the chain keeps a blob commitment, and the data itself is propagated and retained for a protocol-defined window, after which it may be discarded.",
+        },
+        {
+          kind: "flow",
+          label: "How a blob's commitment stays with the chain while its data is kept only for a window",
+          stages: [
+            ["Blob Transaction"],
+            [
+              ["Blob Commitment", "Kept with the chain"],
+              ["Blob Data", "Blob Propagation", "Retained for a window", "Prunable"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Blob retention and blob pricing are set separately from execution state, so data can be published and made temporarily available without becoming part of what every participant must keep indefinitely. The commitment outlives the data: after the window, the chain can still say what was published, but it may no longer be able to provide it.",
+        },
+        { kind: "distinction", left: "Published data", right: "Permanent state" },
+        {
+          kind: "terms",
+          terms: ["Blob data", "Blob transactions", "Blob commitments", "Blob propagation", "Blob retention", "Blob pricing"],
+        },
+        { kind: "heading", text: "Evidence about storage is not availability" },
+        {
+          kind: "paragraph",
+          text: "Trusting a storage provider's claim is different from requiring evidence for it. Storage proofs answer a challenge: the prover, holding the data, generates a proof in response, and a verifier checks it and accepts or rejects the claim. Proof generation and proof verification work as described under Cryptography & Proofs; what differs is the question being asked.",
+        },
+        {
+          kind: "flow",
+          label: "The different questions storage proofs answer",
+          stages: [
+            ["Storage Claim"],
+            [
+              ["Proof of Storage", "Is the data held?"],
+              ["Proof of Replication", "Are distinct copies held?"],
+              ["Proof of Space", "Is capacity committed?"],
+              ["Proof of Retrievability", "Can the whole be recovered?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A proof of storage shows that the prover holds the data at the time of the challenge. A proof of replication shows that it holds distinct, separately stored copies, not one copy counted several times. A proof of space shows that it has dedicated a certain amount of storage capacity, which need not hold useful data. A proof of retrievability shows that the complete data could be recovered from what is stored.",
+        },
+        { kind: "distinction", left: "Proof of storage", right: "Data availability" },
+        {
+          kind: "paragraph",
+          text: "Evidence that a storage condition held when challenged does not establish that every participant can retrieve the data at the moment they need it.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Proof of storage",
+            "Proof of replication",
+            "Proof of space",
+            "Proof of retrievability",
+            "Proof generation",
+            "Proof verification",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol data has a lifecycle: it is stored, distributed, retained, retrieved, verified, and, when necessary, reconstructed. An architecture chooses a different mechanism for each step depending on the guarantees it needs.",
+        },
+        { kind: "distinction", left: "Stored", right: "Retained", further: ["Available", "Intact"] },
+        {
+          kind: "paragraph",
+          text: "Storage architecture determines more than where bytes live. It determines which participants must retain data, which failures can be tolerated, how historical information survives, whether new participants can reconstruct what they need, and which claims about stored data can be independently verified.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "On-Chain Storage",
+            "Distributed Storage",
+            "Content Addressing",
+            "Archival Storage",
+            "Data Availability",
+            "Erasure Coding",
+            "Blobs",
+            "Data Availability Sampling",
+            "Storage Proofs",
+          ],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",

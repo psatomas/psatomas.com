@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6883,6 +6883,115 @@ test("Cryptography & Proofs' L0 exposition states which property each mechanism 
 
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Cryptographic Mechanism", "Fixed-size Digest", "Required Threshold", "Higher-level Proof", "Execution Evidence"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Storage & Availability's L0 exposition separates storing data from making it available", () => {
+  const content = resolver.getContentForConcept("storage-availability")!;
+  assert.equal(content.id, "storage-availability-content");
+  assert.ok(content.definition.startsWith("Storage and availability are different protocol properties."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "distinction",
+    "heading", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Protocol state is the most expensive place to keep data",
+    "Distributed storage survives failures, within limits",
+    "Knowing what data is does not say where it is",
+    "Current operation and history need different storage",
+    "Committed is not available",
+    "Encoding lets availability be checked without downloading everything",
+    "Published data need not become permanent state",
+    "Evidence about storage is not availability",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Protocol Data"], ["Storage Strategy"], ["Retention"], ["Retrieval"], ["Verification"], ["Usable Data"]],
+    [["Data"], ["Data Distribution"], ["Storage Node A", "Storage Node B", "Storage Node C"], ["Replication or Redundancy"], ["Survives some node failures"]],
+    [["Content"], ["Content Hashing"], ["Content Identifier"], ["Address Resolution"], ["Content Retrieval"], ["Hash Verification"]],
+    [["Historical Data"], [["Operating Node", "Data Pruning", "Current state only"], ["Archive Node", "Data Retention", "Full history"]]],
+    [
+      ["Data Committed"],
+      [
+        ["Data Publication", "Data Retrieval", "Availability Verification", "Available to participants"],
+        ["Data Withholding", "Commitment without data", "Cannot reconstruct or verify"],
+      ],
+    ],
+    [["Original Data"], ["Redundant Encoding"], ["Shard 1", "Shard 2", "Shard 3", "Shard 4"], ["Sufficient Subset"], ["Reconstruction"]],
+    [["Encoded Dataset"], ["Random Samples"], ["Sample Retrieval"], ["Sample Verification"], ["Availability Confidence"]],
+    [["Blob Transaction"], [["Blob Commitment", "Kept with the chain"], ["Blob Data", "Blob Propagation", "Retained for a window", "Prunable"]]],
+    [
+      ["Storage Claim"],
+      [
+        ["Proof of Storage", "Is the data held?"],
+        ["Proof of Replication", "Are distinct copies held?"],
+        ["Proof of Space", "Is capacity committed?"],
+        ["Proof of Retrievability", "Can the whole be recovered?"],
+      ],
+    ],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Stored", "Available"],
+      ["Identity of data", "Availability of data"],
+      ["Committed", "Available"],
+      ["Shard", "Replica"],
+      ["Availability confidence", "Every byte retrieved"],
+      ["Published data", "Permanent state"],
+      ["Proof of storage", "Data availability"],
+      ["Stored", "Retained", "Available", "Intact"],
+    ],
+  );
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of ["On-chain storage is not free", "Replication is not an availability guarantee", "If nobody does, pruning becomes loss."]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed. The page takes sampling
+  // before blobs, since sampling builds on erasure coding; the last strip keeps the L1 order.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("storage-availability").map((placement) => placement.id);
+  const order = [
+    "on-chain-storage", "distributed-storage", "content-addressing-in-storage-availability", "archival-storage",
+    "data-availability", "erasure-coding", "data-availability-sampling", "blobs", "storage-proofs",
+  ];
+  assert.deepEqual([...order].sort(), [...l1].sort());
+  assert.equal(strips.length, l1.length + 1);
+  order.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Concepts reused from earlier domains keep their main placements.
+  for (const [conceptId, preferred] of [
+    ["fault-tolerance", "fault-tolerance"],
+    ["archive-nodes", "archive-nodes"],
+    ["proof-generation", "proof-generation"],
+    ["proof-verification", "proof-verification"],
+    ["content-addressing", "content-addressing-in-storage-availability"],
+  ]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Storage Strategy", "Usable Data", "Sufficient Subset", "Commitment without data", "Storage Claim", "Hash Verification"]) {
     assert.ok(!titles.has(text), text);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
