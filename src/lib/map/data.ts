@@ -7250,7 +7250,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Retaining history and reconstructing it are different strategies. Archival state keeps past states directly queryable, at the cost of retaining all of them. A snapshot captures the full state at one point. A checkpoint marks a point in history that participants treat as a reference for later work; what exactly it guarantees varies between protocols. Between such points, earlier states can be reconstructed by replaying recorded inputs through the same transition rules, which works only because those rules are deterministic.",
+          text: "Retaining history and reconstructing it are different strategies. Archival state keeps past states directly queryable, at the cost of retaining all of them. A snapshot captures the full state at one point. A checkpoint marks a point in history that participants treat as a reference for later work; what exactly it guarantees varies between protocols. Between such points, earlier states can be reconstructed by replaying recorded inputs through the same transition rules. Replay-based reconstruction depends on deterministic transition rules: the same ordered inputs must reproduce the same resulting state.",
         },
         {
           kind: "terms",
@@ -7394,7 +7394,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "distinction", left: "Derived state", right: "Canonical state" },
         {
           kind: "paragraph",
-          text: "An index is computed from canonical data and adds no authority of its own; where the two disagree, the protocol is right. That matters when canonical history changes. A reorganization replaces blocks an indexer has already processed, so derived state built from them must be rolled back and rebuilt. A query model that ignores this will answer with data the protocol no longer holds.",
+          text: "An index is computed from canonical data and adds no authority of its own. Where the two disagree, canonical protocol state remains authoritative. That matters when canonical history changes. A reorganization replaces blocks an indexer has already processed, so derived state built from them must be rolled back and rebuilt. A query model that ignores this will answer with data the protocol no longer holds.",
         },
         {
           kind: "terms",
