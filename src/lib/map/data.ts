@@ -8629,7 +8629,7 @@ export const mapKnowledge: MapKnowledgeModel = {
             ["Account"],
             [
               ["Externally Owned Account", "Controlled by a key"],
-              ["Contract Account", "Controlled by its code"],
+              ["Contract Account", "Control defined by logic"],
             ],
             ["Validation"],
             ["Authorized Execution"],
@@ -8694,7 +8694,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Because validation is code, authority can take more than one form. The account's normal validation authority can sit alongside delegated authority: session keys can be granted constrained authority, such as limits on time, actions, value, or target, depending on the account's validation policy, and it is that policy, not possession of the session key, that defines the scope. Recovery logic is different in kind: rather than authorizing ordinary operations, it defines a procedure that can modify or restore the account's control configuration. Modular accounts assemble these behaviors from components. Smart accounts do not inherently eliminate cryptographic credentials or other control mechanisms; they make validation and execution policy programmable, so that possessing a key no longer has to mean unlimited authority.",
+          text: "Because validation is code, authority can take more than one form. The account's normal validation authority can sit alongside delegated authority: session keys can be granted constrained authority, such as limits on time, actions, value, or target, depending on the account's validation policy, and it is that policy, not possession of the session key, that defines the scope. Recovery logic serves a distinct control-management role: it can define a procedure for modifying or restoring the account's control configuration rather than relying only on the account's ordinary authorization path. Modular accounts assemble these behaviors from components. Smart accounts do not inherently eliminate cryptographic credentials or other control mechanisms; they make validation and execution policy programmable, so that possessing a key no longer has to mean unlimited authority.",
         },
         {
           kind: "terms",
