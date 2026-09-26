@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6992,6 +6992,140 @@ test("Storage & Availability's L0 exposition separates storing data from making 
 
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Storage Strategy", "Usable Data", "Sufficient Subset", "Commitment without data", "Storage Claim", "Hash Verification"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Identity, Accounts & Authority's L0 exposition separates identity, authentication and authority", () => {
+  const content = resolver.getContentForConcept("identity-accounts-authority")!;
+  assert.equal(content.id, "identity-accounts-authority-content");
+  assert.ok(content.definition.endsWith("Identity, authentication, and authority answer these different questions."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph",
+    "heading", "paragraph", "distinction", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "distinction", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Identity is built from evidence, not given",
+    "Accounts connect control to protocol state",
+    "Wallets manage control; they are not the account",
+    "Smart accounts make authority programmable",
+    "Account abstraction changes how operations enter",
+    "Authentication shows control, not permission",
+    "Authority decides what control permits",
+    "Machines and agents need the same answers",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Actor"], ["Identifier / Credential / Account"], ["Authentication"], ["Authority"], ["Permitted Action"]],
+    [
+      ["Entity"],
+      [
+        ["Identifier", "Which entity?"],
+        ["Credential", "What is claimed about it?"],
+        ["Attestation", "Who vouches for it?"],
+        ["Reputation", "How has it behaved?"],
+      ],
+    ],
+    [["Account"], [["Externally Owned Account", "Controlled by a key"], ["Contract Account", "Controlled by its code"]], ["Validation"], ["Authorized Execution"]],
+    [["Intent"], ["Transaction Construction"], ["Signing"], ["Transaction Submission"], ["Protocol"]],
+    [["Operation"], ["Validation Logic"], ["Primary key", "Session key, within its scope", "Recovery Logic"], ["Execution Logic"], ["State Change"]],
+    [
+      ["User Intent"],
+      ["User Operation"],
+      ["Alternative Mempool"],
+      ["Bundler"],
+      ["Entry Point"],
+      ["Account Validation", ["Paymaster", "Fee payment policy"]],
+      ["Execution"],
+    ],
+    [["Claimed Actor"], ["Authentication Factor"], ["Verification"], ["Authentication Policy"], ["Accepted", "Rejected"]],
+    [["Authority"], ["Ownership", "Roles", "Capabilities", "Delegation"], ["Permission Model"], ["Authority Boundary"], ["Permitted Actions"]],
+    [
+      ["Machine or Agent"],
+      [
+        ["Machine Credential", "Machine Authentication", "Agent Authorization", "Permitted Action"],
+        ["Observed Activity", "Agent Reputation", "Input to a policy"],
+      ],
+    ],
+    [["Participant"], ["Representation"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Address", "Identity"],
+      ["Account", "Wallet"],
+      ["Account abstraction", "Free execution"],
+      ["Authenticated", "Authorized"],
+      ["Authority", "Ownership"],
+      ["Reputation", "Authorization"],
+      ["Identity", "Authentication", "Authority", "Execution"],
+    ],
+  );
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of ["Nor is it the key", "Delegation, likewise, is not a transfer of ownership", "Programmable accounts do not eliminate keys."]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("identity-accounts-authority").map((placement) => placement.id);
+  assert.equal(l1.length, 8);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Concepts placed here and elsewhere keep their main placements, including those that
+  // live primarily in other domains; Agent Identity's own record is untouched.
+  for (const [conceptId, preferred] of [
+    ["credentials", "credentials"],
+    ["attestations", "attestations-in-identity"],
+    ["key-management", "key-management"],
+    ["signing", "signing"],
+    ["transaction-construction", "transaction-construction"],
+    ["transaction-submission", "transaction-submission"],
+    ["wallet-recovery", "wallet-recovery"],
+    ["wallet-security", "wallet-security"],
+    ["smart-accounts", "smart-accounts"],
+    ["account-abstraction", "account-abstraction"],
+    ["gas-abstraction", "gas-abstraction"],
+    ["authentication", "authentication"],
+    ["roles", "roles"],
+    ["capabilities", "capabilities"],
+    ["delegation", "delegation-in-autonomous-coordination"],
+    ["permission-models", "permission-models"],
+    ["authority-boundaries", "authority-boundaries"],
+    ["agent-identity", "agent-identity"],
+    ["agent-credentials", "agent-credentials"],
+    ["agent-reputation", "agent-reputation-in-machine-economy"],
+    ["machine-authentication", "machine-authentication"],
+  ]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  assert.deepEqual(resolver.getContentForConcept("agent-identity"), {
+    id: "agent-identity-content",
+    conceptId: "agent-identity",
+    definition: "The means by which an AI agent is distinguished and authenticated for protocol interaction.",
+  });
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Identifier / Credential / Account", "Permitted Action", "Claimed Actor", "Fee payment policy", "Observed Activity"]) {
     assert.ok(!titles.has(text), text);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);

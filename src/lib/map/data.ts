@@ -8572,6 +8572,301 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "identity-accounts-authority-content",
+      conceptId: "identity-accounts-authority",
+      definition:
+        "A protocol must distinguish who or what is represented, how control is demonstrated, what that actor may do, and how that authority changes. Identity, authentication, and authority answer these different questions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A protocol cannot know a person, an organization, a machine, or an agent directly. It sees protocol-recognizable evidence and state: an identifier, a credential, an account, a signature. Whatever it concludes, it concludes about those representations.",
+        },
+        {
+          kind: "flow",
+          label: "How an actor comes to perform an action in a protocol",
+          stages: [["Actor"], ["Identifier / Credential / Account"], ["Authentication"], ["Authority"], ["Permitted Action"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Each step answers a different question, and real systems do not always make every step explicit. Building on the trust boundaries of Foundations and the signatures of Cryptography & Proofs, this domain is about where those answers come from and how they connect to protocol state.",
+        },
+        { kind: "heading", text: "Identity is built from evidence, not given" },
+        {
+          kind: "paragraph",
+          text: "An address identifies a protocol-level endpoint or account reference. It does not, by itself, establish the human, organization, or machine behind it: one entity can control many addresses, and one address can be controlled by several parties.",
+        },
+        { kind: "distinction", left: "Address", right: "Identity" },
+        {
+          kind: "flow",
+          label: "The different questions identity evidence answers about an entity",
+          stages: [
+            ["Entity"],
+            [
+              ["Identifier", "Which entity?"],
+              ["Credential", "What is claimed about it?"],
+              ["Attestation", "Who vouches for it?"],
+              ["Reputation", "How has it behaved?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "These play different roles. An identifier, whether an address or a decentralized identifier, says which entity is being discussed. A credential carries claims about that entity. An attestation is a statement another party makes about it. Reputation accumulates signals from past behavior that others use to reason about it. None is trustworthy by itself: what a decentralized identifier, credential, or attestation means depends on who issued it, how it can be verified, and which trust assumptions the verifier accepts.",
+        },
+        {
+          kind: "terms",
+          terms: ["Addresses", "Decentralized identifiers", "Credentials", "Attestations", "Reputation"],
+        },
+        { kind: "heading", text: "Accounts connect control to protocol state" },
+        {
+          kind: "paragraph",
+          text: "An account is the protocol object that holds state and through which actions are authorized and executed. Account state records what it holds; account permissions record what may act for it.",
+        },
+        {
+          kind: "flow",
+          label: "Two ways an account can be controlled",
+          stages: [
+            ["Account"],
+            [
+              ["Externally Owned Account", "Controlled by a key"],
+              ["Contract Account", "Controlled by its code"],
+            ],
+            ["Validation"],
+            ["Authorized Execution"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The main architectural difference is where control lives. An externally owned account is controlled by whoever holds its key: a valid signature is its authorization. A contract account is controlled by its code: its own logic decides what counts as authorized. Account nonces, in systems that use them, are account state that orders an account's operations and prevents certain replays of an authorized operation. Account recovery is the question of how control is restored when the usual means are lost, and it is possible only as far as the account's control model allows.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Externally owned accounts",
+            "Contract accounts",
+            "Account state",
+            "Account nonces",
+            "Account permissions",
+            "Account recovery",
+          ],
+        },
+        { kind: "heading", text: "Wallets manage control; they are not the account" },
+        {
+          kind: "paragraph",
+          text: "A wallet is the software, hardware, or service a participant uses to manage control and interact with accounts. It is not the account, which exists in protocol state whether or not any wallet is running. Nor is it the key: a wallet may manage many keys and many accounts, and may interact with accounts whose authority does not reduce to one private key.",
+        },
+        { kind: "distinction", left: "Account", right: "Wallet" },
+        {
+          kind: "flow",
+          label: "How a wallet turns intent into a submitted transaction",
+          stages: [["Intent"], ["Transaction Construction"], ["Signing"], ["Transaction Submission"], ["Protocol"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Key management covers how keys are generated, stored, and used. Transaction construction turns an intent into a well-formed transaction, signing authorizes it with the mechanisms of Cryptography & Proofs, and transaction submission sends it into the admission path described under Consensus & Ordering. Wallet recovery restores a wallet's access to keys or accounts, which is distinct from account recovery in protocol state, and wallet security protects this whole path in operation.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Key management",
+            "Signing",
+            "Transaction construction",
+            "Transaction submission",
+            "Wallet recovery",
+            "Wallet security",
+          ],
+        },
+        { kind: "heading", text: "Smart accounts make authority programmable" },
+        {
+          kind: "paragraph",
+          text: "A smart account replaces the fixed rule of a key-controlled account with programmable authority. Validation logic decides whether an operation is authorized; execution logic decides what it does once it is.",
+        },
+        {
+          kind: "flow",
+          label: "How a smart account's validation logic accepts different forms of authority",
+          stages: [
+            ["Operation"],
+            ["Validation Logic"],
+            ["Primary key", "Session key, within its scope", "Recovery Logic"],
+            ["Execution Logic"],
+            ["State Change"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Because validation is code, authority can take more than one form. Recovery logic can restore control through a defined procedure. Session keys delegate limited authority, for a scope, a duration, or a set of actions, without transferring full control. Modular accounts assemble these behaviors from components. Programmable accounts do not eliminate keys. They let authorization and execution policies be expressed more flexibly, so that possessing a key no longer has to mean unlimited authority.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Programmable accounts",
+            "Validation logic",
+            "Execution logic",
+            "Recovery logic",
+            "Session keys",
+            "Modular accounts",
+          ],
+        },
+        { kind: "heading", text: "Account abstraction changes how operations enter" },
+        {
+          kind: "paragraph",
+          text: "Account abstraction changes the path an operation takes into execution, so that accounts, and not only rules fixed by the protocol, can define validation. The concepts here come mainly from current EVM designs, but the pattern is more general.",
+        },
+        {
+          kind: "flow",
+          label: "How an abstracted operation reaches execution",
+          stages: [
+            ["User Intent"],
+            ["User Operation"],
+            ["Alternative Mempool"],
+            ["Bundler"],
+            ["Entry Point"],
+            ["Account Validation", ["Paymaster", "Fee payment policy"]],
+            ["Execution"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A user operation expresses what an account wants done; in some designs it is not an ordinary protocol transaction. It travels through an alternative mempool, a separate admission path in the sense of Consensus & Ordering. A bundler aggregates operations and submits them, and an entry point coordinates validation and execution for each account. A paymaster can take on the fees under its own policy, and gas abstraction changes how users pay: in another asset, through someone else, or not directly at all.",
+        },
+        { kind: "distinction", left: "Account abstraction", right: "Free execution" },
+        {
+          kind: "paragraph",
+          text: "Execution still consumes resources, and someone still pays for them. Abstraction changes who bears the cost and how it is presented.",
+        },
+        {
+          kind: "terms",
+          terms: ["User operations", "Bundlers", "Entry points", "Paymasters", "Alternative mempools", "Gas abstraction"],
+        },
+        { kind: "heading", text: "Authentication shows control, not permission" },
+        {
+          kind: "paragraph",
+          text: "Authentication produces evidence that an actor controls, or satisfies, some mechanism. It rarely establishes who a person is; more often it shows control of a key, a credential, a session, or a factor.",
+        },
+        {
+          kind: "flow",
+          label: "How an authentication policy accepts or rejects a claimed actor",
+          stages: [["Claimed Actor"], ["Authentication Factor"], ["Verification"], ["Authentication Policy"], ["Accepted", "Rejected"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Mechanisms differ. Signature authentication checks a signature against a key. Challenge-response asks the actor to answer a fresh challenge, so that an old response cannot be replayed. Session authentication lets one successful authentication cover later requests for a period. Credential authentication checks a credential issued by someone else. Authentication factors are the kinds of evidence involved, and authentication policies decide which combinations are enough.",
+        },
+        { kind: "distinction", left: "Authenticated", right: "Authorized" },
+        {
+          kind: "paragraph",
+          text: "Authentication answers who, or what, is acting. It does not say what that actor may do. A system that treats every authenticated request as permitted has no authority model at all.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Authentication factors",
+            "Signature authentication",
+            "Challenge-response",
+            "Session authentication",
+            "Credential authentication",
+            "Authentication policies",
+          ],
+        },
+        { kind: "heading", text: "Authority decides what control permits" },
+        {
+          kind: "paragraph",
+          text: "Authority is the protocol's answer to what an authenticated actor may do. It is also where the trust boundaries of Foundations become concrete: each authority boundary marks where one actor's power stops.",
+        },
+        {
+          kind: "flow",
+          label: "How forms of authority combine into the actions an actor may perform",
+          stages: [
+            ["Authority"],
+            ["Ownership", "Roles", "Capabilities", "Delegation"],
+            ["Permission Model"],
+            ["Authority Boundary"],
+            ["Permitted Actions"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols express authority in different ways, and none is universally better. Ownership gives broad control to an owner. Roles group permissions by function. Capabilities grant specific authority directly, often as something that can be held and passed on. Delegation lets one authority grant constrained authority to another actor. A permission model defines how these grants interact, and authority boundaries define where each one ends.",
+        },
+        { kind: "distinction", left: "Authority", right: "Ownership" },
+        {
+          kind: "paragraph",
+          text: "Ownership is one model of authority, not authority itself. Delegation, likewise, is not a transfer of ownership: delegated authority can be scoped, temporary, and revocable, while the delegator keeps its own.",
+        },
+        {
+          kind: "terms",
+          terms: ["Ownership", "Roles", "Capabilities", "Delegation", "Permission models", "Authority boundaries"],
+        },
+        { kind: "heading", text: "Machines and agents need the same answers" },
+        {
+          kind: "paragraph",
+          text: "Protocol participants increasingly include software agents, services, devices, and machines. They need the same relationships between identity, control, and authority, often without a person present at the moment of action.",
+        },
+        {
+          kind: "flow",
+          label: "How a machine or agent is authorized, and how its reputation forms",
+          stages: [
+            ["Machine or Agent"],
+            [
+              ["Machine Credential", "Machine Authentication", "Agent Authorization", "Permitted Action"],
+              ["Observed Activity", "Agent Reputation", "Input to a policy"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Agent identity distinguishes a particular agent. Agent credentials and machine credentials carry claims about it, machine authentication shows that a request comes from whatever holds them, and agent authorization determines what it may do. Agent reputation accumulates from observed activity.",
+        },
+        { kind: "distinction", left: "Reputation", right: "Authorization" },
+        {
+          kind: "paragraph",
+          text: "Reputation may inform a policy that grants authority, but it is not authority itself. What agents do with the authority they hold belongs to later parts of the MAP.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Agent identity",
+            "Agent credentials",
+            "Agent reputation",
+            "Agent authorization",
+            "Machine credentials",
+            "Machine authentication",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Taken together, the domain describes a path from a participant to a change in protocol state, though real systems do not always contain every step explicitly.",
+        },
+        {
+          kind: "flow",
+          label: "From a participant to a change in protocol state",
+          stages: [["Participant"], ["Representation"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Identity architecture determines how participants are represented; account architecture, how control connects to protocol state and execution; authentication, which evidence is accepted as proof of control or qualification; and authority, which actions that control permits.",
+        },
+        { kind: "distinction", left: "Identity", right: "Authentication", further: ["Authority", "Execution"] },
+        {
+          kind: "paragraph",
+          text: "A protocol is therefore not secure merely because a signature verifies. It must also determine what that signer controls, which authority follows from that control, where that authority ends, and how it can be delegated, recovered, or revoked.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Identity",
+            "Accounts",
+            "Wallets",
+            "Smart Accounts",
+            "Account Abstraction",
+            "Authentication",
+            "Authority",
+            "Machine Identity",
+          ],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",
