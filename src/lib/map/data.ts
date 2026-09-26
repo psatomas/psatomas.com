@@ -8042,12 +8042,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "distinction", left: "Verification", right: "Truth" },
         {
           kind: "paragraph",
-          text: "Verification establishes a precise relationship: that a signature corresponds to a key, that a value matches a commitment, that a proof satisfies a verification relation. It does not establish that the underlying statement describes reality, that the protocol's rules are the right ones, or that the surrounding system is secure. Each mechanism below establishes some relationships and not others.",
+          text: "Verification establishes a precise relationship, under the mechanism's assumptions: that a signature corresponds to a key, that a value matches a commitment, that a proof satisfies a verification relation. It does not establish that the underlying statement describes reality, that an identity claim corresponds to anyone in the real world, that the protocol's rules are the right ones, that the assumptions themselves hold, or that the surrounding system behaves as intended. Each mechanism below establishes some relationships and not others.",
         },
         { kind: "heading", text: "Hashes turn data into cryptographic references" },
         {
           kind: "paragraph",
-          text: "A cryptographic hash function maps input of any length to a fixed-size digest. The same input always produces the same digest, and even a small change to the input produces a digest that appears unrelated.",
+          text: "A cryptographic hash function maps input of any length to a fixed-size digest. The same input always produces the same digest, and hash functions are designed so that small input changes generally produce substantially different-looking digests.",
         },
         {
           kind: "flow",
@@ -8100,12 +8100,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A signature scheme defines the exact rules, and its security rests on the assumption that producing a valid signature without the private key is infeasible. A valid signature therefore shows that whoever controls the key authorized this exact message. It does not show who that is, which belongs to identity and accounts, and it does not show that the message is true.",
+          text: "A signature scheme defines the exact rules, and its security rests on the assumption that producing a valid signature without the private key is infeasible. A valid signature therefore provides evidence that the message was signed using control of the corresponding private key, under the assumptions of the signature scheme. It does not show who controls that key, which belongs to identity and accounts, whether the message is true, or whether the signer was authorized by some higher-level policy to perform the action it describes.",
         },
         { kind: "distinction", left: "Valid signature", right: "True statement" },
         {
           kind: "paragraph",
-          text: "When many participants sign, two different needs arise. Signature aggregation combines many signatures into one compact value that can be verified at once, saving space and verification work. A multisignature expresses authorization by several signers under a rule, such as two of three, with each signer using their own key.",
+          text: "When many participants sign, two different needs arise. Signature aggregation combines many signatures into one compact value that can be verified at once, saving space and verification work. A multisignature requires signatures from several signers under a rule, such as two of three, with each signer using their own key.",
         },
         {
           kind: "terms",
@@ -8129,7 +8129,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Two properties make this useful. Hiding means the commitment should not reveal the committed value before it is opened. Binding means the committer should not be able to open it as a different value. Together they establish that a choice existed before it was disclosed, which is what sealed bids, commit-reveal randomness, and many proof systems depend on.",
+          text: "Two properties make this useful. Hiding means the commitment should not reveal the committed value before it is opened. Binding means the committer should not be able to open it as a different value. A scheme provides each property under its own assumptions, and not always with the same strength. Together they establish that a choice existed before it was disclosed, which is what sealed bids, commit-reveal randomness, and many proof systems depend on.",
         },
         {
           kind: "paragraph",
@@ -8156,12 +8156,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Secret sharing splits information so that authorized subsets can reconstruct or use it while smaller subsets cannot. Distributed key generation lets participants create shared key material without any trusted dealer ever holding the complete secret. Threshold signatures let a sufficient subset jointly produce a signature, and threshold decryption lets it jointly decrypt, without any one participant holding the complete key. Multi-party computation generalizes the idea: parties jointly compute a function while controlling what each learns about the others' inputs. Quorum cryptography names the wider pattern of operations that require a quorum of participants.",
+          text: "Secret sharing splits information so that authorized subsets can reconstruct or use it while smaller subsets cannot. Distributed key generation lets participants create shared key material without any trusted dealer ever holding the complete secret. Threshold signatures let a sufficient subset jointly produce a signature, and threshold decryption lets it jointly decrypt. In distributed setups, such as those using distributed key generation, this can be done without any one participant needing to hold the complete key. Multi-party computation generalizes the idea: parties jointly compute a function while controlling what each learns about the others' inputs. Quorum cryptography names the wider pattern of operations that require a quorum of participants.",
         },
         { kind: "distinction", left: "Multisignature", right: "Threshold signature" },
         {
           kind: "paragraph",
-          text: "A multisignature is checked as several signers approving under a rule, and the signers are typically identifiable. A threshold signature is a single signature under one shared public key, produced by whichever sufficient subset cooperated.",
+          text: "A multisignature scheme combines or requires signatures from multiple independent signers under a rule. A threshold signature construction instead produces one resulting signature through a threshold protocol, typically checked against a single shared public key, from whichever sufficient subset cooperated.",
         },
         {
           kind: "paragraph",
@@ -8190,7 +8190,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Two properties decide whether this means anything. Completeness: a true statement with a valid witness is accepted. Soundness: a false statement is rejected, except with a probability the system bounds under its stated assumptions. Zero-knowledge adds a third: the proof reveals nothing about the witness beyond the validity of the statement, in the precise sense the proof system defines.",
+          text: "Two properties decide whether this means anything. Completeness: a true statement with a valid witness is accepted. Soundness: an invalid statement should not be accepted, except within the failure bounds permitted by the proof system and its assumptions. Zero-knowledge adds a third: the proof reveals nothing about the witness beyond the validity of the statement, in the precise sense the proof system defines.",
         },
         { kind: "distinction", left: "Proving a statement", right: "Disclosing the witness" },
         {
@@ -8199,7 +8199,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Proof systems differ in how a proof is exchanged. In an interactive proof, prover and verifier exchange messages. A non-interactive proof is a single object anyone can check later, which is usually what a protocol needs; it may depend on a setup or on additional cryptographic assumptions.",
+          text: "Proof systems differ in how a proof is exchanged. In an interactive proof, prover and verifier exchange messages. A non-interactive proof is a single object anyone can check later. Non-interactive proofs are particularly useful in protocols because verification does not require an interactive exchange with the prover; they may depend on a setup or on additional cryptographic assumptions.",
         },
         {
           kind: "paragraph",
@@ -8240,7 +8240,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The architectural point is that the cost of checking a result can be separated from the cost of producing it. Generating a proof is often substantially more expensive than the computation itself. Succinct verification is the property of systems designed so that checking stays small; verification is not automatically cheaper than recomputation in every system.",
+          text: "The architectural point is that the cost of checking a result can be separated from the cost of producing it. Proof generation can add substantial computational overhead beyond performing the underlying computation. Succinct verification is the property of systems designed so that checking stays small; verification is not automatically cheaper than recomputation in every system. Verifiable computation moves work from repeated execution toward producing evidence others can verify, and whether that trade pays off depends on the proof system and the workload.",
         },
         { kind: "distinction", left: "Verified computation", right: "Correct specification" },
         {
