@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6790,6 +6790,99 @@ test("Networks & Infrastructure's L0 exposition moves from connectivity to acces
 
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Operational Actors", "Nodes' Protocol Views", "Temporary differences in local knowledge", "Running Infrastructure", "Local Views"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Cryptography & Proofs' L0 exposition states which property each mechanism establishes, and under which assumptions", () => {
+  const content = resolver.getContentForConcept("cryptography-proofs")!;
+  assert.equal(content.id, "cryptography-proofs-content");
+  assert.ok(content.definition.endsWith("make particular claims independently verifiable, under explicit assumptions."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "distinction", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms", "paragraph", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Hashes turn data into cryptographic references",
+    "Signatures bind actions to keys",
+    "Commitments separate choosing from revealing",
+    "Cryptographic authority can be distributed",
+    "Proofs let claims be verified",
+    "Computation can be verified without repeating it",
+    "Privacy is a set of properties, not a single switch",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Claim"], ["Cryptographic Mechanism"], ["Evidence"], ["Verification"], ["Accept", "Reject"]],
+    [["Input"], ["Cryptographic Hash Function"], ["Fixed-size Digest"], ["Compact reference", "Integrity check", "Linked structure"]],
+    [["Key Pair"], [["Private Key", "Signing", "Signature"], ["Public Key", "Signature Verification", "Valid or Invalid"]]],
+    [["Value + Randomness"], ["Commitment Scheme"], ["Published Commitment"], ["Value + Opening"], ["Verification against the Commitment"]],
+    [["Secret or Authority"], ["Participant A", "Participant B", "Participant C"], ["Required Threshold"], ["Cryptographic Operation"]],
+    [["Statement + Witness"], ["Prover"], ["Proof"], ["Verifier"], ["Accept", "Reject"]],
+    [["Smaller Claims"], ["Proof A", "Proof B", "Proof C"], ["Recursion or Composition"], ["Higher-level Proof"]],
+    [
+      ["Input"],
+      ["Computation"],
+      ["Output", ["Execution Evidence", "Proof Generation", "Computation Proof"]],
+      ["Proof Verification"],
+      ["Accept or Reject the Output"],
+    ],
+    [
+      ["Information"],
+      [
+        ["Content", "Confidentiality"],
+        ["Identity", "Anonymity"],
+        ["Relationships", "Unlinkability"],
+        ["Chosen facts", "Selective Disclosure"],
+        ["Computation", "Private Computation"],
+      ],
+    ],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right]] : [])),
+    [
+      ["Verification", "Truth"],
+      ["Valid signature", "True statement"],
+      ["Multisignature", "Threshold signature"],
+      ["Proving a statement", "Disclosing the witness"],
+      ["Verified computation", "Correct specification"],
+      ["Zero-knowledge", "Anonymity"],
+      ["Trust minimized", "Assumptions removed"],
+    ],
+  );
+
+  // The distinctions carried in prose rather than as contrast blocks.
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of ["A hash is not encryption.", "A commitment is not encryption either", "Privacy is not secrecy alone.", "Cryptography does not remove assumptions."]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("cryptography-proofs").map((placement) => placement.id);
+  assert.equal(l1.length, 8);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Cryptographic Mechanism", "Fixed-size Digest", "Required Threshold", "Higher-level Proof", "Execution Evidence"]) {
     assert.ok(!titles.has(text), text);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);

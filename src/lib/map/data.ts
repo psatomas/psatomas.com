@@ -7987,6 +7987,303 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "cryptography-proofs-content",
+      conceptId: "cryptography-proofs",
+      definition:
+        "Participants in a distributed protocol cannot simply trust every message, computation, or data source. Cryptography & Proofs provides mechanisms that make particular claims independently verifiable, under explicit assumptions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Foundations described trust as something protocols move, distribute, or constrain rather than eliminate. Cryptography is one of the main ways they do it: instead of taking a party's word, a participant checks evidence. Each mechanism supports a particular kind of claim, and each rests on assumptions, about what is computationally infeasible and about how keys and secrets are kept.",
+        },
+        {
+          kind: "flow",
+          label: "How a cryptographic mechanism turns a claim into something a participant can check",
+          stages: [["Claim"], ["Cryptographic Mechanism"], ["Evidence"], ["Verification"], ["Accept", "Reject"]],
+        },
+        { kind: "distinction", left: "Verification", right: "Truth" },
+        {
+          kind: "paragraph",
+          text: "Verification establishes a precise relationship: that a signature corresponds to a key, that a value matches a commitment, that a proof satisfies a verification relation. It does not establish that the underlying statement describes reality, that the protocol's rules are the right ones, or that the surrounding system is secure. Each mechanism below establishes some relationships and not others.",
+        },
+        { kind: "heading", text: "Hashes turn data into cryptographic references" },
+        {
+          kind: "paragraph",
+          text: "A cryptographic hash function maps input of any length to a fixed-size digest. The same input always produces the same digest, and even a small change to the input produces a digest that appears unrelated.",
+        },
+        {
+          kind: "flow",
+          label: "How a hash function turns input into a digest, and what protocols use digests for",
+          stages: [
+            ["Input"],
+            ["Cryptographic Hash Function"],
+            ["Fixed-size Digest"],
+            ["Compact reference", "Integrity check", "Linked structure"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols rely on this for compact references, integrity checks, and structures that link data together. Hash properties are what make it safe. Collision resistance means it should be infeasible to find two different inputs with the same digest. Preimage resistance means that, given a digest, it should be infeasible to find an input that produces it. Collisions exist, since there are more possible inputs than digests, so matching digests are evidence of the same input under the assumption that finding a collision is infeasible, not a logical certainty.",
+        },
+        {
+          kind: "paragraph",
+          text: "Domain separation keeps the same hash function, used for different purposes, from producing values that could be mistaken for one another, typically by tagging each use with its context. Hash-based data structures, such as the Merkle trees of State & Data, are built on these properties.",
+        },
+        {
+          kind: "paragraph",
+          text: "A hash is not encryption. It has no key and is not meant to be reversed, but neither is it designed to keep its input secret: the digest of a guessable value can be found by hashing guesses.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Cryptographic hash functions",
+            "Hash properties",
+            "Collision resistance",
+            "Preimage resistance",
+            "Domain separation",
+            "Hash-based data structures",
+          ],
+        },
+        { kind: "heading", text: "Signatures bind actions to keys" },
+        {
+          kind: "paragraph",
+          text: "A key pair separates two capabilities. The private key can produce signatures; the public key can only check them. Signing combines a message with the private key to produce a signature, and signature verification lets anyone with the public key check that signature against the message, without being able to sign.",
+        },
+        {
+          kind: "flow",
+          label: "How a key pair separates signing from verification",
+          stages: [
+            ["Key Pair"],
+            [
+              ["Private Key", "Signing", "Signature"],
+              ["Public Key", "Signature Verification", "Valid or Invalid"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A signature scheme defines the exact rules, and its security rests on the assumption that producing a valid signature without the private key is infeasible. A valid signature therefore shows that whoever controls the key authorized this exact message. It does not show who that is, which belongs to identity and accounts, and it does not show that the message is true.",
+        },
+        { kind: "distinction", left: "Valid signature", right: "True statement" },
+        {
+          kind: "paragraph",
+          text: "When many participants sign, two different needs arise. Signature aggregation combines many signatures into one compact value that can be verified at once, saving space and verification work. A multisignature expresses authorization by several signers under a rule, such as two of three, with each signer using their own key.",
+        },
+        {
+          kind: "terms",
+          terms: ["Key pairs", "Signing", "Signature verification", "Signature schemes", "Signature aggregation", "Multisignatures"],
+        },
+        { kind: "heading", text: "Commitments separate choosing from revealing" },
+        {
+          kind: "paragraph",
+          text: "A commitment lets a participant fix a value now and reveal it later. The committer computes a commitment from the value, often with added randomness, and publishes it. Later, they reveal the value with an opening, and anyone can check the two against the commitment.",
+        },
+        {
+          kind: "flow",
+          label: "How a value is committed now and verified when it is opened later",
+          stages: [
+            ["Value + Randomness"],
+            ["Commitment Scheme"],
+            ["Published Commitment"],
+            ["Value + Opening"],
+            ["Verification against the Commitment"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Two properties make this useful. Hiding means the commitment should not reveal the committed value before it is opened. Binding means the committer should not be able to open it as a different value. Together they establish that a choice existed before it was disclosed, which is what sealed bids, commit-reveal randomness, and many proof systems depend on.",
+        },
+        {
+          kind: "paragraph",
+          text: "A commitment is not encryption either: there is no key that lets a chosen party read it, and only the committer's opening reveals it. Polynomial commitments and vector commitments commit to structured objects, a function or an ordered collection, while supporting proofs about a particular evaluation or element without opening the whole. The state commitments of State & Data rely on such mechanisms to let a compact value stand in for a large state.",
+        },
+        {
+          kind: "terms",
+          terms: ["Commitment schemes", "Hiding", "Binding", "Opening", "Polynomial commitments", "Vector commitments"],
+        },
+        { kind: "heading", text: "Cryptographic authority can be distributed" },
+        {
+          kind: "paragraph",
+          text: "A single key is a single point of failure: whoever holds it holds all of its authority. Threshold cryptography spreads that authority across participants, so that a sufficient subset must cooperate to use it. This is the trust distribution of Foundations, implemented cryptographically.",
+        },
+        {
+          kind: "flow",
+          label: "How threshold cryptography distributes authority across participants",
+          stages: [
+            ["Secret or Authority"],
+            ["Participant A", "Participant B", "Participant C"],
+            ["Required Threshold"],
+            ["Cryptographic Operation"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Secret sharing splits information so that authorized subsets can reconstruct or use it while smaller subsets cannot. Distributed key generation lets participants create shared key material without any trusted dealer ever holding the complete secret. Threshold signatures let a sufficient subset jointly produce a signature, and threshold decryption lets it jointly decrypt, without any one participant holding the complete key. Multi-party computation generalizes the idea: parties jointly compute a function while controlling what each learns about the others' inputs. Quorum cryptography names the wider pattern of operations that require a quorum of participants.",
+        },
+        { kind: "distinction", left: "Multisignature", right: "Threshold signature" },
+        {
+          kind: "paragraph",
+          text: "A multisignature is checked as several signers approving under a rule, and the signers are typically identifiable. A threshold signature is a single signature under one shared public key, produced by whichever sufficient subset cooperated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Distributing authority does not remove trust assumptions; it changes them. The questions become how many participants may fail, collude, disappear, or act maliciously. Too many colluding can misuse the authority; too many absent can leave it unusable.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Secret sharing",
+            "Threshold signatures",
+            "Distributed key generation",
+            "Threshold decryption",
+            "Multi-party computation",
+            "Quorum cryptography",
+          ],
+        },
+        { kind: "heading", text: "Proofs let claims be verified" },
+        {
+          kind: "paragraph",
+          text: "A proof lets one party convince another that a statement is true. The prover holds a witness, the information that establishes the claim, and constructs a proof from it. The verifier checks the proof and accepts or rejects it.",
+        },
+        {
+          kind: "flow",
+          label: "How a prover turns a statement and witness into a proof a verifier checks",
+          stages: [["Statement + Witness"], ["Prover"], ["Proof"], ["Verifier"], ["Accept", "Reject"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Two properties decide whether this means anything. Completeness: a true statement with a valid witness is accepted. Soundness: a false statement is rejected, except with a probability the system bounds under its stated assumptions. Zero-knowledge adds a third: the proof reveals nothing about the witness beyond the validity of the statement, in the precise sense the proof system defines.",
+        },
+        { kind: "distinction", left: "Proving a statement", right: "Disclosing the witness" },
+        {
+          kind: "terms",
+          terms: ["Zero-knowledge", "Completeness", "Soundness", "Provers", "Verifiers", "Witnesses"],
+        },
+        {
+          kind: "paragraph",
+          text: "Proof systems differ in how a proof is exchanged. In an interactive proof, prover and verifier exchange messages. A non-interactive proof is a single object anyone can check later, which is usually what a protocol needs; it may depend on a setup or on additional cryptographic assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "SNARKs and STARKs are families of proof systems, not rival products. They differ in proof size, verification cost, proving cost, whether they need a trusted setup, and which cryptographic assumptions they rest on, and these trade-offs vary within each family as well as between them.",
+        },
+        {
+          kind: "flow",
+          label: "How smaller proofs are combined into one higher-level proof",
+          stages: [["Smaller Claims"], ["Proof A", "Proof B", "Proof C"], ["Recursion or Composition"], ["Higher-level Proof"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Recursive proofs verify other proofs inside a proof, and proof composition builds larger claims from smaller verified ones, so that many claims can be checked through one.",
+        },
+        {
+          kind: "terms",
+          terms: ["Interactive proofs", "Non-interactive proofs", "SNARKs", "STARKs", "Recursive proofs", "Proof composition"],
+        },
+        { kind: "heading", text: "Computation can be verified without repeating it" },
+        {
+          kind: "paragraph",
+          text: "Computation & Execution described how computation produces results. Verifiable computation asks how another participant can check a result without trusting whoever produced it, and without necessarily running the computation again.",
+        },
+        {
+          kind: "flow",
+          label: "How a computation's output is accepted on the strength of a proof",
+          stages: [
+            ["Input"],
+            ["Computation"],
+            ["Output", ["Execution Evidence", "Proof Generation", "Computation Proof"]],
+            ["Proof Verification"],
+            ["Accept or Reject the Output"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Proof generation turns an execution into a computation proof that the output follows from the input under a specified relation; proof verification checks it. Verifiable execution applies this to a whole execution environment, and proof-carrying computation passes results onward together with their proofs, so that each recipient can check instead of trust.",
+        },
+        {
+          kind: "paragraph",
+          text: "The architectural point is that the cost of checking a result can be separated from the cost of producing it. Generating a proof is often substantially more expensive than the computation itself. Succinct verification is the property of systems designed so that checking stays small; verification is not automatically cheaper than recomputation in every system.",
+        },
+        { kind: "distinction", left: "Verified computation", right: "Correct specification" },
+        {
+          kind: "paragraph",
+          text: "A proof shows that computation followed the specified relation exactly. If the specification encodes the wrong behavior, the proof verifies that wrong behavior faithfully: local correctness, not system correctness.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Computation proofs",
+            "Verifiable execution",
+            "Proof generation",
+            "Proof verification",
+            "Succinct verification",
+            "Proof-carrying computation",
+          ],
+        },
+        { kind: "heading", text: "Privacy is a set of properties, not a single switch" },
+        {
+          kind: "paragraph",
+          text: "Private, encrypted, anonymous, and zero-knowledge are often used as if they meant the same thing. They answer different questions about what an observer can learn.",
+        },
+        {
+          kind: "flow",
+          label: "What each privacy property protects",
+          stages: [
+            ["Information"],
+            [
+              ["Content", "Confidentiality"],
+              ["Identity", "Anonymity"],
+              ["Relationships", "Unlinkability"],
+              ["Chosen facts", "Selective Disclosure"],
+              ["Computation", "Private Computation"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Confidentiality asks whether unauthorized observers can learn the content. Anonymity asks whether an action can be tied to a particular identity. Unlinkability asks whether separate actions or records can be connected to one another, even without knowing whose they are. Selective disclosure asks whether one fact can be revealed without the rest, such as meeting a threshold without revealing the amount. Private computation asks whether a result can be computed while inputs and intermediate values stay protected, by mechanisms such as multi-party computation.",
+        },
+        { kind: "distinction", left: "Zero-knowledge", right: "Anonymity" },
+        {
+          kind: "paragraph",
+          text: "A zero-knowledge proof can hide its witness while the prover's identity, and the transaction carrying the proof, remain fully visible. Privacy is not secrecy alone. Privacy-preserving protocols combine mechanisms to provide specific, stated privacy properties, and a system is private only with respect to the properties it actually provides.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Confidentiality",
+            "Anonymity",
+            "Unlinkability",
+            "Selective disclosure",
+            "Private computation",
+            "Privacy-preserving protocols",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Each mechanism establishes a different kind of property. Hashes turn data into references; signatures bind messages to keys; commitments fix values before revealing them; threshold cryptography distributes authority; proofs let claims be checked without repeating or observing everything; verifiable computation applies that to computation itself; privacy mechanisms control what each observer can learn.",
+        },
+        { kind: "distinction", left: "Trust minimized", right: "Assumptions removed" },
+        {
+          kind: "paragraph",
+          text: "Cryptography does not remove assumptions. It changes what must be trusted, what can be independently verified, what information must be revealed, and whether a failure requires compromising one actor or many. A protocol therefore needs to reason not only about which primitives it uses, but about exactly which property each one establishes, and under which assumptions.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Hash Functions",
+            "Digital Signatures",
+            "Commitments",
+            "Threshold Cryptography",
+            "Zero-Knowledge Proofs",
+            "Proof Systems",
+            "Verifiable Computation",
+            "Privacy",
+          ],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",
