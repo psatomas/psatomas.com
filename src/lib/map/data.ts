@@ -7505,7 +7505,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Consensus models differ in how agreement is reached. Some require explicit quorums: sets of participants large enough that any two of them overlap in at least one participant assumed to be honest. Others let agreement emerge gradually as participants build on the same history. A claim that a protocol reaches consensus is incomplete without the fault assumptions under which it does.",
+          text: "Consensus models differ in how agreement is reached. Some require explicit quorums. A quorum is the amount or set of participation required for a protocol decision to proceed. Its size and intersection requirements depend on the consensus model and its fault assumptions. Others let agreement emerge gradually as participants build on the same history. A claim that a protocol reaches consensus is incomplete without the fault assumptions under which it does.",
         },
         {
           kind: "terms",
@@ -7513,7 +7513,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Validators are the participants that perform consensus duties. Validator selection decides who belongs to the validator set, for example by stake or by permission, and duties are assigned within it. A proposer puts forward a candidate for the next step of history; attesters vote on what they observe. These are roles, not necessarily fixed classes: the same validator may propose at one moment and attest at another.",
+          text: "Validators are the participants that perform consensus duties. Validator selection decides who belongs to the validator set, for example by stake or by permission, and duties are assigned within it. In protocols that distinguish these roles, proposers put forward candidate history while attesters provide protocol-defined votes or attestations used by consensus. These are roles, not necessarily fixed classes: the same validator may propose at one moment and attest at another.",
         },
         {
           kind: "paragraph",
@@ -7565,7 +7565,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The two are not faster and slower versions of the same mechanism. Under probabilistic finality, a result becomes less likely to be reversed as more history is built on it, but no point makes reversal impossible; how much history is enough is a judgment about risk. Under deterministic finality, the protocol makes an explicit decision, and reversing it would require violating the protocol's fault assumptions, for example by more participants misbehaving than it tolerates.",
+          text: "The two are not faster and slower versions of the same mechanism. Under probabilistic finality, confidence increases as additional history accumulates rather than crossing a protocol-defined point of deterministic finalization; how much confirmation is sufficient depends on the risk tolerance and assumptions of the application or system relying on it. Under deterministic finality, the protocol makes an explicit decision. Once finalized, reversal is excluded by the protocol model as long as its stated assumptions continue to hold.",
         },
         {
           kind: "paragraph",
@@ -7607,7 +7607,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Sequencing responsibility can be arranged in different ways. Centralized sequencing gives it to one operator: simple and low-latency, at the cost of trusting that operator for ordering and inclusion. Decentralized sequencing spreads it across many participants, usually with an agreement process of its own. Shared sequencing lets several systems use a common sequencer, which can then order across them. Sequencer rotation changes who holds the responsibility over time. None of these is universally better; each places trust and liveness assumptions somewhere different.",
+          text: "Sequencing responsibility can be arranged in different ways. Centralized sequencing gives it to one operator. A centralized sequencer can simplify ordering and reduce coordination latency, while concentrating ordering authority and introducing reliance on that operator for ordering and inclusion. Decentralized sequencing spreads it across many participants, usually with an agreement process of its own. Shared sequencing lets several systems use a common sequencer, which can then order across them. Sequencer rotation changes who holds the responsibility over time. None of these is universally better; each places trust and liveness assumptions somewhere different.",
         },
         {
           kind: "terms",
@@ -7663,7 +7663,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Assurance can arrive before finality" },
         {
           kind: "paragraph",
-          text: "Finality can take time, and some users need assurance sooner. A preconfirmation is a commitment, made before the protocol's normal settlement, about what will happen to a transaction. An inclusion preconfirmation commits that the transaction will be included; an execution preconfirmation commits to its outcome, a stronger promise that also depends on the state it will execute against.",
+          text: "Finality can take time, and some users need assurance sooner. A preconfirmation is a commitment, made before the protocol's normal settlement, about what will happen to a transaction. Inclusion preconfirmations concern expected inclusion, while execution preconfirmations additionally make a claim about the expected execution outcome or state transition. Their guarantees depend on the design and on the assumptions under which the provider can honor the commitment.",
         },
         {
           kind: "flow",
@@ -7705,7 +7705,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Protocols approach this differently. Inclusion lists let a set of participants require that particular transactions appear, constraining a proposer or builder that would omit them. Forced inclusion lets a user reach the ordered history through another path when the usual one is uncooperative, often after a delay. Not every system has either. Inclusion guarantees describe the resulting promise: how long a valid transaction can be delayed, and under which assumptions.",
+          text: "Protocols approach this differently. Inclusion lists are protocol mechanisms through which designated participants can constrain a proposal by identifying transactions expected to be included. Forced inclusion lets a user reach the ordered history through another path when the usual one is uncooperative, often after a delay. Not every system has either. Inclusion guarantees describe the resulting promise: how long a valid transaction can be delayed, and under which assumptions.",
         },
         {
           kind: "terms",
