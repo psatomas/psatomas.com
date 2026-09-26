@@ -8631,7 +8631,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Identity is built from evidence, not given" },
         {
           kind: "paragraph",
-          text: "An address identifies a protocol-level endpoint or account reference. It does not, by itself, establish the human, organization, or machine behind it: one entity can control many addresses, and one address can be controlled by several parties.",
+          text: "An address is a protocol-level identifier for an account or endpoint, associated with some control mechanism. It does not, by itself, establish the human, organization, or machine behind it; mapping it to a real-world entity requires additional evidence or assumptions. One entity can control many addresses, and control over an address or account can depend on one key, multiple participants, or programmable authorization logic, depending on the account model.",
         },
         { kind: "distinction", left: "Address", right: "Identity" },
         {
@@ -8649,7 +8649,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "These play different roles. An identifier, whether an address or a decentralized identifier, says which entity is being discussed. A credential carries claims about that entity. An attestation is a statement another party makes about it. Reputation accumulates signals from past behavior that others use to reason about it. None is trustworthy by itself: what a decentralized identifier, credential, or attestation means depends on who issued it, how it can be verified, and which trust assumptions the verifier accepts.",
+          text: "These play different roles. An identifier, whether an address or a decentralized identifier, says which entity is being discussed. A credential carries claims about that entity. An attestation is a statement another party makes about it. Reputation accumulates signals from past behavior that others use to reason about it. None is trustworthy by itself. Credentials and attestations are evidence, not truth: what a decentralized identifier, credential, or attestation means depends on who issued it, how it can be verified, the context in which it is used, and which trust assumptions the verifier accepts.",
         },
         {
           kind: "terms",
@@ -8675,7 +8675,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The main architectural difference is where control lives. An externally owned account is controlled by whoever holds its key: a valid signature is its authorization. A contract account is controlled by its code: its own logic decides what counts as authorized. Account nonces, in systems that use them, are account state that orders an account's operations and prevents certain replays of an authorized operation. Account recovery is the question of how control is restored when the usual means are lost, and it is possible only as far as the account's control model allows.",
+          text: "The main architectural difference is where control lives. For an externally owned account, protocol-level control is typically demonstrated by a valid signature under the account's key; whether the resulting action is permitted can still depend on protocol, contract, application, or policy rules. A contract account executes according to programmable validation and execution logic, and the authority that logic recognizes can ultimately depend on keys, roles, other contracts, governance, or other encoded conditions. Account nonces, in systems that use them, are account state that orders an account's operations; they can make an otherwise valid operation invalid when it is replayed outside the sequence or context the account expects. Account recovery is the question of how control is restored when the usual means are lost, and it is possible only when the account or its surrounding authority model defines a recovery path.",
         },
         {
           kind: "terms",
@@ -8691,7 +8691,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Wallets manage control; they are not the account" },
         {
           kind: "paragraph",
-          text: "A wallet is the software, hardware, or service a participant uses to manage control and interact with accounts. It is not the account, which exists in protocol state whether or not any wallet is running. Nor is it the key: a wallet may manage many keys and many accounts, and may interact with accounts whose authority does not reduce to one private key.",
+          text: "A wallet is the software, hardware, or service a participant uses to manage control and interact with accounts. It is not the account, which exists in protocol state whether or not any wallet is running. Nor is it the key, the cryptographic material that demonstrates control: a wallet may manage many keys and many accounts, may rely on keys held elsewhere, such as in a separate signing device, and may interact with accounts whose authority does not reduce to one private key.",
         },
         { kind: "distinction", left: "Account", right: "Wallet" },
         {
@@ -8701,7 +8701,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Key management covers how keys are generated, stored, and used. Transaction construction turns an intent into a well-formed transaction, signing authorizes it with the mechanisms of Cryptography & Proofs, and transaction submission sends it into the admission path described under Consensus & Ordering. Wallet recovery restores a wallet's access to keys or accounts, which is distinct from account recovery in protocol state, and wallet security protects this whole path in operation.",
+          text: "Key management covers how keys are generated, stored, and used. Transaction construction turns an intent into a well-formed transaction, signing attaches evidence of control using the mechanisms of Cryptography & Proofs, and transaction submission sends it into the admission path described under Consensus & Ordering. Wallet recovery restores access to the credentials and configuration a wallet manages, which is distinct from account recovery in protocol state and does not by itself change an account's authority, and wallet security protects this whole path in operation.",
         },
         {
           kind: "terms",
@@ -8732,7 +8732,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Because validation is code, authority can take more than one form. Recovery logic can restore control through a defined procedure. Session keys delegate limited authority, for a scope, a duration, or a set of actions, without transferring full control. Modular accounts assemble these behaviors from components. Programmable accounts do not eliminate keys. They let authorization and execution policies be expressed more flexibly, so that possessing a key no longer has to mean unlimited authority.",
+          text: "Because validation is code, authority can take more than one form. The account's normal validation authority can sit alongside delegated authority: session keys can be granted constrained authority, such as limits on time, actions, value, or target, depending on the account's validation policy, and it is that policy, not possession of the session key, that defines the scope. Recovery logic is different in kind: rather than authorizing ordinary operations, it defines a procedure that can modify or restore the account's control configuration. Modular accounts assemble these behaviors from components. Smart accounts do not inherently eliminate cryptographic credentials or other control mechanisms; they make validation and execution policy programmable, so that possessing a key no longer has to mean unlimited authority.",
         },
         {
           kind: "terms",
@@ -8748,7 +8748,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Account abstraction changes how operations enter" },
         {
           kind: "paragraph",
-          text: "Account abstraction changes the path an operation takes into execution, so that accounts, and not only rules fixed by the protocol, can define validation. The concepts here come mainly from current EVM designs, but the pattern is more general.",
+          text: "Account abstraction changes the path an operation takes into execution, so that accounts, and not only rules fixed by the protocol, can define validation. The components below come mainly from current EVM designs; they belong to particular account-abstraction architectures, not to every form of programmable account, though the pattern is more general.",
         },
         {
           kind: "flow",
@@ -8765,7 +8765,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A user operation expresses what an account wants done; in some designs it is not an ordinary protocol transaction. It travels through an alternative mempool, a separate admission path in the sense of Consensus & Ordering. A bundler aggregates operations and submits them, and an entry point coordinates validation and execution for each account. A paymaster can take on the fees under its own policy, and gas abstraction changes how users pay: in another asset, through someone else, or not directly at all.",
+          text: "A user operation expresses what an account wants done; in some designs it is not an ordinary protocol transaction. It travels through an alternative mempool, a separate admission path in the sense of Consensus & Ordering. A bundler aggregates operations and submits them, and an entry point coordinates validation and execution for each account. A paymaster can take on the fees under its own policy, and gas abstraction changes how execution costs are presented or paid, for example in another asset or by someone else; it does not remove the underlying resource cost.",
         },
         { kind: "distinction", left: "Account abstraction", right: "Free execution" },
         {
@@ -8788,12 +8788,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Mechanisms differ. Signature authentication checks a signature against a key. Challenge-response asks the actor to answer a fresh challenge, so that an old response cannot be replayed. Session authentication lets one successful authentication cover later requests for a period. Credential authentication checks a credential issued by someone else. Authentication factors are the kinds of evidence involved, and authentication policies decide which combinations are enough.",
+          text: "Mechanisms differ. Signature authentication checks a signature against a key. Challenge-response asks the actor to answer a challenge; a fresh, context-bound challenge can prevent an old valid response from being reused for a new authentication attempt. Session authentication lets one successful authentication cover later requests for a period. Credential authentication checks a credential issued by someone else. Authentication factors are the kinds of evidence involved, and authentication policies decide which combinations are enough.",
         },
         { kind: "distinction", left: "Authenticated", right: "Authorized" },
         {
           kind: "paragraph",
-          text: "Authentication answers who, or what, is acting. It does not say what that actor may do. A system that treats every authenticated request as permitted has no authority model at all.",
+          text: "Authentication answers whether an actor has satisfied some mechanism. It does not say what that actor may do. A system that treats every authenticated request as permitted collapses authentication and authorization into the same decision, leaving no separate authority policy.",
         },
         {
           kind: "terms",
@@ -8809,7 +8809,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Authority decides what control permits" },
         {
           kind: "paragraph",
-          text: "Authority is the protocol's answer to what an authenticated actor may do. It is also where the trust boundaries of Foundations become concrete: each authority boundary marks where one actor's power stops.",
+          text: "Authority is the protocol's answer to what an authenticated actor may do. It is also where the trust boundaries of Foundations become concrete: each authority boundary marks where one actor's power stops. Authority is contextual: an actor authenticated in one context does not thereby have authority over another resource, contract, account, or protocol component.",
         },
         {
           kind: "flow",
@@ -8824,12 +8824,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Protocols express authority in different ways, and none is universally better. Ownership gives broad control to an owner. Roles group permissions by function. Capabilities grant specific authority directly, often as something that can be held and passed on. Delegation lets one authority grant constrained authority to another actor. A permission model defines how these grants interact, and authority boundaries define where each one ends.",
+          text: "Protocols express authority in different ways, and none is universally better. Ownership gives broad control to an owner. Roles group permissions by function. A capability represents authority to perform particular operations and, in systems that support delegation or transfer, may itself be passed on or attenuated. Delegation lets one party grant some of its authority to another actor. A permission model defines how these grants interact, and authority boundaries define where each one ends.",
         },
         { kind: "distinction", left: "Authority", right: "Ownership" },
         {
           kind: "paragraph",
-          text: "Ownership is one model of authority, not authority itself. Delegation, likewise, is not a transfer of ownership: delegated authority can be scoped, temporary, and revocable, while the delegator keeps its own.",
+          text: "Ownership is one model of authority, not authority itself. Delegation, likewise, is not a transfer of ownership: the delegator may retain its underlying authority, and whether delegated authority is scoped, temporary, or revocable depends on the system.",
         },
         {
           kind: "terms",
@@ -8878,16 +8878,16 @@ export const mapKnowledge: MapKnowledgeModel = {
         {
           kind: "flow",
           label: "From a participant to a change in protocol state",
-          stages: [["Participant"], ["Representation"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
+          stages: [["Participant"], ["Identity Evidence"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
         },
         {
           kind: "paragraph",
-          text: "Identity architecture determines how participants are represented; account architecture, how control connects to protocol state and execution; authentication, which evidence is accepted as proof of control or qualification; and authority, which actions that control permits.",
+          text: "Identity architecture determines what entity is represented; account architecture, how control connects to protocol state and execution; authentication, which evidence is accepted as proof of control or qualification; authority, which actions that control permits; and execution, which performs the permitted operation and changes state.",
         },
         { kind: "distinction", left: "Identity", right: "Authentication", further: ["Authority", "Execution"] },
         {
           kind: "paragraph",
-          text: "A protocol is therefore not secure merely because a signature verifies. It must also determine what that signer controls, which authority follows from that control, where that authority ends, and how it can be delegated, recovered, or revoked.",
+          text: "A verified signature alone therefore answers only part of this, and a protocol is not secure merely because one verifies. It must also determine what that signer controls, which authority follows from that control, where that authority ends, and how it can be delegated, recovered, or revoked.",
         },
         {
           kind: "terms",

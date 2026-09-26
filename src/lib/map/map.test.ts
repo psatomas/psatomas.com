@@ -7072,7 +7072,7 @@ test("Identity, Accounts & Authority's L0 exposition separates identity, authent
         ["Observed Activity", "Agent Reputation", "Input to a policy"],
       ],
     ],
-    [["Participant"], ["Representation"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
+    [["Participant"], ["Identity Evidence"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
   ]);
   assert.deepEqual(
     body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
@@ -7087,7 +7087,7 @@ test("Identity, Accounts & Authority's L0 exposition separates identity, authent
     ],
   );
   const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
-  for (const phrase of ["Nor is it the key", "Delegation, likewise, is not a transfer of ownership", "Programmable accounts do not eliminate keys."]) {
+  for (const phrase of ["Nor is it the key", "Delegation, likewise, is not a transfer of ownership", "Smart accounts do not inherently eliminate cryptographic credentials"]) {
     assert.ok(prose.includes(phrase), phrase);
   }
 
