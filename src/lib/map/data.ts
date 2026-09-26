@@ -6870,7 +6870,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "flow",
-          label: "How submitted inputs become new system state",
+          label: "One common path from submitted inputs to new system state",
           stages: [
             ["Inputs"],
             ["Transactions"],
@@ -6883,25 +6883,43 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Execution is therefore not a single operation. It is a pipeline connecting submitted actions to changes in protocol state.",
-        },
-        {
-          kind: "terms",
-          terms: ["Transactions", "Validation", "Ordering", "Execution", "State transitions", "System state"],
+          text: "Turning a submitted action into a state change is therefore not a single operation but a pipeline, and execution is one stage of it. Where validation and ordering happen, and how often, varies between systems.",
         },
         {
           kind: "paragraph",
-          text: "Different systems make different choices about how computation proceeds. Execution may be sequential or parallel, deterministic or dependent on external conditions, conservative or speculative.",
+          text: "Different systems make different choices about how computation proceeds. Execution may be sequential or parallel; its result may be fully determined by the agreed inputs, state, and context, or depend on something outside them; and it may proceed conservatively, optimistically, or speculatively.",
         },
         {
           kind: "flow",
-          label: "How execution models lead to an execution result",
-          stages: [["Execution Models"], ["Sequential", "Parallel", "Speculative"], ["Execution Result"]],
+          label: "Two dimensions along which execution models vary, which can combine",
+          stages: [
+            ["Execution Models"],
+            [
+              ["Scheduling", "Sequential or parallel"],
+              ["Handling uncertainty", "Conservative, optimistic, or speculative"],
+            ],
+            ["Execution Result"],
+          ],
         },
         { kind: "tensions", label: "Execution determinism", pairs: [["Deterministic", "Non-Deterministic"]] },
         {
           kind: "paragraph",
           text: "These choices affect more than performance. They determine which operations may execute together, what must be known before execution, how conflicts are detected, and whether independent participants can reproduce the same result.",
+        },
+        {
+          kind: "paragraph",
+          text: "The dimensions can combine. Parallel execution runs operations concurrently only where they do not conflict, or where conflicts can be detected and resolved. Optimistic execution proceeds as if conflicts will not occur and repairs them when they are detected; speculative execution computes results before the inputs or ordering they depend on are settled, and discards them if those turn out differently. The two overlap in practice.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Deterministic execution",
+            "Non-deterministic execution",
+            "Sequential execution",
+            "Parallel execution",
+            "Optimistic execution",
+            "Speculative execution",
+          ],
         },
         { kind: "heading", text: "Transactions connect intent to state" },
         {
@@ -6917,12 +6935,16 @@ export const mapKnowledge: MapKnowledgeModel = {
             ["Validation"],
             ["Ordering"],
             ["Execution"],
-            [["Success", "State changes"], ["Reversion", "Effects discarded"]],
+            [["Success", "State changes"], ["Reversion", "State changes rolled back"]],
           ],
         },
         {
           kind: "paragraph",
           text: "Atomicity defines the boundary of those effects: either the transaction's required state changes occur as one unit, or they do not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reversion is how that boundary is enforced when execution fails: the transaction's state changes are rolled back, although in some systems it is still included and fees or nonce updates still apply. Validation is not always a single step either; checks can occur at admission, before execution, and during it.",
         },
         {
           kind: "paragraph",
@@ -6932,12 +6954,12 @@ export const mapKnowledge: MapKnowledgeModel = {
           kind: "terms",
           terms: [
             "Transaction lifecycle",
-            "Structure",
-            "Ordering",
-            "Validation",
-            "Execution",
-            "Atomicity",
-            "Reversion",
+            "Transaction structure",
+            "Transaction ordering",
+            "Transaction validation",
+            "Transaction execution",
+            "Transaction atomicity",
+            "Transaction reversion",
           ],
         },
         { kind: "heading", text: "Execution requires an environment" },
@@ -6947,11 +6969,15 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Virtual machines such as the EVM, WASM-based runtimes, and zkVMs provide different models for representing and evaluating computation.",
+          text: "Virtual machines define how computation is represented and evaluated, but they are not one kind of thing. The EVM is a specific virtual machine; WASM is an instruction format that several runtimes execute; zkVMs are virtual machines designed so that their execution can be proven, with proofs often used for succinct verification rather than for zero-knowledge.",
+        },
+        {
+          kind: "terms",
+          terms: ["EVM", "WASM", "zkVMs"],
         },
         {
           kind: "paragraph",
-          text: "Smart contracts execute within these environments while interacting with persistent state and other contracts.",
+          text: "Smart contracts execute within these environments when a transaction or another contract invokes them; they do not act on their own. A contract's state is the part of protocol state it owns, and its execution context supplies the rest of what a running contract may see, such as its caller and the current block.",
         },
         {
           kind: "flow",
@@ -6967,6 +6993,10 @@ export const mapKnowledge: MapKnowledgeModel = {
         {
           kind: "paragraph",
           text: "A contract call may trigger other calls, read or modify state, consume resources, succeed, or revert. Local contract execution can therefore become part of a much larger execution graph.",
+        },
+        {
+          kind: "paragraph",
+          text: "Calls let one execution context invoke another account or contract according to the execution environment's call semantics. In EVM terminology these interactions include message calls that may execute contract code. Deployment introduces executable contract code and its initial state into the protocol, while the contract lifecycle covers how that deployed component may subsequently be used, changed, upgraded, disabled, or removed where the system permits those operations.",
         },
         {
           kind: "terms",
@@ -6994,18 +7024,18 @@ export const mapKnowledge: MapKnowledgeModel = {
           label: "Where computation happens and how its result is accepted",
           stages: [
             ["Computation"],
-            [["On-chain"], ["Off-chain", "Computation", "Result / Commitment", "Proof / Evidence"]],
+            [["On-chain", "Protocol execution"], ["Off-chain", "Result / Commitment", "Proof / Evidence"]],
             ["Verification"],
             ["Accepted Result"],
           ],
         },
         {
           kind: "paragraph",
-          text: "This separation creates a fundamental design space: perform the work versus verify that the work was performed correctly.",
+          text: "This separation creates a fundamental design space: perform the work versus verify that the work was performed as specified. When computation happens on-chain, the protocol's own execution produces the result, and how participants check it, by re-executing it or otherwise, varies between systems.",
         },
         {
           kind: "paragraph",
-          text: "Execution traces expose how computation progressed. Commitments bind to computation or results. Proof systems can make claims about execution independently verifiable without repeating the entire computation in the same environment.",
+          text: "Computation integrity is the property that a result really follows from its inputs under the specified program. Execution traces record how a computation progressed; computation commitments bind a party to a particular computation, trace, or result; and computation proofs let others check a claimed result against the specified relation without repeating the entire computation. As Cryptography & Proofs describes, such a proof establishes validity under the proof system's assumptions, not that the specification is right, and producing it can cost far more than checking it.",
         },
         {
           kind: "terms",
@@ -7028,7 +7058,7 @@ export const mapKnowledge: MapKnowledgeModel = {
           stages: [
             ["Off-Chain Computation"],
             [
-              ["Trusted execution", "Trust the execution environment"],
+              ["Trusted execution", "Trust the executor or its environment"],
               ["Untrusted execution", "Verify the result", "On-Chain Verification"],
             ],
           ],
@@ -7039,7 +7069,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The trust boundary may remain around the worker, move to a trusted execution environment, or be reduced through verification.",
+          text: "The trust boundary may remain around the worker, move to a trusted execution environment, or be reduced, though not removed, through verification.",
         },
         {
           kind: "terms",
@@ -7058,24 +7088,24 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "flow",
-          label: "How resource accounting bounds execution",
+          label: "How resource accounting bounds execution, and contributes to, without guaranteeing, DoS resistance",
           stages: [
             ["Execution"],
             ["Computation", "State access", "Other work"],
-            ["Metering"],
-            ["Gas", "Resource Limits"],
-            ["Execution Cost"],
-            ["Bounded Execution"],
-            ["DoS Resistance"],
+            ["Resource Accounting"],
+            [
+              ["Metering", "Gas / Resource Units", "Execution Cost + Resource Limits", "Bounded Execution"],
+              ["Contributes to DoS Resistance"],
+            ],
           ],
         },
         {
           kind: "paragraph",
-          text: "Gas and other metering mechanisms turn resource consumption into quantities the protocol can account for and constrain. Resource limits bound individual execution, while fee accounting determines how costs are attributed.",
+          text: "Gas and other metering mechanisms turn resource consumption into quantities the protocol can account for and constrain. Gas measures use in protocol units; the fee is what is charged for it, and fee accounting determines who pays and where the payment goes. Resource limits bound individual executions and the total work the protocol accepts at once.",
         },
         {
           kind: "paragraph",
-          text: "Resource accounting is therefore simultaneously an execution mechanism, an economic mechanism, and a security boundary.",
+          text: "Resource accounting is therefore simultaneously an execution mechanism, an economic mechanism, and a security boundary. It contributes to denial-of-service resistance only for work it measures and prices adequately; mispriced or unmetered work remains exposed.",
         },
         {
           kind: "terms",
@@ -7101,7 +7131,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Ordering can change outcomes. Parallel execution can introduce conflicts. External information can introduce non-determinism. Resource limits can determine whether otherwise valid computation completes. Contract calls can propagate effects across components.",
+          text: "Ordering can change outcomes. Parallel execution must handle conflicts that sequential execution avoids by construction. Information from outside the agreed inputs can introduce non-determinism. Resource limits can determine whether otherwise valid computation completes. Contract calls can propagate effects across components.",
         },
         {
           kind: "paragraph",
