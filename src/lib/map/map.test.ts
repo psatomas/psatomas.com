@@ -6957,7 +6957,7 @@ test("Storage & Availability's L0 exposition separates storing data from making 
     ],
   );
   const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
-  for (const phrase of ["On-chain storage is not free", "Replication is not an availability guarantee", "If nobody does, pruning becomes loss."]) {
+  for (const phrase of ["On-chain storage is not free", "Replication is not an availability guarantee", "it becomes unavailable only if no remaining source can provide it."]) {
     assert.ok(prose.includes(phrase), phrase);
   }
 
