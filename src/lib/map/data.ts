@@ -6633,11 +6633,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         {
           kind: "flow",
           label: "How rules turn participant actions into system state",
-          stages: [["Participants"], ["Rules"], ["Actions", "Messages"], ["State transitions"], ["System state"]],
+          stages: [["Participants"], ["Actions", "Messages"], ["Rules"], ["State transitions"], ["System state"]],
         },
         {
           kind: "paragraph",
-          text: "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, or act strategically against the protocol.",
+          text: "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, act strategically, or act against the protocol.",
         },
         {
           kind: "flow",
@@ -6657,14 +6657,18 @@ export const mapKnowledge: MapKnowledgeModel = {
           kind: "paragraph",
           text: "This is the model the rest of the MAP decomposes. Each later domain examines part of a protocol's mechanisms, participants, or environment, and the properties that follow from how they interact.",
         },
-        { kind: "heading", text: "No participant sees the whole system" },
+        {
+          kind: "terms",
+          terms: ["Rules", "Participants", "Interactions", "Assumptions", "State", "Protocol properties"],
+        },
+        { kind: "heading", text: "No participant can assume it sees the whole system" },
         {
           kind: "paragraph",
-          text: "A protocol runs across independent processes that share no memory and no clock. They learn about one another only through communication, messages take time to arrive, and any process or link may fail. No participant necessarily possesses a complete, instantaneous view of the system.",
+          text: "A protocol runs across independent processes that share no memory and no global clock. They learn about one another only through communication, messages take time to arrive, and any process or link may fail. No participant necessarily possesses a complete, instantaneous view of the system.",
         },
         {
           kind: "flow",
-          label: "Why independent participants form a distributed system, and why that creates a coordination problem",
+          label: "What makes independent participants a distributed system, and why coordinating across one is hard",
           stages: [
             ["Independent Participants"],
             ["Partial knowledge", "Communication", "Latency", "Failures"],
@@ -6674,11 +6678,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Each participant acts on its own local view. Whatever the protocol achieves collectively, it must achieve from these partial views, which is why protocol reasoning begins as a coordination problem.",
+          text: "Each participant acts on its own local view. Whatever the protocol achieves collectively, it must achieve from these partial views, which is why coordination is a central problem of protocol reasoning.",
         },
         {
           kind: "paragraph",
-          text: "How long messages may take, and which failures may occur, are assumptions the protocol must state rather than facts it can observe. A fault model makes those assumptions explicit, and every guarantee the protocol offers is relative to it.",
+          text: "How long messages may take, and which failures may occur, are assumptions the protocol must state rather than facts it can reliably observe. Timing and fault models make those assumptions explicit, and every guarantee the protocol offers is relative to them.",
         },
         {
           kind: "terms",
@@ -6700,7 +6704,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Determinism is what lets independent processes arrive at the same result without trusting one another's computation. In state machine replication, many processes apply the same inputs, in the same order, to the same rules, and so maintain compatible views of a changing system state.",
+          text: "Determinism is what lets independent processes that start from the same state and apply the same inputs arrive at the same result, each by its own computation rather than by trusting another's. In state machine replication, many processes apply the same inputs, in the same order, to the same rules from the same initial state, and so maintain compatible views of a changing system state.",
         },
         {
           kind: "flow",
@@ -6718,11 +6722,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Trust and coordination are redistributed, not removed" },
         {
           kind: "paragraph",
-          text: "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable.",
+          text: "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable under their own assumptions.",
         },
         {
           kind: "paragraph",
-          text: "Every protocol rests on trust assumptions: about which parties behave correctly, which components report truthfully, and which claims are accepted without being checked. A trust boundary marks where the protocol stops verifying and starts assuming. Trust minimization moves that boundary by making claims verifiable; trust distribution spreads what remains across many parties, so that no single trusted party is decisive.",
+          text: "Every protocol rests on trust assumptions: about which parties behave correctly, which components report truthfully, and which claims are accepted without being checked. A trust boundary marks where the protocol stops verifying and starts assuming. Trust minimization moves that boundary by making claims verifiable; trust distribution spreads what remains across many parties, so that no single party is decisive, as long as the assumed bound on faulty or colluding parties holds.",
         },
         {
           kind: "terms",
@@ -6741,7 +6745,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "How participants coordinate depends on the information they hold and how it moves between them. Some cooperate toward a shared outcome; others compete under rules that turn individually rational choices into a collective result. A coordination model is the protocol's account of how independent choices combine into collective action.",
+          text: "How participants coordinate depends on the information they hold and how it moves between them. Participants may cooperate toward a shared outcome, compete under rules designed to turn individually rational choices into a collective result, or do both. A coordination model is the protocol's account of how independent choices combine into collective action; agreement through consensus is one such model, not the only one.",
         },
         {
           kind: "terms",
@@ -6761,19 +6765,19 @@ export const mapKnowledge: MapKnowledgeModel = {
           label: "How departures from the expected environment put a protocol under stress",
           stages: [
             ["Expected Environment"],
-            ["Latency", "Failure", "Faults", "Byzantine behavior", "Strategic behavior"],
+            ["Latency", "Failures", "Byzantine behavior", "Strategic behavior"],
             ["Protocol under stress"],
             ["Which properties still hold?"],
           ],
         },
         {
           kind: "paragraph",
-          text: "These departures are different kinds of problem. An ordinary failure is a process that stops or a message that is lost. A fault assumption bounds how many participants may fail, and in which ways. Byzantine behavior drops any assumption about how a faulty participant acts: it may lie, equivocate, or tell different participants different things. Strategic behavior is deliberate: participants follow the rules while doing so serves them, and deviate when deviation pays.",
+          text: "These departures are different kinds of problem. An ordinary failure is a process that stops or a message that is lost. A fault assumption bounds how many participants may fail, and in which ways. Byzantine behavior drops any assumption about how a faulty participant acts, whether through bugs, corruption, or malice: it may lie, equivocate, or tell different participants different things. Strategic behavior is deliberate: participants follow the rules while doing so serves them, and deviate when deviation pays. The categories overlap. A crash is a special case of Byzantine behavior, and strategic deviation can be treated as Byzantine; what differs is what the protocol assumes about each.",
         },
         { kind: "distinction", left: "Failure", right: "Byzantine behavior", further: ["Strategic behavior"] },
         {
           kind: "paragraph",
-          text: "An adversary is a participant, or group of participants, acting against the protocol's intended outcome. A threat model states what the adversary can observe, control, and want. Within it, censorship, which excludes particular actions or participants, and collusion, in which several participants deviate together, are not exceptional cases but part of the environment the protocol is designed for.",
+          text: "An adversary is a participant, group of participants, or outside party acting against the protocol's intended outcome. A threat model states what the adversary can observe, control, and want. Within it, censorship, which excludes particular actions or participants, and collusion, in which several participants coordinate against the protocol or other participants, are not exceptional cases but part of the environment the protocol is designed for.",
         },
         {
           kind: "terms",
@@ -6802,7 +6806,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The other properties refine these questions within the system model. Finality is a safety commitment that accepted results will not be reversed. Availability and censorship resistance are liveness commitments: the system keeps responding, and valid actions from any participant are eventually included. Consistency constrains what different participants may observe of the same state. Fault tolerance states how many failures, and of which kind, the other properties survive.",
+          text: "Several other properties can be read through these questions within the system model. Finality is largely a safety commitment: once a result is final, the protocol treats it as not to be reversed under its assumptions. Availability and censorship resistance are largely liveness commitments: the system and the data it depends on remain obtainable when needed, and valid actions from any participant are eventually included. Consistency constrains what different participants may observe of the same state. Fault tolerance states how many failures, and of which kind, the other properties survive.",
         },
         {
           kind: "paragraph",
@@ -6819,6 +6823,10 @@ export const mapKnowledge: MapKnowledgeModel = {
             "Fault tolerance",
             "Censorship resistance",
           ],
+        },
+        {
+          kind: "paragraph",
+          text: "These recur as tensions, not opposites: each pair names forces a design must balance, and many designs achieve some of both.",
         },
         {
           kind: "tensions",
