@@ -1,6 +1,4 @@
-import { buildMapExplorerView } from "@/components/map/explorer-model";
-import { RecursiveMapExplorer } from "@/components/map/recursive-explorer";
-import { mapResolver } from "@/lib/map";
+import { MapExplorer } from "@/components/map/map-explorer";
 import { staticSocial } from "@/lib/social/content";
 import { buildSocialMetadata } from "@/lib/social/metadata";
 
@@ -11,15 +9,6 @@ export const dynamic = "force-dynamic";
 
 // Canonical identity is always /map; the context query never becomes canonical.
 export const metadata = buildSocialMetadata(staticSocial.map);
-
-// Keep canonical MAP data and resolution server-side. The client receives only
-// this route's serializable placement taxonomy, not graph/content/path records
-// or the raw knowledge model. The taxonomy is immutable, so it is built once per
-// isolate rather than on every request.
-const explorerView = buildMapExplorerView(
-  mapResolver,
-  mapResolver.getRootPlacements().map((placement) => placement.id),
-);
 
 export default function MapPage() {
   return (
@@ -36,7 +25,10 @@ export default function MapPage() {
         </p>
       </header>
 
-      <RecursiveMapExplorer view={explorerView} />
+      {/* The explorer carries its own static taxonomy view (taxonomy only, never
+          the raw knowledge model), so the page passes nothing and no response
+          re-serializes the tree. */}
+      <MapExplorer />
     </main>
   );
 }

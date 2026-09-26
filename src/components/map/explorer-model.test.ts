@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { mapKnowledge, createMapResolver } from "../../lib/map/index.ts";
 import type { MapKnowledgeModel } from "../../lib/map/index.ts";
@@ -450,6 +451,19 @@ const POPULATED_L0 = {
     "autonomous-science-systems",
   ],
 } as const;
+
+test("the static explorer view is exactly the ontology's canonical taxonomy view, and taxonomy only", () => {
+  // /map ships this generated file instead of rebuilding and serializing the
+  // view per request; regenerate it with `npm run map:generate`.
+  const text = readFileSync(new URL("./explorer-view.generated.json", import.meta.url), "utf8");
+  assert.deepEqual(JSON.parse(text), JSON.parse(JSON.stringify(view)), "explorer-view.generated.json is stale: run npm run map:generate");
+  // Only placement taxonomy crosses to the client: no exposition text or graph records.
+  for (const content of mapKnowledge.content) assert.ok(!text.includes(content.definition), `no exposition of ${content.conceptId}`);
+  const keys = new Set<string>();
+  JSON.parse(text, function (key, value) { if (!Array.isArray(this)) keys.add(key); return value; });
+  keys.delete("");
+  assert.deepEqual([...keys].sort(), ["children", "conceptId", "hasContent", "label", "ordinal", "placementId", "roots"]);
+});
 
 test("explorer resolves the 27 ordered L0 roots and their placement children", () => {
   assert.equal(view.roots.length, 27);
