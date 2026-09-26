@@ -6393,9 +6393,9 @@ test("Computation & Execution's L0 exposition follows the authored sequence", ()
   assert.ok(content.definition.startsWith("Protocols define what may happen."));
   const body = content.body ?? [];
   assert.deepEqual(body.map((block) => block.kind), [
-    "paragraph", "flow", "paragraph", "terms", "paragraph", "flow", "tensions", "paragraph",
-    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
-    "heading", "paragraph", "paragraph", "paragraph", "flow", "paragraph", "terms",
+    "paragraph", "flow", "paragraph", "paragraph", "flow", "tensions", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "paragraph", "terms", "paragraph", "flow", "paragraph", "paragraph", "terms",
     "heading", "paragraph", "paragraph", "flow", "paragraph", "paragraph", "terms",
     "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
     "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
@@ -6415,12 +6415,19 @@ test("Computation & Execution's L0 exposition follows the authored sequence", ()
   const flows = body.flatMap((block) => (block.kind === "flow" ? [block.stages] : []));
   assert.deepEqual(flows, [
     [["Inputs"], ["Transactions"], ["Validation"], ["Ordering"], ["Execution"], ["State Transition"], ["New System State"]],
-    [["Execution Models"], ["Sequential", "Parallel", "Speculative"], ["Execution Result"]],
-    [["Transaction"], ["Structure"], ["Validation"], ["Ordering"], ["Execution"], [["Success", "State changes"], ["Reversion", "Effects discarded"]]],
+    // Execution models vary along dimensions that combine, not as exclusive siblings.
+    [["Execution Models"], [["Scheduling", "Sequential or parallel"], ["Handling uncertainty", "Conservative, optimistic, or speculative"]], ["Execution Result"]],
+    [["Transaction"], ["Structure"], ["Validation"], ["Ordering"], ["Execution"], [["Success", "State changes"], ["Reversion", "State changes rolled back"]]],
     [["Execution Environment"], ["Inputs", "State", "Context"], ["Smart Contract"], ["Computation", "Calls"], ["Effects"]],
-    [["Computation"], [["On-chain"], ["Off-chain", "Computation", "Result / Commitment", "Proof / Evidence"]], ["Verification"], ["Accepted Result"]],
-    [["Off-Chain Computation"], [["Trusted execution", "Trust the execution environment"], ["Untrusted execution", "Verify the result", "On-Chain Verification"]]],
-    [["Execution"], ["Computation", "State access", "Other work"], ["Metering"], ["Gas", "Resource Limits"], ["Execution Cost"], ["Bounded Execution"], ["DoS Resistance"]],
+    [["Computation"], [["On-chain", "Protocol execution"], ["Off-chain", "Result / Commitment", "Proof / Evidence"]], ["Verification"], ["Accepted Result"]],
+    [["Off-Chain Computation"], [["Trusted execution", "Trust the executor or its environment"], ["Untrusted execution", "Verify the result", "On-Chain Verification"]]],
+    // DoS resistance is something resource accounting contributes to, not the end of a causal chain.
+    [
+      ["Execution"],
+      ["Computation", "State access", "Other work"],
+      ["Resource Accounting"],
+      [["Metering", "Gas / Resource Units", "Execution Cost + Resource Limits", "Bounded Execution"], ["Contributes to DoS Resistance"]],
+    ],
   ]);
   assert.deepEqual(body.find((block) => block.kind === "tensions"), {
     kind: "tensions",
@@ -6433,13 +6440,20 @@ test("Computation & Execution's L0 exposition follows the authored sequence", ()
     right: "Correct transaction semantics",
     further: ["Correct state transition", "Correct system behavior"],
   });
-  // The vocabulary strips close each passage; the last names the domain's L1 topics.
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
   const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
-  assert.equal(strips.length, 7);
-  assert.deepEqual(strips.at(-1), resolver.getChildren("computation-execution").map((placement) => resolver.getConcept(placement.conceptId)?.title));
+  const l1 = resolver.getChildren("computation-execution").map((placement) => placement.id);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
   // Explanatory vocabulary is text, not new ontology: the 02 tree is unchanged.
   assert.equal(resolver.getChildren("computation-execution").length, 7);
-  assert.ok(!mapKnowledge.concepts.some((concept) => concept.title === "Accepted Result" || concept.title === "Bounded Execution"));
+  assert.ok(!mapKnowledge.concepts.some((concept) => ["Accepted Result", "Bounded Execution", "Contributes to DoS Resistance", "Handling uncertainty", "Protocol execution"].includes(concept.title)));
   // No markup or styling in the text values, and the model still validates.
   const strings: string[] = [];
   JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
