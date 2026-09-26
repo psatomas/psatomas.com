@@ -7391,6 +7391,323 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "consensus-ordering-content",
+      conceptId: "consensus-ordering",
+      definition:
+        "Participants in a distributed system receive actions at different times and in different orders. Consensus & Ordering determines which order counts, which history to follow, and when an outcome can be relied upon.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Foundations established that no participant has a complete, instantaneous view of the system. Transactions reach participants over different paths and with different delays, so valid actions can be observed in different orders. Communication alone does not produce a common order.",
+        },
+        {
+          kind: "flow",
+          label: "How differently observed transactions become one ordered history",
+          stages: [
+            ["Submitted Transactions"],
+            ["Participant A's order", "Participant B's order", "Participant C's order"],
+            ["Ordering Mechanism"],
+            ["Ordered History"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Order matters because a deterministic state machine is deterministic only for a given sequence of inputs: the same transactions applied in different orders can produce different states. Not every system needs a single total order of everything; some establish only the ordering required for the state or operations they coordinate. But wherever order affects outcomes, participants need a shared answer.",
+        },
+        {
+          kind: "paragraph",
+          text: "That answer sits between submission and execution. Ordering decides the sequence of inputs; execution decides what each input does; state transitions record the result. The mechanisms that produce the order, and those that decide when it can be relied upon, are the subject of this domain.",
+        },
+        { kind: "heading", text: "Pending is not decided" },
+        {
+          kind: "paragraph",
+          text: "Before any order is agreed, transactions wait. A mempool is a participant's local set of pending transactions: admitted under that participant's mempool policies, propagated to peers, and prioritized for inclusion, often by fee. Because each participant maintains its own, mempools differ, and mempool synchronization narrows that difference without eliminating it.",
+        },
+        {
+          kind: "flow",
+          label: "How a transaction moves from submission to a proposal",
+          stages: [
+            ["Transaction"],
+            ["Transaction Admission"],
+            ["Transaction Propagation"],
+            ["Pending Transactions"],
+            ["Selection / Sequencing"],
+            ["Proposal"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Nothing in a mempool is canonical. A pending transaction may be replaced, dropped, or never included, and two participants may hold different pending sets without either being wrong. Private mempools change who sees a transaction before inclusion: they are an alternative admission and propagation path, not a different consensus mechanism.",
+        },
+        { kind: "distinction", left: "Mempool", right: "Consensus" },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction admission",
+            "Transaction propagation",
+            "Transaction prioritization",
+            "Mempool policies",
+            "Private mempools",
+            "Mempool synchronization",
+          ],
+        },
+        { kind: "heading", text: "Agreement depends on assumptions" },
+        {
+          kind: "paragraph",
+          text: "Consensus is how participants establish agreement sufficient for the system to progress consistently, under the protocol's assumptions. Its guarantee is always conditional: on who participates, on the rules they follow, on how many may be faulty and in what way, and on what is assumed about message delays.",
+        },
+        {
+          kind: "flow",
+          label: "What agreement depends on",
+          stages: [
+            ["Consensus Model"],
+            ["Participants", "Consensus Rules", "Participation Conditions", "Fault Assumptions"],
+            ["Agreement"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Consensus models differ in how agreement is reached. Some require explicit quorums: sets of participants large enough that any two of them overlap in at least one participant assumed to be honest. Others let agreement emerge gradually as participants build on the same history. A claim that a protocol reaches consensus is incomplete without the fault assumptions under which it does.",
+        },
+        {
+          kind: "terms",
+          terms: ["Consensus models", "Consensus participants", "Consensus rules", "Agreement", "Quorums", "Fault assumptions"],
+        },
+        {
+          kind: "paragraph",
+          text: "Validators are the participants that perform consensus duties. Validator selection decides who belongs to the validator set, for example by stake or by permission, and duties are assigned within it. A proposer puts forward a candidate for the next step of history; attesters vote on what they observe. These are roles, not necessarily fixed classes: the same validator may propose at one moment and attest at another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Validator incentives reward duties performed and penalize some deviations. They shape behavior, but they do not replace the consensus rules, and their design belongs to economics.",
+        },
+        {
+          kind: "terms",
+          terms: ["Validator selection", "Validator sets", "Proposers", "Attesters", "Validator duties", "Validator incentives"],
+        },
+        { kind: "heading", text: "Competing histories need a rule for which to follow" },
+        {
+          kind: "paragraph",
+          text: "Even under agreed rules, participants can observe competing candidate histories: two proposals for the same position, or a branch that arrives late. Fork choice rules determine which one a participant should currently treat as the head.",
+        },
+        {
+          kind: "flow",
+          label: "How a fork choice rule selects a head among competing forks",
+          stages: [["Shared History"], ["Fork A", "Fork B"], ["Fork Choice Rule"], ["Selected Head"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Chain selection and head selection are what the rule produces: which branch counts, and which block at its tip is current. When new information changes that selection, the participant reorganizes, abandoning the tip of one branch for another. A reorganization is the fork choice rule responding to new information. It does not by itself mean consensus has failed, and competing forks do not by themselves mean participants permanently disagree.",
+        },
+        { kind: "distinction", left: "Reorganization", right: "Consensus failure" },
+        {
+          kind: "paragraph",
+          text: "What fork choice cannot say is that a selected head will stay selected. That is a separate question.",
+        },
+        {
+          kind: "terms",
+          terms: ["Fork choice rules", "Chain selection", "Competing forks", "Reorganizations", "Head selection"],
+        },
+        { kind: "heading", text: "Finality is when an outcome can be relied upon" },
+        {
+          kind: "paragraph",
+          text: "Finality is the point at which a protocol treats a result as no longer practically reversible. Finality turns agreement about ordering and execution into dependable settlement. Systems need a clear boundary for when participants can rely on an outcome.",
+        },
+        {
+          kind: "flow",
+          label: "Two routes from a selected history to dependable reliance",
+          stages: [
+            ["Selected History"],
+            [
+              ["Probabilistic Finality", "Reversal grows unlikely"],
+              ["Deterministic Finality", "Justification", "Finalization"],
+            ],
+            ["Dependable Reliance"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The two are not faster and slower versions of the same mechanism. Under probabilistic finality, a result becomes less likely to be reversed as more history is built on it, but no point makes reversal impossible; how much history is enough is a judgment about risk. Under deterministic finality, the protocol makes an explicit decision, and reversing it would require violating the protocol's fault assumptions, for example by more participants misbehaving than it tolerates.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some protocols combine the two: a fork choice rule keeps history growing, and a finality gadget periodically finalizes checkpoints within it. In some designs a checkpoint is first justified by sufficient votes, then finalized once a later checkpoint builds on it. These are points in consensus history, and what they guarantee depends on the protocol; a state checkpoint in the sense of State & Data is not automatically final.",
+        },
+        { kind: "distinction", left: "Fork choice", right: "Finality" },
+        {
+          kind: "paragraph",
+          text: "Fork choice answers which history to follow now. Finality answers when an outcome can be treated as no longer practically reversible, under the protocol's assumptions.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Probabilistic finality",
+            "Deterministic finality",
+            "Finality gadgets",
+            "Checkpoints",
+            "Justification",
+            "Finalization",
+          ],
+        },
+        { kind: "heading", text: "Sequencing decides order, not everything else" },
+        {
+          kind: "paragraph",
+          text: "Transaction sequencing fixes an order according to sequencing rules, such as arrival time, fee priority, or other protocol-defined criteria. In some systems it happens as part of block proposal; in others a distinct sequencer orders transactions before they are executed or agreed on. Either way, it answers only one of several questions.",
+        },
+        {
+          kind: "flow",
+          label: "Four questions about the same candidate actions",
+          stages: [
+            ["Candidate Actions"],
+            [
+              ["Sequencing", "What order?"],
+              ["Consensus", "What do participants agree on?"],
+              ["Execution", "What does the ordered input do?"],
+              ["Finality", "When can the result be relied upon?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Sequencing responsibility can be arranged in different ways. Centralized sequencing gives it to one operator: simple and low-latency, at the cost of trusting that operator for ordering and inclusion. Decentralized sequencing spreads it across many participants, usually with an agreement process of its own. Shared sequencing lets several systems use a common sequencer, which can then order across them. Sequencer rotation changes who holds the responsibility over time. None of these is universally better; each places trust and liveness assumptions somewhere different.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction sequencing",
+            "Sequencing rules",
+            "Centralized sequencing",
+            "Decentralized sequencing",
+            "Shared sequencing",
+            "Sequencer rotation",
+          ],
+        },
+        { kind: "heading", text: "Building a block is separate from proposing it" },
+        {
+          kind: "paragraph",
+          text: "Block building turns pending transactions into a candidate block: selecting which transactions to include, ordering them, and constructing the block. A block proposal puts that candidate forward, and block validation checks it against the protocol's rules. Block production is the protocol's overall process for producing blocks. Where each step happens, and in what order, varies between architectures.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Block construction",
+            "Transaction selection",
+            "Transaction ordering",
+            "Block proposals",
+            "Block validation",
+            "Block production",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Proposer-builder separation divides that work. Builders construct candidate blocks and offer them with bids; the proposer selects one to propose. Block construction can then specialize without changing who holds the proposer's consensus role. Where builder and proposer do not trust each other, an intermediary such as a relay may carry bids and blocks between them, though not every design uses one.",
+        },
+        {
+          kind: "flow",
+          label: "How proposer-builder separation divides building from proposing",
+          stages: [
+            ["Pending Transactions"],
+            ["Builder A", "Builder B", "Builder C"],
+            ["Block Bids"],
+            ["Relay, where used"],
+            ["Proposer"],
+            ["Block Proposal"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Builders compete to be selected, forming a builder market. How that market values ordering belongs to MEV & Execution Markets.",
+        },
+        {
+          kind: "terms",
+          terms: ["Proposers", "Builders", "Builder markets", "Block bids", "Relays", "Builder selection"],
+        },
+        { kind: "heading", text: "Assurance can arrive before finality" },
+        {
+          kind: "paragraph",
+          text: "Finality can take time, and some users need assurance sooner. A preconfirmation is a commitment, made before the protocol's normal settlement, about what will happen to a transaction. An inclusion preconfirmation commits that the transaction will be included; an execution preconfirmation commits to its outcome, a stronger promise that also depends on the state it will execute against.",
+        },
+        {
+          kind: "flow",
+          label: "How a preconfirmation gives earlier assurance alongside the protocol's own path",
+          stages: [
+            ["Transaction"],
+            ["Preconfirmation Provider"],
+            ["Preconfirmation Commitment"],
+            ["Earlier Assurance", ["Protocol Ordering", "Execution", "Finality"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The strength of that assurance depends on the provider and on how the commitment is enforced: whether the provider can be penalized for breaking it, and by whom. A preconfirmation guarantee is only as strong as that enforcement, and not every preconfirmation promises execution. Until finality, a preconfirmed outcome remains a provider's commitment, not a decision of the protocol.",
+        },
+        { kind: "distinction", left: "Preconfirmation", right: "Finality" },
+        {
+          kind: "terms",
+          terms: [
+            "Execution preconfirmations",
+            "Inclusion preconfirmations",
+            "Preconfirmation commitments",
+            "Preconfirmation providers",
+            "Preconfirmation guarantees",
+          ],
+        },
+        { kind: "heading", text: "Valid is not the same as included" },
+        {
+          kind: "paragraph",
+          text: "Foundations lists censorship resistance among protocol properties: valid actions from any participant are eventually included. Here that property meets the machinery above. Whoever selects, orders, or builds can also exclude, and an ordinary inclusion path offers no protection against it.",
+        },
+        {
+          kind: "flow",
+          label: "What happens when a valid transaction is excluded",
+          stages: [
+            ["Transaction Submitted"],
+            ["Included", ["Excluded", "Censorship Detection", "Inclusion Mechanism, where available", "Censorship Recovery"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols approach this differently. Inclusion lists let a set of participants require that particular transactions appear, constraining a proposer or builder that would omit them. Forced inclusion lets a user reach the ordered history through another path when the usual one is uncooperative, often after a delay. Not every system has either. Inclusion guarantees describe the resulting promise: how long a valid transaction can be delayed, and under which assumptions.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction inclusion",
+            "Inclusion lists",
+            "Forced inclusion",
+            "Censorship detection",
+            "Censorship recovery",
+            "Inclusion guarantees",
+          ],
+        },
+        {
+          kind: "distinction",
+          left: "Consensus",
+          right: "Ordering",
+          further: ["Block building", "Fork choice", "Finality"],
+        },
+        {
+          kind: "paragraph",
+          text: "These mechanisms interact, but each answers a different question. Consensus & Ordering therefore sits between submission and execution: it turns transactions that participants observed differently into a history they can follow, and determines when that history's outcomes can be relied upon.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Consensus",
+            "Validators",
+            "Fork Choice",
+            "Finality",
+            "Mempools",
+            "Sequencing",
+            "Block Building",
+            "Proposer-Builder Separation",
+            "Preconfirmations",
+            "Censorship Resistance",
+          ],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",
