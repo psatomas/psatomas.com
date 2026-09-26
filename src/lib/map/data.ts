@@ -6677,6 +6677,269 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "computation-execution-content",
+      conceptId: "computation-execution",
+      definition:
+        "Protocols define what may happen. Execution determines what actually happens when those rules are applied to inputs and state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Computation & Execution is concerned with how operations are represented, validated, ordered, evaluated, metered, and translated into state transitions. The same protocol rules can produce very different execution systems depending on the execution model, transaction semantics, runtime environment, and resource constraints.",
+        },
+        {
+          kind: "flow",
+          label: "How submitted inputs become new system state",
+          stages: [
+            ["Inputs"],
+            ["Transactions"],
+            ["Validation"],
+            ["Ordering"],
+            ["Execution"],
+            ["State Transition"],
+            ["New System State"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Execution is therefore not a single operation. It is a pipeline connecting submitted actions to changes in protocol state.",
+        },
+        {
+          kind: "terms",
+          terms: ["Transactions", "Validation", "Ordering", "Execution", "State transitions", "System state"],
+        },
+        {
+          kind: "paragraph",
+          text: "Different systems make different choices about how computation proceeds. Execution may be sequential or parallel, deterministic or dependent on external conditions, conservative or speculative.",
+        },
+        {
+          kind: "flow",
+          label: "How execution models lead to an execution result",
+          stages: [["Execution Models"], ["Sequential", "Parallel", "Speculative"], ["Execution Result"]],
+        },
+        { kind: "tensions", label: "Execution determinism", pairs: [["Deterministic", "Non-Deterministic"]] },
+        {
+          kind: "paragraph",
+          text: "These choices affect more than performance. They determine which operations may execute together, what must be known before execution, how conflicts are detected, and whether independent participants can reproduce the same result.",
+        },
+        { kind: "heading", text: "Transactions connect intent to state" },
+        {
+          kind: "paragraph",
+          text: "A transaction packages an action for execution. Before it can affect the system, it passes through a lifecycle in which its structure and validity are interpreted, its position relative to other transactions is established, and its effects are computed.",
+        },
+        {
+          kind: "flow",
+          label: "The transaction lifecycle",
+          stages: [
+            ["Transaction"],
+            ["Structure"],
+            ["Validation"],
+            ["Ordering"],
+            ["Execution"],
+            [["Success", "State changes"], ["Reversion", "Effects discarded"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Atomicity defines the boundary of those effects: either the transaction's required state changes occur as one unit, or they do not.",
+        },
+        {
+          kind: "paragraph",
+          text: "This makes transaction semantics part of protocol behavior rather than merely an encoding format.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction lifecycle",
+            "Structure",
+            "Ordering",
+            "Validation",
+            "Execution",
+            "Atomicity",
+            "Reversion",
+          ],
+        },
+        { kind: "heading", text: "Execution requires an environment" },
+        {
+          kind: "paragraph",
+          text: "Rules do not execute themselves. A runtime interprets operations according to a defined execution environment.",
+        },
+        {
+          kind: "paragraph",
+          text: "Virtual machines such as the EVM, WASM-based runtimes, and zkVMs provide different models for representing and evaluating computation.",
+        },
+        {
+          kind: "paragraph",
+          text: "Smart contracts execute within these environments while interacting with persistent state and other contracts.",
+        },
+        {
+          kind: "flow",
+          label: "How a smart contract executes within its environment",
+          stages: [
+            ["Execution Environment"],
+            ["Inputs", "State", "Context"],
+            ["Smart Contract"],
+            ["Computation", "Calls"],
+            ["Effects"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A contract call may trigger other calls, read or modify state, consume resources, succeed, or revert. Local contract execution can therefore become part of a much larger execution graph.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Contract state",
+            "Contract execution",
+            "Contract calls",
+            "Message calls",
+            "Deployment",
+            "Execution context",
+            "Contract lifecycle",
+          ],
+        },
+        { kind: "heading", text: "Computation and verification are different responsibilities" },
+        {
+          kind: "paragraph",
+          text: "A protocol does not always need to perform computation where the result is consumed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Computation may happen elsewhere while the protocol verifies evidence about the result.",
+        },
+        {
+          kind: "flow",
+          label: "Where computation happens and how its result is accepted",
+          stages: [
+            ["Computation"],
+            [["On-chain"], ["Off-chain", "Computation", "Result / Commitment", "Proof / Evidence"]],
+            ["Verification"],
+            ["Accepted Result"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "This separation creates a fundamental design space: perform the work versus verify that the work was performed correctly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Execution traces expose how computation progressed. Commitments bind to computation or results. Proof systems can make claims about execution independently verifiable without repeating the entire computation in the same environment.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Computation integrity",
+            "Execution traces",
+            "Computation commitments",
+            "Computation proofs",
+            "Verification",
+          ],
+        },
+        { kind: "heading", text: "Off-chain does not mean outside the protocol" },
+        {
+          kind: "paragraph",
+          text: "Moving computation off-chain changes where work happens, but the protocol still needs a model for deciding what to trust.",
+        },
+        {
+          kind: "flow",
+          label: "How off-chain results become acceptable to the protocol",
+          stages: [
+            ["Off-Chain Computation"],
+            [
+              ["Trusted execution", "Trust the execution environment"],
+              ["Untrusted execution", "Verify the result", "On-Chain Verification"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Off-chain workers can execute expensive, asynchronous, private, or externally dependent operations. The important question is how their outputs become acceptable to the protocol.",
+        },
+        {
+          kind: "paragraph",
+          text: "The trust boundary may remain around the worker, move to a trusted execution environment, or be reduced through verification.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Off-chain execution",
+            "On-chain verification",
+            "Trusted execution",
+            "Untrusted execution",
+            "Off-chain workers",
+          ],
+        },
+        { kind: "heading", text: "Computation is finite because resources are finite" },
+        {
+          kind: "paragraph",
+          text: "Execution consumes resources. Without accounting and limits, participants could impose unbounded computational work on everyone responsible for processing protocol state.",
+        },
+        {
+          kind: "flow",
+          label: "How resource accounting bounds execution",
+          stages: [
+            ["Execution"],
+            ["Computation", "State access", "Other work"],
+            ["Metering"],
+            ["Gas", "Resource Limits"],
+            ["Execution Cost"],
+            ["Bounded Execution"],
+            ["DoS Resistance"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Gas and other metering mechanisms turn resource consumption into quantities the protocol can account for and constrain. Resource limits bound individual execution, while fee accounting determines how costs are attributed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Resource accounting is therefore simultaneously an execution mechanism, an economic mechanism, and a security boundary.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Gas",
+            "Execution cost",
+            "Metering",
+            "Resource limits",
+            "Fee accounting",
+            "Denial-of-service resistance",
+          ],
+        },
+        { kind: "heading", text: "Correct execution is not enough" },
+        {
+          kind: "paragraph",
+          text: "An execution engine can evaluate every instruction correctly while the surrounding system still produces undesirable behavior.",
+        },
+        {
+          kind: "distinction",
+          left: "Correct instruction execution",
+          right: "Correct transaction semantics",
+          further: ["Correct state transition", "Correct system behavior"],
+        },
+        {
+          kind: "paragraph",
+          text: "Ordering can change outcomes. Parallel execution can introduce conflicts. External information can introduce non-determinism. Resource limits can determine whether otherwise valid computation completes. Contract calls can propagate effects across components.",
+        },
+        {
+          kind: "paragraph",
+          text: "Computation & Execution therefore sits between protocol rules and protocol state: it defines how abstract actions become concrete transitions while preserving the execution properties the wider system depends on.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Execution Models",
+            "Transactions",
+            "Virtual Machines",
+            "Smart Contracts",
+            "Verifiable Computation",
+            "Off-Chain Computation",
+            "Resource Accounting",
+          ],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",

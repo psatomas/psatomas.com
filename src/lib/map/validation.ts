@@ -36,21 +36,37 @@ function contentBlockProblems(block: MapContentBlock): string[] {
   switch (block.kind) {
     case "paragraph":
       return blank(block.text) ? ["is empty"] : [];
+    case "heading":
+      return blank(block.text) ? ["is empty"] : [];
     case "flow":
       if (blank(block.label)) return ["has no label"];
       if (block.stages.length < 2) return ["must contain at least two stages"];
-      if (block.stages.some((stage) => stage.length === 0 || stage.some(blank))) return ["has an empty stage or element"];
+      if (
+        block.stages.some(
+          (stage) =>
+            stage.length === 0 ||
+            stage.some((element) => (typeof element === "string" ? blank(element) : element.length === 0 || element.some(blank))),
+        )
+      ) {
+        return ["has an empty stage or element"];
+      }
+      // A branch of several steps only exists within a parallel set.
+      if (block.stages.some((stage) => stage.length === 1 && typeof stage[0] !== "string")) {
+        return ["has a branch outside a parallel set"];
+      }
       // A multi-element stage is a parallel set reached by branching and
       // left by converging; two in a row would leave the pairing ambiguous.
       return block.stages.some((stage, index) => index > 0 && stage.length > 1 && block.stages[index - 1].length > 1)
         ? ["has consecutive parallel stages"]
         : [];
     case "distinction":
-      return blank(block.left) || blank(block.right) ? ["must name both sides"] : [];
+      return blank(block.left) || blank(block.right) || (block.further ?? []).some(blank) ? ["must name both sides"] : [];
     case "tensions":
       if (blank(block.label)) return ["has no label"];
       if (block.pairs.length === 0) return ["must contain at least one pair"];
       return block.pairs.some((pair) => pair.length !== 2 || pair.some(blank)) ? ["has an incomplete pair"] : [];
+    case "terms":
+      return block.terms.length < 2 || block.terms.some(blank) ? ["must list at least two terms"] : [];
     default:
       return [`is an unknown block kind`];
   }

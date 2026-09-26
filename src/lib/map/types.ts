@@ -73,16 +73,27 @@ export type MapRelationship = {
  */
 export type MapContentBlock =
   | { kind: "paragraph"; text: string }
+  /** A short section title within an exposition, never a template label. */
+  | { kind: "heading"; text: string }
   /**
    * A conceptual model: ordered stages, each holding one or more elements. A
    * multi-element stage is a parallel set: the stage before branches into it
    * and it converges into the stage after (never two parallel sets in a row).
+   * An element of a parallel set may be a branch of several steps.
    */
-  | { kind: "flow"; label: string; stages: readonly (readonly string[])[] }
-  /** Two notions that must not be conflated ("left ≠ right"). */
-  | { kind: "distinction"; left: string; right: string }
+  | { kind: "flow"; label: string; stages: readonly (readonly MapFlowElement[])[] }
+  /**
+   * Notions that must not be conflated ("left ≠ right"), optionally extended
+   * into a chain ("left ≠ right ≠ …further").
+   */
+  | { kind: "distinction"; left: string; right: string; further?: readonly string[] }
   /** Recurring pairs of forces that pull against each other. */
-  | { kind: "tensions"; label: string; pairs: readonly (readonly [string, string])[] };
+  | { kind: "tensions"; label: string; pairs: readonly (readonly [string, string])[] }
+  /** The vocabulary a passage introduces, as a plain strip of terms. */
+  | { kind: "terms"; terms: readonly string[] };
+
+/** One element of a flow stage: a concept, or (in a parallel set) a branch of steps. */
+export type MapFlowElement = string | readonly string[];
 
 /** Canonical educational content, owned by at most one record per concept. */
 export type MapConceptContent = {
