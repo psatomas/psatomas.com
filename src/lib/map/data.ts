@@ -7708,6 +7708,285 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "networks-infrastructure-content",
+      conceptId: "networks-infrastructure",
+      definition:
+        "A protocol defines valid transitions and how agreement is reached, but participants still need to find one another, exchange messages, keep local views, expose data, and act. Networks & Infrastructure is the machinery around the rules that makes a protocol reachable and operable.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "That machinery has layers. A peer-to-peer network connects protocol participants and carries their messages. Nodes turn those messages into local views of the protocol. Around the nodes sit services that expose those views to software, derive queryable data from them, watch them, and act on them. Not all of this is part of consensus, and each layer has its own trust, latency, availability, and correctness properties.",
+        },
+        {
+          kind: "flow",
+          label: "The layers between protocol participants and the infrastructure that acts on the protocol",
+          stages: [
+            ["Protocol Participants"],
+            ["P2P Network"],
+            ["Nodes' Protocol Views"],
+            ["RPC", "Indexers", "Monitoring", ["Operational Actors", "Automation"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The layers are easy to blur because most users meet a protocol through the outermost ones. This page moves outward from the communication substrate: to the nodes that participate in it, then to the infrastructure that provides access, performs operational work, observes, and automates.",
+        },
+        { kind: "heading", text: "The network is a graph, not a broadcast bus" },
+        {
+          kind: "paragraph",
+          text: "Participants do not normally connect to every other participant. Peer discovery finds candidates, peer connections link a node to a limited set of them, and peer management decides which connections to keep, replace, or drop. The result is a network topology: a graph through which everything else must travel.",
+        },
+        {
+          kind: "flow",
+          label: "How a message spreads hop by hop across peer connections",
+          stages: [["Message"], ["Node A"], [["Node B", "Node D"], ["Node C", "Node E"]]],
+        },
+        {
+          kind: "paragraph",
+          text: "Messages cross that graph hop by hop. In gossip propagation, each node passes what it learns to some of its peers, which pass it on in turn; flooding sends it to every neighbor, spending bandwidth for speed and redundancy. Either way, dissemination is not an instantaneous broadcast. Each hop adds propagation latency, and nodes validate messages before relaying them and suppress duplicates they have already seen, so that invalid or repeated messages do not multiply.",
+        },
+        {
+          kind: "flow",
+          label: "Why nodes temporarily know different things",
+          stages: [
+            ["Propagation"],
+            ["Different paths", "Different latency", "Message validation", "Duplicate suppression"],
+            ["Different arrival times"],
+            ["Temporary differences in local knowledge"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "At any moment, then, nodes can know different things: the partial knowledge of Foundations, made concrete. Usually the differences close as messages arrive. A network partition is the case where they cannot: the graph divides, and each side's information evolves separately until connectivity returns.",
+        },
+        { kind: "distinction", left: "Propagation", right: "Agreement" },
+        {
+          kind: "paragraph",
+          text: "Propagation decides what information reaches whom, and when. What participants agree on is decided by consensus, which depends on propagation but is not produced by it.",
+        },
+        {
+          kind: "terms",
+          terms: ["Peer discovery", "Peer connections", "Network topology", "Peer management", "Gossip", "Network partitions"],
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Message dissemination",
+            "Gossip propagation",
+            "Propagation latency",
+            "Message validation",
+            "Duplicate suppression",
+            "Flooding",
+          ],
+        },
+        { kind: "heading", text: "A node is a view of the protocol" },
+        {
+          kind: "paragraph",
+          text: "A node is a participant in protocol infrastructure that maintains its own view of the protocol from the messages it receives. Nodes differ in how much they keep, how much they verify, and which duties they perform.",
+        },
+        {
+          kind: "flow",
+          label: "How kinds of node differ in what they keep, verify, and do",
+          stages: [
+            ["Nodes"],
+            [
+              ["Full Node", "Validates and keeps current state"],
+              ["Light Node", "Verifies selected data against commitments"],
+              ["Archive Node", "Retains historical state"],
+              ["Validator Node", "Adds consensus duties"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A full node checks what it receives against the protocol's rules and maintains current state. A light node keeps far less, verifying particular data against commitments instead of processing everything, which makes it cheaper to run and more dependent on the nodes that serve it. An archive node retains historical state, not only the current one. A validator node performs consensus duties in addition to following the protocol. Node synchronization is how any of them establishes its view in the first place, by the strategies described under State & Data.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bootnodes help new nodes find their first peers. They are discovery infrastructure: a node that joins through a bootnode still checks what it receives by its own rules, and the bootnode does not decide what is true.",
+        },
+        { kind: "distinction", left: "Node role", right: "Trust authority" },
+        {
+          kind: "paragraph",
+          text: "A node can provide access to information without becoming the authority on what the protocol says. Its answers are only as trustworthy as the verification behind them, whether its own or the requester's.",
+        },
+        {
+          kind: "terms",
+          terms: ["Full nodes", "Light nodes", "Archive nodes", "Validator nodes", "Bootnodes", "Node synchronization"],
+        },
+        { kind: "heading", text: "Access is not the protocol" },
+        {
+          kind: "paragraph",
+          text: "Most users and applications never connect to the peer-to-peer network. They reach the protocol through interfaces and services built around nodes, usually without seeing them.",
+        },
+        {
+          kind: "flow",
+          label: "Two paths by which an application reaches the protocol, both through intermediaries",
+          stages: [
+            ["Application"],
+            [
+              ["RPC Endpoint", "Request Routing", "Node"],
+              ["Query Service", "Derived Index", "Indexer Pipeline"],
+            ],
+            ["Protocol View"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "RPC interfaces define how software asks a node for information or submits actions to it. RPC methods are the individual operations, and RPC endpoints are the addresses at which they are served. RPC providers operate endpoints at scale, adding request routing across many nodes, availability, and rate limiting that keeps shared infrastructure usable.",
+        },
+        {
+          kind: "terms",
+          terms: ["RPC interfaces", "RPC methods", "RPC providers", "RPC endpoints", "Request routing", "Rate limiting"],
+        },
+        {
+          kind: "paragraph",
+          text: "Indexers take the other path. Chain indexers extract blocks, events, and state from nodes and run them through indexer pipelines; event indexing and state indexing organize the results around the questions applications ask, and query services answer from them. As State & Data describes, these views are derived: they do not redefine canonical state, and reorganization handling exists because a reorganization can invalidate what an index has already built.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Chain indexers",
+            "Event indexing",
+            "State indexing",
+            "Indexer pipelines",
+            "Query services",
+            "Reorganization handling",
+          ],
+        },
+        { kind: "distinction", left: "RPC provider", right: "Protocol" },
+        {
+          kind: "paragraph",
+          text: "Both paths put an intermediary between the application and the protocol. An RPC provider can be unavailable, limit a request, lag behind other nodes, or return an answer the application does not check; an indexer can be stale, or wrong after a reorganization. Neither changes what the protocol holds. Access is not authority.",
+        },
+        { kind: "heading", text: "Some infrastructure acts, not just observes" },
+        {
+          kind: "paragraph",
+          text: "The infrastructure so far carries and exposes information. Other actors use it to do things. Their roles are distinct, even when one piece of software combines them.",
+        },
+        {
+          kind: "flow",
+          label: "How relayers, keepers, and bots turn what they observe into action",
+          stages: [
+            ["Observed Information"],
+            [
+              ["Relayer", "Forwards"],
+              ["Keeper", "Evaluates a condition", "Submits"],
+              ["Bot", "Evaluates a strategy", "Acts"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A relayer moves a transaction or message on behalf of someone else. Transaction relaying submits another party's transaction; message relaying carries a message from one system to another. Relay networks spread that work across many relayers, relay policies decide what they will carry, and relay incentives pay for it. A relayer forwards; it does not decide what the action should be.",
+        },
+        {
+          kind: "terms",
+          terms: ["Transaction relaying", "Message relaying", "Relay networks", "Relay policies", "Relay incentives"],
+        },
+        {
+          kind: "paragraph",
+          text: "A keeper watches for a condition and acts when it holds. Condition monitoring observes state, trigger evaluation decides whether the condition is met, and transaction submission performs the action the protocol expects, such as a periodic update. Keeper networks distribute that responsibility, and keeper incentives compensate it: a protocol that depends on external actions depends on someone being motivated to perform them.",
+        },
+        {
+          kind: "terms",
+          terms: ["Condition monitoring", "Trigger evaluation", "Transaction submission", "Keeper networks", "Keeper incentives"],
+        },
+        {
+          kind: "paragraph",
+          text: "A bot is software that observes information and pursues a strategy of its own. Event-driven bots react to what they observe; trading, arbitrage, and liquidation bots pursue market opportunities; governance bots carry out governance actions; execution bots carry out transactions on someone's behalf. How their market behavior affects ordering belongs to MEV & Execution Markets, and a bot here need not involve AI.",
+        },
+        { kind: "distinction", left: "Observation", right: "Action" },
+        {
+          kind: "paragraph",
+          text: "Observation reads the protocol; action changes it. Once infrastructure acts, its latency, availability, and incentives affect outcomes, not only visibility.",
+        },
+        {
+          kind: "terms",
+          terms: ["Event-driven bots", "Trading bots", "Liquidation bots", "Arbitrage bots", "Governance bots", "Execution bots"],
+        },
+        { kind: "heading", text: "If infrastructure cannot be observed, it cannot be operated reliably" },
+        {
+          kind: "paragraph",
+          text: "Every layer above can fail quietly: a node falls behind, peers drop away, an RPC endpoint returns errors, an indexer stalls, a keeper stops submitting. Monitoring is how operators find out.",
+        },
+        {
+          kind: "flow",
+          label: "How signals from running infrastructure reach an operator or automation",
+          stages: [
+            ["Running Infrastructure"],
+            ["Metrics", "Logs", "Traces", "Health Checks"],
+            ["Observability"],
+            ["Detection"],
+            ["Alerting"],
+            ["Operator or Automation"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The signals are different kinds of evidence. Metrics are numeric measurements over time, such as peer count or block height. Logs record discrete events as they happen. Traces follow a single request or operation across components. Health checks ask a component directly whether it is working. Observability is not another signal but what the signals provide: the ability to reason about a system's internal behavior from what it emits. Alerting turns selected observations into notifications or actions.",
+        },
+        {
+          kind: "terms",
+          terms: ["Metrics", "Logs", "Traces", "Health checks", "Alerting", "Observability"],
+        },
+        { kind: "heading", text: "Automation closes the loop" },
+        {
+          kind: "paragraph",
+          text: "Automation turns observations, schedules, or conditions into repeatable actions. A trigger starts an action: scheduled execution runs it at set times, event-driven execution in response to an observed event, and conditional execution only when a condition holds. Automation policies bound what may be done, and automation networks spread execution across independent operators instead of one.",
+        },
+        {
+          kind: "flow",
+          label: "The automation loop: an action's result is observed again",
+          stages: [
+            ["Protocol / Infrastructure State"],
+            ["Observation"],
+            ["Trigger", "Schedule", "Condition"],
+            ["Automation Policy"],
+            ["Execution"],
+            ["New Observable State"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The loop is operational: an action changes protocol or infrastructure state, and that state is observed again. Keepers and bots are the actors; automation is the pattern they implement.",
+        },
+        { kind: "distinction", left: "Automated", right: "Autonomous" },
+        {
+          kind: "paragraph",
+          text: "An automated action follows predefined triggers, schedules, conditions, or policies. Autonomy, in which a system decides or adapts how it operates, belongs later in the MAP.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Triggers",
+            "Scheduled execution",
+            "Event-driven execution",
+            "Conditional execution",
+            "Automation policies",
+            "Automation networks",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols do not communicate, expose data, observe themselves, or act on the world by themselves. Infrastructure turns protocol rules into a reachable and operable distributed system: peer-to-peer networks move information, nodes maintain protocol views, RPC exposes node capabilities, indexers construct derived views, relayers, keepers, and bots perform operational work, monitoring makes that work observable, and automation connects observations back to actions.",
+        },
+        {
+          kind: "flow",
+          label: "From connectivity to automation",
+          stages: [["Connectivity"], ["Propagation"], ["Local Views"], ["Access"], ["Observation"], ["Action"], ["Automation"]],
+        },
+        {
+          kind: "paragraph",
+          text: "None of these layers is protocol truth or authority. Each can be slow, partial, unavailable, or wrong, and reasoning about a protocol includes reasoning about which of them it relies on.",
+        },
+        {
+          kind: "terms",
+          terms: ["P2P Networks", "Message Propagation", "Nodes", "RPC", "Indexers", "Relayers", "Keepers", "Bots", "Monitoring", "Automation"],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",

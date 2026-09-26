@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6706,6 +6706,90 @@ test("Consensus & Ordering's L0 exposition separates ordering, agreement, fork c
 
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Ordering Mechanism", "Selected Head", "Dependable Reliance", "Earlier Assurance", "Relay, where used"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Networks & Infrastructure's L0 exposition moves from connectivity to access, action, observation and automation", () => {
+  const content = resolver.getContentForConcept("networks-infrastructure")!;
+  assert.equal(content.id, "networks-infrastructure-content");
+  assert.ok(content.definition.endsWith("the machinery around the rules that makes a protocol reachable and operable."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "terms", "distinction", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "terms", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "flow", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "The network is a graph, not a broadcast bus",
+    "A node is a view of the protocol",
+    "Access is not the protocol",
+    "Some infrastructure acts, not just observes",
+    "If infrastructure cannot be observed, it cannot be operated reliably",
+    "Automation closes the loop",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Protocol Participants"], ["P2P Network"], ["Nodes' Protocol Views"], ["RPC", "Indexers", "Monitoring", ["Operational Actors", "Automation"]]],
+    [["Message"], ["Node A"], [["Node B", "Node D"], ["Node C", "Node E"]]],
+    [
+      ["Propagation"],
+      ["Different paths", "Different latency", "Message validation", "Duplicate suppression"],
+      ["Different arrival times"],
+      ["Temporary differences in local knowledge"],
+    ],
+    [
+      ["Nodes"],
+      [
+        ["Full Node", "Validates and keeps current state"],
+        ["Light Node", "Verifies selected data against commitments"],
+        ["Archive Node", "Retains historical state"],
+        ["Validator Node", "Adds consensus duties"],
+      ],
+    ],
+    [["Application"], [["RPC Endpoint", "Request Routing", "Node"], ["Query Service", "Derived Index", "Indexer Pipeline"]], ["Protocol View"]],
+    [["Observed Information"], [["Relayer", "Forwards"], ["Keeper", "Evaluates a condition", "Submits"], ["Bot", "Evaluates a strategy", "Acts"]]],
+    [["Running Infrastructure"], ["Metrics", "Logs", "Traces", "Health Checks"], ["Observability"], ["Detection"], ["Alerting"], ["Operator or Automation"]],
+    [["Protocol / Infrastructure State"], ["Observation"], ["Trigger", "Schedule", "Condition"], ["Automation Policy"], ["Execution"], ["New Observable State"]],
+    [["Connectivity"], ["Propagation"], ["Local Views"], ["Access"], ["Observation"], ["Action"], ["Automation"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right]] : [])),
+    [
+      ["Propagation", "Agreement"],
+      ["Node role", "Trust authority"],
+      ["RPC provider", "Protocol"],
+      ["Observation", "Action"],
+      ["Automated", "Autonomous"],
+    ],
+  );
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed (reused concepts under
+  // their contextual labels); the last names the L1 topics, in the page's order.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("networks-infrastructure").map((placement) => placement.id);
+  assert.equal(l1.length, 10);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+  assert.equal(resolver.getPlacement("synchronization-in-nodes")?.conceptId, "synchronization");
+  assert.equal(resolver.getPlacement("reorganization-handling-in-indexers")?.conceptId, "reorganization-handling");
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Operational Actors", "Nodes' Protocol Views", "Temporary differences in local knowledge", "Running Infrastructure", "Local Views"]) {
     assert.ok(!titles.has(text), text);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
