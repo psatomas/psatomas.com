@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6529,6 +6529,85 @@ test("Computation & Execution's L0 exposition follows the authored sequence", ()
   JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
   assert.ok(strings.every((text) => !/[<>{}]|className|style=/.test(text)));
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+});
+
+test("State & Data's L0 exposition develops state, commitments, history, placement, trust and derived views", () => {
+  const content = resolver.getContentForConcept("state-data")!;
+  assert.equal(content.id, "state-data-content");
+  assert.ok(content.definition.startsWith("Protocol state is the condition of a system at a point in its evolution"));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "distinction", "flow", "paragraph",
+    "heading", "paragraph", "terms", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "distinction", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "terms", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "distinction", "paragraph", "terms",
+    "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "State has a shape and a way to change",
+    "A commitment stands in for the state",
+    "Current state is not the whole history",
+    "Where data lives changes how it can be trusted",
+    "Integrity, authenticity, and provenance answer different questions",
+    "Indexes are views, not state",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Data / Inputs"], ["Transition Rules"], ["Protocol State"], ["State Representation"]],
+    [
+      ["Current State + Input"],
+      ["Transition Preconditions"],
+      [["Valid Transition", "Transition Effects", "Next State"], ["Invalid Transition", "Rejected", "State unchanged"]],
+    ],
+    [["State"], ["Representation"], ["Commitment"], ["State Root"], ["State Proof"], ["Verification"]],
+    [["Snapshot or Checkpoint"], ["Recorded Inputs"], ["Replayed Transitions"], ["Reconstructed State"]],
+    [["Remote / Historical Data"], ["Full Sync", "Snap Sync", "State Sync", "Incremental Sync"], ["Synchronization Verification"], ["Local State View"]],
+    [["Data"], [["On-chain", "Recorded by the protocol"], ["Off-chain", "Data Reference", "Retrieval", "Integrity Verification"]]],
+    [
+      ["Data"],
+      [
+        ["Integrity", "Has it changed?"],
+        ["Authenticity", "Is the claimed source genuine?"],
+        ["Provenance", "Where did it come from, and what happened to it?"],
+      ],
+    ],
+    [["Canonical Data / State"], ["Data Extraction"], ["Data Transformation"], ["Index Construction"], ["Derived State"], ["Query Model"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Stored data", "Protocol state"],
+      ["State root", "State"],
+      ["Verifiable", "Available"],
+      ["Unchanged", "Authentic", "Traceable"],
+      ["Derived state", "Canonical state"],
+    ],
+  );
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("state-data").map((placement) => placement.id);
+  assert.equal(l1.length, 10);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Diagram labels and questions stay exposition, not ontology.
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Local State View", "Reconstructed State", "Replayed Transitions", "Has it changed?", "State unchanged"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
 });
 
 test("exposition validation reports malformed headings, term strips, branches and distinction chains", () => {
