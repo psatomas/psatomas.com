@@ -8344,11 +8344,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Protocol state is the most expensive place to keep data" },
         {
           kind: "paragraph",
-          text: "On-chain storage is data held in protocol state itself. Persistent storage survives across transactions, and state storage is kept by every participant that maintains full state, so writing to it is part of the protocol's execution and state model rather than a separate service. That makes it unusually strong: its availability is as good as the protocol's own. It also makes it costly.",
+          text: "On-chain storage is data held in protocol state itself. Persistent storage survives across transactions, and state storage is maintained by nodes that keep the protocol's full current state, so writing to it is part of the protocol's execution and state model rather than a separate service. That makes it unusually strong: data required as part of current protocol state inherits the availability assumptions of the protocol and the nodes that maintain that state. It also makes it costly.",
         },
         {
           kind: "paragraph",
-          text: "Storage layout and storage slots determine how that data is organized within state, building on the representation described under State & Data. Storage costs price the burden each write places on everyone who must keep it, and storage optimization, such as packing values or removing what is no longer needed, reduces that burden. On-chain storage is not free, and persistent is not permanent in every sense: data lasts until the protocol's rules or the owning contract remove it.",
+          text: "Storage layout and storage slots determine how that data is organized within state, building on the representation described under State & Data. Storage costs price the burden each write places on everyone who must keep it, and storage optimization, such as packing values or removing what is no longer needed, reduces that burden. On-chain storage is not free, and persistent is not permanent in every sense: persistent storage remains part of protocol state until a valid state transition removes or replaces it, subject to the protocol's state-retention model.",
         },
         {
           kind: "terms",
@@ -8357,7 +8357,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Distributed storage survives failures, within limits" },
         {
           kind: "paragraph",
-          text: "Data that does not need to live in protocol state can be kept across independent storage nodes. Data distribution decides which nodes hold which data; data replication keeps copies on several of them, and redundancy more generally keeps more than the minimum needed, so that the data survives some node failures. Storage networks coordinate this across many operators.",
+          text: "Data that does not need to live in protocol state can be kept across independent storage nodes. Data distribution decides which nodes hold which data; data replication keeps copies on several of them, and redundancy more generally keeps more than the minimum needed, so that the data can survive some node failures. Storage networks coordinate this across many operators.",
         },
         {
           kind: "flow",
@@ -8372,7 +8372,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Fault tolerance here is the Foundations property applied to storage: it holds only up to the number and kind of failures the design assumes. Replication is not an availability guarantee either. It improves resilience, but the data is available only if enough replicas are reachable, and willing and able to serve it, when asked.",
+          text: "Fault tolerance here is the Foundations property applied to storage: it holds only up to the number and kind of failures the design assumes. Replication is not an availability guarantee either. Replication and redundancy can improve resilience to failures, but the resulting availability depends on how copies are distributed, which failures are tolerated, and whether enough storage nodes remain reachable, and willing and able to serve the data, when asked.",
         },
         {
           kind: "terms",
@@ -8397,7 +8397,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Address resolution turns an identifier into someone who can supply the content, and content retrieval fetches it. The hash properties described under Cryptography & Proofs make the check meaningful, but the check can only run once the data arrives.",
+          text: "Address resolution looks for someone who can supply the content for an identifier, and content retrieval fetches it if a source is found. The hash properties described under Cryptography & Proofs make the check meaningful: it establishes whether retrieved content matches the identifier. It can only run once the data arrives, and it does not make the content retrievable.",
         },
         { kind: "distinction", left: "Identity of data", right: "Availability of data" },
         {
@@ -8426,7 +8426,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Pruned data is not necessarily lost to the system, as long as someone retains it. If nobody does, pruning becomes loss. Historical data is what the historical queries and reconstruction of State & Data depend on, and archive nodes are the infrastructure role described under Networks & Infrastructure.",
+          text: "Pruned data is not necessarily lost to the system. Pruning removes data from a particular node's retained history; it becomes unavailable only if no remaining source can provide it. Archival storage reduces that risk but does not by itself guarantee permanent preservation. Historical data is what the historical queries and reconstruction of State & Data depend on, and archive nodes are the infrastructure role described under Networks & Infrastructure.",
         },
         {
           kind: "terms",
@@ -8435,7 +8435,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Committed is not available" },
         {
           kind: "paragraph",
-          text: "A protocol can know about data, and commit to it, without every participant possessing it. A block may carry only a commitment to data that others must fetch; an off-chain system may post a commitment and keep the data. Data availability asks whether the participants who need that data can actually obtain it.",
+          text: "A protocol can know about data, and commit to it, without every participant possessing it. A block may carry only a commitment to data that others must fetch; an off-chain system may post a commitment and keep the data. Data availability asks whether the participants who need that data can obtain enough of it, when required, under the system's assumptions.",
         },
         {
           kind: "flow",
@@ -8450,12 +8450,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Data publication makes data obtainable, and data retrieval obtains it. Availability verification is how participants check that retrieval is possible instead of assuming it. Data withholding is the failure these mechanisms exist to catch: data is committed to but not released, so participants cannot reconstruct the state, re-execute the computation, or check a claim that depends on it.",
+          text: "A commitment lets participants identify or verify the data; data publication makes it accessible through some mechanism, and data retrieval obtains it. Availability verification is how participants check that retrieval is possible instead of assuming it. Data withholding is the failure these mechanisms exist to catch: data is committed to but not released, so participants cannot reconstruct the state, re-execute the computation, or check a claim that depends on it.",
         },
         { kind: "distinction", left: "Committed", right: "Available" },
         {
           kind: "paragraph",
-          text: "Availability guarantees differ in what they rely on. Availability committees are one approach: a designated set of participants attests that it holds the data and will serve it, which makes availability depend on that committee's honesty and liveness. Other approaches publish the data to the protocol itself, or rely on the sampling described below.",
+          text: "Availability guarantees differ in what they rely on. Availability committees are one approach: a designated set of participants attests that it holds the data and will serve it. This introduces assumptions about committee participation, responsiveness, and the conditions under which its attestations or service count as sufficient evidence of availability, and committee designs differ in what they guarantee. Other approaches publish the data to the protocol itself, or rely on the sampling described below.",
         },
         {
           kind: "terms",
@@ -8471,7 +8471,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Encoding lets availability be checked without downloading everything" },
         {
           kind: "paragraph",
-          text: "Availability does not require every participant to receive the whole original data. Erasure coding adds redundant encoding: the data is expanded into data shards such that any sufficient subset of them can reconstruct the original.",
+          text: "Availability does not require every participant to receive the whole original data. Erasure coding adds redundant encoding: with an appropriate scheme, the data is expanded into data shards such that the original can be reconstructed from a sufficient subset of them.",
         },
         {
           kind: "flow",
@@ -8499,7 +8499,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Encoding also changes what it takes to check availability. When data is encoded so that preventing reconstruction requires withholding a large fraction of the shards, a participant can sample: request a few randomly selected pieces and verify each against a commitment.",
+          text: "Encoding also changes what it takes to check availability. Because reconstruction needs only a sufficient subset, preventing it requires withholding enough shards to leave less than that subset, which with suitable coding parameters is a substantial fraction. A participant can therefore sample: request a few randomly selected pieces and verify each against a commitment.",
         },
         {
           kind: "flow",
@@ -8514,7 +8514,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Each successful sample raises availability confidence, and enough of them make it very unlikely that the data is being withheld, under the assumptions of the scheme. Light-client sampling lets participants that cannot download everything gain that confidence, and collectively contribute to it. The result is probabilistic, not certain, and rests on sample verification in the sense of Cryptography & Proofs.",
+          text: "Sampling provides probabilistic evidence of availability under the encoding, sampling strategy, network, and adversarial assumptions of the scheme. Each successful sample raises availability confidence, and enough of them make withholding unlikely, not impossible. Light-client sampling lets participants that cannot download everything gain that confidence for themselves. One client's successful samples do not establish that the data is available to everyone; many clients sampling together contribute to wider confidence without automatically establishing a protocol-level guarantee. Sampling rests on sample verification in the sense of Cryptography & Proofs.",
         },
         { kind: "distinction", left: "Availability confidence", right: "Every byte retrieved" },
         {
@@ -8539,7 +8539,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Blob retention and blob pricing are set separately from execution state, so data can be published and made temporarily available without becoming part of what every participant must keep indefinitely. The commitment outlives the data: after the window, the chain can still say what was published, but it may no longer be able to provide it.",
+          text: "Blob retention and blob pricing can be governed separately from persistent execution state, so data can be published and made temporarily available without becoming part of what state-maintaining nodes must keep indefinitely. The protocol may retain a commitment or reference longer than it requires nodes to retain the corresponding blob data: after the window, the chain can still say what was published, but it may no longer be able to provide it.",
         },
         { kind: "distinction", left: "Published data", right: "Permanent state" },
         {
@@ -8566,7 +8566,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A proof of storage shows that the prover holds the data at the time of the challenge. A proof of replication shows that it holds distinct, separately stored copies, not one copy counted several times. A proof of space shows that it has dedicated a certain amount of storage capacity, which need not hold useful data. A proof of retrievability shows that the complete data could be recovered from what is stored.",
+          text: "A proof of storage provides evidence that the prover holds the data at the time of the challenge. A proof of replication provides evidence that the prover stores distinct replicas rather than one copy counted several times; exactly what separation it establishes depends on the scheme. A proof of space provides evidence that storage capacity has been dedicated, which need not hold useful data. Proof-of-retrievability schemes provide evidence, under their construction and assumptions, that stored data can be recovered with the required reliability.",
         },
         { kind: "distinction", left: "Proof of storage", right: "Data availability" },
         {
@@ -8591,7 +8591,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "distinction", left: "Stored", right: "Retained", further: ["Available", "Intact"] },
         {
           kind: "paragraph",
-          text: "Storage architecture determines more than where bytes live. It determines which participants must retain data, which failures can be tolerated, how historical information survives, whether new participants can reconstruct what they need, and which claims about stored data can be independently verified.",
+          text: "Stored means represented somewhere; retained, still kept over time; available, retrievable when required; intact, preserving its expected integrity when retrieved. Storage architecture determines more than where bytes live. It determines which participants must retain data, which failures can be tolerated, how historical information survives, whether new participants can reconstruct what they need, and which claims about stored data can be independently verified.",
         },
         {
           kind: "terms",
