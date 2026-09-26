@@ -2475,7 +2475,7 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["execution-requests", "execution-requests", "Execution Requests"],
     ["objective-interpretation", "objective-interpretation", "Objective Interpretation"],
     ["intent-generation", "intent-generation", "Intent Generation"],
-    ["success-criteria", "success-criteria", "Success Criteria"],
+    ["success-criteria-in-objectives-intents", "success-criteria", "Success Criteria"],
     ["execution-constraints", "execution-constraints", "Execution Constraints"],
   ]],
   ["execution-planning", [
@@ -2491,11 +2491,11 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["candidate-evaluation", "candidate-evaluation", "Candidate Evaluation"],
     ["cost-estimation", "cost-estimation", "Cost Estimation"],
     ["tool-selection-in-action-selection", "tool-selection", "Tool Selection"],
-    ["execution-routing", "execution-routing", "Execution Routing"],
+    ["execution-routing-in-action-selection", "execution-routing", "Execution Routing"],
     ["execution-optimization", "execution-optimization", "Execution Optimization"],
   ]],
   ["simulation", [
-    ["transaction-simulation", "transaction-simulation", "Transaction Simulation"],
+    ["transaction-simulation-in-simulation", "transaction-simulation", "Transaction Simulation"],
     ["state-forking", "state-forking", "State Forking"],
     ["dry-runs", "dry-runs", "Dry Runs"],
     ["outcome-prediction", "outcome-prediction", "Outcome Prediction"],
@@ -2514,7 +2514,7 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["runtime-authorization", "runtime-authorization", "Runtime Authorization"],
     ["capabilities-in-execution-authorization", "capabilities", "Capabilities"],
     ["human-approval", "human-approval", "Human Approval"],
-    ["approval-thresholds", "approval-thresholds", "Approval Thresholds"],
+    ["action-approval-thresholds", "action-approval-thresholds", "Approval Thresholds"],
     ["multi-party-approval", "multi-party-approval", "Multi-Party Approval"],
     ["authorization-scopes", "authorization-scopes", "Authorization Scopes"],
   ]],
@@ -2546,7 +2546,7 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["progress-tracking", "progress-tracking", "Progress Tracking"],
     ["observability-in-execution-monitoring", "observability", "Observability"],
     ["audit-trails", "audit-trails", "Audit Trails"],
-    ["anomaly-detection", "anomaly-detection", "Anomaly Detection"],
+    ["anomaly-detection-in-execution-monitoring", "anomaly-detection", "Anomaly Detection"],
     ["alerting-in-execution-monitoring", "alerting", "Alerting"],
     ["human-oversight-in-execution-monitoring", "human-oversight", "Human Oversight"],
   ]],
@@ -2555,7 +2555,7 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["retries", "retries", "Retries"],
     ["rollbacks", "rollbacks", "Rollbacks"],
     ["compensating-actions", "compensating-actions", "Compensating Actions"],
-    ["circuit-breakers", "circuit-breakers", "Circuit Breakers"],
+    ["circuit-breakers-in-execution-recovery", "circuit-breakers", "Circuit Breakers"],
     ["kill-switches", "kill-switches", "Kill Switches"],
   ]],
 ];
@@ -2701,8 +2701,8 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Intelligent Systems' 10 new L1 and 65 new L2 concepts, then Machine
   // Economy's 12 new L1 and 60 new L2 concepts, then Autonomous
   // Coordination's 5 new L1 and 56 new L2 concepts, then Autonomous
-  // Execution's 11 new L1 and 50 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 50);
+  // Execution's 11 new L1 and 45 new L2 concepts.
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -3874,7 +3874,9 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["transaction-ordering", "builders", "block-construction", "transaction-selection", "private-mempools", "inclusion-guarantees", "auction-clearing"]);
   // Also placed in Intents & Coordination.
-  const placedElsewhere: Record<string, string[]> = { "order-flow-auctions": ["order-flow-auctions-in-solver-competition"] };
+  const placedElsewhere: Record<string, string[]> = {
+    "order-flow-auctions": ["order-flow-auctions-in-solver-competition"],
+  };
   for (const [id, conceptId] of [...MEV_LAYER, ...MEV_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -5060,9 +5062,9 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
   // Each reused concept gains exactly this placement here and stays preferred at its home.
   const reused = EXECUTION_L2.filter(([id, conceptId]) => id !== conceptId);
   assert.deepEqual(reused.map(([, conceptId]) => conceptId), [
-    "goals", "plans", "replanning", "tool-selection", "policy-constraints", "capabilities", "trusted-execution", "agent-actions",
-    "tool-calling", "transaction-construction", "transaction-submission", "verifiable-execution", "settlement", "observability",
-    "alerting", "human-oversight",
+    "goals", "success-criteria", "plans", "replanning", "tool-selection", "execution-routing", "transaction-simulation", "policy-constraints",
+    "capabilities", "trusted-execution", "agent-actions", "tool-calling", "transaction-construction", "transaction-submission",
+    "verifiable-execution", "settlement", "observability", "anomaly-detection", "alerting", "human-oversight", "circuit-breakers",
   ]);
   for (const [id, conceptId] of reused) {
     assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
@@ -5071,11 +5073,14 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     assert.ok(preferred && resolver.getAncestors(preferred)[0]?.id !== "autonomous-execution", `${conceptId} stays preferred at home`);
     assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
   }
-  // Simulation is a new general concept, an L1 topic here.
+  // Simulation is a new general concept, an L1 topic here; Intent Generation
+  // leaves Intents to 13, and Approval Thresholds here are not 14's.
   assert.equal(resolver.getConcept("simulation")?.title, "Simulation");
-  assert.equal(resolver.getConcept("intents"), undefined);
+  assert.equal(resolver.getConcept("action-approval-thresholds")?.title, "Action Approval Thresholds");
   // Execution-specific concepts kept distinct from the concepts they sit near.
   for (const [placementId, related] of [
+    ["intent-generation", "intents"],
+    ["action-approval-thresholds", "approval-thresholds"],
     ["runtime-authorization", "agent-authorization"],
     ["runtime-authorization", "spending-authority"],
     ["authorization-scopes", "agent-permissions"],
@@ -5090,7 +5095,6 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     ["resource-estimation", "resource-budgets"],
     ["cost-estimation", "inference-cost"],
     ["cost-estimation", "execution-cost"],
-    ["execution-routing", "request-routing"],
     ["candidate-evaluation", "ai-evaluation"],
     ["state-forking", "competing-forks"],
     ["simulation-divergence", "distribution-shift"],
@@ -5103,7 +5107,7 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     ["execution-receipts", "logs"],
     ["audit-trails", "traceability"],
     ["execution-failures", "failures"],
-    ["circuit-breakers", "kill-switches"],
+    ["kill-switches", "circuit-breakers"],
   ]) {
     const conceptId = resolver.getPlacement(placementId)?.conceptId;
     assert.equal(conceptId, placementId);

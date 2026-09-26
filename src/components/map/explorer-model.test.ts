@@ -1013,7 +1013,7 @@ test("Autonomous Execution L2 topics are ordinary placements: context, ancestry,
   const index = indexMapExplorerView(view);
   const labels = (id: string) => getMapExplorerContext(index, id).map((step) => step.label);
   assert.deepEqual(labels("human-approval"), ["Autonomous Execution", "Execution Authorization", "Human Approval"]);
-  assert.deepEqual(labels("transaction-simulation"), ["Autonomous Execution", "Simulation", "Transaction Simulation"]);
+  assert.deepEqual(labels("transaction-simulation-in-simulation"), ["Autonomous Execution", "Simulation", "Transaction Simulation"]);
   // Reused concepts: each placement keeps its own context.
   assert.deepEqual(labels("plans-in-execution-planning"), ["Autonomous Execution", "Execution Planning", "Plans"]);
   assert.deepEqual(labels("plans"), ["AI & Intelligent Systems", "Goals & Planning", "Plans"]);

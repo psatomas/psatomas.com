@@ -1890,7 +1890,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "execution-requests",
     "objective-interpretation",
     "intent-generation",
-    "success-criteria",
+    { placementId: "success-criteria-in-objectives-intents", conceptId: "success-criteria" },
     "execution-constraints",
   ],
   "execution-planning": [
@@ -1906,11 +1906,11 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "candidate-evaluation",
     "cost-estimation",
     { placementId: "tool-selection-in-action-selection", conceptId: "tool-selection" },
-    "execution-routing",
+    { placementId: "execution-routing-in-action-selection", conceptId: "execution-routing" },
     "execution-optimization",
   ],
   simulation: [
-    "transaction-simulation",
+    { placementId: "transaction-simulation-in-simulation", conceptId: "transaction-simulation" },
     "state-forking",
     "dry-runs",
     "outcome-prediction",
@@ -1929,7 +1929,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "runtime-authorization",
     { placementId: "capabilities-in-execution-authorization", conceptId: "capabilities" },
     "human-approval",
-    "approval-thresholds",
+    { placementId: "action-approval-thresholds", conceptId: "action-approval-thresholds", contextualLabel: "Approval Thresholds" },
     "multi-party-approval",
     "authorization-scopes",
   ],
@@ -1961,7 +1961,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "progress-tracking",
     { placementId: "observability-in-execution-monitoring", conceptId: "observability" },
     "audit-trails",
-    "anomaly-detection",
+    { placementId: "anomaly-detection-in-execution-monitoring", conceptId: "anomaly-detection" },
     { placementId: "alerting-in-execution-monitoring", conceptId: "alerting" },
     { placementId: "human-oversight-in-execution-monitoring", conceptId: "human-oversight" },
   ],
@@ -1970,7 +1970,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "retries",
     "rollbacks",
     "compensating-actions",
-    "circuit-breakers",
+    { placementId: "circuit-breakers-in-execution-recovery", conceptId: "circuit-breakers" },
     "kill-switches",
   ],
 };
@@ -3189,7 +3189,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "non-toxic-mev", slug: "non-toxic-mev", title: "Non-Toxic MEV" },
     { id: "search-strategies", slug: "search-strategies", title: "Search Strategies" },
     { id: "opportunity-detection", slug: "opportunity-detection", title: "Opportunity Detection" },
-    { id: "transaction-simulation", slug: "transaction-simulation", title: "Transaction Simulation" },
+    // Also placed under 23's Simulation; this placement is preferred.
+    { id: "transaction-simulation", slug: "transaction-simulation", title: "Transaction Simulation", preferredPlacementId: "transaction-simulation" },
     { id: "bundle-construction", slug: "bundle-construction", title: "Bundle Construction" },
     { id: "searcher-infrastructure", slug: "searcher-infrastructure", title: "Searcher Infrastructure" },
     { id: "searcher-competition", slug: "searcher-competition", title: "Searcher Competition" },
@@ -3285,8 +3286,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "intent-matching", slug: "intent-matching", title: "Intent Matching" },
     { id: "intent-resolution", slug: "intent-resolution", title: "Intent Resolution" },
     // Routing execution across venues, shown as "Routing"; not 05's Request
-    // Routing (RPC).
-    { id: "execution-routing", slug: "execution-routing", title: "Execution Routing" },
+    // Routing (RPC). Also placed under 23's Action Selection; this placement is preferred.
+    { id: "execution-routing", slug: "execution-routing", title: "Execution Routing", preferredPlacementId: "execution-routing" },
     // What solvers and systems commit to, shown as "Commitments"; not 06's
     // Cryptographic Commitments or 04's Preconfirmation Commitments.
     { id: "intent-commitments", slug: "intent-commitments", title: "Intent Commitments" },
@@ -3540,7 +3541,8 @@ export const mapKnowledge: MapKnowledgeModel = {
       title: "Emergency Upgrades",
       preferredPlacementId: "emergency-upgrades",
     },
-    // Also placed in 17 Security, Correctness & Resilience; this placement is preferred.
+    // Also placed in 17 Security, Correctness & Resilience and under 23's Execution
+    // Recovery; this placement is preferred.
     {
       id: "circuit-breakers",
       slug: "circuit-breakers",
@@ -3977,7 +3979,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "operational-failures", slug: "operational-failures", title: "Operational Failures" },
     // Anomaly Detection flags deviations from expected behaviour.
     { id: "threat-detection", slug: "threat-detection", title: "Threat Detection" },
-    { id: "anomaly-detection", slug: "anomaly-detection", title: "Anomaly Detection" },
+    // Also placed under 23's Execution Monitoring; this placement is preferred.
+    { id: "anomaly-detection", slug: "anomaly-detection", title: "Anomaly Detection", preferredPlacementId: "anomaly-detection" },
     { id: "on-chain-monitoring", slug: "on-chain-monitoring", title: "On-Chain Monitoring" },
     { id: "security-telemetry", slug: "security-telemetry", title: "Security Telemetry" },
     { id: "forensics", slug: "forensics", title: "Forensics" },
@@ -4123,7 +4126,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "non-goals", slug: "non-goals", title: "Non-Goals" },
     { id: "design-constraints", slug: "design-constraints", title: "Design Constraints" },
     { id: "design-assumptions", slug: "design-assumptions", title: "Design Assumptions" },
-    { id: "success-criteria", slug: "success-criteria", title: "Success Criteria" },
+    // Also placed under 23's Objectives & Intents; this placement is preferred.
+    { id: "success-criteria", slug: "success-criteria", title: "Success Criteria", preferredPlacementId: "success-criteria" },
     // Protocol rules are Foundations' Rules, placed under Protocol Specification.
     { id: "specification-languages", slug: "specification-languages", title: "Specification Languages" },
     { id: "specification-ambiguity", slug: "specification-ambiguity", title: "Specification Ambiguity" },
@@ -4555,11 +4559,11 @@ export const mapKnowledge: MapKnowledgeModel = {
     // L2 topics (placements in L2_TOPICS). Goals are 20's. Intent Generation
     // (turning an objective into a declarative intent) leaves Intents to 13;
     // Execution Constraints are not 10's Mechanism, 21's Policy or 22's
-    // Negotiation Constraints; Success Criteria are not 20's Goal Specification.
+    // Negotiation Constraints. Success Criteria are 19's (measurable conditions for
+    // judging an objective achieved), not 20's Goal Specification.
     { id: "execution-requests", slug: "execution-requests", title: "Execution Requests" },
     { id: "objective-interpretation", slug: "objective-interpretation", title: "Objective Interpretation" },
     { id: "intent-generation", slug: "intent-generation", title: "Intent Generation" },
-    { id: "success-criteria", slug: "success-criteria", title: "Success Criteria" },
     { id: "execution-constraints", slug: "execution-constraints", title: "Execution Constraints" },
     // Plans and Replanning are 20's. Action Dependencies are not 22's Delegation
     // Chains; Resource Estimation is not 21's Resource Budgets.
@@ -4567,18 +4571,16 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "action-dependencies", slug: "action-dependencies", title: "Action Dependencies" },
     { id: "resource-estimation", slug: "resource-estimation", title: "Resource Estimation" },
     { id: "contingency-planning", slug: "contingency-planning", title: "Contingency Planning" },
-    // Tool Selection is 20's. Cost Estimation is not 20's Inference Cost or 02's
-    // Execution Cost; Execution Routing is not 05's Request Routing or 22's
-    // Message Routing; Candidate Evaluation is not 20's AI Evaluation.
+    // Tool Selection is 20's and Execution Routing 13's. Cost Estimation is not
+    // 20's Inference Cost or 02's Execution Cost; Candidate Evaluation is not
+    // 20's AI Evaluation.
     { id: "candidate-generation", slug: "candidate-generation", title: "Candidate Generation" },
     { id: "candidate-evaluation", slug: "candidate-evaluation", title: "Candidate Evaluation" },
     { id: "cost-estimation", slug: "cost-estimation", title: "Cost Estimation" },
-    { id: "execution-routing", slug: "execution-routing", title: "Execution Routing" },
     { id: "execution-optimization", slug: "execution-optimization", title: "Execution Optimization" },
     // State Forking (running against a copy of live state) is not 04's Competing
     // Forks; Simulation Divergence (simulated and real outcomes differing) is
     // not 20's Distribution Shift.
-    { id: "transaction-simulation", slug: "transaction-simulation", title: "Transaction Simulation" },
     { id: "state-forking", slug: "state-forking", title: "State Forking" },
     { id: "dry-runs", slug: "dry-runs", title: "Dry Runs" },
     { id: "outcome-prediction", slug: "outcome-prediction", title: "Outcome Prediction" },
@@ -4594,10 +4596,12 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Runtime Authorization (approving one action as it runs) is not 08's Agent
     // Authorization or 21's Spending and Session Authority; Multi-Party Approval
     // is not 06's Multisignatures; Authorization Scopes are not 21's Agent
-    // Permissions. Capabilities are 08's.
+    // Permissions. Capabilities are 08's. The limits beyond which an action needs
+    // approval, shown as "Approval Thresholds"; not 14's Approval Thresholds (the
+    // share of votes a decision needs).
     { id: "runtime-authorization", slug: "runtime-authorization", title: "Runtime Authorization" },
     { id: "human-approval", slug: "human-approval", title: "Human Approval" },
-    { id: "approval-thresholds", slug: "approval-thresholds", title: "Approval Thresholds" },
+    { id: "action-approval-thresholds", slug: "action-approval-thresholds", title: "Action Approval Thresholds" },
     { id: "multi-party-approval", slug: "multi-party-approval", title: "Multi-Party Approval" },
     { id: "authorization-scopes", slug: "authorization-scopes", title: "Authorization Scopes" },
     // Trusted Execution is 02's. Tool Permissions are not 21's Agent Permissions
@@ -4619,20 +4623,19 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "postconditions", slug: "postconditions", title: "Postconditions" },
     { id: "execution-receipts", slug: "execution-receipts", title: "Execution Receipts" },
     { id: "execution-disputes", slug: "execution-disputes", title: "Execution Disputes" },
-    // Observability and Alerting are 05's; Human Oversight 20's. Audit Trails
-    // (a record of what an agent did and why) are not 03's Traceability.
+    // Observability and Alerting are 05's, Anomaly Detection 17's and Human
+    // Oversight 20's. Audit Trails (a record of what an agent did and why) are not
+    // 03's Traceability.
     { id: "progress-tracking", slug: "progress-tracking", title: "Progress Tracking" },
     { id: "audit-trails", slug: "audit-trails", title: "Audit Trails" },
-    { id: "anomaly-detection", slug: "anomaly-detection", title: "Anomaly Detection" },
     // Execution Failures are not Foundations' Failures (process faults);
-    // Rollbacks are not 02's Transaction Reversion or 04's Reorganizations;
-    // Circuit Breakers (automatic halts on a condition) are not Kill Switches
-    // (a deliberate stop).
+    // Rollbacks are not 02's Transaction Reversion or 04's Reorganizations.
+    // Circuit Breakers are 14's (automatic halts on a condition), not Kill
+    // Switches (a deliberate stop).
     { id: "execution-failures", slug: "execution-failures", title: "Execution Failures" },
     { id: "retries", slug: "retries", title: "Retries" },
     { id: "rollbacks", slug: "rollbacks", title: "Rollbacks" },
     { id: "compensating-actions", slug: "compensating-actions", title: "Compensating Actions" },
-    { id: "circuit-breakers", slug: "circuit-breakers", title: "Circuit Breakers" },
     { id: "kill-switches", slug: "kill-switches", title: "Kill Switches" },
     // Also placed under 09's Oracle Networks (nodes agreeing on a reported
     // value); this placement is preferred.
