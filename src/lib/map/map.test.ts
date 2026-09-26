@@ -2093,15 +2093,6 @@ const LIFECYCLE_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
 ];
 const LIFECYCLE_L2 = LIFECYCLE_TREE.flatMap(([, children]) => children);
-// Earlier domains' concepts that 17–23 place again, for their placement-list assertions.
-const alsoInLaterDomains = (conceptId: string) =>
-  [
-    ...SECURITY_LAYER, ...SECURITY_L2, ...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2, ...LIFECYCLE_LAYER, ...LIFECYCLE_L2,
-    ...AI_LAYER, ...AI_L2, ...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2, ...COORDINATION_LAYER, ...COORDINATION_L2,
-    ...EXECUTION_LAYER, ...EXECUTION_L2,
-  ]
-    .filter(([id, concept]) => concept === conceptId && id !== concept)
-    .map(([id]) => id);
 
 // 20 AI & Intelligent Systems. AI Inference is 09's concept; AI Agents is the
 // Phase 1 fixture's AI Agent placement; Delegation and Agent Identity are 08's,
@@ -2611,6 +2602,47 @@ const AUTHORED_TOPICS = new Set([
   ...EXECUTION_L2.map(([id]) => id),
 ]);
 
+// Each domain's tests see the stack as it stood when that domain was authored:
+// placements in that L0 domain or an earlier one. A later domain that places a
+// concept again asserts that placement, and any preference it moves, in its own
+// tests, so earlier domains' tests never change. Cross-domain invariants are
+// asserted once, globally.
+function l0Order(l0: string): number {
+  const order = L0_DOMAINS.findIndex(([id]) => id === l0);
+  assert.ok(order >= 0, `${l0} is an L0 domain`);
+  return order;
+}
+
+function containingL0(placementId: string): string {
+  return resolver.getAncestors(placementId)[0]?.id ?? placementId;
+}
+
+function withinL0(placementId: string, l0: string): boolean {
+  return l0Order(containingL0(placementId)) <= l0Order(l0);
+}
+
+/** A concept's placement IDs in the given L0 domain or earlier ones, sorted. */
+function placementsThrough(l0: string, conceptId: string): string[] {
+  return resolver
+    .getPlacementsForConcept(conceptId)
+    .filter((placement) => withinL0(placement.id, l0))
+    .map((placement) => placement.id)
+    .sort();
+}
+
+/**
+ * The domain's own preferred-placement decision: while the concept's preferred
+ * placement lies in this domain or an earlier one, it is the expected one and
+ * the resolver's default. A later domain that takes the preference over asserts
+ * that itself.
+ */
+function assertPreferredThrough(l0: string, conceptId: string, expected: string | undefined) {
+  const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
+  if (preferred && !withinL0(preferred, l0)) return;
+  assert.equal(preferred, expected, conceptId);
+  if (expected) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, expected, conceptId);
+}
+
 // A placement's label as the explorer shows it: contextual wording, else the concept title.
 function placementLabel(placementId: string): string | undefined {
   const placement = resolver.getPlacement(placementId);
@@ -2711,14 +2743,12 @@ test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable p
       .filter((placement) => placement.parentPlacementId && !AUTHORED_TOPICS.has(placement.id))
       .map((placement) => [placement.id, placement.parentPlacementId]),
   );
-  assert.deepEqual(parents, {
-  });
-  // AI Agent is now an authored L1 topic of AI & Intelligent Systems, keeping its placement ID.
+  // Every fixture placement is now part of an authored tree.
+  assert.deepEqual(parents, {});
+  // AI Agent is now an authored L1 topic of AI & Intelligent Systems, keeping
+  // its placement ID. Settlement's and Economic Agency's placements are asserted
+  // by the domains that decide them (11 and 21).
   assert.equal(resolver.getPlacement("ai-agent")?.parentPlacementId, "ai-intelligent-systems");
-  // Settlement is placed by Markets & Financial Protocols (preferred), Intents &
-  // Coordination, Machine Economy and Autonomous Execution; Economic Agency stays deliberately unplaced.
-  assert.deepEqual(resolver.getPlacementsForConcept("settlement").map((placement) => placement.id).sort(), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce", "settlement-in-verification-settlement"]);
-  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
 });
 
 test("re-homing changes no relationship, content, mechanism, or path record", () => {
@@ -2797,17 +2827,18 @@ test("every Foundations L1 topic has exactly its intended L2 placements, in orde
 test("repeated Foundations labels reuse a canonical concept only where one exposition serves both", () => {
   // Same concept, distinct placements.
   // Sorted: placements of one concept under different parents have no mutual order.
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("foundations", conceptId);
   assert.deepEqual(placementsOf("state"), ["state-in-protocols", "state-in-state-machines"]);
-  assert.equal(resolver.getConcept("state")?.preferredPlacementId, "state-in-state-machines");
+  assertPreferredThrough("foundations", "state", "state-in-state-machines");
   assert.deepEqual(placementsOf("protocol-properties"), ["protocol-properties", "protocol-properties-in-protocols"]);
-  assert.equal(resolver.getConcept("protocol-properties")?.preferredPlacementId, "protocol-properties");
+  assertPreferredThrough("foundations", "protocol-properties", "protocol-properties");
   // Children belong to placements: only the L1 occurrence carries the properties.
   assert.equal(resolver.getChildren("protocol-properties").length, 7);
   assert.deepEqual(resolver.getChildren("protocol-properties-in-protocols"), []);
-  // Finality is the existing canonical concept: one content record for every placement.
-  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-cross-chain-verification", "finality-in-protocol-properties", "finality-in-rollups"]);
-  assert.equal(resolver.getConcept("finality")?.preferredPlacementId, "finality-in-consensus");
+  // Finality is the existing canonical concept: one content record for every
+  // placement. Within Foundations it is placed once; its preferred placement is
+  // Consensus & Ordering's, asserted there.
+  assert.deepEqual(placementsOf("finality"), ["finality-in-protocol-properties"]);
   assert.equal(mapKnowledge.content.filter((content) => content.conceptId === "finality").length, 1);
 
   // Same wording, different concepts: message exchange between processes is
@@ -2819,23 +2850,12 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
   assert.equal(resolver.getAncestors("communication").at(-1)?.id, "distributed-systems");
   assert.equal(resolver.getAncestors("coordination-communication").at(-1)?.id, "coordination");
 
-  // Every other L2 topic is a new concept placed once here (Verification is
-  // also placed in Computation & Execution), and none has exposition yet.
+  // Every other L2 topic is a new concept placed once, and none has exposition yet.
   const reused = new Set(["state", "protocol-properties", "finality"]);
-  const placedElsewhere: Record<string, string[]> = {
-    verification: ["verification-in-verifiable-computation"],
-    transitions: ["transitions-in-state-data"],
-    "censorship-resistance": ["censorship-resistance-in-consensus-ordering"],
-    "fault-tolerance": ["fault-tolerance-in-distributed-storage"],
-    "trust-assumptions": ["trust-assumptions-in-oracle-problem", "trust-assumptions-in-rollup-security", "trust-assumptions-in-trust-failure-modes"],
-    collusion: ["collusion-in-oracle-security"],
-    "strategic-behavior": ["strategic-behavior-in-economics-mechanism-design"],
-    "collective-action": ["collective-action-in-multi-party-coordination"],
-  };
   for (const [id, conceptId] of FOUNDATIONS_L2) {
     if (reused.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
   }
   assert.equal(resolver.getContentForConcept("state"), undefined);
@@ -2886,11 +2906,11 @@ test("Computation & Execution has exactly its seven L1 topics and their L2 place
 });
 
 test("Computation & Execution reuses Verification and keeps overlapping labels distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("computation-execution", conceptId);
   // Checking a computation's proof is Foundations' Verification: one concept, two placements.
   assert.equal(resolver.getPlacement("verification-in-verifiable-computation")?.conceptId, "verification");
-  assert.deepEqual(placementsOf("verification"), ["verification", "verification-in-verifiable-computation", ...alsoInLaterDomains("verification")].sort());
-  assert.equal(resolver.getConcept("verification")?.preferredPlacementId, "verification");
+  assert.deepEqual(placementsOf("verification"), ["verification", "verification-in-verifiable-computation"]);
+  assertPreferredThrough("computation-execution", "verification", "verification");
   // Related but distinct: an execution model is not the property, contract
   // storage is not State, validating a transaction or verifying on chain is
   // not Verification itself, trusted execution is not a trusted party.
@@ -2916,15 +2936,7 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (conceptId === "verification") continue;
     assert.equal(id, conceptId);
-    // Later domains place some of these again.
-    const elsewhere: Record<string, string[]> = {
-      "transaction-ordering": ["transaction-ordering-in-block-building", "transaction-ordering-in-mev-execution-markets"],
-      "verifiable-computation": ["verifiable-computation-in-cryptography-proofs"],
-      "computation-proofs": ["computation-proofs-in-cryptography-proofs"],
-      "parallel-execution": ["parallel-execution-in-execution-layers"],
-      "off-chain-execution": ["off-chain-execution-in-off-chain-scaling"],
-    };
-    assert.deepEqual(placementsOf(conceptId), [id, ...(elsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...COMPUTATION_LAYER, ...COMPUTATION_L2.map(([id]) => id)];
   assert.equal(new Set(ids).size, ids.length);
@@ -2954,20 +2966,19 @@ test("State & Data has exactly its ten L1 topics and their L2 placements, in ord
 });
 
 test("State & Data reuses State Roots and Transitions and keeps overlapping labels distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("state-data", conceptId);
   // State Roots: one concept in two contexts, preferred where it is taught as a commitment.
-  assert.deepEqual(placementsOf("state-roots"), ["state-roots-in-cross-chain-state", "state-roots-in-state-commitments", "state-roots-in-state-representation"]);
-  assert.equal(resolver.getConcept("state-roots")?.preferredPlacementId, "state-roots-in-state-commitments");
+  assert.deepEqual(placementsOf("state-roots"), ["state-roots-in-state-commitments", "state-roots-in-state-representation"]);
+  assertPreferredThrough("state-data", "state-roots", "state-roots-in-state-commitments");
   // State Transitions (L1) is Foundations' Transitions in contextual wording; children belong to the placement.
   assert.deepEqual(placementsOf("transitions"), ["transitions", "transitions-in-state-data"]);
   assert.equal(resolver.getConcept("transitions")?.title, "Transitions");
-  assert.equal(resolver.getConcept("transitions")?.preferredPlacementId, "transitions");
+  assertPreferredThrough("state-data", "transitions", "transitions");
   assert.deepEqual(resolver.getChildren("transitions"), []);
   assert.equal(resolver.getChildren("transitions-in-state-data").length, 6);
-  // Checkpoints is State Checkpoints; the bare term is Consensus & Ordering's
-  // consensus checkpoints, a different concept.
+  // Checkpoints is State Checkpoints; the bare term stays free for consensus checkpoints.
   assert.equal(resolver.getConcept("state-checkpoints")?.title, "State Checkpoints");
-  assert.notEqual(resolver.getPlacement("state-checkpoints")?.conceptId, resolver.getPlacement("checkpoints")?.conceptId);
+  assert.notEqual(resolver.getPlacement("state-checkpoints")?.conceptId, "checkpoints");
   // Related but distinct concepts.
   for (const [placementId, related] of [
     ["transition-functions", "transition-rules"],
@@ -2987,28 +2998,11 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
   }
   // Every other topic is a new concept placed once, without exposition; placement IDs are unique.
   const shared = new Set(["transitions", "state-roots"]);
-  // Also placed in Networks & Infrastructure.
-  const placedElsewhere: Record<string, string[]> = {
-    synchronization: ["synchronization-in-nodes"],
-    "reorganization-handling": ["reorganization-handling-in-indexers"],
-    "commitment-schemes": ["commitment-schemes-in-cryptographic-commitments"],
-    "content-addressing": ["content-addressing-in-storage-availability"],
-    attestations: ["attestations-in-identity"],
-    "state-commitments": ["state-commitments-in-settlement-layers"],
-    "transition-functions": ["transition-functions-in-execution-layers"],
-    calldata: ["calldata-in-data-availability-layers"],
-    "state-proofs": ["state-proofs-in-cross-chain-state"],
-    provenance: ["provenance-in-oracles-external-reality"],
-    "external-data": ["external-data-in-oracle-problem"],
-    authenticity: ["authenticity-in-oracle-problem"],
-    lineage: ["lineage-in-oracles-external-reality"],
-    attribution: ["attribution-in-oracles-external-reality"],
-  };
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...STATE_DATA_LAYER, ...STATE_DATA_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3065,27 +3059,23 @@ test("Consensus & Ordering has exactly its ten L1 topics and their L2 placements
 });
 
 test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction Ordering and Proposers", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("consensus-ordering", conceptId);
   // Finality: the fixture placement keeps its ID and preferred role, now an L1 topic with its own layer.
   assert.equal(resolver.getPlacement("finality-in-consensus")?.parentPlacementId, "consensus-ordering");
-  assert.equal(resolver.getConcept("finality")?.preferredPlacementId, "finality-in-consensus");
-  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-cross-chain-verification", "finality-in-protocol-properties", "finality-in-rollups"]);
+  assertPreferredThrough("consensus-ordering", "finality", "finality-in-consensus");
+  assert.deepEqual(placementsOf("finality"), ["finality-in-consensus", "finality-in-protocol-properties"]);
   assert.equal(resolver.getChildren("finality-in-consensus").length, 6);
   assert.deepEqual(resolver.getChildren("finality-in-rollups"), []);
   // Censorship Resistance: Foundations' property, taught here through inclusion; preferred here.
-  assert.deepEqual(placementsOf("censorship-resistance"), ["censorship-resistance", "censorship-resistance-in-consensus-ordering", ...alsoInLaterDomains("censorship-resistance")].sort());
-  assert.equal(resolver.getConcept("censorship-resistance")?.preferredPlacementId, "censorship-resistance-in-consensus-ordering");
+  assert.deepEqual(placementsOf("censorship-resistance"), ["censorship-resistance", "censorship-resistance-in-consensus-ordering"]);
+  assertPreferredThrough("consensus-ordering", "censorship-resistance", "censorship-resistance-in-consensus-ordering");
   assert.deepEqual(resolver.getChildren("censorship-resistance"), []);
   // Transaction Ordering: 02's concept, also under Block Building; preferred in the ordering domain.
-  assert.deepEqual(placementsOf("transaction-ordering"), [
-    "transaction-ordering",
-    "transaction-ordering-in-block-building",
-    "transaction-ordering-in-mev-execution-markets",
-  ]);
-  assert.equal(resolver.getConcept("transaction-ordering")?.preferredPlacementId, "transaction-ordering-in-block-building");
+  assert.deepEqual(placementsOf("transaction-ordering"), ["transaction-ordering", "transaction-ordering-in-block-building"]);
+  assertPreferredThrough("consensus-ordering", "transaction-ordering", "transaction-ordering-in-block-building");
   // Proposers: one role under Validators and Proposer-Builder Separation.
   assert.deepEqual(placementsOf("proposers"), ["proposers-in-proposer-builder-separation", "proposers-in-validators"]);
-  assert.equal(resolver.getConcept("proposers")?.preferredPlacementId, "proposers-in-validators");
+  assertPreferredThrough("consensus-ordering", "proposers", "proposers-in-validators");
   // Related but distinct concepts.
   for (const [placementId, related] of [
     ["checkpoints", "state-checkpoints"],
@@ -3107,27 +3097,11 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   }
   // Every other topic is a new concept placed once; none gains exposition (Finality keeps its own).
   const shared = new Set(["consensus", "finality", "censorship-resistance", "transaction-ordering", "proposers"]);
-  // Also placed in MEV & Execution Markets.
-  const placedElsewhere: Record<string, string[]> = {
-    builders: ["builders-in-mev-execution-markets"],
-    "block-construction": ["block-construction-in-builders"],
-    "transaction-selection": ["transaction-selection-in-builders"],
-    "private-mempools": ["private-mempools-in-private-execution"],
-    "inclusion-guarantees": ["inclusion-guarantees-in-mev-mitigation"],
-    preconfirmations: ["preconfirmations-in-intent-commitments"],
-    "shared-sequencing": [
-      "shared-sequencing-in-cross-chain-atomicity",
-      "shared-sequencing-in-cross-domain-coordination",
-      "shared-sequencing-in-rollup-sequencing",
-    ],
-    "centralized-sequencing": ["centralized-sequencing-in-rollup-sequencing"],
-    "decentralized-sequencing": ["decentralized-sequencing-in-rollup-sequencing"],
-  };
   for (const [id, conceptId] of [...CONSENSUS_LAYER, ...CONSENSUS_L2]) {
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
@@ -3157,18 +3131,18 @@ test("Networks & Infrastructure has exactly its ten L1 topics and their L2 place
 });
 
 test("Networks & Infrastructure reuses Synchronization, Reorganization Handling and Automation Networks", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("networks-infrastructure", conceptId);
   // Node Synchronization is State & Data's Synchronization in contextual wording; preferred there.
   assert.deepEqual(placementsOf("synchronization"), ["synchronization", "synchronization-in-nodes"]);
-  assert.equal(resolver.getConcept("synchronization")?.preferredPlacementId, "synchronization");
+  assertPreferredThrough("networks-infrastructure", "synchronization", "synchronization");
   assert.deepEqual(resolver.getChildren("synchronization-in-nodes"), []);
   assert.equal(resolver.getChildren("synchronization").length, 6);
   // Reorganization Handling: one concept under Indexing (03) and Indexers (05).
   assert.deepEqual(placementsOf("reorganization-handling"), ["reorganization-handling", "reorganization-handling-in-indexers"]);
-  assert.equal(resolver.getConcept("reorganization-handling")?.preferredPlacementId, "reorganization-handling");
+  assertPreferredThrough("networks-infrastructure", "reorganization-handling", "reorganization-handling");
   // Keeper Networks is Automation Networks under Keepers.
   assert.deepEqual(placementsOf("automation-networks"), ["automation-networks", "automation-networks-in-keepers"]);
-  assert.equal(resolver.getConcept("automation-networks")?.preferredPlacementId, "automation-networks");
+  assertPreferredThrough("networks-infrastructure", "automation-networks", "automation-networks");
   assert.equal(resolver.getConcept("keeper-networks"), undefined);
   // Observability Logs and Traces are their own concepts in contextual wording.
   assert.equal(resolver.getConcept("system-logs")?.title, "System Logs");
@@ -3196,17 +3170,11 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["synchronization", "reorganization-handling", "automation-networks"]);
-  // Also placed in Storage & Availability.
-  const placedElsewhere: Record<string, string[]> = {
-    "archive-nodes": ["archive-nodes-in-archival-storage"],
-    "transaction-submission": ["transaction-submission-in-wallets"],
-    relayers: ["relayers-in-cross-chain-messaging"],
-  };
   for (const [id, conceptId] of [...NETWORKS_LAYER, ...NETWORKS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...NETWORKS_LAYER, ...NETWORKS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3235,10 +3203,10 @@ test("Cryptography & Proofs has exactly its eight L1 topics and their L2 placeme
 });
 
 test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs and Commitment Schemes", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("cryptography-proofs", conceptId);
   // Verifiable Computation: one concept, an L1 topic in 02 and 06; each placement owns its layer.
   assert.deepEqual(placementsOf("verifiable-computation"), ["verifiable-computation", "verifiable-computation-in-cryptography-proofs"]);
-  assert.equal(resolver.getConcept("verifiable-computation")?.preferredPlacementId, "verifiable-computation-in-cryptography-proofs");
+  assertPreferredThrough("cryptography-proofs", "verifiable-computation", "verifiable-computation-in-cryptography-proofs");
   assert.deepEqual(resolver.getChildren("verifiable-computation").map((placement) => placement.id), [
     "computation-integrity",
     "execution-traces",
@@ -3249,9 +3217,9 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
   assert.equal(resolver.getChildren("verifiable-computation-in-cryptography-proofs").length, 6);
   // Computation Proofs and Commitment Schemes: one concept each, placed again here and preferred here.
   assert.deepEqual(placementsOf("computation-proofs"), ["computation-proofs", "computation-proofs-in-cryptography-proofs"]);
-  assert.equal(resolver.getConcept("computation-proofs")?.preferredPlacementId, "computation-proofs-in-cryptography-proofs");
+  assertPreferredThrough("cryptography-proofs", "computation-proofs", "computation-proofs-in-cryptography-proofs");
   assert.deepEqual(placementsOf("commitment-schemes"), ["commitment-schemes", "commitment-schemes-in-cryptographic-commitments"]);
-  assert.equal(resolver.getConcept("commitment-schemes")?.preferredPlacementId, "commitment-schemes-in-cryptographic-commitments");
+  assertPreferredThrough("cryptography-proofs", "commitment-schemes", "commitment-schemes-in-cryptographic-commitments");
   // Commitments is Cryptographic Commitments in contextual wording.
   assert.equal(resolver.getConcept("cryptographic-commitments")?.title, "Cryptographic Commitments");
   assert.equal(resolver.getConcept("commitments"), undefined);
@@ -3277,19 +3245,11 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["verifiable-computation", "computation-proofs", "commitment-schemes"]);
-  // Also placed in Storage & Availability.
-  const placedElsewhere: Record<string, string[]> = {
-    "proof-generation": ["proof-generation-in-storage-proofs"],
-    "proof-verification": ["proof-verification-in-storage-proofs"],
-    signing: ["signing-in-wallets"],
-    provers: ["provers-in-zk-rollups"],
-    "recursive-proofs": ["recursive-proofs-in-zk-rollups"],
-  };
   for (const [id, conceptId] of [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3318,10 +3278,10 @@ test("Storage & Availability has exactly its nine L1 topics and their L2 placeme
 });
 
 test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive Nodes and proof concepts", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("storage-availability", conceptId);
   // Content Addressing: 03's concept, an L1 topic here with its own layer; preferred here.
   assert.deepEqual(placementsOf("content-addressing"), ["content-addressing", "content-addressing-in-storage-availability"]);
-  assert.equal(resolver.getConcept("content-addressing")?.preferredPlacementId, "content-addressing-in-storage-availability");
+  assertPreferredThrough("storage-availability", "content-addressing", "content-addressing-in-storage-availability");
   assert.deepEqual(resolver.getChildren("content-addressing"), []);
   assert.equal(resolver.getChildren("content-addressing-in-storage-availability").length, 5);
   // Fault Tolerance, Archive Nodes, Proof Generation and Proof Verification: placed again, preferred at home.
@@ -3331,8 +3291,8 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
     ["proof-generation", "proof-generation", "proof-generation-in-storage-proofs"],
     ["proof-verification", "proof-verification", "proof-verification-in-storage-proofs"],
   ]) {
-    assert.deepEqual(placementsOf(conceptId), [home, here, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, home, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [home, here].sort(), conceptId);
+    assertPreferredThrough("storage-availability", conceptId, home);
   }
   // Reconstruction is Data Reconstruction in contextual wording.
   assert.equal(resolver.getConcept("data-reconstruction")?.title, "Data Reconstruction");
@@ -3360,18 +3320,11 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["content-addressing", "fault-tolerance", "archive-nodes", "proof-generation", "proof-verification"]);
-  // Also placed in Scaling & Modular Systems.
-  const placedElsewhere: Record<string, string[]> = {
-    "data-availability": ["data-availability-in-data-availability-layers"],
-    blobs: ["blobs-in-data-availability-layers"],
-    "data-availability-sampling": ["data-availability-sampling-in-data-availability-layers"],
-    "availability-committees": ["availability-committees-in-data-availability-layers"],
-  };
   for (const [id, conceptId] of [...STORAGE_LAYER, ...STORAGE_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...STORAGE_LAYER, ...STORAGE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3400,56 +3353,23 @@ test("Identity, Accounts & Authority has exactly its eight L1 topics and their L
 });
 
 test("Identity, Accounts & Authority reuses Attestations, Signing and Transaction Submission", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("identity-accounts-authority", conceptId);
   // The fixture's placements keep their IDs; Agent Identity now sits under Machine Identity.
   assert.equal(resolver.getPlacement("agent-identity")?.parentPlacementId, "machine-identity");
   assert.equal(resolver.getPlacement("identity")?.parentPlacementId, "identity-accounts-authority");
   assert.equal(resolver.getPlacement("authority")?.parentPlacementId, "identity-accounts-authority");
-  // AI & Intelligent Systems places Agent Identity again under AI Agents; this placement stays preferred.
-  // Machine Economy places it again as an L1 topic; this placement stays preferred.
-  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity", "agent-identity-in-ai-agents", "agent-identity-in-machine-economy"]);
-  assert.equal(resolver.getConcept("agent-identity")?.preferredPlacementId, "agent-identity");
+  assert.deepEqual(placementsOf("agent-identity"), ["agent-identity"]);
   // Attestations: 03's concept, preferred here; Signing and Transaction Submission stay preferred at home.
-  // (Machine Economy places Attestations again under Agent Reputation.)
-  assert.deepEqual(placementsOf("attestations"), ["attestations", "attestations-in-agent-reputation", "attestations-in-identity"]);
-  assert.equal(resolver.getConcept("attestations")?.preferredPlacementId, "attestations-in-identity");
+  assert.deepEqual(placementsOf("attestations"), ["attestations", "attestations-in-identity"]);
+  assertPreferredThrough("identity-accounts-authority", "attestations", "attestations-in-identity");
   assert.deepEqual(placementsOf("signing"), ["signing", "signing-in-wallets"]);
-  assert.equal(resolver.getConcept("signing")?.preferredPlacementId, "signing");
-  assert.deepEqual(placementsOf("transaction-submission"), ["transaction-submission", "transaction-submission-in-action-execution", "transaction-submission-in-wallets"]);
-  assert.equal(resolver.getConcept("transaction-submission")?.preferredPlacementId, "transaction-submission");
-  // General concepts for later reuse (Credentials is already placed again by
-  // Oracles & External Reality), and agent/machine topics kept as their own concepts.
-  assert.deepEqual(placementsOf("credentials"), ["credentials", "credentials-in-real-world-attestations"]);
-  for (const conceptId of ["reputation", "ownership", "roles"]) {
+  assertPreferredThrough("identity-accounts-authority", "signing", "signing");
+  assert.deepEqual(placementsOf("transaction-submission"), ["transaction-submission", "transaction-submission-in-wallets"]);
+  assertPreferredThrough("identity-accounts-authority", "transaction-submission", "transaction-submission");
+  // General concepts for later reuse, and agent/machine topics kept as their own concepts.
+  for (const conceptId of ["credentials", "reputation", "ownership", "delegation", "roles", "capabilities"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
-  // Delegation is placed again by Intents & Coordination, Governance &
-  // Institutions, AI & Intelligent Systems and Machine Economy; Autonomous
-  // Coordination teaches it with its own layer and is preferred.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-autonomous-coordination", "delegation-in-intents", "delegation-in-representation"]);
-  assert.equal(resolver.getConcept("delegation")?.preferredPlacementId, "delegation-in-autonomous-coordination");
-  // Machine Economy places these again; each stays preferred here, except Agent
-  // Reputation, which Machine Economy teaches with its own layer.
-  // (Autonomous Execution places Capabilities and Transaction Construction again.)
-  assert.deepEqual(placementsOf("capabilities"), ["capabilities", "capabilities-in-agent-permissions", "capabilities-in-execution-authorization"]);
-  assert.equal(resolver.getConcept("capabilities")?.preferredPlacementId, "capabilities");
-  assert.deepEqual(placementsOf("transaction-construction"), ["transaction-construction", "transaction-construction-in-action-execution"]);
-  assert.equal(resolver.getConcept("transaction-construction")?.preferredPlacementId, "transaction-construction");
-  for (const [conceptId, later] of [
-    ["permission-models", "permission-models-in-agent-permissions"],
-    ["key-management", "key-management-in-agent-wallets"],
-    ["smart-accounts", "smart-accounts-in-agent-wallets"],
-    ["wallet-recovery", "wallet-recovery-in-agent-wallets"],
-    ["agent-credentials", "agent-credentials-in-agent-identity"],
-    ["machine-authentication", "machine-authentication-in-agent-identity"],
-  ]) {
-    // (Later domains' placements, this one included, come from alsoInLaterDomains.)
-    assert.ok(alsoInLaterDomains(conceptId).includes(later), conceptId);
-    assert.deepEqual(placementsOf(conceptId), [conceptId, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
-  }
-  assert.deepEqual(placementsOf("agent-reputation"), ["agent-reputation", "agent-reputation-in-agent-identity", "agent-reputation-in-machine-economy"]);
-  assert.equal(resolver.getConcept("agent-reputation")?.preferredPlacementId, "agent-reputation-in-machine-economy");
   for (const [placementId, related] of [
     ["agent-credentials", "credentials"],
     ["machine-credentials", "credentials"],
@@ -3474,33 +3394,12 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once; only Agent Identity keeps its existing content.
-  // Also placed in Interoperability & Abstraction.
-  const placedElsewhere: Record<string, string[]> = {
-    "account-abstraction": ["account-abstraction-in-chain-abstraction"],
-    "gas-abstraction": ["gas-abstraction-in-abstraction-layers"],
-  };
-  const shared = new Set([
-    "attestations",
-    "signing",
-    "transaction-submission",
-    "credentials",
-    "agent-identity",
-    "delegation",
-    "capabilities",
-    "transaction-construction",
-    "permission-models",
-    "key-management",
-    "smart-accounts",
-    "wallet-recovery",
-    "agent-credentials",
-    "machine-authentication",
-    "agent-reputation",
-  ]);
+  const shared = new Set(["attestations", "signing", "transaction-submission"]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
@@ -3530,7 +3429,7 @@ test("Oracles & External Reality has exactly its twelve L1 topics and their L2 p
 });
 
 test("Oracles & External Reality reuses existing concepts where the meaning is the same", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("oracles-external-reality", conceptId);
   // Existing concepts placed again, each preferred at its home.
   for (const [conceptId, here] of [
     ["provenance", "provenance-in-oracles-external-reality"],
@@ -3542,23 +3441,17 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     ["lineage", "lineage-in-oracles-external-reality"],
     ["attribution", "attribution-in-oracles-external-reality"],
   ]) {
-    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assertPreferredThrough("oracles-external-reality", conceptId, conceptId);
   }
   assert.deepEqual(placementsOf("consensus"), ["consensus", "consensus-in-oracle-networks"]);
-  assert.equal(resolver.getConcept("consensus")?.preferredPlacementId, "consensus");
+  assertPreferredThrough("oracles-external-reality", "consensus", "consensus");
   // Provenance owns a layer in each domain.
   assert.equal(resolver.getChildren("provenance").length, 6);
   assert.equal(resolver.getChildren("provenance-in-oracles-external-reality").length, 5);
   // APIs and External APIs are one concept within this domain.
   assert.deepEqual(placementsOf("external-apis"), ["external-apis", "external-apis-in-data-sources"]);
-  assert.equal(resolver.getConcept("external-apis")?.preferredPlacementId, "external-apis");
-  // AI Inference and Inference Confidence are consumed here; AI & Intelligent
-  // Systems places them again and is preferred, as their conceptual home.
-  assert.deepEqual(placementsOf("ai-inference"), ["ai-inference", "ai-inference-in-ai-intelligent-systems"]);
-  assert.equal(resolver.getConcept("ai-inference")?.preferredPlacementId, "ai-inference-in-ai-intelligent-systems");
-  assert.deepEqual(placementsOf("inference-confidence"), ["inference-confidence", "inference-confidence-in-uncertainty-reliability"]);
-  assert.equal(resolver.getConcept("inference-confidence")?.preferredPlacementId, "inference-confidence-in-uncertainty-reliability");
+  assertPreferredThrough("oracles-external-reality", "external-apis", "external-apis");
   // Same wording, different concepts: distinct concepts shown with the given labels.
   for (const [placementId, title, existing] of [
     ["external-data-availability", "External Data Availability", "data-availability"],
@@ -3594,17 +3487,12 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  // Revocation is placed again by Machine Economy (withdrawing a grant); this placement stays preferred.
-  assert.deepEqual(placementsOf("revocation"), ["revocation", "revocation-in-agent-permissions", "revocation-in-delegation"]);
-  assert.equal(resolver.getConcept("revocation")?.preferredPlacementId, "revocation");
-  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis", "ai-inference", "inference-confidence", "revocation"]);
-  // Also placed in Governance & Institutions.
-  const placedElsewhere: Record<string, string[]> = { evidence: ["evidence-in-dispute-resolution"] };
+  const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis"]);
   for (const [id, conceptId] of [...ORACLES_LAYER, ...ORACLES_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...ORACLES_LAYER, ...ORACLES_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3633,16 +3521,15 @@ test("Economics & Mechanism Design has exactly its eleven L1 topics and their L2
 });
 
 test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and keeps related concepts distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("economics-mechanism-design", conceptId);
   // Strategic Behavior: Foundations' concept, an L1 topic here with its own layer; preferred here.
-  // (Autonomous Coordination places it again under Competition.)
-  assert.deepEqual(placementsOf("strategic-behavior"), ["strategic-behavior", "strategic-behavior-in-competition", "strategic-behavior-in-economics-mechanism-design"]);
-  assert.equal(resolver.getConcept("strategic-behavior")?.preferredPlacementId, "strategic-behavior-in-economics-mechanism-design");
+  assert.deepEqual(placementsOf("strategic-behavior"), ["strategic-behavior", "strategic-behavior-in-economics-mechanism-design"]);
+  assertPreferredThrough("economics-mechanism-design", "strategic-behavior", "strategic-behavior-in-economics-mechanism-design");
   assert.deepEqual(resolver.getChildren("strategic-behavior"), []);
   assert.equal(resolver.getChildren("strategic-behavior-in-economics-mechanism-design").length, 6);
   // Economic Penalties is Penalties in contextual wording, within this domain.
-  assert.deepEqual(placementsOf("penalties"), ["penalties", "penalties-in-agent-incentives", "penalties-in-cryptoeconomic-security"]);
-  assert.equal(resolver.getConcept("penalties")?.preferredPlacementId, "penalties");
+  assert.deepEqual(placementsOf("penalties"), ["penalties", "penalties-in-cryptoeconomic-security"]);
+  assertPreferredThrough("economics-mechanism-design", "penalties", "penalties");
   // Objectives and Constraints are the mechanism's, in contextual wording.
   assert.equal(resolver.getConcept("mechanism-objectives")?.title, "Mechanism Objectives");
   assert.equal(resolver.getConcept("mechanism-constraints")?.title, "Mechanism Constraints");
@@ -3650,7 +3537,7 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
   assert.equal(resolver.getConcept("constraints"), undefined);
   // General concepts, each placed once for now, available to later domains.
   for (const conceptId of ["incentives", "mechanism-design", "game-theory", "auctions", "fees", "stake", "slashing", "economic-security", "attack-cost", "cost-of-corruption"]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
   }
   // Related but distinct concepts.
   for (const [placementId, related] of [
@@ -3682,28 +3569,12 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  // Machine Economy places these again under Agent Incentives; each stays preferred here.
-  for (const conceptId of ["rewards", "incentive-alignment", "incentive-compatibility"]) {
-    const governance = conceptId === "incentive-alignment" ? ["incentive-alignment-in-institutional-design"] : [];
-    assert.deepEqual(placementsOf(conceptId), [conceptId, `${conceptId}-in-agent-incentives`, ...governance].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
-  }
-  // Autonomous Coordination teaches Resource Allocation again, among agents; this placement stays preferred.
-  assert.deepEqual(placementsOf("resource-allocation"), ["resource-allocation", "resource-allocation-in-autonomous-coordination"]);
-  assert.equal(resolver.getConcept("resource-allocation")?.preferredPlacementId, "resource-allocation");
-  const shared = new Set(["strategic-behavior", "penalties", "rewards", "incentive-alignment", "incentive-compatibility", "resource-allocation"]);
-  // Also placed in Markets & Financial Protocols.
-  const placedElsewhere: Record<string, string[]> = {
-    bids: ["bids-in-order-books"],
-    "auction-clearing": ["auction-clearing-in-mev-auctions"],
-    "batch-auctions": ["batch-auctions-in-solver-competition"],
-    "incentive-alignment": ["incentive-alignment-in-institutional-design"],
-  };
+  const shared = new Set(["strategic-behavior", "penalties"]);
   for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...ECONOMICS_LAYER, ...ECONOMICS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3732,33 +3603,20 @@ test("Markets & Financial Protocols has exactly its twelve L1 topics and their L
 });
 
 test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk and keeps financial mechanisms distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("markets-financial-protocols", conceptId);
   // Bids: 10's concept, placed again under Order Books; 10 stays preferred.
   assert.deepEqual(placementsOf("bids"), ["bids", "bids-in-order-books"]);
-  assert.equal(resolver.getConcept("bids")?.preferredPlacementId, "bids");
+  assertPreferredThrough("markets-financial-protocols", "bids", "bids");
   // Settlement: the fixture's general concept, first placed here; its relationship and mechanism step are unchanged.
-  // Intents & Coordination, Machine Economy and Autonomous Execution place it again; this placement stays preferred.
-  assert.deepEqual(placementsOf("settlement"), ["settlement", "settlement-in-intent-settlement", "settlement-in-machine-commerce", "settlement-in-verification-settlement"]);
-  assert.equal(resolver.getConcept("settlement")?.preferredPlacementId, "settlement");
+  assert.deepEqual(placementsOf("settlement"), ["settlement"]);
   assert.equal(resolver.getPlacement("settlement")?.parentPlacementId, "derivatives");
   assert.deepEqual(resolver.getRelationshipsTo("settlement").map((relationship) => relationship.id), ["finality-finalizes-settlement"]);
   // Liquidity Risk: one concept under Liquidity and Risk; preferred under Risk.
   assert.deepEqual(placementsOf("liquidity-risk"), ["liquidity-risk-in-liquidity", "liquidity-risk-in-risk"]);
-  assert.equal(resolver.getConcept("liquidity-risk")?.preferredPlacementId, "liquidity-risk-in-risk");
+  assertPreferredThrough("markets-financial-protocols", "liquidity-risk", "liquidity-risk-in-risk");
   // General concepts, each placed once for now, available to later domains.
-  for (const conceptId of ["markets", "risk", "reserves", "solvency"]) {
+  for (const conceptId of ["assets", "markets", "liquidity", "collateral", "risk", "reserves", "solvency"]) {
     assert.deepEqual(placementsOf(conceptId), [conceptId], conceptId);
-  }
-  // Machine Economy places these again; each stays preferred here.
-  for (const [conceptId, later] of [
-    ["assets", "assets-in-agent-capital"],
-    ["liquidity", "liquidity-in-agent-capital"],
-    ["collateral", "collateral-in-agent-credit"],
-    ["repayment", "repayment-in-agent-credit"],
-    ["counterparty-risk", "counterparty-risk-in-agent-risk"],
-  ]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, later].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
   }
   // Financial mechanisms stay distinct from their general economic primitives, and other near pairs.
   for (const [placementId, related] of [
@@ -3784,12 +3642,12 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  const shared = new Set(["bids", "liquidity-risk", "settlement", "assets", "liquidity", "collateral", "repayment", "counterparty-risk"]);
+  const shared = new Set(["bids", "liquidity-risk"]);
   for (const [id, conceptId] of [...MARKETS_LAYER, ...MARKETS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...MARKETS_LAYER, ...MARKETS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3818,13 +3676,13 @@ test("MEV & Execution Markets has exactly its thirteen L1 topics and their L2 pl
 });
 
 test("MEV & Execution Markets reuses ordering, building and auction concepts and keeps MEV-specific ones distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("mev-execution-markets", conceptId);
   // L1 reuse: each placement owns its own layer; preferred placements are unchanged.
-  assert.equal(resolver.getConcept("transaction-ordering")?.preferredPlacementId, "transaction-ordering-in-block-building");
+  assertPreferredThrough("mev-execution-markets", "transaction-ordering", "transaction-ordering-in-block-building");
   assert.deepEqual(resolver.getChildren("transaction-ordering-in-block-building"), []);
   assert.equal(resolver.getChildren("transaction-ordering-in-mev-execution-markets").length, 6);
   assert.deepEqual(placementsOf("builders"), ["builders", "builders-in-mev-execution-markets"]);
-  assert.equal(resolver.getConcept("builders")?.preferredPlacementId, "builders");
+  assertPreferredThrough("mev-execution-markets", "builders", "builders");
   assert.deepEqual(resolver.getChildren("builders"), []);
   assert.equal(resolver.getChildren("builders-in-mev-execution-markets").length, 6);
   // L2 reuse: placed again here, preferred at home.
@@ -3835,8 +3693,8 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
     ["inclusion-guarantees", "inclusion-guarantees-in-mev-mitigation"],
     ["auction-clearing", "auction-clearing-in-mev-auctions"],
   ]) {
-    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assertPreferredThrough("mev-execution-markets", conceptId, conceptId);
   }
   // Narrower MEV concepts stay distinct where one exposition would mislead.
   for (const [placementId, related] of [
@@ -3873,15 +3731,11 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
   }
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["transaction-ordering", "builders", "block-construction", "transaction-selection", "private-mempools", "inclusion-guarantees", "auction-clearing"]);
-  // Also placed in Intents & Coordination.
-  const placedElsewhere: Record<string, string[]> = {
-    "order-flow-auctions": ["order-flow-auctions-in-solver-competition"],
-  };
   for (const [id, conceptId] of [...MEV_LAYER, ...MEV_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...MEV_LAYER, ...MEV_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3910,13 +3764,10 @@ test("Intents & Coordination has exactly its twelve L1 topics and their L2 place
 });
 
 test("Intents & Coordination reuses existing concepts without moving their preferred placements", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("intents-coordination", conceptId);
   // Each reused concept is placed again here; its existing home stays preferred.
-  // Delegation is also placed by Governance & Institutions.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-autonomous-coordination", "delegation-in-intents", "delegation-in-representation"]);
-  // Autonomous Coordination later takes Delegation's preferred placement.
-  assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation-in-autonomous-coordination");
   for (const [conceptId, here] of [
+    ["delegation", "delegation-in-intents"],
     ["batch-auctions", "batch-auctions-in-solver-competition"],
     ["order-flow-auctions", "order-flow-auctions-in-solver-competition"],
     ["preconfirmations", "preconfirmations-in-intent-commitments"],
@@ -3924,9 +3775,9 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     ["collective-action", "collective-action-in-multi-party-coordination"],
     ["shared-sequencing", "shared-sequencing-in-cross-domain-coordination"],
   ]) {
-    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
+    assertPreferredThrough("intents-coordination", conceptId, conceptId);
+    assertPreferredThrough("intents-coordination", conceptId, conceptId);
   }
   // Preconfirmations keeps its own layer only where it is an L1 topic.
   assert.equal(resolver.getChildren("preconfirmations").length, 5);
@@ -3970,19 +3821,12 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  // Also placed in Interoperability & Abstraction.
-  const placedElsewhere: Record<string, string[]> = {
-    "cross-chain-intents": ["cross-chain-intents-in-cross-chain-execution"],
-    "cross-domain-execution": ["cross-domain-execution-in-interoperability-abstraction"],
-    "cross-domain-settlement": ["cross-domain-settlement-in-interoperability-abstraction"],
-    "cross-domain-atomicity": ["cross-domain-atomicity-in-interoperability-abstraction"],
-  };
   const shared = new Set(["delegation", "batch-auctions", "order-flow-auctions", "preconfirmations", "settlement", "collective-action", "shared-sequencing"]);
   for (const [id, conceptId] of [...INTENTS_LAYER, ...INTENTS_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...INTENTS_LAYER, ...INTENTS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4011,20 +3855,18 @@ test("Governance & Institutions has exactly its fifteen L1 topics and their L2 p
 });
 
 test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignment and keeps governance mechanisms distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("governance-institutions", conceptId);
   // Reused concepts keep their existing home as the preferred placement.
-  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-agent-permissions", "delegation-in-ai-agents", "delegation-in-autonomous-coordination", "delegation-in-intents", "delegation-in-representation"]);
+  assert.deepEqual(placementsOf("delegation"), ["delegation", "delegation-in-intents", "delegation-in-representation"]);
   for (const [conceptId, here] of [
     ["evidence", "evidence-in-dispute-resolution"],
     ["incentive-alignment", "incentive-alignment-in-institutional-design"],
   ]) {
-    assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here].sort(), conceptId);
   }
-  for (const conceptId of ["evidence", "incentive-alignment"]) {
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, conceptId, conceptId);
+  for (const conceptId of ["delegation", "evidence", "incentive-alignment"]) {
+    assertPreferredThrough("governance-institutions", conceptId, conceptId);
   }
-  // Autonomous Coordination later takes Delegation's preferred placement.
-  assert.equal(resolver.getPreferredPlacementForConcept("delegation")?.id, "delegation-in-autonomous-coordination");
   // Governance mechanisms stay distinct from technically similar ones.
   for (const [placementId, related] of [
     ["voting", "agreement"],
@@ -4056,14 +3898,12 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
     assert.notEqual(conceptId, related, placementId);
   }
   // Every other topic is a new concept placed once, without exposition.
-  // Also placed in Interoperability & Abstraction.
-  const placedElsewhere: Record<string, string[]> = { "pause-mechanisms": ["pause-mechanisms-in-trust-failure-modes"] };
   const shared = new Set(["delegation", "evidence", "incentive-alignment"]);
   for (const [id, conceptId] of [...GOVERNANCE_LAYER, ...GOVERNANCE_L2]) {
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...(placedElsewhere[conceptId] ?? []), ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...GOVERNANCE_LAYER, ...GOVERNANCE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4092,11 +3932,11 @@ test("Scaling & Modular Systems has exactly its fourteen L1 topics and their L2 
 });
 
 test("Scaling & Modular Systems reuses existing concepts and keeps scaling-specific concepts distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  const placementsOf = (conceptId: string) => placementsThrough("scaling-modular-systems", conceptId);
   // The fixture's placements keep their IDs; Rollups is an L1 topic and its Finality an L2 topic.
   assert.equal(resolver.getPlacement("rollups")?.parentPlacementId, "scaling-modular-systems");
   assert.equal(resolver.getPlacement("finality-in-rollups")?.parentPlacementId, "rollups");
-  assert.equal(resolver.getPreferredPlacementForConcept("finality")?.id, "finality-in-consensus");
+  assertPreferredThrough("scaling-modular-systems", "finality", "finality-in-consensus");
   assert.deepEqual(resolver.getRelationshipsTo("finality").map((relationship) => relationship.id), ["rollups-depend-on-finality"]);
   // Reused concepts are placed again here; their existing home stays preferred.
   for (const [conceptId, here] of [
@@ -4162,7 +4002,7 @@ test("Scaling & Modular Systems reuses existing concepts and keeps scaling-speci
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...SCALING_LAYER, ...SCALING_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4191,7 +4031,7 @@ test("Interoperability & Abstraction has exactly its fourteen L1 topics and thei
 });
 
 test("Interoperability & Abstraction reuses existing concepts without moving their preferred placements", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  const placementsOf = (conceptId: string) => placementsThrough("interoperability-abstraction", conceptId);
   // [concept, placement here, preferred placement (unchanged home)]
   for (const [conceptId, here, preferred] of [
     ["cross-domain-execution", "cross-domain-execution-in-interoperability-abstraction", "cross-domain-execution"],
@@ -4210,7 +4050,7 @@ test("Interoperability & Abstraction reuses existing concepts without moving the
   ]) {
     assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+    assertPreferredThrough("interoperability-abstraction", conceptId, preferred);
   }
   // The cross-domain concepts are L1 topics here, each owning its own layer, in "Cross-Chain" wording.
   for (const [placementId, label] of [
@@ -4262,7 +4102,7 @@ test("Interoperability & Abstraction reuses existing concepts without moving the
     if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...INTEROP_LAYER, ...INTEROP_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4291,7 +4131,7 @@ test("Security, Correctness & Resilience has exactly its twenty L1 topics and th
 });
 
 test("Security, Correctness & Resilience reuses existing concepts without moving their preferred placements", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  const placementsOf = (conceptId: string) => placementsThrough("security-correctness-resilience", conceptId);
   // [concept, placement here, preferred placement (its home, unchanged)]
   for (const [conceptId, here, home] of [
     ["threat-models", "threat-models-in-security-models", "threat-models"],
@@ -4335,7 +4175,7 @@ test("Security, Correctness & Resilience reuses existing concepts without moving
   ]) {
     assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, home, conceptId);
+    assertPreferredThrough("security-correctness-resilience", conceptId, home);
     assert.notEqual(home, here, conceptId);
   }
   // Incident Response is an L1 topic here with its own layer; Emergency Governance stays 14's.
@@ -4386,7 +4226,9 @@ test("Security, Correctness & Resilience reuses existing concepts without moving
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    // A concept can be placed twice within 17 itself.
+    const alsoHere = [...SECURITY_LAYER, ...SECURITY_L2].filter(([other, concept]) => concept === conceptId && other !== concept).map(([other]) => other);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoHere].sort(), conceptId);
   }
   const ids = [...SECURITY_LAYER, ...SECURITY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4415,7 +4257,7 @@ test("Protocol Architecture has exactly its twelve L1 topics and their L2 placem
 });
 
 test("Protocol Architecture reuses existing concepts without moving their preferred placements", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  const placementsOf = (conceptId: string) => placementsThrough("protocol-architecture", conceptId);
   // [concept, placement here, preferred placement (its home, unchanged)]
   for (const [conceptId, here, home] of [
     ["credible-neutrality", "credible-neutrality-in-architectural-principles", "credible-neutrality"],
@@ -4435,7 +4277,7 @@ test("Protocol Architecture reuses existing concepts without moving their prefer
   ]) {
     assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, home, conceptId);
+    assertPreferredThrough("protocol-architecture", conceptId, home);
     assert.notEqual(home, here, conceptId);
   }
   // Architecture concepts stay distinct from the layer mechanics and neighbouring concepts.
@@ -4468,7 +4310,7 @@ test("Protocol Architecture reuses existing concepts without moving their prefer
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   const ids = [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4497,7 +4339,7 @@ test("Protocol Design & Lifecycle has exactly its fourteen L1 topics and their L
 });
 
 test("Protocol Design & Lifecycle reuses existing concepts without moving their preferred placements", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  const placementsOf = (conceptId: string) => placementsThrough("protocol-design-lifecycle", conceptId);
   // [concept, placement here, preferred placement (its home, unchanged)]
   for (const [conceptId, here, home] of [
     ["stakeholders", "stakeholders-in-protocol-requirements", "stakeholders"],
@@ -4524,7 +4366,7 @@ test("Protocol Design & Lifecycle reuses existing concepts without moving their 
   ]) {
     assert.ok(placementsOf(conceptId).includes(here), `${conceptId} placed at ${here}`);
     assert.equal(resolver.getPlacement(here)?.conceptId, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, home, conceptId);
+    assertPreferredThrough("protocol-design-lifecycle", conceptId, home);
     assert.notEqual(home, here, conceptId);
   }
   // Lifecycle concepts stay distinct from the design-time, architecture, security and governance ones they sit near.
@@ -4568,7 +4410,7 @@ test("Protocol Design & Lifecycle reuses existing concepts without moving their 
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
-    assert.deepEqual([...placementsOf(conceptId)].sort(), [id, ...alsoInLaterDomains(conceptId)].sort(), conceptId);
+    assert.deepEqual([...placementsOf(conceptId)].sort(), [id].sort(), conceptId);
   }
   const ids = [...LIFECYCLE_LAYER, ...LIFECYCLE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -4602,28 +4444,27 @@ test("AI & Intelligent Systems has exactly its twelve L1 topics and their L2 pla
 });
 
 test("AI & Intelligent Systems reuses existing concepts where the meaning is the same and keeps related concepts distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("ai-intelligent-systems", conceptId);
   // AI Inference and Inference Confidence: 09's concepts, preferred here, their conceptual home.
   assert.deepEqual(placementsOf("ai-inference"), ["ai-inference", "ai-inference-in-ai-intelligent-systems"]);
-  assert.equal(resolver.getConcept("ai-inference")?.preferredPlacementId, "ai-inference-in-ai-intelligent-systems");
+  assertPreferredThrough("ai-intelligent-systems", "ai-inference", "ai-inference-in-ai-intelligent-systems");
   assert.equal(resolver.getChildren("ai-inference-in-ai-intelligent-systems").length, 6);
   assert.deepEqual(resolver.getChildren("ai-inference"), []);
   assert.deepEqual(placementsOf("inference-confidence"), ["inference-confidence", "inference-confidence-in-uncertainty-reliability"]);
-  assert.equal(resolver.getConcept("inference-confidence")?.preferredPlacementId, "inference-confidence-in-uncertainty-reliability");
+  assertPreferredThrough("ai-intelligent-systems", "inference-confidence", "inference-confidence-in-uncertainty-reliability");
   // 09 keeps its contextual wording; here the concept title is shown.
   assert.equal(placementLabel("inference-confidence"), "Confidence");
   assert.equal(placementLabel("inference-confidence-in-uncertainty-reliability"), "Inference Confidence");
-  // Agent Identity and Trusted Execution stay preferred at home; Delegation is
-  // preferred in Autonomous Coordination, which teaches it with its own layer.
-  // (13 and 14 also place Delegation; Machine Economy places Delegation and
-  // Agent Identity again.)
-  for (const [conceptId, here, others, preferred] of [
-    ["delegation", "delegation-in-ai-agents", ["delegation-in-intents", "delegation-in-representation", "delegation-in-agent-permissions", "delegation-in-autonomous-coordination"], "delegation-in-autonomous-coordination"],
-    ["agent-identity", "agent-identity-in-ai-agents", ["agent-identity-in-machine-economy"], "agent-identity"],
-    ["trusted-execution", "trusted-execution-in-verifiable-ai", ["trusted-execution-in-execution-environments"], "trusted-execution"],
-  ] as const) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...others].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
+  // Delegation, Agent Identity and Trusted Execution stay preferred at home
+  // (13 and 14 also place Delegation).
+  for (const [conceptId, here] of [
+    ["delegation", "delegation-in-ai-agents"],
+    ["agent-identity", "agent-identity-in-ai-agents"],
+    ["trusted-execution", "trusted-execution-in-verifiable-ai"],
+  ]) {
+    const earlier = conceptId === "delegation" ? ["delegation-in-intents", "delegation-in-representation"] : [];
+    assert.deepEqual(placementsOf(conceptId), [conceptId, here, ...earlier].sort(), conceptId);
+    assertPreferredThrough("ai-intelligent-systems", conceptId, conceptId);
   }
   // Principals is a general concept, titled without an AI qualifier.
   assert.equal(resolver.getConcept("principals")?.title, "Principals");
@@ -4660,26 +4501,7 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   }
   // Every other topic is a new concept placed once, without exposition; only
   // Agent Identity keeps its existing content.
-  // Autonomous Execution places these again; each stays preferred here.
-  for (const conceptId of ["goals", "plans", "replanning", "tool-selection", "tool-calling", "agent-actions", "human-oversight"]) {
-    assert.equal(placementsOf(conceptId).length, 2, conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, conceptId, conceptId);
-  }
-  const shared = new Set([
-    "ai-inference",
-    "ai-agent",
-    "delegation",
-    "agent-identity",
-    "inference-confidence",
-    "trusted-execution",
-    "goals",
-    "plans",
-    "replanning",
-    "tool-selection",
-    "tool-calling",
-    "agent-actions",
-    "human-oversight",
-  ]);
+  const shared = new Set(["ai-inference", "ai-agent", "delegation", "agent-identity", "inference-confidence", "trusted-execution"]);
   for (const [id, conceptId] of [...AI_LAYER, ...AI_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -4691,13 +4513,11 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 23–27's scope to them", () => {
+test("AI & Intelligent Systems keeps the fixture's AI Agent", () => {
   // The fixture's concept, placement ID and relationships are unchanged; only
-  // its position and contextual wording change. Machine Economy places it again
-  // as one kind of economic agent; this placement stays preferred.
+  // its position and contextual wording change.
   assert.equal(resolver.getConcept("ai-agent")?.title, "AI Agent");
-  assert.equal(resolver.getConcept("ai-agent")?.preferredPlacementId, "ai-agent");
-  assert.deepEqual(placementsOf("ai-agent"), ["ai-agent", "ai-agent-in-economic-agents"]);
+  assert.deepEqual(placementsOf("ai-agent"), ["ai-agent"]);
   const placement = resolver.getPlacement("ai-agent");
   assert.equal(placement?.parentPlacementId, "ai-intelligent-systems");
   assert.equal(placement?.order, 6);
@@ -4710,18 +4530,12 @@ test("AI & Intelligent Systems keeps the fixture's AI Agent and leaves 23–27's
       ["authority-constrains-ai-agent", "authority", "constrains"],
     ],
   );
-  assert.equal(resolver.getPreferredPlacementForConcept("ai-agent")?.id, "ai-agent");
-  // Economic Agency stays unplaced; 23–27 remain empty; the bare Autonomy and
-  // Agents concepts are left to later domains.
-  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
-  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
-    assert.deepEqual(resolver.getChildren(l0), [], l0);
-  }
-  assert.equal(resolver.getConcept("autonomy"), undefined);
-  assert.equal(resolver.getConcept("agents"), undefined);
+  assertPreferredThrough("ai-intelligent-systems", "ai-agent", "ai-agent");
+  // Economic Agency is left to Machine Economy.
+  assert.deepEqual(placementsOf("economic-agency"), []);
 
   function placementsOf(conceptId: string) {
-    return resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+    return placementsThrough("ai-intelligent-systems", conceptId);
   }
 });
 
@@ -4753,16 +4567,16 @@ test("Machine Economy has exactly its fourteen L1 topics and their L2 placements
 });
 
 test("Machine Economy reuses existing concepts where the meaning is the same and keeps related concepts distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("machine-economy", conceptId);
   // Agent Identity: 08's concept (with its exposition), an L1 topic here with its own layer; 08 stays preferred.
   assert.deepEqual(placementsOf("agent-identity"), ["agent-identity", "agent-identity-in-ai-agents", "agent-identity-in-machine-economy"]);
-  assert.equal(resolver.getConcept("agent-identity")?.preferredPlacementId, "agent-identity");
+  assertPreferredThrough("machine-economy", "agent-identity", "agent-identity");
   assert.equal(resolver.getChildren("agent-identity-in-machine-economy").length, 6);
   assert.deepEqual(resolver.getChildren("agent-identity"), []);
   // Agent Reputation: 08's concept, an L1 topic here with its own layer and
   // Agent Identity's "Reputation"; preferred here, where it is taught.
   assert.deepEqual(placementsOf("agent-reputation"), ["agent-reputation", "agent-reputation-in-agent-identity", "agent-reputation-in-machine-economy"]);
-  assert.equal(resolver.getConcept("agent-reputation")?.preferredPlacementId, "agent-reputation-in-machine-economy");
+  assertPreferredThrough("machine-economy", "agent-reputation", "agent-reputation-in-machine-economy");
   assert.equal(resolver.getChildren("agent-reputation-in-machine-economy").length, 6);
   assert.deepEqual(resolver.getChildren("agent-reputation-in-agent-identity"), []);
   // Every other reused concept stays preferred at its home.
@@ -4777,7 +4591,7 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
     ["assets", "assets"],
     ["liquidity", "liquidity"],
     ["capabilities", "capabilities"],
-    ["delegation", "delegation-in-autonomous-coordination"],
+    ["delegation", "delegation"],
     ["permission-models", "permission-models"],
     ["revocation", "revocation"],
     ["settlement", "settlement"],
@@ -4795,8 +4609,8 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
   for (const [conceptId, preferred] of reused) {
     assert.ok(placementsOf(conceptId).includes(here.get(conceptId)!), conceptId);
     assert.notEqual(here.get(conceptId), conceptId, `${conceptId} keeps a distinct placement identity here`);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+    assertPreferredThrough("machine-economy", conceptId, preferred);
+    assertPreferredThrough("machine-economy", conceptId, preferred);
   }
   // Contextual wording over reused and new concepts.
   assert.equal(resolver.getConcept("ai-agent")?.title, "AI Agent");
@@ -4845,28 +4659,7 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
   }
   // Every other topic is a new concept placed once, without exposition; only
   // Agent Identity keeps its existing content.
-  // Autonomous Coordination places Service Discovery, Negotiation and Capital
-  // Allocation again; it is preferred for the first two, where they are taught.
-  for (const [conceptId, later, preferred] of [
-    ["service-discovery", "service-discovery-in-agent-discovery", "service-discovery-in-agent-discovery"],
-    ["negotiation", "negotiation-in-autonomous-coordination", "negotiation-in-autonomous-coordination"],
-    ["capital-allocation", "capital-allocation-in-resource-allocation", "capital-allocation"],
-  ]) {
-    assert.deepEqual(placementsOf(conceptId), [conceptId, later].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
-  }
-  const shared = new Set([
-    "agent-identity",
-    "agent-reputation",
-    "service-discovery",
-    "negotiation",
-    "capital-allocation",
-    "policy-constraints",
-    ...reused.map(([conceptId]) => conceptId),
-  ]);
-  // Autonomous Execution places Policy Constraints again, enforced at execution; this placement stays preferred.
-  assert.deepEqual(placementsOf("policy-constraints"), ["policy-constraints", "policy-constraints-in-execution-policies"]);
-  assert.equal(resolver.getConcept("policy-constraints")?.preferredPlacementId, "policy-constraints");
+  const shared = new Set(["agent-identity", "agent-reputation", ...reused.map(([conceptId]) => conceptId)]);
   for (const [id, conceptId] of [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2]) {
     if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
@@ -4878,15 +4671,12 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("Machine Economy leaves Economic Agency unplaced and 23–27 empty, and 20 unchanged", () => {
+test("Machine Economy leaves Economic Agency unplaced and 20 unchanged", () => {
   // Economic Agency (the capacity to act economically) is not Economic Agents
   // (the kinds of actor); its relationship from Agent Identity is unchanged.
-  assert.deepEqual(resolver.getPlacementsForConcept("economic-agency"), []);
+  assert.deepEqual(placementsThrough("machine-economy", "economic-agency"), []);
   assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
-  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
-    assert.deepEqual(resolver.getChildren(l0), [], l0);
-  }
   // 20's tree is exactly as authored.
   assert.deepEqual(resolver.getChildren("ai-intelligent-systems").map((placement) => placement.id), AI_LAYER.map(([id]) => id));
   for (const [parent, children] of AI_TREE) {
@@ -4923,7 +4713,7 @@ test("Autonomous Coordination has exactly its ten L1 topics and their L2 placeme
 });
 
 test("Autonomous Coordination reuses existing concepts where the meaning is the same and keeps narrower concepts distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort();
+  const placementsOf = (conceptId: string) => placementsThrough("autonomous-coordination", conceptId);
   // L1 topics that are existing concepts, each with its own layer here. Taught
   // here, Negotiation, Delegation, Cooperation and Competition are preferred
   // here; Resource Allocation stays preferred in 10, its economic home.
@@ -4936,8 +4726,8 @@ test("Autonomous Coordination reuses existing concepts where the meaning is the 
   ] as const) {
     const here = `${conceptId}-in-autonomous-coordination`;
     assert.deepEqual(placementsOf(conceptId), [...elsewhere, here].sort(), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+    assertPreferredThrough("autonomous-coordination", conceptId, preferred);
+    assertPreferredThrough("autonomous-coordination", conceptId, preferred);
     assert.equal(resolver.getChildren(here).length, 6, here);
   }
   // The same concepts elsewhere keep their own (empty or separate) layers.
@@ -4953,7 +4743,7 @@ test("Autonomous Coordination reuses existing concepts where the meaning is the 
     ["capital-allocation", "capital-allocation-in-resource-allocation", "capital-allocation"],
   ]) {
     assert.ok(placementsOf(conceptId).includes(here), conceptId);
-    assert.equal(resolver.getConcept(conceptId)?.preferredPlacementId, preferred, conceptId);
+    assertPreferredThrough("autonomous-coordination", conceptId, preferred);
   }
   // Contextual wording over new concepts, leaving the bare terms free.
   assert.equal(resolver.getConcept("negotiated-agreement")?.title, "Negotiated Agreement");
@@ -5017,7 +4807,7 @@ test("Autonomous Coordination reuses existing concepts where the meaning is the 
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("Autonomous Coordination leaves 20 and 21 unchanged and 23–27 empty", () => {
+test("Autonomous Coordination leaves 20 and 21 unchanged", () => {
   for (const [root, layer, tree] of [
     ["ai-intelligent-systems", AI_LAYER, AI_TREE],
     ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
@@ -5026,9 +4816,6 @@ test("Autonomous Coordination leaves 20 and 21 unchanged and 23–27 empty", () 
     for (const [parent, children] of tree) {
       assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
     }
-  }
-  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
-    assert.deepEqual(resolver.getChildren(l0), [], l0);
   }
 });
 
@@ -5058,7 +4845,7 @@ test("Autonomous Execution has exactly its eleven L1 topics and their L2 placeme
 });
 
 test("Autonomous Execution reuses existing concepts at their homes and keeps execution-time controls distinct", () => {
-  const placementsOf = (conceptId: string) => resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id);
+  const placementsOf = (conceptId: string) => placementsThrough("autonomous-execution", conceptId);
   // Each reused concept gains exactly this placement here and stays preferred at its home.
   const reused = EXECUTION_L2.filter(([id, conceptId]) => id !== conceptId);
   assert.deepEqual(reused.map(([, conceptId]) => conceptId), [
@@ -5071,7 +4858,7 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     assert.ok(placementsOf(conceptId).includes(id), id);
     const preferred = resolver.getConcept(conceptId)?.preferredPlacementId;
     assert.ok(preferred && resolver.getAncestors(preferred)[0]?.id !== "autonomous-execution", `${conceptId} stays preferred at home`);
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+    assertPreferredThrough("autonomous-execution", conceptId, preferred);
   }
   // Simulation is a new general concept, an L1 topic here; Intent Generation
   // leaves Intents to 13, and Approval Thresholds here are not 14's.
@@ -5125,7 +4912,7 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("Autonomous Execution leaves 20–22 unchanged and 24–27 empty", () => {
+test("Autonomous Execution leaves 20–22 unchanged", () => {
   for (const [root, layer, tree] of [
     ["ai-intelligent-systems", AI_LAYER, AI_TREE],
     ["machine-economy", MACHINE_ECONOMY_LAYER, MACHINE_ECONOMY_TREE],
@@ -5136,20 +4923,61 @@ test("Autonomous Execution leaves 20–22 unchanged and 24–27 empty", () => {
       assert.deepEqual(resolver.getChildren(parent).map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]), children, parent);
     }
   }
-  for (const l0 of ["autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems"]) {
-    assert.deepEqual(resolver.getChildren(l0), [], l0);
+});
+
+// Cross-domain invariants, asserted once for the whole stack rather than in each
+// domain's own tests.
+test("a concept has an explicit preferred placement exactly when it is placed more than once, and resolves to it", () => {
+  for (const concept of mapKnowledge.concepts) {
+    const placements = resolver.getPlacementsForConcept(concept.id).map((placement) => placement.id);
+    if (placements.length > 1) {
+      assert.ok(concept.preferredPlacementId && placements.includes(concept.preferredPlacementId), concept.id);
+      assert.equal(resolver.getPreferredPlacementForConcept(concept.id)?.id, concept.preferredPlacementId, concept.id);
+    } else {
+      assert.equal(concept.preferredPlacementId, undefined, concept.id);
+    }
   }
 });
 
-test("reused concepts resolve to their preferred placements", () => {
-  for (const [conceptId, preferred] of [
-    ["ai-inference", "ai-inference-in-ai-intelligent-systems"],
-    ["inference-confidence", "inference-confidence-in-uncertainty-reliability"],
-    ["delegation", "delegation-in-autonomous-coordination"],
-    ["agent-identity", "agent-identity"],
-    ["trusted-execution", "trusted-execution"],
-  ]) {
-    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+test("placement IDs are unique, and a further placement never takes another concept's ID", () => {
+  const ids = mapKnowledge.placements.map((placement) => placement.id);
+  assert.equal(new Set(ids).size, ids.length);
+  const conceptIds = new Set(mapKnowledge.concepts.map((concept) => concept.id));
+  for (const placement of mapKnowledge.placements) {
+    if (placement.id !== placement.conceptId) assert.ok(!conceptIds.has(placement.id), placement.id);
+  }
+});
+
+// L0 domains with authored topics. Each newly authored domain adds itself here.
+const POPULATED_L0 = [
+  "foundations",
+  "computation-execution",
+  "state-data",
+  "consensus-ordering",
+  "networks-infrastructure",
+  "cryptography-proofs",
+  "storage-availability",
+  "identity-accounts-authority",
+  "oracles-external-reality",
+  "economics-mechanism-design",
+  "markets-financial-protocols",
+  "mev-execution-markets",
+  "intents-coordination",
+  "governance-institutions",
+  "scaling-modular-systems",
+  "interoperability-abstraction",
+  "security-correctness-resilience",
+  "protocol-architecture",
+  "protocol-design-lifecycle",
+  "ai-intelligent-systems",
+  "machine-economy",
+  "autonomous-coordination",
+  "autonomous-execution",
+];
+
+test("L0 domains without authored topics stay empty", () => {
+  for (const [l0] of L0_DOMAINS) {
+    assert.equal(resolver.getChildren(l0).length > 0, POPULATED_L0.includes(l0), l0);
   }
 });
 

@@ -52,6 +52,17 @@ function rootPlacementIds(resolver: ReturnType<typeof createMapResolver>): strin
 const resolver = createMapResolver(mapKnowledge);
 const view = buildMapExplorerView(resolver, rootPlacementIds(resolver));
 
+// An L0 domain with no topics, added to the real model, for empty-domain
+// behaviour that must hold however many of the real domains are authored.
+const EMPTY_L0 = "unauthored-domain";
+const emptyDomainModel: MapKnowledgeModel = {
+  ...mapKnowledge,
+  concepts: [...mapKnowledge.concepts, { id: EMPTY_L0, slug: EMPTY_L0, title: "Unauthored Domain" }],
+  placements: [...mapKnowledge.placements, { id: EMPTY_L0, conceptId: EMPTY_L0, order: view.roots.length }],
+};
+const emptyDomainResolver = createMapResolver(emptyDomainModel);
+const emptyDomainView = buildMapExplorerView(emptyDomainResolver, rootPlacementIds(emptyDomainResolver));
+
 // L0 domains that currently hold re-homed proof-fixture placements.
 const POPULATED_L0 = {
   foundations: [
@@ -387,7 +398,7 @@ test("empty L0 domains are leaves that never expose disclosure, even if marked e
     assert.equal(row.hasChildren, hasChildren, row.placementId);
     assert.equal(row.isExpanded, hasChildren, row.placementId);
   }
-  assert.equal(rows.filter((row) => !row.hasChildren).length, 4);
+  assert.equal(rows.filter((row) => !row.hasChildren).length, view.roots.length - Object.keys(POPULATED_L0).length);
 });
 
 test("Finality remains one concept rendered through two independent placements", () => {
@@ -555,8 +566,8 @@ test("row activation: a leaf becomes the context without fabricated disclosure",
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.
-  const machineEconomy = getVisibleMapExplorerRows(view, new Set()).find((row) => row.placementId === "autonomous-organizations")!;
-  assert.equal(activateMapExplorerRow(machineEconomy, null, new Set()).expandedPlacementIds.size, 0);
+  const empty = getVisibleMapExplorerRows(emptyDomainView, new Set()).find((row) => row.placementId === EMPTY_L0)!;
+  assert.equal(activateMapExplorerRow(empty, null, new Set()).expandedPlacementIds.size, 0);
 });
 
 test("context navigation opens the placement and its ancestors; disclosure alone never changes context", () => {
@@ -660,8 +671,10 @@ test("root placements become structural regions holding their visible descendant
   // A collapsed region keeps its identity but exposes no rows; an empty one has none.
   assert.deepEqual(regions[14].rows, []);
   assert.equal(regions[14].header.hasChildren, true);
-  assert.deepEqual(regions[23].rows, []);
-  assert.equal(regions[23].header.hasChildren, false);
+  const emptyRegion = getVisibleMapExplorerRegions(emptyDomainView, new Set([EMPTY_L0])).at(-1)!;
+  assert.equal(emptyRegion.header.placementId, EMPTY_L0);
+  assert.deepEqual(emptyRegion.rows, []);
+  assert.equal(emptyRegion.header.hasChildren, false);
 });
 
 test("no entry context yields exactly the default initial state", () => {
@@ -717,8 +730,8 @@ test("an L0 entry context focuses the domain; an empty domain adds no disclosure
   assert.equal(populated.focusedPlacementId, "scaling-modular-systems");
   assert.deepEqual([...populated.expandedPlacementIds], ["scaling-modular-systems"]);
 
-  const empty = getInitialMapExplorerState(view, "autonomous-organizations");
-  assert.equal(empty.focusedPlacementId, "autonomous-organizations");
+  const empty = getInitialMapExplorerState(emptyDomainView, EMPTY_L0);
+  assert.equal(empty.focusedPlacementId, EMPTY_L0);
   assert.deepEqual([...empty.expandedPlacementIds], getInitialExpandedPlacementIds());
 });
 
@@ -775,7 +788,8 @@ test("a concept is expandable when it has exposition or a next layer, never when
   const byId = new Map(rows.map((row) => [row.placementId, row]));
   assert.ok(byId.get("finality-in-consensus")?.isExpandable); // content, no children
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
-  assert.ok(!byId.get("autonomous-organizations")?.isExpandable); // neither
+  const emptyRow = getVisibleMapExplorerRows(emptyDomainView, new Set([EMPTY_L0])).find((row) => row.placementId === EMPTY_L0);
+  assert.ok(emptyRow && !emptyRow.isExpandable); // neither
   assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
   assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
   assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
@@ -1489,7 +1503,7 @@ test("entering a domain from the index sets context, opens it, and never collaps
   const again = enterMapExplorerContext("foundations", open, index);
   assert.equal(again.expandedPlacementIds, open);
   // An empty domain is entered without fabricated disclosure.
-  assert.deepEqual([...enterMapExplorerContext("autonomous-organizations", new Set(), index).expandedPlacementIds], []);
+  assert.deepEqual([...enterMapExplorerContext(EMPTY_L0, new Set(), indexMapExplorerView(emptyDomainView)).expandedPlacementIds], []);
   assert.equal(getMapContextHref(closed.contextPlacementId), "/map?context=foundations");
 });
 
