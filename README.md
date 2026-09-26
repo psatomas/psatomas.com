@@ -27,6 +27,18 @@ npm run build    # production build (also runs the TypeScript check)
 ```
 
 ```bash
+# MAP browser regression (~25 min): drives /map in a real browser across all
+# 27 domains, every L1 topic, every placement of multiply-placed concepts,
+# five widths, keyboard/disclosure/context/history behavior and homepage entry.
+npm run db:migrate:local               # once: local D1 for the homepage
+npx playwright-core install chromium   # once, only if Google Chrome is not installed and CHROME_PATH is unset
+npm run build
+npm run test:map:browser                              # starts `next start` itself
+npm run test:map:browser -- --only=structure,history  # named sections only
+npm run test:map:browser -- --base-url=http://localhost:3000 --verbose
+```
+
+```bash
 npm run preview  # build with OpenNext and run it locally under workerd —
                   # the actual Cloudflare Workers runtime, not just next dev
 npm run deploy    # build and deploy to Cloudflare Workers
