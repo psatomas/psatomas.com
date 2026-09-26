@@ -1926,7 +1926,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "risk-checks",
   ],
   "execution-authorization": [
-    "runtime-authorization",
+    { placementId: "authorization-in-execution-authorization", conceptId: "authorization", contextualLabel: "Runtime Authorization" },
     { placementId: "capabilities-in-execution-authorization", conceptId: "capabilities" },
     "human-approval",
     { placementId: "action-approval-thresholds", conceptId: "action-approval-thresholds", contextualLabel: "Approval Thresholds" },
@@ -2097,7 +2097,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
     "bounded-autonomy",
     "protocol-autonomy-levels",
     "self-management",
-    "protocol-invariants",
+    { placementId: "invariants-in-protocol-autonomy", conceptId: "invariants", contextualLabel: "Protocol Invariants" },
     { placementId: "governance-minimization-in-protocol-autonomy", conceptId: "governance-minimization" },
   ],
   "protocol-objectives": [
@@ -2172,7 +2172,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
   ],
   "autonomous-security-responses": [
     "exploit-detection",
-    "automated-containment",
+    { placementId: "containment-in-autonomous-security-responses", conceptId: "containment", contextualLabel: "Automated Containment" },
     { placementId: "circuit-breakers-in-autonomous-security-responses", conceptId: "circuit-breakers" },
     { placementId: "pause-mechanisms-in-autonomous-security-responses", conceptId: "pause-mechanisms" },
     "outflow-limits",
@@ -2188,7 +2188,7 @@ const L2_TOPICS: Readonly<Record<string, ReadonlyArray<string | L2Topic>>> = {
   ],
   "autonomous-liquidity-management": [
     "liquidity-targets",
-    "liquidity-rebalancing",
+    { placementId: "rebalancing-in-autonomous-liquidity-management", conceptId: "rebalancing", contextualLabel: "Liquidity Rebalancing" },
     "liquidity-range-management",
     "liquidity-incentive-adjustment",
     "peg-defense",
@@ -4363,7 +4363,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Reorganizations.
     { id: "settlement-latency", slug: "settlement-latency", title: "Settlement Latency" },
     { id: "settlement-proofs", slug: "settlement-proofs", title: "Settlement Proofs" },
-    { id: "rebalancing", slug: "rebalancing", title: "Rebalancing" },
+    // Also placed as 25's "Liquidity Rebalancing"; this placement is preferred.
+    { id: "rebalancing", slug: "rebalancing", title: "Rebalancing", preferredPlacementId: "rebalancing" },
     { id: "solver-repayment", slug: "solver-repayment", title: "Solver Repayment" },
     { id: "reorg-risk", slug: "reorg-risk", title: "Reorg Risk" },
     // Atomic Swaps are not 13's Atomic Settlement.
@@ -4483,7 +4484,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     // Protocol Properties.
     // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
     { id: "specifications", slug: "specifications", title: "Specifications", preferredPlacementId: "specifications" },
-    // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
+    // Also placed in 19 Protocol Design & Lifecycle and as 25's "Protocol
+    // Invariants"; this placement is preferred.
     { id: "invariants", slug: "invariants", title: "Invariants", preferredPlacementId: "invariants" },
     { id: "functional-correctness", slug: "functional-correctness", title: "Functional Correctness" },
     // Also placed in 19 Protocol Design & Lifecycle; this placement is preferred.
@@ -4516,7 +4518,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "continuous-auditing", slug: "continuous-auditing", title: "Continuous Auditing" },
     // Authorization (what an authenticated party may do) is not 08's
     // Authentication or Authority.
-    { id: "authorization", slug: "authorization", title: "Authorization" },
+    // Also placed as 23's "Runtime Authorization"; this placement is preferred.
+    { id: "authorization", slug: "authorization", title: "Authorization", preferredPlacementId: "authorization" },
     { id: "least-privilege", slug: "least-privilege", title: "Least Privilege" },
     { id: "privilege-escalation", slug: "privilege-escalation", title: "Privilege Escalation" },
     { id: "role-based-access-control", slug: "role-based-access-control", title: "Role-Based Access Control" },
@@ -4549,7 +4552,8 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "security-telemetry", slug: "security-telemetry", title: "Security Telemetry" },
     { id: "forensics", slug: "forensics", title: "Forensics" },
     // Incident Response is not 14's Emergency Governance.
-    { id: "containment", slug: "containment", title: "Containment" },
+    // Also placed as 25's "Automated Containment"; this placement is preferred.
+    { id: "containment", slug: "containment", title: "Containment", preferredPlacementId: "containment" },
     { id: "response-coordination", slug: "response-coordination", title: "Response Coordination" },
     { id: "post-mortems", slug: "post-mortems", title: "Post-Mortems" },
     { id: "incident-disclosure", slug: "incident-disclosure", title: "Incident Disclosure" },
@@ -5184,13 +5188,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "policy-enforcement", slug: "policy-enforcement", title: "Policy Enforcement" },
     { id: "policy-violations", slug: "policy-violations", title: "Policy Violations" },
     { id: "risk-checks", slug: "risk-checks", title: "Risk Checks" },
-    // Runtime Authorization (approving one action as it runs) is not 08's Agent
-    // Authorization or 21's Spending and Session Authority; Multi-Party Approval
+    // Runtime Authorization is 17's Authorization (what an authenticated party may
+    // do), applied to one action as it runs: not 08's Agent Authorization or 21's
+    // Spending and Session Authority; Multi-Party Approval
     // is not 06's Multisignatures; Authorization Scopes are not 21's Agent
     // Permissions. Capabilities are 08's. The limits beyond which an action needs
     // approval, shown as "Approval Thresholds"; not 14's Approval Thresholds (the
     // share of votes a decision needs).
-    { id: "runtime-authorization", slug: "runtime-authorization", title: "Runtime Authorization" },
     { id: "human-approval", slug: "human-approval", title: "Human Approval" },
     { id: "action-approval-thresholds", slug: "action-approval-thresholds", title: "Action Approval Thresholds" },
     { id: "multi-party-approval", slug: "multi-party-approval", title: "Multi-Party Approval" },
@@ -5376,12 +5380,12 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "verifiable-autonomous-operation", slug: "verifiable-autonomous-operation", title: "Verifiable Autonomous Operation" },
     { id: "protocol-lifecycle-automation", slug: "protocol-lifecycle-automation", title: "Protocol Lifecycle Automation" },
     // L2 topics (placements in L2_TOPICS). Bounded Autonomy (hard limits on what
-    // a protocol may do by itself) is not 20's Human Oversight; Protocol
-    // Invariants are not Foundations' Safety or 11's Invariant Functions.
+    // a protocol may do by itself) is not 20's Human Oversight. Protocol
+    // Invariants are 17's Invariants, not Foundations' Safety or 11's Invariant
+    // Functions.
     { id: "bounded-autonomy", slug: "bounded-autonomy", title: "Bounded Autonomy" },
     { id: "protocol-autonomy-levels", slug: "protocol-autonomy-levels", title: "Protocol Autonomy Levels" },
     { id: "self-management", slug: "self-management", title: "Self-Management" },
-    { id: "protocol-invariants", slug: "protocol-invariants", title: "Protocol Invariants" },
     // Objective Functions are not 10's Mechanism Objectives; Setpoints are the
     // target values a controller holds; Protocol Health is not 05's Health Checks.
     { id: "objective-functions", slug: "objective-functions", title: "Objective Functions" },
@@ -5449,10 +5453,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "recovery-modes", slug: "recovery-modes", title: "Recovery Modes" },
     { id: "state-repair", slug: "state-repair", title: "State Repair" },
     // Responses the protocol takes itself, not 14's Emergency Powers or
-    // Guardians. Circuit Breakers and Pause Mechanisms are 14's, Incident
+    // Guardians. Automated Containment is 17's Containment. Circuit Breakers and Pause Mechanisms are 14's, Incident
     // Response the hand-off to it. Outflow Limits are not 21's Spending Limits.
     { id: "exploit-detection", slug: "exploit-detection", title: "Exploit Detection" },
-    { id: "automated-containment", slug: "automated-containment", title: "Automated Containment" },
     { id: "outflow-limits", slug: "outflow-limits", title: "Outflow Limits" },
     // Reserves (11), Revenue (21) and Resource Allocation (10) are placed again.
     // Insurance Funds are not 11's Loss Absorption; Buybacks are not 10's Burns.
@@ -5460,9 +5463,9 @@ export const mapKnowledge: MapKnowledgeModel = {
     { id: "insurance-funds", slug: "insurance-funds", title: "Insurance Funds" },
     { id: "buybacks", slug: "buybacks", title: "Buybacks" },
     // Managing liquidity, not 11's Liquidity itself; Peg Defense is not 11's
-    // Peg Stability; Liquidity Rebalancing is not 11's Liquidity Provision.
+    // Peg Stability; Liquidity Rebalancing is 16's Rebalancing, not 11's
+    // Liquidity Provision.
     { id: "liquidity-targets", slug: "liquidity-targets", title: "Liquidity Targets" },
-    { id: "liquidity-rebalancing", slug: "liquidity-rebalancing", title: "Liquidity Rebalancing" },
     { id: "liquidity-range-management", slug: "liquidity-range-management", title: "Liquidity Range Management" },
     { id: "liquidity-incentive-adjustment", slug: "liquidity-incentive-adjustment", title: "Liquidity Incentive Adjustment" },
     { id: "peg-defense", slug: "peg-defense", title: "Peg Defense" },

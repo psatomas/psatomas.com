@@ -2502,7 +2502,7 @@ const EXECUTION_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["risk-checks", "risk-checks", "Risk Checks"],
   ]],
   ["execution-authorization", [
-    ["runtime-authorization", "runtime-authorization", "Runtime Authorization"],
+    ["authorization-in-execution-authorization", "authorization", "Runtime Authorization"],
     ["capabilities-in-execution-authorization", "capabilities", "Capabilities"],
     ["human-approval", "human-approval", "Human Approval"],
     ["action-approval-thresholds", "action-approval-thresholds", "Approval Thresholds"],
@@ -2720,7 +2720,7 @@ const PROTOCOLS_TREE: Array<[string, Array<[string, string, string]>]> = [
     ["bounded-autonomy", "bounded-autonomy", "Bounded Autonomy"],
     ["protocol-autonomy-levels", "protocol-autonomy-levels", "Protocol Autonomy Levels"],
     ["self-management", "self-management", "Self-Management"],
-    ["protocol-invariants", "protocol-invariants", "Protocol Invariants"],
+    ["invariants-in-protocol-autonomy", "invariants", "Protocol Invariants"],
     ["governance-minimization-in-protocol-autonomy", "governance-minimization", "Governance Minimization"],
   ]],
   ["protocol-objectives", [
@@ -2795,7 +2795,7 @@ const PROTOCOLS_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
   ["autonomous-security-responses", [
     ["exploit-detection", "exploit-detection", "Exploit Detection"],
-    ["automated-containment", "automated-containment", "Automated Containment"],
+    ["containment-in-autonomous-security-responses", "containment", "Automated Containment"],
     ["circuit-breakers-in-autonomous-security-responses", "circuit-breakers", "Circuit Breakers"],
     ["pause-mechanisms-in-autonomous-security-responses", "pause-mechanisms", "Pause Mechanisms"],
     ["outflow-limits", "outflow-limits", "Outflow Limits"],
@@ -2811,7 +2811,7 @@ const PROTOCOLS_TREE: Array<[string, Array<[string, string, string]>]> = [
   ]],
   ["autonomous-liquidity-management", [
     ["liquidity-targets", "liquidity-targets", "Liquidity Targets"],
-    ["liquidity-rebalancing", "liquidity-rebalancing", "Liquidity Rebalancing"],
+    ["rebalancing-in-autonomous-liquidity-management", "rebalancing", "Liquidity Rebalancing"],
     ["liquidity-range-management", "liquidity-range-management", "Liquidity Range Management"],
     ["liquidity-incentive-adjustment", "liquidity-incentive-adjustment", "Liquidity Incentive Adjustment"],
     ["peg-defense", "peg-defense", "Peg Defense"],
@@ -3347,12 +3347,12 @@ test("canonical concept identities stay unique after adding the L0 layer", () =>
   // Intelligent Systems' 10 new L1 and 65 new L2 concepts, then Machine
   // Economy's 12 new L1 and 60 new L2 concepts, then Autonomous
   // Coordination's 5 new L1 and 56 new L2 concepts, then Autonomous
-  // Execution's 11 new L1 and 45 new L2 concepts, then Autonomous
+  // Execution's 11 new L1 and 44 new L2 concepts, then Autonomous
   // Organizations' 13 new L1 and 54 new L2 concepts, then Autonomous
-  // Protocols' 17 new L1 and 60 new L2 concepts, then Autonomous
+  // Protocols' 17 new L1 and 57 new L2 concepts, then Autonomous
   // Economy's 17 new L1 and 73 new L2 concepts, then Frontier Systems'
   // 16 new L1 and 77 new L2 concepts.
-  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 45 + 13 + 54 + 17 + 60 + 17 + 73 + 16 + 77);
+  assert.equal(ids.length, 27 + 11 + 6 + 40 + 7 + 38 + 9 + 58 + 7 + 56 + 10 + 55 + 7 + 46 + 8 + 47 + 6 + 43 + 11 + 61 + 10 + 65 + 12 + 69 + 11 + 74 + 12 + 64 + 15 + 86 + 12 + 64 + 11 + 72 + 19 + 82 + 12 + 54 + 14 + 60 + 10 + 65 + 12 + 60 + 5 + 56 + 11 + 44 + 13 + 54 + 17 + 57 + 17 + 73 + 16 + 77);
 });
 
 test("the Phase 1 proof fixture is re-homed beneath its L0 domains with stable placement IDs", () => {
@@ -5473,7 +5473,7 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
   const reused = EXECUTION_L2.filter(([id, conceptId]) => id !== conceptId);
   assert.deepEqual(reused.map(([, conceptId]) => conceptId), [
     "goals", "success-criteria", "plans", "replanning", "tool-selection", "execution-routing", "transaction-simulation", "policy-constraints",
-    "capabilities", "trusted-execution", "agent-actions", "tool-calling", "transaction-construction", "transaction-submission",
+    "authorization", "capabilities", "trusted-execution", "agent-actions", "tool-calling", "transaction-construction", "transaction-submission",
     "verifiable-execution", "settlement", "observability", "anomaly-detection", "alerting", "human-oversight", "circuit-breakers",
   ]);
   for (const [id, conceptId] of reused) {
@@ -5491,8 +5491,8 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
   for (const [placementId, related] of [
     ["intent-generation", "intents"],
     ["action-approval-thresholds", "approval-thresholds"],
-    ["runtime-authorization", "agent-authorization"],
-    ["runtime-authorization", "spending-authority"],
+    ["authorization", "agent-authorization"],
+    ["authorization", "spending-authority"],
     ["authorization-scopes", "agent-permissions"],
     ["multi-party-approval", "multisignatures"],
     ["human-approval", "human-oversight"],
@@ -5702,7 +5702,7 @@ test("Autonomous Protocols reuses existing concepts at their homes and keeps pro
   // placement here and stays preferred at its home.
   assert.ok(PROTOCOLS_LAYER.every(([id, conceptId]) => id === conceptId));
   const reused = PROTOCOLS_L2.filter(([id, conceptId]) => id !== conceptId);
-  assert.equal(reused.length, 39);
+  assert.equal(reused.length, 42);
   for (const [id, conceptId] of reused) {
     assert.equal(id, `${conceptId}-in-${resolver.getPlacement(id)?.parentPlacementId}`, id);
     assert.ok(placementsOf(conceptId).includes(id), id);
@@ -5734,7 +5734,7 @@ test("Autonomous Protocols reuses existing concepts at their homes and keeps pro
     ["autonomous-security-responses", "emergency-governance"],
     ["protocol-owned-resources", "treasuries"],
     ["autonomous-liquidity-management", "liquidity"],
-    ["liquidity-rebalancing", "liquidity-provision"],
+    ["rebalancing", "liquidity-provision"],
     ["peg-defense", "peg-stability"],
     ["autonomous-risk-management", "risk"],
     ["dynamic-risk-parameters", "risk-parameters"],
@@ -5750,8 +5750,8 @@ test("Autonomous Protocols reuses existing concepts at their homes and keeps pro
     ["protocol-lifecycle-automation", "contract-lifecycle"],
     ["protocol-lifecycle-automation", "organizational-lifecycle"],
     ["protocol-bootstrapping", "organizational-bootstrapping"],
-    ["protocol-invariants", "safety"],
-    ["protocol-invariants", "invariant-functions"],
+    ["invariants", "safety"],
+    ["invariants", "invariant-functions"],
     ["dynamic-fees", "congestion-pricing"],
     ["adaptive-interest-rates", "interest-rates"],
     ["state-estimation", "state-reconstruction"],
