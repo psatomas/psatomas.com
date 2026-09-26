@@ -7114,6 +7114,283 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "state-data-content",
+      conceptId: "state-data",
+      definition:
+        "Protocol state is the condition of a system at a point in its evolution, as defined by its transition rules. Data is broader: the inputs, records, and references that change, describe, prove, or explain that state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The two are easily conflated because state is stored as data. But not all data is state. Transactions, blocks, events, metadata, and external information describe what was submitted, recorded, or observed. State is what the protocol holds to be the case once its transition rules have been applied to those inputs.",
+        },
+        { kind: "distinction", left: "Stored data", right: "Protocol state" },
+        {
+          kind: "flow",
+          label: "How data becomes protocol state, and how that state is represented",
+          stages: [["Data / Inputs"], ["Transition Rules"], ["Protocol State"], ["State Representation"]],
+        },
+        {
+          kind: "paragraph",
+          text: "State & Data is concerned with that relationship: how state is modeled and changed, how participants refer to and verify it without holding all of it, how its history is kept, how a participant comes to share it, and how the data around it is placed, trusted, traced, and queried.",
+        },
+        { kind: "heading", text: "State has a shape and a way to change" },
+        {
+          kind: "paragraph",
+          text: "A state model decides what the protocol tracks, such as accounts and balances, unspent outputs, or contract storage. Global state is the whole of it; local state is the part that belongs to a single account, contract, or participant. Encoding and layout decide how the model is written down and organized, and so which parts of it can be read, updated, and proven efficiently.",
+        },
+        {
+          kind: "terms",
+          terms: ["State models", "Global state", "Local state", "State encoding", "State layout", "State roots"],
+        },
+        {
+          kind: "paragraph",
+          text: "Foundations treats a protocol as a state machine. The narrower question here is what makes a particular transition valid. A transition function maps the current state and an input to a next state, but only when the transition's preconditions hold.",
+        },
+        {
+          kind: "flow",
+          label: "How preconditions separate valid transitions from invalid ones",
+          stages: [
+            ["Current State + Input"],
+            ["Transition Preconditions"],
+            [
+              ["Valid Transition", "Transition Effects", "Next State"],
+              ["Invalid Transition", "Rejected", "State unchanged"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Preconditions decide whether a transition may occur; effects describe what changes if it does. An invalid transition is not a failed write but a transition the rules do not permit, so the state it would have produced is never reached. Atomicity groups effects: the changes of an atomic state transition apply together or not at all, so the protocol never holds a state in which only some of them happened.",
+        },
+        {
+          kind: "paragraph",
+          text: "How effects are computed belongs to execution. Which states they may lead to belongs to the state model.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transition functions",
+            "Valid transitions",
+            "Invalid transitions",
+            "Transition preconditions",
+            "Transition effects",
+            "Atomic state transitions",
+          ],
+        },
+        { kind: "heading", text: "A commitment stands in for the state" },
+        {
+          kind: "paragraph",
+          text: "Participants often need to refer to state they do not hold in full. A state commitment is a compact value computed from the state's representation, such that no different state can feasibly produce the same value. A state root is such a commitment: it identifies a state, but it is not the state.",
+        },
+        {
+          kind: "flow",
+          label: "How a state commitment lets a participant verify state it does not hold",
+          stages: [["State"], ["Representation"], ["Commitment"], ["State Root"], ["State Proof"], ["Verification"]],
+        },
+        { kind: "distinction", left: "State root", right: "State" },
+        {
+          kind: "paragraph",
+          text: "A state proof shows that a particular value belongs to the state committed to by a given root. A verifier that accepts the root can check the value without holding the rest of the state. Which root to accept is a question the proof does not answer; that is settled by agreement between participants.",
+        },
+        {
+          kind: "paragraph",
+          text: "Commitment structures differ in what they make cheap. Merkle trees commit to a collection by hashing it pairwise up to a single root. Merkle Patricia tries organize entries along key paths, so that individual entries can be located and proven. Verkle trees use vector commitments to make proofs smaller. The choice of commitment scheme shapes proof size, update cost, and state layout; how each scheme is constructed belongs to cryptography.",
+        },
+        {
+          kind: "terms",
+          terms: ["Merkle trees", "Merkle Patricia tries", "Verkle trees", "Commitment schemes", "State roots", "State proofs"],
+        },
+        { kind: "heading", text: "Current state is not the whole history" },
+        {
+          kind: "paragraph",
+          text: "Each transition replaces the current state, but earlier states do not stop mattering. Audits, disputes, and historical queries ask what the state was, not what it is.",
+        },
+        {
+          kind: "flow",
+          label: "How an earlier state is reconstructed from a recorded starting point",
+          stages: [["Snapshot or Checkpoint"], ["Recorded Inputs"], ["Replayed Transitions"], ["Reconstructed State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Retaining history and reconstructing it are different strategies. Archival state keeps past states directly queryable, at the cost of retaining all of them. A snapshot captures the full state at one point. A checkpoint marks a point in history that participants treat as a reference for later work; what exactly it guarantees varies between protocols. Between such points, earlier states can be reconstructed by replaying recorded inputs through the same transition rules, which works only because those rules are deterministic.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "State history",
+            "Historical queries",
+            "State snapshots",
+            "Checkpoints",
+            "Archival state",
+            "State reconstruction",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A participant that joins late, or falls behind, must establish a view of state it did not compute as it happened. Synchronization is that process. Its goal is not only a copy of the state, but a view the participant has reason to rely on.",
+        },
+        {
+          kind: "flow",
+          label: "How a participant establishes a verified local view of state",
+          stages: [
+            ["Remote / Historical Data"],
+            ["Full Sync", "Snap Sync", "State Sync", "Incremental Sync"],
+            ["Synchronization Verification"],
+            ["Local State View"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Initial synchronization builds that view for the first time, and strategies trade time against how much is verified along the way. A full sync replays history from the beginning and checks every transition. Snap sync and state sync fetch a recent state and check it against a commitment before catching up from there. Incremental synchronization follows new transitions as they arrive. Names and mechanics differ between protocols; what they share is that verification, not download, decides whether the resulting local view can be relied on.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Initial synchronization",
+            "Full sync",
+            "Snap sync",
+            "State sync",
+            "Incremental synchronization",
+            "Synchronization verification",
+          ],
+        },
+        { kind: "heading", text: "Where data lives changes how it can be trusted" },
+        {
+          kind: "paragraph",
+          text: "On-chain data is part of what the protocol records and agrees on: calldata and other transaction data, block data, logs and events emitted during execution, and protocol state itself. Not all of it is available to execution. In many systems logs and events are records for observers, not inputs to later transitions.",
+        },
+        {
+          kind: "terms",
+          terms: ["Calldata", "Logs", "Events", "Transaction data", "Block data", "Protocol state"],
+        },
+        {
+          kind: "paragraph",
+          text: "Off-chain data is stored and served elsewhere: external data, metadata, and off-chain state the protocol does not hold itself. The protocol refers to it through data references, often using content addressing, in which the reference is derived from the content so that retrieved data can be checked against it.",
+        },
+        {
+          kind: "flow",
+          label: "How on-chain and off-chain data reach a participant",
+          stages: [
+            ["Data"],
+            [
+              ["On-chain", "Recorded by the protocol"],
+              ["Off-chain", "Data Reference", "Retrieval", "Integrity Verification"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Neither placement is simply trustworthy or untrustworthy. On-chain data inherits the protocol's agreement and availability, along with its cost. Off-chain data can be as verifiable as on-chain data when a reference commits to its content, but its availability depends on whoever stores it.",
+        },
+        { kind: "distinction", left: "Verifiable", right: "Available" },
+        {
+          kind: "paragraph",
+          text: "A reference proves what the data should be, not that it can still be retrieved. How facts about the outside world enter a protocol is a separate question from where its data is kept.",
+        },
+        {
+          kind: "terms",
+          terms: ["External data", "Metadata", "Off-chain state", "Data references", "Content addressing"],
+        },
+        { kind: "heading", text: "Integrity, authenticity, and provenance answer different questions" },
+        {
+          kind: "paragraph",
+          text: "Once data moves between systems, questions that are easy to merge come apart.",
+        },
+        {
+          kind: "flow",
+          label: "Three questions asked of data",
+          stages: [
+            ["Data"],
+            [
+              ["Integrity", "Has it changed?"],
+              ["Authenticity", "Is the claimed source genuine?"],
+              ["Provenance", "Where did it come from, and what happened to it?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Integrity is established by hashing or committing to data, so that any modification is detectable on verification. That is tamper evidence rather than tamper prevention: an integrity guarantee says a change will be noticed, not that it cannot happen. Authenticity needs more than a hash. It binds data to a source, typically through a signature.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Integrity guarantees",
+            "Data hashing",
+            "Data commitments",
+            "Integrity verification",
+            "Tamper evidence",
+            "Authenticity",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Provenance extends across time: where data originated, how it was transformed, and who is attributed with each step. Provenance records and attestations capture that lineage so that it can be traced.",
+        },
+        { kind: "distinction", left: "Unchanged", right: "Authentic", further: ["Traceable"] },
+        {
+          kind: "paragraph",
+          text: "Data can be unchanged yet come from the wrong source, or come from a genuine source with no record of how it was produced. Each property needs its own evidence.",
+        },
+        {
+          kind: "terms",
+          terms: ["Data origin", "Lineage", "Attribution", "Provenance records", "Attestations", "Traceability"],
+        },
+        { kind: "heading", text: "Indexes are views, not state" },
+        {
+          kind: "paragraph",
+          text: "Protocol state is organized for validating transitions, not for answering questions. Finding every transfer involving an account, or the history of a contract's events, requires a different organization. Indexing builds it.",
+        },
+        {
+          kind: "flow",
+          label: "How an index derives a queryable view from canonical data",
+          stages: [
+            ["Canonical Data / State"],
+            ["Data Extraction"],
+            ["Data Transformation"],
+            ["Index Construction"],
+            ["Derived State"],
+            ["Query Model"],
+          ],
+        },
+        { kind: "distinction", left: "Derived state", right: "Canonical state" },
+        {
+          kind: "paragraph",
+          text: "An index is computed from canonical data and adds no authority of its own; where the two disagree, the protocol is right. That matters when canonical history changes. A reorganization replaces blocks an indexer has already processed, so derived state built from them must be rolled back and rebuilt. A query model that ignores this will answer with data the protocol no longer holds.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Data extraction",
+            "Data transformation",
+            "Derived state",
+            "Index construction",
+            "Query models",
+            "Reorganization handling",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "State & Data therefore connects what a protocol's state is, how it can be known without being recomputed, and how the data around it can be trusted, traced, and queried. State is defined by rules, identified by commitments, retained or reconstructed as history, and shared through synchronization; data is placed, referenced, verified, and indexed around it.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "State Representation",
+            "State Transitions",
+            "State Commitments",
+            "Historical State",
+            "Synchronization",
+            "On-Chain Data",
+            "Off-Chain Data",
+            "Data Integrity",
+            "Provenance",
+            "Indexing",
+          ],
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",
