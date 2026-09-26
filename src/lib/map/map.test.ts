@@ -6952,7 +6952,7 @@ test("Storage & Availability's L0 exposition separates storing data from making 
         ["Proof of Storage", "Is the data held?"],
         ["Proof of Replication", "Are distinct copies held?"],
         ["Proof of Space", "Is capacity committed?"],
-        ["Proof of Retrievability", "Can the whole be recovered?"],
+        ["Proof of Retrievability", "Can the data be recovered?"],
       ],
     ],
   ]);
