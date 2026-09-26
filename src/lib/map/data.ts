@@ -8291,7 +8291,7 @@ export const mapKnowledge: MapKnowledgeModel = {
       body: [
         {
           kind: "paragraph",
-          text: "Protocols produce data and depend on it: state, transactions, history, and data referenced from elsewhere. Not all of it needs the same guarantees. Some must be kept by every validating participant indefinitely; some only needs to be retrievable for a period; some only needs to be checkable when someone produces it.",
+          text: "Protocols produce data and depend on it: state, transactions, history, and data referenced from elsewhere. Not all of it needs the same guarantees. Some requires broad retention for as long as the protocol depends on it; some only needs to be retrievable for a period; some only needs to be checkable when someone produces it.",
         },
         {
           kind: "flow",
@@ -8522,7 +8522,7 @@ export const mapKnowledge: MapKnowledgeModel = {
               ["Proof of Storage", "Is the data held?"],
               ["Proof of Replication", "Are distinct copies held?"],
               ["Proof of Space", "Is capacity committed?"],
-              ["Proof of Retrievability", "Can the whole be recovered?"],
+              ["Proof of Retrievability", "Can the data be recovered?"],
             ],
           ],
         },
