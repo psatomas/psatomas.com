@@ -7051,7 +7051,7 @@ test("Identity, Accounts & Authority's L0 exposition separates identity, authent
         ["Reputation", "How has it behaved?"],
       ],
     ],
-    [["Account"], [["Externally Owned Account", "Controlled by a key"], ["Contract Account", "Controlled by its code"]], ["Validation"], ["Authorized Execution"]],
+    [["Account"], [["Externally Owned Account", "Controlled by a key"], ["Contract Account", "Control defined by logic"]], ["Validation"], ["Authorized Execution"]],
     [["Intent"], ["Transaction Construction"], ["Signing"], ["Transaction Submission"], ["Protocol"]],
     [["Operation"], ["Validation Logic"], ["Primary key", "Session key, within its scope", "Recovery Logic"], ["Execution Logic"], ["State Change"]],
     [
