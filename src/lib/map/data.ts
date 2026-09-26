@@ -7781,7 +7781,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Messages cross that graph hop by hop. In gossip propagation, each node passes what it learns to some of its peers, which pass it on in turn; flooding sends it to every neighbor, spending bandwidth for speed and redundancy. Either way, dissemination is not an instantaneous broadcast. Each hop adds propagation latency, and nodes validate messages before relaying them and suppress duplicates they have already seen, so that invalid or repeated messages do not multiply.",
+          text: "Messages cross that graph hop by hop. In gossip propagation, nodes pass what they learn on selectively, to peers chosen by the network's propagation rules, which pass it on in turn; flooding forwards a message broadly, potentially to every eligible neighbor, trading greater bandwidth use for redundant dissemination paths. Either way, dissemination is not an instantaneous broadcast. Each hop adds propagation latency, and nodes typically validate messages before relaying them and suppress duplicates they have already seen, so that invalid or repeated messages do not multiply.",
         },
         {
           kind: "flow",
@@ -7837,7 +7837,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A full node checks what it receives against the protocol's rules and maintains current state. A light node keeps far less, verifying particular data against commitments instead of processing everything, which makes it cheaper to run and more dependent on the nodes that serve it. An archive node retains historical state, not only the current one. A validator node performs consensus duties in addition to following the protocol. Node synchronization is how any of them establishes its view in the first place, by the strategies described under State & Data.",
+          text: "A full node checks what it receives against the protocol's rules and maintains current state. A light node verifies selected claims or data against protocol commitments without maintaining or processing the full state, which makes it cheaper to run. It therefore relies on other infrastructure for access to data it does not retain locally, while verification can reduce how much that infrastructure must be trusted for correctness. An archive node retains historical state, not only the current one. A validator node performs consensus duties in addition to following the protocol. Node synchronization is how any of them establishes its view in the first place, by the strategies described under State & Data.",
         },
         {
           kind: "paragraph",
@@ -7895,7 +7895,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "distinction", left: "RPC provider", right: "Protocol" },
         {
           kind: "paragraph",
-          text: "Both paths put an intermediary between the application and the protocol. An RPC provider can be unavailable, limit a request, lag behind other nodes, or return an answer the application does not check; an indexer can be stale, or wrong after a reorganization. Neither changes what the protocol holds. Access is not authority.",
+          text: "Both paths put an intermediary between the application and the protocol. An RPC response reports some node's local view, exposed through the provider's interface; it is not protocol state itself. An RPC provider can be unavailable, limit a request, lag behind other nodes, or return an answer the application does not check; an indexer can be stale, or wrong after a reorganization. Neither changes what the protocol holds. Access is not authority.",
         },
         { kind: "heading", text: "Some infrastructure acts, not just observes" },
         {
@@ -7916,7 +7916,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A relayer moves a transaction or message on behalf of someone else. Transaction relaying submits another party's transaction; message relaying carries a message from one system to another. Relay networks spread that work across many relayers, relay policies decide what they will carry, and relay incentives pay for it. A relayer forwards; it does not decide what the action should be.",
+          text: "Relayers forward transactions or messages on behalf of other participants or between components, networks, or systems. Transaction relaying submits another party's transaction; message relaying forwards a message toward its destination. Relay networks spread that work across many relayers, relay policies decide what they will carry, and relay incentives pay for it. A relayer forwards; it does not decide what the action should be.",
         },
         {
           kind: "terms",
@@ -7924,7 +7924,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A keeper watches for a condition and acts when it holds. Condition monitoring observes state, trigger evaluation decides whether the condition is met, and transaction submission performs the action the protocol expects, such as a periodic update. Keeper networks distribute that responsibility, and keeper incentives compensate it: a protocol that depends on external actions depends on someone being motivated to perform them.",
+          text: "A keeper watches for a condition and acts when it holds. Condition monitoring observes state, trigger evaluation decides whether the condition is met, and transaction submission performs the action the protocol expects, such as a periodic update. Keeper networks distribute that responsibility, and keeper incentives compensate it: a protocol mechanism that requires an externally submitted action also depends on some participant or service being willing and able to submit it when required.",
         },
         {
           kind: "terms",
@@ -7932,7 +7932,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "A bot is software that observes information and pursues a strategy of its own. Event-driven bots react to what they observe; trading, arbitrage, and liquidation bots pursue market opportunities; governance bots carry out governance actions; execution bots carry out transactions on someone's behalf. How their market behavior affects ordering belongs to MEV & Execution Markets, and a bot here need not involve AI.",
+          text: "A bot is software that observes information and pursues a strategy. Event-driven bots react to what they observe; trading, arbitrage, and liquidation bots pursue market opportunities; governance bots carry out governance actions; execution bots carry out transactions on someone's behalf. Each acts only with the permissions, keys, credentials, and policies it has been given. How their market behavior affects ordering belongs to MEV & Execution Markets, and a bot here need not involve AI.",
         },
         { kind: "distinction", left: "Observation", right: "Action" },
         {
@@ -7962,7 +7962,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The signals are different kinds of evidence. Metrics are numeric measurements over time, such as peer count or block height. Logs record discrete events as they happen. Traces follow a single request or operation across components. Health checks ask a component directly whether it is working. Observability is not another signal but what the signals provide: the ability to reason about a system's internal behavior from what it emits. Alerting turns selected observations into notifications or actions.",
+          text: "The signals are different kinds of evidence. Metrics are numeric measurements over time, such as peer count or block height. Logs here are operational: records of discrete events in running infrastructure, distinct from the logs a protocol records on-chain. Traces follow a single request or operation across components. Health checks ask a component directly whether it is working. Observability is not another signal but what the signals provide: the ability to reason about a system's internal behavior from what it emits. Alerting turns selected observations into notifications or actions.",
         },
         {
           kind: "terms",
