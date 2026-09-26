@@ -1,6 +1,6 @@
 import { buildMapExplorerView } from "@/components/map/explorer-model";
 import { RecursiveMapExplorer } from "@/components/map/recursive-explorer";
-import { createMapResolver, mapKnowledge } from "@/lib/map";
+import { mapResolver } from "@/lib/map";
 import { staticSocial } from "@/lib/social/content";
 import { buildSocialMetadata } from "@/lib/social/metadata";
 
@@ -12,16 +12,16 @@ export const dynamic = "force-dynamic";
 // Canonical identity is always /map; the context query never becomes canonical.
 export const metadata = buildSocialMetadata(staticSocial.map);
 
-export default function MapPage() {
-  // Keep canonical MAP data and resolution server-side. The client receives
-  // only this route's serializable placement taxonomy, not graph/content/path
-  // records or the raw knowledge model.
-  const resolver = createMapResolver(mapKnowledge);
-  const explorerView = buildMapExplorerView(
-    resolver,
-    resolver.getRootPlacements().map((placement) => placement.id),
-  );
+// Keep canonical MAP data and resolution server-side. The client receives only
+// this route's serializable placement taxonomy, not graph/content/path records
+// or the raw knowledge model. The taxonomy is immutable, so it is built once per
+// isolate rather than on every request.
+const explorerView = buildMapExplorerView(
+  mapResolver,
+  mapResolver.getRootPlacements().map((placement) => placement.id),
+);
 
+export default function MapPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-6 py-16 md:gap-16">
       <header className="flex max-w-3xl flex-col gap-4">

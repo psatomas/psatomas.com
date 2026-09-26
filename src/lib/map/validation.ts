@@ -61,6 +61,9 @@ export function validateMapKnowledge(model: MapKnowledgeModel): string[] {
   const errors: string[] = [];
   const conceptIds = new Set(model.concepts.map((concept) => concept.id));
   const placementIds = new Set(model.placements.map((placement) => placement.id));
+  // First placement per ID, as a linear find would return it (duplicates are reported separately).
+  const placementById = new Map<string, MapKnowledgeModel["placements"][number]>();
+  for (const placement of model.placements) if (!placementById.has(placement.id)) placementById.set(placement.id, placement);
 
   validateIdentifiers(errors, "concept", model.concepts.map((concept) => concept.id));
   validateIdentifiers(errors, "concept slug", model.concepts.map((concept) => concept.slug));
@@ -76,7 +79,7 @@ export function validateMapKnowledge(model: MapKnowledgeModel): string[] {
       errors.push(`Concept "${concept.id}" must use the same initial id and slug`);
     }
     if (concept.preferredPlacementId) {
-      const placement = model.placements.find(({ id }) => id === concept.preferredPlacementId);
+      const placement = placementById.get(concept.preferredPlacementId);
       if (!placement) {
         errors.push(`Concept "${concept.id}" references missing preferred placement "${concept.preferredPlacementId}"`);
       } else if (placement.conceptId !== concept.id) {
@@ -115,7 +118,7 @@ export function validateMapKnowledge(model: MapKnowledgeModel): string[] {
         break;
       }
       visited.add(parentId);
-      parentId = model.placements.find(({ id }) => id === parentId)?.parentPlacementId;
+      parentId = placementById.get(parentId)?.parentPlacementId;
     }
   }
 

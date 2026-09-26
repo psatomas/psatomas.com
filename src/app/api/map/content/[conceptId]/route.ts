@@ -1,5 +1,5 @@
 import { toMapConceptExposition } from "@/components/map/explorer-model";
-import { createMapResolver, mapKnowledge } from "@/lib/map";
+import { mapKnowledge, mapResolver } from "@/lib/map";
 
 /**
  * Canonical exposition for one MAP concept, prerendered at build time (one
@@ -17,7 +17,7 @@ export function generateStaticParams() {
 
 export async function GET(_request: Request, { params }: { params: Promise<{ conceptId: string }> }) {
   const { conceptId } = await params;
-  const content = createMapResolver(mapKnowledge).getContentForConcept(conceptId);
+  const content = mapResolver.getContentForConcept(conceptId);
   if (!content) return new Response(null, { status: 404 });
   return Response.json(toMapConceptExposition(content));
 }

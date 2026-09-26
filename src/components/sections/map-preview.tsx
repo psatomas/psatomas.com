@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { getMapL0Entries } from "@/components/map/explorer-model";
-import { createMapResolver, mapKnowledge } from "@/lib/map";
+import { mapResolver } from "@/lib/map";
 
 /**
  * MAP's homepage introduction. As with Systems/Research/Lab, the identity
@@ -13,7 +13,7 @@ import { createMapResolver, mapKnowledge } from "@/lib/map";
  * MAP identity. No tree, no disclosure, no internal scrolling.
  */
 export function MapPreview() {
-  const domains = getMapL0Entries(createMapResolver(mapKnowledge));
+  const domains = getMapL0Entries(mapResolver);
 
   return (
     <section
