@@ -1,4 +1,6 @@
+import { Fragment } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import type { MapFlowElement } from "@/lib/map";
 
 /**
  * A small visual grammar for MAP's conceptual models, deliberately not a
@@ -27,7 +29,7 @@ export function ModelNode({
   compact?: boolean;
   className?: string;
 }) {
-  const spacing = compact ? "px-1.5 tracking-[0.04em] sm:px-3 sm:tracking-[0.12em]" : "px-3 tracking-[0.12em]";
+  const spacing = compact ? "px-1 tracking-[0.04em] sm:px-3 sm:tracking-[0.12em]" : "px-3 tracking-[0.12em]";
   return (
     <span className={`block border border-border bg-background py-2 text-center [overflow-wrap:anywhere] ${NODE_TEXT} ${spacing} ${className}`}>
       {children}
@@ -97,7 +99,7 @@ function Fan({ count, direction, className }: { count: number; direction: "branc
  * stage above and converging into the stage after. On narrow screens a
  * parallel set stacks beside a rail with the same relationships.
  */
-export function FlowModel({ label, stages }: { label: string; stages: readonly (readonly string[])[] }) {
+export function FlowModel({ label, stages }: { label: string; stages: readonly (readonly MapFlowElement[])[] }) {
   return (
     <div role="img" aria-label={describeFlow(label, stages)} className="flex w-full flex-col">
       {stages.map((stage, index) => {
@@ -113,6 +115,8 @@ export function FlowModel({ label, stages }: { label: string; stages: readonly (
           );
         }
         const size = stage.length <= 3 ? PARALLEL.sm : PARALLEL.lg;
+        // Branches of several steps sit further apart on the rail than their steps.
+        const branched = stage.some((element) => typeof element !== "string");
         // Columns stay proportionate to the set so small sets remain compact.
         return (
           <span key={index} className="mx-auto flex w-full flex-col" style={{ maxWidth: `${stage.length * 12}rem` }}>
@@ -120,15 +124,19 @@ export function FlowModel({ label, stages }: { label: string; stages: readonly (
             <Relation className={`-ml-[3.5px] self-start ${size.narrow}`} />
             <span aria-hidden="true" className={`mx-auto h-3 w-px ${LINE} ${size.wideBlock}`} />
             <Fan count={stage.length} direction="branch" className={size.wideGrid} />
-            <span className={`flex flex-col gap-y-2 border-l border-border px-4 ${size.set}`} style={columns(stage.length)}>
-              {stage.map((element) => (
-                <span
-                  key={element}
-                  className={`relative px-1 before:absolute before:top-1/2 before:-left-4 before:h-px before:w-4 before:bg-border ${size.tick}`}
-                >
-                  <ModelNode className={`w-full ${size.node}`}>{element}</ModelNode>
-                </span>
-              ))}
+            <span className={`flex flex-col ${branched ? "gap-y-6" : "gap-y-2"} border-l border-border px-4 ${size.set}`} style={columns(stage.length)}>
+              {branched
+                ? stage.map((element) => (
+                    <Branch key={elementKey(element)} steps={typeof element === "string" ? [element] : element} size={size} extend={Boolean(next)} />
+                  ))
+                : stage.map((element) => (
+                    <span
+                      key={elementKey(element)}
+                      className={`relative px-1 before:absolute before:top-1/2 before:-left-4 before:h-px before:w-4 before:bg-border ${size.tick}`}
+                    >
+                      <ModelNode className={`w-full ${size.node}`}>{element}</ModelNode>
+                    </span>
+                  ))}
             </span>
             {next ? (
               <>
@@ -147,8 +155,41 @@ export function FlowModel({ label, stages }: { label: string; stages: readonly (
   );
 }
 
-function describeFlow(label: string, stages: readonly (readonly string[])[]): string {
-  const said = stages.map((stage) => (stage.length === 1 ? stage[0] : `${stage.slice(0, -1).join(", ")} and ${stage.at(-1)}`));
+const elementKey = (element: MapFlowElement) => (typeof element === "string" ? element : element.join(" > "));
+
+/**
+ * One column of a parallel set that continues for several steps: its steps
+ * stack with their own relations. On narrow screens the rail's tick meets the
+ * first step. On wide screens a column that converges below extends its line
+ * to the shared convergence, so branches of different lengths still meet.
+ */
+function Branch({ steps, size, extend }: { steps: readonly string[]; size: (typeof PARALLEL)[keyof typeof PARALLEL]; extend: boolean }) {
+  return (
+    <span className="flex flex-col px-1">
+      {steps.map((step, index) => (
+        <Fragment key={step}>
+          {index > 0 ? <Relation /> : null}
+          <span
+            className={
+              index === 0
+                ? `relative before:absolute before:top-1/2 before:-left-5 before:h-px before:w-4 before:bg-border ${size.tick}`
+                : "relative"
+            }
+          >
+            <ModelNode className={`w-full ${size.node}`}>{step}</ModelNode>
+          </span>
+        </Fragment>
+      ))}
+      {extend ? <span aria-hidden="true" className={`mx-auto w-px flex-1 ${LINE} ${size.wideBlock}`} /> : null}
+    </span>
+  );
+}
+
+function describeFlow(label: string, stages: readonly (readonly MapFlowElement[])[]): string {
+  const say = (element: MapFlowElement) => (typeof element === "string" ? element : element.join(" leading to "));
+  const said = stages.map((stage) =>
+    stage.length === 1 ? say(stage[0]) : `${stage.slice(0, -1).map(say).join(", ")} and ${say(stage.at(-1)!)}`,
+  );
   return `${label}: ${said.join(", then ")}.`;
 }
 
@@ -158,7 +199,7 @@ export function TensionPair({ left, right }: { left: string; right: string }) {
     <span
       role="img"
       aria-label={`${left} in tension with ${right}`}
-      className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 sm:gap-3"
+      className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 sm:gap-3"
     >
       <ModelNode compact>{left}</ModelNode>
       <span aria-hidden="true" className="text-base leading-none text-muted">

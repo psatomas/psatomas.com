@@ -10,6 +10,11 @@ import { buildSocialMetadata } from "../social/metadata.ts";
 
 const resolver = createMapResolver(mapKnowledge);
 
+// Concepts that own canonical exposition, in record order: L0 introductions and
+// the Phase 1 fixture's content. The ontology tests assert nothing else gains
+// content by accident.
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "finality", "agent-identity"];
+
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
 // the concept they resolve to.
@@ -3377,7 +3382,7 @@ test("re-homing changes no relationship, content, mechanism, or path record", ()
     "authority-constrains-ai-agent",
     "agent-identity-enables-economic-agency",
   ]);
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   assert.deepEqual(mapKnowledge.mechanisms.map((mechanism) => mechanism.id), ["consensus-to-finality"]);
   assert.deepEqual(mapKnowledge.knowledgePaths.map((path) => path.id), ["distributed-systems-to-rollups"]);
   // L0 domains may own canonical content, but taxonomy creates no semantic
@@ -3726,7 +3731,7 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -4024,7 +4029,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5131,7 +5136,7 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...AI_LAYER, ...AI_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5289,7 +5294,7 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5425,7 +5430,7 @@ test("Autonomous Coordination reuses existing concepts where the meaning is the 
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...COORDINATION_LAYER, ...COORDINATION_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5530,7 +5535,7 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...EXECUTION_LAYER, ...EXECUTION_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5652,7 +5657,7 @@ test("Autonomous Organizations reuses existing concepts where the meaning is the
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...ORGANIZATIONS_LAYER, ...ORGANIZATIONS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5778,7 +5783,7 @@ test("Autonomous Protocols reuses existing concepts at their homes and keeps pro
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...PROTOCOLS_LAYER, ...PROTOCOLS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5903,7 +5908,7 @@ test("Autonomous Economy places Economic Agency, reuses existing concepts at the
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...ECONOMY_LAYER, ...ECONOMY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6032,7 +6037,7 @@ test("Frontier Systems reuses established concepts at their homes and keeps fron
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...FRONTIER_LAYER, ...FRONTIER_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6140,7 +6145,7 @@ test("every concept is placed, and relationships, mechanisms and paths reference
   ];
   for (const conceptId of referenced) assert.ok(conceptIds.has(conceptId), conceptId);
   // Structural authoring added no exposition.
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
 });
 
 // Concepts authored independently by both ontology tracks, reconciled into one
@@ -6379,6 +6384,90 @@ test("validation rejects malformed references, cycles, and semantic edges", () =
   for (const [name, errors, expected] of cases) {
     assert.ok(errors.includes(expected), `${name}: expected ${expected}; got ${errors.join("; ")}`);
   }
+});
+
+test("Computation & Execution's L0 exposition follows the authored sequence", () => {
+  const content = resolver.getContentForConcept("computation-execution");
+  assert.ok(content);
+  assert.equal(content.id, "computation-execution-content");
+  assert.ok(content.definition.startsWith("Protocols define what may happen."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "terms", "paragraph", "flow", "tensions", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "paragraph", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "distinction", "paragraph", "paragraph", "terms",
+  ]);
+  // Section headings, in order.
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Transactions connect intent to state",
+    "Execution requires an environment",
+    "Computation and verification are different responsibilities",
+    "Off-chain does not mean outside the protocol",
+    "Computation is finite because resources are finite",
+    "Correct execution is not enough",
+  ]);
+  // Every diagram keeps its nodes and relationships: stages in order, parallel
+  // sets as branches, and branches of several steps where the model continues.
+  const flows = body.flatMap((block) => (block.kind === "flow" ? [block.stages] : []));
+  assert.deepEqual(flows, [
+    [["Inputs"], ["Transactions"], ["Validation"], ["Ordering"], ["Execution"], ["State Transition"], ["New System State"]],
+    [["Execution Models"], ["Sequential", "Parallel", "Speculative"], ["Execution Result"]],
+    [["Transaction"], ["Structure"], ["Validation"], ["Ordering"], ["Execution"], [["Success", "State changes"], ["Reversion", "Effects discarded"]]],
+    [["Execution Environment"], ["Inputs", "State", "Context"], ["Smart Contract"], ["Computation", "Calls"], ["Effects"]],
+    [["Computation"], [["On-chain"], ["Off-chain", "Computation", "Result / Commitment", "Proof / Evidence"]], ["Verification"], ["Accepted Result"]],
+    [["Off-Chain Computation"], [["Trusted execution", "Trust the execution environment"], ["Untrusted execution", "Verify the result", "On-Chain Verification"]]],
+    [["Execution"], ["Computation", "State access", "Other work"], ["Metering"], ["Gas", "Resource Limits"], ["Execution Cost"], ["Bounded Execution"], ["DoS Resistance"]],
+  ]);
+  assert.deepEqual(body.find((block) => block.kind === "tensions"), {
+    kind: "tensions",
+    label: "Execution determinism",
+    pairs: [["Deterministic", "Non-Deterministic"]],
+  });
+  assert.deepEqual(body.find((block) => block.kind === "distinction"), {
+    kind: "distinction",
+    left: "Correct instruction execution",
+    right: "Correct transaction semantics",
+    further: ["Correct state transition", "Correct system behavior"],
+  });
+  // The vocabulary strips close each passage; the last names the domain's L1 topics.
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  assert.equal(strips.length, 7);
+  assert.deepEqual(strips.at(-1), resolver.getChildren("computation-execution").map((placement) => resolver.getConcept(placement.conceptId)?.title));
+  // Explanatory vocabulary is text, not new ontology: the 02 tree is unchanged.
+  assert.equal(resolver.getChildren("computation-execution").length, 7);
+  assert.ok(!mapKnowledge.concepts.some((concept) => concept.title === "Accepted Result" || concept.title === "Bounded Execution"));
+  // No markup or styling in the text values, and the model still validates.
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+});
+
+test("exposition validation reports malformed headings, term strips, branches and distinction chains", () => {
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "malformed-l0-blocks", conceptId: "economic-agency", definition: "Defined.",
+      body: [
+        { kind: "heading", text: " " },
+        { kind: "terms", terms: ["Only one"] },
+        { kind: "flow", label: "Branch alone", stages: [["A"], [["B", "C"]]] },
+        { kind: "flow", label: "Empty branch", stages: [["A"], [["B"], []]] },
+        { kind: "distinction", left: "A", right: "B", further: [""] },
+      ],
+    }],
+  }));
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "malformed-l0-blocks"')), [
+    'Content "malformed-l0-blocks" block 0 (heading) is empty',
+    'Content "malformed-l0-blocks" block 1 (terms) must list at least two terms',
+    'Content "malformed-l0-blocks" block 2 (flow) has a branch outside a parallel set',
+    'Content "malformed-l0-blocks" block 3 (flow) has an empty stage or element',
+    'Content "malformed-l0-blocks" block 4 (distinction) must name both sides',
+  ]);
 });
 
 test("exposition validation reports every malformed block", () => {
