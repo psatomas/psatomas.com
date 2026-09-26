@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6602,6 +6602,110 @@ test("State & Data's L0 exposition develops state, commitments, history, placeme
   // Diagram labels and questions stay exposition, not ontology.
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Local State View", "Reconstructed State", "Replayed Transitions", "Has it changed?", "State unchanged"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Consensus & Ordering's L0 exposition separates ordering, agreement, fork choice, finality and inclusion", () => {
+  const content = resolver.getContentForConcept("consensus-ordering")!;
+  assert.equal(content.id, "consensus-ordering-content");
+  assert.ok(content.definition.includes("which order counts, which history to follow, and when an outcome can be relied upon"));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "terms", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Pending is not decided",
+    "Agreement depends on assumptions",
+    "Competing histories need a rule for which to follow",
+    "Finality is when an outcome can be relied upon",
+    "Sequencing decides order, not everything else",
+    "Building a block is separate from proposing it",
+    "Assurance can arrive before finality",
+    "Valid is not the same as included",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Submitted Transactions"], ["Participant A's order", "Participant B's order", "Participant C's order"], ["Ordering Mechanism"], ["Ordered History"]],
+    [["Transaction"], ["Transaction Admission"], ["Transaction Propagation"], ["Pending Transactions"], ["Selection / Sequencing"], ["Proposal"]],
+    [["Consensus Model"], ["Participants", "Consensus Rules", "Participation Conditions", "Fault Assumptions"], ["Agreement"]],
+    [["Shared History"], ["Fork A", "Fork B"], ["Fork Choice Rule"], ["Selected Head"]],
+    [
+      ["Selected History"],
+      [["Probabilistic Finality", "Reversal grows unlikely"], ["Deterministic Finality", "Justification", "Finalization"]],
+      ["Dependable Reliance"],
+    ],
+    [
+      ["Candidate Actions"],
+      [
+        ["Sequencing", "What order?"],
+        ["Consensus", "What do participants agree on?"],
+        ["Execution", "What does the ordered input do?"],
+        ["Finality", "When can the result be relied upon?"],
+      ],
+    ],
+    [["Pending Transactions"], ["Builder A", "Builder B", "Builder C"], ["Block Bids"], ["Relay, where used"], ["Proposer"], ["Block Proposal"]],
+    [["Transaction"], ["Preconfirmation Provider"], ["Preconfirmation Commitment"], ["Earlier Assurance", ["Protocol Ordering", "Execution", "Finality"]]],
+    [["Transaction Submitted"], ["Included", ["Excluded", "Censorship Detection", "Inclusion Mechanism, where available", "Censorship Recovery"]]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Mempool", "Consensus"],
+      ["Reorganization", "Consensus failure"],
+      ["Fork choice", "Finality"],
+      ["Preconfirmation", "Finality"],
+      ["Consensus", "Ordering", "Block building", "Fork choice", "Finality"],
+    ],
+  );
+
+  // The page builds around Finality's own authored record, which stays as it was.
+  const finality = resolver.getContentForConcept("finality")!;
+  assert.deepEqual(
+    [finality.definition, finality.summary, finality.whyItMatters],
+    [
+      "The point at which a protocol treats a result as no longer practically reversible.",
+      "Finality turns agreement about ordering and execution into dependable settlement.",
+      "Systems need a clear boundary for when participants can rely on an outcome.",
+    ],
+  );
+  const heading = body.findIndex((block) => block.kind === "heading" && block.text.startsWith("Finality"));
+  const opening = body[heading + 1];
+  assert.equal(opening.kind, "paragraph");
+  for (const sentence of [finality.definition.replace(/^The/, "the"), finality.summary!, finality.whyItMatters!]) {
+    assert.ok(opening.kind === "paragraph" && opening.text.includes(sentence), sentence);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("consensus-ordering").map((placement) => placement.id);
+  assert.equal(l1.length, 10);
+  // The page narrates mempools before consensus and validators, as pending precedes agreement.
+  const order = ["mempools", "consensus", "validators", "fork-choice", "finality-in-consensus", "sequencing", "block-building", "proposer-builder-separation", "preconfirmations", "censorship-resistance-in-consensus-ordering"];
+  assert.deepEqual([...order].sort(), [...l1].sort());
+  order.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.equal(strips.length, l1.length + 1);
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Ordering Mechanism", "Selected Head", "Dependable Reliance", "Earlier Assurance", "Relay, where used"]) {
     assert.ok(!titles.has(text), text);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
