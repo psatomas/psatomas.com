@@ -6641,18 +6641,184 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "flow",
-          label: "What system behavior is shaped by",
+          label: "What a protocol system is made of, and what its behavior produces",
           stages: [
-            ["Protocol"],
-            ["Rules", "State", "Participants"],
-            ["System behavior"],
-            ["Trust", "Authority", "Incentives", "Dependencies", "Network", "Adversaries"],
+            ["Protocol System"],
+            [
+              ["Mechanisms", "Rules / State"],
+              ["Participants", "Authority / Incentives"],
+              ["Environment", "Network / Dependencies"],
+            ],
+            ["System Behavior"],
+            ["Protocol Properties"],
           ],
         },
+        {
+          kind: "paragraph",
+          text: "This is the model the rest of the MAP decomposes. Each later domain examines part of a protocol's mechanisms, participants, or environment, and the properties that follow from how they interact.",
+        },
+        { kind: "heading", text: "No participant sees the whole system" },
+        {
+          kind: "paragraph",
+          text: "A protocol runs across independent processes that share no memory and no clock. They learn about one another only through communication, messages take time to arrive, and any process or link may fail. No participant necessarily possesses a complete, instantaneous view of the system.",
+        },
+        {
+          kind: "flow",
+          label: "Why independent participants form a distributed system, and why that creates a coordination problem",
+          stages: [
+            ["Independent Participants"],
+            ["Partial knowledge", "Communication", "Latency", "Failures"],
+            ["Distributed System"],
+            ["Coordination Problem"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Each participant acts on its own local view. Whatever the protocol achieves collectively, it must achieve from these partial views, which is why protocol reasoning begins as a coordination problem.",
+        },
+        {
+          kind: "paragraph",
+          text: "How long messages may take, and which failures may occur, are assumptions the protocol must state rather than facts it can observe. A fault model makes those assumptions explicit, and every guarantee the protocol offers is relative to it.",
+        },
+        {
+          kind: "terms",
+          terms: ["Processes", "Communication", "Partial knowledge", "Latency", "Failures", "Fault models"],
+        },
+        { kind: "heading", text: "Protocols define valid state transitions" },
+        {
+          kind: "paragraph",
+          text: "Beneath the participants sits a simpler abstraction. A protocol can be reasoned about as a state machine: the system has a current state, inputs arrive, and transition rules determine which next states are valid.",
+        },
+        {
+          kind: "flow",
+          label: "The state machine abstraction",
+          stages: [["Current State"], ["Input"], ["Transition Rule"], ["Next State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "This turns questions about behavior into questions about transitions: which inputs are acceptable, what each one changes, and which states must never be reachable. When transition rules are deterministic, the same state and the same input always produce the same next state.",
+        },
+        {
+          kind: "paragraph",
+          text: "Determinism is what lets independent processes arrive at the same result without trusting one another's computation. In state machine replication, many processes apply the same inputs, in the same order, to the same rules, and so maintain compatible views of a changing system state.",
+        },
+        {
+          kind: "flow",
+          label: "State machine replication: the same ordered inputs applied by independent replicas yield compatible state",
+          stages: [["Ordered Inputs"], ["Replica A", "Replica B", "Replica C"], ["Compatible System State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "The abstraction returns to the distributed setting. The difficulty is no longer computing a transition, but agreeing on which inputs to apply and in what order.",
+        },
+        {
+          kind: "terms",
+          terms: ["State", "Inputs", "Transitions", "Transition rules", "Determinism", "State machine replication"],
+        },
+        { kind: "heading", text: "Trust and coordination are redistributed, not removed" },
+        {
+          kind: "paragraph",
+          text: "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every protocol rests on trust assumptions: about which parties behave correctly, which components report truthfully, and which claims are accepted without being checked. A trust boundary marks where the protocol stops verifying and starts assuming. Trust minimization moves that boundary by making claims verifiable; trust distribution spreads what remains across many parties, so that no single trusted party is decisive.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Trust assumptions",
+            "Trusted parties",
+            "Trust boundaries",
+            "Verification",
+            "Trust minimization",
+            "Trust distribution",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Decentralization likewise does not remove coordination: it changes how coordination is achieved and which assumptions it requires.",
+        },
+        {
+          kind: "paragraph",
+          text: "How participants coordinate depends on the information they hold and how it moves between them. Some cooperate toward a shared outcome; others compete under rules that turn individually rational choices into a collective result. A coordination model is the protocol's account of how independent choices combine into collective action.",
+        },
+        {
+          kind: "terms",
+          terms: ["Coordination models", "Information", "Communication", "Cooperation", "Competition", "Collective action"],
+        },
+        {
+          kind: "paragraph",
+          text: "Trust is therefore not simply present or absent, and coordination is not simply centralized or decentralized. Protocol design changes where trust resides, how it is constrained, how claims are verified, how information moves, and how independent participants coordinate.",
+        },
+        { kind: "heading", text: "Protocols must hold outside the ideal case" },
+        {
+          kind: "paragraph",
+          text: "The models above describe what happens when every step goes as specified. Real protocols run in environments that do not cooperate: messages are slow, machines crash, and some participants deviate from the rules.",
+        },
+        {
+          kind: "flow",
+          label: "How departures from the expected environment put a protocol under stress",
+          stages: [
+            ["Expected Environment"],
+            ["Latency", "Failure", "Faults", "Byzantine behavior", "Strategic behavior"],
+            ["Protocol under stress"],
+            ["Which properties still hold?"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "These departures are different kinds of problem. An ordinary failure is a process that stops or a message that is lost. A fault assumption bounds how many participants may fail, and in which ways. Byzantine behavior drops any assumption about how a faulty participant acts: it may lie, equivocate, or tell different participants different things. Strategic behavior is deliberate: participants follow the rules while doing so serves them, and deviate when deviation pays.",
+        },
+        { kind: "distinction", left: "Failure", right: "Byzantine behavior", further: ["Strategic behavior"] },
+        {
+          kind: "paragraph",
+          text: "An adversary is a participant, or group of participants, acting against the protocol's intended outcome. A threat model states what the adversary can observe, control, and want. Within it, censorship, which excludes particular actions or participants, and collusion, in which several participants deviate together, are not exceptional cases but part of the environment the protocol is designed for.",
+        },
+        {
+          kind: "terms",
+          terms: ["Adversaries", "Threat models", "Byzantine behavior", "Censorship", "Collusion", "Strategic behavior"],
+        },
+        { kind: "heading", text: "Properties belong to the system, not its components" },
         { kind: "distinction", left: "Local correctness", right: "System correctness" },
         {
           kind: "paragraph",
           text: "A component can behave exactly as specified while the system around it produces an unintended outcome. Protocol properties emerge from interactions between mechanisms, participants, and assumptions, not from isolated components.",
+        },
+        {
+          kind: "flow",
+          label: "The two questions that organize protocol properties",
+          stages: [
+            ["Protocol Properties"],
+            [
+              ["Safety", "What must never happen?"],
+              ["Liveness", "What must eventually happen?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A safety property is violated at a particular moment, by a state that should never have been reached. A liveness property is violated only by waiting forever, by progress that never comes. Under failures and adversaries, a protocol often cannot guarantee both unconditionally, which is why the two recur as a tension throughout the MAP.",
+        },
+        {
+          kind: "paragraph",
+          text: "The other properties refine these questions within the system model. Finality is a safety commitment that accepted results will not be reversed. Availability and censorship resistance are liveness commitments: the system keeps responding, and valid actions from any participant are eventually included. Consistency constrains what different participants may observe of the same state. Fault tolerance states how many failures, and of which kind, the other properties survive.",
+        },
+        {
+          kind: "paragraph",
+          text: "None of these belongs to an isolated component. Each holds only relative to assumptions about participants, communication, failures, authority, and adversaries, and a property that holds under one set of assumptions may fail under another.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Safety",
+            "Liveness",
+            "Finality",
+            "Availability",
+            "Consistency",
+            "Fault tolerance",
+            "Censorship resistance",
+          ],
         },
         {
           kind: "tensions",
@@ -6668,11 +6834,19 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable. Decentralization likewise does not remove coordination: it changes how coordination is achieved and which assumptions it requires.",
+          text: "Protocol Engineering is therefore concerned with more than implementing rules correctly. It examines how rules, state, participants, incentives, authority, dependencies, and failure interact, and which properties continue to hold when the environment stops being ideal.",
         },
         {
-          kind: "paragraph",
-          text: "Protocol Engineering is therefore concerned with more than implementing rules correctly. It examines how rules, state, participants, incentives, authority, dependencies, and failure interact, and which properties continue to hold when the environment stops being ideal.",
+          kind: "terms",
+          terms: [
+            "Protocols",
+            "Distributed Systems",
+            "State Machines",
+            "Trust Models",
+            "Coordination",
+            "Adversarial Environments",
+            "Protocol Properties",
+          ],
         },
       ],
     },
