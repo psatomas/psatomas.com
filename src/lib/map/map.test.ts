@@ -6114,6 +6114,94 @@ test("L0 domains without authored topics stay empty", () => {
   }
 });
 
+test("every L0 domain is authored, and every placement resolves into one of them within two levels", () => {
+  assert.deepEqual([...POPULATED_L0].sort(), L0_DOMAINS.map(([id]) => id).sort());
+  const conceptIds = new Set(mapKnowledge.concepts.map((concept) => concept.id));
+  const placementIds = new Set(mapKnowledge.placements.map((placement) => placement.id));
+  const roots = new Set(L0_DOMAINS.map(([id]) => id));
+  for (const placement of mapKnowledge.placements) {
+    assert.ok(conceptIds.has(placement.conceptId), `${placement.id} → ${placement.conceptId}`);
+    if (placement.parentPlacementId) assert.ok(placementIds.has(placement.parentPlacementId), placement.id);
+    const ancestors = resolver.getAncestors(placement.id);
+    assert.ok(roots.has(ancestors[0]?.id ?? placement.id), `${placement.id} is rooted in an L0 domain`);
+    assert.ok(ancestors.length <= 2, `${placement.id} is at most L2`);
+  }
+});
+
+test("every concept is placed, and relationships, mechanisms and paths reference existing concepts", () => {
+  const unplaced = mapKnowledge.concepts.filter((concept) => resolver.getPlacementsForConcept(concept.id).length === 0);
+  assert.deepEqual(unplaced.map((concept) => concept.id), []);
+  const conceptIds = new Set(mapKnowledge.concepts.map((concept) => concept.id));
+  const referenced = [
+    ...mapKnowledge.relationships.flatMap((relationship) => [relationship.sourceConceptId, relationship.targetConceptId]),
+    ...mapKnowledge.mechanisms.flatMap((mechanism) => [mechanism.conceptId, ...mechanism.steps.map((step) => step.conceptId)]),
+    ...mapKnowledge.knowledgePaths.flatMap((path) => path.conceptIds),
+    ...mapKnowledge.content.map((content) => content.conceptId),
+  ];
+  for (const conceptId of referenced) assert.ok(conceptIds.has(conceptId), conceptId);
+  // Structural authoring added no exposition.
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+});
+
+// Concepts authored independently by both ontology tracks, reconciled into one
+// canonical concept each: every placement is kept, and the main placement is
+// chosen by meaning (the concept's defining home), not by merge order.
+const RECONCILED: Array<[string, string, string[]]> = [
+  ["payment-channels", "payment-channels", ["payment-channels", "payment-channels-in-machine-payments"]],
+  ["anomaly-detection", "anomaly-detection", ["anomaly-detection", "anomaly-detection-in-execution-monitoring", "anomaly-detection-in-protocol-monitoring"]],
+  ["graceful-degradation", "graceful-degradation", ["graceful-degradation", "graceful-degradation-in-self-healing"]],
+  ["protocol-bootstrapping", "protocol-bootstrapping", ["protocol-bootstrapping", "protocol-bootstrapping-in-protocol-lifecycle-automation"]],
+  ["progressive-decentralization", "progressive-decentralization", ["progressive-decentralization", "progressive-decentralization-in-protocol-lifecycle-automation"]],
+  ["ossification", "ossification", ["ossification", "ossification-in-protocol-lifecycle-automation"]],
+  ["protocol-sunsetting", "protocol-sunsetting", ["protocol-sunsetting", "protocol-sunsetting-in-protocol-lifecycle-automation"]],
+  ["parameter-bounds", "parameter-bounds", ["parameter-bounds", "parameter-bounds-in-adaptive-parameters"]],
+  ["success-criteria", "success-criteria", ["success-criteria", "success-criteria-in-objectives-intents"]],
+  ["invariants", "invariants", ["invariants", "invariants-in-design-goals-constraints", "invariants-in-protocol-autonomy"]],
+  ["containment", "containment", ["containment", "containment-in-autonomous-security-responses"]],
+  ["authorization", "authorization", ["authorization", "authorization-in-execution-authorization"]],
+  ["rebalancing", "rebalancing", ["rebalancing", "rebalancing-in-autonomous-liquidity-management"]],
+];
+
+test("concepts authored by both ontology tracks are one canonical concept with every placement", () => {
+  for (const [conceptId, preferred, placements] of RECONCILED) {
+    assert.equal(mapKnowledge.concepts.filter((concept) => concept.id === conceptId).length, 1, conceptId);
+    assert.deepEqual(resolver.getPlacementsForConcept(conceptId).map((placement) => placement.id).sort(), [...placements].sort(), conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  // Later placements keep their authored wording where it differs.
+  assert.equal(placementLabel("authorization-in-execution-authorization"), "Runtime Authorization");
+  assert.equal(placementLabel("invariants-in-protocol-autonomy"), "Protocol Invariants");
+  assert.equal(placementLabel("containment-in-autonomous-security-responses"), "Automated Containment");
+  assert.equal(placementLabel("rebalancing-in-autonomous-liquidity-management"), "Liquidity Rebalancing");
+  // The replaced duplicate records are gone.
+  for (const removed of ["runtime-authorization", "protocol-invariants", "automated-containment", "liquidity-rebalancing"]) {
+    assert.equal(resolver.getConcept(removed), undefined, removed);
+  }
+});
+
+test("similar concepts from the two ontology tracks stay distinct where their meanings differ", () => {
+  for (const [left, right] of [
+    ["evolutionary-protocols", "protocol-evolution"],
+    ["contagion", "contagion-risk"],
+    ["oversight", "human-oversight"],
+    ["model-risk", "risk-models"],
+    ["security-economics", "economic-security"],
+    ["authority-escalation", "privilege-escalation"],
+    ["outflow-limits", "transfer-limits"],
+    ["protocol-monitoring", "post-launch-monitoring"],
+    ["protocol-health", "network-health"],
+    ["auditability", "auditing"],
+    ["approval-thresholds", "action-approval-thresholds"],
+    ["execution-failures", "execution-failure-handling"],
+    ["exploit-detection", "exploits"],
+    ["simulation", "protocol-simulation"],
+  ]) {
+    assert.ok(resolver.getConcept(left), left);
+    assert.ok(resolver.getConcept(right), right);
+    assert.notEqual(left, right);
+  }
+});
+
 test("one canonical Finality concept resolves through independent placements", () => {
   const consensusFinality = resolver.getPlacement("finality-in-consensus");
   const rollupFinality = resolver.getPlacement("finality-in-rollups");

@@ -1683,6 +1683,27 @@ test("entering a domain from the index sets context, opens it, and never collaps
   assert.equal(getMapContextHref(closed.contextPlacementId), "/map?context=foundations");
 });
 
+test("every placement of the combined ontology is a valid context with a correct breadcrumb and containing L0", () => {
+  const index = indexMapExplorerView(view);
+  const byId = new Map(mapKnowledge.placements.map((placement) => [placement.id, placement]));
+  for (const placement of mapKnowledge.placements) {
+    const ancestors = resolver.getAncestors(placement.id);
+    const context = getMapExplorerContext(index, placement.id);
+    assert.deepEqual(context.map((step) => step.placementId), [...ancestors.map((ancestor) => ancestor.id), placement.id], placement.id);
+    const label = placement.contextualLabel ?? resolver.getConcept(placement.conceptId)?.title;
+    assert.equal(context.at(-1)?.label, label, placement.id);
+    assert.equal(getContainingMapL0(index, placement.id), ancestors[0]?.id ?? placement.id, placement.id);
+    assert.equal(resolveMapContextParam(index, [placement.id]), placement.id, placement.id);
+    assert.ok(byId.has(placement.id));
+  }
+  // Every concept's direct entry resolves to its preferred placement, which is a valid context.
+  for (const concept of mapKnowledge.concepts) {
+    const preferred = resolver.getPreferredPlacementForConcept(concept.id);
+    assert.ok(preferred, concept.id);
+    assert.equal(resolveMapContextParam(index, [preferred.id]), preferred.id, concept.id);
+  }
+});
+
 test("the containing L0 domain comes from placement ancestry", () => {
   const index = indexMapExplorerView(view);
   assert.equal(getContainingMapL0(index, "foundations"), "foundations");
