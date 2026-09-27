@@ -9148,7 +9148,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Game theory models choices that depend on other choices" },
         {
           kind: "paragraph",
-          text: "Game theory gives a vocabulary for analyzing modeled decision-makers. Players have strategies, or available courses of action in the model, and payoffs encode modeled preferences or consequences; payoffs need not be token payments. A best response depends on what other players do. A dominant strategy performs at least as well according to the relevant definition regardless of what others do, whereas a Nash equilibrium concerns a strategy profile in which no player benefits from unilaterally changing strategy given the others' strategies.",
+          text: "Game theory gives a vocabulary for analyzing modeled decision-makers. Players have strategies, or available courses of action in the model, and payoffs encode modeled preferences or consequences; payoffs need not be token payments. A best response depends on what other players do. A dominant strategy performs at least as well as any alternative strategy according to the relevant definition regardless of what others do, whereas a Nash equilibrium concerns a strategy profile in which no player benefits from unilaterally changing strategy given the others' strategies.",
         },
         {
           kind: "flow",
