@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "ai-intelligent-systems", "machine-economy", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5577,6 +5577,22 @@ test("Autonomous Coordination has exactly its ten L1 topics and their L2 placeme
   assert.deepEqual(resolver.getAncestors("task-bidding").map((placement) => placement.id), ["autonomous-coordination", "task-markets"]);
   assert.deepEqual(resolver.getAncestors("revocation-in-delegation").map((placement) => placement.id), ["autonomous-coordination", "delegation-in-autonomous-coordination"]);
   assert.deepEqual(resolver.getAncestors("agent-synchronization").map((placement) => placement.id), ["autonomous-coordination", "multi-agent-coordination"]);
+});
+
+test("Autonomous Coordination owns one L0 exposition with ten live L1 sections", () => {
+  const content = resolver.getContentForConcept("autonomous-coordination");
+  assert.equal(content?.id, "autonomous-coordination-content");
+  assert.deepEqual(
+    (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
+    ["Agent-to-agent communication exchanges structured information", "Agent discovery identifies possible counterparties", "Negotiation exchanges proposals under constraints", "Delegation grants bounded ability or responsibility", "Cooperation coordinates compatible interests", "Competition organizes contention without requiring hostility", "Coalitions coordinate groups under shared terms", "Resource allocation assigns constrained resources", "Task markets coordinate the allocation of work", "Multi-agent coordination organizes joint behavior"],
+  );
+  const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.deepEqual(strips.at(-1), COORDINATION_LAYER.map(([, , title]) => title));
+  assert.equal(strips.filter((terms) => terms.length === 6).length, 10);
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "Delegation remains bounded by a granted scope"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Negotiation" && block.right === "Consensus"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Task Assignment" && block.right === "Task Completion"));
+  assert.equal(resolver.getPlacement("autonomous-coordination")?.conceptId, "autonomous-coordination");
 });
 
 test("Autonomous Coordination reuses existing concepts where the meaning is the same and keeps narrower concepts distinct", () => {
