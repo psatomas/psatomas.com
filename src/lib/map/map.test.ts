@@ -5781,13 +5781,14 @@ test("Autonomous Execution owns one L0 exposition with eleven live L1 sections",
   assert.equal(content?.id, "autonomous-execution-content");
   assert.deepEqual(
     (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
-    ["Objectives and intents become executable specifications", "Execution planning prepares a possible course of action", "Action selection evaluates available candidates", "Simulation examines modeled execution without performing it", "Execution policies evaluate and enforce defined constraints", "Execution authorization determines permitted action at runtime", "Execution environments bound runtime access and interaction", "Action execution attempts to produce external effects", "Verification and settlement establish defined post-execution claims", "Execution monitoring produces runtime information", "Execution recovery responds to failed or unwanted behavior"],
+    ["Objectives and intents become executable specifications", "Execution planning prepares a possible course of action", "Action selection evaluates available candidates", "Simulation examines modeled execution without performing it", "Execution policies evaluate and enforce defined constraints", "Execution authorization determines permitted action at runtime", "Execution environments bound runtime access and interaction", "Action execution attempts to produce external effects", "Verification and settlement address distinct post-execution questions", "Execution monitoring produces runtime information", "Execution recovery responds to failed or unwanted behavior"],
   );
   const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
   assert.deepEqual(strips.at(-1), EXECUTION_LAYER.map(([, , title]) => title));
   assert.equal(strips.filter((terms) => terms.length === 6).length, 11);
   assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "Constructing and submitting a transaction does not settle it"));
   assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Policy Evaluation" && block.right === "Policy Enforcement"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "heading" && block.text === "Verification and settlement address distinct post-execution questions"));
   assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Verifiable Execution" && block.right === "Correct Execution"));
   assert.equal(resolver.getPlacement("autonomous-execution")?.conceptId, "autonomous-execution");
 });
