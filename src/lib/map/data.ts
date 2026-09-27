@@ -9000,7 +9000,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Correct data can become unusable by becoming old" },
         {
           kind: "paragraph",
-          text: "Freshness is a temporal property: whether an update is recent enough for a particular use. Timestamps, update frequency, heartbeats, freshness thresholds, and deviation thresholds let a protocol or application detect some forms of delay or decide when another update is required.",
+          text: "Freshness is a temporal property: whether an update is recent enough for a particular use. Timestamps and update histories provide timing metadata; together with update frequency, heartbeats, freshness thresholds, and deviation thresholds, they can let a protocol or application detect some forms of delay or decide when another update is required under the reporting mechanism's assumptions.",
         },
         {
           kind: "flow",
@@ -9100,12 +9100,12 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "terms", terms: ["Attesters", "Claims", "Evidence", "Credentials", "Attestation Verification", "Revocation"] },
         {
           kind: "paragraph",
-          text: "Oracles do not erase the boundary between a protocol and external reality. They make a path across it: from a source, observation, or claim through representation, reporting, interpretation, and verification to a protocol input. A sound design states which properties it needs and which assumptions support them.",
+          text: "Oracles do not erase the boundary between a protocol and external reality. They make a path across it: from external reality through a source, observation, or claim; collection, representation, and reporting; aggregation or interpretation; provenance, freshness, and verification; to a protocol input. A sound design states which properties it needs and which assumptions support them.",
         },
         { kind: "distinction", left: "Availability", right: "Authenticity", further: ["Freshness", "Correctness"] },
         {
           kind: "paragraph",
-          text: "Availability asks whether information can be obtained; authenticity, whether it originated from a claimed source or mechanism; freshness, whether it is recent enough; and correctness, whether the external claim is accurate. Keeping these questions separate is what lets a protocol use external information without pretending it can independently observe reality.",
+          text: "Availability asks whether required information can be obtained when needed; authenticity, whether it originated from a claimed source or mechanism; freshness, whether it is recent enough; and correctness, whether the external claim is accurate. Keeping these questions separate is what lets a protocol use external information without pretending it can independently observe reality.",
         },
         { kind: "terms", terms: ["Oracle Problem", "Data Sources", "Oracle Networks", "Push / Pull Oracles", "Aggregation", "Freshness", "Provenance", "Oracle Security", "Machine-Readable Reality", "Sensors & External Systems", "AI-Interpreted Data", "Real-World Attestations"] },
       ],
