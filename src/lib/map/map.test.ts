@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -4652,6 +4652,55 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
   }
   const ids = [...INTENTS_LAYER, ...INTENTS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Intents & Coordination's L0 exposition keeps specification, selection, execution, and settlement distinct", () => {
+  const content = resolver.getContentForConcept("intents-coordination")!;
+  assert.equal(content.id, "intents-coordination-content");
+  const body = content.body ?? [];
+  assert.deepEqual(body.flatMap((block) => block.kind === "heading" ? [block.text] : []), [
+    "Intents describe desired outcomes rather than a transaction",
+    "Specification states conditions without ensuring an outcome",
+    "Discovery makes intents available under particular visibility conditions",
+    "Solvers produce candidate solutions under bounded evidence",
+    "Competition compares proposals through a mechanism",
+    "Matching can coordinate compatible intents without executing them",
+    "Resolution selects and attempts a path under stated conditions",
+    "Routing chooses an execution path rather than executing it",
+    "Commitments express conditional obligations and expectations",
+    "Intent settlement records or completes the resulting obligations",
+    "Multi-party coordination combines participants without making them one authority",
+    "Cross-domain coordination composes domains without collapsing their guarantees",
+  ]);
+  const strips = body.flatMap((block) => block.kind === "terms" ? [block.terms] : []);
+  const label = (id: string) => { const p = resolver.getPlacement(id)!; return p.contextualLabel ?? resolver.getConcept(p.conceptId)!.title; };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  assert.equal(strips.length, 13);
+  INTENTS_LAYER.forEach(([id], index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((p) => label(p.id))), id));
+  assert.equal(strips[11].length, 5);
+  assert.deepEqual(strips.at(-1), INTENTS_LAYER.map(([id]) => label(id)));
+  assert.equal(INTENTS_L2.length, 71);
+  const prose = body.flatMap((block) => block.kind === "paragraph" ? [block.text] : []).join(" ");
+  for (const phrase of [
+    "An intent is not a transaction",
+    "An expressed intent does not guarantee execution",
+    "Discovery is not execution",
+    "A solution search is not a valid solution, and a valid solution is not necessarily selected",
+    "Matching is neither execution nor settlement",
+    "Selection is not execution, an execution attempt is not fulfillment",
+    "Routing is path selection, not execution",
+    "a preconfirmation is not finality",
+    "Settlement is not matching or selection and is not necessarily finality",
+    "Shared sequencing is not atomic execution",
+    "specification, selection, execution, and settlement remain distinct",
+  ]) assert.ok(prose.includes(phrase), phrase);
+  assert.deepEqual(body.flatMap((block) => block.kind === "flow" ? [block.stages] : []), [
+    [["Intent"], ["Specification"], ["Discovery"], ["Candidate Solutions"], ["Selection / Resolution"], ["Execution"], ["Settlement"]],
+    [["Candidate Solution"], ["Validity"], ["Selection"], ["Execution Attempt"], ["Fulfillment"], ["Verification"]],
+    [["Cross-Domain Execution"], ["Cross-Domain Settlement"], ["Atomicity Conditions"]],
+  ]);
+  for (const [conceptId, preferred] of [["delegation", "delegation-in-autonomous-coordination"], ["batch-auctions", "batch-auctions"], ["order-flow-auctions", "order-flow-auctions"], ["preconfirmations", "preconfirmations"], ["settlement", "settlement"], ["collective-action", "collective-action"], ["shared-sequencing", "shared-sequencing"], ["cross-chain-intents", "cross-chain-intents"], ["cross-domain-execution", "cross-domain-execution"], ["cross-domain-settlement", "cross-domain-settlement"], ["cross-domain-atomicity", "cross-domain-atomicity"]]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Governance & Institutions has exactly its fifteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
