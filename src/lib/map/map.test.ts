@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -7243,6 +7243,109 @@ test("Oracles & External Reality's L0 exposition keeps protocol verification sep
   for (const text of ["Oracle Rule", "Oracle Result", "Freshness Policy", "Interpreted Claim", "Protocol-Consumable Update"]) {
     assert.ok(!titles.has(text), text);
   }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Economics & Mechanism Design's L0 exposition keeps strategic incentives conditional on their model", () => {
+  const content = resolver.getContentForConcept("economics-mechanism-design")!;
+  assert.equal(content.id, "economics-mechanism-design-content");
+  assert.ok(content.definition.startsWith("Economics & mechanism design examine how protocol rules shape strategic choices"));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "distinction",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "paragraph", "distinction", "distinction", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "distinction", "distinction", "terms",
+    "paragraph", "paragraph", "distinction", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Rules are designed around objectives and constraints",
+    "Game theory models choices that depend on other choices",
+    "Strategic behavior includes more than the intended workflow",
+    "Incentives change payoffs; they do not determine responses",
+    "Token economics is one application of mechanism design",
+    "Fees price use and can allocate scarce capacity",
+    "Auctions specify how bids become allocations and payments",
+    "Scarcity makes allocation a systems problem",
+    "Staking exposes capital to protocol-defined consequences",
+    "Security funding and exposed stake answer different questions",
+    "Cryptoeconomic security is conditional on economic assumptions",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Objectives and Constraints"], ["Mechanism Rules"], ["Participant Choices"], ["Actions"], ["Allocation / Payments"], ["System Outcome"]],
+    [["Objectives and Constraints"], ["Allocation Rules and Payment Rules"], ["Participant Responses"], ["Outcome"], ["Mechanism Properties"]],
+    [["Players"], ["Strategies"], ["Payoffs"], ["Best Responses"], ["Strategy Profile / Equilibrium Analysis"]],
+    [["Behavior"], ["Reward / Penalty Structure"], ["Changed Payoffs"], ["Strategic Response"]],
+    [["Demand for Capacity"], ["Fee Mechanism"], ["Fee Calculation"], ["Participant Bids / Payments"], ["Allocation / Ordering"], ["Fee Allocation"]],
+    [["Bids"], ["Auction Rules"], ["Auction Clearing"], ["Allocation"], ["Payments"]],
+    [["Scarce Resource and Demand"], ["Pricing / Rationing / Allocation Rule"], ["Capacity Allocation"]],
+    [["Stake"], ["Participation"], ["Rewards / Possible Penalties"], ["Validator Economics"], ["Economic Security Assumptions"]],
+    [["Issuance / Fees / Subsidies"], ["Security Expenditure"], ["Participation Incentives"]],
+    [["Cryptoeconomic Assumptions"], ["Capital / Incentives / Penalties"], ["Costly Deviation"], ["Claimed Economic Guarantee"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Incentive", "Guarantee"], ["Equilibrium", "Desirable outcome"], ["Incentive", "Guarantee"],
+      ["Issuance", "Economic inflation"], ["Burn", "Value creation"], ["Token utility", "Token value"],
+      ["Fee", "Protocol revenue"], ["Stake", "Security"], ["Slashing", "Prevention"],
+      ["Security budget", "Stake"], ["Economic finality", "Protocol finality"],
+      ["Cryptoeconomic guarantee", "Cryptographic guarantee"], ["Costly", "Impossible"],
+      ["Valid", "Authorized", "Incentivized", "Guaranteed"],
+    ],
+  );
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of [
+    "Rational behavior is relative to a model",
+    "Incentive compatibility is more specific",
+    "Issuance is not automatically economic inflation",
+    "A fee is not necessarily protocol revenue",
+    "An auction label alone does not guarantee",
+    "Allocation efficiency is relative to an objective",
+    "Stake is not security",
+    "A security budget is not an amount of stake",
+    "It is distinct from the protocol finality described in Consensus & Ordering",
+    "Costly is not impossible",
+  ]) assert.ok(prose.includes(phrase), phrase);
+
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("economics-mechanism-design").map((placement) => placement.id);
+  const explanatoryOrder = ["mechanism-design", "game-theory", "strategic-behavior-in-economics-mechanism-design", "incentives", "token-economics", "fees", "auctions", "resource-allocation", "staking-economics", "security-budgets", "cryptoeconomic-security"];
+  assert.equal(l1.length, 11);
+  assert.equal(strips.length, l1.length + 1);
+  explanatoryOrder.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Existing reused concepts retain their preferred placements, including both Domain 10 uses of Penalties.
+  for (const [conceptId, preferred] of [
+    ["incentives", "incentives"], ["mechanism-design", "mechanism-design"],
+    ["strategic-behavior", "strategic-behavior-in-economics-mechanism-design"], ["fees", "fees"],
+    ["resource-allocation", "resource-allocation"], ["incentive-alignment", "incentive-alignment"],
+    ["rewards", "rewards"], ["penalties", "penalties"], ["incentive-compatibility", "incentive-compatibility"],
+    ["griefing", "griefing"], ["bids", "bids"], ["batch-auctions", "batch-auctions"],
+    ["auction-clearing", "auction-clearing"], ["allocation-efficiency", "allocation-efficiency"],
+    ["economic-security", "economic-security"], ["attack-cost", "attack-cost"], ["cost-of-corruption", "cost-of-corruption"],
+  ]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  assert.deepEqual(resolver.getPlacementsForConcept("penalties").map((placement) => placement.id).sort(), ["penalties", "penalties-in-agent-incentives", "penalties-in-cryptoeconomic-security"]);
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Mechanism Rules", "Participant Choices", "Strategy Profile / Equilibrium Analysis", "Costly Deviation", "Claimed Economic Guarantee"]) assert.ok(!titles.has(text), text);
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
   const strings: string[] = [];
   JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
