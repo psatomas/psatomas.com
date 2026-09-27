@@ -4408,9 +4408,11 @@ test("Markets & Financial Protocols' L0 exposition keeps financial outcomes cond
   const prose = body.flatMap((block) => block.kind === "paragraph" ? [block.text] : []).join(" ");
   for (const phrase of [
     "Correct execution enforces those rules; it does not itself guarantee liquidity, profitability, price stability, repayment, or solvency.",
+    "Tokenization alone does not establish authenticity, backing, redemption, or value.",
     "it is not objective external truth or necessarily the asset's unique price",
     "it need not be temporary",
     "it does not guarantee immediate liquidation",
+    "Incentives can encourage participation without guaranteeing a liquidator, a successful sale, or full debt recovery, especially under stressed conditions.",
     "A peg alone establishes neither backing, redemption ability, sufficient reserves, nor solvency",
     "Risk parameters encode protocol choices about conditions and responses; they do not eliminate uncertainty",
     "A system can be solvent yet illiquid",

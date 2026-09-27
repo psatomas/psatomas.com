@@ -9323,7 +9323,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "heading", text: "Assets are represented objects and claims, not value by themselves" },
         {
           kind: "paragraph",
-          text: "An asset may be fungible or non-fungible, native to a system, tokenized, or synthetic. These are characteristics relevant to representation, transfer, valuation, and protocol use; none by itself determines value, liquidity, legal rights, or risk. A tokenized asset is a protocol-defined digital claim or representation whose relationship to an external asset depends on issuance, custody, legal, redemption, and verification assumptions. A synthetic asset derives exposure or payoff from a reference without necessarily representing ownership of that reference.",
+          text: "An asset may be fungible or non-fungible, native to a system, tokenized, or synthetic. These are characteristics relevant to representation, transfer, valuation, and protocol use; none by itself determines value, liquidity, legal rights, or risk. A tokenized asset is a protocol-defined digital claim or representation whose relationship to an external asset depends on issuance, custody, legal, redemption, and verification assumptions. Tokenization alone does not establish authenticity, backing, redemption, or value. A synthetic asset derives exposure or payoff from a reference without necessarily representing ownership of that reference.",
         },
         { kind: "distinction", left: "Asset", right: "Price" },
         { kind: "distinction", left: "Representation", right: "Underlying Asset" },
@@ -9408,7 +9408,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Liquidation is a protocol-defined response to a position crossing specified risk or collateral conditions. Crossing a threshold generally makes the position eligible or subject to liquidation under the rules; it does not guarantee immediate liquidation. Liquidators, incentives, penalties, and auctions are mechanism components that vary by design, and a liquidation auction is one possible mechanism rather than liquidation's definition. Bad debt is an obligation that remains insufficiently covered or recoverable under the relevant model, not automatically system-wide insolvency.",
+          text: "Liquidation is a protocol-defined response to a position crossing specified risk or collateral conditions. Crossing a threshold generally makes the position eligible or subject to liquidation under the rules; it does not guarantee immediate liquidation. Liquidators, incentives, penalties, and auctions are mechanism components that vary by design, and a liquidation auction is one possible mechanism rather than liquidation's definition. Incentives can encourage participation without guaranteeing a liquidator, a successful sale, or full debt recovery, especially under stressed conditions. Bad debt is an obligation that remains insufficiently covered or recoverable under the relevant model, not automatically system-wide insolvency.",
         },
         { kind: "distinction", left: "Liquidation Eligibility", right: "Immediate Liquidation" },
         { kind: "distinction", left: "Bad Debt", right: "Insolvency" },
