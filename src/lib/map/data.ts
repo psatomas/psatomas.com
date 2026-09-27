@@ -9111,6 +9111,205 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "economics-mechanism-design-content",
+      conceptId: "economics-mechanism-design",
+      definition:
+        "Economics & mechanism design examine how protocol rules shape strategic choices by assigning costs, rewards, penalties, rights, prices, and scarce resources under explicit assumptions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocols do not only constrain what participants can do. They also shape the choices participants face by assigning costs, rewards, penalties, rights, prices, and scarce resources. Technical validity asks whether an action can occur under protocol rules; authority asks whether a participant is permitted to perform it; economic choice asks whether performing it is attractive given costs, rewards, risks, and alternatives. Economic mechanisms complement those rules; they do not replace validity or authority.",
+        },
+        {
+          kind: "flow",
+          label: "How mechanism rules shape a system outcome",
+          stages: [["Objectives and Constraints"], ["Mechanism Rules"], ["Participant Choices"], ["Actions"], ["Allocation / Payments"], ["System Outcome"]],
+        },
+        {
+          kind: "paragraph",
+          text: "A protocol can define consequences for behavior, but it cannot assume participants will respond exactly as its designers intend. Mechanism design asks how rules can be constructed so that strategic participants responding to those rules tend to produce desired properties under a model. Economic mechanisms influence behavior; they do not control it.",
+        },
+        { kind: "distinction", left: "Incentive", right: "Guarantee" },
+        { kind: "heading", text: "Rules are designed around objectives and constraints" },
+        {
+          kind: "paragraph",
+          text: "A mechanism is a rule system for interaction among participants whose choices affect one another. Objectives state what the mechanism is trying to achieve, while constraints bound what is feasible. Allocation rules determine who receives scarce rights, resources, or outcomes; payment rules determine transfers, costs, or rewards where they apply. Not every mechanism uses monetary payments, and no rule system can be assumed to optimize every desirable property at once.",
+        },
+        {
+          kind: "flow",
+          label: "How a mechanism is evaluated under participant response",
+          stages: [["Objectives and Constraints"], ["Allocation Rules and Payment Rules"], ["Participant Responses"], ["Outcome"], ["Mechanism Properties"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Mechanism properties are characteristics evaluated under a specified model: for example, which behavior a rule tends to encourage, how it allocates a scarce resource, or which tradeoffs it creates. The assumptions about participants, information, and constraints are part of the claim, not details a mechanism can discard.",
+        },
+        { kind: "terms", terms: ["Mechanisms", "Objectives", "Constraints", "Allocation Rules", "Payment Rules", "Mechanism Properties"] },
+        { kind: "heading", text: "Game theory models choices that depend on other choices" },
+        {
+          kind: "paragraph",
+          text: "Game theory gives a vocabulary for analyzing modeled decision-makers. Players have strategies, or available courses of action in the model, and payoffs encode modeled preferences or consequences; payoffs need not be token payments. A best response depends on what other players do. A dominant strategy performs at least as well as any alternative strategy according to the relevant definition regardless of what others do, whereas a Nash equilibrium concerns a strategy profile in which no player benefits from unilaterally changing strategy given the others' strategies.",
+        },
+        {
+          kind: "flow",
+          label: "How strategic choices are analyzed in a game model",
+          stages: [["Players"], ["Strategies"], ["Payoffs"], ["Best Responses"], ["Strategy Profile / Equilibrium Analysis"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Rational behavior is relative to a model of preferences, objectives, available strategies, information, and, where relevant, beliefs. It does not mean participants are selfish, malicious, omniscient, or computationally unlimited. An equilibrium is not thereby socially optimal, fair, efficient, desirable to a protocol, or unique.",
+        },
+        { kind: "distinction", left: "Equilibrium", right: "Desirable outcome" },
+        { kind: "terms", terms: ["Players", "Strategies", "Payoffs", "Best Responses", "Dominant Strategies", "Nash Equilibrium"] },
+        { kind: "heading", text: "Strategic behavior includes more than the intended workflow" },
+        {
+          kind: "paragraph",
+          text: "Protocols must account for participants choosing actions in response to rules rather than merely following an intended workflow. A deviation is behavior other than a prescribed, intended, or reference strategy where one exists. Manipulation is strategic exploitation of mechanism rules or inputs to improve an outcome under the actor's objectives.",
+        },
+        {
+          kind: "paragraph",
+          text: "Free riding is benefiting from a shared resource or effort while avoiding an intended contribution where the mechanism permits it. Griefing imposes disproportionate cost or harm on others, potentially without direct profit for the actor; not every harmful behavior is griefing. Bribery is an economic inducement for another participant to behave in a desired way, potentially contrary to protocol objectives.",
+        },
+        { kind: "terms", terms: ["Rational Behavior", "Deviations", "Manipulation", "Free Riding", "Griefing", "Bribery"] },
+        { kind: "heading", text: "Incentives change payoffs; they do not determine responses" },
+        {
+          kind: "paragraph",
+          text: "Incentives change the payoff or consequence structure participants face. Positive incentives add benefits; negative incentives impose costs or consequences. These terms describe the direction of an economic effect, not moral categories. Rewards are one positive-incentive mechanism, and penalties are one negative-incentive mechanism.",
+        },
+        {
+          kind: "flow",
+          label: "How incentives alter the choices participants face",
+          stages: [["Behavior"], ["Reward / Penalty Structure"], ["Changed Payoffs"], ["Strategic Response"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Incentive alignment means intended behavior and participant incentives point in compatible directions under the model; it is not permanent or universal. Incentive compatibility is more specific: under a stated mechanism, model, and solution concept, following an intended or truthful strategy is individually optimal according to the relevant assumptions. Neither condition makes a participant's response guaranteed.",
+        },
+        { kind: "distinction", left: "Incentive", right: "Guarantee" },
+        { kind: "terms", terms: ["Incentive Alignment", "Positive Incentives", "Negative Incentives", "Rewards", "Penalties", "Incentive Compatibility"] },
+        { kind: "heading", text: "Token economics is one application of mechanism design" },
+        {
+          kind: "paragraph",
+          text: "Token economics concerns the policy and accounting rules for a protocol-associated economic asset; it is one application within protocol economics, not the whole field. Token supply is the quantity under those accounting rules, and token distribution concerns how units or holdings are allocated across participants or categories over time. Issuance creates or adds units according to protocol rules, while emissions describe the schedule, rate, or process through which newly issued or allocated units enter circulation or distribution in the model.",
+        },
+        {
+          kind: "paragraph",
+          text: "Burns remove units from usable or accounted supply according to rules. Issuance is not automatically economic inflation, because the economic meaning of inflation depends on the quantity and property being measured. A burn is not value creation, and token utility describes roles or functions within a system rather than guaranteeing market demand, price, appreciation, or economic value.",
+        },
+        { kind: "distinction", left: "Issuance", right: "Economic inflation" },
+        { kind: "distinction", left: "Burn", right: "Value creation" },
+        { kind: "distinction", left: "Token utility", right: "Token value" },
+        { kind: "terms", terms: ["Token Supply", "Token Distribution", "Issuance", "Emissions", "Burns", "Token Utility"] },
+        { kind: "heading", text: "Fees price use and can allocate scarce capacity" },
+        {
+          kind: "paragraph",
+          text: "Transaction fees charge for transaction or resource use according to a system's rules. Fee markets determine or mediate pricing when demand competes for scarce capacity; fee calculation determines how an amount is derived; and fee allocation determines where a collected fee goes. Fees may be paid to participants, allocated among parties, burned, retained, or otherwise processed.",
+        },
+        {
+          kind: "flow",
+          label: "How a fee mechanism allocates contested capacity",
+          stages: [["Demand for Capacity"], ["Fee Mechanism"], ["Fee Calculation"], ["Participant Bids / Payments"], ["Allocation / Ordering"], ["Fee Allocation"]],
+        },
+        {
+          kind: "paragraph",
+          text: "A priority fee can represent an additional payment affecting ordering or service priority under a mechanism. Congestion pricing changes price or cost in response to scarce capacity or demand according to the mechanism. A fee is not necessarily protocol revenue: its destination and treatment depend on the allocation rule.",
+        },
+        { kind: "distinction", left: "Fee", right: "Protocol revenue" },
+        { kind: "terms", terms: ["Transaction Fees", "Fee Markets", "Fee Calculation", "Fee Allocation", "Priority Fees", "Congestion Pricing"] },
+        { kind: "heading", text: "Auctions specify how bids become allocations and payments" },
+        {
+          kind: "paragraph",
+          text: "Auctions are mechanism families for turning bids into allocations and payments. In a canonical simple first-price auction, the winner typically pays its own winning bid. In a canonical simple second-price auction, the winner's payment depends on the next relevant competing bid. Those descriptions do not settle the strategic properties of every protocol auction.",
+        },
+        {
+          kind: "flow",
+          label: "How auction rules turn bids into an outcome",
+          stages: [["Bids"], ["Auction Rules"], ["Auction Clearing"], ["Allocation"], ["Payments"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Sealed-bid describes an information or timing structure and can coexist with different pricing rules; batch describes a grouping or clearing structure. Auction clearing determines accepted bids, allocations, and prices according to the rules. An auction label alone does not guarantee truthful bidding, efficiency, fairness, or an optimal allocation: those properties depend on exact rules, information, valuations, and bidder behavior under the model.",
+        },
+        { kind: "terms", terms: ["Bids", "First-Price Auctions", "Second-Price Auctions", "Sealed-Bid Auctions", "Batch Auctions", "Auction Clearing"] },
+        { kind: "heading", text: "Scarcity makes allocation a systems problem" },
+        {
+          kind: "paragraph",
+          text: "Protocols have finite resources and rights, such as execution capacity, storage or bandwidth where applicable, inclusion capacity, and other protocol-defined scarce resources. Congestion occurs when demand approaches or exceeds available capacity under the relevant time and resource model. Resource pricing is one allocation mechanism, not the only one.",
+        },
+        {
+          kind: "flow",
+          label: "How a scarce resource is allocated under demand",
+          stages: [["Scarce Resource and Demand"], ["Pricing / Rationing / Allocation Rule"], ["Capacity Allocation"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Capacity allocation determines who or what receives available capacity. Rationing can allocate scarcity through non-price or rule-based restrictions and is not inherently centralized. Allocation efficiency is relative to an objective, model of value or cost, constraints, and information; it is not a context-free label for an outcome.",
+        },
+        { kind: "terms", terms: ["Scarce Resources", "Resource Pricing", "Capacity Allocation", "Allocation Efficiency", "Congestion", "Rationing"] },
+        { kind: "heading", text: "Staking exposes capital to protocol-defined consequences" },
+        {
+          kind: "paragraph",
+          text: "Stake is economic value or capital placed under protocol-defined conditions. Staking rewards are compensation or incentives associated with participation under those rules. Slashing is a specific staking-related mechanism that removes, destroys, confiscates, or otherwise reduces stake for specified detectable conditions or behavior; penalties are the broader category of negative economic consequences.",
+        },
+        {
+          kind: "flow",
+          label: "How staking conditions connect participation to economic exposure",
+          stages: [["Stake"], ["Participation"], ["Rewards / Possible Penalties"], ["Validator Economics"], ["Economic Security Assumptions"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Validator economics concerns costs, rewards or revenues, capital exposure, and incentives affecting participation. Delegated stake supplies economic stake, control, or weight through delegation according to a protocol model; it does not by itself imply a transfer of ownership. Stake is not security: security also depends on what behavior is detectable, which penalties can be imposed, participation, concentration, market conditions, and protocol assumptions. Slashing changes consequences for detectable prohibited behavior; it does not make that behavior impossible.",
+        },
+        { kind: "distinction", left: "Stake", right: "Security" },
+        { kind: "distinction", left: "Slashing", right: "Prevention" },
+        { kind: "terms", terms: ["Stake", "Staking Rewards", "Slashing", "Validator Economics", "Delegated Stake", "Economic Security"] },
+        { kind: "heading", text: "Security funding and exposed stake answer different questions" },
+        {
+          kind: "paragraph",
+          text: "A security budget concerns resources used to sustain security-relevant participation or incentives. Security expenditure is the economic resource directed toward maintaining that mechanism. Issuance-funded security compensates participation through newly issued units according to protocol rules; fee-funded security uses fees; and security subsidies support participation where direct fee revenue or another mechanism does not provide the intended compensation.",
+        },
+        {
+          kind: "flow",
+          label: "How sources of funding support security participation",
+          stages: [["Issuance / Fees / Subsidies"], ["Security Expenditure"], ["Participation Incentives"]],
+        },
+        {
+          kind: "paragraph",
+          text: "A security budget is not an amount of stake. Attack cost concerns resources needed to attempt or carry out an attack under a model, while cost of corruption concerns the economic cost of obtaining or inducing sufficient corrupt control or behavior under the modeled mechanism. Neither is static: asset prices, liquidity, participation, concentration, and other conditions can alter the economics.",
+        },
+        { kind: "distinction", left: "Security budget", right: "Stake" },
+        { kind: "terms", terms: ["Security Expenditure", "Issuance-Funded Security", "Fee-Funded Security", "Security Subsidies", "Attack Cost", "Cost of Corruption"] },
+        { kind: "heading", text: "Cryptoeconomic security is conditional on economic assumptions" },
+        {
+          kind: "paragraph",
+          text: "Cryptoeconomic security concerns properties supported by economic incentives, costs, and enforceable consequences under assumptions. Economic guarantees are therefore conditional on incentives, enforceability, asset values, participation, market conditions, and the other assumptions of the model. They are not cryptographic guarantees, whose properties depend on computational or mathematical assumptions of a different kind.",
+        },
+        {
+          kind: "flow",
+          label: "How economic assumptions support a claimed security property",
+          stages: [["Cryptoeconomic Assumptions"], ["Capital / Incentives / Penalties"], ["Costly Deviation"], ["Claimed Economic Guarantee"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Economic finality concerns the economic conditions or costs associated with reversing, corrupting, or violating an outcome under a model. It is distinct from the protocol finality described in Consensus & Ordering; it is not another consensus-finality mechanism. Incentive attacks exploit or reshape economic incentives, and stake-based security depends materially on stake or capital exposure. Economic penalties are consequences imposed by mechanism rules. Costly is not impossible: high economic cost can discourage an attack without making it impossible.",
+        },
+        { kind: "distinction", left: "Economic finality", right: "Protocol finality" },
+        { kind: "distinction", left: "Cryptoeconomic guarantee", right: "Cryptographic guarantee" },
+        { kind: "distinction", left: "Costly", right: "Impossible" },
+        { kind: "terms", terms: ["Economic Guarantees", "Economic Finality", "Incentive Attacks", "Stake-Based Security", "Economic Penalties", "Cryptoeconomic Assumptions"] },
+        {
+          kind: "paragraph",
+          text: "Taken together, protocol economics connects objectives to mechanism rules, strategic choices, payoffs, participant behavior, allocation or payments, and system outcomes. It determines what behavior is rewarded or penalized, how scarcity is allocated, how participation is funded, how capital is exposed, and which economic assumptions a security claim relies on.",
+        },
+        {
+          kind: "paragraph",
+          text: "Economic design does not replace protocol correctness, authority, consensus, or cryptography. It can make undesirable behavior more expensive without making it impossible, and its conclusions remain conditional on the model and assumptions that support them.",
+        },
+        { kind: "distinction", left: "Valid", right: "Authorized", further: ["Incentivized", "Guaranteed"] },
+        { kind: "terms", terms: ["Incentives", "Mechanism Design", "Game Theory", "Strategic Behavior", "Token Economics", "Fees", "Auctions", "Resource Allocation", "Staking Economics", "Security Budgets", "Cryptoeconomic Security"] },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",
