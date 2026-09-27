@@ -5422,6 +5422,10 @@ test("Machine Economy has exactly its fourteen L1 topics and their L2 placements
 test("Machine Economy owns one L0 exposition with all fourteen live L1 sections", () => {
   const content = resolver.getContentForConcept("machine-economy");
   assert.equal(content?.id, "machine-economy-content");
+  assert.deepEqual(
+    (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
+    ["Economic agents participate under an economic role", "Ownership identifies interests, not every form of control", "Identity supports economic interaction without granting authority", "Wallets connect constrained control to execution", "Agent capital constrains feasible action", "Agent budgets constrain resource use", "Permissions determine authorized economic actions", "Machine payments execute authorized transfers", "Machine commerce organizes exchange beyond payment", "Agent markets coordinate available exchange", "Agent reputation summarizes conditional evidence", "Agent credit creates conditional obligations", "Agent risk constrains accepted exposure", "Agent incentives connect action to interests"],
+  );
   const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
   assert.deepEqual(strips.at(-1), MACHINE_ECONOMY_LAYER.map(([, , title]) => title));
   assert.equal(strips.filter((terms) => terms.length === 6).length, 14);
