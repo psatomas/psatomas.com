@@ -4540,13 +4540,17 @@ test("MEV & Execution Markets' L0 exposition keeps execution outcomes conditiona
   const prose = body.flatMap((block) => block.kind === "paragraph" ? [block.text] : []).join(" ");
   for (const phrase of [
     "Detection does not guarantee profit; simulation does not guarantee the production execution outcome",
+    "extraction is an attempt by a participant through a mechanism and does not itself establish net profit after costs",
     "An observed price difference does not guarantee realizable profit",
     "it guarantees neither liquidation, a particular winner, successful execution, full debt recovery, nor profit",
     "not all front-running is sandwiching",
     "a grouped bundle is not automatically atomic",
+    "inclusion does not itself establish finality",
     "A payment does not universally guarantee inclusion",
     "Private does not mean secret from everyone",
+    "protected order flow does not imply protection from every MEV strategy",
     "MEV protection does not mean MEV elimination",
+    "Redistribution changes who receives or bears value; smoothing changes how value or exposure is distributed over a relevant dimension; neither necessarily reduces total extractable value.",
     "Protocol-correct execution is not economically neutral execution",
   ]) assert.ok(prose.includes(phrase), phrase);
   assert.deepEqual(body.flatMap((block) => block.kind === "flow" ? [block.stages] : []), [
