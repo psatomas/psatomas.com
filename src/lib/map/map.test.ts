@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "ai-intelligent-systems", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "ai-intelligent-systems", "machine-economy", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5417,6 +5417,20 @@ test("Machine Economy has exactly its fourteen L1 topics and their L2 placements
   assert.deepEqual(resolver.getAncestors("micropayments").map((placement) => placement.id), ["machine-economy", "machine-payments"]);
   assert.deepEqual(resolver.getAncestors("agent-credentials-in-agent-identity").map((placement) => placement.id), ["machine-economy", "agent-identity-in-machine-economy"]);
   assert.deepEqual(resolver.getAncestors("ai-agent-in-economic-agents").map((placement) => placement.id), ["machine-economy", "economic-agents"]);
+});
+
+test("Machine Economy owns one L0 exposition with all fourteen live L1 sections", () => {
+  const content = resolver.getContentForConcept("machine-economy");
+  assert.equal(content?.id, "machine-economy-content");
+  assert.deepEqual(
+    (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
+    ["Economic agents participate under an economic role", "Ownership identifies interests, not every form of control", "Identity supports economic interaction without granting authority", "Wallets connect constrained control to execution", "Agent capital constrains feasible action", "Agent budgets constrain resource use", "Permissions determine authorized economic actions", "Machine payments execute authorized transfers", "Machine commerce organizes exchange beyond payment", "Agent markets coordinate available exchange", "Agent reputation summarizes conditional evidence", "Agent credit creates conditional obligations", "Agent risk constrains accepted exposure", "Agent incentives connect action to interests"],
+  );
+  const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.deepEqual(strips.at(-1), MACHINE_ECONOMY_LAYER.map(([, , title]) => title));
+  assert.equal(strips.filter((terms) => terms.length === 6).length, 14);
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Budget Policy" && block.right === "Budget Enforcement"));
+  assert.equal(resolver.getContentForConcept("agent-identity")?.id, "agent-identity-content");
 });
 
 test("Machine Economy reuses existing concepts where the meaning is the same and keeps related concepts distinct", () => {
