@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5774,6 +5774,23 @@ test("Autonomous Execution has exactly its eleven L1 topics and their L2 placeme
   assert.equal(EXECUTION_L2.length, 66);
   assert.deepEqual(resolver.getAncestors("human-approval").map((placement) => placement.id), ["autonomous-execution", "execution-authorization"]);
   assert.deepEqual(resolver.getAncestors("settlement-in-verification-settlement").map((placement) => placement.id), ["autonomous-execution", "verification-settlement"]);
+});
+
+test("Autonomous Execution owns one L0 exposition with eleven live L1 sections", () => {
+  const content = resolver.getContentForConcept("autonomous-execution");
+  assert.equal(content?.id, "autonomous-execution-content");
+  assert.deepEqual(
+    (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
+    ["Objectives and intents become executable specifications", "Execution planning prepares a possible course of action", "Action selection evaluates available candidates", "Simulation examines modeled execution without performing it", "Execution policies evaluate and enforce defined constraints", "Execution authorization determines permitted action at runtime", "Execution environments bound runtime access and interaction", "Action execution attempts to produce external effects", "Verification and settlement address distinct post-execution questions", "Execution monitoring produces runtime information", "Execution recovery responds to failed or unwanted behavior"],
+  );
+  const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.deepEqual(strips.at(-1), EXECUTION_LAYER.map(([, , title]) => title));
+  assert.equal(strips.filter((terms) => terms.length === 6).length, 11);
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "Constructing and submitting a transaction does not settle it"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Policy Evaluation" && block.right === "Policy Enforcement"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "heading" && block.text === "Verification and settlement address distinct post-execution questions"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Verifiable Execution" && block.right === "Correct Execution"));
+  assert.equal(resolver.getPlacement("autonomous-execution")?.conceptId, "autonomous-execution");
 });
 
 test("Autonomous Execution reuses existing concepts at their homes and keeps execution-time controls distinct", () => {
