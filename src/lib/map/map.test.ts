@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "ai-intelligent-systems", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "ai-intelligent-systems", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -4501,6 +4501,7 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["transaction-ordering", "builders", "block-construction", "transaction-selection", "private-mempools", "inclusion-guarantees", "auction-clearing"]);
   for (const [id, conceptId] of [...MEV_LAYER, ...MEV_L2]) {
+    if (conceptId === "mev-execution-markets") continue;
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
@@ -4508,6 +4509,58 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
   }
   const ids = [...MEV_LAYER, ...MEV_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("MEV & Execution Markets' L0 exposition keeps execution outcomes conditional", () => {
+  const content = resolver.getContentForConcept("mev-execution-markets")!;
+  assert.equal(content.id, "mev-execution-markets-content");
+  const body = content.body ?? [];
+  assert.deepEqual(body.flatMap((block) => block.kind === "heading" ? [block.text] : []), [
+    "MEV is opportunity created by execution-related choices",
+    "Searchers pursue opportunities through conditional execution paths",
+    "Arbitrage depends on paths, costs, and realized execution",
+    "Liquidation MEV is competition around a financial mechanism",
+    "Sandwiching is one ordering strategy around another transaction",
+    "Ordering rules allocate economically relevant execution choices",
+    "Bundles coordinate transactions without settling their outcome",
+    "Builders construct candidate blocks under competing objectives",
+    "Blockspace is constrained capacity with mechanism-dependent prices",
+    "Order flow is visible or restricted relative to an audience",
+    "MEV auctions turn execution rights into auction mechanisms",
+    "Private execution changes visibility, not every execution guarantee",
+    "Mitigation changes execution conditions rather than removing MEV",
+  ]);
+  const strips = body.flatMap((block) => block.kind === "terms" ? [block.terms] : []);
+  const label = (id: string) => { const p = resolver.getPlacement(id)!; return p.contextualLabel ?? resolver.getConcept(p.conceptId)!.title; };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  assert.equal(strips.length, 14);
+  MEV_LAYER.forEach(([id], index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((p) => label(p.id))), id));
+  assert.deepEqual(strips.at(-1), MEV_LAYER.map(([id]) => label(id)));
+  assert.equal(MEV_L2.length, 79);
+  const prose = body.flatMap((block) => block.kind === "paragraph" ? [block.text] : []).join(" ");
+  for (const phrase of [
+    "Detection does not guarantee profit; simulation does not guarantee the production execution outcome",
+    "extraction is an attempt by a participant through a mechanism and does not itself establish net profit after costs",
+    "An observed price difference does not guarantee realizable profit",
+    "it guarantees neither liquidation, a particular winner, successful execution, full debt recovery, nor profit",
+    "not all front-running is sandwiching",
+    "a grouped bundle is not automatically atomic",
+    "inclusion does not itself establish finality",
+    "A payment does not universally guarantee inclusion",
+    "Private does not mean secret from everyone",
+    "protected order flow does not imply protection from every MEV strategy",
+    "MEV protection does not mean MEV elimination",
+    "Redistribution changes who receives or bears value; smoothing changes how value or exposure is distributed over a relevant dimension; neither necessarily reduces total extractable value.",
+    "Protocol-correct execution is not economically neutral execution",
+  ]) assert.ok(prose.includes(phrase), phrase);
+  assert.deepEqual(body.flatMap((block) => block.kind === "flow" ? [block.stages] : []), [
+    [["State / Information / Order Flow"], ["Execution-Related Choice"], ["Opportunity"], ["Attempted Extraction"], ["Economic Outcome / Externality"]],
+    [["Observed State / Order Flow"], ["Opportunity Detection"], ["Simulation / Strategy"], ["Transaction or Bundle"], ["Submission"], ["Selection / Ordering"], ["Execution"], ["Economic Outcome"]],
+    [["Victim Transaction / Expected Slippage"], ["Front-Running Transaction"], ["Victim Execution and Price Impact"], ["Back-Running Transaction"], ["Realized Outcome"]],
+    [["Transactions / Bundles / Constraints"], ["Selection"], ["Block Construction / Optimization"], ["Candidate Block"], ["Later Protocol Selection and Inclusion"]],
+  ]);
+  for (const [conceptId, preferred] of [["transaction-ordering", "transaction-ordering-in-block-building"], ["builders", "builders"], ["block-construction", "block-construction"], ["auction-clearing", "auction-clearing"], ["transaction-simulation", "transaction-simulation"]]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Intents & Coordination has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
