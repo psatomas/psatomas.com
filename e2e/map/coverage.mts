@@ -74,8 +74,50 @@ async function verifyContext(page: Page, base: string, check: Check, id: string,
 
 const l1 = roots.flatMap((root) => resolver.getChildren(root.id)).map((placement) => placement.id);
 const multiPlaced = model.concepts.filter((concept) => resolver.getPlacementsForConcept(concept.id).length > 1);
+const l2LabelCases = [
+  { id: "economic-guarantees", label: "Economic Guarantees", parentId: "cryptoeconomic-security", parent: "Cryptoeconomic Security" },
+  { id: "rules", label: "Rules", parentId: "protocols", parent: "Protocols" },
+  { id: "validator-selection", label: "Validator Selection", parentId: "validators", parent: "Validators" },
+];
 
 export const coverageSections: Section[] = [
+  {
+    name: "labels",
+    title: `L2 labels without visible parent prefixes × ${WIDTHS.length} widths`,
+    async run({ browser, base, check }) {
+      for (const width of WIDTHS) {
+        const page = await browser.newPage({ viewport: { width, height: 900 } });
+        for (const { id, label, parentId, parent } of l2LabelCases) {
+          await open(page, base, id);
+          const row = page.locator(`[data-placement-id="${id}"]`);
+          const control = row.locator("[data-row-control]");
+          const visibleLabel = await control.evaluate((button) => (button.firstElementChild?.textContent ?? "").trim());
+          check(
+            visibleLabel === label,
+            `@${width} ${id}: visible row label is ${JSON.stringify(label)} without ${JSON.stringify(`${parent} ›`)}`,
+          );
+          check(
+            (await control.getAttribute("aria-label")) === `${label} in ${parent}, level 3`,
+            `@${width} ${id}: accessible name retains ${parent} context`,
+          );
+          check(
+            new URL(page.url()).pathname + new URL(page.url()).search === `/map?context=${id}` && (await control.getAttribute("aria-current")) === "true",
+            `@${width} ${id}: placement URL and current context are unchanged`,
+          );
+          const layout = await page.evaluate(({ id, parentId }) => {
+            const row = document.querySelector(`[data-placement-id="${id}"]`)!.getBoundingClientRect();
+            const parent = document.querySelector(`[data-placement-id="${parentId}"]`)!.getBoundingClientRect();
+            return {
+              overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+              parentPrecedesChild: parent.top < row.top,
+            };
+          }, { id, parentId });
+          check(layout.overflow <= 0 && layout.parentPrecedesChild, `@${width} ${id}: no overflow; expanded parent remains before its L2 child`);
+        }
+        await page.close();
+      }
+    },
+  },
   {
     name: "domains",
     title: `${roots.length} L0 domains × ${WIDTHS.length} widths`,
