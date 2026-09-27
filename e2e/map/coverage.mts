@@ -105,14 +105,21 @@ export const coverageSections: Section[] = [
             `@${width} ${id}: placement URL and current context are unchanged`,
           );
           const layout = await page.evaluate(({ id, parentId }) => {
-            const row = document.querySelector(`[data-placement-id="${id}"]`)!.getBoundingClientRect();
-            const parent = document.querySelector(`[data-placement-id="${parentId}"]`)!.getBoundingClientRect();
+            const selector = (placementId: string) => `[data-placement-id="${placementId}"]`;
+            const row = document.querySelector(selector(id))!.getBoundingClientRect();
+            const parent = document.querySelector(selector(parentId))!.getBoundingClientRect();
+            const labelLeft = (placementId: string) =>
+              document.querySelector<HTMLElement>(`${selector(placementId)} [data-row-control] > span > span:last-child`)!.getBoundingClientRect().left;
             return {
               overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
               parentPrecedesChild: parent.top < row.top,
+              childLabelInset: labelLeft(id) > labelLeft(parentId),
             };
           }, { id, parentId });
-          check(layout.overflow <= 0 && layout.parentPrecedesChild, `@${width} ${id}: no overflow; expanded parent remains before its L2 child`);
+          check(
+            layout.overflow <= 0 && layout.parentPrecedesChild && layout.childLabelInset,
+            `@${width} ${id}: no overflow; parent precedes child; L2 label is inset`,
+          );
         }
         await page.close();
       }
