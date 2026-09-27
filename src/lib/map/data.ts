@@ -9560,7 +9560,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         { kind: "terms", terms: ["MEV", "Searchers", "Arbitrage", "Liquidation MEV", "Sandwiching", "Transaction Ordering", "Bundles", "Builders", "Blockspace Markets", "Order Flow", "MEV Auctions", "Private Execution", "MEV Mitigation"] },
       ],
     },
-+    {
+    {
       id: "ai-intelligent-systems-content",
       conceptId: "ai-intelligent-systems",
       definition: "An intelligent system is more than a learned model: its behavior emerges from model state, inputs and context, inference conditions, memory, tools, goals, authority, and the environment in which it acts.",
