@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -4778,6 +4778,26 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
   }
   const ids = [...GOVERNANCE_LAYER, ...GOVERNANCE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Governance & Institutions' L0 exposition keeps participation, decision, authority, execution, and legitimacy distinct", () => {
+  const content = resolver.getContentForConcept("governance-institutions")!;
+  assert.equal(content.id, "governance-institutions-content");
+  const body = content.body ?? [];
+  assert.equal(body.filter((block) => block.kind === "heading").length, 15);
+  const strips = body.flatMap((block) => block.kind === "terms" ? [block.terms] : []);
+  const label = (id: string) => { const p = resolver.getPlacement(id)!; return p.contextualLabel ?? resolver.getConcept(p.conceptId)!.title; };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  assert.equal(strips.length, 16);
+  GOVERNANCE_LAYER.forEach(([id], index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((p) => label(p.id))), id));
+  assert.equal(strips[6].length, 5);
+  assert.deepEqual(strips.at(-1), GOVERNANCE_LAYER.map(([id]) => label(id)));
+  assert.equal(GOVERNANCE_L2.length, 89);
+  const prose = body.flatMap((block) => block.kind === "paragraph" ? [block.text] : []).join(" ");
+  for (const phrase of ["A governance model is not a voting mechanism", "Participation is not authority", "Proposal submission is not acceptance", "Quorum is not approval", "A decision is not execution", "Delegation does not transfer ownership", "Settlement of a vote is not finality", "Transparency is not accountability", "Evidence is not proof of underlying truth", "a pause is not a rollback", "Participation, decision authority, accepted decision, execution authority, successful execution, and legitimacy remain distinct"]) assert.ok(prose.includes(phrase), phrase);
+  assert.equal(body.filter((block) => block.kind === "flow").length, 4);
+  for (const [conceptId, preferred] of [["delegation", "delegation-in-autonomous-coordination"], ["treasuries", "treasuries-in-autonomous-organizations"], ["evidence", "evidence"], ["incentive-alignment", "incentive-alignment"]]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Scaling & Modular Systems has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
