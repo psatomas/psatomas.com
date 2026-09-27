@@ -14,6 +14,7 @@ export type {
   MapConcept,
   MapConceptContent,
   MapContentBlock,
+  MapFlowElement,
   MapKnowledgeModel,
   MapKnowledgePath,
   MapMechanism,

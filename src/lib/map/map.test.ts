@@ -10,6 +10,11 @@ import { buildSocialMetadata } from "../social/metadata.ts";
 
 const resolver = createMapResolver(mapKnowledge);
 
+// Concepts that own canonical exposition, in record order: L0 introductions and
+// the Phase 1 fixture's content. The ontology tests assert nothing else gains
+// content by accident.
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "finality", "agent-identity"];
+
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
 // the concept they resolve to.
@@ -3377,7 +3382,7 @@ test("re-homing changes no relationship, content, mechanism, or path record", ()
     "authority-constrains-ai-agent",
     "agent-identity-enables-economic-agency",
   ]);
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   assert.deepEqual(mapKnowledge.mechanisms.map((mechanism) => mechanism.id), ["consensus-to-finality"]);
   assert.deepEqual(mapKnowledge.knowledgePaths.map((path) => path.id), ["distributed-systems-to-rollups"]);
   // L0 domains may own canonical content, but taxonomy creates no semantic
@@ -3483,13 +3488,96 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
 });
 
 test("Foundations exposition is canonical data: models, a distinction, and tensions", () => {
-  const body = resolver.getContentForConcept("foundations")?.body ?? [];
+  const content = resolver.getContentForConcept("foundations")!;
+  const body = content.body ?? [];
+  assert.equal(
+    content.definition,
+    "Protocols begin before implementation. They define how independent participants interact, which actions are valid, how state can change, and which properties the system is expected to preserve.",
+  );
   assert.deepEqual(body.map((block) => block.kind), [
-    "paragraph", "flow", "paragraph", "flow", "distinction", "paragraph", "tensions", "paragraph", "paragraph",
+    "paragraph", "flow", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "paragraph", "terms", "paragraph", "paragraph", "terms", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "distinction", "paragraph", "flow", "paragraph", "paragraph", "paragraph", "terms",
+    "paragraph", "tensions", "paragraph", "terms",
   ]);
-  const flows = body.filter((block) => block.kind === "flow");
-  assert.deepEqual(flows[0].stages, [["Participants"], ["Rules"], ["Actions", "Messages"], ["State transitions"], ["System state"]]);
-  assert.deepEqual(body.find((block) => block.kind === "distinction"), { kind: "distinction", left: "Local correctness", right: "System correctness" });
+  // Sections follow the ontology's order: distributed systems, state machines,
+  // trust and coordination, adversarial environments, protocol properties.
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "No participant can assume it sees the whole system",
+    "Protocols define valid state transitions",
+    "Trust and coordination are redistributed, not removed",
+    "Protocols must hold outside the ideal case",
+    "Properties belong to the system, not its components",
+  ]);
+  const flows = body.flatMap((block) => (block.kind === "flow" ? [block.stages] : []));
+  assert.deepEqual(flows, [
+    [["Participants"], ["Actions", "Messages"], ["Rules"], ["State transitions"], ["System state"]],
+    [
+      ["Protocol System"],
+      [["Mechanisms", "Rules / State"], ["Participants", "Authority / Incentives"], ["Environment", "Network / Dependencies"]],
+      ["System Behavior"],
+      ["Protocol Properties"],
+    ],
+    [["Independent Participants"], ["Partial knowledge", "Communication", "Latency", "Failures"], ["Distributed System"], ["Coordination Problem"]],
+    [["Current State"], ["Input"], ["Transition Rule"], ["Next State"]],
+    [["Ordered Inputs"], ["Replica A", "Replica B", "Replica C"], ["Compatible System State"]],
+    [
+      ["Expected Environment"],
+      ["Latency", "Failures", "Byzantine behavior", "Strategic behavior"],
+      ["Protocol under stress"],
+      ["Which properties still hold?"],
+    ],
+    [["Protocol Properties"], [["Safety", "What must never happen?"], ["Liveness", "What must eventually happen?"]]],
+  ]);
+  assert.deepEqual(body.filter((block) => block.kind === "distinction"), [
+    { kind: "distinction", left: "Failure", right: "Byzantine behavior", further: ["Strategic behavior"] },
+    { kind: "distinction", left: "Local correctness", right: "System correctness" },
+  ]);
+  assert.deepEqual(body.find((block) => block.kind === "tensions"), {
+    kind: "tensions",
+    label: "Recurring tensions",
+    pairs: [
+      ["Safety", "Liveness"],
+      ["Trust", "Verification"],
+      ["Openness", "Control"],
+      ["Coordination", "Autonomy"],
+      ["Determinism", "External reality"],
+      ["Local behavior", "System behavior"],
+    ],
+  });
+
+  // The original passages remain, verbatim.
+  const paragraphs = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : []));
+  for (const text of [
+    "At this level a protocol is not primarily code. It is a system of rules, participants, state, and assumptions whose interactions produce behavior.",
+    "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, act strategically, or act against the protocol.",
+    "A component can behave exactly as specified while the system around it produces an unintended outcome. Protocol properties emerge from interactions between mechanisms, participants, and assumptions, not from isolated components.",
+    "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable under their own assumptions.",
+    "Decentralization likewise does not remove coordination: it changes how coordination is achieved and which assumptions it requires.",
+    "Protocol Engineering is therefore concerned with more than implementing rules correctly. It examines how rules, state, participants, incentives, authority, dependencies, and failure interact, and which properties continue to hold when the environment stops being ideal.",
+  ]) assert.ok(paragraphs.includes(text), text);
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("foundations").map((placement) => placement.id);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Diagram labels stay exposition, not ontology.
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const label of ["Protocol System", "Environment", "Coordination Problem", "Protocol under stress", "Replica A"]) {
+    assert.ok(!titles.has(label), label);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
   // No markup or styling leaks into the text values.
   const strings: string[] = [];
   JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
@@ -3726,7 +3814,7 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -4024,7 +4112,7 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5131,7 +5219,7 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...AI_LAYER, ...AI_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5289,7 +5377,7 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5425,7 +5513,7 @@ test("Autonomous Coordination reuses existing concepts where the meaning is the 
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...COORDINATION_LAYER, ...COORDINATION_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5530,7 +5618,7 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...EXECUTION_LAYER, ...EXECUTION_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5652,7 +5740,7 @@ test("Autonomous Organizations reuses existing concepts where the meaning is the
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...ORGANIZATIONS_LAYER, ...ORGANIZATIONS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5778,7 +5866,7 @@ test("Autonomous Protocols reuses existing concepts at their homes and keeps pro
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...PROTOCOLS_LAYER, ...PROTOCOLS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5903,7 +5991,7 @@ test("Autonomous Economy places Economic Agency, reuses existing concepts at the
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...ECONOMY_LAYER, ...ECONOMY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6032,7 +6120,7 @@ test("Frontier Systems reuses established concepts at their homes and keeps fron
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...FRONTIER_LAYER, ...FRONTIER_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6140,7 +6228,7 @@ test("every concept is placed, and relationships, mechanisms and paths reference
   ];
   for (const conceptId of referenced) assert.ok(conceptIds.has(conceptId), conceptId);
   // Structural authoring added no exposition.
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), ["foundations", "finality", "agent-identity"]);
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
 });
 
 // Concepts authored independently by both ontology tracks, reconciled into one
@@ -6379,6 +6467,707 @@ test("validation rejects malformed references, cycles, and semantic edges", () =
   for (const [name, errors, expected] of cases) {
     assert.ok(errors.includes(expected), `${name}: expected ${expected}; got ${errors.join("; ")}`);
   }
+});
+
+test("Computation & Execution's L0 exposition follows the authored sequence", () => {
+  const content = resolver.getContentForConcept("computation-execution");
+  assert.ok(content);
+  assert.equal(content.id, "computation-execution-content");
+  assert.ok(content.definition.startsWith("Protocols define what may happen."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "paragraph", "flow", "tensions", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "paragraph", "terms", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "distinction", "paragraph", "paragraph", "terms",
+  ]);
+  // Section headings, in order.
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Transactions connect intent to state",
+    "Execution requires an environment",
+    "Computation and verification are different responsibilities",
+    "Off-chain does not mean outside the protocol",
+    "Computation is finite because resources are finite",
+    "Correct execution is not enough",
+  ]);
+  // Every diagram keeps its nodes and relationships: stages in order, parallel
+  // sets as branches, and branches of several steps where the model continues.
+  const flows = body.flatMap((block) => (block.kind === "flow" ? [block.stages] : []));
+  assert.deepEqual(flows, [
+    [["Inputs"], ["Transactions"], ["Validation"], ["Ordering"], ["Execution"], ["State Transition"], ["New System State"]],
+    // Execution models vary along dimensions that combine, not as exclusive siblings.
+    [["Execution Models"], [["Scheduling", "Sequential or parallel"], ["Handling uncertainty", "Conservative, optimistic, or speculative"]], ["Execution Result"]],
+    [["Transaction"], ["Structure"], ["Validation"], ["Ordering"], ["Execution"], [["Success", "State changes"], ["Reversion", "State changes rolled back"]]],
+    [["Execution Environment"], ["Inputs", "State", "Context"], ["Smart Contract"], ["Computation", "Calls"], ["Effects"]],
+    [["Computation"], [["On-chain", "Protocol execution"], ["Off-chain", "Result / Commitment", "Proof / Evidence"]], ["Verification"], ["Accepted Result"]],
+    [["Off-Chain Computation"], [["Trusted execution", "Trust the executor or its environment"], ["Untrusted execution", "Verify the result", "On-Chain Verification"]]],
+    // DoS resistance is something resource accounting contributes to, not the end of a causal chain.
+    [
+      ["Execution"],
+      ["Computation", "State access", "Other work"],
+      ["Resource Accounting"],
+      [["Metering", "Gas / Resource Units", "Execution Cost + Resource Limits", "Bounded Execution"], ["Contributes to DoS Resistance"]],
+    ],
+  ]);
+  assert.deepEqual(body.find((block) => block.kind === "tensions"), {
+    kind: "tensions",
+    label: "Execution determinism",
+    pairs: [["Deterministic", "Non-Deterministic"]],
+  });
+  assert.deepEqual(body.find((block) => block.kind === "distinction"), {
+    kind: "distinction",
+    left: "Correct instruction execution",
+    right: "Correct transaction semantics",
+    further: ["Correct state transition", "Correct system behavior"],
+  });
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("computation-execution").map((placement) => placement.id);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+  // Explanatory vocabulary is text, not new ontology: the 02 tree is unchanged.
+  assert.equal(resolver.getChildren("computation-execution").length, 7);
+  assert.ok(!mapKnowledge.concepts.some((concept) => ["Accepted Result", "Bounded Execution", "Contributes to DoS Resistance", "Handling uncertainty", "Protocol execution"].includes(concept.title)));
+  // No markup or styling in the text values, and the model still validates.
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+});
+
+test("State & Data's L0 exposition develops state, commitments, history, placement, trust and derived views", () => {
+  const content = resolver.getContentForConcept("state-data")!;
+  assert.equal(content.id, "state-data-content");
+  assert.ok(content.definition.startsWith("Protocol state is the condition of a system at a point in its evolution"));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "distinction", "flow", "paragraph",
+    "heading", "paragraph", "terms", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "distinction", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "terms", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "distinction", "paragraph", "terms",
+    "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "State has a shape and a way to change",
+    "A commitment stands in for the state",
+    "Current state is not the whole history",
+    "Where data lives changes how it can be trusted",
+    "Integrity, authenticity, and provenance answer different questions",
+    "Indexes are views, not state",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Data / Inputs"], ["Transition Rules"], ["Protocol State"], ["State Representation"]],
+    [
+      ["Current State + Input"],
+      ["Transition Preconditions"],
+      [["Valid Transition", "Transition Effects", "Next State"], ["Invalid Transition", "Rejected", "State unchanged"]],
+    ],
+    [["State"], ["Representation"], ["Commitment"], ["State Root"], ["State Proof"], ["Verification"]],
+    [["Snapshot or Checkpoint"], ["Recorded Inputs"], ["Replayed Transitions"], ["Reconstructed State"]],
+    [["Remote / Historical Data"], ["Full Sync", "Snap Sync", "State Sync", "Incremental Sync"], ["Synchronization Verification"], ["Local State View"]],
+    [["Data"], [["On-chain", "Recorded by the protocol"], ["Off-chain", "Data Reference", "Retrieval", "Integrity Verification"]]],
+    [
+      ["Data"],
+      [
+        ["Integrity", "Has it changed?"],
+        ["Authenticity", "Is the claimed source genuine?"],
+        ["Provenance", "Where did it come from, and what happened to it?"],
+      ],
+    ],
+    [["Canonical Data / State"], ["Data Extraction"], ["Data Transformation"], ["Index Construction"], ["Derived State"], ["Query Model"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Stored data", "Protocol state"],
+      ["State root", "State"],
+      ["Verifiable", "Available"],
+      ["Unchanged", "Authentic", "Traceable"],
+      ["Derived state", "Canonical state"],
+    ],
+  );
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("state-data").map((placement) => placement.id);
+  assert.equal(l1.length, 10);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Diagram labels and questions stay exposition, not ontology.
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Local State View", "Reconstructed State", "Replayed Transitions", "Has it changed?", "State unchanged"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Consensus & Ordering's L0 exposition separates ordering, agreement, fork choice, finality and inclusion", () => {
+  const content = resolver.getContentForConcept("consensus-ordering")!;
+  assert.equal(content.id, "consensus-ordering-content");
+  assert.ok(content.definition.includes("which order counts, which history to follow, and when an outcome can be relied upon"));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "terms", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Pending is not decided",
+    "Agreement depends on assumptions",
+    "Competing histories need a rule for which to follow",
+    "Finality is when an outcome can be relied upon",
+    "Sequencing decides order, not everything else",
+    "Building a block is separate from proposing it",
+    "Assurance can arrive before finality",
+    "Valid is not the same as included",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Submitted Transactions"], ["Participant A's order", "Participant B's order", "Participant C's order"], ["Ordering Mechanism"], ["Ordered History"]],
+    [["Transaction"], ["Transaction Admission"], ["Transaction Propagation"], ["Pending Transactions"], ["Selection / Sequencing"], ["Proposal"]],
+    [["Consensus Model"], ["Participants", "Consensus Rules", "Participation Conditions", "Fault Assumptions"], ["Agreement"]],
+    [["Shared History"], ["Fork A", "Fork B"], ["Fork Choice Rule"], ["Selected Head"]],
+    [
+      ["Selected History"],
+      [["Probabilistic Finality", "Reversal grows unlikely"], ["Deterministic Finality", "Justification", "Finalization"]],
+      ["Dependable Reliance"],
+    ],
+    [
+      ["Candidate Actions"],
+      [
+        ["Sequencing", "What order?"],
+        ["Consensus", "What do participants agree on?"],
+        ["Execution", "What does the ordered input do?"],
+        ["Finality", "When can the result be relied upon?"],
+      ],
+    ],
+    [["Pending Transactions"], ["Builder A", "Builder B", "Builder C"], ["Block Bids"], ["Relay, where used"], ["Proposer"], ["Block Proposal"]],
+    [["Transaction"], ["Preconfirmation Provider"], ["Preconfirmation Commitment"], ["Earlier Assurance", ["Protocol Ordering", "Execution", "Finality"]]],
+    [["Transaction Submitted"], ["Included", ["Excluded", "Censorship Detection", "Inclusion Mechanism, where available", "Censorship Recovery"]]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Mempool", "Consensus"],
+      ["Reorganization", "Consensus failure"],
+      ["Fork choice", "Finality"],
+      ["Preconfirmation", "Finality"],
+      ["Consensus", "Ordering", "Block building", "Fork choice", "Finality"],
+    ],
+  );
+
+  // The page builds around Finality's own authored record, which stays as it was.
+  const finality = resolver.getContentForConcept("finality")!;
+  assert.deepEqual(
+    [finality.definition, finality.summary, finality.whyItMatters],
+    [
+      "The point at which a protocol treats a result as no longer practically reversible.",
+      "Finality turns agreement about ordering and execution into dependable settlement.",
+      "Systems need a clear boundary for when participants can rely on an outcome.",
+    ],
+  );
+  const heading = body.findIndex((block) => block.kind === "heading" && block.text.startsWith("Finality"));
+  const opening = body[heading + 1];
+  assert.equal(opening.kind, "paragraph");
+  for (const sentence of [finality.definition.replace(/^The/, "the"), finality.summary!, finality.whyItMatters!]) {
+    assert.ok(opening.kind === "paragraph" && opening.text.includes(sentence), sentence);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("consensus-ordering").map((placement) => placement.id);
+  assert.equal(l1.length, 10);
+  // The page narrates mempools before consensus and validators, as pending precedes agreement.
+  const order = ["mempools", "consensus", "validators", "fork-choice", "finality-in-consensus", "sequencing", "block-building", "proposer-builder-separation", "preconfirmations", "censorship-resistance-in-consensus-ordering"];
+  assert.deepEqual([...order].sort(), [...l1].sort());
+  order.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.equal(strips.length, l1.length + 1);
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Ordering Mechanism", "Selected Head", "Dependable Reliance", "Earlier Assurance", "Relay, where used"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Networks & Infrastructure's L0 exposition moves from connectivity to access, action, observation and automation", () => {
+  const content = resolver.getContentForConcept("networks-infrastructure")!;
+  assert.equal(content.id, "networks-infrastructure-content");
+  assert.ok(content.definition.endsWith("the machinery around the rules that makes a protocol reachable and operable."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "terms", "distinction", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "terms", "paragraph", "terms", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "flow", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "The network is a graph, not a broadcast bus",
+    "A node is a view of the protocol",
+    "Access is not the protocol",
+    "Some infrastructure acts, not just observes",
+    "If infrastructure cannot be observed, it cannot be operated reliably",
+    "Automation closes the loop",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Protocol Participants"], ["P2P Network"], ["Nodes' Protocol Views"], ["RPC", "Indexers", "Monitoring", ["Operational Actors", "Automation"]]],
+    [["Message"], ["Node A"], [["Node B", "Node D"], ["Node C", "Node E"]]],
+    [
+      ["Propagation"],
+      ["Different paths", "Different latency", "Message validation", "Duplicate suppression"],
+      ["Different arrival times"],
+      ["Temporary differences in local knowledge"],
+    ],
+    [
+      ["Nodes"],
+      [
+        ["Full Node", "Validates and keeps current state"],
+        ["Light Node", "Verifies selected data against commitments"],
+        ["Archive Node", "Retains historical state"],
+        ["Validator Node", "Adds consensus duties"],
+      ],
+    ],
+    [["Application"], [["RPC Endpoint", "Request Routing", "Node"], ["Query Service", "Derived Index", "Indexer Pipeline"]], ["Protocol View"]],
+    [["Observed Information"], [["Relayer", "Forwards"], ["Keeper", "Evaluates a condition", "Submits"], ["Bot", "Evaluates a strategy", "Acts"]]],
+    [["Running Infrastructure"], ["Metrics", "Logs", "Traces", "Health Checks"], ["Observability"], ["Detection"], ["Alerting"], ["Operator or Automation"]],
+    [["Protocol / Infrastructure State"], ["Observation"], ["Trigger", "Schedule", "Condition"], ["Automation Policy"], ["Execution"], ["New Observable State"]],
+    [["Connectivity"], ["Propagation"], ["Local Views"], ["Access"], ["Observation"], ["Action"], ["Automation"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right]] : [])),
+    [
+      ["Propagation", "Agreement"],
+      ["Node role", "Trust authority"],
+      ["RPC provider", "Protocol"],
+      ["Observation", "Action"],
+      ["Automated", "Autonomous"],
+    ],
+  );
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed (reused concepts under
+  // their contextual labels); the last names the L1 topics, in the page's order.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("networks-infrastructure").map((placement) => placement.id);
+  assert.equal(l1.length, 10);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+  assert.equal(resolver.getPlacement("synchronization-in-nodes")?.conceptId, "synchronization");
+  assert.equal(resolver.getPlacement("reorganization-handling-in-indexers")?.conceptId, "reorganization-handling");
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Operational Actors", "Nodes' Protocol Views", "Temporary differences in local knowledge", "Running Infrastructure", "Local Views"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Cryptography & Proofs' L0 exposition states which property each mechanism establishes, and under which assumptions", () => {
+  const content = resolver.getContentForConcept("cryptography-proofs")!;
+  assert.equal(content.id, "cryptography-proofs-content");
+  assert.ok(content.definition.endsWith("make particular claims independently verifiable, under explicit assumptions."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "distinction", "paragraph",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms", "paragraph", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Hashes turn data into cryptographic references",
+    "Signatures bind actions to keys",
+    "Commitments separate choosing from revealing",
+    "Cryptographic authority can be distributed",
+    "Proofs let claims be verified",
+    "Computation can be verified without repeating it",
+    "Privacy is a set of properties, not a single switch",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Claim"], ["Cryptographic Mechanism"], ["Evidence"], ["Verification"], ["Accept", "Reject"]],
+    [["Input"], ["Cryptographic Hash Function"], ["Fixed-size Digest"], ["Compact reference", "Integrity check", "Linked structure"]],
+    [["Key Pair"], [["Private Key", "Signing", "Signature"], ["Public Key", "Signature Verification", "Valid or Invalid"]]],
+    [["Value + Randomness"], ["Commitment Scheme"], ["Published Commitment"], ["Value + Opening"], ["Verification against the Commitment"]],
+    [["Secret or Authority"], ["Participant A", "Participant B", "Participant C"], ["Required Threshold"], ["Cryptographic Operation"]],
+    [["Statement + Witness"], ["Prover"], ["Proof"], ["Verifier"], ["Accept", "Reject"]],
+    [["Smaller Claims"], ["Proof A", "Proof B", "Proof C"], ["Recursion or Composition"], ["Higher-level Proof"]],
+    [
+      ["Input"],
+      ["Computation"],
+      ["Output", ["Execution Evidence", "Proof Generation", "Computation Proof"]],
+      ["Proof Verification"],
+      ["Accept or Reject the Output"],
+    ],
+    [
+      ["Information"],
+      [
+        ["Content", "Confidentiality"],
+        ["Identity", "Anonymity"],
+        ["Relationships", "Unlinkability"],
+        ["Chosen facts", "Selective Disclosure"],
+        ["Computation", "Private Computation"],
+      ],
+    ],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right]] : [])),
+    [
+      ["Verification", "Truth"],
+      ["Valid signature", "True statement"],
+      ["Multisignature", "Threshold signature"],
+      ["Proving a statement", "Disclosing the witness"],
+      ["Verified computation", "Correct specification"],
+      ["Zero-knowledge", "Anonymity"],
+      ["Trust minimized", "Assumptions removed"],
+    ],
+  );
+
+  // The distinctions carried in prose rather than as contrast blocks.
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of ["A hash is not encryption.", "A commitment is not encryption either", "Privacy is not secrecy alone.", "Cryptography does not remove assumptions."]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("cryptography-proofs").map((placement) => placement.id);
+  assert.equal(l1.length, 8);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Cryptographic Mechanism", "Fixed-size Digest", "Required Threshold", "Higher-level Proof", "Execution Evidence"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Storage & Availability's L0 exposition separates storing data from making it available", () => {
+  const content = resolver.getContentForConcept("storage-availability")!;
+  assert.equal(content.id, "storage-availability-content");
+  assert.ok(content.definition.startsWith("Storage and availability are different protocol properties."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph", "distinction",
+    "heading", "paragraph", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Protocol state is the most expensive place to keep data",
+    "Distributed storage survives failures, within limits",
+    "Knowing what data is does not say where it is",
+    "Current operation and history need different storage",
+    "Committed is not available",
+    "Encoding lets availability be checked without downloading everything",
+    "Published data need not become permanent state",
+    "Evidence about storage is not availability",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Protocol Data"], ["Storage Strategy"], ["Retention"], ["Retrieval"], ["Verification"], ["Usable Data"]],
+    [["Data"], ["Data Distribution"], ["Storage Node A", "Storage Node B", "Storage Node C"], ["Replication or Redundancy"], ["Survives some node failures"]],
+    [["Content"], ["Content Hashing"], ["Content Identifier"], ["Address Resolution"], ["Content Retrieval"], ["Hash Verification"]],
+    [["Historical Data"], [["Operating Node", "Data Pruning", "Current state only"], ["Archive Node", "Data Retention", "Full history"]]],
+    [
+      ["Data Committed"],
+      [
+        ["Data Publication", "Data Retrieval", "Availability Verification", "Available to participants"],
+        ["Data Withholding", "Commitment without data", "Cannot reconstruct or verify"],
+      ],
+    ],
+    [["Original Data"], ["Redundant Encoding"], ["Shard 1", "Shard 2", "Shard 3", "Shard 4"], ["Sufficient Subset"], ["Reconstruction"]],
+    [["Encoded Dataset"], ["Random Samples"], ["Sample Retrieval"], ["Sample Verification"], ["Availability Confidence"]],
+    [["Blob Transaction"], [["Blob Commitment", "Kept with the chain"], ["Blob Data", "Blob Propagation", "Retained for a window", "Prunable"]]],
+    [
+      ["Storage Claim"],
+      [
+        ["Proof of Storage", "Is the data held?"],
+        ["Proof of Replication", "Are distinct copies held?"],
+        ["Proof of Space", "Is capacity committed?"],
+        ["Proof of Retrievability", "Can the data be recovered?"],
+      ],
+    ],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Stored", "Available"],
+      ["Identity of data", "Availability of data"],
+      ["Committed", "Available"],
+      ["Shard", "Replica"],
+      ["Availability confidence", "Every byte retrieved"],
+      ["Published data", "Permanent state"],
+      ["Proof of storage", "Data availability"],
+      ["Stored", "Retained", "Available", "Intact"],
+    ],
+  );
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of ["On-chain storage is not free", "Replication is not an availability guarantee", "it becomes unavailable only if no remaining source can provide it."]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed. The page takes sampling
+  // before blobs, since sampling builds on erasure coding; the last strip keeps the L1 order.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("storage-availability").map((placement) => placement.id);
+  const order = [
+    "on-chain-storage", "distributed-storage", "content-addressing-in-storage-availability", "archival-storage",
+    "data-availability", "erasure-coding", "data-availability-sampling", "blobs", "storage-proofs",
+  ];
+  assert.deepEqual([...order].sort(), [...l1].sort());
+  assert.equal(strips.length, l1.length + 1);
+  order.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Concepts reused from earlier domains keep their main placements.
+  for (const [conceptId, preferred] of [
+    ["fault-tolerance", "fault-tolerance"],
+    ["archive-nodes", "archive-nodes"],
+    ["proof-generation", "proof-generation"],
+    ["proof-verification", "proof-verification"],
+    ["content-addressing", "content-addressing-in-storage-availability"],
+  ]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Storage Strategy", "Usable Data", "Sufficient Subset", "Commitment without data", "Storage Claim", "Hash Verification"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Identity, Accounts & Authority's L0 exposition separates identity, authentication and authority", () => {
+  const content = resolver.getContentForConcept("identity-accounts-authority")!;
+  assert.equal(content.id, "identity-accounts-authority-content");
+  assert.ok(content.definition.endsWith("Identity, authentication, and authority answer these different questions."));
+  const body = content.body ?? [];
+  assert.deepEqual(body.map((block) => block.kind), [
+    "paragraph", "flow", "paragraph",
+    "heading", "paragraph", "distinction", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "distinction", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "heading", "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+    "paragraph", "flow", "paragraph", "distinction", "paragraph", "terms",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "Identity is built from evidence, not given",
+    "Accounts connect control to protocol state",
+    "Wallets manage control; they are not the account",
+    "Smart accounts make authority programmable",
+    "Account abstraction changes how operations enter",
+    "Authentication shows control, not permission",
+    "Authority decides what control permits",
+    "Machines and agents need the same answers",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["Actor"], ["Identifier / Credential / Account"], ["Authentication"], ["Authority"], ["Permitted Action"]],
+    [
+      ["Entity"],
+      [
+        ["Identifier", "Which entity?"],
+        ["Credential", "What is claimed about it?"],
+        ["Attestation", "Who vouches for it?"],
+        ["Reputation", "How has it behaved?"],
+      ],
+    ],
+    [["Account"], [["Externally Owned Account", "Controlled by a key"], ["Contract Account", "Control defined by logic"]], ["Validation"], ["Authorized Execution"]],
+    [["Intent"], ["Transaction Construction"], ["Signing"], ["Transaction Submission"], ["Protocol"]],
+    [["Operation"], ["Validation Logic"], ["Primary key", "Session key, within its scope", "Recovery Logic"], ["Execution Logic"], ["State Change"]],
+    [
+      ["User Intent"],
+      ["User Operation"],
+      ["Alternative Mempool"],
+      ["Bundler"],
+      ["Entry Point"],
+      ["Account Validation", ["Paymaster", "Fee payment policy"]],
+      ["Execution"],
+    ],
+    [["Claimed Actor"], ["Authentication Factor"], ["Verification"], ["Authentication Policy"], ["Accepted", "Rejected"]],
+    [["Authority"], ["Ownership", "Roles", "Capabilities", "Delegation"], ["Permission Model"], ["Authority Boundary"], ["Permitted Actions"]],
+    [
+      ["Machine or Agent"],
+      [
+        ["Machine Credential", "Machine Authentication", "Agent Authorization", "Permitted Action"],
+        ["Observed Activity", "Agent Reputation", "Input to a policy"],
+      ],
+    ],
+    [["Participant"], ["Identity Evidence"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Address", "Identity"],
+      ["Account", "Wallet"],
+      ["Account abstraction", "Free execution"],
+      ["Authenticated", "Authorized"],
+      ["Authority", "Ownership"],
+      ["Reputation", "Authorization"],
+      ["Identity", "Authentication", "Authority", "Execution"],
+    ],
+  );
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of ["Nor is it the key", "Delegation, likewise, is not a transfer of ownership", "Smart accounts do not inherently eliminate cryptographic credentials"]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary, as displayed; the last names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("identity-accounts-authority").map((placement) => placement.id);
+  assert.equal(l1.length, 8);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Concepts placed here and elsewhere keep their main placements, including those that
+  // live primarily in other domains; Agent Identity's own record is untouched.
+  for (const [conceptId, preferred] of [
+    ["credentials", "credentials"],
+    ["attestations", "attestations-in-identity"],
+    ["key-management", "key-management"],
+    ["signing", "signing"],
+    ["transaction-construction", "transaction-construction"],
+    ["transaction-submission", "transaction-submission"],
+    ["wallet-recovery", "wallet-recovery"],
+    ["wallet-security", "wallet-security"],
+    ["smart-accounts", "smart-accounts"],
+    ["account-abstraction", "account-abstraction"],
+    ["gas-abstraction", "gas-abstraction"],
+    ["authentication", "authentication"],
+    ["roles", "roles"],
+    ["capabilities", "capabilities"],
+    ["delegation", "delegation-in-autonomous-coordination"],
+    ["permission-models", "permission-models"],
+    ["authority-boundaries", "authority-boundaries"],
+    ["agent-identity", "agent-identity"],
+    ["agent-credentials", "agent-credentials"],
+    ["agent-reputation", "agent-reputation-in-machine-economy"],
+    ["machine-authentication", "machine-authentication"],
+  ]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  assert.deepEqual(resolver.getContentForConcept("agent-identity"), {
+    id: "agent-identity-content",
+    conceptId: "agent-identity",
+    definition: "The means by which an AI agent is distinguished and authenticated for protocol interaction.",
+  });
+
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Identifier / Credential / Account", "Permitted Action", "Claimed Actor", "Fee payment policy", "Observed Activity"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("exposition validation reports malformed headings, term strips, branches and distinction chains", () => {
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "malformed-l0-blocks", conceptId: "economic-agency", definition: "Defined.",
+      body: [
+        { kind: "heading", text: " " },
+        { kind: "terms", terms: ["Only one"] },
+        { kind: "flow", label: "Branch alone", stages: [["A"], [["B", "C"]]] },
+        { kind: "flow", label: "Empty branch", stages: [["A"], [["B"], []]] },
+        { kind: "distinction", left: "A", right: "B", further: [""] },
+      ],
+    }],
+  }));
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "malformed-l0-blocks"')), [
+    'Content "malformed-l0-blocks" block 0 (heading) is empty',
+    'Content "malformed-l0-blocks" block 1 (terms) must list at least two terms',
+    'Content "malformed-l0-blocks" block 2 (flow) has a branch outside a parallel set',
+    'Content "malformed-l0-blocks" block 3 (flow) has an empty stage or element',
+    'Content "malformed-l0-blocks" block 4 (distinction) must name both sides',
+  ]);
 });
 
 test("exposition validation reports every malformed block", () => {

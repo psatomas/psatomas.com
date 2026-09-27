@@ -27,8 +27,21 @@ export type Check = (ok: boolean, message: string) => void;
 export type SuiteContext = { browser: Browser; base: string; check: Check };
 export type Section = { name: string; title: string; run: (context: SuiteContext) => Promise<void> };
 
-/** Lets client-side reveal and scroll finish after an interaction. */
-export const settle = (page: Page) => page.waitForTimeout(700);
+/**
+ * Lets client-side reveal and scroll finish after an interaction. A smooth
+ * reveal across long expositions can outlast the fixed wait, so it then also
+ * waits (up to 4s) until the scroll position stops changing.
+ */
+export async function settle(page: Page) {
+  await page.waitForTimeout(700);
+  let last = -1;
+  for (let poll = 0; poll < 40; poll++) {
+    const y = await page.evaluate(() => window.scrollY);
+    if (y === last) return;
+    last = y;
+    await page.waitForTimeout(100);
+  }
+}
 
 /**
  * CHROME_PATH wins; otherwise installed stable Google Chrome, which is what the

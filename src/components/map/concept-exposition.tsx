@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { getMapConceptContentHref } from "./explorer-model";
 import type { MapConceptExposition } from "./explorer-model";
 import { FlowModel, TensionPair } from "./exposition-models";
@@ -98,7 +98,53 @@ function ExpositionBlock({ block, lead }: { block: MapContentBlock; lead: boolea
           <FlowModel label={block.label} stages={block.stages} />
         </div>
       );
+    case "heading":
+      // A section title within the exposition; it collapses into the prose rhythm.
+      return <h4 className="mt-12 mb-4 text-lg font-semibold tracking-tight text-foreground first:mt-0 last:mb-0">{block.text}</h4>;
+    case "terms":
+      // The vocabulary a passage introduces: plain text, not navigation.
+      return (
+        <div role="list" aria-label="Key terms" className={`${PROSE} ${MONO} flex flex-wrap gap-x-2 gap-y-1 text-muted`}>
+          {block.terms.map((term, index) => (
+            <span role="listitem" key={term}>
+              {term}
+              {index < block.terms.length - 1 ? (
+                <span aria-hidden="true" className="pl-2 text-dim">
+                  ·
+                </span>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      );
     case "distinction":
+      if (block.further?.length) {
+        // A chain of distinctions, one notion per line down the structural axis.
+        const chain = [block.left, block.right, ...block.further];
+        return (
+          <div className={STRUCTURE}>
+            <p
+              role="img"
+              aria-label={`${chain[0]} is not the same as ${chain[1]}${chain
+                .slice(2)
+                .map((term) => `, which is not the same as ${term}`)
+                .join("")}`}
+              className={`${MONO} mx-auto flex max-w-2xl flex-col items-center gap-1 border-y border-border py-4 text-center text-foreground`}
+            >
+              {chain.map((term, index) => (
+                <Fragment key={term}>
+                  {index > 0 ? (
+                    <span aria-hidden="true" className="text-base leading-none text-muted">
+                      ≠
+                    </span>
+                  ) : null}
+                  <span>{term}</span>
+                </Fragment>
+              ))}
+            </p>
+          </div>
+        );
+      }
       // An axiom on the structural axis. Visible symbol; spoken wording lives
       // only in the text alternative.
       return (

@@ -267,8 +267,11 @@ Presentation components decide how a definition, section, mechanism, or
 diagram is rendered.
 
 Richer exposition is an ordered `body` of typed blocks following the
-definition, which leads: paragraphs, conceptual flows (ordered stages of one
-or more elements), distinctions ("A ≠ B"), and tensions (pairs of forces).
+definition, which leads: paragraphs, section headings, conceptual flows
+(ordered stages of one or more elements; an element of a parallel set may be a
+branch of several steps), distinctions ("A ≠ B", optionally a chain "A ≠ B ≠
+C"), tensions (pairs of forces), and term strips (the vocabulary a passage
+introduces, as plain text rather than navigation or new concepts).
 Blocks carry meaning and order only. Authoring prompts such as "why it
 matters" may guide writing but are never rendered as labelled sections: the
 reader meets continuous technical exposition, not a template.

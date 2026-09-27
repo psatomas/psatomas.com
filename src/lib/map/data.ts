@@ -6633,26 +6633,200 @@ export const mapKnowledge: MapKnowledgeModel = {
         {
           kind: "flow",
           label: "How rules turn participant actions into system state",
-          stages: [["Participants"], ["Rules"], ["Actions", "Messages"], ["State transitions"], ["System state"]],
+          stages: [["Participants"], ["Actions", "Messages"], ["Rules"], ["State transitions"], ["System state"]],
         },
         {
           kind: "paragraph",
-          text: "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, or act strategically against the protocol.",
+          text: "What emerges depends on more than the rules. Participants observe different information, communicate over unreliable networks, hold different incentives, exercise different authority, depend on external systems, fail, act strategically, or act against the protocol.",
         },
         {
           kind: "flow",
-          label: "What system behavior is shaped by",
+          label: "What a protocol system is made of, and what its behavior produces",
           stages: [
-            ["Protocol"],
-            ["Rules", "State", "Participants"],
-            ["System behavior"],
-            ["Trust", "Authority", "Incentives", "Dependencies", "Network", "Adversaries"],
+            ["Protocol System"],
+            [
+              ["Mechanisms", "Rules / State"],
+              ["Participants", "Authority / Incentives"],
+              ["Environment", "Network / Dependencies"],
+            ],
+            ["System Behavior"],
+            ["Protocol Properties"],
           ],
         },
+        {
+          kind: "paragraph",
+          text: "This is the model the rest of the MAP decomposes. Each later domain examines part of a protocol's mechanisms, participants, or environment, and the properties that follow from how they interact.",
+        },
+        {
+          kind: "terms",
+          terms: ["Rules", "Participants", "Interactions", "Assumptions", "State", "Protocol properties"],
+        },
+        { kind: "heading", text: "No participant can assume it sees the whole system" },
+        {
+          kind: "paragraph",
+          text: "A protocol runs across independent processes that share no memory and no global clock. They learn about one another only through communication, messages take time to arrive, and any process or link may fail. No participant necessarily possesses a complete, instantaneous view of the system.",
+        },
+        {
+          kind: "flow",
+          label: "What makes independent participants a distributed system, and why coordinating across one is hard",
+          stages: [
+            ["Independent Participants"],
+            ["Partial knowledge", "Communication", "Latency", "Failures"],
+            ["Distributed System"],
+            ["Coordination Problem"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Each participant acts on its own local view. Whatever the protocol achieves collectively, it must achieve from these partial views, which is why coordination is a central problem of protocol reasoning.",
+        },
+        {
+          kind: "paragraph",
+          text: "How long messages may take, and which failures may occur, are assumptions the protocol must state rather than facts it can reliably observe. Timing and fault models make those assumptions explicit, and every guarantee the protocol offers is relative to them.",
+        },
+        {
+          kind: "terms",
+          terms: ["Processes", "Communication", "Partial knowledge", "Latency", "Failures", "Fault models"],
+        },
+        { kind: "heading", text: "Protocols define valid state transitions" },
+        {
+          kind: "paragraph",
+          text: "Beneath the participants sits a simpler abstraction. A protocol can be reasoned about as a state machine: the system has a current state, inputs arrive, and transition rules determine which next states are valid.",
+        },
+        {
+          kind: "flow",
+          label: "The state machine abstraction",
+          stages: [["Current State"], ["Input"], ["Transition Rule"], ["Next State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "This turns questions about behavior into questions about transitions: which inputs are acceptable, what each one changes, and which states must never be reachable. When transition rules are deterministic, the same state and the same input always produce the same next state.",
+        },
+        {
+          kind: "paragraph",
+          text: "Determinism is what lets independent processes that start from the same state and apply the same inputs arrive at the same result, each by its own computation rather than by trusting another's. In state machine replication, many processes apply the same inputs, in the same order, to the same rules from the same initial state, and so maintain compatible views of a changing system state.",
+        },
+        {
+          kind: "flow",
+          label: "State machine replication: the same ordered inputs applied by independent replicas yield compatible state",
+          stages: [["Ordered Inputs"], ["Replica A", "Replica B", "Replica C"], ["Compatible System State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "The abstraction returns to the distributed setting. The difficulty is no longer computing a transition, but agreeing on which inputs to apply and in what order.",
+        },
+        {
+          kind: "terms",
+          terms: ["State", "Inputs", "Transitions", "Transition rules", "Determinism", "State machine replication"],
+        },
+        { kind: "heading", text: "Trust and coordination are redistributed, not removed" },
+        {
+          kind: "paragraph",
+          text: "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable under their own assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every protocol rests on trust assumptions: about which parties behave correctly, which components report truthfully, and which claims are accepted without being checked. A trust boundary marks where the protocol stops verifying and starts assuming. Trust minimization moves that boundary by making claims verifiable; trust distribution spreads what remains across many parties, so that no single party is decisive, as long as the assumed bound on faulty or colluding parties holds.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Trust assumptions",
+            "Trusted parties",
+            "Trust boundaries",
+            "Verification",
+            "Trust minimization",
+            "Trust distribution",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Decentralization likewise does not remove coordination: it changes how coordination is achieved and which assumptions it requires.",
+        },
+        {
+          kind: "paragraph",
+          text: "How participants coordinate depends on the information they hold and how it moves between them. Participants may cooperate toward a shared outcome, compete under rules designed to turn individually rational choices into a collective result, or do both. A coordination model is the protocol's account of how independent choices combine into collective action; agreement through consensus is one such model, not the only one.",
+        },
+        {
+          kind: "terms",
+          terms: ["Coordination models", "Information", "Communication", "Cooperation", "Competition", "Collective action"],
+        },
+        {
+          kind: "paragraph",
+          text: "Trust is therefore not simply present or absent, and coordination is not simply centralized or decentralized. Protocol design changes where trust resides, how it is constrained, how claims are verified, how information moves, and how independent participants coordinate.",
+        },
+        { kind: "heading", text: "Protocols must hold outside the ideal case" },
+        {
+          kind: "paragraph",
+          text: "The models above describe what happens when every step goes as specified. Real protocols run in environments that do not cooperate: messages are slow, machines crash, and some participants deviate from the rules.",
+        },
+        {
+          kind: "flow",
+          label: "How departures from the expected environment put a protocol under stress",
+          stages: [
+            ["Expected Environment"],
+            ["Latency", "Failures", "Byzantine behavior", "Strategic behavior"],
+            ["Protocol under stress"],
+            ["Which properties still hold?"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "These departures are different kinds of problem. An ordinary failure is a process that stops or a message that is lost. A fault assumption bounds how many participants may fail, and in which ways. Byzantine behavior drops any assumption about how a faulty participant acts, whether through bugs, corruption, or malice: it may lie, equivocate, or tell different participants different things. Strategic behavior is deliberate: participants follow the rules while doing so serves them, and deviate when deviation pays. The categories overlap. A crash is a special case of Byzantine behavior, and strategic deviation can be treated as Byzantine; what differs is what the protocol assumes about each.",
+        },
+        { kind: "distinction", left: "Failure", right: "Byzantine behavior", further: ["Strategic behavior"] },
+        {
+          kind: "paragraph",
+          text: "An adversary is a participant, group of participants, or outside party acting against the protocol's intended outcome. A threat model states what the adversary can observe, control, and want. Within it, censorship, which excludes particular actions or participants, and collusion, in which several participants coordinate against the protocol or other participants, are not exceptional cases but part of the environment the protocol is designed for.",
+        },
+        {
+          kind: "terms",
+          terms: ["Adversaries", "Threat models", "Byzantine behavior", "Censorship", "Collusion", "Strategic behavior"],
+        },
+        { kind: "heading", text: "Properties belong to the system, not its components" },
         { kind: "distinction", left: "Local correctness", right: "System correctness" },
         {
           kind: "paragraph",
           text: "A component can behave exactly as specified while the system around it produces an unintended outcome. Protocol properties emerge from interactions between mechanisms, participants, and assumptions, not from isolated components.",
+        },
+        {
+          kind: "flow",
+          label: "The two questions that organize protocol properties",
+          stages: [
+            ["Protocol Properties"],
+            [
+              ["Safety", "What must never happen?"],
+              ["Liveness", "What must eventually happen?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A safety property is violated at a particular moment, by a state that should never have been reached. A liveness property is violated only by waiting forever, by progress that never comes. Under failures and adversaries, a protocol often cannot guarantee both unconditionally, which is why the two recur as a tension throughout the MAP.",
+        },
+        {
+          kind: "paragraph",
+          text: "Several other properties can be read through these questions within the system model. Finality is largely a safety commitment: once a result is final, the protocol treats it as not to be reversed under its assumptions. Availability and censorship resistance are largely liveness commitments: the system and the data it depends on remain obtainable when needed, and valid actions from any participant are eventually included. Consistency constrains what different participants may observe of the same state. Fault tolerance states how many failures, and of which kind, the other properties survive.",
+        },
+        {
+          kind: "paragraph",
+          text: "None of these belongs to an isolated component. Each holds only relative to assumptions about participants, communication, failures, authority, and adversaries, and a property that holds under one set of assumptions may fail under another.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Safety",
+            "Liveness",
+            "Finality",
+            "Availability",
+            "Consistency",
+            "Fault tolerance",
+            "Censorship resistance",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "These recur as tensions, not opposites: each pair names forces a design must balance, and many designs achieve some of both.",
         },
         {
           kind: "tensions",
@@ -6668,11 +6842,2065 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Trust is rarely eliminated. It is moved, distributed, constrained, or replaced with mechanisms that make particular claims independently verifiable. Decentralization likewise does not remove coordination: it changes how coordination is achieved and which assumptions it requires.",
+          text: "Protocol Engineering is therefore concerned with more than implementing rules correctly. It examines how rules, state, participants, incentives, authority, dependencies, and failure interact, and which properties continue to hold when the environment stops being ideal.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Protocols",
+            "Distributed Systems",
+            "State Machines",
+            "Trust Models",
+            "Coordination",
+            "Adversarial Environments",
+            "Protocol Properties",
+          ],
+        },
+      ],
+    },
+    {
+      id: "computation-execution-content",
+      conceptId: "computation-execution",
+      definition:
+        "Protocols define what may happen. Execution determines what actually happens when those rules are applied to inputs and state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Computation & Execution is concerned with how operations are represented, validated, ordered, evaluated, metered, and translated into state transitions. The same protocol rules can produce very different execution systems depending on the execution model, transaction semantics, runtime environment, and resource constraints.",
+        },
+        {
+          kind: "flow",
+          label: "One common path from submitted inputs to new system state",
+          stages: [
+            ["Inputs"],
+            ["Transactions"],
+            ["Validation"],
+            ["Ordering"],
+            ["Execution"],
+            ["State Transition"],
+            ["New System State"],
+          ],
         },
         {
           kind: "paragraph",
-          text: "Protocol Engineering is therefore concerned with more than implementing rules correctly. It examines how rules, state, participants, incentives, authority, dependencies, and failure interact, and which properties continue to hold when the environment stops being ideal.",
+          text: "Turning a submitted action into a state change is therefore not a single operation but a pipeline, and execution is one stage of it. Where validation and ordering happen, and how often, varies between systems.",
+        },
+        {
+          kind: "paragraph",
+          text: "Different systems make different choices about how computation proceeds. Execution may be sequential or parallel; its result may be fully determined by the agreed inputs, state, and context, or depend on something outside them; and it may proceed conservatively, optimistically, or speculatively.",
+        },
+        {
+          kind: "flow",
+          label: "Two dimensions along which execution models vary, which can combine",
+          stages: [
+            ["Execution Models"],
+            [
+              ["Scheduling", "Sequential or parallel"],
+              ["Handling uncertainty", "Conservative, optimistic, or speculative"],
+            ],
+            ["Execution Result"],
+          ],
+        },
+        { kind: "tensions", label: "Execution determinism", pairs: [["Deterministic", "Non-Deterministic"]] },
+        {
+          kind: "paragraph",
+          text: "These choices affect more than performance. They determine which operations may execute together, what must be known before execution, how conflicts are detected, and whether independent participants can reproduce the same result.",
+        },
+        {
+          kind: "paragraph",
+          text: "The dimensions can combine. Parallel execution runs operations concurrently only where they do not conflict, or where conflicts can be detected and resolved. Optimistic execution proceeds as if conflicts will not occur and repairs them when they are detected; speculative execution computes results before the inputs or ordering they depend on are settled, and discards them if those turn out differently. The two overlap in practice.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Deterministic execution",
+            "Non-deterministic execution",
+            "Sequential execution",
+            "Parallel execution",
+            "Optimistic execution",
+            "Speculative execution",
+          ],
+        },
+        { kind: "heading", text: "Transactions connect intent to state" },
+        {
+          kind: "paragraph",
+          text: "A transaction packages an action for execution. Before it can affect the system, it passes through a lifecycle in which its structure and validity are interpreted, its position relative to other transactions is established, and its effects are computed.",
+        },
+        {
+          kind: "flow",
+          label: "The transaction lifecycle",
+          stages: [
+            ["Transaction"],
+            ["Structure"],
+            ["Validation"],
+            ["Ordering"],
+            ["Execution"],
+            [["Success", "State changes"], ["Reversion", "State changes rolled back"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Atomicity defines the boundary of those effects: either the transaction's required state changes occur as one unit, or they do not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reversion is how that boundary is enforced when execution fails: the transaction's state changes are rolled back, although in some systems it is still included and fees or nonce updates still apply. Validation is not always a single step either; checks can occur at admission, before execution, and during it.",
+        },
+        {
+          kind: "paragraph",
+          text: "This makes transaction semantics part of protocol behavior rather than merely an encoding format.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction lifecycle",
+            "Transaction structure",
+            "Transaction ordering",
+            "Transaction validation",
+            "Transaction execution",
+            "Transaction atomicity",
+            "Transaction reversion",
+          ],
+        },
+        { kind: "heading", text: "Execution requires an environment" },
+        {
+          kind: "paragraph",
+          text: "Rules do not execute themselves. A runtime interprets operations according to a defined execution environment.",
+        },
+        {
+          kind: "paragraph",
+          text: "Virtual machines define how computation is represented and evaluated, but they are not one kind of thing. The EVM is a specific virtual machine; WASM is an instruction format that several runtimes execute; zkVMs are virtual machines designed so that their execution can be proven, with proofs often used for succinct verification rather than for zero-knowledge.",
+        },
+        {
+          kind: "terms",
+          terms: ["EVM", "WASM", "zkVMs"],
+        },
+        {
+          kind: "paragraph",
+          text: "Smart contracts execute within these environments when a transaction or another contract invokes them; they do not act on their own. A contract's state is the part of protocol state it owns, and its execution context supplies the rest of what a running contract may see, such as its caller and the current block.",
+        },
+        {
+          kind: "flow",
+          label: "How a smart contract executes within its environment",
+          stages: [
+            ["Execution Environment"],
+            ["Inputs", "State", "Context"],
+            ["Smart Contract"],
+            ["Computation", "Calls"],
+            ["Effects"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A contract call may trigger other calls, read or modify state, consume resources, succeed, or revert. Local contract execution can therefore become part of a much larger execution graph.",
+        },
+        {
+          kind: "paragraph",
+          text: "Calls let one execution context invoke another account or contract according to the execution environment's call semantics. In EVM terminology these interactions include message calls that may execute contract code. Deployment introduces executable contract code and its initial state into the protocol, while the contract lifecycle covers how that deployed component may subsequently be used, changed, upgraded, disabled, or removed where the system permits those operations.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Contract state",
+            "Contract execution",
+            "Contract calls",
+            "Message calls",
+            "Deployment",
+            "Execution context",
+            "Contract lifecycle",
+          ],
+        },
+        { kind: "heading", text: "Computation and verification are different responsibilities" },
+        {
+          kind: "paragraph",
+          text: "A protocol does not always need to perform computation where the result is consumed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Computation may happen elsewhere while the protocol verifies evidence about the result.",
+        },
+        {
+          kind: "flow",
+          label: "Where computation happens and how its result is accepted",
+          stages: [
+            ["Computation"],
+            [["On-chain", "Protocol execution"], ["Off-chain", "Result / Commitment", "Proof / Evidence"]],
+            ["Verification"],
+            ["Accepted Result"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "This separation creates a fundamental design space: perform the work versus verify that the work was performed as specified. When computation happens on-chain, the protocol's own execution produces the result, and how participants check it, by re-executing it or otherwise, varies between systems.",
+        },
+        {
+          kind: "paragraph",
+          text: "Computation integrity is the property that a result really follows from its inputs under the specified program. Execution traces record how a computation progressed; computation commitments bind a party to a particular computation, trace, or result; and computation proofs let others check a claimed result against the specified relation without repeating the entire computation. As Cryptography & Proofs describes, such a proof establishes validity under the proof system's assumptions, not that the specification is right, and producing it can cost far more than checking it.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Computation integrity",
+            "Execution traces",
+            "Computation commitments",
+            "Computation proofs",
+            "Verification",
+          ],
+        },
+        { kind: "heading", text: "Off-chain does not mean outside the protocol" },
+        {
+          kind: "paragraph",
+          text: "Moving computation off-chain changes where work happens, but the protocol still needs a model for deciding what to trust.",
+        },
+        {
+          kind: "flow",
+          label: "How off-chain results become acceptable to the protocol",
+          stages: [
+            ["Off-Chain Computation"],
+            [
+              ["Trusted execution", "Trust the executor or its environment"],
+              ["Untrusted execution", "Verify the result", "On-Chain Verification"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Off-chain workers can execute expensive, asynchronous, private, or externally dependent operations. The important question is how their outputs become acceptable to the protocol.",
+        },
+        {
+          kind: "paragraph",
+          text: "The trust boundary may remain around the worker, move to a trusted execution environment, or be reduced, though not removed, through verification.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Off-chain execution",
+            "On-chain verification",
+            "Trusted execution",
+            "Untrusted execution",
+            "Off-chain workers",
+          ],
+        },
+        { kind: "heading", text: "Computation is finite because resources are finite" },
+        {
+          kind: "paragraph",
+          text: "Execution consumes resources. Without accounting and limits, participants could impose unbounded computational work on everyone responsible for processing protocol state.",
+        },
+        {
+          kind: "flow",
+          label: "How resource accounting bounds execution, and contributes to, without guaranteeing, DoS resistance",
+          stages: [
+            ["Execution"],
+            ["Computation", "State access", "Other work"],
+            ["Resource Accounting"],
+            [
+              ["Metering", "Gas / Resource Units", "Execution Cost + Resource Limits", "Bounded Execution"],
+              ["Contributes to DoS Resistance"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Gas and other metering mechanisms turn resource consumption into quantities the protocol can account for and constrain. Gas measures use in protocol units; the fee is what is charged for it, and fee accounting determines who pays and where the payment goes. Resource limits bound individual executions and the total work the protocol accepts at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Resource accounting is therefore simultaneously an execution mechanism, an economic mechanism, and a security boundary. It contributes to denial-of-service resistance only for work it measures and prices adequately; mispriced or unmetered work remains exposed.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Gas",
+            "Execution cost",
+            "Metering",
+            "Resource limits",
+            "Fee accounting",
+            "Denial-of-service resistance",
+          ],
+        },
+        { kind: "heading", text: "Correct execution is not enough" },
+        {
+          kind: "paragraph",
+          text: "An execution engine can evaluate every instruction correctly while the surrounding system still produces undesirable behavior.",
+        },
+        {
+          kind: "distinction",
+          left: "Correct instruction execution",
+          right: "Correct transaction semantics",
+          further: ["Correct state transition", "Correct system behavior"],
+        },
+        {
+          kind: "paragraph",
+          text: "Ordering can change outcomes. Parallel execution must handle conflicts that sequential execution avoids by construction. Information from outside the agreed inputs can introduce non-determinism. Resource limits can determine whether otherwise valid computation completes. Contract calls can propagate effects across components.",
+        },
+        {
+          kind: "paragraph",
+          text: "Computation & Execution therefore sits between protocol rules and protocol state: it defines how abstract actions become concrete transitions while preserving the execution properties the wider system depends on.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Execution Models",
+            "Transactions",
+            "Virtual Machines",
+            "Smart Contracts",
+            "Verifiable Computation",
+            "Off-Chain Computation",
+            "Resource Accounting",
+          ],
+        },
+      ],
+    },
+    {
+      id: "state-data-content",
+      conceptId: "state-data",
+      definition:
+        "Protocol state is the condition of a system at a point in its evolution, as defined by its transition rules. Data is broader: the inputs, records, and references that change, describe, prove, or explain that state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The two are easily conflated because state is stored as data. But not all data is state. Transactions, blocks, events, metadata, and external information describe what was submitted, recorded, or observed. State is what the protocol holds to be the case once its transition rules have been applied to those inputs.",
+        },
+        { kind: "distinction", left: "Stored data", right: "Protocol state" },
+        {
+          kind: "flow",
+          label: "How data becomes protocol state, and how that state is represented",
+          stages: [["Data / Inputs"], ["Transition Rules"], ["Protocol State"], ["State Representation"]],
+        },
+        {
+          kind: "paragraph",
+          text: "State & Data is concerned with that relationship: how state is modeled and changed, how participants refer to and verify it without holding all of it, how its history is kept, how a participant comes to share it, and how the data around it is placed, trusted, traced, and queried.",
+        },
+        { kind: "heading", text: "State has a shape and a way to change" },
+        {
+          kind: "paragraph",
+          text: "A state model decides what the protocol tracks, such as accounts and balances, unspent outputs, or contract storage. Global state is the whole of it; local state is the part that belongs to a single account, contract, or participant. Encoding and layout decide how the model is written down and organized, and so which parts of it can be read, updated, and proven efficiently.",
+        },
+        {
+          kind: "terms",
+          terms: ["State models", "Global state", "Local state", "State encoding", "State layout", "State roots"],
+        },
+        {
+          kind: "paragraph",
+          text: "Foundations treats a protocol as a state machine. The narrower question here is what makes a particular transition valid. A transition function maps the current state and an input to a next state, but only when the transition's preconditions hold.",
+        },
+        {
+          kind: "flow",
+          label: "How preconditions separate valid transitions from invalid ones",
+          stages: [
+            ["Current State + Input"],
+            ["Transition Preconditions"],
+            [
+              ["Valid Transition", "Transition Effects", "Next State"],
+              ["Invalid Transition", "Rejected", "State unchanged"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Preconditions decide whether a transition may occur; effects describe what changes if it does. An invalid transition is not a failed write but a transition the rules do not permit, so the state it would have produced is never reached. Atomicity groups effects: the changes of an atomic state transition apply together or not at all, so the protocol never holds a state in which only some of them happened.",
+        },
+        {
+          kind: "paragraph",
+          text: "How effects are computed belongs to execution. Which states they may lead to belongs to the state model.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transition functions",
+            "Valid transitions",
+            "Invalid transitions",
+            "Transition preconditions",
+            "Transition effects",
+            "Atomic state transitions",
+          ],
+        },
+        { kind: "heading", text: "A commitment stands in for the state" },
+        {
+          kind: "paragraph",
+          text: "Participants often need to refer to state they do not hold in full. A state commitment is a compact value computed from the state's representation, such that no different state can feasibly produce the same value. A state root is such a commitment: it identifies a state, but it is not the state.",
+        },
+        {
+          kind: "flow",
+          label: "How a state commitment lets a participant verify state it does not hold",
+          stages: [["State"], ["Representation"], ["Commitment"], ["State Root"], ["State Proof"], ["Verification"]],
+        },
+        { kind: "distinction", left: "State root", right: "State" },
+        {
+          kind: "paragraph",
+          text: "A state proof shows that a particular value belongs to the state committed to by a given root. A verifier that accepts the root can check the value without holding the rest of the state. Which root to accept is a question the proof does not answer; that is settled by agreement between participants.",
+        },
+        {
+          kind: "paragraph",
+          text: "Commitment structures differ in what they make cheap. Merkle trees commit to a collection by hashing it pairwise up to a single root. Merkle Patricia tries organize entries along key paths, so that individual entries can be located and proven. Verkle trees use vector commitments to make proofs smaller. The choice of commitment scheme shapes proof size, update cost, and state layout; how each scheme is constructed belongs to cryptography.",
+        },
+        {
+          kind: "terms",
+          terms: ["Merkle trees", "Merkle Patricia tries", "Verkle trees", "Commitment schemes", "State roots", "State proofs"],
+        },
+        { kind: "heading", text: "Current state is not the whole history" },
+        {
+          kind: "paragraph",
+          text: "Each transition replaces the current state, but earlier states do not stop mattering. Audits, disputes, and historical queries ask what the state was, not what it is.",
+        },
+        {
+          kind: "flow",
+          label: "How an earlier state is reconstructed from a recorded starting point",
+          stages: [["Snapshot or Checkpoint"], ["Recorded Inputs"], ["Replayed Transitions"], ["Reconstructed State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Retaining history and reconstructing it are different strategies. Archival state keeps past states directly queryable, at the cost of retaining all of them. A snapshot captures the full state at one point. A checkpoint marks a point in history that participants treat as a reference for later work; what exactly it guarantees varies between protocols. Between such points, earlier states can be reconstructed by replaying recorded inputs through the same transition rules. Replay-based reconstruction depends on deterministic transition rules: the same ordered inputs must reproduce the same resulting state.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "State history",
+            "Historical queries",
+            "State snapshots",
+            "Checkpoints",
+            "Archival state",
+            "State reconstruction",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A participant that joins late, or falls behind, must establish a view of state it did not compute as it happened. Synchronization is that process. Its goal is not only a copy of the state, but a view the participant has reason to rely on.",
+        },
+        {
+          kind: "flow",
+          label: "How a participant establishes a verified local view of state",
+          stages: [
+            ["Remote / Historical Data"],
+            ["Full Sync", "Snap Sync", "State Sync", "Incremental Sync"],
+            ["Synchronization Verification"],
+            ["Local State View"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Initial synchronization builds that view for the first time, and strategies trade time against how much is verified along the way. A full sync replays history from the beginning and checks every transition. Snap sync and state sync fetch a recent state and check it against a commitment before catching up from there. Incremental synchronization follows new transitions as they arrive. Names and mechanics differ between protocols; what they share is that verification, not download, decides whether the resulting local view can be relied on.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Initial synchronization",
+            "Full sync",
+            "Snap sync",
+            "State sync",
+            "Incremental synchronization",
+            "Synchronization verification",
+          ],
+        },
+        { kind: "heading", text: "Where data lives changes how it can be trusted" },
+        {
+          kind: "paragraph",
+          text: "On-chain data is part of what the protocol records and agrees on: calldata and other transaction data, block data, logs and events emitted during execution, and protocol state itself. Not all of it is available to execution. In many systems logs and events are records for observers, not inputs to later transitions.",
+        },
+        {
+          kind: "terms",
+          terms: ["Calldata", "Logs", "Events", "Transaction data", "Block data", "Protocol state"],
+        },
+        {
+          kind: "paragraph",
+          text: "Off-chain data is stored and served elsewhere: external data, metadata, and off-chain state the protocol does not hold itself. The protocol refers to it through data references, often using content addressing, in which the reference is derived from the content so that retrieved data can be checked against it.",
+        },
+        {
+          kind: "flow",
+          label: "How on-chain and off-chain data reach a participant",
+          stages: [
+            ["Data"],
+            [
+              ["On-chain", "Recorded by the protocol"],
+              ["Off-chain", "Data Reference", "Retrieval", "Integrity Verification"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Neither placement is simply trustworthy or untrustworthy. On-chain data inherits the protocol's agreement and availability, along with its cost. Off-chain data can be as verifiable as on-chain data when a reference commits to its content, but its availability depends on whoever stores it.",
+        },
+        { kind: "distinction", left: "Verifiable", right: "Available" },
+        {
+          kind: "paragraph",
+          text: "A reference proves what the data should be, not that it can still be retrieved. How facts about the outside world enter a protocol is a separate question from where its data is kept.",
+        },
+        {
+          kind: "terms",
+          terms: ["External data", "Metadata", "Off-chain state", "Data references", "Content addressing"],
+        },
+        { kind: "heading", text: "Integrity, authenticity, and provenance answer different questions" },
+        {
+          kind: "paragraph",
+          text: "Once data moves between systems, questions that are easy to merge come apart.",
+        },
+        {
+          kind: "flow",
+          label: "Three questions asked of data",
+          stages: [
+            ["Data"],
+            [
+              ["Integrity", "Has it changed?"],
+              ["Authenticity", "Is the claimed source genuine?"],
+              ["Provenance", "Where did it come from, and what happened to it?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Integrity is established by hashing or committing to data, so that any modification is detectable on verification. That is tamper evidence rather than tamper prevention: an integrity guarantee says a change will be noticed, not that it cannot happen. Authenticity needs more than a hash. It binds data to a source, typically through a signature.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Integrity guarantees",
+            "Data hashing",
+            "Data commitments",
+            "Integrity verification",
+            "Tamper evidence",
+            "Authenticity",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Provenance extends across time: where data originated, how it was transformed, and who is attributed with each step. Provenance records and attestations capture that lineage so that it can be traced.",
+        },
+        { kind: "distinction", left: "Unchanged", right: "Authentic", further: ["Traceable"] },
+        {
+          kind: "paragraph",
+          text: "Data can be unchanged yet come from the wrong source, or come from a genuine source with no record of how it was produced. Each property needs its own evidence.",
+        },
+        {
+          kind: "terms",
+          terms: ["Data origin", "Lineage", "Attribution", "Provenance records", "Attestations", "Traceability"],
+        },
+        { kind: "heading", text: "Indexes are views, not state" },
+        {
+          kind: "paragraph",
+          text: "Protocol state is organized for validating transitions, not for answering questions. Finding every transfer involving an account, or the history of a contract's events, requires a different organization. Indexing builds it.",
+        },
+        {
+          kind: "flow",
+          label: "How an index derives a queryable view from canonical data",
+          stages: [
+            ["Canonical Data / State"],
+            ["Data Extraction"],
+            ["Data Transformation"],
+            ["Index Construction"],
+            ["Derived State"],
+            ["Query Model"],
+          ],
+        },
+        { kind: "distinction", left: "Derived state", right: "Canonical state" },
+        {
+          kind: "paragraph",
+          text: "An index is computed from canonical data and adds no authority of its own. Where the two disagree, canonical protocol state remains authoritative. That matters when canonical history changes. A reorganization replaces blocks an indexer has already processed, so derived state built from them must be rolled back and rebuilt. A query model that ignores this will answer with data the protocol no longer holds.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Data extraction",
+            "Data transformation",
+            "Derived state",
+            "Index construction",
+            "Query models",
+            "Reorganization handling",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "State & Data therefore connects what a protocol's state is, how it can be known without being recomputed, and how the data around it can be trusted, traced, and queried. State is defined by rules, identified by commitments, retained or reconstructed as history, and shared through synchronization; data is placed, referenced, verified, and indexed around it.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "State Representation",
+            "State Transitions",
+            "State Commitments",
+            "Historical State",
+            "Synchronization",
+            "On-Chain Data",
+            "Off-Chain Data",
+            "Data Integrity",
+            "Provenance",
+            "Indexing",
+          ],
+        },
+      ],
+    },
+    {
+      id: "consensus-ordering-content",
+      conceptId: "consensus-ordering",
+      definition:
+        "Participants in a distributed system receive actions at different times and in different orders. Consensus & Ordering determines which order counts, which history to follow, and when an outcome can be relied upon.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Foundations established that no participant has a complete, instantaneous view of the system. Transactions reach participants over different paths and with different delays, so valid actions can be observed in different orders. Communication alone does not produce a common order.",
+        },
+        {
+          kind: "flow",
+          label: "How differently observed transactions become one ordered history",
+          stages: [
+            ["Submitted Transactions"],
+            ["Participant A's order", "Participant B's order", "Participant C's order"],
+            ["Ordering Mechanism"],
+            ["Ordered History"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Order matters because a deterministic state machine is deterministic only for a given sequence of inputs: the same transactions applied in different orders can produce different states. Not every system needs a single total order of everything; some establish only the ordering required for the state or operations they coordinate. But wherever order affects outcomes, participants need a shared answer.",
+        },
+        {
+          kind: "paragraph",
+          text: "That answer sits between submission and execution. Ordering decides the sequence of inputs; execution decides what each input does; state transitions record the result. The mechanisms that produce the order, and those that decide when it can be relied upon, are the subject of this domain.",
+        },
+        { kind: "heading", text: "Pending is not decided" },
+        {
+          kind: "paragraph",
+          text: "Before any order is agreed, transactions wait. A mempool is a participant's local set of pending transactions: admitted under that participant's mempool policies, propagated to peers, and prioritized for inclusion, often by fee. Because each participant maintains its own, mempools differ, and mempool synchronization narrows that difference without eliminating it.",
+        },
+        {
+          kind: "flow",
+          label: "How a transaction moves from submission to a proposal",
+          stages: [
+            ["Transaction"],
+            ["Transaction Admission"],
+            ["Transaction Propagation"],
+            ["Pending Transactions"],
+            ["Selection / Sequencing"],
+            ["Proposal"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Nothing in a mempool is canonical. A pending transaction may be replaced, dropped, or never included, and two participants may hold different pending sets without either being wrong. Private mempools change who sees a transaction before inclusion: they are an alternative admission and propagation path, not a different consensus mechanism.",
+        },
+        { kind: "distinction", left: "Mempool", right: "Consensus" },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction admission",
+            "Transaction propagation",
+            "Transaction prioritization",
+            "Mempool policies",
+            "Private mempools",
+            "Mempool synchronization",
+          ],
+        },
+        { kind: "heading", text: "Agreement depends on assumptions" },
+        {
+          kind: "paragraph",
+          text: "Consensus is how participants establish agreement sufficient for the system to progress consistently, under the protocol's assumptions. Its guarantee is always conditional: on who participates, on the rules they follow, on how many may be faulty and in what way, and on what is assumed about message delays.",
+        },
+        {
+          kind: "flow",
+          label: "What agreement depends on",
+          stages: [
+            ["Consensus Model"],
+            ["Participants", "Consensus Rules", "Participation Conditions", "Fault Assumptions"],
+            ["Agreement"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Consensus models differ in how agreement is reached. Some require explicit quorums. A quorum is the amount or set of participation required for a protocol decision to proceed. Its size and intersection requirements depend on the consensus model and its fault assumptions. Others let agreement emerge gradually as participants build on the same history. A claim that a protocol reaches consensus is incomplete without the fault assumptions under which it does.",
+        },
+        {
+          kind: "terms",
+          terms: ["Consensus models", "Consensus participants", "Consensus rules", "Agreement", "Quorums", "Fault assumptions"],
+        },
+        {
+          kind: "paragraph",
+          text: "Validators are the participants that perform consensus duties. Validator selection decides who belongs to the validator set, for example by stake or by permission, and duties are assigned within it. In protocols that distinguish these roles, proposers put forward candidate history while attesters provide protocol-defined votes or attestations used by consensus. These are roles, not necessarily fixed classes: the same validator may propose at one moment and attest at another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Validator incentives reward duties performed and penalize some deviations. They shape behavior, but they do not replace the consensus rules, and their design belongs to economics.",
+        },
+        {
+          kind: "terms",
+          terms: ["Validator selection", "Validator sets", "Proposers", "Attesters", "Validator duties", "Validator incentives"],
+        },
+        { kind: "heading", text: "Competing histories need a rule for which to follow" },
+        {
+          kind: "paragraph",
+          text: "Even under agreed rules, participants can observe competing candidate histories: two proposals for the same position, or a branch that arrives late. Fork choice rules determine which one a participant should currently treat as the head.",
+        },
+        {
+          kind: "flow",
+          label: "How a fork choice rule selects a head among competing forks",
+          stages: [["Shared History"], ["Fork A", "Fork B"], ["Fork Choice Rule"], ["Selected Head"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Chain selection and head selection are what the rule produces: which branch counts, and which block at its tip is current. When new information changes that selection, the participant reorganizes, abandoning the tip of one branch for another. A reorganization is the fork choice rule responding to new information. It does not by itself mean consensus has failed, and competing forks do not by themselves mean participants permanently disagree.",
+        },
+        { kind: "distinction", left: "Reorganization", right: "Consensus failure" },
+        {
+          kind: "paragraph",
+          text: "What fork choice cannot say is that a selected head will stay selected. That is a separate question.",
+        },
+        {
+          kind: "terms",
+          terms: ["Fork choice rules", "Chain selection", "Competing forks", "Reorganizations", "Head selection"],
+        },
+        { kind: "heading", text: "Finality is when an outcome can be relied upon" },
+        {
+          kind: "paragraph",
+          text: "Finality is the point at which a protocol treats a result as no longer practically reversible. Finality turns agreement about ordering and execution into dependable settlement. Systems need a clear boundary for when participants can rely on an outcome.",
+        },
+        {
+          kind: "flow",
+          label: "Two routes from a selected history to dependable reliance",
+          stages: [
+            ["Selected History"],
+            [
+              ["Probabilistic Finality", "Reversal grows unlikely"],
+              ["Deterministic Finality", "Justification", "Finalization"],
+            ],
+            ["Dependable Reliance"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The two are not faster and slower versions of the same mechanism. Under probabilistic finality, confidence increases as additional history accumulates rather than crossing a protocol-defined point of deterministic finalization; how much confirmation is sufficient depends on the risk tolerance and assumptions of the application or system relying on it. Under deterministic finality, the protocol makes an explicit decision. Once finalized, reversal is excluded by the protocol model as long as its stated assumptions continue to hold.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some protocols combine the two: a fork choice rule keeps history growing, and a finality gadget periodically finalizes checkpoints within it. In some designs a checkpoint is first justified by sufficient votes, then finalized once a later checkpoint builds on it. These are points in consensus history, and what they guarantee depends on the protocol; a state checkpoint in the sense of State & Data is not automatically final.",
+        },
+        { kind: "distinction", left: "Fork choice", right: "Finality" },
+        {
+          kind: "paragraph",
+          text: "Fork choice answers which history to follow now. Finality answers when an outcome can be treated as no longer practically reversible, under the protocol's assumptions.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Probabilistic finality",
+            "Deterministic finality",
+            "Finality gadgets",
+            "Checkpoints",
+            "Justification",
+            "Finalization",
+          ],
+        },
+        { kind: "heading", text: "Sequencing decides order, not everything else" },
+        {
+          kind: "paragraph",
+          text: "Transaction sequencing fixes an order according to sequencing rules, such as arrival time, fee priority, or other protocol-defined criteria. In some systems it happens as part of block proposal; in others a distinct sequencer orders transactions before they are executed or agreed on. Either way, it answers only one of several questions.",
+        },
+        {
+          kind: "flow",
+          label: "Four questions about the same candidate actions",
+          stages: [
+            ["Candidate Actions"],
+            [
+              ["Sequencing", "What order?"],
+              ["Consensus", "What do participants agree on?"],
+              ["Execution", "What does the ordered input do?"],
+              ["Finality", "When can the result be relied upon?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Sequencing responsibility can be arranged in different ways. Centralized sequencing gives it to one operator. A centralized sequencer can simplify ordering and reduce coordination latency, while concentrating ordering authority and introducing reliance on that operator for ordering and inclusion. Decentralized sequencing spreads it across many participants, usually with an agreement process of its own. Shared sequencing lets several systems use a common sequencer, which can then order across them. Sequencer rotation changes who holds the responsibility over time. None of these is universally better; each places trust and liveness assumptions somewhere different.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction sequencing",
+            "Sequencing rules",
+            "Centralized sequencing",
+            "Decentralized sequencing",
+            "Shared sequencing",
+            "Sequencer rotation",
+          ],
+        },
+        { kind: "heading", text: "Building a block is separate from proposing it" },
+        {
+          kind: "paragraph",
+          text: "Block building turns pending transactions into a candidate block: selecting which transactions to include, ordering them, and constructing the block. A block proposal puts that candidate forward, and block validation checks it against the protocol's rules. Block production is the protocol's overall process for producing blocks. Where each step happens, and in what order, varies between architectures.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Block construction",
+            "Transaction selection",
+            "Transaction ordering",
+            "Block proposals",
+            "Block validation",
+            "Block production",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Proposer-builder separation divides that work. Builders construct candidate blocks and offer them with bids; the proposer selects one to propose. Block construction can then specialize without changing who holds the proposer's consensus role. Where builder and proposer do not trust each other, an intermediary such as a relay may carry bids and blocks between them, though not every design uses one.",
+        },
+        {
+          kind: "flow",
+          label: "How proposer-builder separation divides building from proposing",
+          stages: [
+            ["Pending Transactions"],
+            ["Builder A", "Builder B", "Builder C"],
+            ["Block Bids"],
+            ["Relay, where used"],
+            ["Proposer"],
+            ["Block Proposal"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Builders compete to be selected, forming a builder market. How that market values ordering belongs to MEV & Execution Markets.",
+        },
+        {
+          kind: "terms",
+          terms: ["Proposers", "Builders", "Builder markets", "Block bids", "Relays", "Builder selection"],
+        },
+        { kind: "heading", text: "Assurance can arrive before finality" },
+        {
+          kind: "paragraph",
+          text: "Finality can take time, and some users need assurance sooner. A preconfirmation is a commitment, made before the protocol's normal settlement, about what will happen to a transaction. Inclusion preconfirmations concern expected inclusion, while execution preconfirmations additionally make a claim about the expected execution outcome or state transition. Their guarantees depend on the design and on the assumptions under which the provider can honor the commitment.",
+        },
+        {
+          kind: "flow",
+          label: "How a preconfirmation gives earlier assurance alongside the protocol's own path",
+          stages: [
+            ["Transaction"],
+            ["Preconfirmation Provider"],
+            ["Preconfirmation Commitment"],
+            ["Earlier Assurance", ["Protocol Ordering", "Execution", "Finality"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The strength of that assurance depends on the provider and on how the commitment is enforced: whether the provider can be penalized for breaking it, and by whom. A preconfirmation guarantee is only as strong as that enforcement, and not every preconfirmation promises execution. Until finality, a preconfirmed outcome remains a provider's commitment, not a decision of the protocol.",
+        },
+        { kind: "distinction", left: "Preconfirmation", right: "Finality" },
+        {
+          kind: "terms",
+          terms: [
+            "Execution preconfirmations",
+            "Inclusion preconfirmations",
+            "Preconfirmation commitments",
+            "Preconfirmation providers",
+            "Preconfirmation guarantees",
+          ],
+        },
+        { kind: "heading", text: "Valid is not the same as included" },
+        {
+          kind: "paragraph",
+          text: "Foundations lists censorship resistance among protocol properties: valid actions from any participant are eventually included. Here that property meets the machinery above. Whoever selects, orders, or builds can also exclude, and an ordinary inclusion path offers no protection against it.",
+        },
+        {
+          kind: "flow",
+          label: "What happens when a valid transaction is excluded",
+          stages: [
+            ["Transaction Submitted"],
+            ["Included", ["Excluded", "Censorship Detection", "Inclusion Mechanism, where available", "Censorship Recovery"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols approach this differently. Inclusion lists are protocol mechanisms through which designated participants can constrain a proposal by identifying transactions expected to be included. Forced inclusion lets a user reach the ordered history through another path when the usual one is uncooperative, often after a delay. Not every system has either. Inclusion guarantees describe the resulting promise: how long a valid transaction can be delayed, and under which assumptions.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Transaction inclusion",
+            "Inclusion lists",
+            "Forced inclusion",
+            "Censorship detection",
+            "Censorship recovery",
+            "Inclusion guarantees",
+          ],
+        },
+        {
+          kind: "distinction",
+          left: "Consensus",
+          right: "Ordering",
+          further: ["Block building", "Fork choice", "Finality"],
+        },
+        {
+          kind: "paragraph",
+          text: "These mechanisms interact, but each answers a different question. Consensus & Ordering therefore sits between submission and execution: it turns transactions that participants observed differently into a history they can follow, and determines when that history's outcomes can be relied upon.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Consensus",
+            "Validators",
+            "Fork Choice",
+            "Finality",
+            "Mempools",
+            "Sequencing",
+            "Block Building",
+            "Proposer-Builder Separation",
+            "Preconfirmations",
+            "Censorship Resistance",
+          ],
+        },
+      ],
+    },
+    {
+      id: "networks-infrastructure-content",
+      conceptId: "networks-infrastructure",
+      definition:
+        "A protocol defines valid transitions and how agreement is reached, but participants still need to find one another, exchange messages, keep local views, expose data, and act. Networks & Infrastructure is the machinery around the rules that makes a protocol reachable and operable.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "That machinery has layers. A peer-to-peer network connects protocol participants and carries their messages. Nodes turn those messages into local views of the protocol. Around the nodes sit services that expose those views to software, derive queryable data from them, watch them, and act on them. Not all of this is part of consensus, and each layer has its own trust, latency, availability, and correctness properties.",
+        },
+        {
+          kind: "flow",
+          label: "The layers between protocol participants and the infrastructure that acts on the protocol",
+          stages: [
+            ["Protocol Participants"],
+            ["P2P Network"],
+            ["Nodes' Protocol Views"],
+            ["RPC", "Indexers", "Monitoring", ["Operational Actors", "Automation"]],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The layers are easy to blur because most users meet a protocol through the outermost ones. This page moves outward from the communication substrate: to the nodes that participate in it, then to the infrastructure that provides access, performs operational work, observes, and automates.",
+        },
+        { kind: "heading", text: "The network is a graph, not a broadcast bus" },
+        {
+          kind: "paragraph",
+          text: "Participants do not normally connect to every other participant. Peer discovery finds candidates, peer connections link a node to a limited set of them, and peer management decides which connections to keep, replace, or drop. The result is a network topology: a graph through which everything else must travel.",
+        },
+        {
+          kind: "flow",
+          label: "How a message spreads hop by hop across peer connections",
+          stages: [["Message"], ["Node A"], [["Node B", "Node D"], ["Node C", "Node E"]]],
+        },
+        {
+          kind: "paragraph",
+          text: "Messages cross that graph hop by hop. In gossip propagation, nodes pass what they learn on selectively, to peers chosen by the network's propagation rules, which pass it on in turn; flooding forwards a message broadly, potentially to every eligible neighbor, trading greater bandwidth use for redundant dissemination paths. Either way, dissemination is not an instantaneous broadcast. Each hop adds propagation latency, and nodes typically validate messages before relaying them and suppress duplicates they have already seen, so that invalid or repeated messages do not multiply.",
+        },
+        {
+          kind: "flow",
+          label: "Why nodes temporarily know different things",
+          stages: [
+            ["Propagation"],
+            ["Different paths", "Different latency", "Message validation", "Duplicate suppression"],
+            ["Different arrival times"],
+            ["Temporary differences in local knowledge"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "At any moment, then, nodes can know different things: the partial knowledge of Foundations, made concrete. Usually the differences close as messages arrive. A network partition is the case where they cannot: the graph divides, and each side's information evolves separately until connectivity returns.",
+        },
+        { kind: "distinction", left: "Propagation", right: "Agreement" },
+        {
+          kind: "paragraph",
+          text: "Propagation decides what information reaches whom, and when. What participants agree on is decided by consensus, which depends on propagation but is not produced by it.",
+        },
+        {
+          kind: "terms",
+          terms: ["Peer discovery", "Peer connections", "Network topology", "Peer management", "Gossip", "Network partitions"],
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Message dissemination",
+            "Gossip propagation",
+            "Propagation latency",
+            "Message validation",
+            "Duplicate suppression",
+            "Flooding",
+          ],
+        },
+        { kind: "heading", text: "A node is a view of the protocol" },
+        {
+          kind: "paragraph",
+          text: "A node is a participant in protocol infrastructure that maintains its own view of the protocol from the messages it receives. Nodes differ in how much they keep, how much they verify, and which duties they perform.",
+        },
+        {
+          kind: "flow",
+          label: "How kinds of node differ in what they keep, verify, and do",
+          stages: [
+            ["Nodes"],
+            [
+              ["Full Node", "Validates and keeps current state"],
+              ["Light Node", "Verifies selected data against commitments"],
+              ["Archive Node", "Retains historical state"],
+              ["Validator Node", "Adds consensus duties"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A full node checks what it receives against the protocol's rules and maintains current state. A light node verifies selected claims or data against protocol commitments without maintaining or processing the full state, which makes it cheaper to run. It therefore relies on other infrastructure for access to data it does not retain locally, while verification can reduce how much that infrastructure must be trusted for correctness. An archive node retains historical state, not only the current one. A validator node performs consensus duties in addition to following the protocol. Node synchronization is how any of them establishes its view in the first place, by the strategies described under State & Data.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bootnodes help new nodes find their first peers. They are discovery infrastructure: a node that joins through a bootnode still checks what it receives by its own rules, and the bootnode does not decide what is true.",
+        },
+        { kind: "distinction", left: "Node role", right: "Trust authority" },
+        {
+          kind: "paragraph",
+          text: "A node can provide access to information without becoming the authority on what the protocol says. Its answers are only as trustworthy as the verification behind them, whether its own or the requester's.",
+        },
+        {
+          kind: "terms",
+          terms: ["Full nodes", "Light nodes", "Archive nodes", "Validator nodes", "Bootnodes", "Node synchronization"],
+        },
+        { kind: "heading", text: "Access is not the protocol" },
+        {
+          kind: "paragraph",
+          text: "Most users and applications never connect to the peer-to-peer network. They reach the protocol through interfaces and services built around nodes, usually without seeing them.",
+        },
+        {
+          kind: "flow",
+          label: "Two paths by which an application reaches the protocol, both through intermediaries",
+          stages: [
+            ["Application"],
+            [
+              ["RPC Endpoint", "Request Routing", "Node"],
+              ["Query Service", "Derived Index", "Indexer Pipeline"],
+            ],
+            ["Protocol View"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "RPC interfaces define how software asks a node for information or submits actions to it. RPC methods are the individual operations, and RPC endpoints are the addresses at which they are served. RPC providers operate endpoints at scale, adding request routing across many nodes, availability, and rate limiting that keeps shared infrastructure usable.",
+        },
+        {
+          kind: "terms",
+          terms: ["RPC interfaces", "RPC methods", "RPC providers", "RPC endpoints", "Request routing", "Rate limiting"],
+        },
+        {
+          kind: "paragraph",
+          text: "Indexers take the other path. Chain indexers extract blocks, events, and state from nodes and run them through indexer pipelines; event indexing and state indexing organize the results around the questions applications ask, and query services answer from them. As State & Data describes, these views are derived: they do not redefine canonical state, and reorganization handling exists because a reorganization can invalidate what an index has already built.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Chain indexers",
+            "Event indexing",
+            "State indexing",
+            "Indexer pipelines",
+            "Query services",
+            "Reorganization handling",
+          ],
+        },
+        { kind: "distinction", left: "RPC provider", right: "Protocol" },
+        {
+          kind: "paragraph",
+          text: "Both paths put an intermediary between the application and the protocol. An RPC response reports some node's local view, exposed through the provider's interface; it is not protocol state itself. An RPC provider can be unavailable, limit a request, lag behind other nodes, or return an answer the application does not check; an indexer can be stale, or wrong after a reorganization. Neither changes what the protocol holds. Access is not authority.",
+        },
+        { kind: "heading", text: "Some infrastructure acts, not just observes" },
+        {
+          kind: "paragraph",
+          text: "The infrastructure so far carries and exposes information. Other actors use it to do things. Their roles are distinct, even when one piece of software combines them.",
+        },
+        {
+          kind: "flow",
+          label: "How relayers, keepers, and bots turn what they observe into action",
+          stages: [
+            ["Observed Information"],
+            [
+              ["Relayer", "Forwards"],
+              ["Keeper", "Evaluates a condition", "Submits"],
+              ["Bot", "Evaluates a strategy", "Acts"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Relayers forward transactions or messages on behalf of other participants or between components, networks, or systems. Transaction relaying submits another party's transaction; message relaying forwards a message toward its destination. Relay networks spread that work across many relayers, relay policies decide what they will carry, and relay incentives pay for it. A relayer forwards; it does not decide what the action should be.",
+        },
+        {
+          kind: "terms",
+          terms: ["Transaction relaying", "Message relaying", "Relay networks", "Relay policies", "Relay incentives"],
+        },
+        {
+          kind: "paragraph",
+          text: "A keeper watches for a condition and acts when it holds. Condition monitoring observes state, trigger evaluation decides whether the condition is met, and transaction submission performs the action the protocol expects, such as a periodic update. Keeper networks distribute that responsibility, and keeper incentives compensate it: a protocol mechanism that requires an externally submitted action also depends on some participant or service being willing and able to submit it when required.",
+        },
+        {
+          kind: "terms",
+          terms: ["Condition monitoring", "Trigger evaluation", "Transaction submission", "Keeper networks", "Keeper incentives"],
+        },
+        {
+          kind: "paragraph",
+          text: "A bot is software that observes information and pursues a strategy. Event-driven bots react to what they observe; trading, arbitrage, and liquidation bots pursue market opportunities; governance bots carry out governance actions; execution bots carry out transactions on someone's behalf. Each acts only with the permissions, keys, credentials, and policies it has been given. How their market behavior affects ordering belongs to MEV & Execution Markets, and a bot here need not involve AI.",
+        },
+        { kind: "distinction", left: "Observation", right: "Action" },
+        {
+          kind: "paragraph",
+          text: "Observation reads the protocol; action changes it. Once infrastructure acts, its latency, availability, and incentives affect outcomes, not only visibility.",
+        },
+        {
+          kind: "terms",
+          terms: ["Event-driven bots", "Trading bots", "Liquidation bots", "Arbitrage bots", "Governance bots", "Execution bots"],
+        },
+        { kind: "heading", text: "If infrastructure cannot be observed, it cannot be operated reliably" },
+        {
+          kind: "paragraph",
+          text: "Every layer above can fail quietly: a node falls behind, peers drop away, an RPC endpoint returns errors, an indexer stalls, a keeper stops submitting. Monitoring is how operators find out.",
+        },
+        {
+          kind: "flow",
+          label: "How signals from running infrastructure reach an operator or automation",
+          stages: [
+            ["Running Infrastructure"],
+            ["Metrics", "Logs", "Traces", "Health Checks"],
+            ["Observability"],
+            ["Detection"],
+            ["Alerting"],
+            ["Operator or Automation"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The signals are different kinds of evidence. Metrics are numeric measurements over time, such as peer count or block height. Logs here are operational: records of discrete events in running infrastructure, distinct from the logs a protocol records on-chain. Traces follow a single request or operation across components. Health checks ask a component directly whether it is working. Observability is not another signal but what the signals provide: the ability to reason about a system's internal behavior from what it emits. Alerting turns selected observations into notifications or actions.",
+        },
+        {
+          kind: "terms",
+          terms: ["Metrics", "Logs", "Traces", "Health checks", "Alerting", "Observability"],
+        },
+        { kind: "heading", text: "Automation closes the loop" },
+        {
+          kind: "paragraph",
+          text: "Automation turns observations, schedules, or conditions into repeatable actions. A trigger starts an action: scheduled execution runs it at set times, event-driven execution in response to an observed event, and conditional execution only when a condition holds. Automation policies bound what may be done, and automation networks spread execution across independent operators instead of one.",
+        },
+        {
+          kind: "flow",
+          label: "The automation loop: an action's result is observed again",
+          stages: [
+            ["Protocol / Infrastructure State"],
+            ["Observation"],
+            ["Trigger", "Schedule", "Condition"],
+            ["Automation Policy"],
+            ["Execution"],
+            ["New Observable State"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The loop is operational: an action changes protocol or infrastructure state, and that state is observed again. Keepers and bots are the actors; automation is the pattern they implement.",
+        },
+        { kind: "distinction", left: "Automated", right: "Autonomous" },
+        {
+          kind: "paragraph",
+          text: "An automated action follows predefined triggers, schedules, conditions, or policies. Autonomy, in which a system decides or adapts how it operates, belongs later in the MAP.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Triggers",
+            "Scheduled execution",
+            "Event-driven execution",
+            "Conditional execution",
+            "Automation policies",
+            "Automation networks",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols do not communicate, expose data, observe themselves, or act on the world by themselves. Infrastructure turns protocol rules into a reachable and operable distributed system: peer-to-peer networks move information, nodes maintain protocol views, RPC exposes node capabilities, indexers construct derived views, relayers, keepers, and bots perform operational work, monitoring makes that work observable, and automation connects observations back to actions.",
+        },
+        {
+          kind: "flow",
+          label: "From connectivity to automation",
+          stages: [["Connectivity"], ["Propagation"], ["Local Views"], ["Access"], ["Observation"], ["Action"], ["Automation"]],
+        },
+        {
+          kind: "paragraph",
+          text: "None of these layers is protocol truth or authority. Each can be slow, partial, unavailable, or wrong, and reasoning about a protocol includes reasoning about which of them it relies on.",
+        },
+        {
+          kind: "terms",
+          terms: ["P2P Networks", "Message Propagation", "Nodes", "RPC", "Indexers", "Relayers", "Keepers", "Bots", "Monitoring", "Automation"],
+        },
+      ],
+    },
+    {
+      id: "cryptography-proofs-content",
+      conceptId: "cryptography-proofs",
+      definition:
+        "Participants in a distributed protocol cannot simply trust every message, computation, or data source. Cryptography & Proofs provides mechanisms that make particular claims independently verifiable, under explicit assumptions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Foundations described trust as something protocols move, distribute, or constrain rather than eliminate. Cryptography is one of the main ways they do it: instead of taking a party's word, a participant checks evidence. Each mechanism supports a particular kind of claim, and each rests on assumptions, about what is computationally infeasible and about how keys and secrets are kept.",
+        },
+        {
+          kind: "flow",
+          label: "How a cryptographic mechanism turns a claim into something a participant can check",
+          stages: [["Claim"], ["Cryptographic Mechanism"], ["Evidence"], ["Verification"], ["Accept", "Reject"]],
+        },
+        { kind: "distinction", left: "Verification", right: "Truth" },
+        {
+          kind: "paragraph",
+          text: "Verification establishes a precise relationship, under the mechanism's assumptions: that a signature corresponds to a key, that a value matches a commitment, that a proof satisfies a verification relation. It does not establish that the underlying statement describes reality, that an identity claim corresponds to anyone in the real world, that the protocol's rules are the right ones, that the assumptions themselves hold, or that the surrounding system behaves as intended. Each mechanism below establishes some relationships and not others.",
+        },
+        { kind: "heading", text: "Hashes turn data into cryptographic references" },
+        {
+          kind: "paragraph",
+          text: "A cryptographic hash function maps input of any length to a fixed-size digest. The same input always produces the same digest, and hash functions are designed so that small input changes generally produce substantially different-looking digests.",
+        },
+        {
+          kind: "flow",
+          label: "How a hash function turns input into a digest, and what protocols use digests for",
+          stages: [
+            ["Input"],
+            ["Cryptographic Hash Function"],
+            ["Fixed-size Digest"],
+            ["Compact reference", "Integrity check", "Linked structure"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols rely on this for compact references, integrity checks, and structures that link data together. Hash properties are what make it safe. Collision resistance means it should be infeasible to find two different inputs with the same digest. Preimage resistance means that, given a digest, it should be infeasible to find an input that produces it. Collisions exist, since there are more possible inputs than digests, so matching digests are evidence of the same input under the assumption that finding a collision is infeasible, not a logical certainty.",
+        },
+        {
+          kind: "paragraph",
+          text: "Domain separation keeps the same hash function, used for different purposes, from producing values that could be mistaken for one another, typically by tagging each use with its context. Hash-based data structures, such as the Merkle trees of State & Data, are built on these properties.",
+        },
+        {
+          kind: "paragraph",
+          text: "A hash is not encryption. It has no key and is not meant to be reversed, but neither is it designed to keep its input secret: the digest of a guessable value can be found by hashing guesses.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Cryptographic hash functions",
+            "Hash properties",
+            "Collision resistance",
+            "Preimage resistance",
+            "Domain separation",
+            "Hash-based data structures",
+          ],
+        },
+        { kind: "heading", text: "Signatures bind actions to keys" },
+        {
+          kind: "paragraph",
+          text: "A key pair separates two capabilities. The private key can produce signatures; the public key can only check them. Signing combines a message with the private key to produce a signature, and signature verification lets anyone with the public key check that signature against the message, without being able to sign.",
+        },
+        {
+          kind: "flow",
+          label: "How a key pair separates signing from verification",
+          stages: [
+            ["Key Pair"],
+            [
+              ["Private Key", "Signing", "Signature"],
+              ["Public Key", "Signature Verification", "Valid or Invalid"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A signature scheme defines the exact rules, and its security rests on the assumption that producing a valid signature without the private key is infeasible. A valid signature therefore provides evidence that the message was signed using control of the corresponding private key, under the assumptions of the signature scheme. It does not show who controls that key, which belongs to identity and accounts, whether the message is true, or whether the signer was authorized by some higher-level policy to perform the action it describes.",
+        },
+        { kind: "distinction", left: "Valid signature", right: "True statement" },
+        {
+          kind: "paragraph",
+          text: "When many participants sign, two different needs arise. Signature aggregation combines many signatures into one compact value that can be verified at once, saving space and verification work. A multisignature requires signatures from several signers under a rule, such as two of three, with each signer using their own key.",
+        },
+        {
+          kind: "terms",
+          terms: ["Key pairs", "Signing", "Signature verification", "Signature schemes", "Signature aggregation", "Multisignatures"],
+        },
+        { kind: "heading", text: "Commitments separate choosing from revealing" },
+        {
+          kind: "paragraph",
+          text: "A commitment lets a participant fix a value now and reveal it later. The committer computes a commitment from the value, often with added randomness, and publishes it. Later, they reveal the value with an opening, and anyone can check the two against the commitment.",
+        },
+        {
+          kind: "flow",
+          label: "How a value is committed now and verified when it is opened later",
+          stages: [
+            ["Value + Randomness"],
+            ["Commitment Scheme"],
+            ["Published Commitment"],
+            ["Value + Opening"],
+            ["Verification against the Commitment"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Two properties make this useful. Hiding means the commitment should not reveal the committed value before it is opened. Binding means the committer should not be able to open it as a different value. A scheme provides each property under its own assumptions, and not always with the same strength. Together they establish that a choice existed before it was disclosed, which is what sealed bids, commit-reveal randomness, and many proof systems depend on.",
+        },
+        {
+          kind: "paragraph",
+          text: "A commitment is not encryption either: there is no key that lets a chosen party read it, and only the committer's opening reveals it. Polynomial commitments and vector commitments commit to structured objects, a function or an ordered collection, while supporting proofs about a particular evaluation or element without opening the whole. The state commitments of State & Data rely on such mechanisms to let a compact value stand in for a large state.",
+        },
+        {
+          kind: "terms",
+          terms: ["Commitment schemes", "Hiding", "Binding", "Opening", "Polynomial commitments", "Vector commitments"],
+        },
+        { kind: "heading", text: "Cryptographic authority can be distributed" },
+        {
+          kind: "paragraph",
+          text: "A single key is a single point of failure: whoever holds it holds all of its authority. Threshold cryptography spreads that authority across participants, so that a sufficient subset must cooperate to use it. This is the trust distribution of Foundations, implemented cryptographically.",
+        },
+        {
+          kind: "flow",
+          label: "How threshold cryptography distributes authority across participants",
+          stages: [
+            ["Secret or Authority"],
+            ["Participant A", "Participant B", "Participant C"],
+            ["Required Threshold"],
+            ["Cryptographic Operation"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Secret sharing splits information so that authorized subsets can reconstruct or use it while smaller subsets cannot. Distributed key generation lets participants create shared key material without any trusted dealer ever holding the complete secret. Threshold signatures let a sufficient subset jointly produce a signature, and threshold decryption lets it jointly decrypt. In distributed setups, such as those using distributed key generation, this can be done without any one participant needing to hold the complete key. Multi-party computation generalizes the idea: parties jointly compute a function while controlling what each learns about the others' inputs. Quorum cryptography names the wider pattern of operations that require a quorum of participants.",
+        },
+        { kind: "distinction", left: "Multisignature", right: "Threshold signature" },
+        {
+          kind: "paragraph",
+          text: "A multisignature scheme combines or requires signatures from multiple independent signers under a rule. A threshold signature construction instead produces one resulting signature through a threshold protocol, typically checked against a single shared public key, from whichever sufficient subset cooperated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Distributing authority does not remove trust assumptions; it changes them. The questions become how many participants may fail, collude, disappear, or act maliciously. Too many colluding can misuse the authority; too many absent can leave it unusable.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Secret sharing",
+            "Threshold signatures",
+            "Distributed key generation",
+            "Threshold decryption",
+            "Multi-party computation",
+            "Quorum cryptography",
+          ],
+        },
+        { kind: "heading", text: "Proofs let claims be verified" },
+        {
+          kind: "paragraph",
+          text: "A proof lets one party convince another that a statement is true. The prover holds a witness, the information that establishes the claim, and constructs a proof from it. The verifier checks the proof and accepts or rejects it.",
+        },
+        {
+          kind: "flow",
+          label: "How a prover turns a statement and witness into a proof a verifier checks",
+          stages: [["Statement + Witness"], ["Prover"], ["Proof"], ["Verifier"], ["Accept", "Reject"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Two properties decide whether this means anything. Completeness: a true statement with a valid witness is accepted. Soundness: an invalid statement should not be accepted, except within the failure bounds permitted by the proof system and its assumptions. Zero-knowledge adds a third: the proof reveals nothing about the witness beyond the validity of the statement, in the precise sense the proof system defines.",
+        },
+        { kind: "distinction", left: "Proving a statement", right: "Disclosing the witness" },
+        {
+          kind: "terms",
+          terms: ["Zero-knowledge", "Completeness", "Soundness", "Provers", "Verifiers", "Witnesses"],
+        },
+        {
+          kind: "paragraph",
+          text: "Proof systems differ in how a proof is exchanged. In an interactive proof, prover and verifier exchange messages. A non-interactive proof is a single object anyone can check later. Non-interactive proofs are particularly useful in protocols because verification does not require an interactive exchange with the prover; they may depend on a setup or on additional cryptographic assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "SNARKs and STARKs are families of proof systems, not rival products. They differ in proof size, verification cost, proving cost, whether they need a trusted setup, and which cryptographic assumptions they rest on, and these trade-offs vary within each family as well as between them.",
+        },
+        {
+          kind: "flow",
+          label: "How smaller proofs are combined into one higher-level proof",
+          stages: [["Smaller Claims"], ["Proof A", "Proof B", "Proof C"], ["Recursion or Composition"], ["Higher-level Proof"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Recursive proofs verify other proofs inside a proof, and proof composition builds larger claims from smaller verified ones, so that many claims can be checked through one.",
+        },
+        {
+          kind: "terms",
+          terms: ["Interactive proofs", "Non-interactive proofs", "SNARKs", "STARKs", "Recursive proofs", "Proof composition"],
+        },
+        { kind: "heading", text: "Computation can be verified without repeating it" },
+        {
+          kind: "paragraph",
+          text: "Computation & Execution described how computation produces results. Verifiable computation asks how another participant can check a result without trusting whoever produced it, and without necessarily running the computation again.",
+        },
+        {
+          kind: "flow",
+          label: "How a computation's output is accepted on the strength of a proof",
+          stages: [
+            ["Input"],
+            ["Computation"],
+            ["Output", ["Execution Evidence", "Proof Generation", "Computation Proof"]],
+            ["Proof Verification"],
+            ["Accept or Reject the Output"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Proof generation turns an execution into a computation proof that the output follows from the input under a specified relation; proof verification checks it. Verifiable execution applies this to a whole execution environment, and proof-carrying computation passes results onward together with their proofs, so that each recipient can check instead of trust.",
+        },
+        {
+          kind: "paragraph",
+          text: "The architectural point is that the cost of checking a result can be separated from the cost of producing it. Proof generation can add substantial computational overhead beyond performing the underlying computation. Succinct verification is the property of systems designed so that checking stays small; verification is not automatically cheaper than recomputation in every system. Verifiable computation moves work from repeated execution toward producing evidence others can verify, and whether that trade pays off depends on the proof system and the workload.",
+        },
+        { kind: "distinction", left: "Verified computation", right: "Correct specification" },
+        {
+          kind: "paragraph",
+          text: "A proof shows that computation followed the specified relation exactly. If the specification encodes the wrong behavior, the proof verifies that wrong behavior faithfully: local correctness, not system correctness.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Computation proofs",
+            "Verifiable execution",
+            "Proof generation",
+            "Proof verification",
+            "Succinct verification",
+            "Proof-carrying computation",
+          ],
+        },
+        { kind: "heading", text: "Privacy is a set of properties, not a single switch" },
+        {
+          kind: "paragraph",
+          text: "Private, encrypted, anonymous, and zero-knowledge are often used as if they meant the same thing. They answer different questions about what an observer can learn.",
+        },
+        {
+          kind: "flow",
+          label: "What each privacy property protects",
+          stages: [
+            ["Information"],
+            [
+              ["Content", "Confidentiality"],
+              ["Identity", "Anonymity"],
+              ["Relationships", "Unlinkability"],
+              ["Chosen facts", "Selective Disclosure"],
+              ["Computation", "Private Computation"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Confidentiality asks whether unauthorized observers can learn the content. Anonymity asks whether an action can be tied to a particular identity. Unlinkability asks whether separate actions or records can be connected to one another, even without knowing whose they are. Selective disclosure asks whether one fact can be revealed without the rest, such as meeting a threshold without revealing the amount. Private computation asks whether a result can be computed while inputs and intermediate values stay protected, by mechanisms such as multi-party computation.",
+        },
+        { kind: "distinction", left: "Zero-knowledge", right: "Anonymity" },
+        {
+          kind: "paragraph",
+          text: "A zero-knowledge proof can hide its witness while the prover's identity, and the transaction carrying the proof, remain fully visible. Privacy is not secrecy alone. Privacy-preserving protocols combine mechanisms to provide specific, stated privacy properties, and a system is private only with respect to the properties it actually provides.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Confidentiality",
+            "Anonymity",
+            "Unlinkability",
+            "Selective disclosure",
+            "Private computation",
+            "Privacy-preserving protocols",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Each mechanism establishes a different kind of property. Hashes turn data into references; signatures bind messages to keys; commitments fix values before revealing them; threshold cryptography distributes authority; proofs let claims be checked without repeating or observing everything; verifiable computation applies that to computation itself; privacy mechanisms control what each observer can learn.",
+        },
+        { kind: "distinction", left: "Trust minimized", right: "Assumptions removed" },
+        {
+          kind: "paragraph",
+          text: "Cryptography does not remove assumptions. It changes what must be trusted, what can be independently verified, what information must be revealed, and whether a failure requires compromising one actor or many. A protocol therefore needs to reason not only about which primitives it uses, but about exactly which property each one establishes, and under which assumptions.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Hash Functions",
+            "Digital Signatures",
+            "Commitments",
+            "Threshold Cryptography",
+            "Zero-Knowledge Proofs",
+            "Proof Systems",
+            "Verifiable Computation",
+            "Privacy",
+          ],
+        },
+      ],
+    },
+    {
+      id: "storage-availability-content",
+      conceptId: "storage-availability",
+      definition:
+        "Storage and availability are different protocol properties. Storing data means some system retains it; availability means the participants who need it can retrieve it when they need it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocols produce data and depend on it: state, transactions, history, and data referenced from elsewhere. Not all of it needs the same guarantees. Some requires broad retention for as long as the protocol depends on it; some only needs to be retrievable for a period; some only needs to be checkable when someone produces it.",
+        },
+        {
+          kind: "flow",
+          label: "What protocol data passes through before it is usable",
+          stages: [["Protocol Data"], ["Storage Strategy"], ["Retention"], ["Retrieval"], ["Verification"], ["Usable Data"]],
+        },
+        {
+          kind: "paragraph",
+          text: "A storage architecture has to answer several independent questions: where the data is stored, for how long, by whom, whether it can be retrieved, whether storage or retrieval can be verified, and what happens when those storing it fail. A commitment can show that particular data is the data being referred to. It does not make that data available.",
+        },
+        { kind: "distinction", left: "Stored", right: "Available" },
+        { kind: "heading", text: "Protocol state is the most expensive place to keep data" },
+        {
+          kind: "paragraph",
+          text: "On-chain storage is data held in protocol state itself. Persistent storage survives across transactions, and state storage is maintained by nodes that keep the protocol's full current state, so writing to it is part of the protocol's execution and state model rather than a separate service. That makes it unusually strong: data required as part of current protocol state inherits the availability assumptions of the protocol and the nodes that maintain that state. It also makes it costly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Storage layout and storage slots determine how that data is organized within state, building on the representation described under State & Data. Storage costs price the burden each write places on everyone who must keep it, and storage optimization, such as packing values or removing what is no longer needed, reduces that burden. On-chain storage is not free, and persistent is not permanent in every sense: persistent storage remains part of protocol state until a valid state transition removes or replaces it, subject to the protocol's state-retention model.",
+        },
+        {
+          kind: "terms",
+          terms: ["Persistent storage", "Storage layout", "Storage slots", "Storage costs", "State storage", "Storage optimization"],
+        },
+        { kind: "heading", text: "Distributed storage survives failures, within limits" },
+        {
+          kind: "paragraph",
+          text: "Data that does not need to live in protocol state can be kept across independent storage nodes. Data distribution decides which nodes hold which data; data replication keeps copies on several of them, and redundancy more generally keeps more than the minimum needed, so that the data can survive some node failures. Storage networks coordinate this across many operators.",
+        },
+        {
+          kind: "flow",
+          label: "How distributing and replicating data lets it survive some node failures",
+          stages: [
+            ["Data"],
+            ["Data Distribution"],
+            ["Storage Node A", "Storage Node B", "Storage Node C"],
+            ["Replication or Redundancy"],
+            ["Survives some node failures"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Fault tolerance here is the Foundations property applied to storage: it holds only up to the number and kind of failures the design assumes. Replication is not an availability guarantee either. Replication and redundancy can improve resilience to failures, but the resulting availability depends on how copies are distributed, which failures are tolerated, and whether enough storage nodes remain reachable, and willing and able to serve the data, when asked.",
+        },
+        {
+          kind: "terms",
+          terms: ["Storage nodes", "Data replication", "Data distribution", "Redundancy", "Fault tolerance", "Storage networks"],
+        },
+        { kind: "heading", text: "Knowing what data is does not say where it is" },
+        {
+          kind: "paragraph",
+          text: "A location-based reference says where to find data: a server, a path, a storage slot. Content addressing refers to data by what it is instead. Content hashing derives a content identifier from the data itself, so the identifier is an immutable reference: it can only ever refer to that content, and whatever is retrieved can be checked against it.",
+        },
+        {
+          kind: "flow",
+          label: "How content is found by what it is and checked when it arrives",
+          stages: [
+            ["Content"],
+            ["Content Hashing"],
+            ["Content Identifier"],
+            ["Address Resolution"],
+            ["Content Retrieval"],
+            ["Hash Verification"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Address resolution looks for someone who can supply the content for an identifier, and content retrieval fetches it if a source is found. The hash properties described under Cryptography & Proofs make the check meaningful: it establishes whether retrieved content matches the identifier. It can only run once the data arrives, and it does not make the content retrievable.",
+        },
+        { kind: "distinction", left: "Identity of data", right: "Availability of data" },
+        {
+          kind: "paragraph",
+          text: "Knowing the correct identifier does not mean anyone currently stores or serves the content.",
+        },
+        {
+          kind: "terms",
+          terms: ["Content identifiers", "Content hashing", "Immutable references", "Address resolution", "Content retrieval"],
+        },
+        { kind: "heading", text: "Current operation and history need different storage" },
+        {
+          kind: "paragraph",
+          text: "Operating a protocol requires current state and recent data; preserving it requires history. These are different requirements, and most participants do not need to meet both. Data pruning lets a node discard historical data it no longer needs to operate, while archive nodes, long-term storage, and state archiving keep that data elsewhere, under data retention rules that decide what is kept and for how long.",
+        },
+        {
+          kind: "flow",
+          label: "How history is pruned by operating nodes and retained by archives",
+          stages: [
+            ["Historical Data"],
+            [
+              ["Operating Node", "Data Pruning", "Current state only"],
+              ["Archive Node", "Data Retention", "Full history"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Pruned data is not necessarily lost to the system. Pruning removes data from a particular node's retained history; it becomes unavailable only if no remaining source can provide it. Archival storage reduces that risk but does not by itself guarantee permanent preservation. Historical data is what the historical queries and reconstruction of State & Data depend on, and archive nodes are the infrastructure role described under Networks & Infrastructure.",
+        },
+        {
+          kind: "terms",
+          terms: ["Historical data", "Long-term storage", "Archive nodes", "Data retention", "Data pruning", "State archiving"],
+        },
+        { kind: "heading", text: "Committed is not available" },
+        {
+          kind: "paragraph",
+          text: "A protocol can know about data, and commit to it, without every participant possessing it. A block may carry only a commitment to data that others must fetch; an off-chain system may post a commitment and keep the data. Data availability asks whether the participants who need that data can obtain enough of it, when required, under the system's assumptions.",
+        },
+        {
+          kind: "flow",
+          label: "What happens to committed data when it is published, and when it is withheld",
+          stages: [
+            ["Data Committed"],
+            [
+              ["Data Publication", "Data Retrieval", "Availability Verification", "Available to participants"],
+              ["Data Withholding", "Commitment without data", "Cannot reconstruct or verify"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A commitment lets participants identify or verify the data; data publication makes it accessible through some mechanism, and data retrieval obtains it. Availability verification is how participants check that retrieval is possible instead of assuming it. Data withholding is the failure these mechanisms exist to catch: data is committed to but not released, so participants cannot reconstruct the state, re-execute the computation, or check a claim that depends on it.",
+        },
+        { kind: "distinction", left: "Committed", right: "Available" },
+        {
+          kind: "paragraph",
+          text: "Availability guarantees differ in what they rely on. Availability committees are one approach: a designated set of participants attests that it holds the data and will serve it. This introduces assumptions about committee participation, responsiveness, and the conditions under which its attestations or service count as sufficient evidence of availability, and committee designs differ in what they guarantee. Other approaches publish the data to the protocol itself, or rely on the sampling described below.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Availability guarantees",
+            "Data publication",
+            "Data retrieval",
+            "Availability verification",
+            "Data withholding",
+            "Availability committees",
+          ],
+        },
+        { kind: "heading", text: "Encoding lets availability be checked without downloading everything" },
+        {
+          kind: "paragraph",
+          text: "Availability does not require every participant to receive the whole original data. Erasure coding adds redundant encoding: with an appropriate scheme, the data is expanded into data shards such that the original can be reconstructed from a sufficient subset of them.",
+        },
+        {
+          kind: "flow",
+          label: "How erasure coding lets a sufficient subset of shards reconstruct the data",
+          stages: [
+            ["Original Data"],
+            ["Redundant Encoding"],
+            ["Shard 1", "Shard 2", "Shard 3", "Shard 4"],
+            ["Sufficient Subset"],
+            ["Reconstruction"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Coding parameters set how much redundancy is added and how many shards reconstruction needs. Fault recovery is what that redundancy buys: the data survives the loss of some shards, up to the limit the parameters set.",
+        },
+        { kind: "distinction", left: "Shard", right: "Replica" },
+        {
+          kind: "paragraph",
+          text: "A replica is a full copy. A shard may carry only part, or an encoding, of the data, and is useful only together with enough others.",
+        },
+        {
+          kind: "terms",
+          terms: ["Data shards", "Redundant encoding", "Reconstruction", "Coding parameters", "Fault recovery"],
+        },
+        {
+          kind: "paragraph",
+          text: "Encoding also changes what it takes to check availability. Because reconstruction needs only a sufficient subset, preventing it requires withholding enough shards to leave less than that subset, which with suitable coding parameters is a substantial fraction. A participant can therefore sample: request a few randomly selected pieces and verify each against a commitment.",
+        },
+        {
+          kind: "flow",
+          label: "How random samples build confidence that encoded data is available",
+          stages: [
+            ["Encoded Dataset"],
+            ["Random Samples"],
+            ["Sample Retrieval"],
+            ["Sample Verification"],
+            ["Availability Confidence"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Sampling provides probabilistic evidence of availability under the encoding, sampling strategy, network, and adversarial assumptions of the scheme. Each successful sample raises availability confidence, and enough of them make withholding unlikely, not impossible. Light-client sampling lets participants that cannot download everything gain that confidence for themselves. One client's successful samples do not establish that the data is available to everyone; many clients sampling together contribute to wider confidence without automatically establishing a protocol-level guarantee. Sampling rests on sample verification in the sense of Cryptography & Proofs.",
+        },
+        { kind: "distinction", left: "Availability confidence", right: "Every byte retrieved" },
+        {
+          kind: "terms",
+          terms: ["Sampling", "Random sampling", "Sample verification", "Availability confidence", "Light-client sampling"],
+        },
+        { kind: "heading", text: "Published data need not become permanent state" },
+        {
+          kind: "paragraph",
+          text: "Some data only needs to be available for long enough to be checked, not kept forever. Blob-like designs carry such data in protocol-visible objects: a blob transaction carries blob data, the chain keeps a blob commitment, and the data itself is propagated and retained for a protocol-defined window, after which it may be discarded.",
+        },
+        {
+          kind: "flow",
+          label: "How a blob's commitment stays with the chain while its data is kept only for a window",
+          stages: [
+            ["Blob Transaction"],
+            [
+              ["Blob Commitment", "Kept with the chain"],
+              ["Blob Data", "Blob Propagation", "Retained for a window", "Prunable"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Blob retention and blob pricing can be governed separately from persistent execution state, so data can be published and made temporarily available without becoming part of what state-maintaining nodes must keep indefinitely. The protocol may retain a commitment or reference longer than it requires nodes to retain the corresponding blob data: after the window, the chain can still say what was published, but it may no longer be able to provide it.",
+        },
+        { kind: "distinction", left: "Published data", right: "Permanent state" },
+        {
+          kind: "terms",
+          terms: ["Blob data", "Blob transactions", "Blob commitments", "Blob propagation", "Blob retention", "Blob pricing"],
+        },
+        { kind: "heading", text: "Evidence about storage is not availability" },
+        {
+          kind: "paragraph",
+          text: "Trusting a storage provider's claim is different from requiring evidence for it. Storage proofs answer a challenge: the prover, holding the data, generates a proof in response, and a verifier checks it and accepts or rejects the claim. Proof generation and proof verification work as described under Cryptography & Proofs; what differs is the question being asked.",
+        },
+        {
+          kind: "flow",
+          label: "The different questions storage proofs answer",
+          stages: [
+            ["Storage Claim"],
+            [
+              ["Proof of Storage", "Is the data held?"],
+              ["Proof of Replication", "Are distinct copies held?"],
+              ["Proof of Space", "Is capacity committed?"],
+              ["Proof of Retrievability", "Can the data be recovered?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A proof of storage provides evidence that the prover holds the data at the time of the challenge. A proof of replication provides evidence that the prover stores distinct replicas rather than one copy counted several times; exactly what separation it establishes depends on the scheme. A proof of space provides evidence that storage capacity has been dedicated, which need not hold useful data. Proof-of-retrievability schemes provide evidence, under their construction and assumptions, that stored data can be recovered with the required reliability.",
+        },
+        { kind: "distinction", left: "Proof of storage", right: "Data availability" },
+        {
+          kind: "paragraph",
+          text: "Evidence that a storage condition held when challenged does not establish that every participant can retrieve the data at the moment they need it.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Proof of storage",
+            "Proof of replication",
+            "Proof of space",
+            "Proof of retrievability",
+            "Proof generation",
+            "Proof verification",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol data has a lifecycle: it is stored, distributed, retained, retrieved, verified, and, when necessary, reconstructed. An architecture chooses a different mechanism for each step depending on the guarantees it needs.",
+        },
+        { kind: "distinction", left: "Stored", right: "Retained", further: ["Available", "Intact"] },
+        {
+          kind: "paragraph",
+          text: "Stored means represented somewhere; retained, still kept over time; available, retrievable when required; intact, preserving its expected integrity when retrieved. Storage architecture determines more than where bytes live. It determines which participants must retain data, which failures can be tolerated, how historical information survives, whether new participants can reconstruct what they need, and which claims about stored data can be independently verified.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "On-Chain Storage",
+            "Distributed Storage",
+            "Content Addressing",
+            "Archival Storage",
+            "Data Availability",
+            "Erasure Coding",
+            "Blobs",
+            "Data Availability Sampling",
+            "Storage Proofs",
+          ],
+        },
+      ],
+    },
+    {
+      id: "identity-accounts-authority-content",
+      conceptId: "identity-accounts-authority",
+      definition:
+        "A protocol must distinguish who or what is represented, how control is demonstrated, what that actor may do, and how that authority changes. Identity, authentication, and authority answer these different questions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A protocol cannot know a person, an organization, a machine, or an agent directly. It sees protocol-recognizable evidence and state: an identifier, a credential, an account, a signature. Whatever it concludes, it concludes about those representations.",
+        },
+        {
+          kind: "flow",
+          label: "How an actor comes to perform an action in a protocol",
+          stages: [["Actor"], ["Identifier / Credential / Account"], ["Authentication"], ["Authority"], ["Permitted Action"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Each step answers a different question, and real systems do not always make every step explicit. Building on the trust boundaries of Foundations and the signatures of Cryptography & Proofs, this domain is about where those answers come from and how they connect to protocol state.",
+        },
+        { kind: "heading", text: "Identity is built from evidence, not given" },
+        {
+          kind: "paragraph",
+          text: "An address is a protocol-level identifier for an account or endpoint, associated with some control mechanism. It does not, by itself, establish the human, organization, or machine behind it; mapping it to a real-world entity requires additional evidence or assumptions. One entity can control many addresses, and control over an address or account can depend on one key, multiple participants, or programmable authorization logic, depending on the account model.",
+        },
+        { kind: "distinction", left: "Address", right: "Identity" },
+        {
+          kind: "flow",
+          label: "The different questions identity evidence answers about an entity",
+          stages: [
+            ["Entity"],
+            [
+              ["Identifier", "Which entity?"],
+              ["Credential", "What is claimed about it?"],
+              ["Attestation", "Who vouches for it?"],
+              ["Reputation", "How has it behaved?"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "These play different roles. An identifier, whether an address or a decentralized identifier, says which entity is being discussed. A credential carries claims about that entity. An attestation is a statement another party makes about it. Reputation accumulates signals from past behavior that others use to reason about it. None is trustworthy by itself. Credentials and attestations are evidence, not truth: what a decentralized identifier, credential, or attestation means depends on who issued it, how it can be verified, the context in which it is used, and which trust assumptions the verifier accepts.",
+        },
+        {
+          kind: "terms",
+          terms: ["Addresses", "Decentralized identifiers", "Credentials", "Attestations", "Reputation"],
+        },
+        { kind: "heading", text: "Accounts connect control to protocol state" },
+        {
+          kind: "paragraph",
+          text: "An account is the protocol object that holds state and through which actions are authorized and executed. Account state records what it holds; account permissions record what may act for it.",
+        },
+        {
+          kind: "flow",
+          label: "Two ways an account can be controlled",
+          stages: [
+            ["Account"],
+            [
+              ["Externally Owned Account", "Controlled by a key"],
+              ["Contract Account", "Control defined by logic"],
+            ],
+            ["Validation"],
+            ["Authorized Execution"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The main architectural difference is where control lives. For an externally owned account, protocol-level control is typically demonstrated by a valid signature under the account's key; whether the resulting action is permitted can still depend on protocol, contract, application, or policy rules. A contract account executes according to programmable validation and execution logic, and the authority that logic recognizes can ultimately depend on keys, roles, other contracts, governance, or other encoded conditions. Account nonces, in systems that use them, are account state that orders an account's operations; they can make an otherwise valid operation invalid when it is replayed outside the sequence or context the account expects. Account recovery is the question of how control is restored when the usual means are lost, and it is possible only when the account or its surrounding authority model defines a recovery path.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Externally owned accounts",
+            "Contract accounts",
+            "Account state",
+            "Account nonces",
+            "Account permissions",
+            "Account recovery",
+          ],
+        },
+        { kind: "heading", text: "Wallets manage control; they are not the account" },
+        {
+          kind: "paragraph",
+          text: "A wallet is the software, hardware, or service a participant uses to manage control and interact with accounts. It is not the account, which exists in protocol state whether or not any wallet is running. Nor is it the key, the cryptographic material that demonstrates control: a wallet may manage many keys and many accounts, may rely on keys held elsewhere, such as in a separate signing device, and may interact with accounts whose authority does not reduce to one private key.",
+        },
+        { kind: "distinction", left: "Account", right: "Wallet" },
+        {
+          kind: "flow",
+          label: "How a wallet turns intent into a submitted transaction",
+          stages: [["Intent"], ["Transaction Construction"], ["Signing"], ["Transaction Submission"], ["Protocol"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Key management covers how keys are generated, stored, and used. Transaction construction turns an intent into a well-formed transaction, signing attaches evidence of control using the mechanisms of Cryptography & Proofs, and transaction submission sends it into the admission path described under Consensus & Ordering. Wallet recovery restores access to the credentials and configuration a wallet manages, which is distinct from account recovery in protocol state and does not by itself change an account's authority, and wallet security protects this whole path in operation.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Key management",
+            "Signing",
+            "Transaction construction",
+            "Transaction submission",
+            "Wallet recovery",
+            "Wallet security",
+          ],
+        },
+        { kind: "heading", text: "Smart accounts make authority programmable" },
+        {
+          kind: "paragraph",
+          text: "A smart account replaces the fixed rule of a key-controlled account with programmable authority. Validation logic decides whether an operation is authorized; execution logic decides what it does once it is.",
+        },
+        {
+          kind: "flow",
+          label: "How a smart account's validation logic accepts different forms of authority",
+          stages: [
+            ["Operation"],
+            ["Validation Logic"],
+            ["Primary key", "Session key, within its scope", "Recovery Logic"],
+            ["Execution Logic"],
+            ["State Change"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Because validation is code, authority can take more than one form. The account's normal validation authority can sit alongside delegated authority: session keys can be granted constrained authority, such as limits on time, actions, value, or target, depending on the account's validation policy, and it is that policy, not possession of the session key, that defines the scope. Recovery logic serves a distinct control-management role: it can define a procedure for modifying or restoring the account's control configuration rather than relying only on the account's ordinary authorization path. Modular accounts assemble these behaviors from components. Smart accounts do not inherently eliminate cryptographic credentials or other control mechanisms; they make validation and execution policy programmable, so that possessing a key no longer has to mean unlimited authority.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Programmable accounts",
+            "Validation logic",
+            "Execution logic",
+            "Recovery logic",
+            "Session keys",
+            "Modular accounts",
+          ],
+        },
+        { kind: "heading", text: "Account abstraction changes how operations enter" },
+        {
+          kind: "paragraph",
+          text: "Account abstraction changes the path an operation takes into execution, so that accounts, and not only rules fixed by the protocol, can define validation. The components below come mainly from current EVM designs; they belong to particular account-abstraction architectures, not to every form of programmable account, though the pattern is more general.",
+        },
+        {
+          kind: "flow",
+          label: "How an abstracted operation reaches execution",
+          stages: [
+            ["User Intent"],
+            ["User Operation"],
+            ["Alternative Mempool"],
+            ["Bundler"],
+            ["Entry Point"],
+            ["Account Validation", ["Paymaster", "Fee payment policy"]],
+            ["Execution"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A user operation expresses what an account wants done; in some designs it is not an ordinary protocol transaction. It travels through an alternative mempool, a separate admission path in the sense of Consensus & Ordering. A bundler aggregates operations and submits them, and an entry point coordinates validation and execution for each account. A paymaster can take on the fees under its own policy, and gas abstraction changes how execution costs are presented or paid, for example in another asset or by someone else; it does not remove the underlying resource cost.",
+        },
+        { kind: "distinction", left: "Account abstraction", right: "Free execution" },
+        {
+          kind: "paragraph",
+          text: "Execution still consumes resources, and someone still pays for them. Abstraction changes who bears the cost and how it is presented.",
+        },
+        {
+          kind: "terms",
+          terms: ["User operations", "Bundlers", "Entry points", "Paymasters", "Alternative mempools", "Gas abstraction"],
+        },
+        { kind: "heading", text: "Authentication shows control, not permission" },
+        {
+          kind: "paragraph",
+          text: "Authentication produces evidence that an actor controls, or satisfies, some mechanism. It rarely establishes who a person is; more often it shows control of a key, a credential, a session, or a factor.",
+        },
+        {
+          kind: "flow",
+          label: "How an authentication policy accepts or rejects a claimed actor",
+          stages: [["Claimed Actor"], ["Authentication Factor"], ["Verification"], ["Authentication Policy"], ["Accepted", "Rejected"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Mechanisms differ. Signature authentication checks a signature against a key. Challenge-response asks the actor to answer a challenge; a fresh, context-bound challenge can prevent an old valid response from being reused for a new authentication attempt. Session authentication lets one successful authentication cover later requests for a period. Credential authentication checks a credential issued by someone else. Authentication factors are the kinds of evidence involved, and authentication policies decide which combinations are enough.",
+        },
+        { kind: "distinction", left: "Authenticated", right: "Authorized" },
+        {
+          kind: "paragraph",
+          text: "Authentication answers whether an actor has satisfied some mechanism. It does not say what that actor may do. A system that treats every authenticated request as permitted collapses authentication and authorization into the same decision, leaving no separate authority policy.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Authentication factors",
+            "Signature authentication",
+            "Challenge-response",
+            "Session authentication",
+            "Credential authentication",
+            "Authentication policies",
+          ],
+        },
+        { kind: "heading", text: "Authority decides what control permits" },
+        {
+          kind: "paragraph",
+          text: "Authority is the protocol's answer to what an authenticated actor may do. It is also where the trust boundaries of Foundations become concrete: each authority boundary marks where one actor's power stops. Authority is contextual: an actor authenticated in one context does not thereby have authority over another resource, contract, account, or protocol component.",
+        },
+        {
+          kind: "flow",
+          label: "How forms of authority combine into the actions an actor may perform",
+          stages: [
+            ["Authority"],
+            ["Ownership", "Roles", "Capabilities", "Delegation"],
+            ["Permission Model"],
+            ["Authority Boundary"],
+            ["Permitted Actions"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols express authority in different ways, and none is universally better. Ownership gives broad control to an owner. Roles group permissions by function. A capability represents authority to perform particular operations and, in systems that support delegation or transfer, may itself be passed on or attenuated. Delegation lets one party grant some of its authority to another actor. A permission model defines how these grants interact, and authority boundaries define where each one ends.",
+        },
+        { kind: "distinction", left: "Authority", right: "Ownership" },
+        {
+          kind: "paragraph",
+          text: "Ownership is one model of authority, not authority itself. Delegation, likewise, is not a transfer of ownership: the delegator may retain its underlying authority, and whether delegated authority is scoped, temporary, or revocable depends on the system.",
+        },
+        {
+          kind: "terms",
+          terms: ["Ownership", "Roles", "Capabilities", "Delegation", "Permission models", "Authority boundaries"],
+        },
+        { kind: "heading", text: "Machines and agents need the same answers" },
+        {
+          kind: "paragraph",
+          text: "Protocol participants increasingly include software agents, services, devices, and machines. They need the same relationships between identity, control, and authority, often without a person present at the moment of action.",
+        },
+        {
+          kind: "flow",
+          label: "How a machine or agent is authorized, and how its reputation forms",
+          stages: [
+            ["Machine or Agent"],
+            [
+              ["Machine Credential", "Machine Authentication", "Agent Authorization", "Permitted Action"],
+              ["Observed Activity", "Agent Reputation", "Input to a policy"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Agent identity distinguishes a particular agent. Agent credentials and machine credentials carry claims about it, machine authentication shows that a request comes from whatever holds them, and agent authorization determines what it may do. Agent reputation accumulates from observed activity.",
+        },
+        { kind: "distinction", left: "Reputation", right: "Authorization" },
+        {
+          kind: "paragraph",
+          text: "Reputation may inform a policy that grants authority, but it is not authority itself. What agents do with the authority they hold belongs to later parts of the MAP.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Agent identity",
+            "Agent credentials",
+            "Agent reputation",
+            "Agent authorization",
+            "Machine credentials",
+            "Machine authentication",
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Taken together, the domain describes a path from a participant to a change in protocol state, though real systems do not always contain every step explicitly.",
+        },
+        {
+          kind: "flow",
+          label: "From a participant to a change in protocol state",
+          stages: [["Participant"], ["Identity Evidence"], ["Account"], ["Authentication"], ["Authority"], ["Operation"], ["Protocol State"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Identity architecture determines what entity is represented; account architecture, how control connects to protocol state and execution; authentication, which evidence is accepted as proof of control or qualification; authority, which actions that control permits; and execution, which performs the permitted operation and changes state.",
+        },
+        { kind: "distinction", left: "Identity", right: "Authentication", further: ["Authority", "Execution"] },
+        {
+          kind: "paragraph",
+          text: "A verified signature alone therefore answers only part of this, and a protocol is not secure merely because one verifies. It must also determine what that signer controls, which authority follows from that control, where that authority ends, and how it can be delegated, recovered, or revoked.",
+        },
+        {
+          kind: "terms",
+          terms: [
+            "Identity",
+            "Accounts",
+            "Wallets",
+            "Smart Accounts",
+            "Account Abstraction",
+            "Authentication",
+            "Authority",
+            "Machine Identity",
+          ],
         },
       ],
     },
