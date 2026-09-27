@@ -221,8 +221,8 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
    */
   function renderRowControl(row: MapExplorerRow, region: boolean) {
     const focused = row.placementId === focusedPlacementId;
-    // A row's own parent is only shown below region level; the region plane
-    // already names the parent of its first-level rows.
+    // A row's own parent contextualizes its accessible name only below region
+    // level; the region plane already names the parent of first-level rows.
     const parentLabel = row.depth >= 2 ? row.parentLabel : undefined;
 
     return (
@@ -246,11 +246,6 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
           {row.ordinal ? (
             <span aria-hidden="true" className={`${LABEL_TEXT} mr-3 text-muted`}>
               {row.ordinal}
-            </span>
-          ) : null}
-          {parentLabel ? (
-            <span aria-hidden="true" className={`${LABEL_TEXT} text-dim`}>
-              {parentLabel} ›{" "}
             </span>
           ) : null}
           <span
