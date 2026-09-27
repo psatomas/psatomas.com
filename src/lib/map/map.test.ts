@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -4355,6 +4355,7 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
   // Every other topic is a new concept placed once, without exposition.
   const shared = new Set(["bids", "liquidity-risk"]);
   for (const [id, conceptId] of [...MARKETS_LAYER, ...MARKETS_L2]) {
+    if (conceptId === "markets-financial-protocols") continue;
     assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
@@ -4362,6 +4363,61 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
   }
   const ids = [...MARKETS_LAYER, ...MARKETS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Markets & Financial Protocols' L0 exposition keeps financial outcomes conditional", () => {
+  const content = resolver.getContentForConcept("markets-financial-protocols")!;
+  assert.equal(content.id, "markets-financial-protocols-content");
+  assert.ok(content.definition.startsWith("Markets and financial protocols organize"));
+  const body = content.body ?? [];
+  const headings = body.flatMap((block) => block.kind === "heading" ? [block.text] : []);
+  assert.deepEqual(headings, [
+    "Assets are represented objects and claims, not value by themselves",
+    "Markets turn participant actions into prices and allocations",
+    "Liquidity is transacting capacity under conditions",
+    "AMMs quote from protocol state rather than conventional bilateral matching",
+    "Order books organize executable interest through matching rules",
+    "Lending turns supplied capital into claims and obligations",
+    "Collateral conditions make obligations continuously evaluable",
+    "Liquidation is a threshold response, not an instantaneous event",
+    "Stablecoins pursue a reference relationship through contingent mechanisms",
+    "Derivatives create reference-dependent positions",
+    "Financial risk is a set of exposures, not one scalar",
+    "Solvency compares resources with claims under assumptions",
+  ]);
+  assert.deepEqual(body.flatMap((block) => block.kind === "flow" ? [block.stages] : []), [
+    [["Participants"], ["Orders / Actions"], ["Market Structure"], ["Interaction / Execution"], ["Prices and Allocations"]],
+    [["Pool / Protocol State"], ["Pricing or Invariant Rule"], ["Trade"], ["State Transition"], ["New Trading Conditions"]],
+    [["Orders"], ["Bids / Asks"], ["Matching Rules"], ["Execution"], ["Updated Orders / Balances / Positions"]],
+    [["Lender Capital"], ["Lending Market"], ["Borrower Position"], ["Interest / Repayment Obligation"], ["Repayment, Liquidation, Default, or Another Protocol-Defined Outcome"]],
+    [["Collateral Value + Obligation"], ["Collateral Condition / Ratio"], ["Protocol Thresholds"], ["Position Remains Acceptable or Becomes Actionable"]],
+    [["Position"], ["Threshold Condition"], ["Liquidation Eligibility"], ["Liquidator / Liquidation Mechanism"], ["Asset / Debt Transition"], ["Remaining Position or Bad Debt"]],
+    [["Reference / Peg Objective"], ["Backing, Redemption, Market, Collateral, Incentive, or Other Stabilization Mechanism"], ["Participant / Market Response"], ["Observed Market State"], ["Peg Maintained or Deviation"]],
+    [["Underlying / Reference"], ["Contract / Payoff Rules"], ["Position"], ["Valuation / Margin Where Applicable"], ["Settlement"]],
+    [["Assets / Resources"], ["Liabilities / Claims + Valuation Assumptions + Constraints"], ["Solvent Condition or Insolvency"], ["Loss Absorption / Unresolved Losses"]],
+  ]);
+  const strips = body.flatMap((block) => block.kind === "terms" ? [block.terms] : []);
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  assert.equal(strips.length, 13);
+  MARKETS_LAYER.forEach(([id], index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), MARKETS_LAYER.map(([id]) => label(id)));
+  const prose = body.flatMap((block) => block.kind === "paragraph" ? [block.text] : []).join(" ");
+  for (const phrase of [
+    "Correct execution enforces those rules; it does not itself guarantee liquidity, profitability, price stability, repayment, or solvency.",
+    "it is not objective external truth or necessarily the asset's unique price",
+    "it need not be temporary",
+    "it does not guarantee immediate liquidation",
+    "A peg alone establishes neither backing, redemption ability, sufficient reserves, nor solvency",
+    "Risk parameters encode protocol choices about conditions and responses; they do not eliminate uncertainty",
+    "A system can be solvent yet illiquid",
+  ]) assert.ok(prose.includes(phrase), phrase);
+  assert.equal(resolver.getPreferredPlacementForConcept("bids")?.id, "bids");
+  assert.equal(resolver.getPreferredPlacementForConcept("liquidity-risk")?.id, "liquidity-risk-in-risk");
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("MEV & Execution Markets has exactly its thirteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
