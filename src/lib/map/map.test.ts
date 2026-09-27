@@ -5212,11 +5212,28 @@ test("AI & Intelligent Systems has exactly its twelve L1 topics and their L2 pla
   assert.deepEqual(resolver.getAncestors("model-inputs").map((placement) => placement.id), ["ai-intelligent-systems", "ai-inference-in-ai-intelligent-systems"]);
 });
 
-+test("AI & Intelligent Systems owns an L0 exposition with live taxonomy strips and canonical Agent Identity reuse", () => {
+test("AI & Intelligent Systems owns an L0 exposition with live taxonomy strips and canonical Agent Identity reuse", () => {
   const content = resolver.getContentForConcept("ai-intelligent-systems");
   assert.ok(content);
   assert.equal(content.id, "ai-intelligent-systems-content");
   const body = content.body ?? [];
+  assert.deepEqual(
+    body.filter((block) => block.kind === "heading").map((block) => block.text),
+    [
+      "Models are learned computational state",
+      "Inference produces outputs under particular conditions",
+      "Reasoning organizes computation toward tasks",
+      "Goals and planning organize future action",
+      "Context, memory, and retrieval extend an invocation",
+      "Tools connect generated decisions to external capabilities",
+      "Agents repeatedly decide and act within authority boundaries",
+      "Reliability must be measured under stated conditions",
+      "Evaluation is evidence, not a guarantee",
+      "Alignment and control constrain behavior",
+      "AI security addresses adversarial manipulation",
+      "Verifiable AI makes defined claims checkable",
+    ],
+  );
   const strips = body.filter((block) => block.kind === "terms").map((block) => block.terms);
   assert.deepEqual(strips.at(-1), AI_LAYER.map(([, , title]) => title));
   assert.ok(strips.some((terms) => terms.includes("Agent Identity")));
