@@ -8905,6 +8905,212 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "oracles-external-reality-content",
+      conceptId: "oracles-external-reality",
+      definition:
+        "Oracles bring claims, observations, and measurements about external reality into a form a protocol can consume, under explicit assumptions about sources, reporting, and verification.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A deterministic protocol can verify its state-transition rules against the inputs it has, but it cannot directly observe external reality. From protocol state alone it cannot determine whether a market price is accurate, a physical event occurred, a sensor measured correctly, an API reported a fact accurately, or a real-world claim is true. The oracle problem is therefore not merely moving data on-chain: it is importing information together with assumptions about how it was observed, reported, and checked.",
+        },
+        {
+          kind: "flow",
+          label: "How an external claim becomes an input a protocol can use",
+          stages: [["External Reality"], ["Observation / Claim"], ["Representation"], ["Oracle Mechanism"], ["Verification"], ["Protocol Input"], ["Protocol Action"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Each transformation can preserve evidence, add checks, or change the assumptions a protocol depends on; none removes the boundary between computation and the world it describes. Cryptographic verification can establish that a signature verifies, evidence matches a commitment, or a report arrived through an expected mechanism. Verification is not truth about the external claim.",
+        },
+        { kind: "distinction", left: "Verification", right: "Truth" },
+        { kind: "heading", text: "A protocol cannot observe external reality directly" },
+        {
+          kind: "paragraph",
+          text: "An oracle is the mechanism between a protocol and information it cannot derive from its own state. It may carry a measurement, a reported value, or a claim, but the protocol receives a representation governed by oracle rules, not direct access to reality. Those rules make assumptions visible: who or what observed the information, how it was authenticated, what can fail, and what the protocol accepts as usable input.",
+        },
+        {
+          kind: "paragraph",
+          text: "External information can be available, authentic under a stated mechanism, fresh enough for a decision, or correct; these are separate properties. A protocol can reason about the evidence it receives without thereby proving the underlying real-world fact.",
+        },
+        { kind: "terms", terms: ["External Information", "Trust Assumptions", "Verification Limits", "Data Authenticity", "Data Availability", "Oracle Failure"] },
+        { kind: "heading", text: "Every oracle begins with a source" },
+        {
+          kind: "paragraph",
+          text: "A source can be primary, such as an event observer, an exchange, or a sensor; or secondary, such as an API, an indexer, or a report derived from other sources. Market data and sensor data are not self-explanatory facts: each reflects an observation process, a definition, and conditions under which the source can be wrong, incomplete, delayed, or manipulated.",
+        },
+        {
+          kind: "flow",
+          label: "How source information becomes a report",
+          stages: [["Primary or Secondary Source"], ["Data Collection"], ["Observation or Claim"], ["Report"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Source diversity can reduce dependence on one source, but it is not source independence. Several endpoints, reporters, or secondary sources may all ultimately rely on the same primary source or share the same failure mode. The relevant question is not only how many reports exist, but what evidence and dependencies they actually represent.",
+        },
+        { kind: "distinction", left: "Source diversity", right: "Source independence" },
+        { kind: "terms", terms: ["Primary Sources", "Secondary Sources", "APIs", "Market Data", "Sensor Data", "Source Diversity"] },
+        { kind: "heading", text: "Oracle networks distribute reporting, not truth" },
+        {
+          kind: "paragraph",
+          text: "An oracle network can use several oracle nodes to collect, report, and combine information according to node-selection and incentive rules. Distributing those roles can reduce exposure to a single reporter or make failures more observable, but it does not make the network an independent observer of reality.",
+        },
+        {
+          kind: "flow",
+          label: "How an oracle network produces a result",
+          stages: [["Sources"], ["Oracle Nodes"], ["Data Collection"], ["Data Reporting"], ["Oracle Rule"], ["Oracle Result"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Oracle consensus is the process by which a reporting system forms or accepts a result under its own rules. It is not the protocol consensus of Consensus & Ordering, which concerns agreement about protocol history and state. Agreement among reporters can be evidence that a reporting rule was followed; it does not establish external truth, especially when reporters share sources, incentives, or compromises.",
+        },
+        { kind: "distinction", left: "Oracle consensus", right: "Protocol consensus" },
+        { kind: "terms", terms: ["Oracle Nodes", "Node Selection", "Data Collection", "Data Reporting", "Consensus", "Oracle Incentives"] },
+        { kind: "heading", text: "Data can arrive before it is needed or when it is requested" },
+        {
+          kind: "paragraph",
+          text: "Push oracles publish updates according to an update model, such as a schedule, heartbeat, or deviation threshold. Pull oracles obtain or verify information in response to a request. Both designs decide when data is made available and which actor pays, waits, or bears the risk of using an old value; neither changes the quality of the underlying observation.",
+        },
+        {
+          kind: "flow",
+          label: "Two paths for delivering oracle information",
+          stages: [["Source Information"], [["Push Oracle", "Scheduled or condition-based update"], ["Pull Oracle", "Request-response or on-demand update"]], ["Protocol-Consumable Update"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Request-response and on-demand updates can make the timing of a query explicit. They do not guarantee that a source responds, that the response is current, or that it is correct. Update models are therefore part of the trust and operational assumptions a consuming protocol must make.",
+        },
+        { kind: "terms", terms: ["Push Oracles", "Pull Oracles", "Update Models", "Request-Response", "On-Demand Updates"] },
+        { kind: "heading", text: "Many reports still need a rule for becoming one result" },
+        {
+          kind: "paragraph",
+          text: "Aggregation defines how multiple reports become one value or decision. Medianization, weighted aggregation, quorum aggregation, and outlier filtering each encode a rule about which reports count and how much they count. The rule may reduce exposure to particular outliers or failures when its assumptions hold.",
+        },
+        {
+          kind: "flow",
+          label: "How reports are combined before protocol use",
+          stages: [["Reported Values"], ["Aggregation Rules"], ["Aggregated Result"], ["Protocol Input"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Aggregation is not correctness. A median or quorum can still reflect correlated, compromised, manipulated, or systematically incorrect inputs. A protocol should understand the aggregation rule as a mechanism for combining reports, not as a proof that the result is true.",
+        },
+        { kind: "distinction", left: "Aggregation", right: "Correctness" },
+        { kind: "terms", terms: ["Data Aggregation", "Medianization", "Weighted Aggregation", "Outlier Filtering", "Quorum Aggregation", "Aggregation Rules"] },
+        { kind: "heading", text: "Correct data can become unusable by becoming old" },
+        {
+          kind: "paragraph",
+          text: "Freshness is a temporal property: whether an update is recent enough for a particular use. Timestamps and update histories provide timing metadata; together with update frequency, heartbeats, freshness thresholds, and deviation thresholds, they can let a protocol or application detect some forms of delay or decide when another update is required under the reporting mechanism's assumptions.",
+        },
+        {
+          kind: "flow",
+          label: "How a freshness policy decides whether to use an update",
+          stages: [["Reported Value"], ["Timestamp and Update History"], ["Freshness Policy"], ["Usable", "Stale"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Freshness is not correctness. Recent information can be wrong, while historically correct information can be too stale for a decision that requires a current value. Freshness controls the age a consumer accepts; it does not verify the external claim itself.",
+        },
+        { kind: "distinction", left: "Freshness", right: "Correctness" },
+        { kind: "terms", terms: ["Update Frequency", "Staleness", "Timestamps", "Freshness Thresholds", "Heartbeats", "Deviation Thresholds"] },
+        { kind: "heading", text: "Knowing where data came from is different from knowing it is true" },
+        {
+          kind: "paragraph",
+          text: "Provenance records where information originated and how it moved or changed. Source provenance, source attribution, data lineage, and transformation history can help a consumer inspect which sources and processes contributed to a result, or verify that the recorded path is internally consistent.",
+        },
+        {
+          kind: "flow",
+          label: "How provenance follows an oracle result",
+          stages: [["Source"], ["Transformations"], ["Aggregation"], ["Oracle Result"], ["Provenance Verification"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Provenance is not truth. Strong provenance can make a false claim traceable: it can show that a particular source, transformation, and reporting path produced the result without establishing that the original observation was correct. It makes assumptions inspectable rather than eliminating them.",
+        },
+        { kind: "distinction", left: "Provenance", right: "Truth" },
+        { kind: "terms", terms: ["Source Provenance", "Data Lineage", "Source Attribution", "Transformation History", "Provenance Verification"] },
+        { kind: "heading", text: "Every step creates another failure surface" },
+        {
+          kind: "paragraph",
+          text: "Oracle security spans the full path from source to protocol consumption. Sources can be compromised, data can be poisoned, reporters can be manipulated, identities can be multiplied in a Sybil attack, and supposedly independent actors can collude. Economic attacks can make a false report profitable or make honest reporting too costly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Authenticity is not correctness. A signature or attestation mechanism can establish that information came from a claimed source under stated assumptions, yet that source can be faulty, compromised, manipulated, or mistaken. Oracle manipulation is therefore not one bug class; it is an interaction between sources, reporters, incentives, aggregation rules, and the protocol action that relies on the result.",
+        },
+        { kind: "distinction", left: "Authenticity", right: "Correctness" },
+        { kind: "terms", terms: ["Oracle Manipulation", "Data Poisoning", "Source Compromise", "Sybil Attacks", "Collusion", "Economic Attacks"] },
+        { kind: "heading", text: "Reality must be represented before machines can consume it" },
+        {
+          kind: "paragraph",
+          text: "Protocols and other software consume representations, not reality itself. Structured data, semantic data, data schemas, and reality interfaces specify how a claim is encoded, named, and passed between systems. They can make information interpretable by machines and reduce ambiguity about format or meaning.",
+        },
+        {
+          kind: "flow",
+          label: "How a real-world claim becomes machine-consumable",
+          stages: [["External Reality"], ["Representation"], ["Structured or Semantic Data"], ["Machine-Readable Claim"], ["Reality Interface"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Machine-readable is not machine-verifiable. A well-formed schema can make a claim consumable by software without proving the claim is true. Verifiable claims require a stated verification model and evidence; even then, verification establishes only what that model supports, not a universal guarantee about reality.",
+        },
+        { kind: "distinction", left: "Machine-readable", right: "Machine-verifiable" },
+        { kind: "terms", terms: ["Structured Data", "Semantic Data", "Machine-Readable Claims", "Verifiable Claims", "Data Schemas", "Reality Interfaces"] },
+        { kind: "heading", text: "Some observations originate outside software" },
+        {
+          kind: "paragraph",
+          text: "Sensors, IoT devices, external APIs, and cyber-physical interfaces connect software to physical events and measurements. A sensor reading is still a representation produced by a device, calibration process, communication path, and operating environment. The protocol receives the reading, not the event itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Trusted hardware does not eliminate the oracle problem; it moves trust toward hardware, manufacturers, provisioning, attestation mechanisms, and the physical connection between a measured event and the device. Those assumptions can be appropriate and useful, but they remain assumptions about an observation boundary rather than cryptographic proof of the physical world.",
+        },
+        { kind: "terms", terms: ["Sensors", "IoT Devices", "External APIs", "Trusted Hardware", "Physical Events", "Cyber-Physical Interfaces"] },
+        { kind: "heading", text: "Some external information must be interpreted" },
+        {
+          kind: "paragraph",
+          text: "Unstructured information may need data extraction, classification, or AI inference before a system can use it as a claim. This is interpretation of input data, not direct observation of truth. An interpreted result depends on the inputs, the model or process, the categories or rules applied, and the assumptions made at each stage.",
+        },
+        {
+          kind: "flow",
+          label: "How unstructured input becomes an interpreted claim",
+          stages: [["Unstructured Data"], ["Data Extraction"], ["Classification or AI Inference"], ["Interpreted Claim"], ["Protocol Use"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Confidence is generic: different systems define and calibrate it differently. It is not a universal probability that the interpreted claim is true. Interpretation verification can check an allowed process, a supplied artifact, or consistency with a model, while leaving separate questions about whether the input was representative and whether the interpretation fits the real-world context.",
+        },
+        { kind: "distinction", left: "Inference", right: "Observation" },
+        { kind: "terms", terms: ["Unstructured Data", "Data Extraction", "Classification", "AI Inference", "Confidence", "Interpretation Verification"] },
+        { kind: "heading", text: "Sometimes reality enters as a claim made by an actor" },
+        {
+          kind: "paragraph",
+          text: "An attester can make or endorse a claim about an entity, event, or qualification and attach evidence or credentials under an attestation verification model. Revocation can later signal that a credential or attestation should no longer be relied upon under that system's rules. These mechanisms help identify who made a claim and whether it remains recognized.",
+        },
+        {
+          kind: "flow",
+          label: "How an actor's real-world claim reaches a verifier",
+          stages: [["Attester"], ["Claim and Evidence"], ["Attestation"], ["Attestation Verification"], ["Accepted", "Rejected"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Attestation is not fact. It establishes that an attester made or endorsed a claim under a verification model; it does not make the claim objectively true. A verifier must still decide whether that attester, evidence, scope, and revocation process are appropriate for the decision at hand.",
+        },
+        { kind: "distinction", left: "Attestation", right: "Fact" },
+        { kind: "terms", terms: ["Attesters", "Claims", "Evidence", "Credentials", "Attestation Verification", "Revocation"] },
+        {
+          kind: "paragraph",
+          text: "Oracles do not erase the boundary between a protocol and external reality. They make a path across it: from external reality through a source, observation, or claim; collection, representation, and reporting; aggregation or interpretation; provenance, freshness, and verification; to a protocol input. A sound design states which properties it needs and which assumptions support them.",
+        },
+        { kind: "distinction", left: "Availability", right: "Authenticity", further: ["Freshness", "Correctness"] },
+        {
+          kind: "paragraph",
+          text: "Availability asks whether required information can be obtained when needed; authenticity, whether it originated from a claimed source or mechanism; freshness, whether it is recent enough; and correctness, whether the external claim is accurate. Keeping these questions separate is what lets a protocol use external information without pretending it can independently observe reality.",
+        },
+        { kind: "terms", terms: ["Oracle Problem", "Data Sources", "Oracle Networks", "Push / Pull Oracles", "Aggregation", "Freshness", "Provenance", "Oracle Security", "Machine-Readable Reality", "Sensors & External Systems", "AI-Interpreted Data", "Real-World Attestations"] },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",

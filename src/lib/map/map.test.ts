@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -7139,6 +7139,108 @@ test("Identity, Accounts & Authority's L0 exposition separates identity, authent
 
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Identifier / Credential / Account", "Permitted Action", "Claimed Actor", "Fee payment policy", "Observed Activity"]) {
+    assert.ok(!titles.has(text), text);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+  const strings: string[] = [];
+  JSON.stringify(body, (_key, value) => (typeof value === "string" && strings.push(value), value));
+  assert.ok(strings.length > 0 && strings.every((text) => !/[<>{}]|className|style=/.test(text)));
+});
+
+test("Oracles & External Reality's L0 exposition keeps protocol verification separate from external truth", () => {
+  const content = resolver.getContentForConcept("oracles-external-reality")!;
+  assert.equal(content.id, "oracles-external-reality-content");
+  assert.ok(content.definition.startsWith("Oracles bring claims, observations, and measurements"));
+  const body = content.body ?? [];
+  assert.deepEqual(body.flatMap((block) => (block.kind === "heading" ? [block.text] : [])), [
+    "A protocol cannot observe external reality directly",
+    "Every oracle begins with a source",
+    "Oracle networks distribute reporting, not truth",
+    "Data can arrive before it is needed or when it is requested",
+    "Many reports still need a rule for becoming one result",
+    "Correct data can become unusable by becoming old",
+    "Knowing where data came from is different from knowing it is true",
+    "Every step creates another failure surface",
+    "Reality must be represented before machines can consume it",
+    "Some observations originate outside software",
+    "Some external information must be interpreted",
+    "Sometimes reality enters as a claim made by an actor",
+  ]);
+  assert.deepEqual(body.flatMap((block) => (block.kind === "flow" ? [block.stages] : [])), [
+    [["External Reality"], ["Observation / Claim"], ["Representation"], ["Oracle Mechanism"], ["Verification"], ["Protocol Input"], ["Protocol Action"]],
+    [["Primary or Secondary Source"], ["Data Collection"], ["Observation or Claim"], ["Report"]],
+    [["Sources"], ["Oracle Nodes"], ["Data Collection"], ["Data Reporting"], ["Oracle Rule"], ["Oracle Result"]],
+    [["Source Information"], [["Push Oracle", "Scheduled or condition-based update"], ["Pull Oracle", "Request-response or on-demand update"]], ["Protocol-Consumable Update"]],
+    [["Reported Values"], ["Aggregation Rules"], ["Aggregated Result"], ["Protocol Input"]],
+    [["Reported Value"], ["Timestamp and Update History"], ["Freshness Policy"], ["Usable", "Stale"]],
+    [["Source"], ["Transformations"], ["Aggregation"], ["Oracle Result"], ["Provenance Verification"]],
+    [["External Reality"], ["Representation"], ["Structured or Semantic Data"], ["Machine-Readable Claim"], ["Reality Interface"]],
+    [["Unstructured Data"], ["Data Extraction"], ["Classification or AI Inference"], ["Interpreted Claim"], ["Protocol Use"]],
+    [["Attester"], ["Claim and Evidence"], ["Attestation"], ["Attestation Verification"], ["Accepted", "Rejected"]],
+  ]);
+  assert.deepEqual(
+    body.flatMap((block) => (block.kind === "distinction" ? [[block.left, block.right, ...(block.further ?? [])]] : [])),
+    [
+      ["Verification", "Truth"],
+      ["Source diversity", "Source independence"],
+      ["Oracle consensus", "Protocol consensus"],
+      ["Aggregation", "Correctness"],
+      ["Freshness", "Correctness"],
+      ["Provenance", "Truth"],
+      ["Authenticity", "Correctness"],
+      ["Machine-readable", "Machine-verifiable"],
+      ["Inference", "Observation"],
+      ["Attestation", "Fact"],
+      ["Availability", "Authenticity", "Freshness", "Correctness"],
+    ],
+  );
+  const prose = body.flatMap((block) => (block.kind === "paragraph" ? [block.text] : [])).join(" ");
+  for (const phrase of [
+    "Verification is not truth about the external claim",
+    "Source diversity can reduce dependence on one source, but it is not source independence",
+    "Oracle consensus is the process",
+    "Aggregation is not correctness",
+    "Freshness is not correctness",
+    "Provenance is not truth",
+    "Authenticity is not correctness",
+    "Trusted hardware does not eliminate the oracle problem",
+    "Machine-readable is not machine-verifiable",
+    "This is interpretation of input data, not direct observation of truth",
+    "Attestation is not fact",
+  ]) {
+    assert.ok(prose.includes(phrase), phrase);
+  }
+
+  // Each strip is its L1 topic's live L2 vocabulary; the final strip names the L1 topics.
+  const label = (placementId: string) => {
+    const placement = resolver.getPlacement(placementId)!;
+    return placement.contextualLabel ?? resolver.getConcept(placement.conceptId)!.title;
+  };
+  const lower = (terms: readonly string[]) => terms.map((term) => term.toLowerCase());
+  const strips = body.flatMap((block) => (block.kind === "terms" ? [block.terms] : []));
+  const l1 = resolver.getChildren("oracles-external-reality").map((placement) => placement.id);
+  assert.equal(l1.length, 12);
+  assert.equal(strips.length, l1.length + 1);
+  l1.forEach((id, index) => assert.deepEqual(lower(strips[index]), lower(resolver.getChildren(id).map((placement) => label(placement.id))), id));
+  assert.deepEqual(strips.at(-1), l1.map(label));
+
+  // Reused concepts retain their preferred homes; the L0 adds no ontology for diagram labels.
+  for (const [conceptId, preferred] of [
+    ["trust-assumptions", "trust-assumptions"],
+    ["consensus", "consensus"],
+    ["provenance", "provenance"],
+    ["authenticity", "authenticity"],
+    ["collusion", "collusion"],
+    ["data-schemas", "data-schemas"],
+    ["trusted-hardware", "trusted-hardware"],
+    ["ai-inference", "ai-inference-in-ai-intelligent-systems"],
+    ["evidence", "evidence"],
+    ["revocation", "revocation"],
+  ]) {
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
+  }
+  const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
+  for (const text of ["Oracle Rule", "Oracle Result", "Freshness Policy", "Interpreted Claim", "Protocol-Consumable Update"]) {
     assert.ok(!titles.has(text), text);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
