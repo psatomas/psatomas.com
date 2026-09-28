@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
