@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "protocol-design-lifecycle", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5461,6 +5461,24 @@ test("Protocol Design & Lifecycle reuses existing concepts without moving their 
   }
   const ids = [...LIFECYCLE_LAYER, ...LIFECYCLE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Protocol Design & Lifecycle owns a bounded L0 exposition with live taxonomy strips", () => {
+  const content = resolver.getContentForConcept("protocol-design-lifecycle")!;
+  assert.equal(content.id, "protocol-design-lifecycle-content");
+  assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "protocol-design-lifecycle").length, 1);
+  const body = content.body ?? [];
+  assert.deepEqual(body.filter((b) => b.kind === "heading").map((b) => b.text), ["Requirements articulate intended needs and constraints", "Goals and constraints delimit a design space", "Specification represents intended protocol behavior", "Modeling studies representations rather than deployed behavior", "Prototyping and simulation provide bounded evidence", "Implementation realizes scoped designs in code", "Pre-launch validation combines distinct assurance activities", "Deployment and launch establish distinct operational transitions", "Parameterization manages bounded operational choices", "Operations sustain a protocol under observed conditions", "Change management coordinates defined protocol changes", "Versioning and compatibility describe transition constraints", "Evolution exposes long-term coordination and maintenance choices", "Retirement manages bounded support and transition"]);
+  const strips = body.flatMap((b) => b.kind === "terms" ? [b.terms] : []);
+  assert.equal(LIFECYCLE_L2.length, 81);
+  assert.deepEqual(strips.slice(0, -1), LIFECYCLE_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
+  assert.deepEqual(strips.at(-1), LIFECYCLE_LAYER.map(([, , label]) => label));
+  assert.deepEqual(strips.map((s) => s.length), [6,6,5,6,6,6,6,6,6,6,6,6,5,5,14]);
+  const flows = body.filter((b) => b.kind === "flow");
+  assert.equal(flows.length, 1);
+  assert.equal(flows[0]?.label, "A conceptual protocol lifecycle");
+  for (const [, id] of [...LIFECYCLE_LAYER, ...LIFECYCLE_L2]) assert.equal(resolver.getContentForConcept(id), undefined, id);
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("AI & Intelligent Systems has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
