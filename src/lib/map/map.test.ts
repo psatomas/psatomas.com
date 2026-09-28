@@ -5353,7 +5353,9 @@ test("Protocol Architecture owns a bounded L0 exposition with live taxonomy stri
   assert.deepEqual(strips.slice(0, -1), ARCHITECTURE_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
   assert.deepEqual(strips.at(-1), ARCHITECTURE_LAYER.map(([, , label]) => label));
   assert.deepEqual(strips.map((s) => s.length), [5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 12]);
-  assert.equal(body.filter((b) => b.kind === "flow").length, 1);
+  const flows = body.filter((b) => b.kind === "flow");
+  assert.equal(flows.length, 1);
+  assert.equal(flows[0]?.label, "A conceptual architectural decomposition");
   const prose = body.filter((b) => b.kind === "paragraph").map((b) => b.text).join(" ");
   for (const phrase of ["Architecture is a structural model, not a taxonomy, implementation", "protocol minimalism", "State Ownership is not asset or organizational ownership", "scheduling is not transaction ordering or sequencing", "proxy patterns are not proxy upgrade risks", "Data Architecture and Data Placement are not Data Availability", "trust minimization is not absence of trust", "Composability is not interoperability", "immutability does not prevent a wider system from evolving"]) assert.ok(prose.includes(phrase), phrase);
   for (const [id, preferred] of [["client-diversity", "client-diversity"], ["technical-debt", "technical-debt"], ["cross-chain-composability", "cross-chain-composability"], ["immutability", "immutability"]]) assert.equal(resolver.getPreferredPlacementForConcept(id)?.id, preferred, id);
