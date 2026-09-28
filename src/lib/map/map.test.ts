@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "interoperability-abstraction", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5015,6 +5015,56 @@ test("Interoperability & Abstraction reuses existing concepts without moving the
   }
   const ids = [...INTEROP_LAYER, ...INTEROP_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Interoperability & Abstraction owns a conditional L0 exposition with live taxonomy strips", () => {
+  const content = resolver.getContentForConcept("interoperability-abstraction")!;
+  assert.equal(content.id, "interoperability-abstraction-content");
+  assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "interoperability-abstraction").length, 1);
+  assert.ok(CONTENT_CONCEPTS.includes("interoperability-abstraction"));
+  const body = content.body ?? [];
+  const headings = body.filter((block) => block.kind === "heading").map((block) => block.text);
+  assert.deepEqual(headings, [
+    "Interoperability models compose systems under different trust relationships",
+    "Messaging separates delivery from ordering, authentication, and execution",
+    "Bridges connect systems through mechanism-specific trust boundaries",
+    "Asset bridging represents claims under issuance and redemption assumptions",
+    "Cross-chain state depends on what is proven and when",
+    "Cross-chain verification evaluates defined claims under assumptions",
+    "Interoperability protocols define interfaces rather than universal outcomes",
+    "Cross-chain execution composes actions without guaranteeing their result",
+    "Cross-chain settlement addresses inter-domain obligations under timing assumptions",
+    "Cross-chain atomicity is conditional across failure domains",
+    "Chain abstraction changes interface and routing without collapsing systems",
+    "Abstraction layers simplify selected views under mechanism constraints",
+    "Interoperability security protects composition-specific attack surfaces",
+    "Trust and failure modes reveal dependencies rather than eliminate them",
+  ]);
+  const strips = body.flatMap((block) => block.kind === "terms" ? [block.terms] : []);
+  assert.equal(strips.length, 15);
+  assert.equal(INTEROP_L2.length, 82);
+  assert.deepEqual(strips.slice(0, -1), INTEROP_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
+  assert.deepEqual(strips.at(-1), INTEROP_LAYER.map(([, , label]) => label));
+  assert.deepEqual(strips.map((terms) => terms.length), [6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 5, 6, 6, 14]);
+  assert.equal(body.filter((block) => block.kind === "flow").length, 1);
+  const prose = body.filter((block) => block.kind === "paragraph").map((block) => block.text).join(" ");
+  for (const phrase of [
+    "delivery does not itself establish execution, verification, settlement, availability, or finality.",
+    "Verification is not availability, finality, or settlement; Finality is reused here with its canonical exposition in Consensus",
+    "execution does not itself establish atomicity or settlement.",
+    "A pause or isolation mechanism can contain selected effects without guaranteeing recovery, reversal, safety, or continued liveness.",
+  ]) assert.ok(prose.includes(phrase), phrase);
+  assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "finality").map((entry) => entry.id).join(), "finality-content");
+  assert.equal(resolver.getPreferredPlacementForConcept("finality")?.id, "finality-in-consensus");
+  for (const [conceptId, placementId, preferredId] of [
+    ["cross-domain-execution", "cross-domain-execution-in-interoperability-abstraction", "cross-domain-execution"],
+    ["cross-domain-settlement", "cross-domain-settlement-in-interoperability-abstraction", "cross-domain-settlement"],
+    ["cross-domain-atomicity", "cross-domain-atomicity-in-interoperability-abstraction", "cross-domain-atomicity"],
+  ]) {
+    assert.equal(resolver.getPlacement(placementId)?.conceptId, conceptId);
+    assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferredId);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Security, Correctness & Resilience has exactly its twenty L1 topics and their L2 placements, in order, and nothing deeper", () => {
