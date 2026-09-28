@@ -46,7 +46,7 @@ const ROW_HOVER =
 // explorer root, so the margin is pure CSS.
 const REVEAL_MARGIN = "scroll-mt-[calc(var(--map-sticky-top)+var(--map-context-h)+24px)]";
 const NESTED_LABEL_LAYOUT =
-  "relative pr-5 pl-8 before:pointer-events-none before:absolute before:inset-y-0 before:left-5 before:w-px before:bg-border after:pointer-events-none after:absolute after:top-1/2 after:left-5 after:h-px after:w-1.5 after:bg-border sm:pr-6 sm:pl-9 sm:before:left-6 sm:after:left-6";
+  "relative pr-3 pl-8 before:pointer-events-none before:absolute before:inset-y-0 before:left-5 before:w-px before:bg-border after:pointer-events-none after:absolute after:top-1/2 after:left-5 after:h-px after:w-1.5 after:bg-border sm:pr-6 sm:pl-9 sm:before:left-6 sm:after:left-6";
 
 /** A request to bring a placement's row into view; the nonce makes each request distinct. */
 type RevealRequest = { placementId: string; behavior: "auto" | "smooth"; nonce: number };
@@ -242,7 +242,7 @@ export function RecursiveMapExplorer({ view }: { view: MapExplorerView }) {
         className={`group flex min-w-0 flex-1 items-stretch text-left ${CONTROL_FOCUS}`}
       >
         <span
-          className={`min-w-0 flex-1 [overflow-wrap:anywhere] ${row.depth >= 2 ? NESTED_LABEL_LAYOUT : "px-5 sm:px-6"} ${
+          className={`min-w-0 flex-1 [overflow-wrap:normal] ${row.depth >= 2 ? NESTED_LABEL_LAYOUT : "px-5 sm:px-6"} ${
             region ? "py-4" : "py-3.5"
           }`}
         >

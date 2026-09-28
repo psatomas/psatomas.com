@@ -78,6 +78,7 @@ const l2LabelCases = [
   { id: "economic-guarantees", label: "Economic Guarantees", parentId: "cryptoeconomic-security", parent: "Cryptoeconomic Security" },
   { id: "rules", label: "Rules", parentId: "protocols", parent: "Protocols" },
   { id: "validator-selection", label: "Validator Selection", parentId: "validators", parent: "Validators" },
+  { id: "undercollateralization", label: "Undercollateralization", parentId: "collateral", parent: "Collateral", requiresWholeWord: true },
 ];
 
 export const coverageSections: Section[] = [
@@ -87,7 +88,8 @@ export const coverageSections: Section[] = [
     async run({ browser, base, check }) {
       for (const width of WIDTHS) {
         const page = await browser.newPage({ viewport: { width, height: 900 } });
-        for (const { id, label, parentId, parent } of l2LabelCases) {
+        for (const l2LabelCase of l2LabelCases) {
+          const { id, label, parentId, parent } = l2LabelCase;
           await open(page, base, id);
           const row = page.locator(`[data-placement-id="${id}"]`);
           const control = row.locator("[data-row-control]");
@@ -104,22 +106,30 @@ export const coverageSections: Section[] = [
             new URL(page.url()).pathname + new URL(page.url()).search === `/map?context=${id}` && (await control.getAttribute("aria-current")) === "true",
             `@${width} ${id}: placement URL and current context are unchanged`,
           );
-          const layout = await page.evaluate(({ id, parentId }) => {
+          const layout = await page.evaluate(({ id, parentId, requiresWholeWord }) => {
             const selector = (placementId: string) => `[data-placement-id="${placementId}"]`;
             const row = document.querySelector(selector(id))!.getBoundingClientRect();
             const parent = document.querySelector(selector(parentId))!.getBoundingClientRect();
+            const label = document.querySelector<HTMLElement>(`${selector(id)} [data-row-control] > span > span:last-child`)!;
             const labelLeft = (placementId: string) =>
               document.querySelector<HTMLElement>(`${selector(placementId)} [data-row-control] > span > span:last-child`)!.getBoundingClientRect().left;
+            const range = document.createRange();
+            range.selectNodeContents(label);
+            const lineTops = new Set([...range.getClientRects()].filter((rect) => rect.width > 0.5).map((rect) => Math.round(rect.top)));
             return {
               overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
               parentPrecedesChild: parent.top < row.top,
               childLabelInset: labelLeft(id) > labelLeft(parentId),
+              wholeWordIntact: !requiresWholeWord || lineTops.size === 1,
             };
-          }, { id, parentId });
+          }, { id, parentId, requiresWholeWord: "requiresWholeWord" in l2LabelCase && l2LabelCase.requiresWholeWord });
           check(
             layout.overflow <= 0 && layout.parentPrecedesChild && layout.childLabelInset,
             `@${width} ${id}: no overflow; parent precedes child; L2 label is inset`,
           );
+          if ("requiresWholeWord" in l2LabelCase && l2LabelCase.requiresWholeWord) {
+            check(layout.wholeWordIntact, `@${width} ${id}: label does not break mid-word`);
+          }
         }
         await page.close();
       }
