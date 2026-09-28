@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5917,6 +5917,28 @@ test("Autonomous Organizations has exactly its fifteen L1 topics and their L2 pl
   assert.equal(ORGANIZATIONS_L2.length, 88);
   assert.deepEqual(resolver.getAncestors("treasury-custody").map((placement) => placement.id), ["autonomous-organizations", "treasuries-in-autonomous-organizations"]);
   assert.deepEqual(resolver.getAncestors("voting-in-organizational-governance").map((placement) => placement.id), ["autonomous-organizations", "organizational-governance"]);
+});
+
+test("Autonomous Organizations owns one L0 exposition with fifteen live contextual sections", () => {
+  const content = resolver.getContentForConcept("autonomous-organizations");
+  assert.equal(content?.id, "autonomous-organizations-content");
+  assert.equal(resolver.getPlacement("autonomous-organizations")?.conceptId, "autonomous-organizations");
+  assert.deepEqual(
+    (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
+    ["Organizations establish a bounded organizational context", "Organizational membership defines participation under criteria", "Roles and authority allocate bounded organizational responsibility", "Organizational structure arranges relationships without guaranteeing coordination", "Organizational governance forms decisions under a mechanism", "Organizational decision-making specifies participants and decision paths", "Organizational policies guide and constrain organizational behavior", "Treasuries steward organizational financial resources", "Organizational budgeting commits resources under defined processes", "Organizational workflows coordinate work without becoming execution planning", "Autonomous operations apply bounded organizational autonomy", "Accountability and auditability preserve distinct organizational evidence", "Disputes and emergency controls have bounded organizational semantics", "Organizational lifecycle changes organizational form over time", "Inter-organizational coordination relates organizations without unifying them"],
+  );
+  const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.equal(strips.length, 16);
+  assert.deepEqual(strips.at(-1), ORGANIZATIONS_LAYER.map(([, , title]) => title));
+  assert.deepEqual(strips.slice(0, -1).map((terms) => terms.length), [5, ...Array(9).fill(6), 5, ...Array(4).fill(6)]);
+  assert.deepEqual(strips.slice(0, -1).flat(), ORGANIZATIONS_TREE.flatMap(([, children]) => children.map(([, , title]) => title)));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "A conceptual organizational progression"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "A budget can guide organizational work without completing it"));
+  const distinctions = (content?.body ?? []).filter((block) => block.kind === "distinction");
+  assert.ok(distinctions.some((block) => block.left === "Organizational Membership" && block.right === "Coalition Membership"));
+  assert.ok(distinctions.some((block) => block.left === "Treasury Custody" && block.right === "Key Management"));
+  assert.ok(distinctions.some((block) => block.left === "Auditability" && block.right === "Audit Trail"));
+  assert.ok(distinctions.some((block) => block.left === "Cross-Organizational Governance" && block.right === "Organizational Governance"));
 });
 
 test("Autonomous Organizations reuses existing concepts where the meaning is the same and keeps organization-level concepts distinct", () => {
