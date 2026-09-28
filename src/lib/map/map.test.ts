@@ -4899,6 +4899,24 @@ test("Scaling & Modular Systems reuses existing concepts and keeps scaling-speci
   assert.equal(new Set(ids).size, ids.length);
 });
 
+test("Scaling & Modular Systems owns a conditional L0 exposition with live taxonomy strips", () => {
+  const content = resolver.getContentForConcept("scaling-modular-systems")!;
+  assert.equal(content.id, "scaling-modular-systems-content");
+  assert.ok(CONTENT_CONCEPTS.includes("scaling-modular-systems"));
+  const body = content.body ?? [];
+  assert.equal(body.filter((b) => b.kind === "heading").length, 14);
+  const strips = body.flatMap((b) => b.kind === "terms" ? [b.terms] : []);
+  assert.equal(strips.length, 15);
+  assert.equal(SCALING_L2.length, 80);
+  assert.deepEqual(strips.map((s) => s.length), [6,6,6,6,6,6,6,6,6,4,6,5,5,6,14]);
+  assert.equal(body.filter((b) => b.kind === "flow").length, 1);
+  const prose = body.filter((b) => b.kind === "paragraph").map((b) => b.text).join(" ");
+  for (const phrase of ["This is a conceptual relationship, not a universal pipeline.", "Rollup State is not base-layer state; its relationship to another layer depends on the rollup architecture.", "Proof generation does not itself establish system availability or finality.", "Finality is reused rather than redefined here."]) assert.ok(prose.includes(phrase), phrase);
+  assert.equal(mapKnowledge.content.filter((c) => c.conceptId === "finality").map((c) => c.id).join(), "finality-content");
+  assert.equal(resolver.getPreferredPlacementForConcept("finality")?.id, "finality-in-consensus");
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
+});
+
 test("Interoperability & Abstraction has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
   assert.deepEqual(
     resolver.getChildren("interoperability-abstraction").map((placement) => [placement.id, placement.conceptId, placementLabel(placement.id)]),
