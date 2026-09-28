@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "interoperability-abstraction", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "interoperability-abstraction", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6280,6 +6280,18 @@ test("Autonomous Economy has exactly its seventeen L1 topics and their L2 placem
   assert.equal(ECONOMY_L2.length, 102);
   assert.deepEqual(resolver.getAncestors("contagion").map((placement) => placement.id), ["autonomous-economy", "economic-stability"]);
   assert.deepEqual(resolver.getAncestors("economic-agency").map((placement) => placement.id), ["autonomous-economy", "autonomous-economic-actors"]);
+});
+
+test("Autonomous Economy owns one L0 exposition with seventeen live contextual sections", () => {
+  const content = resolver.getContentForConcept("autonomous-economy");
+  assert.equal(content?.id, "autonomous-economy-content");
+  const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.equal((content?.body ?? []).filter((block) => block.kind === "heading").length, 17);
+  assert.deepEqual(strips.slice(0, -1).map((terms) => terms.length), [6, 6, 6, 6, 6, 7, 6, 5, ...Array(9).fill(6)]);
+  assert.deepEqual(strips.at(-1), ECONOMY_LAYER.map(([, , title]) => title));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "A conceptual autonomous-economy progression"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Capital Flow" && block.right === "Payment Flow"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "distinction" && block.left === "Economic Resilience" && block.right === "Execution Recovery"));
 });
 
 test("Autonomous Economy places Economic Agency, reuses existing concepts at their homes and keeps economy-level concepts distinct", () => {
