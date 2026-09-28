@@ -5468,7 +5468,7 @@ test("Protocol Design & Lifecycle owns a bounded L0 exposition with live taxonom
   assert.equal(content.id, "protocol-design-lifecycle-content");
   assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "protocol-design-lifecycle").length, 1);
   const body = content.body ?? [];
-  assert.equal(body.filter((b) => b.kind === "heading").length, 14);
+  assert.deepEqual(body.filter((b) => b.kind === "heading").map((b) => b.text), ["Requirements articulate intended needs and constraints", "Goals and constraints delimit a design space", "Specification represents intended protocol behavior", "Modeling studies representations rather than deployed behavior", "Prototyping and simulation provide bounded evidence", "Implementation realizes scoped designs in code", "Pre-launch validation combines distinct assurance activities", "Deployment and launch establish distinct operational transitions", "Parameterization manages bounded operational choices", "Operations sustain a protocol under observed conditions", "Change management coordinates defined protocol changes", "Versioning and compatibility describe transition constraints", "Evolution exposes long-term coordination and maintenance choices", "Retirement manages bounded support and transition"]);
   const strips = body.flatMap((b) => b.kind === "terms" ? [b.terms] : []);
   assert.equal(LIFECYCLE_L2.length, 81);
   assert.deepEqual(strips.slice(0, -1), LIFECYCLE_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
