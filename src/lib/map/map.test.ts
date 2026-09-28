@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "protocol-design-lifecycle", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "protocol-design-lifecycle", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6605,13 +6605,74 @@ test("Frontier Systems reuses established concepts at their homes and keeps fron
   }
   // Every other topic is a new concept placed once, without exposition.
   for (const [id, conceptId] of [...FRONTIER_LAYER, ...FRONTIER_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    if (conceptId !== "frontier-systems") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
   assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
   const ids = [...FRONTIER_LAYER, ...FRONTIER_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Frontier Systems owns one conditional L0 exposition with live taxonomy strips", () => {
+  const content = resolver.getContentForConcept("frontier-systems")!;
+  assert.equal(content.id, "frontier-systems-content");
+  assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "frontier-systems").length, 1);
+  const body = content.body ?? [];
+  const headings = body.filter((block) => block.kind === "heading").map((block) => block.text);
+  assert.deepEqual(headings, [
+    "Machine-native ownership separates machine roles from recognized ownership",
+    "Autonomous legal entities require legal recognition beyond technical autonomy",
+    "Machine-native monetary systems distinguish issuance, acceptance, and authority",
+    "Programmable law distinguishes executable rules from legal authority",
+    "Machine constitutions constrain systems without establishing legitimacy",
+    "Synthetic institutions extend institutional forms without guaranteeing compatibility",
+    "AI-mediated governance can assist decisions without supplying legitimate authority",
+    "Digital polities distinguish technical participation from jurisdiction and sovereignty",
+    "Agent societies extend coordination into social arrangements",
+    "Machine-mediated commons separate funding from stewardship and provision",
+    "Recursive autonomy compounds delegation and limits rather than authority without bound",
+    "Self-modifying systems require safeguards without promising improvement",
+    "Protocol ecologies describe selection and interaction without intentional coordination",
+    "Autonomous infrastructure coordinates provision and maintenance under bounded claims",
+    "Cyber-physical autonomy crosses software and real-world safety boundaries",
+    "Autonomous science systems extend research workflows without establishing knowledge",
+  ]);
+  const strips = body.filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.equal(FRONTIER_L2.length, 89);
+  assert.deepEqual(strips.slice(0, -1), FRONTIER_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
+  assert.deepEqual(strips.map((terms) => terms.length), [5, 5, 6, 6, 5, 6, 6, 6, 6, 5, 5, 6, 5, 5, 6, 6, 16]);
+  assert.deepEqual(strips.at(-1), FRONTIER_LAYER.map(([, , label]) => label));
+  const flows = body.filter((block) => block.kind === "flow");
+  assert.equal(flows.length, 2);
+  assert.deepEqual(flows.map((flow) => flow.label), [
+    "A conditional frontier-systems composition",
+    "A conditional autonomy-evolution relationship",
+  ]);
+  const prose = body.filter((block) => block.kind === "paragraph").map((block) => block.text).join(" ");
+  for (const phrase of [
+    "Ownership, custody, control, authority, and beneficial ownership answer different questions",
+    "Technical autonomy does not create legal capacity",
+    "Machine-Native Money is not Domain 26 Machine Money",
+    "machine execution does not automatically create legally enforceable law",
+    "machine enforcement does not establish legitimacy",
+    "Mediation does not guarantee legitimate authority",
+    "Nested autonomy does not establish unlimited recursive authority",
+    "verification of a change does not prove global safety or correctness",
+    "Verification does not itself guarantee availability, correctness, or safety",
+    "experimentation does not itself establish scientific validity",
+  ]) assert.ok(prose.includes(phrase), phrase);
+  for (const [conceptId, preferredId] of [
+    ["economic-agency", "economic-agency"], ["legal-wrappers", "legal-wrappers"], ["monetary-systems", "monetary-systems"],
+    ["constitutions", "constitutions"], ["institutions", "institutions"], ["human-oversight", "human-oversight"],
+    ["exit-rights", "exit-rights"], ["collective-decision-making", "collective-decision-making"],
+    ["public-goods-funding", "public-goods-funding"], ["corrigibility", "corrigibility"],
+    ["verifiable-agents", "verifiable-agents"], ["cyber-physical-interfaces", "cyber-physical-interfaces"],
+  ]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferredId, conceptId);
+  for (const [, conceptId] of [...FRONTIER_LAYER, ...FRONTIER_L2]) {
+    if (conceptId !== "frontier-systems") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Frontier Systems leaves 20–26 unchanged", () => {
