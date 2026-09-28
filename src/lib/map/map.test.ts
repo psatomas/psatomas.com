@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "interoperability-abstraction", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5191,6 +5191,71 @@ test("Security, Correctness & Resilience reuses existing concepts without moving
   }
   const ids = [...SECURITY_LAYER, ...SECURITY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Security, Correctness & Resilience owns a bounded L0 exposition with live taxonomy strips", () => {
+  const content = resolver.getContentForConcept("security-correctness-resilience")!;
+  assert.equal(content.id, "security-correctness-resilience-content");
+  assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "security-correctness-resilience").length, 1);
+  assert.ok(CONTENT_CONCEPTS.includes("security-correctness-resilience"));
+  const body = content.body ?? [];
+  const headings = body.filter((block) => block.kind === "heading").map((block) => block.text);
+  assert.deepEqual(headings, [
+    "Security models state adversaries, boundaries, and assumptions",
+    "Security properties constrain different failure and adversary outcomes",
+    "Threat modeling turns a system context into scoped requirements",
+    "Attack classes describe adversarial modes, not weaknesses themselves",
+    "Vulnerabilities are weaknesses; exploits make use of them",
+    "Smart contract security addresses execution at contract boundaries",
+    "Protocol security spans interactions among system layers",
+    "Correctness is conformance to stated behavior and properties",
+    "Formal methods reason about explicitly represented properties",
+    "Testing samples behavior rather than proving every execution",
+    "Auditing evaluates scoped work and produces findings to address",
+    "Access control separates identity, permission, and authority",
+    "Key security protects capabilities bound to cryptographic material",
+    "Operational security protects systems in deployment and operation",
+    "Security monitoring observes signals without resolving incidents itself",
+    "Incident response bounds harm through coordinated actions",
+    "Resilience continues bounded operation through disruption",
+    "Security economics makes deterrence and dependency explicit",
+    "Upgrade security constrains change under exceptional authority",
+    "Domain-specific security remains specialized at its relevant boundary",
+  ]);
+  const strips = body.flatMap((block) => block.kind === "terms" ? [block.terms] : []);
+  assert.equal(SECURITY_L2.length, 119);
+  assert.equal(strips.length, 21);
+  assert.deepEqual(strips.slice(0, -1), SECURITY_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
+  assert.deepEqual(strips.at(-1), SECURITY_LAYER.map(([, , label]) => label));
+  assert.deepEqual(strips.map((terms) => terms.length), [6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 6, 20]);
+  assert.equal(body.filter((block) => block.kind === "flow").length, 3);
+  const prose = body.filter((block) => block.kind === "paragraph").map((block) => block.text).join(" ");
+  for (const phrase of [
+    "Security assumptions are not security guarantees",
+    "Availability is not liveness, and censorship resistance is not generic availability",
+    "A vulnerability is a weakness",
+    "Smart contract security is not protocol security",
+    "Formal verification does not imply absence of unspecified faults",
+    "testing does not prove universal correctness or security",
+    "an audit does not itself establish security",
+    "Monitoring or detection does not guarantee containment, attribution, recovery, or prevention",
+    "Incident Response is reused here in its security context; it is not Resilience",
+    "Redundancy does not guarantee availability",
+    "attack cost or cost of corruption alone does not establish attack prevention",
+    "emergency upgrades are not inherently safe",
+  ]) assert.ok(prose.includes(phrase), phrase);
+  assert.equal(resolver.getPlacement("incident-response-in-security-correctness-resilience")?.conceptId, "incident-response");
+  assert.equal(resolver.getPreferredPlacementForConcept("incident-response")?.id, "incident-response");
+  for (const [conceptId, preferredId] of [
+    ["censorship-resistance", "censorship-resistance-in-consensus-ordering"],
+    ["oracle-security", "oracle-security"], ["governance-attacks", "governance-attacks"],
+    ["rollup-security", "rollup-security"], ["bridge-security", "bridge-security"],
+    ["mev-protection", "mev-protection"], ["wallet-security", "wallet-security"],
+  ]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferredId, conceptId);
+  for (const [, conceptId] of [...SECURITY_LAYER, ...SECURITY_L2]) {
+    if (conceptId !== "security-correctness-resilience") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+  }
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Protocol Architecture has exactly its twelve L1 topics and their L2 placements, in order, and nothing deeper", () => {
