@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -6080,6 +6080,29 @@ test("Autonomous Protocols has exactly its seventeen L1 topics and their L2 plac
   assert.equal(PROTOCOLS_L2.length, 99);
   assert.deepEqual(resolver.getAncestors("pid-control").map((placement) => placement.id), ["autonomous-protocols", "control-loops"]);
   assert.deepEqual(resolver.getAncestors("keepers-in-protocol-maintenance").map((placement) => placement.id), ["autonomous-protocols", "protocol-maintenance"]);
+});
+
+test("Autonomous Protocols owns one L0 exposition with seventeen live contextual sections", () => {
+  const content = resolver.getContentForConcept("autonomous-protocols");
+  assert.equal(content?.id, "autonomous-protocols-content");
+  assert.equal(resolver.getPlacement("autonomous-protocols")?.conceptId, "autonomous-protocols");
+  assert.deepEqual(
+    (content?.body ?? []).filter((block) => block.kind === "heading").map((block) => block.text),
+    ["Protocol autonomy operates within defined bounds", "Protocol objectives express selected operating targets", "Protocol monitoring separates observation from interpretation", "Control loops apply feedback under model-dependent conditions", "Adaptive parameters adjust within specified mechanisms and limits", "Protocol policies constrain autonomous operation", "Protocol agents perform bounded protocol-adjacent work", "Protocol maintenance performs defined operational work", "Protocol adaptation changes operation without becoming an upgrade", "Self-healing addresses faults without guaranteeing restoration", "Autonomous security responses bound exposure under conditions", "Protocol-owned resources remain distinct from treasuries", "Autonomous liquidity management adjusts liquidity positions under strategy", "Autonomous risk management constrains selected exposure", "Governance and human override bound exceptional protocol action", "Verifiable autonomous operation establishes bounded claims", "Protocol lifecycle automation changes protocol operation over time"],
+  );
+  const strips = (content?.body ?? []).filter((block) => block.kind === "terms").map((block) => block.terms);
+  assert.deepEqual(strips.at(-1), PROTOCOLS_LAYER.map(([, , title]) => title));
+  assert.deepEqual(strips.slice(0, -1).map((terms) => terms.length), [5, 5, ...Array(4).fill(6), 5, ...Array(10).fill(6)]);
+  assert.deepEqual(strips.slice(0, -1).flat(), PROTOCOLS_TREE.flatMap(([, children]) => children.map(([, conceptId]) => resolver.getConcept(conceptId)?.title)));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "A conceptual autonomous-protocol operation cycle"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "flow" && block.label === "A conceptual security-response progression"));
+  const distinctions = (content?.body ?? []).filter((block) => block.kind === "distinction");
+  assert.ok(distinctions.some((block) => block.left === "Policy Evaluation" && block.right === "Policy Enforcement"));
+  assert.ok(distinctions.some((block) => block.left === "Circuit Breaker" && block.right === "Kill Switch"));
+  assert.ok(distinctions.some((block) => block.left === "Verifiable Execution" && block.right === "Correct Execution"));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "terms" && block.terms.includes("Invariants") && block.terms.includes("Authority Escalation") === false));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "terms" && block.terms.includes("Authority Escalation")));
+  assert.ok((content?.body ?? []).some((block) => block.kind === "terms" && block.terms.includes("Containment")));
 });
 
 test("Autonomous Protocols reuses existing concepts at their homes and keeps protocol autonomy distinct", () => {
