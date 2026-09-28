@@ -6643,7 +6643,12 @@ test("Frontier Systems owns one conditional L0 exposition with live taxonomy str
   assert.deepEqual(strips.slice(0, -1), FRONTIER_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
   assert.deepEqual(strips.map((terms) => terms.length), [5, 5, 6, 6, 5, 6, 6, 6, 6, 5, 5, 6, 5, 5, 6, 6, 16]);
   assert.deepEqual(strips.at(-1), FRONTIER_LAYER.map(([, , label]) => label));
-  assert.equal(body.filter((block) => block.kind === "flow").length, 2);
+  const flows = body.filter((block) => block.kind === "flow");
+  assert.equal(flows.length, 2);
+  assert.deepEqual(flows.map((flow) => flow.label), [
+    "A conditional frontier-systems composition",
+    "A conditional autonomy-evolution relationship",
+  ]);
   const prose = body.filter((block) => block.kind === "paragraph").map((block) => block.text).join(" ");
   for (const phrase of [
     "Ownership, custody, control, authority, and beneficial ownership answer different questions",
