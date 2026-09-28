@@ -13,7 +13,7 @@ const resolver = createMapResolver(mapKnowledge);
 // Concepts that own canonical exposition, in record order: L0 introductions and
 // the Phase 1 fixture's content. The ontology tests assert nothing else gains
 // content by accident.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
+const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "finality", "agent-identity"];
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -5338,6 +5338,27 @@ test("Protocol Architecture reuses existing concepts without moving their prefer
   }
   const ids = [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("Protocol Architecture owns a bounded L0 exposition with live taxonomy strips", () => {
+  const content = resolver.getContentForConcept("protocol-architecture")!;
+  assert.equal(content.id, "protocol-architecture-content");
+  assert.equal(mapKnowledge.content.filter((entry) => entry.conceptId === "protocol-architecture").length, 1);
+  const body = content.body ?? [];
+  assert.deepEqual(body.filter((b) => b.kind === "heading").map((b) => b.text), [
+    "Architectural principles organize responsibilities and constraints", "Protocol layers assign responsibilities without becoming scaling layers", "Components and interfaces bound collaboration inside a protocol", "State architecture locates responsibility for state", "Execution architecture organizes work without defining execution semantics", "Smart contract architecture composes contracts into systems", "Client architecture separates operational implementations", "Network architecture structures communication relationships", "Data architecture arranges information without making it available", "Trust architecture makes dependencies explicit", "Composability connects capabilities under interface and failure constraints", "Architectural tradeoffs constrain change and complexity",
+  ]);
+  const strips = body.flatMap((b) => b.kind === "terms" ? [b.terms] : []);
+  assert.equal(ARCHITECTURE_L2.length, 68);
+  assert.deepEqual(strips.slice(0, -1), ARCHITECTURE_TREE.map(([, terms]) => terms.map(([, , label]) => label)));
+  assert.deepEqual(strips.at(-1), ARCHITECTURE_LAYER.map(([, , label]) => label));
+  assert.deepEqual(strips.map((s) => s.length), [5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 12]);
+  assert.equal(body.filter((b) => b.kind === "flow").length, 1);
+  const prose = body.filter((b) => b.kind === "paragraph").map((b) => b.text).join(" ");
+  for (const phrase of ["Architecture is a structural model, not a taxonomy, implementation", "protocol minimalism", "State Ownership is not asset or organizational ownership", "scheduling is not transaction ordering or sequencing", "proxy patterns are not proxy upgrade risks", "Data Architecture and Data Placement are not Data Availability", "trust minimization is not absence of trust", "Composability is not interoperability", "immutability does not prevent a wider system from evolving"]) assert.ok(prose.includes(phrase), phrase);
+  for (const [id, preferred] of [["client-diversity", "client-diversity"], ["technical-debt", "technical-debt"], ["cross-chain-composability", "cross-chain-composability"], ["immutability", "immutability"]]) assert.equal(resolver.getPreferredPlacementForConcept(id)?.id, preferred, id);
+  for (const [, id] of [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]) assert.equal(resolver.getContentForConcept(id), undefined, id);
+  assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
 test("Protocol Design & Lifecycle has exactly its fourteen L1 topics and their L2 placements, in order, and nothing deeper", () => {
