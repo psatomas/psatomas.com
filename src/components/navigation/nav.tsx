@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 // Primary IA: Home / About (who I am) / MAP (the knowledge environment) /
-// Systems (what I build) / Research (how I think) / Lab (what I explore).
+// Research (how I think) / Lab (what I explore) / Systems (what I build).
 // GitHub deliberately isn't here — it's external professional proof, not one
 // of the site's own sections, and it already has an equal-weight home in the
 // footer alongside LinkedIn, X, and email (see src/app/layout.tsx). Never add
@@ -14,9 +14,9 @@ const navItems: Array<{ label: string; href: string }> = [
   { label: "HOME", href: "/" },
   { label: "ABOUT", href: "/about" },
   { label: "MAP", href: "/map" },
-  { label: "SYSTEMS", href: "/systems" },
   { label: "RESEARCH", href: "/research" },
   { label: "LAB", href: "/lab" },
+  { label: "SYSTEMS", href: "/systems" },
 ];
 
 export function Nav() {

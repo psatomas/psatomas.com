@@ -3,16 +3,16 @@ import { staticSocial } from "@/lib/social/content";
 import { Hero } from "@/components/sections/hero";
 import { AboutPreview } from "@/components/sections/about-preview";
 import { MapPreview } from "@/components/sections/map-preview";
-import { SystemsPreview } from "@/components/sections/systems-preview";
 import { ResearchPreview } from "@/components/sections/research-preview";
 import { LabPreview } from "@/components/sections/lab-preview";
+import { SystemsPreview } from "@/components/sections/systems-preview";
 
 // The narrative is deliberate and matches the site's own conceptual model
-// — person, then the technical territory, then work, thinking, and
-// exploration — not an order to rebalance by content volume: Hero (who) ->
+// — person, then the technical territory, investigation, experimentation,
+// and built work — not an order to rebalance by content volume: Hero (who) ->
 // About (who, in more words) -> MAP (the structured technical territory) ->
-// Systems (what I build) -> Research (how I reason) -> Lab (what I
-// explore). The environments remain independent siblings; this is only
+// Research (how I reason) -> Lab (what I explore) -> Systems (what I build).
+// The environments remain independent siblings; this is only
 // homepage hierarchy. Every section
 // below Hero reads from its own domain's existing source: MAP's preview
 // derives its L0 domains from the canonical MAP knowledge model rather than
@@ -61,9 +61,9 @@ export default async function Home() {
 
       <AboutPreview />
       <MapPreview />
-      <SystemsPreview />
       <ResearchPreview />
       <LabPreview />
+      <SystemsPreview />
     </main>
   );
 }
