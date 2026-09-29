@@ -50,13 +50,12 @@ export function LabPreview() {
   }
 
   return (
-    // Lab's taller top gap than About/Systems/Research (pt-20/24 vs. their
-    // pt-14/16) marks its shift into experimentation. Terminal separation
-    // belongs to the homepage composition (page.tsx), not whichever primary
-    // preview happens to be last.
+    // Like the other primary previews, Lab uses the shared top rhythm.
+    // Terminal separation belongs to the homepage composition (page.tsx),
+    // not whichever primary preview happens to be last.
     <section
       aria-labelledby="lab-heading"
-      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-20 md:pt-24"
+      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-14 md:pt-16"
     >
       {/* One outer border for the whole Lab environment. Its open upper
           area — role, heading, description — is itself a single,
@@ -145,9 +144,9 @@ export function LabPreview() {
                             class order (see ExperimentHeader / the Research
                             article page for the same fix). Reproducing
                             MonoLabel's exact typographic classes directly
-                            here, with no competing color utility, is what
-                            actually renders this cyan. */}
-                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
+                            here, with no competing color utility, preserves
+                            the muted structural-index treatment. */}
+                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
                           {experiment.index}
                         </span>
                         <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent group-focus-visible:text-accent transition-colors">
