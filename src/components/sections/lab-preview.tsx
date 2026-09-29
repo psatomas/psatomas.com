@@ -144,9 +144,9 @@ export function LabPreview() {
                             class order (see ExperimentHeader / the Research
                             article page for the same fix). Reproducing
                             MonoLabel's exact typographic classes directly
-                            here, with no competing color utility, preserves
-                            the muted structural-index treatment. */}
-                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted transition-colors group-hover:text-background group-focus-visible:text-background">
+                            here, with no competing color utility, is what
+                            actually renders this cyan. */}
+                        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent transition-colors group-hover:text-background group-focus-visible:text-background">
                           {experiment.index}
                         </span>
                         <span className="font-mono text-base font-semibold tracking-tight text-foreground group-hover:text-accent group-focus-visible:text-accent transition-colors">

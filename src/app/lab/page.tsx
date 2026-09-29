@@ -100,9 +100,9 @@ export default function LabPage() {
                         cascade regardless of class order (same fix as
                         ExperimentHeader and the Research article page).
                         Reproducing MonoLabel's exact typographic classes
-                        directly here, with no competing color utility, is
-                        what actually renders this cyan. */}
-                    <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
+                        directly here, with no competing color utility,
+                        preserves the muted structural-index treatment. */}
+                    <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
                       {experiment.index}
                     </span>
                     <span className="font-mono text-lg font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent group-focus-visible:text-accent">
