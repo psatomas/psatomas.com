@@ -41,7 +41,7 @@ export function Nav() {
     // there's no visible seam at scroll position 0).
     <header className="sticky top-0 z-10 border-b border-border bg-background">
       <div className="mx-auto flex max-w-6xl px-6 py-5">
-        <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-8">
+        <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:ml-auto sm:gap-8">
           {navItems.map((item) => (
             <Link
               key={item.label}
