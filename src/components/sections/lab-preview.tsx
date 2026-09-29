@@ -50,13 +50,13 @@ export function LabPreview() {
   }
 
   return (
-    // Lab is the closing section, not just the fourth one — a taller top
-    // gap than About/Systems/Research (pt-20/24 vs. their pt-14/16) marks
-    // that shift deliberately, and a real bottom gap (pb-16/20) keeps it
-    // from butting straight into the footer's own border/padding.
+    // Lab's taller top gap than About/Systems/Research (pt-20/24 vs. their
+    // pt-14/16) marks its shift into experimentation. Terminal separation
+    // belongs to the homepage composition (page.tsx), not whichever primary
+    // preview happens to be last.
     <section
       aria-labelledby="lab-heading"
-      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-20 pb-16 md:pt-24 md:pb-20"
+      className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-20 md:pt-24"
     >
       {/* One outer border for the whole Lab environment. Its open upper
           area — role, heading, description — is itself a single,
