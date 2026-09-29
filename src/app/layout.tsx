@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
         <footer className="border-t border-border">
           <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-8 font-mono text-xs tracking-[0.08em] text-dim sm:flex-row sm:justify-between">
-            {/* The one other PSAT touchpoint besides the navbar unit — the
+            {/* The one other PSAT touchpoint besides the homepage identity — the
                 single canonical mark (src/assets/psat-mark-footer.png, a
                 transparent derivative of src/assets/psat-mark.png, which
                 replaced the retired separate symbol/combined-mark

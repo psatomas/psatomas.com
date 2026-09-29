@@ -2,6 +2,8 @@ import Image from "next/image";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { SystemMap } from "@/components/sections/system-map";
 import portrait from "@/assets/portrait.jpg";
+import psatMark from "@/assets/psat-mark-navbar.png";
+import psatomasWordmark from "@/assets/psatomas-wordmark-navbar.png";
 
 // The technical territory this work currently occupies — deliberately not
 // a skills list or a tool/tech stack: no TypeScript/Next.js/Foundry/viem
@@ -201,6 +203,15 @@ export function Hero() {
               <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
                 TOMÁS ARAÚJO
               </h1>
+              {/* The existing mark + wordmark remain one brand unit, now
+                  presented as a secondary signature of the name rather
+                  than as a second route to Home. It is decorative here:
+                  the adjacent heading already supplies the page's identity
+                  to assistive technology. */}
+              <div aria-hidden="true" className="mt-2 flex self-end items-center gap-2 opacity-75">
+                <Image src={psatMark} alt="" className="h-4 w-auto" />
+                <Image src={psatomasWordmark} alt="" className="h-[18px] w-auto" />
+              </div>
             </div>
 
             <p className="max-w-md text-lg text-muted">
