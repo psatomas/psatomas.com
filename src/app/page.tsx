@@ -31,7 +31,7 @@ export const metadata = buildSocialMetadata(staticSocial.home);
 
 export default async function Home() {
   return (
-    <main className="flex-1">
+    <main className="flex-1 pb-16 md:pb-20">
       <Hero />
 
       {/* The one structural transition line on the homepage: it marks
