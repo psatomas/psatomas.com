@@ -199,15 +199,20 @@ export function Hero() {
 
           <div className="flex min-w-0 flex-col gap-8">
             <div className="flex flex-col gap-4">
-              <MonoLabel>PROTOCOL ENGINEER / 2026</MonoLabel>
               {/* The existing mark + wordmark remain one brand unit, now
                   presented as a secondary signature of the name rather
                   than as a second route to Home. It is decorative here:
                   the adjacent heading already supplies the page's identity
-                  to assistive technology. */}
-              <div aria-hidden="true" className="flex self-end items-center gap-2 opacity-75">
-                <Image src={psatMark} alt="" className="h-4 w-auto" />
-                <Image src={psatomasWordmark} alt="" className="h-[18px] w-auto" />
+                  to assistive technology. At sm and above this row starts
+                  at the mark's established Y position, so the protocol
+                  label drops down to meet the fixed brand reference rather
+                  than moving the mark. */}
+              <div className="flex flex-col gap-4 sm:mt-[29px] sm:flex-row sm:items-center sm:justify-between">
+                <MonoLabel>PROTOCOL ENGINEER / 2026</MonoLabel>
+                <div aria-hidden="true" className="flex self-end items-center gap-2 opacity-75">
+                  <Image src={psatMark} alt="" className="h-4 w-auto" />
+                  <Image src={psatomasWordmark} alt="" className="h-[18px] w-auto" />
+                </div>
               </div>
               <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
                 TOMÁS ARAÚJO
