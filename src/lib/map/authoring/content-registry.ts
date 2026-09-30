@@ -43,4 +43,6 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "state-machines",
   "trust-models",
   "coordination",
+  "protocols",
+  "adversarial-environments",
 ];
