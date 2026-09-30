@@ -18,7 +18,11 @@ stop and report instead of guessing.
 npm run map:inspect -- --domain <l0-domain-id>
 ```
 
-This lists the domain's L1 topics in sibling order with their content status,
+For a whole domain's L1 topics, follow [domain-runbook.md](domain-runbook.md)
+instead of selecting batches by hand: `npm run map:author` plans the domain,
+tracks the run and performs steps 5 to 9 mechanically.
+
+`map:inspect --domain` lists the domain's L1 topics in sibling order with their content status,
 how many children already have content, whether the concept is also placed
 at other levels, and whether its preferred placement is elsewhere.
 

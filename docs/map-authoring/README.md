@@ -81,7 +81,10 @@ select bounded target → inspect → derive responsibility → author → check
 ```
 
 The full procedure and its stop conditions are in
-[`authoring-workflow.md`](authoring-workflow.md). The gates are:
+[`authoring-workflow.md`](authoring-workflow.md). A whole domain's L1 topics
+are authored through [`domain-runbook.md`](domain-runbook.md) and
+`npm run map:author`, which carries a run from `main` to a validated PR
+awaiting human merge. The gates are:
 
 ```bash
 npm run map:generate

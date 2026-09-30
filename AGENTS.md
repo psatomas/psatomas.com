@@ -16,3 +16,4 @@ For work that authors or revises MAP concept exposition (`mapKnowledge.content` 
 2. Inspect each target before writing: `npm run map:inspect -- <concept-id> [--context <placement-id>]`.
 3. Keep exposition canonical. There is one record per concept, and it must hold at every placement. Content work never changes taxonomy.
 4. Follow `docs/map-authoring/quality-contract.md`, register authored content, and run the gates in `docs/map-authoring/authoring-workflow.md`. Stop and ask when its stop conditions apply.
+5. For a domain's L1 topics, follow `docs/map-authoring/domain-runbook.md` through `npm run map:author -- start --domain <id>`, and continue without pausing until the validated PR or a genuine stop. Never merge, deploy, or start a domain that was not named.
