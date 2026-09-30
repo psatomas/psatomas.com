@@ -38,4 +38,5 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "frontier-systems",
   "finality",
   "agent-identity",
+  "distributed-systems",
 ];
