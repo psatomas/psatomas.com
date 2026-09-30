@@ -1,5 +1,5 @@
 import { MAP_RELATIONSHIP_TYPES } from "./types.ts";
-import type { MapContentBlock, MapKnowledgeModel } from "./types.ts";
+import type { MapContentBlock, MapFlowElement, MapKnowledgeModel } from "./types.ts";
 
 const IDENTIFIER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -32,7 +32,78 @@ function validateIdentifiers(errors: string[], label: string, ids: readonly stri
 
 const blank = (text: string) => text.trim().length === 0;
 
+// Exposition is plain text: the renderer prints every string verbatim, so
+// markup or markdown would reach the reader literally, and a line break would
+// silently collapse into a space.
+const MARKUP = [
+  { pattern: /<\/?[A-Za-z][^<>]*>/, problem: "contains an HTML tag" },
+  { pattern: /\*\*|__|`|\]\(/, problem: "contains markdown syntax" },
+  { pattern: /[\r\n]/, problem: "contains a line break" },
+];
+
+function textProblems(text: string): string[] {
+  return MARKUP.filter(({ pattern }) => pattern.test(text)).map(({ problem }) => problem);
+}
+
+function blockStrings(block: MapContentBlock): string[] {
+  switch (block.kind) {
+    case "paragraph":
+    case "heading":
+      return [block.text];
+    case "flow":
+      return [block.label, ...block.stages.flat(2)];
+    case "distinction":
+      return [block.left, block.right, ...(block.further ?? [])];
+    case "tensions":
+      return [block.label, ...block.pairs.flat()];
+    case "terms":
+      return [...block.terms];
+    default:
+      return [];
+  }
+}
+
+// The exposition renderer keys each repeated element by its own text (see
+// concept-exposition.tsx and exposition-models.tsx), so these must be unique
+// within their list or React keys collide. The key shapes mirror the renderer.
+const hasDuplicates = (keys: readonly string[]) => new Set(keys).size !== keys.length;
+const flowElementKey = (element: MapFlowElement) => (typeof element === "string" ? element : element.join(" > "));
+
+function duplicateKeyProblems(block: MapContentBlock): string[] {
+  switch (block.kind) {
+    case "flow":
+      return block.stages.some(
+        (stage) =>
+          hasDuplicates(stage.map(flowElementKey)) ||
+          stage.some((element) => typeof element !== "string" && hasDuplicates(element)),
+      )
+        ? ["repeats an element within a stage or branch"]
+        : [];
+    case "distinction":
+      return block.further?.length && hasDuplicates([block.left, block.right, ...block.further]) ? ["repeats a notion in its chain"] : [];
+    case "tensions":
+      return hasDuplicates(block.pairs.map(([left, right]) => `${left}-${right}`)) ? ["repeats a pair"] : [];
+    case "terms":
+      return hasDuplicates(block.terms) ? ["repeats a term"] : [];
+    default:
+      return [];
+  }
+}
+
+// A parallel set lays out as side-by-side columns sized for at most six within
+// the knowledge field (exposition-models.tsx, PARALLEL).
+const MAX_PARALLEL_ELEMENTS = 6;
+
 function contentBlockProblems(block: MapContentBlock): string[] {
+  const shape = contentBlockShapeProblems(block);
+  if (shape.length > 0) return shape;
+  return [
+    ...duplicateKeyProblems(block),
+    ...[...new Set(blockStrings(block).flatMap(textProblems))],
+  ];
+}
+
+function contentBlockShapeProblems(block: MapContentBlock): string[] {
   switch (block.kind) {
     case "paragraph":
       return blank(block.text) ? ["is empty"] : [];
@@ -53,6 +124,9 @@ function contentBlockProblems(block: MapContentBlock): string[] {
       // A branch of several steps only exists within a parallel set.
       if (block.stages.some((stage) => stage.length === 1 && typeof stage[0] !== "string")) {
         return ["has a branch outside a parallel set"];
+      }
+      if (block.stages.some((stage) => stage.length > MAX_PARALLEL_ELEMENTS)) {
+        return [`has a parallel set wider than ${MAX_PARALLEL_ELEMENTS} elements`];
       }
       // A multi-element stage is a parallel set reached by branching and
       // left by converging; two in a row would leave the pairing ambiguous.
@@ -168,6 +242,14 @@ export function validateMapKnowledge(model: MapKnowledgeModel): string[] {
       errors.push(`Concept "${content.conceptId}" has duplicate canonical content ownership`);
     }
     contentOwners.add(content.conceptId);
+    if (blank(content.definition)) errors.push(`Content "${content.id}" has an empty definition`);
+    // Legacy prose fields render as paragraphs after the definition.
+    for (const field of ["definition", "summary", "explanation", "whyItMatters"] as const) {
+      const text = content[field];
+      if (text === undefined) continue;
+      if (field !== "definition" && blank(text)) errors.push(`Content "${content.id}" ${field} is empty`);
+      for (const problem of textProblems(text)) errors.push(`Content "${content.id}" ${field} ${problem}`);
+    }
     content.body?.forEach((block, index) => {
       for (const problem of contentBlockProblems(block)) {
         errors.push(`Content "${content.id}" block ${index} (${block.kind}) ${problem}`);

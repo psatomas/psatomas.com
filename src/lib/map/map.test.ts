@@ -10,10 +10,29 @@ import { buildSocialMetadata } from "../social/metadata.ts";
 
 const resolver = createMapResolver(mapKnowledge);
 
-// Concepts that own canonical exposition, in record order: L0 introductions and
-// the Phase 1 fixture's content. The ontology tests assert nothing else gains
-// content by accident.
+// The registry of intentionally authored canonical exposition: every concept
+// that owns content, and nothing else. Today that is the L0 introductions and
+// the Phase 1 fixture's content. Authoring a concept's exposition adds it here
+// (docs/map-authoring/authoring-workflow.md); structural taxonomy work never
+// does, and the ontology tests assert that no other concept gains content by
+// accident. Order is not significant.
 const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "protocol-design-lifecycle", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems", "finality", "agent-identity"];
+const AUTHORED_CONTENT = new Set(CONTENT_CONCEPTS);
+
+/** A concept owns canonical content exactly when that content is registered as authored. */
+function assertAuthoredContentOnly(conceptId: string) {
+  const registered = AUTHORED_CONTENT.has(conceptId);
+  assert.equal(
+    resolver.getContentForConcept(conceptId) !== undefined,
+    registered,
+    registered ? `${conceptId} is registered in CONTENT_CONCEPTS but owns no content` : `${conceptId} owns content that is not registered in CONTENT_CONCEPTS`,
+  );
+}
+
+/** The content records are exactly the registry. */
+function assertContentRegistry() {
+  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId).sort(), [...CONTENT_CONCEPTS].sort());
+}
 
 // Foundations' intended L1 → L2 hierarchy, written out independently of the
 // data: [placement ID, concept ID, title]. Repeated labels are listed with
@@ -3382,7 +3401,7 @@ test("re-homing changes no relationship, content, mechanism, or path record", ()
     "authority-constrains-ai-agent",
     "agent-identity-enables-economic-agency",
   ]);
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   assert.deepEqual(mapKnowledge.mechanisms.map((mechanism) => mechanism.id), ["consensus-to-finality"]);
   assert.deepEqual(mapKnowledge.knowledgePaths.map((path) => path.id), ["distributed-systems-to-rollups"]);
   // L0 domains may own canonical content, but taxonomy creates no semantic
@@ -3423,8 +3442,8 @@ test("Foundations' next conceptual layer is its seven child placements, each its
   for (const id of FOUNDATIONS_LAYER) {
     assert.equal(resolver.getPlacement(id)?.conceptId, id);
     assert.ok(resolver.getConcept(id));
-    // Structure only: the L1 topics carry no exposition yet.
-    assert.equal(resolver.getContentForConcept(id), undefined);
+    // Structure alone adds no exposition: only registered concepts own content.
+    assertAuthoredContentOnly(id);
   }
 });
 
@@ -3479,9 +3498,9 @@ test("repeated Foundations labels reuse a canonical concept only where one expos
     if (reused.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
   }
-  assert.equal(resolver.getContentForConcept("state"), undefined);
+  assertAuthoredContentOnly("state");
   // Placement identity stays unique across the repeated labels.
   const ids = FOUNDATIONS_L2.map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
@@ -3588,7 +3607,7 @@ test("Computation & Execution has exactly its seven L1 topics and their L2 place
   assert.deepEqual(resolver.getChildren("computation-execution").map((placement) => placement.id), COMPUTATION_LAYER);
   for (const id of COMPUTATION_LAYER) {
     assert.equal(resolver.getPlacement(id)?.conceptId, id);
-    assert.equal(resolver.getContentForConcept(id), undefined);
+    assertAuthoredContentOnly(id);
   }
   const label = (placementId: string) => {
     const placement = resolver.getPlacement(placementId)!;
@@ -3637,9 +3656,9 @@ test("Computation & Execution reuses Verification and keeps overlapping labels d
   assert.equal(resolver.getConcept("contract-deployment")?.title, "Contract Deployment");
   assert.equal(resolver.getPlacement("contract-deployment")?.contextualLabel, "Deployment");
   assert.equal(resolver.getConcept("deployment"), undefined);
-  // Every other topic is a new concept placed once, without exposition; placement IDs are unique.
+  // Every other topic is a new concept placed once, owning content only if registered; placement IDs are unique.
   for (const [id, conceptId] of [...COMPUTATION_TREE.map(([id]): [string, string, string] => [id, id, ""]), ...COMPUTATION_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (conceptId === "verification") continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -3702,10 +3721,10 @@ test("State & Data reuses State Roots and Transitions and keeps overlapping labe
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition; placement IDs are unique.
+  // Every other topic is a new concept placed once, owning content only if registered; placement IDs are unique.
   const shared = new Set(["transitions", "state-roots"]);
   for (const [id, conceptId] of [...STATE_DATA_LAYER, ...STATE_DATA_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -3809,12 +3828,12 @@ test("Consensus & Ordering reuses Finality, Censorship Resistance, Transaction O
   // Every other topic is a new concept placed once; none gains exposition (Finality keeps its own).
   const shared = new Set(["consensus", "finality", "censorship-resistance", "transaction-ordering", "proposers"]);
   for (const [id, conceptId] of [...CONSENSUS_LAYER, ...CONSENSUS_L2]) {
-    if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...CONSENSUS_LAYER, ...CONSENSUS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -3879,10 +3898,10 @@ test("Networks & Infrastructure reuses Synchronization, Reorganization Handling 
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["synchronization", "reorganization-handling", "automation-networks"]);
   for (const [id, conceptId] of [...NETWORKS_LAYER, ...NETWORKS_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -3954,10 +3973,10 @@ test("Cryptography & Proofs reuses Verifiable Computation, Computation Proofs an
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["verifiable-computation", "computation-proofs", "commitment-schemes"]);
   for (const [id, conceptId] of [...CRYPTOGRAPHY_LAYER, ...CRYPTOGRAPHY_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4029,10 +4048,10 @@ test("Storage & Availability reuses Content Addressing, Fault Tolerance, Archive
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["content-addressing", "fault-tolerance", "archive-nodes", "proof-generation", "proof-verification"]);
   for (const [id, conceptId] of [...STORAGE_LAYER, ...STORAGE_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4107,12 +4126,12 @@ test("Identity, Accounts & Authority reuses Attestations, Signing and Transactio
   // Every other topic is a new concept placed once; only Agent Identity keeps its existing content.
   const shared = new Set(["attestations", "signing", "transaction-submission"]);
   for (const [id, conceptId] of [...IDENTITY_LAYER, ...IDENTITY_L2]) {
-    if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...IDENTITY_LAYER, ...IDENTITY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -4197,10 +4216,10 @@ test("Oracles & External Reality reuses existing concepts where the meaning is t
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["provenance", "trust-assumptions", "collusion", "credentials", "external-data", "authenticity", "lineage", "attribution", "consensus", "external-apis"]);
   for (const [id, conceptId] of [...ORACLES_LAYER, ...ORACLES_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4279,10 +4298,10 @@ test("Economics & Mechanism Design reuses Strategic Behavior and Penalties and k
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["strategic-behavior", "penalties"]);
   for (const [id, conceptId] of [...ECONOMICS_LAYER, ...ECONOMICS_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4352,11 +4371,11 @@ test("Markets & Financial Protocols reuses Bids, Settlement and Liquidity Risk a
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["bids", "liquidity-risk"]);
   for (const [id, conceptId] of [...MARKETS_LAYER, ...MARKETS_L2]) {
     if (conceptId === "markets-financial-protocols") continue;
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4498,11 +4517,11 @@ test("MEV & Execution Markets reuses ordering, building and auction concepts and
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["transaction-ordering", "builders", "block-construction", "transaction-selection", "private-mempools", "inclusion-guarantees", "auction-clearing"]);
   for (const [id, conceptId] of [...MEV_LAYER, ...MEV_L2]) {
     if (conceptId === "mev-execution-markets") continue;
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4642,10 +4661,10 @@ test("Intents & Coordination reuses existing concepts without moving their prefe
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["delegation", "batch-auctions", "order-flow-auctions", "preconfirmations", "settlement", "collective-action", "shared-sequencing"]);
   for (const [id, conceptId] of [...INTENTS_LAYER, ...INTENTS_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4768,10 +4787,10 @@ test("Governance & Institutions reuses Delegation, Evidence and Incentive Alignm
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["delegation", "evidence", "incentive-alignment"]);
   for (const [id, conceptId] of [...GOVERNANCE_LAYER, ...GOVERNANCE_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -4890,7 +4909,7 @@ test("Scaling & Modular Systems reuses existing concepts and keeps scaling-speci
   // Every other topic is a new concept placed once, without exposition (Finality keeps its own).
   const shared = new Set(["scaling", "rollups", "finality", "provers", "recursive-proofs", "off-chain-execution", "parallel-execution", "transition-functions", "state-commitments", "data-availability", "blobs", "data-availability-sampling", "availability-committees", "calldata", "centralized-sequencing", "decentralized-sequencing", "shared-sequencing", "trust-assumptions"]);
   for (const [id, conceptId] of [...SCALING_LAYER, ...SCALING_L2]) {
-    if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -5005,10 +5024,10 @@ test("Interoperability & Abstraction reuses existing concepts without moving the
   // Cross-chain settlement and atomicity stay distinct from the generic concepts.
   assert.notEqual(resolver.getPlacement("cross-domain-settlement-in-interoperability-abstraction")?.conceptId, "settlement");
   assert.notEqual(resolver.getPlacement("cross-domain-atomicity-in-interoperability-abstraction")?.conceptId, "transaction-atomicity");
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["cross-domain-execution", "cross-domain-settlement", "cross-domain-atomicity", "relayers", "state-proofs", "state-roots", "finality", "cross-chain-intents", "shared-sequencing", "account-abstraction", "gas-abstraction", "trust-assumptions", "pause-mechanisms"]);
   for (const [id, conceptId] of [...INTEROP_LAYER, ...INTEROP_L2]) {
-    if (conceptId !== "finality") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -5179,10 +5198,10 @@ test("Security, Correctness & Resilience reuses existing concepts without moving
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["threat-models", "adversaries", "byzantine-behavior", "trust-boundaries", "safety", "liveness", "confidentiality", "availability", "censorship-resistance", "sybil-attacks", "replay-attacks", "collusion", "griefing", "oracle-manipulation", "economic-attacks", "verification", "authentication", "permission-models", "alerting", "pause-mechanisms", "circuit-breakers", "fault-tolerance", "redundancy", "failure-isolation", "economic-security", "attack-cost", "cost-of-corruption", "security-inheritance", "upgrade-keys", "timelocks", "emergency-upgrades", "oracle-security", "governance-attacks", "rollup-security", "bridge-security", "mev-protection", "wallet-security", "incident-response"]);
   for (const [id, conceptId] of [...SECURITY_LAYER, ...SECURITY_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     // A concept can be placed twice within 17 itself.
@@ -5253,7 +5272,7 @@ test("Security, Correctness & Resilience owns a bounded L0 exposition with live 
     ["mev-protection", "mev-protection"], ["wallet-security", "wallet-security"],
   ]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferredId, conceptId);
   for (const [, conceptId] of [...SECURITY_LAYER, ...SECURITY_L2]) {
-    if (conceptId !== "security-correctness-resilience") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
@@ -5328,10 +5347,10 @@ test("Protocol Architecture reuses existing concepts without moving their prefer
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["credible-neutrality", "decentralization", "modularity", "layer-separation", "component-interfaces", "state-models", "execution-models", "execution-clients", "network-topology", "data-schemas", "trust-boundaries", "trust-minimization", "cross-chain-composability", "immutability"]);
   for (const [id, conceptId] of [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
@@ -5359,7 +5378,7 @@ test("Protocol Architecture owns a bounded L0 exposition with live taxonomy stri
   const prose = body.filter((b) => b.kind === "paragraph").map((b) => b.text).join(" ");
   for (const phrase of ["Architecture is a structural model, not a taxonomy, implementation", "protocol minimalism", "State Ownership is not asset or organizational ownership", "scheduling is not transaction ordering or sequencing", "proxy patterns are not proxy upgrade risks", "Data Architecture and Data Placement are not Data Availability", "trust minimization is not absence of trust", "Composability is not interoperability", "immutability does not prevent a wider system from evolving"]) assert.ok(prose.includes(phrase), phrase);
   for (const [id, preferred] of [["client-diversity", "client-diversity"], ["technical-debt", "technical-debt"], ["cross-chain-composability", "cross-chain-composability"], ["immutability", "immutability"]]) assert.equal(resolver.getPreferredPlacementForConcept(id)?.id, preferred, id);
-  for (const [, id] of [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]) assert.equal(resolver.getContentForConcept(id), undefined, id);
+  for (const [, id] of [...ARCHITECTURE_LAYER, ...ARCHITECTURE_L2]) assertAuthoredContentOnly(id);
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
@@ -5451,10 +5470,10 @@ test("Protocol Design & Lifecycle reuses existing concepts without moving their 
   }
   // Protocol rules are Foundations' Rules, not a lifecycle-qualified duplicate.
   assert.equal(resolver.getConcept("protocol-rules"), undefined);
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["stakeholders", "security-requirements", "invariants", "specifications", "formal-specifications", "rules", "state-machines", "mechanism-design", "threat-modeling", "client-diversity", "validation", "testing", "formal-methods", "auditing", "bug-bounties", "deployment-security", "parameter-changes", "incident-response", "protocol-upgrades", "rule-changes", "technical-debt"]);
   for (const [id, conceptId] of [...LIFECYCLE_LAYER, ...LIFECYCLE_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual([...placementsOf(conceptId)].sort(), [id].sort(), conceptId);
@@ -5477,7 +5496,7 @@ test("Protocol Design & Lifecycle owns a bounded L0 exposition with live taxonom
   const flows = body.filter((b) => b.kind === "flow");
   assert.equal(flows.length, 1);
   assert.equal(flows[0]?.label, "A conceptual protocol lifecycle");
-  for (const [, id] of [...LIFECYCLE_LAYER, ...LIFECYCLE_L2]) assert.equal(resolver.getContentForConcept(id), undefined, id);
+  for (const [, id] of [...LIFECYCLE_LAYER, ...LIFECYCLE_L2]) assertAuthoredContentOnly(id);
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
 
@@ -5599,12 +5618,12 @@ test("AI & Intelligent Systems reuses existing concepts where the meaning is the
   // Agent Identity keeps its existing content.
   const shared = new Set(["ai-inference", "ai-agent", "delegation", "agent-identity", "inference-confidence", "trusted-execution"]);
   for (const [id, conceptId] of [...AI_LAYER, ...AI_L2]) {
-    if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...AI_LAYER, ...AI_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5618,7 +5637,7 @@ test("AI & Intelligent Systems keeps the fixture's AI Agent", () => {
   assert.equal(placement?.parentPlacementId, "ai-intelligent-systems");
   assert.equal(placement?.order, 6);
   assert.equal(placement?.contextualLabel, "AI Agents");
-  assert.equal(resolver.getContentForConcept("ai-agent"), undefined);
+  assertAuthoredContentOnly("ai-agent");
   assert.deepEqual(
     resolver.getRelationshipsTo("ai-agent").map((relationship) => [relationship.id, relationship.sourceConceptId, relationship.typeId]),
     [
@@ -5771,12 +5790,12 @@ test("Machine Economy reuses existing concepts where the meaning is the same and
   // Agent Identity keeps its existing content.
   const shared = new Set(["agent-identity", "agent-reputation", ...reused.map(([conceptId]) => conceptId)]);
   for (const [id, conceptId] of [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2]) {
-    if (conceptId !== "agent-identity") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...MACHINE_ECONOMY_LAYER, ...MACHINE_ECONOMY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -5785,7 +5804,7 @@ test("Machine Economy leaves Economic Agency unplaced and 20 unchanged", () => {
   // Economic Agency (the capacity to act economically) is not Economic Agents
   // (the kinds of actor); its relationship from Agent Identity is unchanged.
   assert.deepEqual(placementsThrough("machine-economy", "economic-agency"), []);
-  assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
+  assertAuthoredContentOnly("economic-agency");
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.id), ["agent-identity-enables-economic-agency"]);
   // 20's tree is exactly as authored.
   assert.deepEqual(resolver.getChildren("ai-intelligent-systems").map((placement) => placement.id), AI_LAYER.map(([id]) => id));
@@ -5920,15 +5939,15 @@ test("Autonomous Coordination reuses existing concepts where the meaning is the 
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   const shared = new Set(["negotiation", "delegation", "cooperation", "competition", "resource-allocation", "service-discovery", "revocation", "strategic-behavior", "capital-allocation"]);
   for (const [id, conceptId] of [...COORDINATION_LAYER, ...COORDINATION_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (shared.has(conceptId)) continue;
     assert.equal(id, conceptId);
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...COORDINATION_LAYER, ...COORDINATION_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6044,13 +6063,13 @@ test("Autonomous Execution reuses existing concepts at their homes and keeps exe
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   for (const [id, conceptId] of [...EXECUTION_LAYER, ...EXECUTION_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...EXECUTION_LAYER, ...EXECUTION_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6188,13 +6207,13 @@ test("Autonomous Organizations reuses existing concepts where the meaning is the
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   for (const [id, conceptId] of [...ORGANIZATIONS_LAYER, ...ORGANIZATIONS_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...ORGANIZATIONS_LAYER, ...ORGANIZATIONS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6337,13 +6356,13 @@ test("Autonomous Protocols reuses existing concepts at their homes and keeps pro
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   for (const [id, conceptId] of [...PROTOCOLS_LAYER, ...PROTOCOLS_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...PROTOCOLS_LAYER, ...PROTOCOLS_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6474,13 +6493,13 @@ test("Autonomous Economy places Economic Agency, reuses existing concepts at the
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   for (const [id, conceptId] of [...ECONOMY_LAYER, ...ECONOMY_L2]) {
-    assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...ECONOMY_LAYER, ...ECONOMY_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6603,13 +6622,13 @@ test("Frontier Systems reuses established concepts at their homes and keeps fron
     assert.ok(resolver.getConcept(related), related);
     assert.notEqual(conceptId, related, placementId);
   }
-  // Every other topic is a new concept placed once, without exposition.
+  // Every other topic is a new concept placed once, owning content only if registered.
   for (const [id, conceptId] of [...FRONTIER_LAYER, ...FRONTIER_L2]) {
-    if (conceptId !== "frontier-systems") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
     if (id !== conceptId) continue;
     assert.deepEqual(placementsOf(conceptId), [id], conceptId);
   }
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  assertContentRegistry();
   const ids = [...FRONTIER_LAYER, ...FRONTIER_L2].map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -6670,7 +6689,7 @@ test("Frontier Systems owns one conditional L0 exposition with live taxonomy str
     ["verifiable-agents", "verifiable-agents"], ["cyber-physical-interfaces", "cyber-physical-interfaces"],
   ]) assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferredId, conceptId);
   for (const [, conceptId] of [...FRONTIER_LAYER, ...FRONTIER_L2]) {
-    if (conceptId !== "frontier-systems") assert.equal(resolver.getContentForConcept(conceptId), undefined, conceptId);
+    assertAuthoredContentOnly(conceptId);
   }
   assert.deepEqual(validateMapKnowledge(mapKnowledge), []);
 });
@@ -6777,8 +6796,8 @@ test("every concept is placed, and relationships, mechanisms and paths reference
     ...mapKnowledge.content.map((content) => content.conceptId),
   ];
   for (const conceptId of referenced) assert.ok(conceptIds.has(conceptId), conceptId);
-  // Structural authoring added no exposition.
-  assert.deepEqual(mapKnowledge.content.map((content) => content.conceptId), CONTENT_CONCEPTS);
+  // Content exists exactly where it was intentionally authored.
+  assertContentRegistry();
 });
 
 // Concepts authored independently by both ontology tracks, reconciled into one
@@ -6914,8 +6933,8 @@ test("sparse and orphan concepts remain valid", () => {
   assert.deepEqual(withOrphan.getPlacementsForConcept("unplaced-concept"), []);
   assert.equal(withOrphan.getContentForConcept("unplaced-concept"), undefined);
   assert.deepEqual(withOrphan.getRelationshipsTo("unplaced-concept").map((relationship) => relationship.typeId), ["enables"]);
-  // Economic Agency itself stays without content, with its relationship unchanged.
-  assert.equal(resolver.getContentForConcept("economic-agency"), undefined);
+  // Economic Agency itself owns content only if registered, with its relationship unchanged.
+  assertAuthoredContentOnly("economic-agency");
   assert.deepEqual(resolver.getRelationshipsTo("economic-agency").map((relationship) => relationship.typeId), ["enables"]);
 });
 
@@ -7946,6 +7965,56 @@ test("exposition validation reports every malformed block", () => {
     'Content "malformed-exposition" block 3 (tensions) has an incomplete pair',
     'Content "malformed-exposition" block 4 (flow) has consecutive parallel stages',
   ]);
+});
+
+test("exposition validation rejects blank definitions and prose the renderer cannot present", () => {
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "unpresentable-exposition", conceptId: "economic-agency", definition: " ", summary: "",
+      whyItMatters: "Matters **a lot**.",
+      body: [
+        { kind: "paragraph", text: "A <em>marked up</em> passage." },
+        { kind: "paragraph", text: "First line.\nSecond line." },
+        { kind: "heading", text: "Use `code` or [links](https://example.com)" },
+        { kind: "terms", terms: ["Safety", "Liveness", "Safety"] },
+        { kind: "distinction", left: "A", right: "B", further: ["A"] },
+        { kind: "tensions", label: "Pairs", pairs: [["Safety", "Liveness"], ["Safety", "Liveness"]] },
+        { kind: "flow", label: "Repeated", stages: [["A"], ["B", "B"], ["C"]] },
+        { kind: "flow", label: "Repeated step", stages: [["A"], [["B", "B"], ["C"]], ["D"]] },
+        { kind: "flow", label: "Too wide", stages: [["A"], ["B", "C", "D", "E", "F", "G", "H"], ["I"]] },
+      ],
+    }],
+  }));
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "unpresentable-exposition"')), [
+    'Content "unpresentable-exposition" block 0 (paragraph) contains an HTML tag',
+    'Content "unpresentable-exposition" block 1 (paragraph) contains a line break',
+    'Content "unpresentable-exposition" block 2 (heading) contains markdown syntax',
+    'Content "unpresentable-exposition" block 3 (terms) repeats a term',
+    'Content "unpresentable-exposition" block 4 (distinction) repeats a notion in its chain',
+    'Content "unpresentable-exposition" block 5 (tensions) repeats a pair',
+    'Content "unpresentable-exposition" block 6 (flow) repeats an element within a stage or branch',
+    'Content "unpresentable-exposition" block 7 (flow) repeats an element within a stage or branch',
+    'Content "unpresentable-exposition" block 8 (flow) has a parallel set wider than 6 elements',
+    'Content "unpresentable-exposition" has an empty definition',
+    'Content "unpresentable-exposition" summary is empty',
+    'Content "unpresentable-exposition" whyItMatters contains markdown syntax',
+  ]);
+  // Plain comparisons and the same notion in different stages remain valid.
+  assert.deepEqual(errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "presentable-exposition", conceptId: "economic-agency", definition: "Fees > 0 and A ≠ B are plain text.",
+      body: [{ kind: "flow", label: "Revisits", stages: [["State"], ["Transition"], ["State"]] }],
+    }],
+  })), []);
+});
+
+test("content exists exactly where it was intentionally authored, one record per concept", () => {
+  for (const concept of mapKnowledge.concepts) assertAuthoredContentOnly(concept.id);
+  assertContentRegistry();
+  assert.equal(AUTHORED_CONTENT.size, CONTENT_CONCEPTS.length, "the registry lists each concept once");
+  for (const content of mapKnowledge.content) assert.equal(content.id, `${content.conceptId}-content`, content.conceptId);
 });
 
 test("resolver rejects invalid models rather than repairing them", () => {

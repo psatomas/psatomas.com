@@ -22,8 +22,15 @@ Protocol Lab is hand-written inline SVG/CSS driven by React state.
 ```bash
 npm run dev      # local dev server
 npm run lint     # eslint
-npm run test     # node's built-in test runner — Oracle domain/service/adapter tests
+npm run test     # node's built-in test runner — Oracle and MAP unit tests
 npm run build    # production build (also runs the TypeScript check)
+```
+
+```bash
+# MAP content authoring (docs/map-authoring/README.md)
+npm run map:inspect -- <concept-id> [--context <placement-id>]  # bounded authoring context for one concept
+npm run map:inspect -- --domain <l0-domain-id>                  # a domain's L1 topics and their content status
+npm run map:generate                                            # regenerate the /map explorer view after MAP data changes
 ```
 
 ```bash
