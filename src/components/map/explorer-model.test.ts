@@ -910,13 +910,16 @@ test("a concept is expandable when it has exposition or a next layer, never when
 
 test("authored L1 exposition is canonical: it opens every placement of its concept, at any depth", () => {
   // Protocol Properties is an L1 topic of Foundations and an L2 leaf under
-  // Protocols. Authoring it once (in a copy of the model) must make both
-  // placements open onto the same exposition and change nothing else.
-  assert.equal(hasCanonicalContent("protocol-properties"), false, "fixture assumes Protocol Properties is not yet authored");
+  // Protocols. Authoring it once must make both placements open onto the same
+  // exposition and change nothing else. Both models are copies (without, then
+  // with, its content), so this holds whatever the real corpus has authored.
+  const unauthoredModel = { ...mapKnowledge, content: mapKnowledge.content.filter((content) => content.conceptId !== "protocol-properties") };
+  const unauthored = createMapResolver(unauthoredModel);
   const authored = createMapResolver({
-    ...mapKnowledge,
-    content: [...mapKnowledge.content, { id: "protocol-properties-content", conceptId: "protocol-properties", definition: "Defined." }],
+    ...unauthoredModel,
+    content: [...unauthoredModel.content, { id: "protocol-properties-content", conceptId: "protocol-properties", definition: "Defined." }],
   });
+  const view = buildMapExplorerView(unauthored, rootPlacementIds(unauthored));
   const authoredView = buildMapExplorerView(authored, rootPlacementIds(authored));
   const all = (source: MapExplorerView) =>
     getVisibleMapExplorerRows(source, new Set(mapKnowledge.placements.map((placement) => placement.id)));
