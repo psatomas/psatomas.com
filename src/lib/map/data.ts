@@ -10513,6 +10513,226 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "oracle-problem-content",
+      conceptId: "oracle-problem",
+      definition:
+        "The oracle problem is that a protocol able to check everything derived from its own state has no way to check facts about the world outside it, yet must act on them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Consensus does not reach outside. Every node can re-execute a transaction and arrive at the same result, but no node can re-observe a price, a delivery or a vote held elsewhere, and nodes can agree only on inputs they all see identically. External information therefore enters as a report that someone submits, and the protocol's agreement is about what was reported, not about whether it was true. The verification limits sit exactly there: the protocol can check who signed a report and whether it is well formed, which establishes data authenticity under a stated mechanism, but not that the report matches the world.",
+        },
+        {
+          kind: "paragraph",
+          text: "The trust assumptions scale with what a report controls. A value that decides liquidations, settlements or payouts is worth corrupting for anyone who gains more from a false value than it costs to produce one, so an oracle stays secure only while corrupting it costs more than corruption could win, a margin that narrows as the value depending on it grows.",
+        },
+        {
+          kind: "paragraph",
+          text: "Oracle failure includes silence as well as falsehood. When no report arrives, or none recent enough, the protocol still has to do something: halt, fall back to another source, or keep using the last value. Each response chooses which failure the protocol would rather suffer, which makes the availability of external data as much a part of the problem as its accuracy.",
+        },
+      ],
+    },
+    {
+      id: "data-sources-content",
+      conceptId: "data-sources",
+      definition:
+        "Data sources are where the information an oracle reports originates: the markets, observers, sensors, services and records whose observations or claims become reports.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A source decides what is measured before anyone reports it. A market price depends on which venues count, whether it is a last trade, a midpoint or a volume-weighted average, and over what window, so two honest sources can disagree. Choosing sources is choosing a definition, and a protocol that consumes a price inherits whatever definition its sources used.",
+        },
+        {
+          kind: "paragraph",
+          text: "The cost of manipulating a report is often the cost of manipulating its source. A thinly traded market can be moved cheaply, and a price read from an on-chain market can be moved within a single transaction, sometimes with borrowed funds repaid before the transaction ends. Averaging over time makes any single moment harder to exploit, at the price of lagging behind genuine moves, so the depth and structure of the source market bound how much value a report built on it can safely secure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Secondary sources add parties the protocol does not see. An API can change a definition, limit access or go offline at its operator's discretion, and that operator usually owes the protocol nothing. Sensor data adds a physical step, where calibration, placement or tampering can make a correctly signed reading describe the wrong thing.",
+        },
+      ],
+    },
+    {
+      id: "oracle-networks-content",
+      conceptId: "oracle-networks",
+      definition:
+        "An oracle network is a set of independently operated oracle nodes that collect, report and combine external information under shared rules, so that no single reporter decides the result.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Node selection is where the network's trust actually sits. Whoever admits nodes, whether an operator, a governance process or anyone willing to stake, decides how independent the reporters really are, and an open set that asks nothing of its members can be filled by one party under many names. A network of many nodes chosen by one party is a single trust assumption with many reporters.",
+        },
+        {
+          kind: "paragraph",
+          text: "Oracle incentives shape what nodes observe. Rewarding agreement with the final result and penalizing deviation discourages careless reports, but it also rewards copying: a node that repeats what others report earns as much as one that observes for itself, and an honest outlier is punished for being right early. Networks limit this by having nodes commit to their reports before any are revealed, so no node can see the others' values in time to copy them.",
+        },
+        {
+          kind: "paragraph",
+          text: "The fault thresholds that consensus relies on apply to the reporters, not to the sources behind them. A result can tolerate some share of faulty or dishonest nodes, but nodes that read the same source, run the same software or answer to the same operator fail together and count, for that purpose, as one.",
+        },
+      ],
+    },
+    {
+      id: "push-pull-oracles-content",
+      conceptId: "push-pull-oracles",
+      definition:
+        "Push and pull oracles are the two ways oracle data reaches a consuming protocol: published in advance by the oracle, or fetched and supplied at the moment a user or contract needs it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A push oracle's value always trails its source somewhat. Under a deviation threshold the published value can differ from the source by up to that threshold before an update is sent, and under a heartbeat it can be as old as the interval, so a consuming protocol inherits both as tolerated error. Each update also costs the publisher whether or not anyone reads it, which limits how often, and for how many feeds, publishing is worthwhile.",
+        },
+        {
+          kind: "paragraph",
+          text: "Pull oracles move both the cost and a choice to the user. The party that needs a value obtains a signed report and submits it with its own transaction, so the value is recent when used, but that party also chooses which valid report to submit. Where several reports would be accepted, a user can pick the one that suits it best, so on-demand updates are safe only as far as the protocol narrows what it accepts, for example by requiring each report to be newer than the last one used and close in time to the transaction.",
+        },
+        {
+          kind: "paragraph",
+          text: "Request-response splits a query into a request now and an answer later. The request is visible before its answer arrives, which can let others act on the coming answer first, and the consumer must decide what happens if no answer comes, since the logic waiting for it stays suspended until one does.",
+        },
+      ],
+    },
+    {
+      id: "oracle-aggregation-content",
+      conceptId: "oracle-aggregation",
+      definition:
+        "Oracle aggregation is the rule by which many oracle reports become the single value or decision a protocol uses.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Medianization gives a precise guarantee. If fewer than half of the reports are dishonest, the median lies between the lowest and the highest honest report, so dishonest reporters can move it only within the range honest ones already span. The guarantee weakens exactly where reports are correlated: when most reporters share a faulty source, the median faithfully reports the shared fault.",
+        },
+        {
+          kind: "paragraph",
+          text: "Weighted aggregation trades that simplicity for another assumption. Weighting reports by stake, reputation or trading volume lets better-supported reports count for more, but it concentrates influence in whoever holds the largest weights, and weights that can be bought or manufactured, such as volume on a venue where anyone can trade with themselves, can be gamed by producing them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Outlier filtering and quorum aggregation each exchange one failure for another. Discarding reports far from the rest removes isolated errors, but during a sharp genuine move the first correct reports look like outliers, so filtering can delay a real change. Requiring a quorum resists a few faulty reporters, but when too many are offline no result forms at all. Choosing aggregation rules is choosing between wrong values and missing ones.",
+        },
+      ],
+    },
+    {
+      id: "freshness-content",
+      conceptId: "freshness",
+      definition:
+        "Freshness is whether an oracle value is recent enough for the decision it will inform, judged against how quickly the underlying quantity can change.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Age depends on which moment is counted. A value was observed at its source, signed by a reporter and included on-chain at three different times, and a check against the wrong one can pass a value that was old long before it arrived. Timestamps carried in a report are only as reliable as whoever set them, and block timestamps are chosen by block producers within limits, so a freshness check is as sound as the clock it trusts.",
+        },
+        {
+          kind: "paragraph",
+          text: "An acceptable age is really an acceptable error. The further a quantity can move in a given time, the sooner a reading stops being useful, so freshness thresholds follow from the volatility of what is measured and from how much error the decision can tolerate. One threshold applied to calm and volatile quantities alike is too strict for one or too loose for the other.",
+        },
+        {
+          kind: "paragraph",
+          text: "Staleness tends to arrive when it hurts most. Updates fall behind when the source moves fastest and the network is most congested, so a protocol that simply refuses stale values stops working exactly when it is most needed, while one that accepts them acts on outdated values under stress. Update frequency, heartbeats and deviation thresholds bound the lag in ordinary conditions, not in the conditions that test them.",
+        },
+      ],
+    },
+    {
+      id: "oracle-security-content",
+      conceptId: "oracle-security",
+      definition:
+        "Oracle security is the protection of the whole path from an external source to the protocol action that uses its value, against anyone who could profit from a wrong value or from no value at all.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Much of it is decided by the consumer. A protocol can bound the damage any single value can do: limiting how far a value may move between updates, delaying actions that depend on a new value, capping how much can be settled against one feed, or comparing independent oracles and pausing when they disagree. Each bound costs responsiveness, and an oracle that is sound in general can still be unsafe for a consumer that stakes more on it than its security was built to carry.",
+        },
+        {
+          kind: "paragraph",
+          text: "Oracle manipulation usually completes before anyone can respond. A value moved for a single block can trigger liquidations or settlements that stand after the value recovers, so detecting the manipulation afterwards rarely undoes the harm. Designs that accept a reported value only after a dispute window, during which anyone can challenge it by posting a bond, trade immediacy for a chance to catch a false value before it is used.",
+        },
+        {
+          kind: "paragraph",
+          text: "The weakest path is often administrative. A key that can replace a feed's reporters, change its aggregation rule or set a value directly is a single reporter able to override all the others, so the security of an oracle includes the security of whoever can reconfigure it.",
+        },
+      ],
+    },
+    {
+      id: "machine-readable-reality-content",
+      conceptId: "machine-readable-reality",
+      definition:
+        "Machine-readable reality is the representation of facts about the world in forms that software can parse, exchange and act on without a person interpreting them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every representation decides in advance what can be said. A data schema fixes the fields, categories and values a claim may take, and events that do not fit are either forced into the nearest category or cannot be expressed at all. For the software that consumes it, the schema is the definition of reality, so disputes gather exactly where the world does not match the categories, such as an outcome that is neither clearly yes nor clearly no.",
+        },
+        {
+          kind: "paragraph",
+          text: "Parsing is not agreeing on meaning. Two systems can exchange structured data without error while disagreeing about units, time zones or what a field denotes, and because both sides parse successfully the disagreement stays silent. Semantic data ties terms to shared, published definitions so that different systems read a field the same way, which matters most where no person checks the result.",
+        },
+        {
+          kind: "paragraph",
+          text: "Representations also have to last. A protocol that cannot change its code keeps reading claims under the schema it was written for, while the producers of those claims may move on to newer versions, so versioning is part of what a reality interface promises. A verifiable claim fixes who made a statement and what it said, and is only as useful as the precision with which that statement was defined.",
+        },
+      ],
+    },
+    {
+      id: "sensors-external-systems-content",
+      conceptId: "sensors-external-systems",
+      definition:
+        "Sensors and external systems are the devices and outside services through which a protocol learns about, and sometimes acts on, events that happen outside software.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A device measures its own surroundings, while a protocol usually needs a claim about an event. A thermometer reports the temperature where it hangs and a location module the signals it receives, and either can be moved, spoofed or fed a false stimulus without anyone touching its software or keys. Physical access is an attack path that signatures and trusted hardware do not close, which is why systems that depend on physical events corroborate them across independent devices, operators or kinds of measurement rather than trusting a single reading.",
+        },
+        {
+          kind: "paragraph",
+          text: "Silence is ambiguous in the physical world. A device that reports nothing may be observing nothing, or may have lost power, connectivity or its mounting, and a protocol cannot tell which from the absence alone. Requiring regular signs of life lets a system tell a quiet device from a missing one, though not a working device from one that is measuring the wrong thing.",
+        },
+        {
+          kind: "paragraph",
+          text: "Cyber-physical interfaces also run the other way. When a protocol unlocks a door, releases goods or switches equipment, an error becomes a physical consequence that no reorganization or refund reverses, so actions that reach the world need confirmation steps, limits and a safe state to fall back to when the data that triggered them is in doubt.",
+        },
+      ],
+    },
+    {
+      id: "ai-interpreted-data-content",
+      conceptId: "ai-interpreted-data",
+      definition:
+        "AI-interpreted data is external information that becomes usable only after a model or other automated process extracts, classifies or infers a claim from unstructured input such as text, images or recordings.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An interpretation is reproducible only if its process is fixed. Two reporters running what they call the same model can disagree when versions, settings or sampling differ, so agreement among independent interpreters requires pinning the model, its parameters and a deterministic way of producing output, or else aggregating answers that are expected to vary. The model and its configuration belong to the claim itself, not to a detail behind it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whoever shapes the input can shape the output. Unstructured input can carry text or patterns crafted to steer a model toward a chosen answer, and a document supplied by a party that benefits from how it is read is exactly where such steering is most likely. Data extraction from sources the interested parties do not control is therefore a security property as well as a quality one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Inference confidence is most useful inside one system, as a routing signal. Results below a chosen confidence can be sent to a stronger model, to several independent interpreters or to human review, so that costly checks are spent where the automated reading is least certain. The same number carries little meaning across systems that calibrate it differently.",
+        },
+      ],
+    },
+    {
+      id: "real-world-attestations-content",
+      conceptId: "real-world-attestations",
+      definition:
+        "Real-world attestations are claims about entities, events or qualifications outside a protocol, made or endorsed by an identifiable attester in a form that a verifier can check.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An attestation is worth what its attester stands to lose by being wrong. Legal liability, a professional reputation or a posted bond give a claim weight, and a verifier deciding whether to rely on it is in effect deciding whether that accountability reaches it, across jurisdictions and within the time enforcement would take. A claim signed by an attester with nothing at stake is authentic and nothing more.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every attestation has a scope and a moment. A review of reserves on a given date says nothing about liabilities it did not examine or about withdrawals made the next day, and an inspection certifies the goods that were inspected, not those shipped afterwards. Evidence attached to a claim lets others re-examine that scope; a claim without evidence can be trusted or not, but not audited.",
+        },
+        {
+          kind: "paragraph",
+          text: "Revocation lags reality. Between the moment a fact changes, the moment the attester learns of it and the moment revocation is published, relying parties act on a claim that is no longer true, so what an attestation offers includes how quickly its attester notices change and how visibly it announces it.",
+        },
+      ],
+    },
+    {
       id: "economics-mechanism-design-content",
       conceptId: "economics-mechanism-design",
       definition:
