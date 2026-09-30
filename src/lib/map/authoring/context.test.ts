@@ -25,7 +25,8 @@ function assertFailsWith(code: MapAuthoringErrorCode, run: () => unknown, messag
 test("a single-placement L1 topic resolves its placement, parent section, siblings and children", () => {
   const context = inspector.inspectConcept("distributed-systems");
   assert.deepEqual(context.concept, { id: "distributed-systems", title: "Distributed Systems" });
-  assert.equal(context.content.exists, false);
+  // Content status follows the authored-content registry, whatever has been authored.
+  assert.equal(context.content.exists, AUTHORED_CONTENT_CONCEPTS.includes("distributed-systems"));
   assert.equal(context.primaryPlacementId, "distributed-systems");
   assert.equal(context.primarySource, "preferred");
   assert.deepEqual(context.levels, ["L1"]);
@@ -43,7 +44,8 @@ test("a single-placement L1 topic resolves its placement, parent section, siblin
   // The parent's section for this topic is the one whose strip names its children.
   assert.equal(placement.parent?.section?.heading, "No participant can assume it sees the whole system");
   assert.equal(placement.parent?.section?.lines.at(-1), "[terms] Processes · Communication · Partial knowledge · Latency · Failures · Fault models");
-  assert.deepEqual(context.attention, []);
+  // A single placement at one level raises nothing about placement roles.
+  assert.deepEqual(context.attention.filter((note) => !note.startsWith("Canonical content")), []);
 });
 
 /** A root with three topics, whose exposition follows the L0 section convention. */
@@ -193,10 +195,11 @@ test("registration guidance follows the concept's content and registry state", (
   const constraints = (context: ReturnType<typeof inspector.inspectConcept>) =>
     formatMapConceptAuthoringContext(context).split("\nAuthoring constraints\n")[1];
 
-  // No content, not registered: new exposition must be registered.
-  const fresh = inspector.inspectConcept("distributed-systems");
+  // No content, not registered: new exposition must be registered. (A synthetic
+  // model keeps these states independent of what the real corpus has authored.)
+  const fresh = createMapAuthoringInspector(sectionedModel(SECTIONS), { authoredContent: ["domain"] }).inspectConcept("alpha");
   assert.equal(fresh.registration, "unregistered");
-  assert.match(constraints(fresh), /must also register "distributed-systems" in AUTHORED_CONTENT_CONCEPTS/);
+  assert.match(constraints(fresh), /must also register "alpha" in AUTHORED_CONTENT_CONCEPTS/);
 
   // Content and registration agree: revising needs no new entry.
   const existing = inspector.inspectConcept("finality");
@@ -211,11 +214,9 @@ test("registration guidance follows the concept's content and registry state", (
   }).inspectConcept("finality");
   assert.equal(unregisteredFinality.registration, "content-not-registered");
   assert.match(unregisteredFinality.attention[0], /^Registry inconsistency: "finality" owns content "finality-content" but is not registered/);
-  const registeredEmpty = createMapAuthoringInspector(mapKnowledge, {
-    authoredContent: [...AUTHORED_CONTENT_CONCEPTS, "distributed-systems"],
-  }).inspectConcept("distributed-systems");
+  const registeredEmpty = createMapAuthoringInspector(sectionedModel(SECTIONS), { authoredContent: ["domain", "alpha"] }).inspectConcept("alpha");
   assert.equal(registeredEmpty.registration, "registered-without-content");
-  assert.match(registeredEmpty.attention[0], /^Registry inconsistency: "distributed-systems" is registered .* but owns no content/);
+  assert.match(registeredEmpty.attention[0], /^Registry inconsistency: "alpha" is registered .* but owns no content/);
   for (const context of [unregisteredFinality, registeredEmpty]) {
     const text = constraints(context);
     assert.match(text, /^ {2}- Do not author yet: /);
@@ -277,7 +278,9 @@ test("domain status lists L1 topics in sibling order with their content status",
   assert.deepEqual(ids(status.l1), resolver.getChildren("foundations").map((placement) => placement.id));
   const properties = status.l1.find((entry) => entry.placementId === "protocol-properties")!;
   assert.deepEqual([properties.levels, properties.childCount, properties.childrenWithContent], [["L1", "L2"], 7, 1]);
-  assert.match(formatMapDomainAuthoringStatus(status), /^MAP authoring status: 01 Foundations \(foundations\) — domain exposition: yes\nL1 topics with canonical content: 0 of 7\n/);
+  const authored = status.l1.filter((entry) => AUTHORED_CONTENT_CONCEPTS.includes(entry.conceptId)).length;
+  assert.deepEqual(status.l1.map((entry) => entry.hasContent), status.l1.map((entry) => AUTHORED_CONTENT_CONCEPTS.includes(entry.conceptId)));
+  assert.ok(formatMapDomainAuthoringStatus(status).startsWith(`MAP authoring status: 01 Foundations (foundations) — domain exposition: yes\nL1 topics with canonical content: ${authored} of 7\n`));
 });
 
 test("authoring tooling stays out of the MAP runtime", () => {

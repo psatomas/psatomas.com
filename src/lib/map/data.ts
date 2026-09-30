@@ -6859,6 +6859,48 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "distributed-systems-content",
+      conceptId: "distributed-systems",
+      definition:
+        "A distributed system is one in which separate processes, each holding its own state, can affect one another only by exchanging messages, and in which the behavior that matters is the behavior of the whole rather than of any single process.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Distance is not the defining feature; it mainly changes how long messages take. What defines the category is that processes share no state and no common clock and can fail independently of one another: each process knows its own state directly, and everything else only through what it has received.",
+        },
+        { kind: "distinction", left: "Distributed", right: "Decentralized" },
+        {
+          kind: "paragraph",
+          text: "Being distributed is a structural fact about processes and messages. It says nothing about who controls those processes. A system run by a single operator across many machines is distributed but not decentralized; decentralization concerns how authority and trust are divided among participants, a separate question with its own assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "The conditions that make distribution hard form a chain rather than a list. Processes hold state and act on it. Communication is the only way the state of one process can affect another. Communication takes time and can fail, so what a process knows about any other is partial and possibly out of date. Every decision a process makes is made on that partial knowledge, and the behavior of the system emerges from such decisions.",
+        },
+        {
+          kind: "flow",
+          label: "How one process comes to know about another",
+          stages: [["Process state"], ["Communication"], ["Latency", "Failures"], ["Partial knowledge"], ["Local decision"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Latency and failures are not independent problems. Seen from outside, a process that has crashed and a process whose messages are merely slow look the same: nothing arrives. If there is no known bound on how long a message may take, waiting longer never settles the question, so a process that must act has to decide without knowing whether its peer has stopped or is about to respond.",
+        },
+        {
+          kind: "paragraph",
+          text: "The absence of a common clock has another consequence. Different processes can observe the same events in different orders, and their local clocks cannot be relied on to agree exactly. There is no instant at which the whole system can be inspected, so the order of events across processes is something a protocol has to establish, not something it can read off.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because slowness, loss, and failure cannot in general be told apart as they happen, a protocol's correctness cannot rest on observing which one occurred. It rests on assumptions stated in advance. A fault model states which failures are possible, from processes that simply stop to processes that behave arbitrarily, and how many processes may fail; a timing model states whether messages arrive within a known bound. Stronger assumptions permit stronger guarantees, but a guarantee holds only while the environment stays within them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Together these conditions define the coordination problem. Any outcome that depends on more than one process must be assembled from local decisions made on partial, delayed, and possibly mistaken information, under assumptions no process can verify from where it stands. Replication, ordering, and agreement are responses to that problem, and each is judged by which properties it preserves under which fault and timing models.",
+        },
+      ],
+    },
+    {
       id: "computation-execution-content",
       conceptId: "computation-execution",
       definition:
