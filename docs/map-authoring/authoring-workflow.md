@@ -91,11 +91,13 @@ If you cannot state these without guessing, [stop](#stop-and-escalate).
 
 ## 5. Register the authored content
 
-Add the concept ID to `CONTENT_CONCEPTS` in
-[`src/lib/map/map.test.ts`](../../src/lib/map/map.test.ts). The ontology tests
-treat any content not in that registry as accidental, so registration is the
-explicit statement that the exposition was authored on purpose. Removing
-content removes its registration.
+For new exposition, add the concept ID to `AUTHORED_CONTENT_CONCEPTS` in
+[`src/lib/map/authoring/content-registry.ts`](../../src/lib/map/authoring/content-registry.ts).
+The ontology tests treat any content not in that registry as accidental, so
+registration is the explicit statement that the exposition was authored on
+purpose. Revising already registered exposition needs no new entry
+(`map:inspect` shows the concept's registration state). Removing content
+removes its registration.
 
 Do not add tests that pin the new wording (see
 [quality-contract.md](quality-contract.md#tests-for-authored-content)).
@@ -163,6 +165,9 @@ Stop, do not author, and report the question when:
 - **Unknown or mismatched target.** `map:inspect` fails.
 - **Invalid baseline.** MAP validation or the unit tests already fail before
   your change.
+- **Registry inconsistency.** `map:inspect` reports the concept as
+  `INCONSISTENT`: it owns content that is not registered, or it is registered
+  without content.
 - **Meanings diverge across placements.** The concept seems to mean different
   things in different placements, so one exposition cannot serve all of them
   truthfully. This is a taxonomy question: a split or a re-placement is not

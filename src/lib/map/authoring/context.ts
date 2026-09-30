@@ -14,6 +14,7 @@ import { MAP_RELATIONSHIP_TYPES } from "../types.ts";
 import type { MapConceptContent, MapContentBlock, MapFlowElement, MapKnowledgeModel, MapPlacement } from "../types.ts";
 import { createMapResolver, type MapResolver } from "../resolver.ts";
 import { MapKnowledgeValidationError } from "../validation.ts";
+import { AUTHORED_CONTENT_CONCEPTS } from "./content-registry.ts";
 
 export type MapAuthoringErrorCode = "invalid-model" | "unknown-concept" | "unknown-context" | "context-mismatch" | "unknown-domain";
 
@@ -86,8 +87,17 @@ export type MapAuthoringRelation = {
   title: string;
 };
 
+/**
+ * How the concept's canonical content relates to the authored-content registry
+ * (content-registry.ts). The two agree ("unregistered": no content yet;
+ * "registered": content intentionally authored) or disagree, which the unit
+ * tests reject and an author must resolve before writing.
+ */
+export type MapContentRegistration = "unregistered" | "registered" | "registered-without-content" | "content-not-registered";
+
 export type MapConceptAuthoringContext = {
   concept: { id: string; title: string };
+  registration: MapContentRegistration;
   content: {
     exists: boolean;
     contentId?: string;
@@ -172,18 +182,34 @@ const sameTerms = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length && lower(left).every((term, index) => term === lower(right)[index]);
 
 /**
+ * The part of a parent's exposition that is divided among its children. An
+ * exposition that ends by naming the parent's own children in a terms strip
+ * (the L0 convention) closes each child's section with a strip of its own;
+ * whatever follows the last of those, up to the summary strip, is closing
+ * material about the parent as a whole (possibly under its own heading), and
+ * belongs to no child's section. Without such a summary nothing is dropped.
+ */
+function sectionedBody(body: readonly MapContentBlock[], siblingLabels: readonly string[]): readonly MapContentBlock[] {
+  const summary = body.findLastIndex((block) => block.kind === "terms" && sameTerms(block.terms, siblingLabels));
+  if (summary < 0) return body;
+  return body.slice(0, body.slice(0, summary).findLastIndex((block) => block.kind === "terms") + 1);
+}
+
+/**
  * Locates the part of a parent's exposition that covers one child placement.
  * L0 expositions close each L1 section with a terms strip naming that topic's
  * own children, so a section whose strip equals the placement's child labels
  * is its section. Otherwise a single section mentioning the placement's label
  * (in a heading or a terms strip) is used; anything else is left to the author.
+ * Sections never include the parent's closing material (see sectionedBody).
  */
 function locateSection(
   parentContent: MapConceptContent,
   label: string,
   childLabels: readonly string[],
+  siblingLabels: readonly string[],
 ): MapExpositionSection | undefined {
-  const all = sections(parentContent.body ?? []);
+  const all = sections(sectionedBody(parentContent.body ?? [], siblingLabels));
   const toSection = (index: number): MapExpositionSection => ({
     index,
     heading: all[index].heading,
@@ -202,13 +228,17 @@ function locateSection(
       section.blocks.some(
         (block) =>
           (block.kind === "heading" && block.text.toLowerCase().includes(needle)) ||
-          (block.kind === "terms" && lower(block.terms).includes(needle) && block !== parentContent.body?.at(-1)),
+          (block.kind === "terms" && lower(block.terms).includes(needle)),
       ),
     );
   return mentions.length === 1 ? toSection(mentions[0].index) : undefined;
 }
 
-export function createMapAuthoringInspector(model: MapKnowledgeModel) {
+export function createMapAuthoringInspector(
+  model: MapKnowledgeModel,
+  { authoredContent = AUTHORED_CONTENT_CONCEPTS }: { authoredContent?: readonly string[] } = {},
+) {
+  const registry = new Set(authoredContent);
   let resolver: MapResolver;
   try {
     resolver = createMapResolver(model);
@@ -249,7 +279,7 @@ export function createMapAuthoringInspector(model: MapKnowledgeModel) {
       const parentContent = resolver.getContentForConcept(parentPlacement.conceptId);
       parent = {
         ...ref(parentPlacement),
-        section: parentContent ? locateSection(parentContent, self.label, children.map(labelOf)) : undefined,
+        section: parentContent ? locateSection(parentContent, self.label, children.map(labelOf), siblingsOf(placement).map(labelOf)) : undefined,
         headings: (parentContent?.body ?? []).flatMap((block) => (block.kind === "heading" ? [block.text] : [])),
       };
     }
@@ -346,10 +376,20 @@ export function createMapAuthoringInspector(model: MapKnowledgeModel) {
       .filter((other) => other.id !== concept.id && other.title === concept.title)
       .map((other) => other.id)
       .sort();
+    const registered = registry.has(concept.id);
+    const registration: MapContentRegistration = content
+      ? registered ? "registered" : "content-not-registered"
+      : registered ? "registered-without-content" : "unregistered";
     const levels = levelsOf(concept.id);
     const primaryContext = contexts.find((context) => context.isPrimary);
 
     const attention: string[] = [];
+    if (registration === "content-not-registered") {
+      attention.push(`Registry inconsistency: "${concept.id}" owns content "${content?.id}" but is not registered in AUTHORED_CONTENT_CONCEPTS. Resolve this before authoring.`);
+    }
+    if (registration === "registered-without-content") {
+      attention.push(`Registry inconsistency: "${concept.id}" is registered in AUTHORED_CONTENT_CONCEPTS but owns no content. Resolve this before authoring.`);
+    }
     if (contexts.length === 0) {
       attention.push("The concept has no placement: no reader reaches its exposition through the explorer.");
     }
@@ -397,6 +437,7 @@ export function createMapAuthoringInspector(model: MapKnowledgeModel) {
 
     return {
       concept: { id: concept.id, title: concept.title },
+      registration,
       content: {
         exists: Boolean(content),
         ...(content ? { contentId: content.id } : {}),

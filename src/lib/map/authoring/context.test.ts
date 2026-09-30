@@ -3,8 +3,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { mapKnowledge } from "../data.ts";
 import { createMapResolver } from "../resolver.ts";
-import type { MapKnowledgeModel } from "../types.ts";
+import type { MapContentBlock, MapKnowledgeModel } from "../types.ts";
 import { createMapAuthoringInspector, MapAuthoringContextError } from "./context.ts";
+import { AUTHORED_CONTENT_CONCEPTS } from "./content-registry.ts";
 import type { MapAuthoringErrorCode } from "./context.ts";
 import { formatMapConceptAuthoringContext, formatMapDomainAuthoringStatus } from "./format.ts";
 
@@ -43,6 +44,91 @@ test("a single-placement L1 topic resolves its placement, parent section, siblin
   assert.equal(placement.parent?.section?.heading, "No participant can assume it sees the whole system");
   assert.equal(placement.parent?.section?.lines.at(-1), "[terms] Processes · Communication · Partial knowledge · Latency · Failures · Fault models");
   assert.deepEqual(context.attention, []);
+});
+
+/** A root with three topics, whose exposition follows the L0 section convention. */
+function sectionedModel(body: MapContentBlock[]): MapKnowledgeModel {
+  const concept = (id: string) => ({ id, slug: id, title: id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) });
+  const topics = ["alpha", "beta", "gamma"];
+  const children = topics.flatMap((topic) => [`${topic}-one`, `${topic}-two`]);
+  return {
+    concepts: ["domain", ...topics, ...children].map(concept),
+    placements: [
+      { id: "domain", conceptId: "domain", order: 0 },
+      ...topics.map((id, order) => ({ id, conceptId: id, parentPlacementId: "domain", order })),
+      ...children.map((id) => ({ id, conceptId: id, parentPlacementId: id.split("-")[0], order: id.endsWith("one") ? 0 : 1 })),
+    ],
+    relationships: [],
+    content: [{ id: "domain-content", conceptId: "domain", definition: "A domain.", body }],
+    mechanisms: [],
+    knowledgePaths: [],
+  };
+}
+
+const SECTIONS: MapContentBlock[] = [
+  { kind: "paragraph", text: "Domain introduction." },
+  { kind: "heading", text: "Alpha opens the domain" },
+  { kind: "paragraph", text: "Alpha explained." },
+  { kind: "terms", terms: ["Alpha One", "Alpha Two"] },
+  { kind: "heading", text: "Beta sits in the middle" },
+  { kind: "paragraph", text: "Beta explained." },
+  { kind: "terms", terms: ["Beta One", "Beta Two"] },
+  { kind: "paragraph", text: "Beta continues after its strip." },
+  { kind: "heading", text: "Gamma closes the topics" },
+  { kind: "paragraph", text: "Gamma explained." },
+  { kind: "distinction", left: "Gamma", right: "Beta" },
+  { kind: "terms", terms: ["Gamma One", "Gamma Two"] },
+];
+const sectionOf = (model: MapKnowledgeModel, topic: string) =>
+  createMapAuthoringInspector(model).inspectConcept(topic).placements[0].parent?.section;
+
+test("parent sections: a middle section is its whole heading-delimited span", () => {
+  const model = sectionedModel([...SECTIONS, { kind: "paragraph", text: "Domain closing." }, { kind: "terms", terms: ["Alpha", "Beta", "Gamma"] }]);
+  assert.deepEqual(sectionOf(model, "beta"), {
+    index: 2,
+    heading: "Beta sits in the middle",
+    lines: ["## Beta sits in the middle", "Beta explained.", "[terms] Beta One · Beta Two", "Beta continues after its strip."],
+  });
+});
+
+test("parent sections: the final section ends at its own strip, before the parent's closing material", () => {
+  const gamma = ["## Gamma closes the topics", "Gamma explained.", "[distinction] Gamma ≠ Beta", "[terms] Gamma One · Gamma Two"];
+  const summary: MapContentBlock = { kind: "terms", terms: ["Alpha", "Beta", "Gamma"] };
+  for (const closing of [
+    [{ kind: "paragraph", text: "Domain closing." }, { kind: "tensions", label: "Forces", pairs: [["Alpha", "Gamma"]] }],
+    // Closing material under a heading of its own is still closing material.
+    [{ kind: "heading", text: "What the domain adds up to" }, { kind: "paragraph", text: "Domain closing." }],
+    [],
+  ] as MapContentBlock[][]) {
+    const model = sectionedModel([...SECTIONS, ...closing, summary]);
+    assert.deepEqual(sectionOf(model, "gamma")?.lines, gamma, JSON.stringify(closing));
+    assert.equal(sectionOf(model, "alpha")?.lines.at(-1), "[terms] Alpha One · Alpha Two");
+  }
+});
+
+test("parent sections: without a closing summary strip nothing is truncated", () => {
+  const model = sectionedModel([...SECTIONS, { kind: "paragraph", text: "Gamma continues after its strip." }]);
+  assert.equal(sectionOf(model, "gamma")?.lines.at(-1), "Gamma continues after its strip.");
+});
+
+test("parent sections in the L0 corpus never absorb a domain's closing summary", () => {
+  for (const root of resolver.getRootPlacements()) {
+    const topics = resolver.getChildren(root.id);
+    const summary = `[terms] ${topics.map((topic) => inspector.inspectConcept(topic.conceptId, { contextPlacementId: topic.id }).placements[0].label).join(" · ")}`;
+    for (const topic of topics) {
+      const section = inspector.inspectConcept(topic.conceptId, { contextPlacementId: topic.id }).placements[0].parent?.section;
+      assert.ok(section, `${topic.id}: its section in ${root.id} is located`);
+      assert.ok(!section.lines.includes(summary), `${topic.id}: section excludes the domain summary`);
+    }
+    // The last topic's section still runs from its heading through its own strip.
+    const last = inspector.inspectConcept(topics.at(-1)!.conceptId, { contextPlacementId: topics.at(-1)!.id }).placements[0];
+    assert.ok(last.parent?.section?.lines.at(-1)?.startsWith("[terms] "), `${root.id}: last section ends at its strip`);
+  }
+  // Foundations' last section keeps its own models and ends before the recurring tensions.
+  const properties = inspector.inspectConcept("protocol-properties").placements[0].parent?.section;
+  assert.equal(properties?.heading, "Properties belong to the system, not its components");
+  assert.deepEqual(properties?.lines.filter((line) => line.startsWith("[")).map((line) => line.split(" ")[0]), ["[distinction]", "[flow]", "[terms]"]);
+  assert.equal(properties?.lines.at(-1), "[terms] Safety · Liveness · Finality · Availability · Consistency · Fault tolerance · Censorship resistance");
 });
 
 test("a concept placed at L1 and L2 reports both roles and which placement carries its layer", () => {
@@ -101,6 +187,41 @@ test("a preferred leaf placement points the author at the placement that carries
 test("distinct concepts sharing a title are reported, never merged", () => {
   assert.deepEqual(inspector.inspectConcept("communication").sameTitleConcepts, ["coordination-communication"]);
   assert.deepEqual(inspector.inspectConcept("coordination-communication").sameTitleConcepts, ["communication"]);
+});
+
+test("registration guidance follows the concept's content and registry state", () => {
+  const constraints = (context: ReturnType<typeof inspector.inspectConcept>) =>
+    formatMapConceptAuthoringContext(context).split("\nAuthoring constraints\n")[1];
+
+  // No content, not registered: new exposition must be registered.
+  const fresh = inspector.inspectConcept("distributed-systems");
+  assert.equal(fresh.registration, "unregistered");
+  assert.match(constraints(fresh), /must also register "distributed-systems" in AUTHORED_CONTENT_CONCEPTS/);
+
+  // Content and registration agree: revising needs no new entry.
+  const existing = inspector.inspectConcept("finality");
+  assert.equal(existing.registration, "registered");
+  assert.match(constraints(existing), /"finality" is already registered in AUTHORED_CONTENT_CONCEPTS \(src\/lib\/map\/authoring\/content-registry.ts\); revising its exposition needs no new registry entry/);
+  assert.doesNotMatch(constraints(existing), /must also register/);
+  assert.ok(!existing.attention.some((note) => note.startsWith("Registry inconsistency")));
+
+  // Content without registration, and registration without content, are surfaced instead of normal guidance.
+  const unregisteredFinality = createMapAuthoringInspector(mapKnowledge, {
+    authoredContent: AUTHORED_CONTENT_CONCEPTS.filter((id) => id !== "finality"),
+  }).inspectConcept("finality");
+  assert.equal(unregisteredFinality.registration, "content-not-registered");
+  assert.match(unregisteredFinality.attention[0], /^Registry inconsistency: "finality" owns content "finality-content" but is not registered/);
+  const registeredEmpty = createMapAuthoringInspector(mapKnowledge, {
+    authoredContent: [...AUTHORED_CONTENT_CONCEPTS, "distributed-systems"],
+  }).inspectConcept("distributed-systems");
+  assert.equal(registeredEmpty.registration, "registered-without-content");
+  assert.match(registeredEmpty.attention[0], /^Registry inconsistency: "distributed-systems" is registered .* but owns no content/);
+  for (const context of [unregisteredFinality, registeredEmpty]) {
+    const text = constraints(context);
+    assert.match(text, /^ {2}- Do not author yet: /);
+    assert.doesNotMatch(text, /must also register|already registered|Revising edits|body blocks|Flows need/);
+    assert.match(formatMapConceptAuthoringContext(context), /\nRegistration: {7}INCONSISTENT: /);
+  }
 });
 
 test("inspection fails clearly for unknown concepts, contexts, domains and invalid data", () => {

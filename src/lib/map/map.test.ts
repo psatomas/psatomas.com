@@ -5,18 +5,14 @@ import { mapKnowledge } from "./data.ts";
 import { createMapResolver } from "./resolver.ts";
 import { MapKnowledgeValidationError, validateMapKnowledge } from "./validation.ts";
 import type { MapKnowledgeModel } from "./types.ts";
+import { AUTHORED_CONTENT_CONCEPTS } from "./authoring/content-registry.ts";
 import { staticSocial } from "../social/content.ts";
 import { buildSocialMetadata } from "../social/metadata.ts";
 
 const resolver = createMapResolver(mapKnowledge);
 
-// The registry of intentionally authored canonical exposition: every concept
-// that owns content, and nothing else. Today that is the L0 introductions and
-// the Phase 1 fixture's content. Authoring a concept's exposition adds it here
-// (docs/map-authoring/authoring-workflow.md); structural taxonomy work never
-// does, and the ontology tests assert that no other concept gains content by
-// accident. Order is not significant.
-const CONTENT_CONCEPTS = ["foundations", "computation-execution", "state-data", "consensus-ordering", "networks-infrastructure", "cryptography-proofs", "storage-availability", "identity-accounts-authority", "oracles-external-reality", "economics-mechanism-design", "markets-financial-protocols", "mev-execution-markets", "intents-coordination", "governance-institutions", "scaling-modular-systems", "security-correctness-resilience", "interoperability-abstraction", "protocol-architecture", "protocol-design-lifecycle", "ai-intelligent-systems", "machine-economy", "autonomous-coordination", "autonomous-execution", "autonomous-organizations", "autonomous-protocols", "autonomous-economy", "frontier-systems", "finality", "agent-identity"];
+// The authored-content registry (src/lib/map/authoring/content-registry.ts).
+const CONTENT_CONCEPTS = AUTHORED_CONTENT_CONCEPTS;
 const AUTHORED_CONTENT = new Set(CONTENT_CONCEPTS);
 
 /** A concept owns canonical content exactly when that content is registered as authored. */
@@ -25,7 +21,7 @@ function assertAuthoredContentOnly(conceptId: string) {
   assert.equal(
     resolver.getContentForConcept(conceptId) !== undefined,
     registered,
-    registered ? `${conceptId} is registered in CONTENT_CONCEPTS but owns no content` : `${conceptId} owns content that is not registered in CONTENT_CONCEPTS`,
+    registered ? `${conceptId} is registered in AUTHORED_CONTENT_CONCEPTS but owns no content` : `${conceptId} owns content that is not registered in AUTHORED_CONTENT_CONCEPTS`,
   );
 }
 

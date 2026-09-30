@@ -7,6 +7,7 @@ import type {
   MapAuthoringPlacementContext,
   MapAuthoringPlacementRef,
   MapConceptAuthoringContext,
+  MapContentRegistration,
   MapDomainAuthoringStatus,
 } from "./context.ts";
 
@@ -51,17 +52,55 @@ function placementBlock(context: MapAuthoringPlacementContext): string[] {
   return lines;
 }
 
+const REGISTRY = "AUTHORED_CONTENT_CONCEPTS (src/lib/map/authoring/content-registry.ts)";
+
+const REGISTRATION_LABEL: Record<MapContentRegistration, string> = {
+  unregistered: "not registered (no content yet)",
+  registered: "registered as intentionally authored",
+  "registered-without-content": "INCONSISTENT: registered, but owns no content",
+  "content-not-registered": "INCONSISTENT: owns content that is not registered",
+};
+
 function authoringConstraints(context: MapConceptAuthoringContext): string[] {
+  const id = context.concept.id;
   const placements = context.placements.length;
+  switch (context.registration) {
+    // Content and registry disagree: npm test already fails, and authoring on
+    // top would hide which of the two is wrong.
+    case "registered-without-content":
+      return [
+        `Do not author yet: "${id}" is registered in ${REGISTRY} but mapKnowledge.content has no record for it.`,
+        "Either the content was removed without unregistering it or the registration was added without content; establish which, and resolve it (docs/map-authoring/authoring-workflow.md, Stop and escalate).",
+      ];
+    case "content-not-registered":
+      return [
+        `Do not author yet: "${id}" owns content "${context.content.contentId}" that is not registered in ${REGISTRY}.`,
+        "Either the content was added unintentionally or its registration is missing; establish which, and resolve it (docs/map-authoring/authoring-workflow.md, Stop and escalate).",
+      ];
+    case "registered":
+      return [
+        `Revising edits the existing record "${context.content.contentId}" in mapKnowledge.content (src/lib/map/data.ts).`,
+        `"${id}" is already registered in ${REGISTRY}; revising its exposition needs no new registry entry.`,
+        ...exposureConstraints(placements),
+        "Revising existing content leaves hasContent unchanged; still run the gates in docs/map-authoring/authoring-workflow.md.",
+      ];
+    case "unregistered":
+      return [
+        `New exposition is one record in mapKnowledge.content (src/lib/map/data.ts): { id: "${id}-content", conceptId: "${id}", definition, body? }.`,
+        `Intentionally authored exposition must also register "${id}" in ${REGISTRY}, as step 5 of docs/map-authoring/authoring-workflow.md describes.`,
+        ...exposureConstraints(placements),
+        "Adding content flips hasContent at every placement: run npm run map:generate, then the gates in docs/map-authoring/authoring-workflow.md.",
+      ];
+  }
+}
+
+function exposureConstraints(placements: number): string[] {
   return [
-    `Content is one record in mapKnowledge.content (src/lib/map/data.ts): { id: "${context.concept.id}-content", conceptId: "${context.concept.id}", definition, body? }.`,
-    `Register "${context.concept.id}" in CONTENT_CONCEPTS (src/lib/map/map.test.ts) when its exposition is intentionally authored.`,
     `The exposition opens at every placement listed above (${placements}); it is canonical, not placement-specific.`,
     "The definition leads; body blocks are paragraph, heading, flow, distinction, tensions and terms. Use only the blocks the explanation needs.",
     "All text is plain: no HTML, markdown or line breaks. Strings within one terms strip, distinction chain, tension list or flow stage/branch must be unique.",
     "Flows need at least two stages, never two parallel sets in a row, a branch only inside a parallel set, and at most six parallel elements.",
     "Terms strips need at least two terms; they are plain vocabulary, not navigation.",
-    "Adding or removing content flips hasContent: run npm run map:generate, then the gates in docs/map-authoring/authoring-workflow.md.",
   ];
 }
 
@@ -73,6 +112,7 @@ export function formatMapConceptAuthoringContext(context: MapConceptAuthoringCon
   lines.push(`MAP authoring context: ${context.concept.title} (${context.concept.id})`);
   lines.push("");
   lines.push(`Canonical content:  ${context.content.exists ? `${context.content.contentId}${kinds ? ` (body: ${kinds})` : " (definition only, no body)"}` : "none"}`);
+  lines.push(`Registration:       ${REGISTRATION_LABEL[context.registration]}`);
   lines.push(`Placements:         ${context.placements.length} at ${context.levels.join(", ") || "no level"}`);
   lines.push(`Preferred:          ${context.preferredPlacementId ?? (context.placements.length ? "none declared (single placement)" : "none")}`);
   lines.push(
