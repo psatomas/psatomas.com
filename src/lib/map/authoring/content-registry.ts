@@ -97,4 +97,12 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "blobs",
   "data-availability-sampling",
   "storage-proofs",
+  "identity",
+  "accounts",
+  "wallets",
+  "smart-accounts",
+  "account-abstraction",
+  "authentication",
+  "authority",
+  "machine-identity",
 ];

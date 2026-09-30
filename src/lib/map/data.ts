@@ -10151,6 +10151,162 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "identity-content",
+      conceptId: "identity",
+      definition:
+        "Identity is the body of evidence by which participants recognize an entity across interactions: which entity they are dealing with, and what they can reasonably believe about it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Identity evidence has to stay attached to the entity it describes. An address or key can change hands, and reputation or credentials that move with it stop describing whoever earned them. Decentralized identifiers separate a stable identifier from the keys that control it, so an entity can rotate or recover keys without losing its history, at the cost of trusting whatever process decides which keys currently speak for the identifier.",
+        },
+        {
+          kind: "paragraph",
+          text: "Credentials and attestations can also change after they are issued. A claim that was true when made may expire or be withdrawn, so a verifier has to check its status at the moment of use, and that check can reveal to the issuer who is presenting the credential and where. Designs that let a holder prove a single claim, such as being above an age or belonging to a group, without revealing the whole credential or contacting the issuer narrow that exposure.",
+        },
+        {
+          kind: "paragraph",
+          text: "What makes identity useful is also what makes it costly. Linking interactions to one persistent entity lets reputation accumulate and lets a system resist one party posing as many, but the same links let observers follow that entity across contexts. Fresh addresses are cheap to create and hard to link, which invites duplicate identities; strongly linked identities resist duplication by exposing more. Each system has to decide where between the two it needs to stand.",
+        },
+      ],
+    },
+    {
+      id: "accounts-content",
+      conceptId: "accounts",
+      definition:
+        "An account is a participant's standing inside a protocol: a persistent record of what it holds, together with the rule that decides who may act for it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Keeping balances as mutable account state makes ordering the account's problem. When a spend only lowers a balance, nothing in the spend itself prevents it from being submitted twice, so account nonces number each operation and the protocol accepts each number once, in sequence. Strict sequencing has a cost: one stuck operation holds back every later operation from the same account, which is why some designs allow several independent nonce sequences per account.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where control lives decides what can ever change. An externally owned account's rule is fixed when it is created: its key is its only permission, and losing the key loses the account. A contract account's rule is code, so account permissions can be split, limited or delegated and account recovery can be added, but every such path is another way in. A recovery mechanism that restores access for the owner restores it for anyone who can satisfy it, so an account is only as secure as its weakest authorized route.",
+        },
+      ],
+    },
+    {
+      id: "wallets-content",
+      conceptId: "wallets",
+      definition:
+        "A wallet is what a participant uses to exercise control: the software, device or service that holds or reaches their keys, prepares their actions, and obtains the signatures that authorize them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A signature protects exactly what was signed, while the participant approves what the wallet shows. Transaction construction encodes an intent as bytes, signing commits to those bytes, and the two meet only in the wallet's display. When a wallet cannot decode what it asks the participant to sign, a well-protected key still authorizes whatever the bytes say, so faithful display is part of wallet security rather than a convenience.",
+        },
+        {
+          kind: "paragraph",
+          text: "Construction also carries decisions the participant rarely sees: which fee to offer, which nonce to use, which contract to route through, and, at transaction submission, which provider receives the transaction first. A wallet that simulates a transaction before signing can show its expected effect, but the simulation holds only for the state it ran against, and the transaction will run on the state at the time of inclusion, which may differ.",
+        },
+        {
+          kind: "paragraph",
+          text: "Key management decides where the power to sign lives: on an everyday device, on dedicated signing hardware, or split among several parties so that none can sign alone. Every backup made for wallet recovery is a further copy of that power, only as safe as the place it is kept. Making keys harder to reach lowers the chance of theft and raises the chance of loss, and each arrangement settles that trade differently.",
+        },
+      ],
+    },
+    {
+      id: "smart-accounts-content",
+      conceptId: "smart-accounts",
+      definition:
+        "A smart account is an account whose authorization rule is a program, so that who can act through it, and within what limits, is decided by code the account runs rather than by possession of a single key.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Moving authority into code moves the risk with it. A flaw in validation logic is a flaw in who can act, and whoever can upgrade the account's code, or install components into a modular account, holds authority over everything that code decides. Who controls a smart account therefore includes who can change it, and every module added is code the account now trusts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Programmable authority is what makes limited delegation practical. Session keys can let an application, a service or an automated agent act for the account within a scope its validation policy enforces, such as a spending limit, an expiry or a set of permitted targets, so routine actions no longer need the account's primary authority, and a leaked session key costs at most what its scope allows.",
+        },
+        {
+          kind: "paragraph",
+          text: "A smart account exists separately on each network it is deployed to. It can share one address across networks where deployment is deterministic, but its configuration, including its keys, modules and recovery settings, is changed network by network and can drift apart, so a key revoked on one network may still act on another until it is revoked there as well.",
+        },
+      ],
+    },
+    {
+      id: "account-abstraction-content",
+      conceptId: "account-abstraction",
+      definition:
+        "Account abstraction lets accounts define their own validation and fee arrangements, so that an operation can be authorized and paid for in ways the protocol's built-in account rules do not provide.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Letting accounts define validation creates a problem for whoever includes their operations. A bundler pays for execution when it submits, but whether an operation is valid depends on code the account chose and on state that can change before inclusion. If validation could consult arbitrary state, anyone could craft operations that pass when checked and fail when included, leaving the bundler to pay. Designs therefore limit what validation may read and spend, and bundlers simulate each operation before accepting it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Paymasters carry the same risk on the fee side. A paymaster that agrees to cover an operation's cost exposes its own deposit, so it accepts operations only under its own policy, often requiring approval from a service it runs or payment in another asset, and designs hold paymasters to deposits and limits so that one misbehaving paymaster cannot burden every bundler. Gas abstraction built this way lets a participant act without holding the asset the protocol charges in, one reason it matters to systems that hide the differences between networks from their users.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whether abstraction is layered on a protocol or built into it changes its costs. Layered designs add an alternative mempool, bundlers and an entry-point contract without changing the protocol's own transaction rules, at the price of extra execution and a separate admission path with its own availability and censorship assumptions. Built-in designs make every account programmable directly, but the protocol itself must then enforce the validation limits that layered designs keep by convention.",
+        },
+      ],
+    },
+    {
+      id: "authentication-content",
+      conceptId: "authentication",
+      definition:
+        "Authentication is the check a system makes that an actor has satisfied a mechanism it accepts, such as holding a key, answering a challenge or presenting a credential, before treating a request as coming from that actor.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A proof of control is only as specific as what it binds to. A signature authenticates the exact message signed, so a sign-in message that does not name the service, the network, a fresh nonce and an expiry can be requested by one site and replayed at another. Challenge-response holds only when the challenge ties the response to this verifier, this moment and this purpose; otherwise an attacker can pass a genuine challenge on to the victim and use the answer as their own.",
+        },
+        {
+          kind: "paragraph",
+          text: "Session authentication moves the target. Once a session is established, the session itself becomes the credential, and whoever holds it acts without meeting any authentication factor again. How long sessions last, what they may do and how quickly they can be revoked therefore matter as much as the strength of the authentication that opened them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Authentication factors add security only when they fail independently: a password and a code delivered to the same compromised device are one weakness, not two. Authentication policies can ask for more evidence before risky actions than before routine ones, and credential authentication inherits the trust placed in the credential's issuer, which the verifier accepts rather than checks.",
+        },
+      ],
+    },
+    {
+      id: "authority-content",
+      conceptId: "authority",
+      definition:
+        "Authority is the body of rules that decide what each actor may do to which resources, once the system knows who is acting.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Most permission models check who is calling: an owner address or a role is compared with the caller, and the action proceeds with whatever power that caller holds. This leaves room for a confused deputy, a component with broad authority that is led to use it on someone else's behalf, as when a contract acts on an instruction without checking whose authority the instruction really carries. Capabilities avoid this by making authority travel with the request: an actor can do only what the capability it presents allows, whoever the actor is.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delegation spreads authority further than its grantor may follow. Grants can be passed on, and the authority actually outstanding is everything reachable through the chain of grants, including standing approvals given for one purpose and never withdrawn. Revoking at the root ends the chain only where the system was built to carry revocation down it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The highest authority is usually the power to change the rules. An owner or role that can upgrade a contract or rewrite its permission model can, in effect, grant itself whatever the model forbids, so authority boundaries hold only as far as the paths that could redraw them are themselves constrained, for example by delays, several required approvers or governance.",
+        },
+      ],
+    },
+    {
+      id: "machine-identity-content",
+      conceptId: "machine-identity",
+      definition:
+        "Machine identity is how software agents, services and devices are recognized as distinct participants that can prove control of their credentials and act within authority granted to them, often with no person present when they act.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A machine usually acts for someone. Agent identity distinguishes the agent itself, but accountability rests with the principal that deployed or operates it, so agent authorization is normally delegated authority: scoped, limited and revocable by that principal. What an agent may do is bounded by what its principal granted, and when something goes wrong, responsibility is traced back through the same grant.",
+        },
+        {
+          kind: "paragraph",
+          text: "Keys identify their holders, not their behavior. The same machine credential can be used by different code after an update or a compromise, and nothing in a signature shows which. Some systems bind a key to a measured software or hardware state, so that machine authentication also attests to what is running, but that evidence is only as trustworthy as the hardware and the party vouching for the measurement.",
+        },
+        {
+          kind: "paragraph",
+          text: "Machines are cheap to multiply. An agent with a poor record can be replaced by a new one with no record at all, so agent reputation means little unless it attaches to something costly to abandon, such as the principal, a deposit, or agent credentials from an issuer that limits how many it grants. Because no person watches each action, machine credentials also tend to be short-lived and narrowly scoped, so that misuse expires before anyone would have noticed it.",
+        },
+      ],
+    },
+    {
       id: "oracles-external-reality-content",
       conceptId: "oracles-external-reality",
       definition:
