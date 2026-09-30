@@ -6901,6 +6901,44 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "protocol-properties-content",
+      conceptId: "protocol-properties",
+      definition:
+        "A protocol property is a claim about the behavior of a system that must hold in every execution the protocol permits, under the conditions the protocol assumes.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The claim concerns all permitted executions, not the executions that happened to occur. A system that has never produced conflicting results has not thereby shown that it cannot; a property holds only if no sequence of messages, delays, and failures allowed by the assumptions can break it. Properties are therefore established by reasoning about the whole space of possible behavior, and only sampled by observation and testing.",
+        },
+        { kind: "distinction", left: "Property", right: "Observed behavior" },
+        {
+          kind: "paragraph",
+          text: "A property statement has three parts: what is guaranteed, to whom, and under which conditions. The conditions are part of the property, not a footnote to it. A consensus protocol does not simply guarantee agreement; it guarantees agreement among its correct participants as long as no more than a stated fraction of them fail, and progress only under further assumptions about how messages are delivered.",
+        },
+        { kind: "heading", text: "Named properties differ in shape, subject, and conditions" },
+        {
+          kind: "paragraph",
+          text: "Safety and liveness are not two entries in a list of properties but the two shapes from which any guarantee about individual executions is built: every such guarantee can be split into a part that rules out bad events and a part that requires good events eventually. Properties that compare different executions, such as some forms of confidentiality, fall outside this decomposition.",
+        },
+        {
+          kind: "paragraph",
+          text: "Finality, availability, consistency, and censorship resistance are defined by what they protect rather than by their shape: results, the service and its data, the relation between what different participants observe, and the valid actions of any participant. Reading them only as safety or only as liveness loses part of what they promise. That a final result is never reversed is a safety requirement; that results do become final is a liveness requirement, and a protocol offering only the first could satisfy it by never finalizing anything.",
+        },
+        {
+          kind: "paragraph",
+          text: "Fault tolerance is not a further kind of behavior but a claim about the others: which of them keep holding through which faults, and through how many. A claim of fault tolerance is incomplete until it names the properties that survive, and they often survive differently. When too many participants stop responding, many consensus protocols halt rather than finalize conflicting results, preserving safety through a fault that suspends liveness.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because every property holds only under conditions, properties compete when conditions degrade. If the network partitions, a system that keeps answering requests on every side cannot also guarantee that every answer reflects one up-to-date order of operations; until the partition heals, it must give up some availability or some consistency. Deciding which properties to keep, and through which failures, is a design decision rather than an implementation detail.",
+        },
+        {
+          kind: "paragraph",
+          text: "A protocol's properties are its promises: the part of its behavior that participants and other systems may rely on without observing every execution. A property stated without its assumptions promises nothing precise, and assumptions stated without properties leave nothing to rely on.",
+        },
+      ],
+    },
+    {
       id: "computation-execution-content",
       conceptId: "computation-execution",
       definition:
