@@ -103,10 +103,11 @@ rules out:
 
 When a concept is placed at several levels:
 
-- **Only one placement carries the concept's children.** Children are placed
-  under one placement of the concept; its other placements are leaves.
+- **Usually one placement carries the concept's children.** Children are
+  placed under that placement; its other placements are leaves.
   `map:inspect` names the carrier ("Only X carries the concept's
-  children").
+  children"). Some concepts carry children at several placements; see
+  [several child-carrying placements](#several-child-carrying-placements).
 - **The same text must work in both roles.** Where the concept is an L1
   topic, it introduces a layer of children. At its leaf placements, the same
   text must read as a complete explanation of the concept, because nothing
@@ -118,6 +119,41 @@ When a concept is placed at several levels:
   Data. Inspect with `--context <carrier>` to see the layer you are
   synthesizing, and read the other placements to see where the text must also
   stand alone.
+
+### Several child-carrying placements
+
+A few concepts carry a layer of children at more than one placement, usually
+L1 topics of different domains. Each layer decomposes the same concept along a
+different facet suited to its domain. For example, one layer covers the
+mechanisms of an activity and another the kinds of thing it applies to, or one
+covers what is established and another the machinery that establishes it.
+
+- **One carrier:** the existing L1 contract applies. The exposition may
+  synthesize that carrier's layer.
+- **Several carriers:**
+  - The canonical exposition explains the concept in terms that are valid at
+    every placement. It may identify the facets that the child layers
+    represent and say how they relate.
+  - It must not synthesize one carrier's layer as though that were *the*
+    decomposition of the concept.
+  - It must not synthesize the union of all child sets into one artificial
+    layer.
+  - Each carrier's domain exposition (its L0 section) remains responsible for
+    synthesizing that domain's layer. Children, including those shared
+    between layers, are named at most, never explained.
+  - **Ownership.** The domain containing the preferred placement owns
+    authoring of the canonical exposition. Batches for the other domains leave
+    the concept to that domain rather than treating it as blocked. Ownership
+    is workflow responsibility only: it does not make the preferred carrier's
+    layer the canonical decomposition.
+  - **Inspection.** Inspect every child-carrying placement before writing.
+    `map:inspect` lists each facet with its trail, child count and the
+    children unique to it, the child concepts the layers share, and the
+    parent section around every carrier.
+  - **Stop condition.** If the layers cannot reasonably be read as facets of
+    one canonical meaning, stop. That points to a taxonomy or identity
+    problem, such as a concept that should be split, not an authoring
+    problem.
 
 ### Contextual labels versus identity
 

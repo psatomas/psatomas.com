@@ -61,6 +61,19 @@ const REGISTRATION_LABEL: Record<MapContentRegistration, string> = {
   "content-not-registered": "INCONSISTENT: owns content that is not registered",
 };
 
+function parentSection(placement: MapAuthoringPlacementContext | undefined): string[] {
+  if (!placement?.parent) return ["  none (root placement or no placement)"];
+  const parent = placement.parent;
+  if (!parent.hasContent) return [`  ${parent.label} (${parent.conceptId}) has no exposition.`];
+  if (parent.section) {
+    return [
+      `  ${parent.label}, section ${parent.section.index + 1}${parent.section.heading ? ` "${parent.section.heading}"` : " (before the first heading)"}:`,
+      ...parent.section.lines.map((line) => `${INDENT}${line}`),
+    ];
+  }
+  return [`  No single section of ${parent.label}'s exposition was located. Its headings:`, ...parent.headings.map((heading) => `${INDENT}## ${heading}`)];
+}
+
 function authoringConstraints(context: MapConceptAuthoringContext): string[] {
   const id = context.concept.id;
   const placements = context.placements.length;
@@ -129,14 +142,16 @@ export function formatMapConceptAuthoringContext(context: MapConceptAuthoringCon
 
   const primary = context.placements.find((placement) => placement.isPrimary);
   lines.push("", "Parent exposition around the primary context");
-  if (!primary?.parent) lines.push("  none (root placement or no placement)");
-  else if (!primary.parent.hasContent) lines.push(`  ${primary.parent.label} (${primary.parent.conceptId}) has no exposition.`);
-  else if (primary.parent.section) {
-    lines.push(`  ${primary.parent.label}, section ${primary.parent.section.index + 1}${primary.parent.section.heading ? ` "${primary.parent.section.heading}"` : " (before the first heading)"}:`);
-    lines.push(...primary.parent.section.lines.map((line) => `${INDENT}${line}`));
-  } else {
-    lines.push(`  No single section of ${primary.parent.label}'s exposition was located. Its headings:`);
-    lines.push(...primary.parent.headings.map((heading) => `${INDENT}## ${heading}`));
+  lines.push(...parentSection(primary));
+  // Every other placement that carries a layer of children has its own parent
+  // section to respect, whichever placement is primary.
+  const otherCarriers = context.childLayers.carriers.filter((carrier) => carrier.placementId !== primary?.placementId);
+  if (otherCarriers.length > 0) {
+    lines.push("", "Parent exposition around the other child-carrying placements");
+    for (const carrier of otherCarriers) {
+      lines.push(`  [${carrier.placementId}] ${carrier.trail}`);
+      lines.push(...parentSection(context.placements.find((placement) => placement.placementId === carrier.placementId)));
+    }
   }
 
   lines.push("", "Existing canonical exposition");
@@ -173,6 +188,7 @@ export function formatMapDomainAuthoringStatus(status: MapDomainAuthoringStatus)
         entry.levels.length > 1 ? `also ${entry.levels.filter((level) => level !== "L1").join("/")}` : undefined,
         entry.conceptPlacementCount > 1 ? `${entry.conceptPlacementCount} placements` : undefined,
         entry.preferredElsewhere ? `preferred at ${entry.preferredElsewhere}` : undefined,
+        entry.otherChildLayers.length ? `children also at ${entry.otherChildLayers.join(", ")}` : undefined,
       ].filter(Boolean);
       return `  ${String(index + 1).padStart(2)}. ${entry.hasContent ? "[content]" : "[ -     ]"} ${entry.placementId.padEnd(width)}  ${entry.label}  (children ${entry.childrenWithContent}/${entry.childCount} with content${flags.length ? `; ${flags.join("; ")}` : ""})`;
     }),

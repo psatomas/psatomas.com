@@ -30,6 +30,11 @@ at other levels, and whether its preferred placement is elsewhere.
 - Where `map:inspect` shows `preferred at <placement>` for an L1 topic, the
   concept also lives elsewhere. Read its full context (step 2) before
   including it.
+- Where it shows `children also at <placement>`, the concept carries child
+  layers in more than one placement. Only the domain containing its
+  preferred placement authors it (see
+  [several child-carrying placements](content-architecture.md#several-child-carrying-placements)).
+  Other domains' batches record it as left to that domain, not as blocked.
 
 ## 2. Inspect the canonical concept and its placement context
 
@@ -64,6 +69,11 @@ Read the whole output, in this order:
 
 If the parent section is not located automatically, read the parent in full
 with `npm run map:inspect -- <parent-concept-id>`.
+
+When the Attention list reports that children are carried at several
+placements, read every facet it lists and the parent section printed for each
+carrier. The exposition relates those facets. It synthesizes none of the
+layers, and it does not synthesize their union.
 
 ## 3. Derive the semantic responsibility
 
@@ -171,7 +181,8 @@ Stop, do not author, and report the question when:
 - **Meanings diverge across placements.** The concept seems to mean different
   things in different placements, so one exposition cannot serve all of them
   truthfully. This is a taxonomy question: a split or a re-placement is not
-  content work.
+  content work. The same applies when several child layers cannot reasonably
+  be read as facets of one meaning.
 - **Conflict with existing content.** The parent's exposition says something
   your exposition would have to contradict. Parent content is canonical;
   resolving the conflict is a separate decision.

@@ -95,6 +95,23 @@ export type MapAuthoringRelation = {
  */
 export type MapContentRegistration = "unregistered" | "registered" | "registered-without-content" | "content-not-registered";
 
+/**
+ * One placement that carries a layer of children. When a concept has several,
+ * each layer is a facet of the concept: the canonical exposition relates the
+ * facets, and each carrier's domain exposition synthesizes its own layer
+ * (docs/map-authoring/content-architecture.md).
+ */
+export type MapChildLayer = {
+  placementId: string;
+  /** Ordinal-led context trail, e.g. "06 Cryptography & Proofs / Verifiable Computation". */
+  trail: string;
+  domainId: string;
+  isPreferred: boolean;
+  childCount: number;
+  /** Child concepts that no other carrier's layer includes, in child order. */
+  uniqueChildConceptIds: string[];
+};
+
 export type MapConceptAuthoringContext = {
   concept: { id: string; title: string };
   registration: MapContentRegistration;
@@ -112,6 +129,8 @@ export type MapConceptAuthoringContext = {
   levels: string[];
   /** Primary placement first, then the others by L0 domain order, depth and ID. */
   placements: MapAuthoringPlacementContext[];
+  /** Placements that carry children, by L0 domain order, depth and ID (independent of --context). */
+  childLayers: { carriers: MapChildLayer[]; sharedChildConceptIds: string[] };
   relationships: MapAuthoringRelation[];
   mechanisms: { id: string; title: string; role: "owner" | "step" }[];
   knowledgePaths: { id: string; title: string }[];
@@ -122,6 +141,8 @@ export type MapConceptAuthoringContext = {
 };
 
 export type MapDomainAuthoringEntry = MapAuthoringPlacementRef & {
+  /** Other placements of this concept that carry their own layer of children. */
+  otherChildLayers: string[];
   /** The concept's preferred placement when it is not this L1 placement. */
   preferredElsewhere?: string;
   /** Levels at which this L1 topic's concept is placed anywhere in MAP. */
@@ -382,6 +403,27 @@ export function createMapAuthoringInspector(
       : registered ? "registered-without-content" : "unregistered";
     const levels = levelsOf(concept.id);
     const primaryContext = contexts.find((context) => context.isPrimary);
+    const carrierContexts = [...contexts]
+      .filter((context) => context.children.length > 0)
+      .sort(
+        (a, b) =>
+          roots.indexOf(a.domain.placementId) - roots.indexOf(b.domain.placementId) || a.depth - b.depth || a.placementId.localeCompare(b.placementId),
+      );
+    const layerConcepts = carrierContexts.map((context) => new Set(context.children.map((child) => child.conceptId)));
+    const sharedChildConceptIds = [...new Set(layerConcepts.flatMap((layer) => [...layer]))]
+      .filter((conceptId) => layerConcepts.filter((layer) => layer.has(conceptId)).length > 1)
+      .sort();
+    const carriers: MapChildLayer[] = carrierContexts.map((context, index) => ({
+      placementId: context.placementId,
+      trail: `${context.domainOrdinal} ${context.trail.map((step) => step.label).join(" / ")}`,
+      domainId: context.domain.placementId,
+      isPreferred: context.isPreferred,
+      childCount: context.children.length,
+      uniqueChildConceptIds: context.children
+        .map((child) => child.conceptId)
+        .filter((conceptId) => layerConcepts.every((layer, other) => other === index || !layer.has(conceptId))),
+    }));
+    const leaves = contexts.filter((context) => context.children.length === 0);
 
     const attention: string[] = [];
     if (registration === "content-not-registered") {
@@ -400,22 +442,48 @@ export function createMapAuthoringInspector(
     }
     if (contexts.length > 1) {
       attention.push(`${contexts.length} placements: the exposition renders identically at each; write nothing that is true only in one of them.`);
-      const branches = contexts.filter((context) => context.children.length > 0);
-      if (branches.length > 0 && branches.length < contexts.length) {
+      if (carriers.length === 1 && leaves.length > 0) {
         attention.push(
-          `Only ${branches.map((context) => context.placementId).join(", ")} carries the concept's children; at its other placements it is a leaf, where the same exposition must read as a complete explanation.`,
+          `Only ${carriers[0].placementId} carries the concept's children; at its other placements it is a leaf, where the same exposition must read as a complete explanation.`,
         );
       }
     }
-    const layer = contexts.find((context) => context.children.length > 0);
-    if (primaryContext && primaryContext.children.length === 0 && layer) {
-      attention.push(`The primary context is a leaf; the concept's own layer of children is at ${layer.placementId} (${layer.level}). To author its synthesis role, inspect with --context ${layer.placementId}.`);
+    if (carriers.length > 1) {
+      attention.push(
+        `Children are carried at ${carriers.length} placements, each layer a facet of the concept. Explain the concept in terms valid at every placement and relate the facets; do not synthesize one carrier's layer as the canonical decomposition, nor the union of all layers. Each carrier's domain exposition synthesizes its own layer. If the layers cannot be read as facets of one meaning, stop: that is a taxonomy question.`,
+      );
+      for (const carrier of carriers) {
+        attention.push(
+          `Facet ${carrier.placementId}${carrier.isPreferred ? " (preferred)" : ""}: ${carrier.trail}; ${carrier.childCount} children; only in this layer: ${carrier.uniqueChildConceptIds.join(", ") || "none"}.`,
+        );
+      }
+      attention.push(`Child concepts shared across facets: ${sharedChildConceptIds.join(", ") || "none"}.`);
+      if (leaves.length > 0) {
+        attention.push(`At ${leaves.map((context) => context.placementId).join(", ")} the concept is a leaf, where the same exposition must read as a complete explanation.`);
+      }
+      const owner = contexts.find((context) => context.isPreferred);
+      if (owner) {
+        attention.push(
+          `Authoring is owned by the domain of the preferred placement, ${owner.domain.label} (${owner.placementId}); that does not make its layer the canonical decomposition.`,
+        );
+      }
+    }
+    if (primaryContext && primaryContext.children.length === 0 && carriers.length === 1) {
+      attention.push(`The primary context is a leaf; the concept's own layer of children is at ${carriers[0].placementId} (${contexts.find((context) => context.placementId === carriers[0].placementId)?.level}). To author its synthesis role, inspect with --context ${carriers[0].placementId}.`);
+    }
+    if (primaryContext && primaryContext.children.length === 0 && carriers.length > 1) {
+      attention.push(`The primary context is a leaf; the concept's child layers are carried at ${carriers.map((carrier) => carrier.placementId).join(", ")}.`);
     }
     if (primarySource === "explicit" && primary?.id !== preferredId) {
       attention.push(`The selected context "${primary?.id}" is not the preferred placement "${preferredId}".`);
     }
     if (content) attention.push(`Canonical content "${content.id}" already exists: revising it changes every placement.`);
-    const authoredChildren = primaryContext?.children.filter((child) => child.hasContent) ?? [];
+    // Across every child-carrying placement, each child concept once.
+    const authoredChildren = [
+      ...new Map(
+        carrierContexts.flatMap((context) => context.children.filter((child) => child.hasContent)).map((child) => [child.conceptId, child]),
+      ).values(),
+    ];
     if (authoredChildren.length > 0) {
       attention.push(`Children with their own exposition: ${authoredChildren.map((child) => child.conceptId).join(", ")}. Relate to them; do not restate them.`);
     }
@@ -449,6 +517,7 @@ export function createMapAuthoringInspector(
       primarySource,
       levels,
       placements: contexts,
+      childLayers: { carriers, sharedChildConceptIds },
       relationships,
       mechanisms,
       knowledgePaths,
@@ -471,6 +540,11 @@ export function createMapAuthoringInspector(
         const preferred = resolver.getPreferredPlacementForConcept(placement.conceptId)?.id;
         return {
           ...ref(placement),
+          otherChildLayers: resolver
+            .getPlacementsForConcept(placement.conceptId)
+            .filter((other) => other.id !== placement.id && resolver.getChildren(other.id).length > 0)
+            .map((other) => other.id)
+            .sort(),
           ...(preferred && preferred !== placement.id ? { preferredElsewhere: preferred } : {}),
           levels: levelsOf(placement.conceptId),
           conceptPlacementCount: resolver.getPlacementsForConcept(placement.conceptId).length,

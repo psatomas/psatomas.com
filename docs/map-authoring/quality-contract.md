@@ -53,7 +53,9 @@ state how each was checked, especially where the answer is uncertain.
 6. **Canonical validity across placements.** Read it once in each placement
    `map:inspect` lists. Is it true and self-sufficient in each, including
    leaf placements with nothing beneath? Is it free of positional language
-   ("below", "this domain")?
+   ("below", "this domain")? Where several placements carry children, does
+   it relate their facets without synthesizing one layer, or the union of
+   all layers, as the concept's decomposition?
 7. **Identity discipline.** Does it describe this concept, not a same-title
    concept or a domain-specific sense of the word? Does it use contextual
    labels only as labels?
