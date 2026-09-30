@@ -7043,6 +7043,62 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "protocols-content",
+      conceptId: "protocols",
+      definition:
+        "A protocol is a set of shared rules that lets independent parties, none of which controls the others, interact predictably by agreeing in advance on what each message and action means and what it changes.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The rules are the one thing every participant shares. Parties that neither trust nor answer to one another can still act together, because each can check the others' actions against the same rules. For the same reason one protocol can have many implementations, written by different teams in different languages, as long as each follows those rules.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rules apply to roles rather than to particular parties. A protocol defines roles such as proposer, validator, client, or relayer, states what each may and must do, and sets the conditions for occupying each one. In an open protocol, whoever meets those conditions can take part; the rules need to know what role a party is acting in, not who it is.",
+        },
+        {
+          kind: "paragraph",
+          text: "An interaction is a sequence of actions that the rules connect: a request and its response, a proposal and the votes on it, an offer and its acceptance. Each message has meaning only within the protocol, which determines what it may contain, what it commits its sender to, and when it may be sent. The same bytes can be a valid bid in one protocol and noise in another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Interactions end; state remains. A protocol's state is what its rules act on and what carries the consequences of past interactions into future ones, which is why so many of a protocol's rules are rules about how state may change.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every protocol can be read as a conditional. If participants and the environment stay within its assumptions, parties that follow its rules obtain the properties it offers. The same rules can therefore offer different guarantees under different assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where rules are executed automatically rather than followed voluntarily, as in smart contract protocols, a deployed protocol can hold assets, quote prices, and enforce agreements by itself. It then appears as a participant in other systems: an agent whose every action follows from its rules and its inputs, with no one deciding in the moment unless the rules give someone the power to intervene.",
+        },
+      ],
+    },
+    {
+      id: "adversarial-environments-content",
+      conceptId: "adversarial-environments",
+      definition:
+        "In an adversarial environment, some of the choices a protocol leaves open, such as the timing of messages, the inputs that arrive, and how some participants act, are made by parties trying to make the protocol fail.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "That changes what it means for a protocol to work. Behavior that is merely unlikely can no longer be set aside, because an adversary will choose it whenever it is available. A protocol must hold against the most damaging behavior its threat model permits.",
+        },
+        {
+          kind: "paragraph",
+          text: "In an open system, counting adversaries by the number of participants they control means little, because identities are cheap and one party can present many. Protocols therefore bound adversaries by scarce resources instead: a share of stake, of computing power, or of some other cost that cannot be multiplied by creating new identities. A threshold such as one third is a claim about resources, and it holds only while acquiring that share stays out of reach.",
+        },
+        {
+          kind: "paragraph",
+          text: "The defenses differ because the adversaries do. Against arbitrary behavior, a protocol must limit how much of the system such behavior controls. Against profit-seeking behavior, it can also make deviation unprofitable, so that following the rules is the best strategy available; that defense assumes the adversary wants profit, and a party willing to lose money to disrupt the system is untouched by it. Against a party that controls a chokepoint, such as the power to decide what is included, the defense is an alternative path around it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Collusion changes the arithmetic of all three. Participants who are each within bounds can act as one: pooling resources past a threshold, sharing information the protocol assumed was private, or jointly controlling a chokepoint that none holds alone. Because collusion can happen out of view, protocols reason about the coalitions it could produce rather than about whether it is occurring.",
+        },
+      ],
+    },
+    {
       id: "computation-execution-content",
       conceptId: "computation-execution",
       definition:
