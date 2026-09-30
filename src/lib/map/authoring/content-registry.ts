@@ -45,4 +45,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "coordination",
   "protocols",
   "adversarial-environments",
+  "execution-models",
+  "transactions",
+  "virtual-machines",
+  "smart-contracts",
+  "off-chain-computation",
+  "resource-accounting",
 ];

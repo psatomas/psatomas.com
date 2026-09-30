@@ -283,6 +283,146 @@ test("domain status lists L1 topics in sibling order with their content status",
   assert.ok(formatMapDomainAuthoringStatus(status).startsWith(`MAP authoring status: 01 Foundations (foundations) — domain exposition: yes\nL1 topics with canonical content: ${authored} of 7\n`));
 });
 
+/**
+ * Two domains (d1 before d2). Concept "c" carries a layer under each: d1/c
+ * (children a, b, s) and d2/c-in-d2 (children x, s, y), preferred in d2, and
+ * is also a leaf under d2/p. "single" carries one layer and is a leaf
+ * elsewhere. Options vary sharing, leaves, preference and child content.
+ */
+function facetModel({ shared = true, leaf = true, preferred = "c-in-d2", authoredChild }: { shared?: boolean; leaf?: boolean; preferred?: string; authoredChild?: string } = {}): MapKnowledgeModel {
+  const titles: Record<string, string> = { d1: "Domain One", d2: "Domain Two", c: "Concept", p: "Parent Topic", a: "Alpha", b: "Beta", s: "Shared", x: "Xray", y: "Yankee", z: "Zulu", single: "Single", q: "Quebec", r: "Romeo" };
+  const concept = (id: string) => ({ id, slug: id, title: titles[id], ...(id === "c" ? { preferredPlacementId: preferred } : {}), ...(id === "single" ? { preferredPlacementId: "single" } : {}) });
+  const secondLayer = shared ? ["x", "s", "y"] : ["x", "z", "y"];
+  const placements = [
+    { id: "d1", conceptId: "d1", order: 0 },
+    { id: "d2", conceptId: "d2", order: 1 },
+    { id: "c", conceptId: "c", parentPlacementId: "d1", order: 0 },
+    { id: "single", conceptId: "single", parentPlacementId: "d1", order: 1 },
+    { id: "c-in-d2", conceptId: "c", parentPlacementId: "d2", order: 0 },
+    { id: "p", conceptId: "p", parentPlacementId: "d2", order: 1 },
+    ...["a", "b", "s"].map((id, order) => ({ id, conceptId: id, parentPlacementId: "c", order })),
+    ...secondLayer.map((id, order) => ({ id: id === "s" ? "s-in-c-in-d2" : id, conceptId: id, parentPlacementId: "c-in-d2", order })),
+    ...["q", "r"].map((id, order) => ({ id, conceptId: id, parentPlacementId: "single", order })),
+    ...(leaf ? [{ id: "c-in-p", conceptId: "c", parentPlacementId: "p", order: 0 }, { id: "single-in-p", conceptId: "single", parentPlacementId: "p", order: 1 }] : []),
+  ];
+  const strip = (placementId: string) => placements.filter((placement) => placement.parentPlacementId === placementId).map((placement) => titles[placement.conceptId]);
+  const section = (heading: string, placementId: string): MapContentBlock[] => [
+    { kind: "heading", text: heading },
+    { kind: "paragraph", text: `${heading} explained.` },
+    { kind: "terms", terms: strip(placementId) },
+  ];
+  return {
+    concepts: [...new Set(placements.map((placement) => placement.conceptId))].map(concept),
+    placements,
+    relationships: [],
+    content: [
+      { id: "d1-content", conceptId: "d1", definition: "Domain one.", body: [...section("Concept in domain one", "c"), ...section("Single in domain one", "single"), { kind: "terms", terms: strip("d1") }] },
+      { id: "d2-content", conceptId: "d2", definition: "Domain two.", body: [...section("Concept in domain two", "c-in-d2"), { kind: "terms", terms: ["Concept", "Parent Topic"] }] },
+      ...(authoredChild ? [{ id: `${authoredChild}-content`, conceptId: authoredChild, definition: "Authored child." }] : []),
+    ],
+    mechanisms: [],
+    knowledgePaths: [],
+  };
+}
+const facetInspector = (options: Parameters<typeof facetModel>[0] = {}) => {
+  const model = facetModel(options);
+  return createMapAuthoringInspector(model, { authoredContent: model.content.map((content) => content.conceptId) });
+};
+
+test("one child-carrying placement keeps the single-carrier contract", () => {
+  const context = facetInspector().inspectConcept("single");
+  assert.deepEqual(context.childLayers, {
+    carriers: [{ placementId: "single", trail: "01 Domain One / Single", domainId: "d1", isPreferred: true, childCount: 2, uniqueChildConceptIds: ["q", "r"] }],
+    sharedChildConceptIds: [],
+  });
+  assert.ok(context.attention.includes("Only single carries the concept's children; at its other placements it is a leaf, where the same exposition must read as a complete explanation."));
+  assert.ok(!context.attention.some((note) => note.startsWith("Children are carried at") || note.startsWith("Facet ") || note.startsWith("Authoring is owned")));
+  assert.doesNotMatch(formatMapConceptAuthoringContext(context), /other child-carrying placements/);
+});
+
+test("several carriers with overlapping layers are reported as facets", () => {
+  const context = facetInspector().inspectConcept("c");
+  assert.deepEqual(context.childLayers, {
+    carriers: [
+      { placementId: "c", trail: "01 Domain One / Concept", domainId: "d1", isPreferred: false, childCount: 3, uniqueChildConceptIds: ["a", "b"] },
+      { placementId: "c-in-d2", trail: "02 Domain Two / Concept", domainId: "d2", isPreferred: true, childCount: 3, uniqueChildConceptIds: ["x", "y"] },
+    ],
+    sharedChildConceptIds: ["s"],
+  });
+  const notes = context.attention;
+  assert.ok(notes.some((note) => note.startsWith("Children are carried at 2 placements, each layer a facet of the concept.")));
+  assert.ok(notes.includes("Facet c: 01 Domain One / Concept; 3 children; only in this layer: a, b."));
+  assert.ok(notes.includes("Facet c-in-d2 (preferred): 02 Domain Two / Concept; 3 children; only in this layer: x, y."));
+  assert.ok(notes.includes("Child concepts shared across facets: s."));
+  // Nothing claims a single carrier when there are several.
+  assert.ok(!notes.some((note) => note.startsWith("Only ")));
+});
+
+test("several carriers with disjoint layers share no child concepts", () => {
+  const context = facetInspector({ shared: false }).inspectConcept("c");
+  assert.deepEqual(context.childLayers.sharedChildConceptIds, []);
+  assert.deepEqual(context.childLayers.carriers.map((carrier) => carrier.uniqueChildConceptIds), [["a", "b", "s"], ["x", "z", "y"]]);
+  assert.ok(context.attention.includes("Child concepts shared across facets: none."));
+});
+
+test("several carriers plus leaf placements name the leaves without a single-carrier claim", () => {
+  const withLeaf = facetInspector().inspectConcept("c");
+  assert.ok(withLeaf.attention.includes("At c-in-p the concept is a leaf, where the same exposition must read as a complete explanation."));
+  assert.ok(!withLeaf.attention.some((note) => note.startsWith("Only ")));
+  const withoutLeaf = facetInspector({ leaf: false }).inspectConcept("c");
+  assert.ok(!withoutLeaf.attention.some((note) => note.includes("the concept is a leaf")));
+  // A leaf primary context points at every layer, not one.
+  const fromLeaf = facetInspector().inspectConcept("c", { contextPlacementId: "c-in-p" });
+  assert.ok(fromLeaf.attention.includes("The primary context is a leaf; the concept's child layers are carried at c, c-in-d2."));
+});
+
+test("preferred and secondary carrier contexts see the same facets and ownership, with every carrier's parent section", () => {
+  const inspector = facetInspector();
+  const preferred = inspector.inspectConcept("c");
+  const secondary = inspector.inspectConcept("c", { contextPlacementId: "c" });
+  assert.equal(preferred.primaryPlacementId, "c-in-d2");
+  assert.equal(secondary.primaryPlacementId, "c");
+  // Facets are ordered by domain, independent of which carrier is primary.
+  assert.deepEqual(preferred.childLayers, secondary.childLayers);
+  const ownership = "Authoring is owned by the domain of the preferred placement, Domain Two (c-in-d2); that does not make its layer the canonical decomposition.";
+  assert.ok(preferred.attention.includes(ownership) && secondary.attention.includes(ownership));
+  // Each view prints its own parent section and the other carrier's.
+  const text = (context: ReturnType<typeof inspector.inspectConcept>) => formatMapConceptAuthoringContext(context);
+  assert.match(text(preferred), /Parent exposition around the primary context\n {2}Domain Two, section 1 "Concept in domain two":[\s\S]*Parent exposition around the other child-carrying placements\n {2}\[c\] 01 Domain One \/ Concept\n {2}Domain One, section 1 "Concept in domain one":/);
+  assert.match(text(secondary), /Parent exposition around the primary context\n {2}Domain One, section 1 "Concept in domain one":[\s\S]*Parent exposition around the other child-carrying placements\n {2}\[c-in-d2\] 02 Domain Two \/ Concept\n {2}Domain Two, section 1 "Concept in domain two":/);
+});
+
+test("child content status covers every carrier's layer", () => {
+  const context = facetInspector({ authoredChild: "x" }).inspectConcept("c", { contextPlacementId: "c" });
+  assert.ok(context.attention.includes("Children with their own exposition: x. Relate to them; do not restate them."));
+});
+
+test("domain status shows child layers carried in other domains", () => {
+  const status = facetInspector().inspectDomain("d1");
+  assert.deepEqual(status.l1.map((entry) => [entry.placementId, entry.otherChildLayers]), [["c", ["c-in-d2"]], ["single", []]]);
+  assert.match(formatMapDomainAuthoringStatus(status), /c {6} Concept {2}\(children 0\/3 with content; also L2; 3 placements; preferred at c-in-d2; children also at c-in-d2\)/);
+});
+
+test("facet reporting is deterministic", () => {
+  for (const conceptId of ["c", "single"]) {
+    const [first, second] = [facetInspector().inspectConcept(conceptId), facetInspector().inspectConcept(conceptId)];
+    assert.deepEqual(first, second);
+    assert.equal(formatMapConceptAuthoringContext(first), formatMapConceptAuthoringContext(second));
+  }
+});
+
+test("the real ontology's multi-carrier concepts are recognized, and single carriers are unchanged", () => {
+  for (const conceptId of ["verifiable-computation", "provenance", "resource-allocation"]) {
+    const context = inspector.inspectConcept(conceptId);
+    assert.ok(context.childLayers.carriers.length > 1, conceptId);
+    assert.ok(context.attention.some((note) => note.startsWith(`Children are carried at ${context.childLayers.carriers.length} placements`)), conceptId);
+    assert.ok(!context.attention.some((note) => note.startsWith("Only ")), conceptId);
+  }
+  for (const conceptId of ["distributed-systems", "protocol-properties", "state-machines"]) {
+    assert.equal(inspector.inspectConcept(conceptId).childLayers.carriers.length, 1, conceptId);
+  }
+});
+
 test("authoring tooling stays out of the MAP runtime", () => {
   const runtime = ["src/app", "src/components"].flatMap((dir) =>
     readdirSync(new URL(`../../../../${dir}/`, import.meta.url), { recursive: true, withFileTypes: true })

@@ -7392,6 +7392,153 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "execution-models-content",
+      conceptId: "execution-models",
+      definition:
+        "An execution model defines how a system computes the result of the operations it has accepted: which result counts as correct, and what freedom an implementation has in producing it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The two halves are separate. The semantic half fixes the result, typically that applying the operations must produce the same state as applying them one at a time in their agreed order. The strategic half is how that result is actually computed: one operation after another, several at once, or ahead of time on a guess. Sequential execution is the simplest strategy and also the usual reference, since the others are correct exactly when their results cannot be told apart from it.",
+        },
+        { kind: "distinction", left: "Execution semantics", right: "Execution strategy" },
+        {
+          kind: "paragraph",
+          text: "Every strategy other than the reference depends on knowing which operations interfere. Two operations conflict when one writes state that the other reads or writes. A system can learn this in advance, by requiring each operation to declare the state it will touch and scheduling non-conflicting operations together, or discover it during execution, proceeding optimistically and re-executing whatever collided. The first costs flexibility and upfront declaration; the second costs wasted work when conflicts are frequent.",
+        },
+        {
+          kind: "paragraph",
+          text: "A result can be checked by recomputing it only if nothing outside the agreed inputs influenced it. Sources of non-determinism, such as local time, randomness, or calls to outside systems, are therefore either excluded from execution or turned into inputs agreed on before execution begins. Where they remain, the result has to be accepted from whoever computed it, which moves execution from verification into trust.",
+        },
+        {
+          kind: "paragraph",
+          text: "Speculation buys latency with computation that may be thrown away, and it is safe only when a result that is later discarded can never have been observed as final.",
+        },
+      ],
+    },
+    {
+      id: "transactions-content",
+      conceptId: "transactions",
+      definition:
+        "A transaction is a signed, self-contained request to change system state, which the protocol authorizes, orders, and applies as a single unit.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Three boundaries coincide in a transaction. It is the unit of authorization, because a signature binds its sender to exactly these contents. It is the unit of ordering, because the protocol positions transactions, not their individual steps. And it is the unit of atomicity, because its effects are applied together or not at all. Designs that separate these boundaries, letting one authorization cover many actions or one action span several transactions, have to rebuild the guarantees their coincidence provided.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a sender authorizes is an intended action, not its outcome. A transaction's effects are computed against whatever state exists when it executes, and that depends on everything ordered before it: the same transaction can move a different amount, receive a different price, or fail outright depending on its position. This is why position in the order can have value, and why a transaction may carry bounds, such as a minimum acceptable price, beyond which it should revert rather than proceed.",
+        },
+        { kind: "distinction", left: "Authorized action", right: "Resulting effect" },
+        {
+          kind: "paragraph",
+          text: "For the same reason, validity is judged more than once. A transaction can be well formed and properly authorized when it is admitted and still be invalid by the time it executes, because an earlier transaction spent the funds it relied on or used the sequence number it carried. Fields such as sequence numbers and chain identifiers exist so that one authorization can be used only once, and only where it was intended.",
+        },
+      ],
+    },
+    {
+      id: "virtual-machines-content",
+      conceptId: "virtual-machines",
+      definition:
+        "A virtual machine is the abstract computer a protocol specifies so that every participant, on whatever hardware, executes the same program in exactly the same way.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Real processors differ in word size, floating-point behavior, memory layout, and error handling, and any such difference could lead two honest participants to different results. A virtual machine removes those differences by defining everything execution depends on: the instruction set, how memory and storage behave, what a program may read from its environment, and what happens on every error. Agreement across machines is a property the virtual machine has to be designed to provide.",
+        },
+        {
+          kind: "paragraph",
+          text: "The same definition draws a boundary around programs. Code running inside the virtual machine can reach only what the machine exposes, so it cannot read a participant's files, open network connections, or observe the time except as the protocol chooses to provide. That isolation is what allows a protocol to run code submitted by anyone, and because each instruction also carries a defined cost, the protocol has something precise to charge for.",
+        },
+        {
+          kind: "paragraph",
+          text: "Virtual machines differ mainly in what they are optimized for, and each optimization pulls against another.",
+        },
+        {
+          kind: "tensions",
+          label: "Recurring virtual machine tradeoffs",
+          pairs: [
+            ["Execution speed", "Proving cost"],
+            ["Compatibility", "Design freedom"],
+            ["Expressiveness", "Analyzability"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "An instruction set that runs quickly on ordinary processors can be expensive to prove, so machines built for proof generation choose operations for how cheaply they can be proven. An established machine carries programs, tools, and deployed state that constrain how far it can change, and a more expressive machine lets programs do more while making their behavior harder to analyze in advance. The EVM draws much of its value from that compatibility, WASM from general-purpose toolchains and performance, and zkVMs from their suitability for proving.",
+        },
+      ],
+    },
+    {
+      id: "smart-contracts-content",
+      conceptId: "smart-contracts",
+      definition:
+        "A smart contract is a program deployed into a protocol's state whose code alone determines how the state it owns may change.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The code is the authority over the contract's state. No participant, including whoever deployed it, can change that state except by calling the contract and having its code permit the change, unless the code itself grants someone that power. This is what lets a contract act as a neutral counterparty among participants who do not trust one another: what it will do is fixed in advance and open to inspection by anyone.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contracts are built to call one another, and composition is where much of their power and much of their risk lies. A call hands control to code the caller does not control, in the middle of the caller's own execution. The callee can fail, consume resources, or call back into the caller before it has finished, while its state may not yet reflect the operation in progress; this is the root of reentrancy failures. What a contract knows about a call, such as who invoked it and with what value, comes from its execution context, and relying on the wrong part of that context, such as the original sender instead of the immediate caller, can mislead it. A contract that calls out has to be correct for whatever the called code might do, not only for what it is expected to do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Deployment fixes the code, and on many platforms deployed code cannot be changed. Upgradeability is added by design, typically by routing calls through a component whose target someone can replace, and that party then holds authority over everything the contract controls. Whether a contract can change, and who can change it, is therefore part of what its users are trusting rather than a maintenance detail.",
+        },
+      ],
+    },
+    {
+      id: "off-chain-computation-content",
+      conceptId: "off-chain-computation",
+      definition:
+        "Off-chain computation is work a protocol relies on but does not perform itself: its result is produced outside the protocol's replicated execution and then accepted into it under rules the protocol defines.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Execution inside a protocol is replicated: every participant that validates state repeats it. That is what makes the result independently checkable, and it is also why on-chain computation is expensive, bounded, public, and unable to reach outside systems. Moving work off-chain removes those constraints by giving up replication, so the protocol needs another basis for accepting what it did not compute.",
+        },
+        {
+          kind: "paragraph",
+          text: "The protocol keeps the decision. An off-chain worker proposes a result, and the protocol decides whether it takes effect under an acceptance rule stated in advance. Each rule rests on a different assumption: that the worker is honest or has too much at stake to lie, that attested hardware and its manufacturer are sound, that a proof system checked on-chain is secure, or that some honest party is watching during a window in which anyone may dispute the result.",
+        },
+        {
+          kind: "paragraph",
+          text: "Judging a result requires the inputs it claims to have used. If those inputs are not committed where the protocol and its participants can see them, neither a proof nor a dispute can show whether the right computation was run on the right data.",
+        },
+        {
+          kind: "paragraph",
+          text: "Off-chain workers also bring a dependency that replicated execution did not have: they can stop responding. Acceptance rules constrain what may be accepted, not whether anything arrives, so a protocol that relies on off-chain work needs a way to proceed without it, such as replacing the worker, falling back to a slower path, or letting users act directly.",
+        },
+      ],
+    },
+    {
+      id: "resource-accounting-content",
+      conceptId: "resource-accounting",
+      definition:
+        "Resource accounting is how a protocol measures the work each operation imposes on the participants who process it, and bounds and charges for that work so that no one can impose unlimited cost on others.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A protocol cannot know in advance how long an arbitrary program will run, or whether it will stop at all. Metering therefore happens during execution: each step draws on a budget the sender supplied, and execution halts when the budget runs out. The work already done has still cost everyone who performed it, which is why it is usually charged even when the operation fails.",
+        },
+        {
+          kind: "paragraph",
+          text: "The unit of account is a model of cost, and work has several kinds of cost. Computation, access to existing state, network bandwidth, and permanent storage consume different resources, change in relative expense as hardware and the size of state change, and do not reduce naturally to one number. Protocols either fold them into a single unit and adjust its price table over time, or meter the dimensions separately.",
+        },
+        {
+          kind: "paragraph",
+          text: "Storage is the hardest case, because its cost does not end with the operation. Data written to state must be kept, and served, by every participant that holds state for as long as it remains, while the fee for writing it is paid once. A charge that is fair for computation can badly underprice the lasting burden of state growth.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where resource limits sit is a choice about who can keep up. Every participant expected to process state must be able to perform the permitted work, for the worst single operation and for a full block or period, in the time available, so raising limits raises the resources required to participate.",
+        },
+      ],
+    },
+    {
       id: "state-data-content",
       conceptId: "state-data",
       definition:
