@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "map:generate": "node scripts/generate-map-explorer-view.ts",
+    "map:inspect": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/inspect-map-concept.ts",
     "test": "node --test \"src/**/*.test.ts\"",
     "test:map:browser": "node e2e/map/run.mts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
