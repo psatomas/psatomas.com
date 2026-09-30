@@ -40,4 +40,7 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "agent-identity",
   "distributed-systems",
   "protocol-properties",
+  "state-machines",
+  "trust-models",
+  "coordination",
 ];

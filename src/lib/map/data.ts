@@ -6939,6 +6939,110 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "state-machines-content",
+      conceptId: "state-machines",
+      definition:
+        "A state machine is a model of a system as a set of possible states, the inputs the system can receive, and rules that determine which transition each input may cause from each state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "It is a model, not the system itself. Describing a protocol this way separates three questions that are easily tangled: what the system currently is, what can happen to it, and what is allowed to happen. The same protocol can be modeled by different state machines at different levels of detail, depending on which questions the model has to answer.",
+        },
+        {
+          kind: "paragraph",
+          text: "What counts as state is the central modeling decision. State is whatever the system must remember about its past to determine which transitions are valid next: anything that can affect a later transition has to be captured, and anything that cannot may be left out. An account balance is state because later transfers depend on it; the order in which earlier transfers arrived is state only if some rule consults it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The abstraction makes behavior checkable. Instead of asking whether a protocol ever misbehaves across every possible run, one can ask whether any reachable state violates a required condition. A condition that holds in every reachable state is an invariant, and it can often be established by showing that the initial state satisfies it and that every valid transition preserves it. An argument about unbounded behavior becomes an argument about individual transitions.",
+        },
+        { kind: "distinction", left: "Unpredictable inputs", right: "Nondeterministic transitions" },
+        {
+          kind: "paragraph",
+          text: "A machine can receive inputs that no one can predict and still be deterministic. Determinism concerns the rules: given a state and an input, is the next state fixed? Where inputs come from, when they arrive, and in what order are questions about the machine's environment, and a deterministic machine fed different input sequences will legitimately end in different states.",
+        },
+        {
+          kind: "paragraph",
+          text: "When the rules are deterministic, the current state is a function of the initial state and the sequence of inputs applied to it. The input sequence then becomes the more fundamental record: the state can be rebuilt by replaying it, audited by recomputing it, and reproduced elsewhere by applying it again. State machine replication is built on this property.",
+        },
+      ],
+    },
+    {
+      id: "trust-models-content",
+      conceptId: "trust-models",
+      definition:
+        "A trust model is a system's account of what it relies on without checking: which parties and components are trusted, for which claims, and what their failure would allow.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Trust attaches to particular claims. The same operator may be trusted to keep a service running while every result it produces is checked. A party trusted only to include transactions promptly can, by failing, delay them but not forge them, provided the transactions themselves are checked. A trust model is complete only when it states, for each trusted party, what that party could do by failing or misbehaving.",
+        },
+        {
+          kind: "flow",
+          label: "Two routes by which a claim comes to be relied on",
+          stages: [
+            ["Claim"],
+            [
+              ["Checked by the relying party", "Rests on the checking mechanism"],
+              ["Accepted from its source", "Rests on the source's behavior"],
+            ],
+            ["Relied on"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Checking a claim does not remove assumptions; it exchanges assumptions about a party's honesty for assumptions about mathematics, code, and data, such as the hardness of a cryptographic problem, the correctness of the checking software, and access to the data the check requires.",
+        },
+        { kind: "distinction", left: "Verifiable", right: "Verified" },
+        {
+          kind: "paragraph",
+          text: "A claim that could be checked protects no one until someone checks it. If checking is expensive, slow, or depends on data that is not published, the claim is verifiable in principle and trusted in practice. Minimizing trust is therefore not only a matter of making claims checkable but of making checking cheap and accessible enough that it actually happens, and a trust model has to say who performs each check.",
+        },
+        {
+          kind: "paragraph",
+          text: "Spreading trust across many parties reduces reliance on any one of them only to the extent that their failures are independent. Parties running the same software, hosted by the same provider, or answerable to the same interests can fail together, so a threshold that looks large may rest on far fewer independent points of failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "A trust model states whom a system relies on; a threat model states what an adversary is assumed able to do. The two are read together, because a trust assumption becomes a risk exactly where the threat model allows the trusted party to be compromised. Made explicit, a trust model lets two systems that perform the same function be compared by what each asks its users to take on faith.",
+        },
+      ],
+    },
+    {
+      id: "coordination-content",
+      conceptId: "coordination",
+      definition:
+        "Coordination is the process by which independent participants, each choosing for itself, arrive at choices that fit together into a collective outcome.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Coordination works on expectations. A participant's choice depends on what it expects others to do, and those expectations depend on what it knows: about the situation, about the other participants, and often about what they know. Protocols coordinate by shaping that chain rather than by controlling each choice.",
+        },
+        {
+          kind: "flow",
+          label: "What coordination acts on",
+          stages: [["Information"], ["Expectations about others"], ["Individual choices"], ["Collective outcome"]],
+        },
+        {
+          kind: "paragraph",
+          text: "Knowing a fact is not always enough. When participants must act together, each may need to know that the others know it, and that they know it is known. Unreliable communication makes this layered knowledge hard to reach, which is one reason protocols fix shared rules in advance: a rule that every participant knows, and knows the others follow, coordinates without any message being sent at the moment of action.",
+        },
+        {
+          kind: "paragraph",
+          text: "Communication in the coordinating sense is the exchange of intentions, signals, and commitments that change what others expect, which is distinct from the delivery of messages between processes. A stated intention changes expectations only if others believe it will be kept, so protocols often make commitments binding or costly to break, through deposits, penalties, or rules that carry out the commitment automatically.",
+        },
+        { kind: "distinction", left: "Competition", right: "Coordination failure" },
+        {
+          kind: "paragraph",
+          text: "Cooperation and competition are both ways of coordinating. Cooperation aligns participants toward compatible objectives. Competition lets participants contend under rules, and the rules decide what their contention produces: a price, an allocation, or an ordering. Most protocols rely on both, with participants cooperating on the rules while competing within them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Shared interest does not guarantee a shared outcome. When everyone benefits from a result that each would rather let others pay for, individually sensible choices can leave the result unachieved; this is the collective action problem. Coordination models, whether explicit agreement, conventions, markets, or a designated coordinator, differ in how they address it and in what each assumes about participants' information and incentives.",
+        },
+      ],
+    },
+    {
       id: "computation-execution-content",
       conceptId: "computation-execution",
       definition:
