@@ -7948,6 +7948,49 @@ test("exposition validation reports every malformed block", () => {
   ]);
 });
 
+test("exposition validation rejects blank definitions and prose the renderer cannot present", () => {
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "unpresentable-exposition", conceptId: "economic-agency", definition: " ", summary: "",
+      whyItMatters: "Matters **a lot**.",
+      body: [
+        { kind: "paragraph", text: "A <em>marked up</em> passage." },
+        { kind: "paragraph", text: "First line.\nSecond line." },
+        { kind: "heading", text: "Use `code` or [links](https://example.com)" },
+        { kind: "terms", terms: ["Safety", "Liveness", "Safety"] },
+        { kind: "distinction", left: "A", right: "B", further: ["A"] },
+        { kind: "tensions", label: "Pairs", pairs: [["Safety", "Liveness"], ["Safety", "Liveness"]] },
+        { kind: "flow", label: "Repeated", stages: [["A"], ["B", "B"], ["C"]] },
+        { kind: "flow", label: "Repeated step", stages: [["A"], [["B", "B"], ["C"]], ["D"]] },
+        { kind: "flow", label: "Too wide", stages: [["A"], ["B", "C", "D", "E", "F", "G", "H"], ["I"]] },
+      ],
+    }],
+  }));
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "unpresentable-exposition"')), [
+    'Content "unpresentable-exposition" block 0 (paragraph) contains an HTML tag',
+    'Content "unpresentable-exposition" block 1 (paragraph) contains a line break',
+    'Content "unpresentable-exposition" block 2 (heading) contains markdown syntax',
+    'Content "unpresentable-exposition" block 3 (terms) repeats a term',
+    'Content "unpresentable-exposition" block 4 (distinction) repeats a notion in its chain',
+    'Content "unpresentable-exposition" block 5 (tensions) repeats a pair',
+    'Content "unpresentable-exposition" block 6 (flow) repeats an element within a stage or branch',
+    'Content "unpresentable-exposition" block 7 (flow) repeats an element within a stage or branch',
+    'Content "unpresentable-exposition" block 8 (flow) has a parallel set wider than 6 elements',
+    'Content "unpresentable-exposition" has an empty definition',
+    'Content "unpresentable-exposition" summary is empty',
+    'Content "unpresentable-exposition" whyItMatters contains markdown syntax',
+  ]);
+  // Plain comparisons and the same notion in different stages remain valid.
+  assert.deepEqual(errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "presentable-exposition", conceptId: "economic-agency", definition: "Fees > 0 and A ≠ B are plain text.",
+      body: [{ kind: "flow", label: "Revisits", stages: [["State"], ["Transition"], ["State"]] }],
+    }],
+  })), []);
+});
+
 test("resolver rejects invalid models rather than repairing them", () => {
   const invalid = { ...mapKnowledge, concepts: [...mapKnowledge.concepts, mapKnowledge.concepts[0]] };
   assert.throws(() => createMapResolver(invalid), MapKnowledgeValidationError);
