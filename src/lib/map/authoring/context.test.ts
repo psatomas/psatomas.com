@@ -5,6 +5,7 @@ import { mapKnowledge } from "../data.ts";
 import { createMapResolver } from "../resolver.ts";
 import type { MapContentBlock, MapKnowledgeModel } from "../types.ts";
 import { createMapAuthoringInspector, MapAuthoringContextError } from "./context.ts";
+import { AUTHORED_CONTENT_CONCEPTS } from "./content-registry.ts";
 import type { MapAuthoringErrorCode } from "./context.ts";
 import { formatMapConceptAuthoringContext, formatMapDomainAuthoringStatus } from "./format.ts";
 
@@ -186,6 +187,41 @@ test("a preferred leaf placement points the author at the placement that carries
 test("distinct concepts sharing a title are reported, never merged", () => {
   assert.deepEqual(inspector.inspectConcept("communication").sameTitleConcepts, ["coordination-communication"]);
   assert.deepEqual(inspector.inspectConcept("coordination-communication").sameTitleConcepts, ["communication"]);
+});
+
+test("registration guidance follows the concept's content and registry state", () => {
+  const constraints = (context: ReturnType<typeof inspector.inspectConcept>) =>
+    formatMapConceptAuthoringContext(context).split("\nAuthoring constraints\n")[1];
+
+  // No content, not registered: new exposition must be registered.
+  const fresh = inspector.inspectConcept("distributed-systems");
+  assert.equal(fresh.registration, "unregistered");
+  assert.match(constraints(fresh), /must also register "distributed-systems" in AUTHORED_CONTENT_CONCEPTS/);
+
+  // Content and registration agree: revising needs no new entry.
+  const existing = inspector.inspectConcept("finality");
+  assert.equal(existing.registration, "registered");
+  assert.match(constraints(existing), /"finality" is already registered in AUTHORED_CONTENT_CONCEPTS \(src\/lib\/map\/authoring\/content-registry.ts\); revising its exposition needs no new registry entry/);
+  assert.doesNotMatch(constraints(existing), /must also register/);
+  assert.ok(!existing.attention.some((note) => note.startsWith("Registry inconsistency")));
+
+  // Content without registration, and registration without content, are surfaced instead of normal guidance.
+  const unregisteredFinality = createMapAuthoringInspector(mapKnowledge, {
+    authoredContent: AUTHORED_CONTENT_CONCEPTS.filter((id) => id !== "finality"),
+  }).inspectConcept("finality");
+  assert.equal(unregisteredFinality.registration, "content-not-registered");
+  assert.match(unregisteredFinality.attention[0], /^Registry inconsistency: "finality" owns content "finality-content" but is not registered/);
+  const registeredEmpty = createMapAuthoringInspector(mapKnowledge, {
+    authoredContent: [...AUTHORED_CONTENT_CONCEPTS, "distributed-systems"],
+  }).inspectConcept("distributed-systems");
+  assert.equal(registeredEmpty.registration, "registered-without-content");
+  assert.match(registeredEmpty.attention[0], /^Registry inconsistency: "distributed-systems" is registered .* but owns no content/);
+  for (const context of [unregisteredFinality, registeredEmpty]) {
+    const text = constraints(context);
+    assert.match(text, /^ {2}- Do not author yet: /);
+    assert.doesNotMatch(text, /must also register|already registered|Revising edits|body blocks|Flows need/);
+    assert.match(formatMapConceptAuthoringContext(context), /\nRegistration: {7}INCONSISTENT: /);
+  }
 });
 
 test("inspection fails clearly for unknown concepts, contexts, domains and invalid data", () => {

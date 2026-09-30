@@ -14,6 +14,7 @@ import { MAP_RELATIONSHIP_TYPES } from "../types.ts";
 import type { MapConceptContent, MapContentBlock, MapFlowElement, MapKnowledgeModel, MapPlacement } from "../types.ts";
 import { createMapResolver, type MapResolver } from "../resolver.ts";
 import { MapKnowledgeValidationError } from "../validation.ts";
+import { AUTHORED_CONTENT_CONCEPTS } from "./content-registry.ts";
 
 export type MapAuthoringErrorCode = "invalid-model" | "unknown-concept" | "unknown-context" | "context-mismatch" | "unknown-domain";
 
@@ -86,8 +87,17 @@ export type MapAuthoringRelation = {
   title: string;
 };
 
+/**
+ * How the concept's canonical content relates to the authored-content registry
+ * (content-registry.ts). The two agree ("unregistered": no content yet;
+ * "registered": content intentionally authored) or disagree, which the unit
+ * tests reject and an author must resolve before writing.
+ */
+export type MapContentRegistration = "unregistered" | "registered" | "registered-without-content" | "content-not-registered";
+
 export type MapConceptAuthoringContext = {
   concept: { id: string; title: string };
+  registration: MapContentRegistration;
   content: {
     exists: boolean;
     contentId?: string;
@@ -224,7 +234,11 @@ function locateSection(
   return mentions.length === 1 ? toSection(mentions[0].index) : undefined;
 }
 
-export function createMapAuthoringInspector(model: MapKnowledgeModel) {
+export function createMapAuthoringInspector(
+  model: MapKnowledgeModel,
+  { authoredContent = AUTHORED_CONTENT_CONCEPTS }: { authoredContent?: readonly string[] } = {},
+) {
+  const registry = new Set(authoredContent);
   let resolver: MapResolver;
   try {
     resolver = createMapResolver(model);
@@ -362,10 +376,20 @@ export function createMapAuthoringInspector(model: MapKnowledgeModel) {
       .filter((other) => other.id !== concept.id && other.title === concept.title)
       .map((other) => other.id)
       .sort();
+    const registered = registry.has(concept.id);
+    const registration: MapContentRegistration = content
+      ? registered ? "registered" : "content-not-registered"
+      : registered ? "registered-without-content" : "unregistered";
     const levels = levelsOf(concept.id);
     const primaryContext = contexts.find((context) => context.isPrimary);
 
     const attention: string[] = [];
+    if (registration === "content-not-registered") {
+      attention.push(`Registry inconsistency: "${concept.id}" owns content "${content?.id}" but is not registered in AUTHORED_CONTENT_CONCEPTS. Resolve this before authoring.`);
+    }
+    if (registration === "registered-without-content") {
+      attention.push(`Registry inconsistency: "${concept.id}" is registered in AUTHORED_CONTENT_CONCEPTS but owns no content. Resolve this before authoring.`);
+    }
     if (contexts.length === 0) {
       attention.push("The concept has no placement: no reader reaches its exposition through the explorer.");
     }
@@ -413,6 +437,7 @@ export function createMapAuthoringInspector(model: MapKnowledgeModel) {
 
     return {
       concept: { id: concept.id, title: concept.title },
+      registration,
       content: {
         exists: Boolean(content),
         ...(content ? { contentId: content.id } : {}),
