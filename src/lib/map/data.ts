@@ -7816,6 +7816,208 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "state-representation-content",
+      conceptId: "state-representation",
+      definition:
+        "State representation is the way a protocol writes its abstract state down: the model it uses to describe what it tracks, and the concrete encoding and layout in which that model is stored, hashed, and served.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Many representations can describe the same abstract state, but a protocol must fix one. Its commitments are computed over the representation, not over the idea of the state, so two participants that agree on every balance but encode them differently will compute different roots and appear to disagree. In a replicated protocol, encoding is therefore part of consensus: canonical down to the byte, and changed only by a coordinated upgrade.",
+        },
+        {
+          kind: "paragraph",
+          text: "The state model also shapes how operations interfere. Where state is a set of unspent outputs, each operation consumes and creates specific items, and operations that touch different items are independent by construction. Where state is a set of accounts with balances and storage, many operations meet on the same account, which is simpler to program against but makes contention and ordering more consequential.",
+        },
+        {
+          kind: "paragraph",
+          text: "Layout decides what is cheap. Data that is read, updated, or proven together can be stored together, while data scattered across a structure costs more to access and to prove. Whether a piece of state is local to one account or contract, or global to the protocol, determines who can change it and how much of the whole must be touched to prove anything about it.",
+        },
+      ],
+    },
+    {
+      id: "transitions-content",
+      conceptId: "transitions",
+      definition:
+        "A state transition is a single, rule-sanctioned change from one protocol state to the next, taking effect only if its preconditions hold and applying all of its effects together.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Transitions compose. Each transaction produces a transition, a block's transition is the composition of its transactions' transitions in order, and a protocol's history is the composition of its blocks'. Protocols usually commit only to the states at block boundaries: the intermediate states between one transaction and the next are computed by every participant but appear in no commitment and cannot be referred to afterwards.",
+        },
+        { kind: "distinction", left: "Transition inputs", right: "State difference" },
+        {
+          kind: "paragraph",
+          text: "A transition can be communicated in two ways. Its inputs can be sent, so that every recipient recomputes the effects, or its effects can be sent as the difference between the old state and the new one. Applying a difference is cheaper, but a difference alone does not show that it follows from any valid input; it has to arrive with a proof, from a party that is trusted, or together with the inputs needed to check it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because a transition takes effect only as a whole, what a protocol promises about state is a promise about the states between transitions. Conditions that hold only partway through a transition, such as an intermediate value that no rule would accept as final, are invisible outside it, which is what allows rules to be stated over complete states rather than over the steps that produce them.",
+        },
+      ],
+    },
+    {
+      id: "state-commitments-content",
+      conceptId: "state-commitments",
+      definition:
+        "A state commitment binds a protocol to one exact state through a single short value, so that anyone who accepts that value can verify claims about the state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Commitments turn trust in a large state into trust in one small value. A client that holds only a commitment can check individual values with proofs, and a system that records another protocol's commitments, as a settlement layer records a rollup's, can resolve claims about that protocol's state without executing its transitions or storing its state.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a commitment structure can prove depends on how it is organized. Proving that a value is present needs only a path to it; proving that a key is absent requires a structure ordered by key, so that the place where the key would be can be shown to be empty. Proof size, the cost of updating the commitment after every transition, and whether proofs can be combined all differ between structures, and protocols have changed commitment schemes as their state grew.",
+        },
+        {
+          kind: "paragraph",
+          text: "The same property makes validation without state possible. If each operation arrives with proofs for the state it touches, a participant holding only the current commitment can check the operation and compute the next commitment, moving the cost of holding state from every validator to whoever supplies the proofs.",
+        },
+      ],
+    },
+    {
+      id: "historical-state-content",
+      conceptId: "historical-state",
+      definition:
+        "Historical state is the state a protocol held at earlier points in its history, together with the means by which it can still be recovered, queried, or proven after it has been replaced.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Keeping every past state is expensive, and most participants do not. They keep the current state and enough recent history to follow the protocol, and discard the rest. Retaining full history then becomes a service performed by fewer participants, which changes whom a historical query depends on even though the protocol's rules are unchanged.",
+        },
+        {
+          kind: "paragraph",
+          text: "A historical answer is only as trustworthy as its link to something already accepted. Because each block records a commitment to the state it produced, an old state can be matched to that commitment, and the commitment traced through the chain of headers leading to the present. Without such a link, a claim about the past is only a report from whoever stored it.",
+        },
+        {
+          kind: "paragraph",
+          text: "History also has a horizon. Some protocols need past state only for a bounded time, for example while a result can still be disputed, and can safely let it go afterwards; others promise that it remains retrievable indefinitely and must pay for that promise for as long as they keep it.",
+        },
+      ],
+    },
+    {
+      id: "synchronization-content",
+      conceptId: "synchronization",
+      definition:
+        "Synchronization is how a participant that did not observe a protocol's history as it happened acquires a current view of its state, together with grounds for trusting that view.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every synchronization starts from something accepted without being rechecked from the beginning: the genesis state, a recent checkpoint, or a commitment obtained elsewhere. That starting point is its trust assumption. Starting from genesis costs the most and assumes the least; starting from a recent commitment is fast and assumes that the commitment came from a source that would not misrepresent it.",
+        },
+        {
+          kind: "paragraph",
+          text: "A synchronizing participant also learns only what its peers tell it. If every peer it reaches is controlled by an adversary, it can be shown a history that the rest of the network does not share, so synchronization depends on reaching at least one honest source and on rules that let the participant recognize which history to follow.",
+        },
+        {
+          kind: "paragraph",
+          text: "Synchronization does not end with the first complete view. A participant then keeps pace with each new block, and whenever it falls behind, through downtime or a slow connection, it synchronizes again over the gap. Catching up and keeping up are the same problem at different scales.",
+        },
+      ],
+    },
+    {
+      id: "on-chain-data-content",
+      conceptId: "on-chain-data",
+      definition:
+        "On-chain data is everything a protocol takes into its own agreed record: transactions and their inputs, the blocks that order them, the logs and events that execution emits, and the state that results.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Recording data on-chain gives it the protocol's guarantees, agreement on its content and order and availability to every participant that follows the protocol, and charges for them. Every full participant must receive and check it, and usually keep it, so on-chain data is priced and bounded more strictly than almost anything else a system stores.",
+        },
+        {
+          kind: "paragraph",
+          text: "Not all on-chain data has to last. State must be kept for as long as later transitions may read it. Transaction inputs and emitted logs are needed to verify and interpret what happened, but not to execute what comes next, so protocols increasingly distinguish data that must remain in state from data that must only have been available.",
+        },
+        {
+          kind: "paragraph",
+          text: "On-chain data is also public by default. Anything recorded is visible to every participant for as long as the history is retained, so information that must stay confidential has to be encrypted, replaced by a commitment, or kept off-chain.",
+        },
+      ],
+    },
+    {
+      id: "off-chain-data-content",
+      conceptId: "off-chain-data",
+      definition:
+        "Off-chain data is information a protocol depends on but does not record, reachable from the protocol only through the references it keeps.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Data goes off-chain because recording it would be too costly, too large, too sensitive, or too changeable to place in every participant's copy. What remains on-chain is a reference, and the kind of reference decides what the protocol has actually committed to.",
+        },
+        { kind: "distinction", left: "Location reference", right: "Content reference" },
+        {
+          kind: "paragraph",
+          text: "A location reference, such as an address or a name, points to wherever the data is currently served. Whoever controls that location can change what it returns, so the protocol has committed to a pointer rather than to data. A content reference is computed from the data itself: it identifies exactly one piece of content and makes any change detectable, but it cannot be updated without being replaced.",
+        },
+        {
+          kind: "paragraph",
+          text: "Off-chain state adds a further requirement. When a protocol governs state kept outside it, such as balances that parties track between themselves and settle later, it needs a way to bring the latest valid version back on-chain, with evidence, whenever the parties disagree.",
+        },
+      ],
+    },
+    {
+      id: "data-integrity-content",
+      conceptId: "data-integrity",
+      definition:
+        "Data integrity is the assurance that data has not changed from a version that was fixed earlier, established by checking it against a value derived from that version.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An integrity check only moves the question. It shows that data matches a reference value, so the reference value itself must arrive by a path that is already trusted: recorded on-chain, signed by a known source, or held from before. A hash obtained from the same party that supplies the data protects against accidental corruption but not against that party.",
+        },
+        {
+          kind: "paragraph",
+          text: "How data is committed decides how much of it must be fetched to check any part. A hash over a whole object can be checked only against the whole object; a commitment built over a structure lets a single part be checked with a short proof, so participants can verify pieces of large data sets they do not hold.",
+        },
+        {
+          kind: "paragraph",
+          text: "Integrity guarantees also inherit the assumptions of the functions that produce them. They hold while it remains infeasible to find different data with the same value, and data meant to stay verifiable for a long time may outlive the hash function first used to protect it.",
+        },
+      ],
+    },
+    {
+      id: "provenance-content",
+      conceptId: "provenance",
+      definition:
+        "Provenance is the traceable history of a piece of data: its sources, the steps that transformed it, and the parties responsible for each.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Provenance is built by applying other data guarantees along a path. Each step, whether an origin, a transformation, or a handoff, can carry its own integrity and authenticity evidence, and provenance links those steps so that a result can be traced back to its sources. A gap anywhere in the chain leaves everything after it unexplained, however well each later step is protected.",
+        },
+        {
+          kind: "paragraph",
+          text: "The concept has two faces. One is the record itself: how origins, lineage, and attribution are captured and kept so that any data can be traced. The other is the use of that record to judge a particular result, such as a reported value about the outside world, by checking which sources and transformations it passed through and whether the steps it records fit together.",
+        },
+        {
+          kind: "paragraph",
+          text: "What provenance adds is accountability. When a result turns out to be wrong, the record shows which source or step to hold responsible, and which other results share that source or step and may be wrong in the same way.",
+        },
+      ],
+    },
+    {
+      id: "indexing-content",
+      conceptId: "indexing",
+      definition:
+        "Indexing is the construction of views over a protocol's canonical data that are organized for answering questions rather than for validating transitions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Most applications read indexes, not state, which makes the indexer a trust dependency that the protocol itself does not see. An index can be wrong, incomplete, or behind, and its answers can be verified from the protocol only where they concern committed data, such as a current balance with a state proof. Answers that aggregate across history, such as every transfer an account has ever made, are much harder to verify and are usually taken on trust.",
+        },
+        {
+          kind: "paragraph",
+          text: "An index also interprets. Deciding which events matter, how raw logs are decoded, and how entities are identified across contracts are choices the protocol does not make, so two correct indexers over the same history can return different answers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where an index follows the chain is a trade-off between freshness and stability. Following the latest block gives current answers that a reorganization may later withdraw; following only finalized history gives stable answers that arrive later.",
+        },
+      ],
+    },
+    {
       id: "consensus-ordering-content",
       conceptId: "consensus-ordering",
       definition:
