@@ -8775,6 +8775,182 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "p2p-networks-content",
+      conceptId: "p2p-networks",
+      definition:
+        "A peer-to-peer network is the web of direct connections through which a protocol's participants reach one another without a central server, each node linked to only some of the others and relying on them to reach the rest.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Connection slots are scarce. A node can maintain only so many peers, and which ones it keeps decides what it hears and how quickly. Peer management therefore scores peers by how they behave, keeping those that deliver valid, timely messages and dropping those that waste bandwidth, and it favors diversity, spreading connections across different networks and operators so that no single party can occupy most of a node's slots.",
+        },
+        {
+          kind: "paragraph",
+          text: "The shape of the graph also leaks information. A message reaches its originator's neighbors before anyone else, so an observer connected to many nodes can often infer where a transaction entered the network, and with it who is likely behind it. Some networks pass a new transaction along a few hops before broadcasting it widely, accepting a little delay for less exposure of its origin.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reachability comes from redundancy. Because any node may disappear or misbehave, a healthy topology offers many overlapping paths between participants, so that losing some connections slows information down rather than cutting it off.",
+        },
+      ],
+    },
+    {
+      id: "message-propagation-content",
+      conceptId: "message-propagation",
+      definition:
+        "Message propagation is how a message created by one node reaches the other nodes that need it, passed from node to node under rules that decide what is forwarded, to whom, and when.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Relaying is also filtering. Because nodes check messages before forwarding them, an invalid message usually stops at the first honest node it reaches, which keeps one bad participant from making the whole network carry its traffic. The check takes time at every hop, so networks that need speed sometimes forward a compact announcement first and the full content afterwards, or relay before completing expensive checks, accepting more exposure to invalid data in exchange for lower latency.",
+        },
+        {
+          kind: "paragraph",
+          text: "How fast a message spreads shapes more than convenience. A participant that receives a new block later than others spends that time building on history that is already outdated, and larger messages take longer at every hop. Propagation delay therefore favors well-connected participants and limits how much data each round of the protocol can reasonably carry.",
+        },
+      ],
+    },
+    {
+      id: "nodes-content",
+      conceptId: "nodes",
+      definition:
+        "A node is a running instance of a protocol's software: it joins the network, keeps its own copy of whatever protocol data it maintains, and verifies incoming data for itself.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Nodes are where the rules are enforced independently of consensus. A full node rejects an invalid block even if every validator signed it, so participants who run their own nodes cannot be made to accept a rule violation merely because validators agreed to it. That enforcement protects only those whose node performs it; everyone else inherits the guarantees of whichever node answers them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Most nodes run one of a small number of software implementations, and a defect shared by the implementation that most nodes use can become a failure of the whole network. With several independent implementations in wide use, the same defect splits the network instead of corrupting it, which is why the spread of node software across implementations matters as much as the number of nodes.",
+        },
+      ],
+    },
+    {
+      id: "rpc-content",
+      conceptId: "rpc",
+      definition:
+        "RPC is the request-and-response channel between applications and nodes, through which software reads protocol data and hands over actions for submission, together with the services that run such channels for others.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A read through RPC reveals as much as it returns. The provider sees which accounts, contracts, and transactions an application asks about, often alongside the network address of the user behind it, so relying on a shared provider trades the cost of running infrastructure for handing that provider a detailed view of who is interested in what.",
+        },
+        {
+          kind: "paragraph",
+          text: "RPC is also the usual write path. A transaction submitted through a provider reaches that provider before it reaches anyone else, which lets the provider forward it promptly, delay it, drop it, or route it somewhere of its choosing. Which provider an application submits through is therefore a choice about who handles its transactions first, not merely about connectivity.",
+        },
+        {
+          kind: "paragraph",
+          text: "The methods themselves are shared across node implementations largely by convention. Applications come to depend on details the protocol does not define, and a difference between implementations or providers can change what an application receives for the same request.",
+        },
+      ],
+    },
+    {
+      id: "indexers-content",
+      conceptId: "indexers",
+      definition:
+        "Indexers are the services that extract data from nodes, transform it, and store it in forms organized for queries, operating the pipelines that turn raw node data into the views applications read.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An indexer can only be as complete as the data it can extract. Current state is widely available, but a full account of past events and internal execution often requires nodes that keep every historical state or produce detailed execution traces, which few nodes do. What an indexer can offer is bounded by which of those nodes it can reach.",
+        },
+        {
+          kind: "paragraph",
+          text: "Indexes are expensive to rebuild. Starting over means processing the protocol's entire history again, and a change to what an index records, or a bug in how it was built, can require exactly that. How an indexer tracks its progress and recovers from failure therefore determines how long applications can be left without answers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where relying on one indexer is too much, several can serve the same queries independently, and some designs let their answers be compared or challenged, so that a wrong answer from one can be detected against the others.",
+        },
+      ],
+    },
+    {
+      id: "relayers-content",
+      conceptId: "relayers",
+      definition:
+        "A relayer carries a transaction or message from where it was created to where it must be delivered, doing the submission work on someone else's behalf without determining what the transaction or message says.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "When what a relayer carries is authenticated, by the sender's signature or a proof the destination can check, the relayer cannot alter it without detection. Its remaining power is over whether and when the message arrives, and designs that let anyone relay a given message reduce even that, since a relayer that holds a message back can be bypassed by one that does not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Relaying also separates who acts from who pays. Submission at the destination costs fees there, and a relayer can pay them and be compensated in some other way, which lets a user act on a system where they hold none of the asset its fees require. The relayer carries that cost up front, and relay policies decide which requests it is willing to take on.",
+        },
+      ],
+    },
+    {
+      id: "keepers-content",
+      conceptId: "keepers",
+      definition:
+        "A keeper is an external participant that performs actions a protocol needs but cannot take by itself, watching for the conditions under which those actions become due and submitting them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocols execute only when someone submits a transaction, so anything that must happen at a certain time or under a certain condition, such as updating an interest rate or liquidating an unsafe position, needs someone outside the protocol to set it off. Well-designed keeper actions are open to anyone and checked by the protocol itself, so that correctness does not depend on which keeper acts, only on some keeper acting.",
+        },
+        {
+          kind: "paragraph",
+          text: "Keepers act for reward, and the reward has to cover the cost of acting under the worst conditions, not typical ones. Duties often become urgent exactly when the network is congested and fees are high, as during sharp market moves, and a reward that no longer covers fees at that moment leaves the protocol without keepers when it needs them most. Where many keepers compete for the same reward, the competition itself becomes a race in fees and speed.",
+        },
+      ],
+    },
+    {
+      id: "bots-content",
+      conceptId: "bots",
+      definition:
+        "A bot acts for its operator without a person approving each action: it reads a protocol and its surroundings and follows a programmed strategy.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A bot's authority is whatever its keys and permissions allow, and it holds them online so that it can act without delay. Anyone who gains control of those keys, or can feed the bot misleading inputs, can make it act. Operators therefore limit what a bot can reach, giving it dedicated accounts, spending limits, and narrow permissions rather than broad control.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many bots watch the same signals and follow similar strategies, so their actions are correlated. When a price moves, they can react together within the same block, and one bot's action can create the signal the next one responds to, turning a small change into a cascade. How a protocol behaves under stress is therefore partly how the bots around it behave.",
+        },
+      ],
+    },
+    {
+      id: "monitoring-content",
+      conceptId: "monitoring",
+      definition:
+        "Monitoring is the continuous collection and evaluation of signals from the infrastructure a protocol runs on and from the protocol's own behavior, so that problems are noticed while they can still be addressed.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Signals from components say whether each part is working; signals from the protocol say whether the system is. A node can report itself healthy while the network around it misses blocks, falls behind on finality, or reorganizes more deeply than usual, so monitoring that watches only components can stay quiet during exactly the failures users feel.",
+        },
+        {
+          kind: "paragraph",
+          text: "A monitor has to fail differently from what it watches. One that runs on the same machines, shares the same hosting, or reads from the same node will go silent along with it. Comparing what several independent sources report is also how monitoring notices failures that no single component reports, such as one node drifting away from the rest.",
+        },
+        {
+          kind: "paragraph",
+          text: "Alerting spends attention. An alert that fires often without requiring action teaches operators to ignore it, so thresholds are set around what someone should actually do, and everything else is recorded rather than sent.",
+        },
+      ],
+    },
+    {
+      id: "automation-content",
+      conceptId: "automation",
+      definition:
+        "Automation is the practice of letting predefined triggers start actions without a person deciding each time, under policies that bound what those actions may do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Removing the person removes both delay and judgment. An automated action fires whenever its trigger holds, including when the trigger was reached by accident, by bad data, or by someone manipulating what is observed. The automation policy is therefore the real safety boundary: limits on amounts, rates, and frequency, and conditions under which the automation stops itself, decide how much damage a misfiring trigger can do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Automation also has to tolerate imperfect observation. A trigger may be seen twice, late, or not at all, and an action may be retried after a failure that in fact succeeded. Actions are therefore written to check the current state before acting and to have the same effect if performed twice, so that an unreliable loop does not become an unreliable system.",
+        },
+      ],
+    },
+    {
       id: "cryptography-proofs-content",
       conceptId: "cryptography-proofs",
       definition:
