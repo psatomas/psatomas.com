@@ -61,4 +61,13 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "data-integrity",
   "provenance",
   "indexing",
+  "consensus",
+  "validators",
+  "fork-choice",
+  "mempools",
+  "sequencing",
+  "block-building",
+  "proposer-builder-separation",
+  "preconfirmations",
+  "censorship-resistance",
 ];
