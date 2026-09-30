@@ -51,3 +51,6 @@ next-env.d.ts
 
 # Claude Code local settings
 .claude/
+
+# MAP domain-authoring run state (npm run map:author); local and resumable
+/.map-authoring/
