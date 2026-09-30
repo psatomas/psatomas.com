@@ -9676,6 +9676,186 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "on-chain-storage-content",
+      conceptId: "on-chain-storage",
+      definition:
+        "On-chain storage holds the values that transactions write into a protocol's state, where the execution of any later transaction can read or change them and every node that maintains current state must keep them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Its costs follow from who carries it. Persistent storage outlives the transaction that wrote it, and state storage keeps it on every node that maintains current state, so a write is paid for once while the data occupies disk and slows access across the network for as long as it remains. Storage costs have to settle, at the moment of writing, a charge for a burden of unknown duration. Because the burden outlasts the payment, protocols also reward removal, for example by refunding part of the cost when a value is cleared, and some designs charge for continued occupancy or let unused state expire.",
+        },
+        {
+          kind: "paragraph",
+          text: "Storage layout and storage slots set the unit in which that burden is measured. A program's variables map onto fixed-size slots, and the layout decides how many slots a value spans and which values share one. Where reads and writes are charged per slot touched, and in some protocols the first access to a slot within a transaction costs more than later ones, two programs holding the same data can differ widely in cost only because of how that data is arranged.",
+        },
+        {
+          kind: "paragraph",
+          text: "Storage optimization therefore starts with a question about each piece of data: must a later transaction read it, or does it only need to be retrievable? Only the first kind needs protocol state. The second can live in cheaper places, such as event logs, transaction data, or storage outside the protocol referenced by a commitment kept in state, each of which gives up some of the availability that state provides in exchange for a lower price.",
+        },
+      ],
+    },
+    {
+      id: "distributed-storage-content",
+      conceptId: "distributed-storage",
+      definition:
+        "Distributed storage keeps data on many independently operated storage nodes instead of in protocol state, so that it stays retrievable when some of those nodes fail or leave.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What protects the data is less the number of copies than their independence. Data distribution decides where copies land, and copies held by the same operator, hosting provider or region tend to fail together. Fault tolerance in distributed storage is therefore a statement about how many correlated losses a design absorbs, and spreading copies across unrelated operators can be worth more than adding copies that share a failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Redundancy also decays. Storage nodes go offline, lose disks or stop participating, and each departure consumes part of the margin that data replication created. A storage network has to notice the loss and restore the missing copies elsewhere before further losses exhaust that margin, so its resilience depends as much on how quickly it repairs as on how much it stored at the start. Whole copies are the simplest redundancy; schemes that reach the same resilience with less stored data belong to erasure coding.",
+        },
+        {
+          kind: "paragraph",
+          text: "The nodes are run by parties with their own costs and motives, and nothing in the data makes them keep it. Storage networks therefore pair placement and repair with a reason to keep serving, usually payment over the period the data is stored, and with a way to check that nodes still hold what they are paid for, which is the role of storage proofs. Without both, redundancy on paper can describe data that no one is still keeping.",
+        },
+      ],
+    },
+    {
+      id: "content-addressing-content",
+      conceptId: "content-addressing",
+      definition:
+        "Content addressing names data by a fingerprint derived from its bytes, so that a reference can resolve only to that content and any copy obtained can be checked against it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An identifier fixes an encoding, not an abstract meaning. Content hashing runs over bytes in a particular format, and large content is usually split into chunks whose hashes are combined into a single root, so the same file chunked or encoded differently receives a different content identifier. Parties holding identical data can fail to find each other's copies unless they agree on how identifiers are produced.",
+        },
+        {
+          kind: "paragraph",
+          text: "Address resolution only locates parties claiming to hold what an identifier names, and content retrieval fetches it from them. Because each chunk has its own hash beneath the root, a reader can fetch pieces from different sources and verify each one as it arrives instead of trusting a download until it completes. The guarantee holds only where the check runs: a reader who takes content from a gateway that verifies on its behalf is trusting the gateway, not the hash.",
+        },
+        {
+          kind: "paragraph",
+          text: "Immutable references cannot follow data that changes. Every version of an updated dataset has a new identifier, so systems that need a stable name place a mutable pointer over content identifiers, mapping the name to whichever identifier is current. The pointer brings back what content addressing removed: whoever can update it decides what the name refers to, and a reader can rely on it only as far as it trusts that party or a signature it can verify.",
+        },
+      ],
+    },
+    {
+      id: "archival-storage-content",
+      conceptId: "archival-storage",
+      definition:
+        "Archival storage is the keeping of a protocol's past, the data that current operation no longer needs, by parties willing to hold it beyond what running the protocol requires.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Retrieved history can be checked without trusting whoever supplies it. Past blocks and states are bound by commitments the protocol keeps, such as the chain of block headers and the state roots they carry, so an archive that serves altered historical data can be caught by anyone holding those commitments. What cannot be checked is whether an archive still has the data at all: the integrity of history is verifiable, but its availability rests on some archive continuing to hold it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Data retention divides that responsibility. A protocol may require operating nodes to keep and serve recent history for a defined period, after which data pruning lets them drop it, and anything older survives only in long-term storage kept by archive nodes, explorers, indexers or others with their own reasons to hold it. Protocols rarely pay for history beyond their retention window, so what lasts depends on those reasons lasting too.",
+        },
+        {
+          kind: "paragraph",
+          text: "History comes in two forms with very different costs. The record of past blocks and transactions grows steadily and can be kept in full, while the sequence of past states is far larger. State archiving either stores those states directly, which lets an archive node answer a question about any past moment at once, or keeps occasional snapshots and recomputes the states between them by replaying recorded history, trading storage for computation.",
+        },
+      ],
+    },
+    {
+      id: "data-availability-content",
+      conceptId: "data-availability",
+      definition:
+        "Data availability is the property that data a system has committed to can actually be obtained, in full, by everyone who needs it, in time to verify, challenge or rebuild what depends on it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Withholding is hard to answer because it leaves no evidence. An invalid state transition can be demonstrated afterwards by anyone who holds the data, but a producer who withholds data and releases it later cannot be shown to have withheld it: by the time others look, the data is there. Availability failures therefore cannot be settled by proof after the fact, which is why availability verification has each participant check for itself before relying on the data, rather than waiting to adjudicate a failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Availability guarantees differ in who must download how much. Publishing all data to the protocol makes every full node a witness, at a cost that grows with the data. Availability committees narrow the downloading to a designated set and replace each participant's own check with an assumption about enough of its members. Sampling spreads small random checks across many participants. Data publication through any of these is a choice of where the remaining assumption sits.",
+        },
+        {
+          kind: "paragraph",
+          text: "Availability is needed for a window, not forever. Participants need the data while they can still verify it, dispute what was claimed from it, or rebuild state from it; once that window closes, keeping the data is a matter for storage and archiving rather than availability. Data retrieval after the window may still succeed, but nothing the guarantee promised depends on it.",
+        },
+      ],
+    },
+    {
+      id: "erasure-coding-content",
+      conceptId: "erasure-coding",
+      definition:
+        "Erasure coding transforms data into a larger set of pieces from which the original can be rebuilt using only some of them, so that losing pieces up to a chosen limit loses no data.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Its advantage over copying is efficiency. With coding parameters that divide data into k data shards and encode them into n pieces, any k of the n rebuild the original, so the data outlives the loss of any n minus k pieces while occupying only n divided by k times its size. Tolerating the same number of losses with full copies would take n minus k plus one replicas. The parameters set the trade directly: more redundant encoding tolerates more loss and costs more space and bandwidth.",
+        },
+        {
+          kind: "paragraph",
+          text: "The saving moves cost into repair. Restoring a lost replica means copying one surviving replica, but restoring a lost coded piece usually means fetching enough other pieces to rebuild the data first, so fault recovery in coded storage spends more bandwidth per repair than replication does. Systems that encode long-lived data weigh the storage saved against the traffic their repairs will generate.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reconstruction also assumes the pieces were produced honestly. An encoder can publish pieces that are not a consistent encoding of any single dataset, so that different subsets rebuild different data, or none. Where an encoding supports availability claims, the system needs a way to hold the encoder to a correct encoding, either proofs that a piece is inconsistent with the rest or commitments that bind every piece to one underlying encoding, and data reconstruction guarantees no more than that check does.",
+        },
+      ],
+    },
+    {
+      id: "blobs-content",
+      conceptId: "blobs",
+      definition:
+        "Blobs are large pieces of data carried by transactions that a protocol makes available for a limited period, while it keeps only a small commitment to each one permanently.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Blob data sits beside execution rather than inside it. Execution typically sees only the blob commitment, not the data, so a contract that must rely on a blob's contents checks a proof that some value belongs to the committed data instead of reading the data itself. The data is meant for parties outside execution, such as those reconstructing or verifying another system's state from what that system published.",
+        },
+        {
+          kind: "paragraph",
+          text: "Blob pricing follows from that separation. Blob space has its own price, rising and falling with demand for it relative to a target, so demand for published data does not compete directly with demand for computation and state. The price pays for carrying data through a window, not for keeping it indefinitely, which is why a byte in a blob can cost far less than a byte kept in state.",
+        },
+        {
+          kind: "paragraph",
+          text: "The network and the window bound what blobs can offer. Blob propagation delivers the data to nodes that must hold it for the retention period, so the number and size of blobs per block are limited by what those nodes can download and keep; letting nodes confirm availability without downloading every blob is the purpose of data availability sampling. Blob retention is set to outlast the period in which the data is needed for verification, and anyone who needs it longer has to keep it themselves.",
+        },
+      ],
+    },
+    {
+      id: "data-availability-sampling-content",
+      conceptId: "data-availability-sampling",
+      definition:
+        "Data availability sampling is checking that encoded data can be obtained by requesting a few randomly chosen pieces of it and verifying each one, instead of downloading all of it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The confidence it gives compounds quickly. If preventing reconstruction requires withholding at least half of the encoded pieces, a request for a piece of withheld data fails at least half the time, so a client whose samples all succeed has been fooled with probability at most one half raised to the number of samples: about one in a million after twenty. The coding parameters set that fraction, and an encoding that can be defeated by withholding a smaller share needs more samples for the same availability confidence.",
+        },
+        {
+          kind: "paragraph",
+          text: "Random sampling works only while the choice stays unpredictable to whoever holds the data. A producer that knows which pieces a client will request can serve exactly those and withhold the rest, and one that can recognize a client's requests can answer that client alone. Designs therefore keep sample choices private until they are made and try to keep requests from being linked to the clients that send them, so that satisfying every sampler means serving nearly everything.",
+        },
+        {
+          kind: "paragraph",
+          text: "Sample verification ties each returned piece to the commitment the producer made, so samples cannot be answered with pieces invented on the spot, and with a correct encoding a verified sample is evidence about the published data rather than about whatever the producer chose to send. Under the scheme's assumptions, light-client sampling lets a participant too small to download everything reject a block whose data it cannot sample, however many block producers have signed it.",
+        },
+      ],
+    },
+    {
+      id: "storage-proofs-content",
+      conceptId: "storage-proofs",
+      definition:
+        "Storage proofs are evidence, produced in answer to a challenge, that a party holds the data or storage capacity it claims to hold, checkable by a verifier that does not keep the data itself.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each proof covers a moment. A successful answer shows that the condition held when the challenge was set, so continuous storage is established only by challenges repeated often and unpredictably enough that discarding the data between them is likely to be caught. The verifier keeps only a commitment to the data, which is what lets it judge an answer about data it does not hold.",
+        },
+        {
+          kind: "paragraph",
+          text: "Timing carries part of the guarantee. A prover that has discarded the data might fetch it from someone else when challenged, and one that claims several copies might keep one and derive the others on request. Proof of replication addresses this by making each copy slow to produce, through an encoding unique to that replica, and by requiring answers faster than the encoding could be redone, so that answering in time implies the copy was already stored.",
+        },
+        {
+          kind: "paragraph",
+          text: "On their own, proofs only inform. Storage networks make them binding by tying them to payment and collateral: a provider is paid for each period in which its proofs succeed and loses part of its deposit when they fail. Proof generation is then a recurring cost for providers and proof verification a recurring cost for whoever checks, which is why schemes aggregate many proofs and keep verification small relative to the data proved.",
+        },
+      ],
+    },
+    {
       id: "identity-accounts-authority-content",
       conceptId: "identity-accounts-authority",
       definition:

@@ -88,4 +88,13 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "proof-systems",
   "verifiable-computation",
   "privacy",
+  "on-chain-storage",
+  "distributed-storage",
+  "content-addressing",
+  "archival-storage",
+  "data-availability",
+  "erasure-coding",
+  "blobs",
+  "data-availability-sampling",
+  "storage-proofs",
 ];
