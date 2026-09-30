@@ -24,6 +24,7 @@ import {
   toggleMapExplorerPlacement,
   toMapConceptExposition,
 } from "./explorer-model.ts";
+import type { MapExplorerRow, MapExplorerView } from "./explorer-model.ts";
 
 function chainModel(depth: number): MapKnowledgeModel {
   const concepts = Array.from({ length: depth }, (_, index) => ({
@@ -52,6 +53,23 @@ function rootPlacementIds(resolver: ReturnType<typeof createMapResolver>): strin
 
 const resolver = createMapResolver(mapKnowledge);
 const view = buildMapExplorerView(resolver, rootPlacementIds(resolver));
+
+const hasCanonicalContent = (conceptId: string) => resolver.getContentForConcept(conceptId) !== undefined;
+
+/**
+ * Taxonomy rows present whatever canonical content is authored: each row's
+ * content flag is its concept's (every placement of a concept alike), L1 rows
+ * open onto their layer of L2 leaves, and a row is expandable exactly when it
+ * has exposition or children. Which concepts own content is asserted once,
+ * against the authored-content registry, in src/lib/map/map.test.ts.
+ */
+function assertRowsFollowContent(rows: readonly MapExplorerRow[]) {
+  for (const row of rows) {
+    assert.equal(row.hasContent, hasCanonicalContent(row.conceptId), `${row.placementId} content flag`);
+    assert.equal(row.hasChildren, row.depth === 1, `${row.placementId} children`);
+    assert.equal(row.isExpandable, row.hasChildren || row.hasContent, `${row.placementId} disclosure`);
+  }
+}
 
 // An L0 domain with no topics, added to the real model, for empty-domain
 // behaviour that must hold however many of the real domains are authored.
@@ -866,8 +884,10 @@ test("collapsed Foundations is identity only; opening it reveals its exposition 
     "Adversarial Environments",
     "Protocol Properties",
   ]);
-  // The seven are the next layer: closed, without exposition, each opening onto its own topics.
-  assert.ok(region.rows.every((row) => row.depth === 1 && !row.hasContent && row.hasChildren && row.isExpandable && !row.isExpanded));
+  // The seven are the next layer: closed, each opening onto its own topics
+  // (and onto its canonical exposition once one is authored).
+  assert.ok(region.rows.every((row) => row.depth === 1 && row.hasChildren && row.isExpandable && !row.isExpanded));
+  assertRowsFollowContent(region.rows);
 });
 
 test("a concept is expandable when it has exposition or a next layer, never when empty", () => {
@@ -877,10 +897,38 @@ test("a concept is expandable when it has exposition or a next layer, never when
   assert.ok(byId.get("consensus")?.isExpandable); // children, no content
   const emptyRow = getVisibleMapExplorerRows(emptyDomainView, new Set([EMPTY_L0])).find((row) => row.placementId === EMPTY_L0);
   assert.ok(emptyRow && !emptyRow.isExpandable); // neither
-  assert.ok(byId.get("protocols")?.isExpandable); // children (L2), no content
-  assert.ok(!byId.get("rules")?.isExpandable); // an L2 leaf
-  assert.ok(!byId.get("protocol-properties-in-protocols")?.isExpandable); // its concept's properties sit under the L1 placement
+  assert.ok(byId.get("protocols")?.isExpandable); // children (L2)
+  // A further placement is a leaf: its concept's children sit under the concept's
+  // own placement, so it opens only onto canonical exposition, wherever authored.
+  const furtherPlacement = byId.get("protocol-properties-in-protocols");
+  assert.ok(furtherPlacement && !furtherPlacement.hasChildren);
+  assert.equal(furtherPlacement.isExpandable, hasCanonicalContent("protocol-properties"));
   assert.ok(byId.get("finality-in-protocol-properties")?.isExpandable); // the canonical Finality exposition
+  // The rule holds for every row of the ontology, whatever content is authored.
+  for (const row of rows) assert.equal(row.isExpandable, row.hasChildren || row.hasContent, row.placementId);
+});
+
+test("authored L1 exposition is canonical: it opens every placement of its concept, at any depth", () => {
+  // Protocol Properties is an L1 topic of Foundations and an L2 leaf under
+  // Protocols. Authoring it once (in a copy of the model) must make both
+  // placements open onto the same exposition and change nothing else.
+  assert.equal(hasCanonicalContent("protocol-properties"), false, "fixture assumes Protocol Properties is not yet authored");
+  const authored = createMapResolver({
+    ...mapKnowledge,
+    content: [...mapKnowledge.content, { id: "protocol-properties-content", conceptId: "protocol-properties", definition: "Defined." }],
+  });
+  const authoredView = buildMapExplorerView(authored, rootPlacementIds(authored));
+  const all = (source: MapExplorerView) =>
+    getVisibleMapExplorerRows(source, new Set(mapKnowledge.placements.map((placement) => placement.id)));
+  const before = new Map(all(view).map((row) => [row.placementId, row]));
+  const changed = all(authoredView).filter((row) => JSON.stringify(row) !== JSON.stringify(before.get(row.placementId)));
+  assert.deepEqual(changed.map((row) => [row.placementId, row.depth, row.hasContent, row.isExpandable]), [
+    ["protocol-properties-in-protocols", 2, true, true],
+    ["protocol-properties", 1, true, true],
+  ]);
+  // Entering the L2 placement now opens it to reveal the exposition.
+  assert.ok(getInitialMapExplorerState(authoredView, "protocol-properties-in-protocols").expandedPlacementIds.has("protocol-properties-in-protocols"));
+  assert.ok(!getInitialMapExplorerState(view, "protocol-properties-in-protocols").expandedPlacementIds.has("protocol-properties-in-protocols"));
 });
 
 test("Scaling & Modular Systems L2 topics are ordinary placements: context, ancestry, containing L0", () => {
@@ -899,9 +947,7 @@ test("Scaling & Modular Systems L2 topics are ordinary placements: context, ance
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "scaling-modular-systems" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 80);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  // L2 topics are leaves; the fixture's Finality keeps its canonical exposition, so it opens.
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "finality") && row.isExpandable === row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "15");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -923,8 +969,7 @@ test("Protocol Design & Lifecycle L2 topics are ordinary placements: context, an
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "protocol-design-lifecycle" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 81);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "19");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -946,8 +991,7 @@ test("Protocol Architecture L2 topics are ordinary placements: context, ancestry
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "protocol-architecture" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 68);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "18");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -970,8 +1014,7 @@ test("Security, Correctness & Resilience L2 topics are ordinary placements: cont
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "security-correctness-resilience" && row.depth > 0);
   assert.equal(subtreeRows.length, 20 + 119);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "17");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -994,9 +1037,7 @@ test("Interoperability & Abstraction L2 topics are ordinary placements: context,
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "interoperability-abstraction" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 82);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  // L2 topics are leaves; the reused Finality keeps its canonical exposition, so it opens.
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "finality") && row.isExpandable === row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "16");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1019,8 +1060,7 @@ test("Governance & Institutions L2 topics are ordinary placements: context, ance
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "governance-institutions" && row.depth > 0);
   assert.equal(subtreeRows.length, 15 + 89);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "14");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1044,8 +1084,7 @@ test("Intents & Coordination L2 topics are ordinary placements: context, ancestr
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "intents-coordination" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 71);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "13");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1074,8 +1113,7 @@ test("MEV & Execution Markets L2 topics are ordinary placements: context, ancest
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "mev-execution-markets" && row.depth > 0);
   assert.equal(subtreeRows.length, 13 + 79);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "12");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1102,8 +1140,7 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "markets-financial-protocols" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 72);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "11");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1127,8 +1164,7 @@ test("Frontier Systems L2 topics are ordinary placements: context, ancestry, con
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "frontier-systems" && row.depth > 0);
   assert.equal(subtreeRows.length, 16 + 89);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "27");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1153,8 +1189,7 @@ test("Autonomous Economy L2 topics are ordinary placements: context, ancestry, c
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-economy" && row.depth > 0);
   assert.equal(subtreeRows.length, 17 + 102);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "26");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1179,8 +1214,7 @@ test("Autonomous Protocols L2 topics are ordinary placements: context, ancestry,
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-protocols" && row.depth > 0);
   assert.equal(subtreeRows.length, 17 + 99);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "25");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1205,8 +1239,7 @@ test("Autonomous Organizations L2 topics are ordinary placements: context, ances
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-organizations" && row.depth > 0);
   assert.equal(subtreeRows.length, 15 + 88);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "24");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1230,8 +1263,7 @@ test("Autonomous Execution L2 topics are ordinary placements: context, ancestry,
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-execution" && row.depth > 0);
   assert.equal(subtreeRows.length, 11 + 66);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "23");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1267,8 +1299,7 @@ test("Autonomous Coordination L2 topics are ordinary placements: context, ancest
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-coordination" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 60);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "22");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1309,9 +1340,7 @@ test("Machine Economy L2 topics are ordinary placements: context, ancestry, cont
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "machine-economy" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 84);
-  // Agent Identity's L1 placement carries its canonical exposition as well as its layer.
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && row.hasContent === (row.conceptId === "agent-identity")));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "21");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1346,9 +1375,7 @@ test("AI & Intelligent Systems L2 topics are ordinary placements: context, ances
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "ai-intelligent-systems" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 69);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  // Only the reused Agent Identity brings its canonical exposition.
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "agent-identity") && row.isExpandable === row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "20");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1373,8 +1400,7 @@ test("Economics & Mechanism Design L2 topics are ordinary placements: context, a
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "economics-mechanism-design" && row.depth > 0);
   assert.equal(subtreeRows.length, 11 + 66);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "10");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1405,8 +1431,7 @@ test("Oracles & External Reality L2 topics are ordinary placements: context, anc
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "oracles-external-reality" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 70);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "09");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1432,9 +1457,7 @@ test("Identity, Accounts & Authority L2 topics are ordinary placements: context,
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "identity-accounts-authority" && row.depth > 0);
   assert.equal(subtreeRows.length, 8 + 47);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  // L2 topics are leaves; Agent Identity keeps its canonical exposition, so it opens.
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.hasChildren && row.hasContent === (row.conceptId === "agent-identity") && row.isExpandable === row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "08");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1462,8 +1485,7 @@ test("Storage & Availability L2 topics are ordinary placements: context, ancestr
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "storage-availability" && row.depth > 0);
   assert.equal(subtreeRows.length, 9 + 51);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "07");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1492,8 +1514,7 @@ test("Cryptography & Proofs L2 topics are ordinary placements: context, ancestry
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "cryptography-proofs" && row.depth > 0);
   assert.equal(subtreeRows.length, 8 + 48);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "06");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1523,8 +1544,7 @@ test("Networks & Infrastructure L2 topics are ordinary placements: context, ance
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "networks-infrastructure" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 58);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "05");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1552,9 +1572,7 @@ test("Consensus & Ordering L2 topics are ordinary placements: context, ancestry,
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "consensus-ordering" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 58);
-  // Finality carries its canonical exposition as well as its layer; everything else here has none.
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && row.hasContent === (row.conceptId === "finality")));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "04");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1582,8 +1600,7 @@ test("State & Data L2 topics are ordinary placements: context, ancestry, contain
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "state-data" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 59);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "03");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
@@ -1610,8 +1627,7 @@ test("Computation & Execution L2 topics are ordinary placements: context, ancest
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "computation-execution" && row.depth > 0);
   assert.equal(subtreeRows.length, 7 + 39);
-  assert.ok(subtreeRows.filter((row) => row.depth === 1).every((row) => row.isExpandable && row.hasChildren && !row.hasContent));
-  assert.ok(subtreeRows.filter((row) => row.depth === 2).every((row) => !row.isExpandable && !row.hasChildren && !row.hasContent));
+  assertRowsFollowContent(subtreeRows);
   for (const row of subtreeRows) {
     assert.equal(getContainingMapL0Ordinal(index, row.placementId), "02");
     assert.ok(row.depth <= 2, `${row.placementId} is at most L2`);
