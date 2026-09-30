@@ -146,7 +146,10 @@ test("a concept placed at L1 and L2 reports both roles and which placement carri
   assert.ok(finality?.hasContent && finality.conceptPlacementCount === 4);
   assert.ok(context.attention.some((note) => note.startsWith("Placed at L1 and L2")));
   assert.ok(context.attention.some((note) => note.startsWith("Only protocol-properties carries the concept's children")));
-  assert.ok(context.attention.some((note) => note.startsWith("Children with their own exposition: finality.")));
+  // The note lists exactly the children that own exposition, whatever the corpus has authored; Finality is one.
+  const authoredChildren = context.placements[0].children.filter((child) => child.hasContent).map((child) => child.conceptId);
+  assert.ok(authoredChildren.includes("finality"));
+  assert.ok(context.attention.includes(`Children with their own exposition: ${authoredChildren.join(", ")}. Relate to them; do not restate them.`));
 });
 
 test("an explicit context becomes primary; other placements follow by domain order", () => {
@@ -277,7 +280,8 @@ test("domain status lists L1 topics in sibling order with their content status",
   assert.equal(status.domainOrdinal, "01");
   assert.deepEqual(ids(status.l1), resolver.getChildren("foundations").map((placement) => placement.id));
   const properties = status.l1.find((entry) => entry.placementId === "protocol-properties")!;
-  assert.deepEqual([properties.levels, properties.childCount, properties.childrenWithContent], [["L1", "L2"], 7, 1]);
+  const authoredChildren = resolver.getChildren("protocol-properties").filter((child) => AUTHORED_CONTENT_CONCEPTS.includes(child.conceptId)).length;
+  assert.deepEqual([properties.levels, properties.childCount, properties.childrenWithContent], [["L1", "L2"], 7, authoredChildren]);
   const authored = status.l1.filter((entry) => AUTHORED_CONTENT_CONCEPTS.includes(entry.conceptId)).length;
   assert.deepEqual(status.l1.map((entry) => entry.hasContent), status.l1.map((entry) => AUTHORED_CONTENT_CONCEPTS.includes(entry.conceptId)));
   assert.ok(formatMapDomainAuthoringStatus(status).startsWith(`MAP authoring status: 01 Foundations (foundations) — domain exposition: yes\nL1 topics with canonical content: ${authored} of 7\n`));
