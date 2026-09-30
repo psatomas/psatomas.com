@@ -39,4 +39,5 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "finality",
   "agent-identity",
   "distributed-systems",
+  "protocol-properties",
 ];
