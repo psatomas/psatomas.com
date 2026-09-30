@@ -8335,6 +8335,167 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "consensus-content",
+      conceptId: "consensus",
+      definition:
+        "Consensus is how a set of participants, some of which may be faulty, settle on a single decision, such as one value or one ordering of inputs, that every correct participant accepts.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What consensus produces is agreement, not correctness. Participants settle on one of the options before them, and a protocol can agree flawlessly on a value that misdescribes the world or on an ordering that serves a dishonest proposer. Validity rules can narrow which options are acceptable, but they constrain the choice rather than make it right.",
+        },
+        { kind: "distinction", left: "Agreement", right: "Correctness" },
+        {
+          kind: "paragraph",
+          text: "Where agreement is reached explicitly, quorums carry the weight. A decision needs a quorum, and quorums are sized so that any two of them share at least one participant assumed to be correct. Because that participant will not support two conflicting decisions, two conflicting decisions cannot both gather a quorum. The fault assumptions set the size: the more participants that may be faulty, and the worse they may behave, the larger each quorum must be.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where agreement emerges from participants extending the same history, there is no single moment of decision; confidence in any part of the history grows as more is built on top of it. Such protocols therefore need a separate notion of finality to say when a result stops being provisional.",
+        },
+      ],
+    },
+    {
+      id: "validators-content",
+      conceptId: "validators",
+      definition:
+        "Validators hold a protocol's consensus duties: proposing candidate history, voting on it, and signing what they have seen, under rules that decide who may take part and when.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The validator set is where a protocol's fault assumption becomes concrete. A bound on faulty participants is a bound on faulty members of that set, weighted by whatever the protocol counts, such as stake. Entry to and exit from the set must therefore be agreed like any other state change, and a validator that has left still holds its old keys, which can sign statements about the period when it was a member.",
+        },
+        {
+          kind: "paragraph",
+          text: "Signatures make duties accountable. Because each vote is signed, two conflicting votes from the same validator are evidence that anyone can check, and a protocol can penalize the validator without trusting whoever reports it. Penalties reach only misbehavior that leaves such evidence, and only stake that is still held: a validator that has already withdrawn is beyond them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Validators also carry liveness. Every missed proposal or vote delays or weakens progress, so a protocol has to tolerate some validators being absent and decide how long an unresponsive validator keeps its place in the set.",
+        },
+      ],
+    },
+    {
+      id: "fork-choice-content",
+      conceptId: "fork-choice",
+      definition:
+        "A fork choice rule is the deterministic procedure by which each participant, given the blocks and votes it has seen, selects which of several competing candidate histories to treat as current.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The rule is applied to a local view. Two honest participants that have seen different blocks or votes can select different heads at the same moment, and both are following the rule correctly. What makes their selections converge is propagation: once the same information has reached both, the rule gives both the same answer.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rules differ in what they weigh. Some count accumulated work or length, so the branch that more effort has extended wins; others count validator votes weighted by stake, so the branch the set has most recently supported wins. What a rule weighs decides what an adversary would have to acquire to push it toward a branch of its choosing.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because the rule responds to what participants have seen, an adversary that controls when they see it can steer the outcome. Withholding a block and releasing it at a chosen moment can split honest participants between branches or make them abandon a head they had selected, so fork choice rules are designed around the timing of information as much as its content.",
+        },
+      ],
+    },
+    {
+      id: "mempools-content",
+      conceptId: "mempools",
+      definition:
+        "A mempool holds the transactions a participant has received that are not yet ordered, together with the policies that decide which of them it accepts, keeps, forwards, and offers for inclusion.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Pending transactions use resources before anyone has paid for them. Every participant that admits, stores, and forwards a transaction bears a cost, yet a transaction that is never included pays nothing, so mempool policies exist largely to stop that free service from being abused: minimum fees, limits per sender, and rules that let a pending transaction be replaced only by one that pays more.",
+        },
+        {
+          kind: "paragraph",
+          text: "A public mempool also exposes intentions before they take effect. A transaction waiting to be ordered reveals what its sender is about to do, and anyone who sees it can try to act first, act after, or place their own transactions around it. That exposure is the reason submission paths that keep transactions private until inclusion exist.",
+        },
+      ],
+    },
+    {
+      id: "sequencing-content",
+      conceptId: "sequencing",
+      definition:
+        "Sequencing is the assignment of an order to a set of pending actions, under rules that say how the order is chosen and by whom, independently of whether the actions are valid or what they will do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An order that sounds neutral is often undefined. First come, first served presumes a single arrival order, but participants receive transactions at different times and disagree about which came first. Protocols that aim for fair ordering therefore define fairness relative to what a set of participants observed, for example placing one transaction before another when most of them received it first, rather than relative to a true arrival time that no one can see.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a sequencer can see shapes what it can do with its authority. A sequencer that sees transaction contents can order them for its own benefit; one that must fix the order before contents are revealed, as when transactions are encrypted and decrypted only after ordering, cannot. Hiding contents until the order is fixed is one way to limit ordering power other than spreading it across more parties.",
+        },
+      ],
+    },
+    {
+      id: "block-building-content",
+      conceptId: "block-building",
+      definition:
+        "Block building is the work of assembling a candidate block: which pending transactions go in, in what order, and arranged so that the protocol's rules will accept the result.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Building is an optimization under constraints. A block has limited capacity, transactions depend on one another through shared state and sender sequence numbers, and each ordering yields different outcomes and fees. A builder searches for the arrangement worth the most to it, so different builders facing the same pending transactions can produce very different blocks, all of them valid.",
+        },
+        {
+          kind: "paragraph",
+          text: "That search rewards scale. Builders with access to more transactions, faster simulation of outcomes, and better knowledge of what others will pay produce more valuable blocks, so building tends to concentrate among specialists. Protocols that want the power to propose to remain widely held therefore often separate building from proposing, so that sophistication in one does not become control of the other.",
+        },
+      ],
+    },
+    {
+      id: "proposer-builder-separation-content",
+      conceptId: "proposer-builder-separation",
+      definition:
+        "Proposer-builder separation assigns block construction and block proposal to different participants: specialized builders compete to supply the block, and the proposer, who keeps the consensus role, chooses which one to put forward.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The division creates a problem of mutual exposure. If the proposer could see a block's contents before committing to it, it could take the builder's arrangement for itself; if the builder revealed nothing, the proposer could not know that the block is valid or that the bid will be paid. Designs resolve this by having the proposer commit to a block it has not seen, with the contents revealed afterwards and something ensuring that each side's commitment holds.",
+        },
+        {
+          kind: "paragraph",
+          text: "That something is either an intermediary or the protocol. A relay can hold the builder's block, check its validity and payment, and release it only once the proposer has committed, which works only as long as both sides trust the relay. Moving the exchange into the protocol's own rules removes that trusted party but adds the mechanism to consensus itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Separation also shifts the power to leave transactions out, from proposers to the few builders who win most blocks. Mechanisms that let proposers require certain transactions to be included respond to that shift.",
+        },
+      ],
+    },
+    {
+      id: "preconfirmations-content",
+      conceptId: "preconfirmations",
+      definition:
+        "A preconfirmation is signed, early assurance about a transaction's fate, covering its inclusion and sometimes the result of executing it, issued before the protocol itself has settled that transaction.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A promise about ordering is credible only from someone who will control that ordering. A party that will propose or sequence the relevant block can promise inclusion; anyone else can only promise to try. Promising an execution outcome demands more, since that outcome is fixed only once everything ahead of the transaction is, so the provider must control or be able to predict that as well.",
+        },
+        {
+          kind: "paragraph",
+          text: "Committing early costs the provider something. Each preconfirmation fixes part of a block before the provider knows what else will arrive, giving up the option to use that space or position for something worth more later. Preconfirmations are therefore priced, and providers weigh what they are paid now against the flexibility they give away.",
+        },
+      ],
+    },
+    {
+      id: "censorship-resistance-content",
+      conceptId: "censorship-resistance",
+      definition:
+        "Censorship resistance is the property that no participant, or coalition of participants within the protocol's assumptions, can indefinitely prevent a valid action from being included.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "It is a matter of degree. A protocol's censorship resistance is measured by the delay an excluder can impose on a valid transaction and what imposing that delay costs. When any one of many independent proposers is enough to include a transaction, excluding it requires controlling every one of them for as long as the exclusion lasts, which is why the number and independence of the parties able to include matter more than the honesty of any single one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Exclusion is also hard to prove. A transaction that was left out looks like one that was never received or that paid too little, so plain omission leaves no evidence against anyone. Mechanisms that make inclusion an obligation, by recording which transactions must appear and rejecting blocks that omit them, turn omission into a detectable violation, and only then can it be attributed and penalized.",
+        },
+      ],
+    },
+    {
       id: "networks-infrastructure-content",
       conceptId: "networks-infrastructure",
       definition:
