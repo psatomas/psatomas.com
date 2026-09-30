@@ -9248,6 +9248,146 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "hash-functions-content",
+      conceptId: "hash-functions",
+      definition:
+        "A cryptographic hash function is a public, keyless function that maps data of any size to a short fixed-size digest, which can serve in place of the data because no one can feasibly produce other data that matches it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Stand-ins compose. A digest can be included in other data that is itself hashed, so one digest can fix an entire chain or tree of earlier records: altering any record changes every digest that depends on it. That is how a short value can commit a protocol to its entire history.",
+        },
+        {
+          kind: "paragraph",
+          text: "The digest length sets the margin. Finding any two inputs that collide takes on the order of the square root of the number of possible digests, far fewer attempts than finding an input that matches one given digest, so a digest must be roughly twice as long as the security level wanted against collisions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hashes also stand in for unpredictability where no trusted source of it exists. Deriving a challenge by hashing everything exchanged so far lets a prover produce a proof without a live verifier, and requiring a digest below a target turns hashing into a costly, checkable proof of effort. These uses rely on the function behaving like an unpredictable random function, a stronger and less precisely provable assumption than collision resistance alone.",
+        },
+      ],
+    },
+    {
+      id: "digital-signatures-content",
+      conceptId: "digital-signatures",
+      definition:
+        "A digital signature is a value that anyone holding a public key can check and that only the holder of the matching private key could have produced, binding that key to one exact message.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A signature is evidence that travels. Unlike a secret shared between two parties, it can be checked by anyone, later, without the signer's cooperation, and the key holder cannot disown it afterwards. That is what lets a signed statement be shown to third parties, relied on by people who were not present when it was made, and used as proof against the signer.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a signature cannot carry is time or status. Verification checks only the key, the message, and the signature, so a signature made with a stolen key is indistinguishable from one made by its rightful owner, and a key that has been abandoned still produces valid signatures. Revoking or rotating a key, and deciding which signatures to honor after a compromise, are matters for the system around the scheme, not for the scheme itself.",
+        },
+      ],
+    },
+    {
+      id: "cryptographic-commitments-content",
+      conceptId: "cryptographic-commitments",
+      definition:
+        "A cryptographic commitment fixes a value at one moment, in a form that conceals it, so that it can be revealed later and checked against what was fixed.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Hiding and binding cannot both be absolute. A commitment that conceals its value perfectly could in principle be opened as more than one value, and one that pins its value down perfectly must reveal something to an observer with unlimited computing power. Every scheme therefore rests at least one of the two properties on a computational assumption, and which one it chooses decides what could go wrong if that assumption fails.",
+        },
+        {
+          kind: "paragraph",
+          text: "Binding stops a committer from changing the value, but nothing in the scheme forces them to open it. In a commit-and-reveal process, a participant who sees the others' revealed values before revealing their own can decline to open when the outcome would not favor them, so protocols pair commitments with deposits or penalties that make refusing to reveal costly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Commitments to structured objects let one short value answer many later questions. Proof systems use them to commit a prover to a large computation and then examine it at a few chosen points, which is much of how they keep verification small.",
+        },
+      ],
+    },
+    {
+      id: "threshold-cryptography-content",
+      conceptId: "threshold-cryptography",
+      definition:
+        "Threshold cryptography splits the ability to perform a cryptographic operation among many participants, so that any sufficiently large subset can perform it together and no smaller subset can perform it at all.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The result conceals who took part. A threshold signature or decryption looks the same whichever qualifying subset produced it, which keeps it compact and indistinguishable from a single party's output, but it also means the output cannot show which participants acted. Where a protocol needs to hold particular participants responsible, it needs evidence from outside the threshold operation itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Shares can be renewed without changing what they unlock. Participants can periodically refresh their shares so that old ones become useless, which forces an attacker to compromise a threshold of participants within a single period rather than one at a time over the whole lifetime of the key.",
+        },
+      ],
+    },
+    {
+      id: "zero-knowledge-proofs-content",
+      conceptId: "zero-knowledge-proofs",
+      definition:
+        "A zero-knowledge proof establishes a statement for a verifier while keeping private the secret information, the witness, that the prover used to establish it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Revealing nothing has a precise meaning: everything the verifier sees could have been generated without the witness. If a simulator holding no secret can produce transcripts indistinguishable from real ones, the real ones cannot be carrying the secret. The guarantee concerns the witness, so the statement itself, and anything it names in public, is revealed in full; what a zero-knowledge proof keeps private depends on what the statement leaves out.",
+        },
+        {
+          kind: "paragraph",
+          text: "Soundness can also be strengthened to knowledge. A proof of knowledge shows not only that a witness exists but that the prover possesses one, which matters when the statement is true in any case, such as that some secret key corresponds to a given public key, and the point is to show that this prover holds it.",
+        },
+      ],
+    },
+    {
+      id: "proof-systems-content",
+      conceptId: "proof-systems",
+      definition:
+        "A proof system is the complete scheme by which statements of some class are proven and checked: how a statement is encoded, how the prover constructs a proof, what the verifier computes, and which assumptions make the result sound.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Before anything can be proven, the statement has to be expressed in the form the system understands, usually as a set of arithmetic constraints. That encoding is an artifact separate from the program it represents, and it can be wrong on its own: constraints that fail to pin down every value let a prover satisfy them with a false result, and a perfectly sound proof system will then accept it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some systems need public parameters generated in advance from secret randomness. Anyone who retained that randomness could prove false statements, so generation is spread across many participants in a ceremony designed so that the parameters are safe if any single participant discarded their part. Systems without such a setup avoid that dependency and usually pay for it with larger proofs.",
+        },
+      ],
+    },
+    {
+      id: "verifiable-computation-content",
+      conceptId: "verifiable-computation",
+      definition:
+        "Verifiable computation lets a participant accept the result of a computation because of evidence that it was carried out as specified, rather than because it trusts whoever ran the computation or repeats the work itself.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Two concerns meet in the concept. Integrity asks what must be established about a computation, namely that the output genuinely results from the given inputs and program, and what can carry that assurance: traces of the execution, commitments that fix it, and proofs that attest to it. Proof machinery asks how such evidence is produced and checked efficiently, so that checking takes far less work than the computation did and results can travel with the evidence that justifies them. Computation proofs belong to both concerns.",
+        },
+        {
+          kind: "paragraph",
+          text: "The arrangement is deliberately asymmetric. Producing a proof can cost much more than running the computation, while checking it can cost very little, so one prover's work can serve every verifier that later checks the result. Proving therefore tends to become a specialized role while verification stays cheap enough for anyone, which is what lets many participants rely on a computation that only one of them performed.",
+        },
+      ],
+    },
+    {
+      id: "privacy-content",
+      conceptId: "privacy",
+      definition:
+        "Privacy in a protocol is the set of limits on what observers can learn from its data and activity: which contents, identities, relationships, and facts each observer can and cannot infer.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Anonymity depends on the size of the crowd it hides in. An action is anonymous only while it is indistinguishable from other possible actions, so a small group of similar participants, an unusual amount, or distinctive timing can shrink that crowd to one. Designs that hide identities therefore also try to make actions look alike, standardizing amounts and batching activity, because any distinguishing detail narrows the set.",
+        },
+        {
+          kind: "paragraph",
+          text: "Privacy also has to coexist with verification. A fully public record lets anyone check validity because everything is visible; a private one must let participants confirm that hidden activity obeys the rules without seeing it, which is where proofs about concealed values come in. Selective disclosure then lets a participant reveal particular facts to particular parties, such as an auditor, without making them public.",
+        },
+        {
+          kind: "paragraph",
+          text: "Guarantees at one layer can be undone at another. Content hidden by the protocol can still be linked through the timing, fees, or network paths of the messages that carry it, so a system is only as private as the weakest layer an observer can reach.",
+        },
+      ],
+    },
+    {
       id: "storage-availability-content",
       conceptId: "storage-availability",
       definition:

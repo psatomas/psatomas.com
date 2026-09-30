@@ -80,4 +80,12 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "bots",
   "monitoring",
   "automation",
+  "hash-functions",
+  "digital-signatures",
+  "cryptographic-commitments",
+  "threshold-cryptography",
+  "zero-knowledge-proofs",
+  "proof-systems",
+  "verifiable-computation",
+  "privacy",
 ];
