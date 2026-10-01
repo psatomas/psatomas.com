@@ -9,7 +9,9 @@ decides *order* and *mechanics*; `npm run map:author` records them.
 
 **The human boundary is the merge.** A successful run ends at "validated PR
 awaiting human merge". The tool never merges, deploys, force-pushes, amends a
-pushed commit, or starts a domain it was not explicitly given.
+pushed commit, or starts a domain it was not explicitly given. Only an
+explicitly authorized [campaign](#autonomous-campaigns) moves that boundary,
+and only for its own PRs.
 
 ## Who does what
 
@@ -202,6 +204,30 @@ instead:
   never passed on the unit suite.
 
 It is committed separately, before the content, and named in the PR.
+
+## Autonomous campaigns
+
+By default the agent stops at the validated PR. Only when the user explicitly
+authorizes an autonomous campaign may it merge and continue, and then only
+under these rules:
+
+- **One domain at a time.** It merges only PRs the campaign's own runs
+  created, never another PR, and starts the next domain only after the
+  previous one is merged and `main` is synchronized.
+- **Merge only a verified run.** The run is `done`, and immediately before
+  merging the PR is open against `main`, its head equals the run's
+  `pushedSha` and the remote branch, and every check has passed or been
+  skipped. It merges with `gh pr merge <number> --merge --match-head-commit
+  <sha>`: no squash, rebase, admin override or force.
+- **Then synchronize and confirm.** Fast-forward local `main` to
+  `origin/main`, confirm the run's content is present and the tree is clean,
+  and let `domains` name the next incomplete domain, which is then started
+  explicitly with `start --domain`.
+- **Stops still stop.** Any stop condition, failed check, merge refusal,
+  conflict or git or remote mismatch ends the campaign with a stop report.
+  It is never worked around to keep going.
+- **No deployment.** Merging deploys nothing here; deployment needs its own
+  explicit request.
 
 ## Reporting
 
