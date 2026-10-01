@@ -900,7 +900,15 @@
       "placements": [
         "architectural-tradeoffs"
       ],
-      "sourceFingerprint": "6ff8f232a3fa54dc2e30f35865969037cae13437ac7d9c3ca92effa7f8249ddb"
+      "sourceFingerprint": "6ff8f232a3fa54dc2e30f35865969037cae13437ac7d9c3ca92effa7f8249ddb",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "tensions"
+        ],
+        "resultFingerprint": "9db59878ffbd5d40e2fde7f03c3ed4b90cb6a69740cc02646262fac987fd677a",
+        "note": "The concept is a set of competing qualities and each paragraph argues one; a tensions block names them before the argument, with the prose unchanged."
+      }
     },
     {
       "conceptId": "pre-launch-validation",
