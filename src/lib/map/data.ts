@@ -14719,7 +14719,17 @@ export const mapKnowledge: MapKnowledgeModel = {
       body: [
         {
           kind: "paragraph",
-          text: "The methods differ mainly in cost and in what must be trusted. Zero-knowledge proofs of inference need no trust in the prover but cost far more than running the model, which today limits them to small models; trusted execution environments run models at close to normal cost while relying on the hardware's integrity and its manufacturer's attestation; and re-executing an inference when someone disputes it is cheap in the common case but works only when inference is exactly reproducible.",
+          text: "The methods differ mainly in cost and in what must be trusted.",
+        },
+        {
+          kind: "comparison",
+          label: "How methods for checking AI claims differ",
+          dimensions: ["Cost", "What must be trusted or hold"],
+          alternatives: [
+            { name: "Zero-knowledge proofs", values: ["Far more than running the model, which today limits them to small models", "Nothing about the prover"] },
+            { name: "Trusted execution", values: ["Close to running the model normally", "The hardware's integrity and its manufacturer's attestation"] },
+            { name: "Re-execution on dispute", values: ["Cheap in the common case", "Exactly reproducible inference"] },
+          ],
         },
         {
           kind: "paragraph",

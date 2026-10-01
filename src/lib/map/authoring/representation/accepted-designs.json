@@ -983,7 +983,15 @@
       "placements": [
         "verifiable-ai"
       ],
-      "sourceFingerprint": "66361f660be1c177e93fd20157bd06c7911be8019af561e2dafb5c0fe5e7b1b1"
+      "sourceFingerprint": "66361f660be1c177e93fd20157bd06c7911be8019af561e2dafb5c0fe5e7b1b1",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "132a29125780a680da6af962f6dcab9e881924fae958cf084cc43b83233e3e87",
+        "note": "Three methods on cost and trust were one dense sentence; the comparison shows them, and what verification establishes and verifiable agents stay in prose."
+      }
     },
     {
       "conceptId": "action-execution",
