@@ -216,32 +216,108 @@ npm run map:author -- represent audit [--concept <id> | --domain <id>] [--json] 
   HEAD, the branch and the content files before and after it runs, and fails
   on any difference.
 
-## Refactor mode (designed, not yet run)
+## Refactor mode
 
-Accepted improvements are applied later, domain by domain, through the
-[runbook](domain-runbook.md) mechanics. A refactor run:
+Accepted improvements are applied domain by domain through `map:author --
+refactor`, which shares every stage, check and safeguard of a
+[domain run](domain-runbook.md).
 
-1. **Starts** from current `main` and the domain's recorded designs. Only
-   designs a human accepted, classified refactor, enhance or rewrite, and
-   not stale are in scope. Keep and pending concepts are untouched.
-2. **Authors** each in-scope record in place, preserving its substance
-   wherever the design says so. Ownership and every placement keep their
-   meaning: the record is still one canonical exposition for all of them.
-3. **Verifies** with the normal gates (tests, lint, build), the full
-   browser suite, and the render check of every placement of every changed
-   concept at both widths.
-4. **Validates the diff** with `validateRefactorDiff`
-   ([`refactor-diff.ts`](../../src/lib/map/authoring/representation/refactor-diff.ts)):
-   - only `data.ts` may change, and only for concepts with a current
-     improvement design;
-   - no record is added or removed, and ids are unchanged;
-   - the registry, taxonomy, relationships, mechanisms and paths are
-     unchanged;
-   - the generated view is byte-identical, because existing content flips no
-     `hasContent` flag. A content change after the design was recorded is a
-     stop.
-5. **Commits and opens a PR** as a domain run does, with the design
-   summaries in the PR so reviewers see why each form changed.
+### Accepted designs are repository-owned
 
-A design that needs a capability gap is not applied until the capability
-exists, or until a human accepts a different representation.
+[`accepted-designs.json`](../../src/lib/map/authoring/representation/accepted-designs.json)
+is the governance for refactor runs, reviewed and accepted by merging it.
+
+- **What is listed.** Only improvement designs, each actionable or blocked.
+  Each entry holds:
+  - the concept and its owning domain;
+  - its classification and a short concept model;
+  - its form when reviewed, and the accepted target;
+  - the justification, every placement, and canonical or facet notes;
+  - the fingerprint of the exact record it reviewed.
+- **KEEP is everything else.** A run may change nothing the spec does not
+  list as actionable for its domain.
+- **Blocked designs** need a primitive no block expresses yet (today:
+  `state`). They are kept visible, never executed, and never block other
+  designs in their domain.
+- **The spec is written from the audit** with `map:author -- represent
+  export-accepted`. A spec that already records resolutions is never
+  regenerated.
+- **A unit test keeps the spec valid against the corpus.** If a listed
+  record changes outside a run, its design is stale and must be reviewed
+  again.
+
+### A run
+
+```bash
+npm run map:author -- refactor domains                   # every domain: no work, pending, complete, stale; blocked; the next
+npm run map:author -- refactor plan --domain <id>
+npm run map:author -- refactor start --domain <id> [--dry-run]
+npm run map:author -- refactor context <concept-id>      # the concept, its accepted design and the boundary
+npm run map:author -- refactor record <concept-id> --decision execute|reduce|keep --note "..."
+npm run map:author -- refactor audit
+npm run map:author -- refactor complete audit --note "..."
+npm run map:author -- refactor run [--trailer ..] [--footer ..]
+```
+
+1. **Start.** Starting requires:
+   - a clean, current `main`;
+   - no open MAP run PR of either kind;
+   - no existing branch or run for the domain;
+   - a valid spec, with no stale design for the domain.
+
+   It creates `refactor/map-<domain>-l1-representations` and records the
+   base and the domain's design set. A domain with nothing actionable never
+   gets a branch.
+2. **Reconsider and edit**, one actionable design at a time, against
+   current context. The agent then records one decision:
+   - **execute**: reach exactly the accepted structured form;
+   - **reduce**: a smaller change within it;
+   - **keep**: leave the record exactly as reviewed.
+
+   A refactor or enhancement keeps the definition and legacy fields. Using
+   a block the design does not include, changing a definition outside a
+   rewrite design, or touching another concept is refused at `record` and
+   again at the diff. If a materially different design is needed, the run
+   stops.
+3. **Audit** the changed records. Completing the audit writes each
+   decision into the spec as that design's resolution: the decision, the
+   resulting structured form and the result's fingerprint.
+4. **Verify.**
+   - The normal gates and the full browser suite.
+   - The render check of every placement of every changed concept at 1280
+     and 375 pixels: trail, current and expanded state, exact children at
+     each carrier, no facet leakage, text alternatives and table labels,
+     overflow, and identical text at every placement.
+5. **Validate the diff** with `validateRefactorDiff`
+   ([`refactor-diff.ts`](../../src/lib/map/authoring/representation/refactor-diff.ts)).
+   Expectations come from the base's designs and the recorded decisions:
+   - exactly the executed or reduced records changed, each within its
+     design;
+   - kept, blocked, KEEP and other domains' records are byte-identical;
+   - nothing is added or removed, and ids, registry, taxonomy,
+     relationships, mechanisms, paths and the generated view are unchanged;
+   - the spec changes only by this run's resolutions, consistent with the
+     records;
+   - declared general fixes are the only other file class.
+6. **Commit, push, open the PR and wait for CI.** The commit is
+   `refactor(map): improve <domain> L1 representations` (after any fix
+   commits). The PR text, generated from the run, lists changed and kept
+   concepts with their reasons, blocked designs, verification and the diff
+   boundary. The run ends at "validated PR awaiting human merge". A run in
+   which every design was kept still opens a PR, because the spec records
+   those resolutions.
+
+The run state lives in `.map-authoring/refactor/<domain>.json`. As for domain
+runs:
+- every command first reconciles the branch, HEAD, remote branch and PR with
+  the recorded run;
+- a changed tree or build invalidates earlier checks;
+- a content change after the audit reopens it.
+
+A domain is complete once all its actionable designs are resolved on `main`.
+`refactor domains` names the next domain with work in canonical order.
+
+**No shortcut for new content.** A refactor run changes existing L1 records
+only, within accepted designs. It can never add a record, so new exposition,
+including all L2 authoring, still goes through context, analysis, concept
+model, representation design, authoring, editorial audit and verification.

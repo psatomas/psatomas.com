@@ -75,7 +75,7 @@ commit on the remote. Any mismatch is a stop. A state file for another domain,
 or of another version, is refused.
 
 **start** (tool). Refuses unless the tree has no tracked changes, you are on
-`main`, local `main` has nothing origin lacks, no `feat/map-*-l1` PR is still
+`main`, local `main` has nothing origin lacks, no MAP run PR (`feat/map-*-l1` or `refactor/map-*-l1-representations`) is still
 open, the branch does not exist, and the plan has no stops. It fast-forwards
 `main`; if that changed anything, run `start` again so the plan is read from
 the new tree. It then creates `feat/map-<domain-id>-l1` and records the base.
@@ -208,6 +208,15 @@ instead:
   never passed on the unit suite.
 
 It is committed separately, before the content, and named in the PR.
+
+## Representation refactor runs
+
+`map:author -- refactor ...` applies accepted representation designs to
+existing L1 records, domain by domain, with this runbook's stages, checks and
+safeguards. Start, branch and PR guards cover both kinds of run: an open MAP
+run PR of either kind blocks starting another. The procedure, the decision
+boundary and the diff rules are in
+[representation-design.md](representation-design.md#refactor-mode).
 
 ## Autonomous campaigns
 
