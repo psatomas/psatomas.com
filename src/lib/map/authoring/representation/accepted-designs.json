@@ -600,7 +600,15 @@
       "placements": [
         "asset-bridging"
       ],
-      "sourceFingerprint": "e739e6421b048764eb468243abbc16b27f0c0e97106bf9a5b0a55b5afdfbd482"
+      "sourceFingerprint": "e739e6421b048764eb468243abbc16b27f0c0e97106bf9a5b0a55b5afdfbd482",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "6d865e8d7006352dbd485206f0e47d5fb0e8249c3c831fe6ec8fbd26c732b364",
+        "note": "Each paragraph addresses the same three attributes for its model; a closing comparison lets the holder's exposure be read across them, with mechanisms kept in prose."
+      }
     },
     {
       "conceptId": "cross-chain-verification",
@@ -634,7 +642,15 @@
       "placements": [
         "cross-chain-verification"
       ],
-      "sourceFingerprint": "621aff137b30a4dc9f8d0a8b29b9df7580bca92af88e8bc92e28c9201850deea"
+      "sourceFingerprint": "621aff137b30a4dc9f8d0a8b29b9df7580bca92af88e8bc92e28c9201850deea",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "0f9d2f85a69beaa32863e4abe76bda292ca0febcf6143f9bdde953403c89197f",
+        "note": "Four methods on the same three dimensions were packed into one sentence; the comparison shows them, and the finality bound and keeping up with source changes stay in prose."
+      }
     },
     {
       "conceptId": "cross-domain-atomicity",
@@ -669,7 +685,13 @@
         "cross-domain-atomicity-in-interoperability-abstraction"
       ],
       "canonicalNote": "Preferred as a leaf under Intents & Coordination; the mechanisms are the same there.",
-      "sourceFingerprint": "beb0fdf2f7c6701891e771bdab72380afc4171fcfbfa08372acac02401eab667"
+      "sourceFingerprint": "beb0fdf2f7c6701891e771bdab72380afc4171fcfbfa08372acac02401eab667",
+      "resolution": {
+        "decision": "keep",
+        "structured": [],
+        "resultFingerprint": "beb0fdf2f7c6701891e771bdab72380afc4171fcfbfa08372acac02401eab667",
+        "note": "Reconsidered: the three mechanisms differ in kind (an option and online parties, locks and a coordinator, non-atomic intermediate states), so a table would force shared dimensions they lack; each has its paragraph and the closing sentence already states what matters."
+      }
     },
     {
       "conceptId": "trust-failure-modes",
@@ -700,7 +722,15 @@
       "placements": [
         "trust-failure-modes"
       ],
-      "sourceFingerprint": "4f30512b7b510a665db90a595d21f83a1ef39d9dbbdcf19f9237c92254191bc9"
+      "sourceFingerprint": "4f30512b7b510a665db90a595d21f83a1ef39d9dbbdcf19f9237c92254191bc9",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "distinction"
+        ],
+        "resultFingerprint": "3240787a0d389dda8d00b8047e01c65da9334cf1c6afe9732b29f4a38bec863c",
+        "note": "The record's organizing contrast between liveness and safety failures, and the designs that trade one for the other, is now a distinction after the paragraph that explains it."
+      }
     },
     {
       "conceptId": "domain-specific-security",

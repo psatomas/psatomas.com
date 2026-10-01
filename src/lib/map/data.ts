@@ -13570,6 +13570,16 @@ export const mapKnowledge: MapKnowledgeModel = {
           kind: "paragraph",
           text: "Liquidity-based bridging issues nothing new. Providers hold the asset on each chain, and a user hands it over on one side and receives the native asset from providers on the other, so what arrives is the real asset and the risk falls on the providers and on the mechanism that rebalances them; capacity is limited by what they hold. Where several wrapped versions of one asset exist, whichever the ecosystem treats as the canonical asset is where liquidity gathers.",
         },
+        {
+          kind: "comparison",
+          label: "How bridging models compare",
+          dimensions: ["What arrives on the destination", "Where the risk sits", "What limits capacity"],
+          alternatives: [
+            { name: "Lock-and-mint", values: ["A wrapped token backed by locked originals", "The lock; if it is drained, wrapped holders bear the loss", "Nothing while the lock holds"] },
+            { name: "Burn-and-mint", values: ["The issuer's own token, minted there", "Mint authority on every chain", "Only the issuer's own rules"] },
+            { name: "Liquidity-based", values: ["The native asset, from providers", "Providers and the mechanism that rebalances them", "What providers hold on each side"] },
+          ],
+        },
       ],
     },
     {
@@ -13604,7 +13614,18 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Methods differ in what each check costs and how often it is paid. Checking a source's consensus signatures directly is expensive on most destinations, so light-client verification usually tracks the source's signer set through periodic updates; ZK verification compresses that work into a proof that is cheap to check but costly and slow to produce; optimistic verification is cheap to run but adds a waiting period for objections; committee verification is cheap and fast and asks the destination to trust the committee.",
+          text: "Methods differ in what each check costs, how often it is paid and what the destination must trust. Checking a source's consensus signatures directly is expensive on most destinations, so light clients usually track the source's signer set through periodic updates.",
+        },
+        {
+          kind: "comparison",
+          label: "How verification methods differ",
+          dimensions: ["Cost to check", "Delay or cost to produce", "What the destination trusts"],
+          alternatives: [
+            { name: "Light client", values: ["Moderate, plus periodic signer-set updates", "Waiting for source finality", "The source's consensus"] },
+            { name: "ZK verification", values: ["Low", "A proof that is costly and slow to generate", "The proof system and the source's consensus"] },
+            { name: "Optimistic verification", values: ["Low", "A waiting period for objections", "At least one honest watcher"] },
+            { name: "Committee verification", values: ["Low", "Short", "The committee"] },
+          ],
         },
         {
           kind: "paragraph",
@@ -13761,6 +13782,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         {
           kind: "paragraph",
           text: "Failures come in two kinds with very different consequences. A liveness failure stops the system, leaving messages undelivered or funds stuck, and is usually recoverable once the cause is fixed; a safety failure lets a wrong result through, such as a forged withdrawal, and is often irreversible. Designs choose which to risk: requiring more signatures or longer checks protects safety at the cost of liveness, and pause mechanisms deliberately give up liveness to protect safety when something looks wrong.",
+        },
+        {
+          kind: "distinction",
+          left: "Liveness failure",
+          right: "Safety failure",
         },
         {
           kind: "paragraph",
