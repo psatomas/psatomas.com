@@ -44,6 +44,19 @@ export async function settle(page: Page) {
 }
 
 /**
+ * Waits until a placement's exposition has settled, before anything reads it.
+ * The region is aria-busy until its content has loaded or failed; content
+ * selectors alone cannot tell, because the Loading placeholder is itself a
+ * paragraph and is already in the server-rendered page. A failed load (the
+ * only state with a retry control) rejects rather than being read as content.
+ */
+export async function waitForExposition(page: Page, placementId: string, timeout = 15000) {
+  const region = page.locator(`#map-exposition-${placementId}[aria-busy="false"]`);
+  await region.waitFor({ timeout });
+  if (await region.locator("button").count()) throw new Error("the exposition failed to load");
+}
+
+/**
  * CHROME_PATH wins; otherwise installed stable Google Chrome, which is what the
  * baseline was validated in; otherwise Playwright's own Chromium
  * (`npx playwright-core install chromium`). Engines differ in text layout, so

@@ -4,7 +4,7 @@
 // canonical content. Nothing here changes the product.
 import { describeCycle } from "../../src/components/map/exposition-text.ts";
 import type { MapContentBlock } from "../../src/lib/map/index.ts";
-import { settle, type Section } from "./harness.mts";
+import { settle, waitForExposition, type Section } from "./harness.mts";
 
 const PLACEMENT = "consensus";
 const CYCLE = { kind: "cycle", label: "A feedback loop", steps: ["Measure the system", "Compare with the target", "Adjust a parameter", "Effect appears after a delay"] } as const;
@@ -19,8 +19,49 @@ const COMPARISON = {
   ],
 } as const;
 const BLOCKS: MapContentBlock[] = [{ kind: "paragraph", text: "A fixture exposition exercising cycle and comparison models." }, CYCLE, COMPARISON];
+const CONTENT = /\/api\/map\/content\/consensus$/;
 
 export const expositionSections: Section[] = [
+  {
+    name: "readiness",
+    title: "an exposition is read only once it has settled",
+    async run({ browser, base, check }) {
+      // The content response is held until released, so the loading state lasts
+      // as long as the check needs it: no outcome depends on how fast anything is.
+      const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => (release = resolve));
+      await page.route(CONTENT, async (route) => {
+        await held;
+        await route.fulfill({ json: { conceptId: "consensus", blocks: BLOCKS } });
+      });
+      await page.goto(`${base}/map?context=${PLACEMENT}`, { waitUntil: "load" });
+      const exposition = page.locator(`#map-exposition-${PLACEMENT}`);
+      await exposition.locator("p", { hasText: "Loading" }).waitFor({ timeout: 15000 });
+      check((await exposition.getAttribute("aria-busy")) === "true" && (await exposition.locator("p").count()) > 0, "while loading, the placeholder alone satisfies a wait for a paragraph");
+      // Bounded only so the check ends: the content is held, so no wait can see it settle.
+      const early = await waitForExposition(page, PLACEMENT, 1000).then(
+        () => "settled",
+        (error: Error) => error.name,
+      );
+      check(early === "TimeoutError", `the readiness wait does not settle on the loading state (${early})`);
+      release();
+      await waitForExposition(page, PLACEMENT);
+      const text = (await exposition.innerText()).replace(/\s+/g, " ").trim();
+      check(text.startsWith((BLOCKS[0] as { text: string }).text) && !text.includes("Loading"), "once settled, the loaded exposition is what is read");
+      await page.close();
+
+      const failing = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+      await failing.route(CONTENT, (route) => route.fulfill({ status: 500 }));
+      await failing.goto(`${base}/map?context=${PLACEMENT}`, { waitUntil: "load" });
+      const failed = await waitForExposition(failing, PLACEMENT).then(
+        () => "settled",
+        (error: Error) => error.message,
+      );
+      check(failed === "the exposition failed to load", `a failed load is reported, never read as content (${failed})`);
+      await failing.close();
+    },
+  },
   {
     name: "models",
     title: "cycle and comparison models at desktop and 375px",
@@ -28,7 +69,7 @@ export const expositionSections: Section[] = [
       const texts: string[] = [];
       for (const width of [1280, 375]) {
         const page = await browser.newPage({ viewport: { width, height: 1000 } });
-        await page.route(/\/api\/map\/content\/consensus$/, (route) => route.fulfill({ json: { conceptId: "consensus", blocks: BLOCKS } }));
+        await page.route(CONTENT, (route) => route.fulfill({ json: { conceptId: "consensus", blocks: BLOCKS } }));
         await page.goto(`${base}/map?context=${PLACEMENT}`, { waitUntil: "load" });
         await page.locator(`#map-exposition-${PLACEMENT} [role="table"]`).waitFor({ timeout: 15000 });
         await settle(page);
