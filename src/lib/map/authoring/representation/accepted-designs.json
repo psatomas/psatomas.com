@@ -42,7 +42,15 @@
       "placements": [
         "proposer-builder-separation"
       ],
-      "sourceFingerprint": "34dff72360c996278fb251270c3e650003f6279a5265c230b2ac48d8fef5d106"
+      "sourceFingerprint": "34dff72360c996278fb251270c3e650003f6279a5265c230b2ac48d8fef5d106",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "flow"
+        ],
+        "resultFingerprint": "722b0ade4904b42222a0ab66aa1819361b4c32c060e9df090c58332270ef5c86",
+        "note": "The commit-before-reveal order is the record's model and the parent's flow shows only routing; the sequence is drawn and the trust paragraph no longer restates it."
+      }
     },
     {
       "conceptId": "data-availability",
