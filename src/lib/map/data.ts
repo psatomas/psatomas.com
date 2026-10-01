@@ -14940,6 +14940,186 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "agent-to-agent-communication-content",
+      conceptId: "agent-to-agent-communication",
+      definition:
+        "Agent-to-agent communication is the exchange of messages between autonomous agents, in formats and through channels that let them request, offer, inform and commit to one another.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agents can talk in free text or in structured messages, and each carries a cost. Natural language is flexible enough for situations nobody anticipated but ambiguous, and a message read by a model can carry instructions designed to redirect it; structured messages with defined fields mean the same thing to both sides and resist such manipulation, but cover only what their designers foresaw. Many message protocols combine the two, using a structured envelope for what must be exact and free text where flexibility helps.",
+        },
+        {
+          kind: "paragraph",
+          text: "A message that promises something binds nothing by itself. A signed message at least records who said what, which can serve as evidence in a dispute, but a promise to pay or deliver becomes dependable only when tied to something that enforces it, such as escrowed funds, a bond or a contract that executes the commitment.",
+        },
+        {
+          kind: "paragraph",
+          text: "Message routing and communication policies decide who can reach whom. Relays and brokers that carry messages between agents see who talks to whom even when contents are encrypted, and open channels invite spam and floods aimed at exhausting an agent's attention or budget, so policies such as requiring payment, reputation or prior permission to send serve as admission control for agents, much as fees do for a network.",
+        },
+      ],
+    },
+    {
+      id: "agent-discovery-content",
+      conceptId: "agent-discovery",
+      definition:
+        "Agent discovery is how agents find others to work with: locating counterparties, learning what they claim to be able to do, and matching needs to offers.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Whoever ranks the results shapes the market. An agent registry or discovery protocol that orders agents by price, reputation or relevance decides which agents get found, and so which get work, so control over listing and ranking is a position of power, whether held by a single operator, a curated committee or a rule anyone can inspect.",
+        },
+        {
+          kind: "paragraph",
+          text: "Searching reveals what the searcher needs. A query broadcast to many agents tells them what is wanted, how urgently and sometimes for how much, which lets sellers raise prices or competitors act first, so agents balance the reach of a wide search against the information it leaks, much as traders balance visibility against exposure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Matching tends to concentrate. Agents that are found more often accumulate more history and reputation, which gets them found more often still, so discovery mechanisms that rank by past success can lock in early leaders. Deliberately giving new entrants some exposure keeps the pool of counterparties from narrowing to a few.",
+        },
+      ],
+    },
+    {
+      id: "negotiation-content",
+      conceptId: "negotiation",
+      definition:
+        "Negotiation is the exchange of offers and counteroffers through which parties with partly conflicting interests try to reach terms that all of them will accept.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Bargaining power comes from alternatives and patience. A party with a good outside option, or able to wait longer than its counterpart, can hold out for better terms, so negotiation strategies largely consist of improving one's own alternatives and judging the other side's, and deadlines shift power toward whoever is less pressed by them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each side's limit is the information it most needs to keep. An agent negotiating for a principal must be told the worst terms the principal will accept, and an agent that reveals them, whether through its offers or because its counterpart persuades it to disclose its instructions, gives away the surplus it was meant to win. Negotiation constraints therefore have to be enforced outside what the agent can be talked into revealing or relaxing.",
+        },
+        {
+          kind: "paragraph",
+          text: "Negotiation can fail without anything going wrong, and it can also fail expensively. Rounds of offers consume time and resources, and two agents each designed to concede little can exchange counteroffers indefinitely, so negotiation protocols bound the number of rounds or the time allowed and fall back on posted prices or auctions when no agreement is reached.",
+        },
+      ],
+    },
+    {
+      id: "delegation-content",
+      conceptId: "delegation",
+      definition:
+        "Delegation is one party giving another the responsibility or the ability to act on its behalf, within a scope it defines and keeps the right to withdraw.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Delegating a task and delegating authority are different arrangements. A delegate entrusted only with work prepares or proposes while the delegator still decides, which keeps control at the cost of the delegator's attention; a delegate entrusted with authority acts directly, which is faster and makes the delegator answerable for actions it never reviewed. In both cases much of the responsibility for the outcome stays with whoever delegated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delegation without visibility is blind trust. A delegator can judge whether its authority was used well only if it can see what was done in its name, through records of actions, reports or attestations, and delegation policies that require such records turn delegation from a one-time grant into an ongoing relationship that can be adjusted.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delegation constraints are clearest when stated in advance and checked mechanically: what may be done, up to what amount, until when, and whether the delegate may pass any of it on. Constraints a delegate merely promises to respect depend on its good faith, while those enforced by the system that holds the authority do not.",
+        },
+      ],
+    },
+    {
+      id: "cooperation-content",
+      conceptId: "cooperation",
+      definition:
+        "Cooperation is participants working together toward objectives they share or that are compatible, by dividing tasks, pooling resources, exchanging information and sharing what they gain.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How gains will be divided is best settled before cooperating. Splitting the result in proportion to contribution sounds fair but requires measuring contribution, which is often contested when outputs are joint, while splitting equally ignores differences in effort and risk; benefit-sharing rules written into the contract that pays out the gains spare the cooperators a later dispute and make the terms of joining clear in advance.",
+        },
+        {
+          kind: "paragraph",
+          text: "Information shared for cooperation cannot be unshared. Data, strategies or plans given to a partner to complete a joint task remain with it afterwards, and partners who cooperate in one matter often compete in another, so cooperating participants share selectively, revealing only what the joint task requires, or use techniques that let a partner use information without seeing all of it.",
+        },
+        {
+          kind: "paragraph",
+          text: "A cooperative plan stalls when any participant falls short. When tasks are divided, each part depends on the others being done, so a partner that fails or withdraws can hold up the whole; cooperation that matters therefore builds in redundancy, deadlines after which a task is reassigned, or deposits forfeited by those who do not deliver.",
+        },
+      ],
+    },
+    {
+      id: "competition-content",
+      conceptId: "competition",
+      definition:
+        "Competition is participants contending for the same scarce opportunities or resources, each trying to secure them for itself within rules that settle who prevails.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What keeps competition effective is open entry more than the number of competitors. A market with few participants stays disciplined if newcomers can enter easily whenever margins grow, while one with many participants behind high barriers can still settle into comfortable margins. Competitive pressure comes from the threat of being displaced, which depends on how costly displacement is to attempt.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rivalry can reward outperforming others or merely harming them. When the rules let a competitor gain by degrading a rival's results, for instance by delaying its transactions or flooding a shared resource, effort shifts from doing better to making others do worse; well-designed competition makes sabotage unprofitable, so that the only way to win is to perform.",
+        },
+        {
+          kind: "paragraph",
+          text: "Competitive equilibria describe where contention would settle if conditions stayed fixed, and in automated systems they rarely do. Participants adapt continuously, new ones arrive and the rules themselves change, so live systems spend most of their time moving rather than resting at an equilibrium, and the more useful question is which way competition is pushing them.",
+        },
+      ],
+    },
+    {
+      id: "coalition-formation-content",
+      conceptId: "coalition-formation",
+      definition:
+        "Coalition formation is agents joining into groups that act jointly, agreeing who belongs, what the group pursues, and how its gains and costs are shared.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A coalition holds together only if no subgroup would do better on its own. If some members could leave and earn more acting separately, they have reason to break away, so a stable coalition needs a division of its gains that gives every possible subgroup at least what it could get alone, and for many groups no such division exists. Coalition stability is therefore a property of the terms as much as of the members.",
+        },
+        {
+          kind: "paragraph",
+          text: "Coalition rules for membership trade openness against cohesion. Admitting anyone grows the group but dilutes each member's share and invites free riders, while restricting membership protects the group and excludes participants who might have added value; agents that belong to several coalitions at once can face conflicting obligations that no single coalition's rules resolve.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agents can form coalitions for a single task and dissolve them when it is done. Writing the terms, contributions, division of proceeds and conditions for leaving, into a contract at formation lets such short-lived groups assemble without lengthy trust-building, and settles in advance what happens to assets and obligations at coalition dissolution.",
+        },
+      ],
+    },
+    {
+      id: "task-markets-content",
+      conceptId: "task-markets",
+      definition:
+        "Task markets match units of work with those willing to do them: a task is published with its terms, providers compete or are chosen to perform it, and payment is settled when the work is accepted.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Automating a task market works best for tasks whose completion can be judged. Work with a checkable result, such as a computation, a proof or code that must pass given tests, can be accepted and paid automatically; work whose quality is a matter of judgment needs review or a dispute process, and the precision of the task's description largely determines how often such disputes arise.",
+        },
+        {
+          kind: "paragraph",
+          text: "How work is assigned decides whether effort is wasted. An open bounty that pays whoever finishes first draws many providers to the same task, only one of whom is paid; task assignment before work begins avoids that duplication but requires trusting the chosen provider to finish, which is why assignment is often paired with a deposit or a deadline after which the task is released to others.",
+        },
+        {
+          kind: "paragraph",
+          text: "Both sides need assurance about payment. Escrowing the reward when a task is published shows providers the money exists, and a rule that accepts the work automatically if the requester does not respond within a set time protects providers from requesters who receive the work and never sign off on it.",
+        },
+      ],
+    },
+    {
+      id: "multi-agent-coordination-content",
+      conceptId: "multi-agent-coordination",
+      definition:
+        "Multi-agent coordination is how several autonomous agents arrange their individual actions so that together they achieve a joint result, through explicit plans and protocols or through patterns that emerge from their interaction.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agents acting on shared resources at the same time can undo each other's work. Two agents buying the last unit of the same item, or spending from the same budget, conflict unless something orders them; explicit coordination protocols, such as reservations, turn-taking or a chosen leader, prevent the conflict at the cost of delay and of a point that can fail, while optimistic approaches let agents proceed and resolve conflicts afterwards.",
+        },
+        {
+          kind: "paragraph",
+          text: "A shared ledger can coordinate agents without any messages between them. When agents read and write a common state, such as open tasks, current prices or claimed resources, each can adjust to what the others have done simply by observing it, a form of coordination through the environment that scales to many agents who never communicate directly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Emergent coordination can also go wrong collectively. Agents that each respond sensibly to the same signal, such as a price move, can together amplify it, overshoot and reverse in unison, producing oscillations no single agent intended even when their models differ; damping such feedback, through rate limits, varied response times or diverse strategies, is part of designing systems in which many agents act at once.",
+        },
+      ],
+    },
+    {
       id: "autonomous-execution-content",
       conceptId: "autonomous-execution",
       definition: "Autonomous execution concerns the runtime lifecycle through which an agent interprets objectives, plans and evaluates possible actions, applies constraints and authority, attempts execution, observes results, verifies or settles defined claims, and responds when execution does not proceed as intended.",
