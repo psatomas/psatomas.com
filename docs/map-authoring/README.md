@@ -62,7 +62,8 @@ For one concept, the output reports:
 - every placement, with level, context trail, contextual label or note,
   parent, ordered siblings and ordered children, including which children
   already own content;
-- the section of the parent's exposition that covers the primary placement;
+- the section of the parent's exposition that covers the primary placement,
+  or the whole exposition when the parent has no sections (an L1 parent);
 - relationships, mechanisms and knowledge paths that reference the concept;
 - other concepts that share its title;
 - an **Attention** list of the facts that constrain the writing, such as

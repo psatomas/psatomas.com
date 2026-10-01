@@ -49,6 +49,8 @@ export type MapExpositionSection = {
   /** Position among the exposition's sections (text before the first heading, if any, is the first). */
   index: number;
   heading?: string;
+  /** The parent's exposition has no sections (an L1 synthesis, say), so all of it, definition included, is the context. */
+  whole?: true;
   lines: string[];
 };
 
@@ -218,11 +220,13 @@ function sectionedBody(body: readonly MapContentBlock[], siblingLabels: readonly
 
 /**
  * Locates the part of a parent's exposition that covers one child placement.
- * L0 expositions close each L1 section with a terms strip naming that topic's
- * own children, so a section whose strip equals the placement's child labels
- * is its section. Otherwise a single section mentioning the placement's label
- * (in a heading or a terms strip) is used; anything else is left to the author.
- * Sections never include the parent's closing material (see sectionedBody).
+ * An exposition without headings (the L1 shape) is not divided among its
+ * children, so all of it is the context. L0 expositions close each L1 section
+ * with a terms strip naming that topic's own children, so a section whose
+ * strip equals the placement's child labels is its section. Otherwise a single
+ * section mentioning the placement's label (in a heading or a terms strip) is
+ * used; anything else is left to the author. Sections never include the
+ * parent's closing material (see sectionedBody).
  */
 function locateSection(
   parentContent: MapConceptContent,
@@ -230,6 +234,7 @@ function locateSection(
   childLabels: readonly string[],
   siblingLabels: readonly string[],
 ): MapExpositionSection | undefined {
+  if (!(parentContent.body ?? []).some((block) => block.kind === "heading")) return { index: 0, whole: true, lines: expositionLines(parentContent) };
   const all = sections(sectionedBody(parentContent.body ?? [], siblingLabels));
   const toSection = (index: number): MapExpositionSection => ({
     index,

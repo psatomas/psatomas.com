@@ -113,6 +113,17 @@ test("parent sections: without a closing summary strip nothing is truncated", ()
   assert.equal(sectionOf(model, "gamma")?.lines.at(-1), "Gamma continues after its strip.");
 });
 
+test("parent sections: an exposition without headings is the context as a whole, definition first", () => {
+  const body: MapContentBlock[] = [{ kind: "paragraph", text: "Alpha's model." }, { kind: "distinction", left: "Alpha One", right: "Alpha Two" }];
+  const sectioned = sectionedModel(SECTIONS);
+  const model = { ...sectioned, content: [...sectioned.content, { id: "alpha-content", conceptId: "alpha", definition: "Alpha is a topic.", body }] };
+  const context = createMapAuthoringInspector(model, { authoredContent: ["domain", "alpha"] }).inspectConcept("alpha-one");
+  assert.deepEqual(context.placements[0].parent?.section, { index: 0, whole: true, lines: ["Alpha is a topic.", "Alpha's model.", "[distinction] Alpha One ≠ Alpha Two"] });
+  assert.match(formatMapConceptAuthoringContext(context), /Alpha, whole exposition \(it has no sections\):\n\s+Alpha is a topic\./);
+  // A sectioned (L0) parent is still divided among its children.
+  assert.equal(sectionOf(model, "alpha")?.whole, undefined);
+});
+
 test("parent sections in the L0 corpus never absorb a domain's closing summary", () => {
   for (const root of resolver.getRootPlacements()) {
     const topics = resolver.getChildren(root.id);
