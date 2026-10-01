@@ -278,4 +278,13 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "agent-credit",
   "agent-risk",
   "agent-incentives",
+  "agent-to-agent-communication",
+  "agent-discovery",
+  "negotiation",
+  "delegation",
+  "cooperation",
+  "competition",
+  "coalition-formation",
+  "task-markets",
+  "multi-agent-coordination",
 ];
