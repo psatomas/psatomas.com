@@ -17020,8 +17020,13 @@ export const mapKnowledge: MapKnowledgeModel = {
     {
       id: "agent-identity-content",
       conceptId: "agent-identity",
-      definition: "The means by which an AI agent is distinguished and authenticated for protocol interaction.",
-    },
+      definition:
+        "Agent identity is what lets others recognize a software or AI agent as the same participant across interactions and confirm that a request really comes from it: a persistent identifier, the keys that authenticate for it, and the claims and history attached to it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An agent's identity has more anchors than a person's, and they can come apart. The identifier others refer to, the keys that sign for it, the code and model that decide what it does, and the principal accountable for it each change on their own schedule: keys are rotated, models are updated, agents are handed to new operators, and a running agent can be copied. Persistent identity keeps the identifier through those changes, which is what lets credentials and history accumulate around it, and it can also make an agent look unchanged after what made it trustworthy has changed underneath.",
+        },
         {
           kind: "paragraph",
           text: "Authentication, credentials and reputation answer different questions about the same identifier. Machine authentication proves that a request was signed by keys currently bound to it; agent credentials, issued by a principal, a platform or an auditor, attach claims to it, such as who operates the agent or which model it runs; reputation is evidence of how it has behaved. None of them grants authority, and a counterparty weighs them together according to how much the interaction puts at stake.",
