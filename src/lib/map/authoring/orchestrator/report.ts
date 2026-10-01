@@ -6,8 +6,13 @@
 import type { DiffReport } from "./diff-check.ts";
 import type { RunState } from "./run-state.ts";
 
-/** "Identity, Accounts & Authority" → "identity, accounts and authority". */
-export const domainPhrase = (title: string) => title.replace(/\s*&\s*/g, " and ").toLowerCase();
+/** "Identity, Accounts & Authority" → "identity, accounts and authority"; acronyms such as "MEV" keep their case. */
+export const domainPhrase = (title: string) =>
+  title
+    .replace(/\s*&\s*/g, " and ")
+    .split(" ")
+    .map((word) => (/^[A-Z]{2,}$/.test(word) ? word : word.toLowerCase()))
+    .join(" ");
 
 const list = (values: readonly string[]) => (values.length ? values.join(", ") : "none");
 const withTrailer = (message: string, trailer?: string) => (trailer ? `${message}\n\n${trailer}\n` : `${message}\n`);

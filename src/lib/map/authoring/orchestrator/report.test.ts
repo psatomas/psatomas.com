@@ -21,6 +21,8 @@ function finishedRun() {
 
 test("domain phrases spell out ampersands for commit subjects", () => {
   assert.equal(domainPhrase("Identity, Accounts & Authority"), "identity, accounts and authority");
+  assert.equal(domainPhrase("MEV & Execution Markets"), "MEV and execution markets");
+  assert.equal(domainPhrase("AI & Intelligent Systems"), "AI and intelligent systems");
 });
 
 test("commit messages follow the semantic convention and carry the trailer", () => {
