@@ -98,7 +98,10 @@ If you cannot state these without guessing, [stop](#stop-and-escalate).
   ([`data.ts`](../../src/lib/map/data.ts)), following
   `{ id: "<concept-id>-content", conceptId: "<concept-id>", definition, body? }`.
   Place new records after the existing records of the same domain, or at the
-  end of the content array.
+  end of the content array. This only keeps the file navigable: record order
+  has no meaning. The resolver indexes records by concept, the registry is
+  unordered, and the tests and the orchestrator's diff check compare records
+  by concept.
 - Follow [content-architecture.md](content-architecture.md) and the
   editorial criteria in [quality-contract.md](quality-contract.md#b-editorial-and-semantic-review-criteria).
 - Write only plain text. Use only block kinds from `types.ts`.
