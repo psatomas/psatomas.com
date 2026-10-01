@@ -8,10 +8,11 @@
 // it, in order (none at a leaf); no child of the concept's other carriers
 // renders anywhere (no cross-facet leakage); structured blocks carry text
 // alternatives; and nothing overflows horizontally. The exposition text must
-// be identical at every placement and width. Runs against `next start` on the
-// existing build, like the browser suite.
+// be identical at every placement and width. Nothing is read until the
+// exposition has settled (waitForExposition), and a failed load fails. Runs
+// against `next start` on the existing build, like the browser suite.
 import { renderExpectations } from "../../src/lib/map/authoring/orchestrator/plan.ts";
-import { launchBrowser, model, startServer, trailOf } from "./harness.mts";
+import { launchBrowser, model, startServer, trailOf, waitForExposition } from "./harness.mts";
 
 export const RENDER_WIDTHS = [1280, 375] as const;
 
@@ -38,6 +39,7 @@ export async function checkRender(conceptIds: readonly string[], base?: string):
             const page = await browser.newPage({ viewport: { width, height: 1000 } });
             try {
               await page.goto(`${url}/map?context=${placementId}`, { waitUntil: "load" });
+              await waitForExposition(page, placementId);
               await page.locator(`#map-exposition-${placementId} p`).first().waitFor({ timeout: 15000 });
               await page.waitForTimeout(800);
               const facts = await page.evaluate((placementId) => {
