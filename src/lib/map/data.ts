@@ -15852,6 +15852,346 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "protocol-autonomy-content",
+      conceptId: "protocol-autonomy",
+      definition:
+        "Protocol autonomy is the capacity of a protocol to operate and adjust its own behavior according to built-in rules, without a governance decision for each change.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Autonomy replaces discretion with rules that respond on their own. An interest rate that follows utilization, a fee that tracks demand or a limit that tightens with risk changes without anyone voting, which makes the protocol fast to respond, predictable to its users and hard to capture; the same rules respond only to conditions their designers anticipated, so situations outside those conditions still need people.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bounded autonomy pairs automatic adjustment with hard limits it cannot cross. Governance sets the range within which a parameter may move and how fast it may change, and the protocol adjusts freely inside that range, so a flaw in the adjustment rule produces bounded drift rather than unbounded damage, and the scope of autonomy becomes something governance can widen or narrow deliberately.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol autonomy levels range from fixed rules that never adapt, through rules that adjust by formula, to adjustment driven by models trained on data. Each step adds flexibility and removes predictability: a formula can be analyzed and its effects bounded in advance, while a learned model's responses are harder to anticipate and to verify, which suits the higher levels only to decisions whose bounds are firmly enforced around them.",
+        },
+      ],
+    },
+    {
+      id: "protocol-objectives-content",
+      conceptId: "protocol-objectives",
+      definition:
+        "Protocol objectives are the operating targets a protocol's automatic mechanisms pursue, such as a level of utilization, a price band or a reserve ratio, expressed precisely enough for the protocol itself to act on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Objectives usually compete, and the protocol needs a rule for when they do. Keeping a stablecoin close to its peg, keeping borrowing affordable and keeping reserves high cannot all be maximized at once, so objective functions either weigh them against each other or rank them, as when safety is always satisfied first and efficiency is pursued only within the room that safety leaves.",
+        },
+        {
+          kind: "paragraph",
+          text: "A setpoint is a policy decision written as a number. The target utilization, collateral ratio or price band that an automatic mechanism steers toward reflects judgments about risk and purpose made by whoever chose it, and the mechanism carries those judgments out faithfully, including after they have stopped fitting the conditions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol health is wider than any objective. A protocol can hit its targets while risks build in dimensions no objective measures, such as concentration among a few users or dependence on a single price source, so health is tracked with indicators beyond those the mechanisms optimize. Objective drift, the slow divergence of targets from what current conditions call for, is caught only by reviewing setpoints periodically rather than assuming they remain right.",
+        },
+      ],
+    },
+    {
+      id: "protocol-monitoring-content",
+      conceptId: "protocol-monitoring",
+      definition:
+        "Protocol monitoring is a protocol's observation of its own state and environment, on which its automatic mechanisms, and the people overseeing them, rely to decide what to do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A protocol can observe its own state completely and the world around it only by estimate. Balances, positions and parameters on the ledger are exactly known, but the conditions that matter for many decisions, such as market prices elsewhere, the depth of external liquidity or the intentions of large holders, can only be estimated from proxies, so state estimation blends exact internal data with uncertain external inputs, and its conclusions carry that uncertainty.",
+        },
+        {
+          kind: "paragraph",
+          text: "Invariant monitoring gives the earliest warning that something is wrong. Checking continuously that core relationships hold, such as assets covering liabilities or total supply matching the sum of balances, can catch a flaw at its first effect, and checks built into the protocol's own transactions can stop a violating action outright, at the cost of computation on every transaction.",
+        },
+        {
+          kind: "paragraph",
+          text: "Signals that trigger automatic responses must resist manipulation. If a protocol pauses, raises fees or tightens limits when a measured value crosses a threshold, an attacker who can move that value can trigger those responses at will, to block competitors or to set up an exploit, so the signals feeding automatic actions are drawn from sources and time windows that are costly to manipulate.",
+        },
+      ],
+    },
+    {
+      id: "control-loops-content",
+      conceptId: "control-loops",
+      definition:
+        "Control loops are mechanisms by which a protocol measures a quantity, compares it with a target and adjusts something it controls to reduce the difference, repeating continuously.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Delay is what makes control loops unstable. A controller that acts on measurements taken a few blocks ago, and whose adjustments take further time to change behavior, keeps correcting an error that has already begun to shrink, overshoots and must correct back; the more strongly it responds, the larger the swings, so control stability requires matching how hard a loop pushes to how slowly its effects appear.",
+        },
+        {
+          kind: "paragraph",
+          text: "PID control combines three responses: one proportional to the current error, one to its accumulated history and one to its rate of change. The accumulated term removes persistent offsets that the proportional response alone leaves, but while the controlled parameter sits at its limit it keeps accumulating, and the loop then overshoots badly once the limit is released, which is why controllers working within parameter bounds need protection against this build-up.",
+        },
+        {
+          kind: "paragraph",
+          text: "In protocols, the controlled system includes participants who can see the controller. When an interest rate or fee follows a known rule, participants can anticipate the next adjustment and act before it, so the loop's own predictability becomes something to trade against; feedback loops whose inputs participants can move, or whose next step they can foresee, need designs that limit what such anticipation can earn.",
+        },
+      ],
+    },
+    {
+      id: "adaptive-parameters-content",
+      conceptId: "adaptive-parameters",
+      definition:
+        "Adaptive parameters are protocol values, such as fees, interest rates or limits, that change automatically according to rules responding to measured conditions, rather than through a governance decision each time.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Dynamic fees let a protocol charge for conditions as they are. A trading pool that raises its fee when prices are volatile compensates its liquidity providers for the greater losses they suffer to better-informed traders at such times, and lowers it when calm returns to attract volume, so the fee tracks the cost it is meant to cover instead of averaging over very different conditions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Adaptive interest rates can respond to persistence as well as level. A rate that follows utilization instantly reacts to every swing, while one that keeps rising as long as utilization stays above target, and keeps falling while it stays below, pushes harder against lasting imbalances and less against brief ones, at the cost of responding more slowly to genuine shocks.",
+        },
+        {
+          kind: "paragraph",
+          text: "Parameter sensitivity decides how cautiously a parameter should adapt. Near thresholds such as liquidation levels, a small change in a parameter can shift large positions from safe to unsafe, while elsewhere the same change matters little, so analyzing how strongly outcomes respond to each parameter before automating it shows which can adjust quickly and which should move slowly, if at all.",
+        },
+      ],
+    },
+    {
+      id: "protocol-policies-content",
+      conceptId: "protocol-policies",
+      definition:
+        "Protocol policies are the rules setting out how a protocol behaves when it operates autonomously: the conditions under which it runs normally, the responses it takes when conditions change, and when it hands decisions to people.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An operating envelope marks where autonomy applies. Within defined ranges of utilization, price deviation, liquidity and similar conditions, the protocol runs on its automatic rules; outside them, its assumptions may no longer hold, so leaving the envelope is itself the signal for a different set of responses, rather than for the same rules to keep running in conditions they were not designed for.",
+        },
+        {
+          kind: "paragraph",
+          text: "Response policies work best when graded. Instead of a single switch between normal operation and a full stop, a protocol can escalate step by step, from warnings, to restricting new positions, to pausing a specific function, to referring the decision to governance, so that a moderate problem receives a moderate response and users lose only the functions the situation actually requires.",
+        },
+        {
+          kind: "paragraph",
+          text: "Escalation needs a recipient, a deadline and a default. Handing a decision to people helps only if someone is designated to receive it, can act within the time the situation allows, and is backed by a conservative default applied automatically if no decision arrives, so that the protocol is never left waiting indefinitely in a condition its rules were not meant to handle.",
+        },
+      ],
+    },
+    {
+      id: "protocol-agents-content",
+      conceptId: "protocol-agents",
+      definition:
+        "Protocol agents are programs and services that act on a protocol's behalf or in its service, from contracts that hold assets and follow fixed strategies on-chain to systems off-chain that observe conditions and submit the transactions the protocol depends on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On-chain agents are fully bound by the protocol's rules: a contract that rebalances a vault or manages a position can do only what its code permits, and anyone can inspect that code. Its limits are the reverse of its guarantees, since it cannot see anything off-chain directly, cannot act without being called, and cannot change its strategy except through whatever upgrade path its design allows.",
+        },
+        {
+          kind: "paragraph",
+          text: "AI-operated protocols place a model's judgment inside an operating role, for example proposing parameter changes or choosing allocations. Because a model's choices are hard to predict or verify in advance, such designs usually let it act only within limits enforced on-chain, and treat its output as one input to the protocol's rules rather than as the rule itself, so that a mistaken or manipulated model can do no more than those limits allow.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols that rely on agents running off-chain, such as bots, worker services or automation networks, inherit their operators' reliability. If one service submits every necessary transaction, its outage or capture stalls the protocol however sound the on-chain logic is, so robust designs keep agent actions open to any participant and checked on-chain, and make sure more than one operator has the means and the reason to act.",
+        },
+      ],
+    },
+    {
+      id: "protocol-maintenance-content",
+      conceptId: "protocol-maintenance",
+      definition:
+        "Protocol maintenance is the recurring work that keeps a deployed protocol functioning as designed, such as updating accrued values, processing queues, settling expired positions, clearing obsolete state and keeping track of what the protocol depends on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Much maintenance can be designed away. A protocol can compute accrued interest when an account is next touched instead of updating every account on a schedule, or let each user settle an expired position as part of their own next transaction, so that the work happens only where someone needs it and is paid for by them. What remains as standalone maintenance tasks is the work no single user has a reason to do, which is where keepers and the incentives paid to them come in.",
+        },
+        {
+          kind: "paragraph",
+          text: "State cleanup removes data that has served its purpose, such as expired orders or closed positions, to reduce storage and keep later operations cheap. It must not destroy anything still owed: a record that looks obsolete may still back a claim, so cleanup rules generally remove only what is provably settled, and some protocols pay the cleaner from the storage refund the removal earns.",
+        },
+        {
+          kind: "paragraph",
+          text: "Dependency management keeps account of everything outside the protocol that it relies on, such as price feeds, other protocols' contracts, bridges and token contracts. Each of these can change, be deprecated or fail on its own schedule, so maintaining a protocol includes watching their announcements and state, and having a planned way to replace a dependency before it becomes unusable rather than after.",
+        },
+      ],
+    },
+    {
+      id: "protocol-adaptation-content",
+      conceptId: "protocol-adaptation",
+      definition:
+        "Protocol adaptation is a protocol's ability to change how it operates in response to conditions, by switching modes, retuning its behavior or learning from observed outcomes, while its code and rules stay the same.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Regime detection and mode switching let a protocol behave differently in conditions that differ in kind, not just in degree. A lending market might detect that prices are moving abnormally fast and switch into a mode with wider safety margins, or a trading venue might recognize a liquidity crisis and change how it prices trades; the hard part is deciding the switch reliably, since a regime is inferred from data and every switch rule produces both false alarms and missed changes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Switching between modes invites oscillation and gaming. If the conditions for entering and leaving a mode are the same, a measurement sitting near the boundary flips the protocol back and forth; requiring a clearly stronger signal to leave than to enter, or a minimum time in each mode, avoids this. And because participants who can push the measurement across the boundary can trigger a mode change, detection has to rely on signals they cannot cheaply move.",
+        },
+        {
+          kind: "paragraph",
+          text: "Learning mechanisms go further, adjusting how the protocol responds based on how past responses turned out. That lets it improve over time but makes its behavior depend on history that may include deliberate manipulation, so adaptation limits fix what learning may change and by how much, and adaptation evaluation compares results against simple fixed rules to check whether the added complexity actually helps.",
+        },
+      ],
+    },
+    {
+      id: "self-healing-content",
+      conceptId: "self-healing",
+      definition:
+        "Self-healing is a protocol's capacity to notice that something within it or around it has failed and to respond on its own, by routing around the fault, operating in a reduced form, or restoring a consistent state, without waiting for people to intervene.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Automatic failover depends on having somewhere to fail over to. A protocol that reads prices from one feed can only stop when that feed fails, while one designed with a second source, a fallback calculation or an alternative route can switch to it; the substitute is usually weaker in some way, such as slower, less precise or easier to manipulate, so failover rules also need to limit how long and how much the protocol relies on it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recovery modes are distinct operating states entered after a fault, in which the protocol allows only the actions that move it back toward health, such as repayments, deposits or orderly withdrawals, while blocking new risk. Leaving such a mode should require evidence that the fault has passed, not merely that time has, since a protocol that resumes normal operation while its inputs are still unreliable can repeat the failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "State repair is the hardest step to automate. Correcting balances or records that a fault has left wrong means deciding what the correct values are, and those decisions often redistribute losses among users; a protocol can safely repair state on its own only where the rule for correct values was fixed in advance, such as recomputing an index from its inputs, and must leave everything else to an accountable process.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-security-responses-content",
+      conceptId: "autonomous-security-responses",
+      definition:
+        "Autonomous security responses are protective actions a protocol takes on its own when its rules detect signs of an attack or failure, such as pausing functions, slowing outflows or isolating affected components, without waiting for a human decision.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Their case rests on speed. An exploit can drain a protocol within a few blocks, faster than any person can be reached, so a response written into the protocol may be the only one that arrives in time; what it can achieve is limited to slowing or stopping harm, while understanding the attack, fixing the flaw and recovering funds remain part of incident response, where people take over.",
+        },
+        {
+          kind: "paragraph",
+          text: "Outflow limits illustrate the approach. By capping how much value can leave the protocol, or a single pool within it, over a period, they do not detect any particular attack, yet they bound what any attack can take before someone notices; the cost is that legitimate large withdrawals are delayed too, especially during a market panic, when users most want their funds.",
+        },
+        {
+          kind: "paragraph",
+          text: "Exploit detection has to tolerate false alarms. Signatures of known attacks miss new ones, while broad anomaly rules also trigger on unusual but legitimate activity, and an attacker who knows the triggers can stay just short of them or set them off deliberately to freeze a protocol. Responses whose costs are modest, such as delays and caps, can therefore fire on weaker evidence than drastic ones like a full pause.",
+        },
+      ],
+    },
+    {
+      id: "protocol-owned-resources-content",
+      conceptId: "protocol-owned-resources",
+      definition:
+        "Protocol-owned resources are assets held and deployed under a protocol's own rules, such as liquidity it provides, reserves it keeps against losses, and revenue it collects, rather than assets held by users or by an organization on the protocol's behalf.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Owning resources lets a protocol rely less on outside participants. Liquidity that users provide in return for rewards leaves once the rewards stop, while liquidity the protocol owns stays for as long as its rules keep it there, and a reserve or insurance fund held by the protocol can absorb a bad debt directly instead of depending on someone to step in.",
+        },
+        {
+          kind: "paragraph",
+          text: "The same holdings create exposure. Liquidity a protocol owns suffers the same price losses as anyone else's, and reserves held in the token the protocol itself issues lose value in the very crisis they are meant to cover, so the composition of protocol-owned resources determines whether they protect against a failure or move with it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Deciding how to use these resources decides who gains from them. Revenue can build reserves, fund buybacks that return value to token holders, pay for incentives or support operations, and each use benefits a different group over a different time span; whether those choices are made by fixed rules, by automatic policies or by governance determines how predictable the protocol's finances are to everyone relying on them.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-liquidity-management-content",
+      conceptId: "autonomous-liquidity-management",
+      definition:
+        "Autonomous liquidity management is the use of protocol rules to place, move and adjust liquidity on their own, toward targets such as depth at certain prices, a share of trading volume, or support for a token's price.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Concentrated liquidity makes management necessary. Liquidity placed within a narrow price range earns fees only while the price stays in that range, so as the price moves, someone has to shift the range to follow it; each move costs fees and fixes whatever loss the position has suffered relative to holding, so range management weighs fee income against the cost and losses of repositioning.",
+        },
+        {
+          kind: "paragraph",
+          text: "Predictable management can be exploited. When the rules for rebalancing or repositioning are visible on-chain, others can trade ahead of the protocol's moves or push the price to trigger them, so managers often limit how often or how far they rebalance, spread moves over time, or rely on prices that are hard to move within a block.",
+        },
+        {
+          kind: "paragraph",
+          text: "Peg defense applies these tools to keep a token near a target price, by adding liquidity or buying when the price falls and selling when it rises. It is limited by what the protocol holds: defense spends reserves when the price is weak, and if the selling outlasts the reserves, the visible depletion can accelerate the fall it was meant to stop.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-risk-management-content",
+      conceptId: "autonomous-risk-management",
+      definition:
+        "Autonomous risk management is a protocol's own ongoing control of the exposure it accepts, through models that estimate potential losses, parameters and limits derived from them, and actions that reduce exposure when estimates cross set levels.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Risk models are where judgment enters an automated system. Collateral requirements, borrowing caps and liquidation thresholds all follow from estimates of how far and how fast prices can move and how much can be sold before prices give way, and those estimates come from past data that may not include the next crisis; automating the response to a model makes the protocol faster, not the model more accurate.",
+        },
+        {
+          kind: "paragraph",
+          text: "Dynamic risk parameters tighten as conditions worsen, for example raising collateral requirements as volatility rises or lowering borrowing caps as market depth thins. Tightening too abruptly can itself push borrowers into liquidation, adding forced sales to a falling market, so these parameters usually apply changes to new positions first, or move gradually enough for existing positions to adjust.",
+        },
+        {
+          kind: "paragraph",
+          text: "Stress testing asks how the protocol would fare in specific severe scenarios, such as a sharp price drop combined with a liquidity drain, and automated deleveraging is one response when a scenario becomes real: reducing the largest or riskiest positions in an order set by rule. Deleveraging spreads the cost of a crisis across positions by a predictable rule instead of leaving it to whoever is last to exit, but it also closes positions whose holders had not chosen to close them.",
+        },
+      ],
+    },
+    {
+      id: "governance-human-override-content",
+      conceptId: "governance-human-override",
+      definition:
+        "Governance and human override are the means by which people retain final authority over an autonomous protocol, by enacting decisions that change its rules or parameters and by stepping in to stop or redirect its operation when its rules fail.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Automatic enactment makes a governance decision take effect through the protocol itself once the decision is final, so a passed proposal to change a parameter is carried out exactly as approved without depending on anyone to implement it. That removes the risk of an approved decision being ignored or altered, but also the last chance for a person to notice that the approved change itself was wrong, which shifts the burden of checking onto the review before the vote.",
+        },
+        {
+          kind: "paragraph",
+          text: "Override mechanisms are what makes human oversight more than observation. People who can see a problem but have no means to act on it can only warn, so autonomous protocols typically name who may pause, cap or reverse which functions, and under what conditions; each such power is also a point of attack and of trust, so overrides tend to be narrow, logged and subject to review afterward.",
+        },
+        {
+          kind: "paragraph",
+          text: "Kill switches are the extreme case: halting a protocol or a component entirely, by deliberate human decision. Unlike a circuit breaker, which trips on a measured condition and often resets, a kill switch reflects a judgment that continued operation is worse than none; whether one exists at all, and who holds it, is a choice between being able to stop a catastrophe and being able to promise users that no one can stop the protocol.",
+        },
+      ],
+    },
+    {
+      id: "verifiable-autonomous-operation-content",
+      conceptId: "verifiable-autonomous-operation",
+      definition:
+        "Verifiable autonomous operation is the property of an autonomous protocol whose actions others can check, through proofs, records and visible state that show what it did, on what inputs, and whether its stated rules and invariants held.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Autonomy shifts trust from operators to rules, and verification is how users confirm that the rules are what actually ran. Actions taken on-chain can be checked by replaying them, but autonomous protocols increasingly rely on computation done off-chain, such as risk calculations or model outputs, and operation proofs let the protocol accept such results only together with evidence that they were produced by the agreed procedure from the agreed inputs.",
+        },
+        {
+          kind: "paragraph",
+          text: "Invariant verification can also come before operation: showing, for example with formal methods, that no sequence of permitted actions can lead the protocol into a state where a stated invariant fails, rather than detecting a failure once it occurs. Such a result covers only the invariants written down and the environment assumed in the analysis, so its value depends on whether those invariants capture what users actually rely on.",
+        },
+        {
+          kind: "paragraph",
+          text: "Audit trails and decision records serve the questions asked after the fact. A complete trail of which rule fired, with which inputs, and what action followed lets anyone reconstruct why the protocol behaved as it did, which matters most when its behavior surprised people; transparency of this kind enables accountability but does not supply it, since someone still has to examine the record and be able to act on what they find.",
+        },
+      ],
+    },
+    {
+      id: "protocol-lifecycle-automation-content",
+      conceptId: "protocol-lifecycle-automation",
+      definition:
+        "Protocol lifecycle automation is the use of rules fixed in advance to carry a protocol through the stages of its existence, from launch and the gradual transfer of control, through upgrades, to the point where it stops changing or is retired.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Writing the lifecycle into the protocol turns promises into commitments. A team can announce that it will hand over control or stop issuing incentives by a certain date, but a schedule enforced by the protocol, such as admin powers that expire at a set block or emissions that end on a fixed curve, does not depend on the team keeping its word or on anyone remembering it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Automated upgrades show the trade-off. A protocol might adopt a new version of a component automatically once it has been approved and a delay has passed, keeping up with fixes without fresh human action, but every automatic path to changing code is also a path an attacker can try to use, so such mechanisms are usually limited to narrow components and accompanied by delays during which users can leave.",
+        },
+        {
+          kind: "paragraph",
+          text: "The end of a lifecycle needs the same care as the beginning. Ossification removes upgrade paths so that the protocol's behavior becomes permanent, which gives users certainty but also makes any remaining flaw permanent; sunsetting winds a protocol down, and doing it by rule, with withdrawal windows, stopped new activity and a defined treatment of what remains, protects users who are not watching when the decision is made.",
+        },
+      ],
+    },
+    {
       id: "autonomous-economy-content", conceptId: "autonomous-economy",
       definition: "An autonomous economy is an economy-scale system in which economic actors, institutions, markets, resources, and policies interact through defined mechanisms, incentives, information, and constraints.",
       body: [
