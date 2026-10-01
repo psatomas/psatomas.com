@@ -19,6 +19,17 @@
 // Every command except domains/plan acts on the active run (the one unfinished
 // state file under .map-authoring/, or --domain). The tool never merges,
 // deploys, force-pushes, amends or starts a domain without an explicit --domain.
+//
+// Representation refactor runs (docs/map-authoring/representation-design.md#refactor-mode)
+// share every stage, check and safeguard, with their own state under
+// .map-authoring/refactor/ and their own branch and PR naming:
+//
+//   npm run map:author -- refactor domains                    every domain's refactor status; the next with work
+//   npm run map:author -- refactor plan --domain <id> [--json]
+//   npm run map:author -- refactor start --domain <id> [--dry-run]
+//   npm run map:author -- refactor context <concept-id>       the concept, its accepted design and the boundary
+//   npm run map:author -- refactor record <concept-id> --decision execute|reduce|keep --note "..."
+//   npm run map:author -- refactor status | next | audit | complete audit --note ".." | fix .. | stop .. | resume .. | run ..
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -35,13 +46,22 @@ import { auditConcepts } from "../src/lib/map/authoring/orchestrator/audit.ts";
 import { validateContentDiff, validateFixes } from "../src/lib/map/authoring/orchestrator/diff-check.ts";
 import { planFixVerification } from "../src/lib/map/authoring/orchestrator/fix-verification.ts";
 import { listDomains, nextIncompleteDomain, planDomain, renderExpectations, renderSample } from "../src/lib/map/authoring/orchestrator/plan.ts";
-import { completionReport, contentCommitMessage, fixCommitMessage, prBody, prTitle } from "../src/lib/map/authoring/orchestrator/report.ts";
+import { completionReport, contentCommitMessage, fixCommitMessage, prBody, prTitle, refactorCommitMessage, refactorCompletionReport, refactorPrBody, refactorPrTitle } from "../src/lib/map/authoring/orchestrator/report.ts";
+import { ACCEPTED_DESIGNS_FILE, decisionProblems, designSetFingerprint, MAP_RUN_BRANCH, planRefactor, refactorBranch, refactorCampaign, resolveSpec, specProblems, targetKinds, type AcceptedDesignSpec, type Decision, DECISIONS } from "../src/lib/map/authoring/representation/refactor.ts";
+import { validateRefactorDiff } from "../src/lib/map/authoring/representation/refactor-diff.ts";
 import {
   addFix,
   AGENT_STAGES,
   completeStage,
+  changedConcepts,
+  commitGroups,
+  compositionProblems,
+  createRefactorRunState,
   createRunState,
+  gitProblems,
   invalidate,
+  recordDecision,
+  startProblems,
   nextAction,
   pendingConcepts,
   recordCheck,
@@ -60,9 +80,9 @@ import {
 } from "../src/lib/map/authoring/orchestrator/run-state.ts";
 
 const ROOT = new URL("..", import.meta.url).pathname;
-const STATE_DIR = join(ROOT, ".map-authoring");
+const STATE_ROOT = join(ROOT, ".map-authoring");
 /** Temporary verification trees: inside the repository's filesystem so node_modules can be hard-linked, and git-ignored. */
-const VERIFY_DIR = join(STATE_DIR, "verify");
+const VERIFY_DIR = join(STATE_ROOT, "verify");
 const MAIN = "main";
 const VIEW_FILE = "src/components/map/explorer-view.generated.json";
 const FOCUSED_TESTS = ["src/lib/map/map.test.ts", "src/lib/map/authoring/context.test.ts", "src/components/map/explorer-model.test.ts"];
@@ -73,7 +93,7 @@ delete process.env.MAP_BASE_URL;
 
 // ---------------------------------------------------------------- arguments
 
-const [command, ...rest] = process.argv.slice(2);
+const [first, ...rest] = process.argv.slice(2);
 const flags = new Map<string, string | true>();
 const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
@@ -88,6 +108,11 @@ for (let index = 0; index < rest.length; index++) {
 }
 const flag = (name: string) => (typeof flags.get(name) === "string" ? (flags.get(name) as string) : undefined);
 const dryRun = flags.has("--dry-run");
+/** `refactor <command>` runs the same commands over representation refactor state. */
+const refactor = first === "refactor";
+const command = refactor ? (positional.shift() ?? "domains") : first;
+const STATE_DIR = refactor ? join(STATE_ROOT, "refactor") : STATE_ROOT;
+const CLI = refactor ? "map:author -- refactor" : "map:author --";
 
 function fail(message: string, code = 2): never {
   console.error(`map:author: ${message}`);
@@ -129,6 +154,8 @@ function readState(domainId: string): RunState | undefined {
   if (!existsSync(statePath(domainId))) return undefined;
   const state = JSON.parse(readFileSync(statePath(domainId), "utf8")) as RunState;
   if (state.version !== 1 || state.domainId !== domainId) fail(`${statePath(domainId)} is not a version-1 run for ${domainId}; inspect it before continuing`, 1);
+  // A run of one kind is never resumed as the other.
+  if ((state.kind === "refactor") !== refactor) fail(`${statePath(domainId)} is a ${state.kind ?? "domain authoring"} run, not a ${refactor ? "refactor" : "domain authoring"} run`, 1);
   return state;
 }
 function saveState(state: RunState) {
@@ -138,11 +165,11 @@ function saveState(state: RunState) {
 
 function activeState(): RunState {
   const domainId = flag("--domain");
-  if (domainId) return readState(domainId) ?? fail(`no run for ${domainId}; start one with \`map:author -- start --domain ${domainId}\``);
+  if (domainId) return readState(domainId) ?? fail(`no run for ${domainId}; start one with \`${CLI} start --domain ${domainId}\``);
   const runs = existsSync(STATE_DIR)
     ? readdirSync(STATE_DIR).filter((file) => file.endsWith(".json")).map((file) => readState(file.slice(0, -5))!).filter((state) => state.stage !== "done")
     : [];
-  if (runs.length === 0) fail("no active run; see `map:author -- domains`, then `map:author -- start --domain <id>`");
+  if (runs.length === 0) fail(`no active run; see \`${CLI} domains\`, then \`${CLI} start --domain <id>\``);
   if (runs.length > 1) fail(`several active runs (${runs.map((state) => state.domainId).join(", ")}); pass --domain`);
   return runs[0];
 }
@@ -177,20 +204,13 @@ const remoteSha = (ref: string) => lines(gitOut("ls-remote", "origin", ref))[0]?
 
 /** Recorded run versus the actual repository; any mismatch is a stop before anything else happens. */
 function verifyGit(state: RunState) {
-  const problems: string[] = [];
-  const branch = currentBranch();
-  if (branch !== state.branch) problems.push(`on branch ${branch}, the run is on ${state.branch}`);
-  else {
-    if (!git("merge-base", "--is-ancestor", state.baseSha, "HEAD").ok) problems.push(`base ${state.baseSha.slice(0, 7)} is not an ancestor of HEAD`);
-    const expectedHead = state.commits.at(-1)?.sha ?? state.baseSha;
-    if (head() !== expectedHead) problems.push(`HEAD is ${head().slice(0, 7)}, the run recorded ${expectedHead.slice(0, 7)}`);
-    // Once committed, the validated tree is HEAD; any tracked change on top of it was never validated.
-    if (state.commits.length > 0 && trackedChanges().length) problems.push(`tracked changes after the run's commits: ${trackedChanges().join(", ")}`);
-    if (state.pushedSha) {
-      const remote = remoteSha(`refs/heads/${state.branch}`);
-      if (remote !== state.pushedSha) problems.push(`origin/${state.branch} is ${remote?.slice(0, 7) ?? "missing"}, the run pushed ${state.pushedSha.slice(0, 7)}`);
-    }
-  }
+  const problems = gitProblems(state, {
+    branch: currentBranch(),
+    head: head(),
+    baseIsAncestor: git("merge-base", "--is-ancestor", state.baseSha, "HEAD").ok,
+    trackedChanges: trackedChanges(),
+    remoteHead: state.pushedSha ? remoteSha(`refs/heads/${state.branch}`) : undefined,
+  });
   if (problems.length) {
     stop(state, {
       subject: "git state",
@@ -237,7 +257,38 @@ function commandDomains() {
   console.log(next ? `\nnext incomplete: ${next.domainId} (not started; run \`map:author -- start --domain ${next.domainId}\`)` : "\nevery domain is complete");
 }
 
+/** What `start` sees of the repository and GitHub; shared by both kinds of run. */
+function observeStart(branch: string, domainId: string) {
+  const onBranch = currentBranch();
+  const remoteMain = remoteSha(`refs/heads/${MAIN}`);
+  const prs = sh("gh", ["pr", "list", "--state", "open", "--json", "number,headRefName,title"]);
+  return startProblems(branch, {
+    existingRun: Boolean(readState(domainId)),
+    trackedChanges: trackedChanges(),
+    branch: onBranch,
+    localMainAhead: Boolean(remoteMain && onBranch === MAIN && head() !== remoteMain && !git("merge-base", "--is-ancestor", "HEAD", remoteMain).ok && git("cat-file", "-e", remoteMain).ok),
+    remoteMain,
+    branchExists: git("rev-parse", "--verify", "--quiet", `refs/heads/${branch}`).ok || Boolean(remoteSha(`refs/heads/${branch}`)),
+    prsReadable: prs.ok,
+    openRunPrs: prs.ok ? (JSON.parse(prs.out) as { number: number; headRefName: string; title: string }[]).filter((pr) => MAP_RUN_BRANCH.test(pr.headRefName)) : [],
+  });
+}
+
+/** Fast-forwards main, then creates the branch, or asks for a rerun when main moved so the plan is read from the new tree. */
+function branchFromMain(branch: string): string | undefined {
+  const before = head();
+  gitOut("fetch", "--quiet", "origin", MAIN);
+  gitOut("merge", "--quiet", "--ff-only", `origin/${MAIN}`);
+  if (head() !== before) {
+    console.log(`\n${MAIN} fast-forwarded to ${head().slice(0, 7)}; rerun start to plan from it`);
+    return undefined;
+  }
+  gitOut("switch", "--quiet", "-c", branch);
+  return head();
+}
+
 function commandStart() {
+  if (refactor) return commandRefactorStart();
   const domainId = flag("--domain") ?? fail("start needs an explicit --domain; see `map:author -- domains`");
   const plan = planDomain(mapKnowledge, domainId);
   const branch = `feat/map-${domainId}-l1`;
@@ -249,40 +300,155 @@ function commandStart() {
   const problems: string[] = [];
   if (plan.stops.length) problems.push(...plan.stops.map((entry) => `${entry.conceptId}: ${entry.reason}`));
   if (plan.eligible.length === 0) problems.push(`${domainId} has no eligible L1 topics`);
-  const changes = trackedChanges();
-  if (changes.length) problems.push(`tracked changes present: ${changes.join(", ")}`);
-  const onBranch = currentBranch();
-  if (onBranch !== MAIN) problems.push(`on ${onBranch}; start from ${MAIN}`);
-  const remoteMain = remoteSha(`refs/heads/${MAIN}`);
-  if (!remoteMain) problems.push(`origin has no ${MAIN}`);
-  else if (onBranch === MAIN && head() !== remoteMain && !git("merge-base", "--is-ancestor", "HEAD", remoteMain).ok && git("cat-file", "-e", remoteMain).ok) {
-    problems.push(`local ${MAIN} has commits that origin/${MAIN} does not`);
-  }
-  if (git("rev-parse", "--verify", "--quiet", `refs/heads/${branch}`).ok || remoteSha(`refs/heads/${branch}`)) problems.push(`branch ${branch} already exists`);
-  const prs = sh("gh", ["pr", "list", "--state", "open", "--json", "number,headRefName,title"]);
-  if (!prs.ok) problems.push(`cannot read open PRs: ${tail(prs.out, 1)}`);
-  else {
-    const openMap = (JSON.parse(prs.out) as { number: number; headRefName: string; title: string }[]).filter((pr) => /^feat\/map-.*-l1$/.test(pr.headRefName));
-    if (openMap.length) problems.push(`unmerged domain PRs: ${openMap.map((pr) => `#${pr.number} ${pr.title}`).join("; ")}`);
-  }
+  problems.push(...observeStart(branch, domainId));
 
   printPlan(domainId);
   if (problems.length) {
     console.log(`\ncannot start ${domainId}:\n  ${problems.join("\n  ")}`);
     process.exit(1);
   }
-  if (dryRun) return console.log(`\ndry run: would update ${MAIN} to ${remoteMain!.slice(0, 7)}, create ${branch} and author ${plan.eligible.join(", ")}`);
-
-  const before = head();
-  gitOut("fetch", "--quiet", "origin", MAIN);
-  gitOut("merge", "--quiet", "--ff-only", `origin/${MAIN}`);
-  // The plan above was read from the old tree; a fresh process plans from the updated one.
-  if (head() !== before) return console.log(`\n${MAIN} fast-forwarded to ${head().slice(0, 7)}; rerun start to plan from it`);
-  gitOut("switch", "--quiet", "-c", branch);
-  const state = createRunState({ plan, branch, baseSha: head(), now: now() });
+  if (dryRun) return console.log(`\ndry run: would update ${MAIN} to ${remoteSha(`refs/heads/${MAIN}`)!.slice(0, 7)}, create ${branch} and author ${plan.eligible.join(", ")}`);
+  const baseSha = branchFromMain(branch);
+  if (!baseSha) return;
+  const state = createRunState({ plan, branch, baseSha, now: now() });
   saveState(state);
   console.log(`\nstarted ${domainId} on ${branch} at ${state.baseSha.slice(0, 7)}`);
   console.log(`next: ${(nextAction(state) as { message: string }).message}`);
+}
+
+// ---------------------------------------------------------------- representation refactor runs
+
+/** The accepted-design spec in the working tree, or as committed at a revision. */
+function readSpec(sha?: string): AcceptedDesignSpec {
+  const text = sha ? git("show", `${sha}:${ACCEPTED_DESIGNS_FILE}`) : { ok: existsSync(join(ROOT, ACCEPTED_DESIGNS_FILE)), out: existsSync(join(ROOT, ACCEPTED_DESIGNS_FILE)) ? readFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), "utf8") : "" };
+  if (!text.ok) fail(`no accepted-design spec at ${ACCEPTED_DESIGNS_FILE}${sha ? ` in ${sha.slice(0, 7)}` : ""}`, 1);
+  return JSON.parse(text.out) as AcceptedDesignSpec;
+}
+
+function commandRefactorStatus() {
+  const spec = readSpec();
+  const problems = specProblems(spec, mapKnowledge);
+  const campaign = refactorCampaign(spec, mapKnowledge);
+  if (flags.has("--json")) return console.log(JSON.stringify({ ...campaign, problems }, null, 2));
+  for (const domain of campaign.domains) {
+    const counts = [
+      ...(domain.state === "no work" ? [] : [`${domain.actionable} to reconsider`, `${domain.resolved} resolved`]),
+      ...(domain.blocked ? [`${domain.blocked} blocked`] : []),
+      ...(domain.stale ? [`${domain.stale} STALE`] : []),
+    ].join(", ");
+    console.log(`${domain.ordinal} ${domain.title.padEnd(36)} ${domain.state.padEnd(9)} ${counts}`);
+  }
+  const blocked = spec.designs.filter((design) => design.status === "blocked");
+  if (blocked.length) console.log(`\nblocked: ${blocked.map((design) => `${design.conceptId} (${design.blockedBy?.join(", ")})`).join("; ")}`);
+  for (const problem of problems) console.log(`SPEC PROBLEM: ${problem}`);
+  console.log(campaign.next ? `\nnext with work: ${campaign.next} (not started; run \`${CLI} start --domain ${campaign.next}\`)` : "\nevery domain's actionable designs are resolved");
+}
+
+function printRefactorPlan(domainId: string) {
+  const plan = planRefactor(readSpec(), mapKnowledge, domainId);
+  if (flags.has("--json")) return console.log(JSON.stringify(plan, null, 2));
+  console.log(`${plan.ordinal} ${plan.title} (${plan.domainId}): ${plan.noop ? "no work" : plan.complete ? "complete" : "pending"}`);
+  for (const design of plan.actionable) {
+    console.log(`  actionable ${design.conceptId.padEnd(34)} ${design.classification.padEnd(8)} → ${targetKinds(design).join(" + ") || "prose"}${plan.stale.includes(design.conceptId) ? "  STALE" : ""}`);
+  }
+  for (const design of plan.resolved) console.log(`  resolved   ${design.conceptId.padEnd(34)} ${design.resolution!.decision}`);
+  for (const design of plan.blocked) console.log(`  blocked    ${design.conceptId.padEnd(34)} needs ${design.blockedBy?.join(", ")}`);
+  console.log(`  keep       ${plan.keep.length} other L1 concept(s), protected`);
+}
+
+function commandRefactorStart() {
+  const domainId = flag("--domain") ?? fail(`start needs an explicit --domain; see \`${CLI} domains\``);
+  const spec = readSpec();
+  const plan = planRefactor(spec, mapKnowledge, domainId);
+  const branch = refactorBranch(domainId);
+  const existing = readState(domainId);
+  if (existing && existing.stage !== "done") {
+    console.log(`a refactor run for ${domainId} already exists; resuming it instead of starting again`);
+    return commandStatus(existing);
+  }
+  const problems: string[] = [];
+  if (existing) problems.push(`a finished refactor run for ${domainId} exists (${statePath(domainId)}); its PR must be merged or closed and the file removed before another run`);
+  problems.push(...specProblems(spec, mapKnowledge).map((problem) => `spec: ${problem}`));
+  if (plan.noop) problems.push(`${domainId} has no actionable designs: nothing to refactor, no branch or PR`);
+  else if (plan.complete) problems.push(`${domainId}'s actionable designs are all resolved`);
+  if (plan.stale.length) problems.push(`designs reviewed against different content: ${plan.stale.join(", ")}`);
+  problems.push(...observeStart(branch, domainId));
+  printRefactorPlan(domainId);
+  if (problems.length) {
+    console.log(`\ncannot start ${domainId}:\n  ${problems.join("\n  ")}`);
+    process.exit(1);
+  }
+  const placements = renderExpectations(mapKnowledge, plan.actionable.map((design) => design.conceptId)).flatMap((target) => target.placements.map((placement) => placement.placementId));
+  if (dryRun) {
+    console.log(`\ndry run: would update ${MAIN} to ${remoteSha(`refs/heads/${MAIN}`)!.slice(0, 7)} and create ${branch}`);
+    console.log(`may change at most: ${plan.actionable.map((design) => design.conceptId).join(", ")}`);
+    console.log(`render checks, if all change: ${placements.join(", ")} (each at 1280 and 375)`);
+    return;
+  }
+  const baseSha = branchFromMain(branch);
+  if (!baseSha) return;
+  const state = createRefactorRunState({ plan, designSet: designSetFingerprint(spec, domainId), branch, baseSha, now: now() });
+  saveState(state);
+  console.log(`\nstarted the ${domainId} refactor on ${branch} at ${state.baseSha.slice(0, 7)}`);
+  console.log(`next: ${(nextAction(state) as { message: string }).message}`);
+}
+
+/** The run's accepted design for one concept, as committed on its base. */
+function designOf(state: RunState, conceptId: string) {
+  const design = readSpec(state.baseSha).designs.find((candidate) => candidate.conceptId === conceptId && candidate.domainId === state.domainId);
+  if (!design || !state.plan.eligible.includes(conceptId)) fail(`${conceptId} has no actionable design in this run (${state.plan.eligible.join(", ")}); KEEP and blocked concepts are not changed`, 1);
+  return design;
+}
+
+function commandRefactorContext() {
+  const state = activeState();
+  const conceptId = positional[0] ?? fail("context needs a concept id");
+  const design = designOf(state, conceptId);
+  const carriers = createMapAuthoringInspector(mapKnowledge).inspectConcept(conceptId).childLayers.carriers;
+  const primary = (carriers.find((carrier) => carrier.isPreferred) ?? carriers[0])?.placementId;
+  process.stdout.write(formatMapConceptAuthoringContext(createMapAuthoringInspector(mapKnowledge).inspectConcept(conceptId, primary ? { contextPlacementId: primary } : {})));
+  console.log(
+    [
+      "",
+      `Accepted design (${design.classification}), reviewed against ${design.current.sequence}`,
+      `  purpose: ${design.model.purpose}`,
+      ...design.target.map((choice) => `  target ${choice.structure}: ${choice.purpose}`),
+      `  justification: ${design.justification}`,
+      ...(design.canonicalNote ? [`  placements: ${design.canonicalNote}`] : []),
+      ...(design.facetNote ? [`  facets: ${design.facetNote}`] : []),
+      "",
+      "Boundary",
+      "  Reconsider the design against the context above before editing. Then either:",
+      `  - execute: reach exactly ${targetKinds(design).join(" + ") || "prose"} as structured blocks;`,
+      "  - reduce: a smaller change within those structures (or the record's own);",
+      "  - keep: leave the record exactly as it is.",
+      design.classification === "rewrite" ? "  This design is a rewrite: the definition may change." : "  The definition and legacy fields stay unchanged; changing them is a rewrite and needs its own accepted design.",
+      "  A different representation, another primitive, a sibling or taxonomy is outside the run: stop instead.",
+    ].join("\n"),
+  );
+}
+
+async function commandRefactorRecord() {
+  let state = activeState();
+  const conceptId = positional[0] ?? fail("record needs a concept id");
+  if (state.stop) return printStop(state);
+  verifyGit(state);
+  const design = designOf(state, conceptId);
+  const decision = flag("--decision") as Decision | undefined;
+  if (!decision || !DECISIONS.includes(decision)) fail(`record needs --decision ${DECISIONS.join("|")}`);
+  const note = flag("--note") ?? fail("record needs --note saying why");
+  const base = (await modelAt(state.baseSha)).model.content.find((record) => record.conceptId === conceptId);
+  const current = mapKnowledge.content.find((record) => record.conceptId === conceptId);
+  const problems = decisionProblems(design, base, current, decision);
+  if (problems.length) fail(`not within the accepted design:\n  ${problems.join("\n  ")}\nchange the record, record another decision, or stop (\`${CLI} stop\`) if a different design is needed`, 1);
+  const generated = sh("npm", ["run", "--silent", "map:generate"]);
+  if (!generated.ok) fail(`map:generate failed\n${tail(generated.out)}`, 1);
+  const focused = sh("node", ["--test", ...FOCUSED_TESTS]);
+  if (!focused.ok) fail(`focused tests failed (${testCounts(focused.out)})\n${tail(focused.out, 40)}`, 1);
+  state = recordDecision(state, conceptId, decision, note, now());
+  saveState(state);
+  console.log(`recorded ${conceptId}: ${decision} (focused tests ${testCounts(focused.out)}); ${pendingConcepts(state).length} to go`);
+  commandNext(state);
 }
 
 function gitPosition(state: RunState): string {
@@ -299,7 +465,9 @@ function commandStatus(state = activeState()) {
   const report = [
     `${state.title} (${state.domainId}): stage ${state.stage}${state.stop ? " (STOPPED)" : ""}`,
     `branch ${state.branch} from ${state.baseSha.slice(0, 7)}; ${gitPosition(state)}`,
-    `authored ${done.length}/${state.plan.eligible.length}: ${done.join(", ") || "none"}${pendingConcepts(state).length ? ` | pending: ${pendingConcepts(state).join(", ")}` : ""}`,
+    refactor
+      ? `decided ${done.length}/${state.plan.eligible.length}: ${done.map((conceptId) => `${conceptId} ${state.refactor!.decisions[conceptId]?.decision}`).join(", ") || "none"}${pendingConcepts(state).length ? ` | to reconsider: ${pendingConcepts(state).join(", ")}` : ""} | blocked: ${state.refactor!.blocked.join(", ") || "none"} | keep protected: ${state.refactor!.keep.length}`
+      : `authored ${done.length}/${state.plan.eligible.length}: ${done.join(", ") || "none"}${pendingConcepts(state).length ? ` | pending: ${pendingConcepts(state).join(", ")}` : ""}`,
     `already authored: ${state.plan.authored.join(", ") || "none"}`,
     `deferred: ${state.plan.deferred.map((entry) => `${entry.conceptId} (${entry.reason})`).join("; ") || "none"}`,
     `fixes: ${state.fixes.map((fix) => fix.message).join("; ") || "none"}`,
@@ -358,7 +526,8 @@ function commandRecord() {
 
 function commandAudit() {
   const state = activeState();
-  const audits = auditConcepts(mapKnowledge, state.plan.eligible.filter((conceptId) => state.concepts[conceptId].done));
+  const audits = auditConcepts(mapKnowledge, refactor ? changedConcepts(state) : state.plan.eligible.filter((conceptId) => state.concepts[conceptId].done));
+  if (refactor && !audits.length) console.log("every design was reconsidered and kept: no changed record to audit");
   if (flags.has("--json")) return console.log(JSON.stringify(audits, null, 2));
   const phrases = (entries: { conceptId: string; phrases: string[] }[]) =>
     entries.map((entry) => `${entry.conceptId}: ${entry.phrases.slice(0, 3).map((phrase) => `"${phrase}"`).join(", ")}${entry.phrases.length > 3 ? ` +${entry.phrases.length - 3}` : ""}`).join("; ");
@@ -371,10 +540,10 @@ function commandAudit() {
     for (const sentence of audit.positional) console.log(`  positional?: "${sentence}"`);
     if (audit.sharedDefinitionTemplate.length) console.log(`  definition opening shared with: ${audit.sharedDefinitionTemplate.join(", ")}`);
   }
-  console.log("\nJudge these against docs/map-authoring/quality-contract.md; correct only this run's content.");
+  console.log(`\nJudge these against docs/map-authoring/quality-contract.md${refactor ? " and representation-design.md" : ""}; correct only this run's ${refactor ? "changed records, within their accepted designs" : "content"}.`);
 }
 
-function commandComplete() {
+async function commandComplete() {
   let state = activeState();
   if (state.stop) return printStop(state);
   verifyGit(state);
@@ -383,6 +552,16 @@ function commandComplete() {
   const note = flag("--note");
   if (stage === "audit" && !note && !state.completed.audit) fail("complete audit needs --note summarizing what the audit found and corrected (\"No corrections.\" is a valid note)");
   if (note && !state.completed[stage]) state = { ...state, auditNotes: [...state.auditNotes, note] };
+  if (refactor && stage === "audit") {
+    // Every decision must still hold for the records as audited, and is then written into the spec.
+    const base = (await modelAt(state.baseSha)).model;
+    const problems = Object.entries(state.refactor!.decisions).flatMap(([conceptId, recorded]) =>
+      decisionProblems(designOf(state, conceptId), base.content.find((record) => record.conceptId === conceptId), mapKnowledge.content.find((record) => record.conceptId === conceptId), recorded.decision),
+    );
+    if (problems.length) fail(`the audited records no longer match their recorded decisions:\n  ${problems.join("\n  ")}\nrecord the decisions again or restore the records`, 1);
+    const notes = Object.fromEntries(Object.entries(state.refactor!.decisions).map(([conceptId, recorded]) => [conceptId, { decision: recorded.decision, note: recorded.note }]));
+    writeFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), `${JSON.stringify(resolveSpec(readSpec(state.baseSha), notes, mapKnowledge), null, 2)}\n`);
+  }
   state = completeStage(state, stage, now(), note);
   if (stage === "audit") state = { ...state, auditContent: contentFingerprint(state) };
   saveState(state);
@@ -636,8 +815,11 @@ async function runStage(state: RunState): Promise<RunState> {
     }
     case "render": {
       const { checkRender, formatRenderFailures } = await import("../e2e/map/render-check.mts");
-      const targets = renderExpectations(mapKnowledge, state.plan.eligible);
-      const report = await checkRender(state.plan.eligible);
+      // A refactor renders what it changed: every placement of every changed record.
+      const concepts = refactor ? changedConcepts(state) : state.plan.eligible;
+      if (concepts.length === 0) return completeStage(check(state, "render", { ok: true, status: 0, out: "" }, "no changed record to render", "render verification", ""), "render", at);
+      const targets = renderExpectations(mapKnowledge, concepts);
+      const report = await checkRender(concepts);
       const evidence = formatRenderFailures(report);
       const placements = targets.reduce((sum, target) => sum + target.placements.length, 0);
       const detail = `${report.renders} renders across ${placements} placements`;
@@ -646,6 +828,41 @@ async function runStage(state: RunState): Promise<RunState> {
     case "diff": {
       const base = await modelAt(state.baseSha);
       const files = changedFiles(state);
+      if (refactor) {
+        const baseSpec = readSpec(state.baseSha);
+        if (designSetFingerprint(baseSpec, state.domainId) !== state.refactor!.designSet) {
+          stop(state, { subject: "accepted designs", evidence: `the base's designs for ${state.domainId} differ from those the run started with`, why: "the run would validate against designs it did not reconsider", decision: "discard the run and start again from main" });
+        }
+        const decisions = Object.fromEntries(Object.entries(state.refactor!.decisions).map(([conceptId, recorded]) => [conceptId, recorded.decision]));
+        const report = validateRefactorDiff({
+          base: base.model,
+          head: mapKnowledge,
+          baseRegistry: base.registry,
+          headRegistry: AUTHORED_CONTENT_CONCEPTS,
+          baseView: JSON.parse(gitOut("show", `${state.baseSha}:${VIEW_FILE}`)),
+          headView: JSON.parse(readFileSync(join(ROOT, VIEW_FILE), "utf8")),
+          baseSpec,
+          headSpec: readSpec(),
+          designs: baseSpec.designs.filter((design) => state.plan.eligible.includes(design.conceptId) && design.domainId === state.domainId),
+          decisions,
+          changedFiles: files,
+          fixes: state.fixes,
+          fixLines: fixLines(state, state.fixes.flatMap((fix) => fix.files)),
+        });
+        if (!report.ok) {
+          stop(recordCheck(state, "diff", false, `FAILED: ${report.problems.length} problem(s)`, at, tree), {
+            subject: "refactor diff",
+            evidence: report.problems.join("\n"),
+            why: "the diff contains more, or other, than the run's decisions within their accepted designs",
+            decision: "revert the unexpected change, or stop if a different design is needed",
+          });
+        }
+        const verified = await verifyFixesAlone(state, check);
+        const validatedFiles = Object.fromEntries(files.map((file) => [file, worktreeBlob(file)]));
+        const detail = `${report.changed.length} changed record(s), ${report.kept.length} kept, ${files.length} file(s)`;
+        const recorded = check(verified, "diff", { ok: true, status: 0, out: "" }, detail, "refactor diff", "");
+        return completeStage({ ...recorded, validatedFiles, refactor: { ...recorded.refactor!, diff: { changed: report.changed, kept: report.kept } } }, "diff", at);
+      }
       const diff = validateContentDiff({
         base: base.model,
         head: mapKnowledge,
@@ -689,10 +906,10 @@ async function runStage(state: RunState): Promise<RunState> {
 
 /** Commits each declared fix, then the content, and proves the commits compose to the validated tree. */
 function commit(state: RunState): RunState {
-  const groups = [
-    ...state.fixes.map((fix) => ({ message: fixCommitMessage(fix, state.attribution?.trailer), files: fix.files })),
-    { message: contentCommitMessage(state, state.attribution?.trailer), files: Object.keys(state.validatedFiles!).filter((file) => !state.fixes.some((fix) => fix.files.includes(file))) },
-  ].filter((group) => group.files.length > 0);
+  const groups = commitGroups(state, {
+    fix: (fix) => fixCommitMessage(fix, state.attribution?.trailer),
+    content: refactor ? refactorCommitMessage(state, state.attribution?.trailer) : contentCommitMessage(state, state.attribution?.trailer),
+  });
   const drifted = Object.entries(state.validatedFiles!).filter(([file, hash]) => worktreeBlob(file) !== hash).map(([file]) => file);
   if (state.commits.length === 0 && drifted.length) {
     stop(state, { subject: "working tree", evidence: `changed since validation: ${drifted.join(", ")}`, why: "commits must reproduce the validated tree exactly", decision: "revert the later change, or keep it: `resume --decision ..` then `run` revalidates from the gates" });
@@ -719,12 +936,11 @@ function commit(state: RunState): RunState {
     saveState(current);
     console.log(`  ok  commit ${head().slice(0, 7)} ${group.message.split("\n")[0]}`);
   }
-  const composed = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD")).sort();
-  const mismatched = Object.entries(state.validatedFiles!).filter(([file, hash]) => blobAt("HEAD", file) !== hash).map(([file]) => file);
-  if (JSON.stringify(composed) !== JSON.stringify(Object.keys(state.validatedFiles!).sort()) || mismatched.length || trackedChanges().length) {
+  const composition = compositionProblems(state.validatedFiles!, { files: lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD")), blobAtHead: (file) => blobAt("HEAD", file) });
+  if (composition.length || trackedChanges().length) {
     stop(current, {
       subject: "commits",
-      evidence: `committed ${composed.join(", ")}; differing from validation: ${mismatched.join(", ") || "none"}; left uncommitted: ${trackedChanges().join(", ") || "none"}`,
+      evidence: `${composition.join("; ") || "commits match validation"}; left uncommitted: ${trackedChanges().join(", ") || "none"}`,
       why: "the commits do not compose to the validated tree",
       decision: "inspect the commits; nothing has been pushed",
     });
@@ -789,8 +1005,9 @@ function openPr(state: RunState): RunState {
     console.log(`  ok  PR #${existing.number} already open at ${existing.headRefOid.slice(0, 7)}`);
     return { ...state, pr: { number: existing.number, url: existing.url } };
   }
-  const body = prBody(state, state.diff!, state.attribution?.footer);
-  const result = sh("gh", ["pr", "create", "--base", MAIN, "--head", state.branch, "--title", prTitle(state), "--body-file", "-"], { input: body });
+  const body = refactor ? refactorPrBody(state, state.refactor!.diff!, state.attribution?.footer) : prBody(state, state.diff!, state.attribution?.footer);
+  const title = refactor ? refactorPrTitle(state) : prTitle(state);
+  const result = sh("gh", ["pr", "create", "--base", MAIN, "--head", state.branch, "--title", title, "--body-file", "-"], { input: body });
   // The outcome is read back from GitHub, never inferred from the attempt.
   const created = matchingPr(state, branchPrs(state));
   if (!created) throw new ToolFailure("gh pr create", result.out || "no pull request exists for the branch after creating one");
@@ -848,7 +1065,7 @@ async function commandRun() {
   if (action.kind !== "tool") return commandNext(state);
   if (dryRun) {
     const remaining = STAGES.slice(STAGES.indexOf(state.stage)).filter((stage) => stage !== "done");
-    console.log(`dry run: would perform ${remaining.join(" → ")} for ${state.domainId}, stopping at "validated PR awaiting human merge"`);
+    console.log(`dry run: would perform ${remaining.join(" → ")} for the ${state.domainId} ${refactor ? "refactor" : "run"}, stopping at "validated PR awaiting human merge"`);
     return;
   }
   verifyGit(state);
@@ -871,7 +1088,7 @@ async function commandRun() {
     }
     saveState(state);
   }
-  if (state.stage === "done") console.log(`\n${completionReport(state)}`);
+  if (state.stage === "done") console.log(`\n${refactor ? refactorCompletionReport(state, state.refactor?.diff) : completionReport(state)}`);
   else commandNext(state);
 }
 
@@ -880,10 +1097,12 @@ async function commandRun() {
 try {
   switch (command) {
     case "domains":
-      commandDomains();
+      if (refactor) commandRefactorStatus();
+      else commandDomains();
       break;
     case "plan":
-      printPlan(flag("--domain") ?? fail("plan needs --domain"));
+      if (refactor) printRefactorPlan(flag("--domain") ?? fail("plan needs --domain"));
+      else printPlan(flag("--domain") ?? fail("plan needs --domain"));
       break;
     case "start":
       commandStart();
@@ -895,16 +1114,18 @@ try {
       commandNext();
       break;
     case "context":
-      commandContext();
+      if (refactor) commandRefactorContext();
+      else commandContext();
       break;
     case "record":
-      commandRecord();
+      if (refactor) await commandRefactorRecord();
+      else commandRecord();
       break;
     case "audit":
       commandAudit();
       break;
     case "complete":
-      commandComplete();
+      await commandComplete();
       break;
     case "fix":
       commandFix();
@@ -919,6 +1140,7 @@ try {
       await commandRun();
       break;
     case "represent":
+      if (refactor) fail("represent is not a refactor command");
       try {
         commandRepresent(positional, flag, (name) => flags.has(name));
       } catch (error) {

@@ -7,6 +7,7 @@
  */
 import { validateFixes, type DiffReport, type FixKind } from "./diff-check.ts";
 import type { DomainPlan } from "./plan.ts";
+import type { Decision, RefactorPlan } from "../representation/refactor.ts";
 
 export const STAGES = ["author", "audit", "gates", "browser", "render", "diff", "commit", "push", "pr", "ci", "done"] as const;
 export type Stage = (typeof STAGES)[number];
@@ -22,8 +23,24 @@ export type FixGroup = { kind: FixKind; message: string; files: string[]; reason
 /** Tool stages whose checks validate the working tree; content changes after them invalidate them. */
 export const VALIDATION_STAGES: readonly Stage[] = ["gates", "browser", "render", "diff"];
 
+/** A representation refactor run's own record (docs/map-authoring/representation-design.md#refactor-mode). */
+export type RefactorRecord = {
+  /** The domain's accepted designs, without resolutions, when the run started. */
+  designSet: string;
+  blocked: string[];
+  /** The domain's other concepts with content: KEEP, protected from any change. */
+  keep: string[];
+  /** The decision recorded for each actionable design after reconsidering it. */
+  decisions: Record<string, { decision: Decision; note: string; at: string }>;
+  /** The validated diff: records changed and designs kept. */
+  diff?: { changed: string[]; kept: string[] };
+};
+
 export type RunState = {
   version: 1;
+  /** Absent for a domain authoring run. */
+  kind?: "refactor";
+  refactor?: RefactorRecord;
   domainId: string;
   title: string;
   branch: string;
@@ -95,6 +112,118 @@ function assertLive(state: RunState) {
 /** The eligible concepts still to author, in sibling order. */
 export const pendingConcepts = (state: RunState) => state.plan.eligible.filter((conceptId) => !state.concepts[conceptId]?.done);
 
+/**
+ * A refactor run for one domain: its actionable designs play the role an
+ * authoring run's eligible topics play, each "done" once a decision is
+ * recorded for it.
+ */
+export function createRefactorRunState(input: { plan: RefactorPlan; designSet: string; branch: string; baseSha: string; now: string }): RunState {
+  const { plan } = input;
+  if (plan.stale.length) throw new RunStateError(`designs reviewed against different content: ${plan.stale.join(", ")}`);
+  if (plan.actionable.length === 0) throw new RunStateError(`domain ${plan.domainId} has no unresolved actionable designs: nothing to refactor`);
+  const eligible = plan.actionable.map((design) => design.conceptId);
+  return {
+    version: 1,
+    kind: "refactor",
+    refactor: { designSet: input.designSet, blocked: plan.blocked.map((design) => design.conceptId), keep: plan.keep, decisions: {} },
+    domainId: plan.domainId,
+    title: plan.title,
+    branch: input.branch,
+    baseSha: input.baseSha,
+    createdAt: input.now,
+    stage: "author",
+    completed: {},
+    plan: { authored: [], eligible, deferred: plan.blocked.map((design) => ({ conceptId: design.conceptId, reason: `blocked by ${design.blockedBy?.join(", ") ?? "a missing primitive"}` })), facet: plan.actionable.filter((design) => design.facetNote).map((design) => design.conceptId) },
+    concepts: Object.fromEntries(eligible.map((conceptId) => [conceptId, { done: false }])),
+    fixes: [],
+    auditNotes: [],
+    checks: {},
+    commits: [],
+  };
+}
+
+/** Records the decision for one actionable design and marks it done; replaying the same decision is a no-op. */
+export function recordDecision(state: RunState, conceptId: string, decision: Decision, note: string, now: string): RunState {
+  if (state.kind !== "refactor" || !state.refactor) throw new RunStateError("decisions belong to refactor runs");
+  if (!note.trim()) throw new RunStateError("a decision needs a note saying why");
+  const existing = state.refactor.decisions[conceptId];
+  if (existing && state.concepts[conceptId]?.done && existing.decision === decision && existing.note === note) return state;
+  if (!(conceptId in state.concepts)) throw new RunStateError(`${conceptId} is not an actionable design of ${state.domainId}`);
+  const decisions = { ...state.refactor.decisions, [conceptId]: { decision, note, at: now } };
+  // The editorial audit may revise a decision (reverting a change to keep, say); the audit is then completed again.
+  if (state.stage === "audit") return { ...state, refactor: { ...state.refactor, decisions } };
+  if (state.stage !== "author") throw new RunStateError(`cannot change a decision at stage ${state.stage}; change the record, which returns the run to the audit`);
+  const reopened = state.concepts[conceptId]?.done ? { ...state, concepts: { ...state.concepts, [conceptId]: { done: false } } } : state;
+  return recordConcept({ ...reopened, refactor: { ...state.refactor, decisions } }, conceptId, now);
+}
+
+/** Concepts a refactor run changes: decided execute or reduce. */
+export const changedConcepts = (state: RunState) =>
+  Object.entries(state.refactor?.decisions ?? {}).filter(([, value]) => value.decision !== "keep").map(([conceptId]) => conceptId).sort();
+
+/**
+ * The commits a run makes: each declared fix on its own, in declaration
+ * order, then everything else it validated. Together they cover exactly the
+ * validated files, each in one commit.
+ */
+export function commitGroups(state: RunState, messages: { fix: (fix: FixGroup) => string; content: string }): { message: string; files: string[] }[] {
+  const validated = Object.keys(state.validatedFiles ?? {});
+  return [
+    ...state.fixes.map((fix) => ({ message: messages.fix(fix), files: fix.files })),
+    { message: messages.content, files: validated.filter((file) => !state.fixes.some((fix) => fix.files.includes(file))) },
+  ].filter((group) => group.files.length > 0);
+}
+
+/** Why commits do not reproduce the validated tree: the files they changed and each one's blob at HEAD. */
+export function compositionProblems(validatedFiles: Record<string, string>, committed: { files: string[]; blobAtHead: (file: string) => string }): string[] {
+  const problems: string[] = [];
+  if (JSON.stringify([...committed.files].sort()) !== JSON.stringify(Object.keys(validatedFiles).sort())) problems.push(`committed ${[...committed.files].sort().join(", ")}; validated ${Object.keys(validatedFiles).sort().join(", ")}`);
+  const mismatched = Object.entries(validatedFiles).filter(([file, hash]) => committed.blobAtHead(file) !== hash).map(([file]) => file);
+  if (mismatched.length) problems.push(`differing from validation: ${mismatched.join(", ")}`);
+  return problems;
+}
+
+/** What the repository looks like when a command resumes a run. */
+export type ObservedGit = { branch: string; head: string; baseIsAncestor: boolean; trackedChanges: string[]; remoteHead?: string };
+
+/** Recorded run versus the actual repository; any problem means the run cannot continue as recorded. */
+export function gitProblems(state: RunState, observed: ObservedGit): string[] {
+  if (observed.branch !== state.branch) return [`on branch ${observed.branch}, the run is on ${state.branch}`];
+  const problems: string[] = [];
+  if (!observed.baseIsAncestor) problems.push(`base ${state.baseSha.slice(0, 7)} is not an ancestor of HEAD`);
+  const expectedHead = state.commits.at(-1)?.sha ?? state.baseSha;
+  if (observed.head !== expectedHead) problems.push(`HEAD is ${observed.head.slice(0, 7)}, the run recorded ${expectedHead.slice(0, 7)}`);
+  // Once committed, the validated tree is HEAD; any tracked change on top of it was never validated.
+  if (state.commits.length > 0 && observed.trackedChanges.length) problems.push(`tracked changes after the run's commits: ${observed.trackedChanges.join(", ")}`);
+  if (state.pushedSha && observed.remoteHead !== state.pushedSha) problems.push(`origin/${state.branch} is ${observed.remoteHead?.slice(0, 7) ?? "missing"}, the run pushed ${state.pushedSha.slice(0, 7)}`);
+  return problems;
+}
+
+/** What `start` observes before creating a run. */
+export type ObservedStart = {
+  existingRun: boolean;
+  trackedChanges: string[];
+  branch: string;
+  localMainAhead: boolean;
+  remoteMain?: string;
+  branchExists: boolean;
+  openRunPrs: { number: number; title: string; headRefName: string }[];
+  prsReadable: boolean;
+};
+
+/** Why a run of either kind may not start; empty when it may. Never weakened for one kind. */
+export function startProblems(branch: string, observed: ObservedStart, main = "main"): string[] {
+  const problems: string[] = [];
+  if (observed.trackedChanges.length) problems.push(`tracked changes present: ${observed.trackedChanges.join(", ")}`);
+  if (observed.branch !== main) problems.push(`on ${observed.branch}; start from ${main}`);
+  if (!observed.remoteMain) problems.push(`origin has no ${main}`);
+  else if (observed.localMainAhead) problems.push(`local ${main} has commits that origin/${main} does not`);
+  if (observed.branchExists) problems.push(`branch ${branch} already exists`);
+  if (!observed.prsReadable) problems.push("cannot read open PRs");
+  else if (observed.openRunPrs.length) problems.push(`unmerged MAP run PRs: ${observed.openRunPrs.map((pr) => `#${pr.number} ${pr.title}`).join("; ")}`);
+  return problems;
+}
+
 /** Marks one authored concept as recorded. Idempotent; the last one advances the run to the audit. */
 export function recordConcept(state: RunState, conceptId: string, now: string): RunState {
   assertLive(state);
@@ -145,6 +274,7 @@ export function revalidate(state: RunState): RunState {
   delete rewound.validatedFiles;
   delete rewound.diff;
   delete rewound.buildId;
+  if (rewound.refactor?.diff) rewound.refactor = { ...rewound.refactor, diff: undefined };
   return rewound;
 }
 
@@ -246,6 +376,18 @@ export type NextAction =
 export function nextAction(state: RunState): NextAction {
   if (state.stop) return { kind: "stop", stage: state.stop.stage, stop: state.stop };
   if (state.stage === "done") return { kind: "done", stage: "done" };
+  if (state.stage === "author" && state.kind === "refactor") {
+    const [conceptId] = pendingConcepts(state);
+    return {
+      kind: "agent",
+      stage: "author",
+      conceptId,
+      message: `reconsider ${conceptId}: read \`map:author -- refactor context ${conceptId}\`, change the record within its accepted design or leave it, then \`map:author -- refactor record ${conceptId} --decision execute|reduce|keep --note "..."\``,
+    };
+  }
+  if (state.stage === "audit" && state.kind === "refactor") {
+    return { kind: "agent", stage: "audit", message: "audit the changed records: read `map:author -- refactor audit`, correct only them, then `map:author -- refactor complete audit --note \"...\"`" };
+  }
   if (state.stage === "author") {
     const [conceptId] = pendingConcepts(state);
     return {
@@ -258,5 +400,5 @@ export function nextAction(state: RunState): NextAction {
   if (state.stage === "audit") {
     return { kind: "agent", stage: "audit", message: "audit the domain: read `map:author -- audit`, correct only the new content, then `map:author -- complete audit --note \"...\"`" };
   }
-  return { kind: "tool", stage: state.stage, message: `run \`map:author -- run\` to perform ${state.stage}` };
+  return { kind: "tool", stage: state.stage, message: `run \`map:author -- ${state.kind === "refactor" ? "refactor run" : "run"}\` to perform ${state.stage}` };
 }

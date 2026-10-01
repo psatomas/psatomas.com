@@ -82,3 +82,74 @@ export function completionReport(state: RunState): string {
     `PR: ${state.pr ? state.pr.url : "none"} | CI: ${state.ci ? `${state.ci.status} (${state.ci.detail})` : "unknown"}`,
   ].join("\n");
 }
+
+// ---------------------------------------------------------------- representation refactor runs
+
+type RefactorReport = { changed: string[]; kept: string[] };
+const decisionLine = (state: RunState, conceptId: string) => {
+  const recorded = state.refactor?.decisions[conceptId];
+  return `${conceptId} (${recorded?.decision ?? "undecided"}): ${recorded?.note ?? ""}`;
+};
+
+export function refactorCommitMessage(state: RunState, trailer?: string): string {
+  const decisions = state.refactor?.decisions ?? {};
+  const changed = Object.keys(decisions).filter((conceptId) => decisions[conceptId].decision !== "keep").sort();
+  const kept = Object.keys(decisions).filter((conceptId) => decisions[conceptId].decision === "keep").sort();
+  const lines = [
+    `refactor(map): improve ${domainPhrase(state.title)} L1 representations`,
+    "",
+    `Each accepted representation design for the domain was reconsidered against current context before editing (docs/map-authoring/representation-design.md#refactor-mode).`,
+    `Changed within their accepted designs: ${list(changed)}.`,
+    `Reconsidered and kept: ${list(kept)}.`,
+  ];
+  if (state.refactor?.blocked.length) lines.push(`Blocked by a missing primitive, untouched: ${list(state.refactor.blocked)}.`);
+  lines.push("The accepted-design spec records each resolution.");
+  return withTrailer(lines.join("\n"), trailer);
+}
+
+export const refactorPrTitle = (state: RunState) => `MAP: ${state.title} L1 representations`;
+
+export function refactorPrBody(state: RunState, diff: RefactorReport, footer?: string): string {
+  const check = (name: string) => state.checks[name]?.detail ?? "not run";
+  const lines = [
+    "## Summary",
+    "",
+    `**${state.title} L1 representation refactor**, driven by \`npm run map:author -- refactor\`. Each record's form is changed only where its accepted design still holds after reconsidering the concept in its current context, so that its structure carries what the concept's meaning needs.`,
+    "",
+    `- **Changed:** ${diff.changed.length ? diff.changed.map((conceptId) => decisionLine(state, conceptId)).join("; ") : "none"}`,
+    `- **Reconsidered and kept:** ${diff.kept.length ? diff.kept.map((conceptId) => decisionLine(state, conceptId)).join("; ") : "none"}`,
+    `- **Blocked (missing primitive), untouched:** ${list(state.refactor?.blocked ?? [])}`,
+  ];
+  if (state.fixes.length) lines.push(`- **General fixes (separate commits):** ${state.fixes.map((fix) => `\`${fix.message}\``).join("; ")}`);
+  if (state.auditNotes.length) lines.push(`- **Editorial audit:** ${state.auditNotes.join(" ")}`);
+  lines.push(
+    "",
+    "## Diff boundary",
+    "",
+    `- Only ${list(diff.changed)} changed, each within its accepted design; the accepted-design spec records every resolution.`,
+    "- No record added or removed; registry, taxonomy, relationships, mechanisms, paths and the generated view unchanged.",
+    "",
+    "## Verification",
+    "",
+    `- map:generate: ${check("generate")}`,
+    `- Unit tests: ${check("test")}`,
+    `- Lint (tracked tree): ${check("lint")}`,
+    `- Build: ${check("build")}`,
+    `- Browser suite: ${check("browser")}`,
+    `- Render verification: ${check("render")}`,
+  );
+  if (footer) lines.push("", footer);
+  return `${lines.join("\n")}\n`;
+}
+
+export function refactorCompletionReport(state: RunState, diff?: RefactorReport): string {
+  return [
+    `${state.title}: ${diff && diff.changed.length === 0 ? "every design reconsidered and kept; resolutions await human merge" : "validated PR awaiting human merge"}`,
+    `changed: ${list(diff?.changed ?? [])} | kept: ${list(diff?.kept ?? [])} | blocked: ${list(state.refactor?.blocked ?? [])}`,
+    `editorial: ${state.auditNotes.join(" ") || "no notes"}`,
+    `fixes: ${state.fixes.length ? state.fixes.map((fix) => fix.message).join("; ") : "none"}`,
+    `verified: ${Object.entries(state.checks).map(([name, value]) => `${name} ${value.ok ? value.detail : "FAILED"}`).join("; ")}`,
+    `commits: ${state.commits.map((commit) => `${commit.sha.slice(0, 7)} ${commit.message.split("\n")[0]}`).join("; ")}`,
+    `PR: ${state.pr ? state.pr.url : "none"} | CI: ${state.ci ? `${state.ci.status} (${state.ci.detail})` : "unknown"}`,
+  ].join("\n");
+}
