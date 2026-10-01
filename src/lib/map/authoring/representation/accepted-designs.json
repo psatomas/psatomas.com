@@ -942,7 +942,15 @@
       "placements": [
         "pre-launch-validation"
       ],
-      "sourceFingerprint": "348c3574b8489c5323cc08ff319e6fe7c949eb5cf6e0fc3d82564b0b6ac269fd"
+      "sourceFingerprint": "348c3574b8489c5323cc08ff319e6fe7c949eb5cf6e0fc3d82564b0b6ac269fd",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "addb081d076f7a28c0a9ae4c63483665d4690875aca49348859e8e6b744e334f",
+        "note": "What each activity finds and when it pays off were split across two paragraphs; the comparison joins both attributes, and the validation question stays in prose."
+      }
     },
     {
       "conceptId": "verifiable-ai",

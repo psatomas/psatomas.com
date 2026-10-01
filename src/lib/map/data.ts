@@ -14265,11 +14265,18 @@ export const mapKnowledge: MapKnowledgeModel = {
       body: [
         {
           kind: "paragraph",
-          text: "The activities complement each other because each finds a different kind of flaw. Testing finds what the tests exercise, formal methods establish what has been stated as a property, auditing finds what experienced reviewers recognize, and bug bounties invite anyone motivated to look, so a flaw missed by one can be caught by another, and none can stand in for the rest.",
+          text: "The activities complement each other: each finds a different kind of flaw and pays off at a different time, so a flaw missed by one can be caught by another, and none can stand in for the rest.",
         },
         {
-          kind: "paragraph",
-          text: "Their order also matters. Formal methods and testing pay off earliest, while designs and code are still cheap to change; audits are most useful on code frozen for launch, since every later change escapes them; bug bounties run from shortly before launch onward, when the reward for finding a flaw is real.",
+          kind: "comparison",
+          label: "What each pre-launch activity finds, and when",
+          dimensions: ["What it finds", "When it pays off"],
+          alternatives: [
+            { name: "Testing", values: ["What the tests exercise", "Early, while code is cheap to change"] },
+            { name: "Formal methods", values: ["Violations of properties that have been stated", "Early, while designs are cheap to change"] },
+            { name: "Auditing", values: ["What experienced reviewers recognize", "On code frozen for launch, since later changes escape it"] },
+            { name: "Bug bounties", values: ["What anyone motivated to look finds", "From shortly before launch, when the reward is real"] },
+          ],
         },
         {
           kind: "paragraph",
