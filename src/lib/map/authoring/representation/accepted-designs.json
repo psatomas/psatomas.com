@@ -305,7 +305,15 @@
       "placements": [
         "intent-commitments"
       ],
-      "sourceFingerprint": "3d40f2b4007eda8eee96a0874404e0209a7d92d310b257f528a029d2f0faf00d"
+      "sourceFingerprint": "3d40f2b4007eda8eee96a0874404e0209a7d92d310b257f528a029d2f0faf00d",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "e992e3054dbd744cc7aa0f8ee11b9246661b55577a7a9ae9c17eb772b29084ae",
+        "note": "The sentence comparing three guarantees on two dimensions is now a comparison, with the option pricing kept in prose."
+      }
     },
     {
       "conceptId": "intent-discovery",
@@ -338,7 +346,15 @@
       "placements": [
         "intent-discovery"
       ],
-      "sourceFingerprint": "428f8019acc70677b33d9c88fd03f23760c35f03ddc490b063b51c339ccba51e"
+      "sourceFingerprint": "428f8019acc70677b33d9c88fd03f23760c35f03ddc490b063b51c339ccba51e",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "tensions"
+        ],
+        "resultFingerprint": "225c305f872cd39ab4ff5567c664173e04fba55a042201bea77070d1e38f4116",
+        "note": "The record is three trade-offs; a tensions block names them together after the definition, and the paragraphs that explain each stay unchanged."
+      }
     },
     {
       "conceptId": "proposals",
