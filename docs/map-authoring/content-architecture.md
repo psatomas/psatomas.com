@@ -205,15 +205,16 @@ blocks by what the explanation needs:
   assumptions") may guide what you write but are never rendered as labelled
   sections.
 - **Legacy fields.** `summary`, `explanation` and `whyItMatters` render as
-  plain paragraphs, and only the Finality fixture uses them. Use `definition`
-  plus `body` for new exposition.
+  plain paragraphs. No record uses them any more; the renderer still
+  supports them. Use `definition` plus `body` for new exposition.
 
 ## Known debt in the existing corpus
 
-- **Consensus & Ordering repeats Finality.** Its L0 section on Finality
-  restates the Finality fixture's definition, summary and why-it-matters
-  nearly verbatim. When Finality is authored or revised, resolve the overlap
-  deliberately. Do not copy the pattern.
+- **Consensus & Ordering's Finality section keeps the fixture's wording.**
+  Its opening still carries the Phase 1 fixture's definition, summary and
+  why-it-matters sentences. The Finality record has since been rewritten as
+  an L1 synthesis that no longer repeats them, so the overlap is gone; the L0
+  wording is accepted content and stays until the L0 is revised.
 - **Pinned L0 wording.** Many domain tests pin L0 headings and phrases. See
   [`quality-contract.md`](quality-contract.md#tests-for-authored-content) for
   why new content should not follow that pattern.

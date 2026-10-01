@@ -16990,14 +16990,47 @@ export const mapKnowledge: MapKnowledgeModel = {
     {
       id: "finality-content",
       conceptId: "finality",
-      definition: "The point at which a protocol treats a result as no longer practically reversible.",
-      summary: "Finality turns agreement about ordering and execution into dependable settlement.",
-      whyItMatters: "Systems need a clear boundary for when participants can rely on an outcome.",
+      definition:
+        "Finality is the guarantee that a result a protocol has recorded, such as a block and the transactions in it, will not be reversed while the protocol's assumptions hold, together with the point from which that guarantee applies.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every party that acts on a result has to decide when it is safe to. An exchange crediting a deposit, a bridge releasing funds on another chain or a rollup settling against its base layer acts on history that the fork choice could still replace, and acting too early turns a later reorganization into a loss that cannot be recovered. Finality is how a protocol settles that question, and every system built on the protocol inherits how it settles it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Approaches to finality differ in who decides that a result is final and in what they give up when participants fail, not only in how long they take.",
+        },
+        {
+          kind: "comparison",
+          label: "How finality approaches differ",
+          dimensions: ["When a result counts as final", "What reversing it would take", "When many participants are offline"],
+          alternatives: [
+            { name: "Probabilistic", values: ["Never outright; each relying party chooses a depth", "Outbuilding the rest of the network from before that depth", "Blocks keep coming, and confidence keeps accumulating"] },
+            { name: "Deterministic", values: ["Once a quorum of validators finalizes it", "Validators beyond the fault threshold signing conflicting results", "The protocol stops until a quorum returns"] },
+            { name: "Finality gadget", values: ["Once the checkpoint it belongs to is finalized", "The same as deterministic, for finalized checkpoints", "Blocks keep coming while finality lags behind"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Finality holds only within its assumptions and covers only what was checked. If validators beyond the tolerated share sign conflicting results, both can be finalized, and the protocol has no rule left to choose between them: participants must coordinate outside it to decide which history to follow. A party that relies on a finality proof instead of executing the transactions itself, as light clients, bridges and other chains do, also accepts the validity of the finalized result on the same terms as its permanence, namely that enough of the finalizing validators checked it.",
+        },
+      ],
     },
     {
       id: "agent-identity-content",
       conceptId: "agent-identity",
       definition: "The means by which an AI agent is distinguished and authenticated for protocol interaction.",
+    },
+        {
+          kind: "paragraph",
+          text: "Authentication, credentials and reputation answer different questions about the same identifier. Machine authentication proves that a request was signed by keys currently bound to it; agent credentials, issued by a principal, a platform or an auditor, attach claims to it, such as who operates the agent or which model it runs; reputation is evidence of how it has behaved. None of them grants authority, and a counterparty weighs them together according to how much the interaction puts at stake.",
+        },
+        {
+          kind: "paragraph",
+          text: "Portability and recovery decide whether an identity outlasts the system that issued it. An identifier recognized on only one platform or network leaves the agent's history behind when it moves, while one that resolves wherever the agent operates carries that history along, including any record of misconduct. Recovery has to sit outside the agent: whoever can rebind the identifier to new keys after a loss or compromise controls the identity from then on, so that power belongs with the principal, ideally behind a delay that gives counterparties time to notice the change before trusting the new keys.",
+        },
+      ],
     },
   ],
   mechanisms: [
