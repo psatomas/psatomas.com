@@ -13986,6 +13986,286 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "protocol-requirements-content",
+      conceptId: "protocol-requirements",
+      definition:
+        "Protocol requirements state what a protocol must do and under what conditions, derived from the problem it addresses and the needs of those who will use, run and build on it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Requirements start from a problem stated independently of any solution. A protocol defined first by its mechanism tends to accumulate requirements that justify the mechanism, while one defined by the problem can compare mechanisms against what is actually needed. Stakeholders' needs then often conflict, such as users wanting low fees and node operators wanting modest hardware, so requirements also record which need prevails when they do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Non-functional requirements shape protocols more than features do. How much hardware a node may need, how much bandwidth, how quickly transactions must confirm and how hard exclusion must be constrain the whole architecture, and they guide trade-offs only when stated as measurable limits rather than aspirations, since a requirement that cannot be checked cannot settle a choice.",
+        },
+        {
+          kind: "paragraph",
+          text: "Requirements traceability links each requirement to the design decisions, specification sections, code and tests that address it. With several independent implementations of one specification, that link is what shows whether every client meets every requirement, and it tells anyone changing the protocol which promises a change might break.",
+        },
+      ],
+    },
+    {
+      id: "design-goals-constraints-content",
+      conceptId: "design-goals-constraints",
+      definition:
+        "Design goals and constraints define the space within which a protocol is designed: what it aims to achieve, what it deliberately leaves out, which limits it must respect, and what it assumes about its environment.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Non-goals protect a design as much as goals do. Stating what a protocol will not attempt, such as privacy, a particular kind of application or compatibility with an older system, keeps scope from growing with every request and tells users which properties they should not rely on. A design without stated non-goals tends to be judged against goals it never had.",
+        },
+        {
+          kind: "paragraph",
+          text: "Design assumptions are claims about an environment the design does not control: how fast messages travel, how participants behave, what computation costs. Properties built on them can fail silently once they stop holding, so each assumption is most useful when recorded together with how its failure would be noticed, turning a hidden dependency into something that can be watched.",
+        },
+        {
+          kind: "paragraph",
+          text: "Success criteria set before launch keep evaluation honest. Defined afterwards, they tend to describe whatever happened; defined in advance and measurably, they show whether the design achieved what it set out to do. Invariants play the same role for behavior, as commitments meant to hold in every version, which later changes must preserve.",
+        },
+      ],
+    },
+    {
+      id: "protocol-specification-content",
+      conceptId: "protocol-specification",
+      definition:
+        "A protocol specification is the authoritative description of a protocol's rules, precise enough that independent implementations built from it behave identically.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Once several clients exist, the specification is the protocol. It decides which client is right when they disagree, and any ambiguity in it is a place where two careful implementations can make different choices and split the network. Where no independent specification exists, the most widely used implementation becomes the specification by default, and its bugs become rules every other implementation must copy.",
+        },
+        {
+          kind: "paragraph",
+          text: "Executable specifications narrow that gap. Writing the rules as runnable code in a simple language makes them testable and lets them generate test vectors every client must reproduce, trading some readability for precision; prose remains necessary to explain intent, but the executable form settles what the rules actually say.",
+        },
+        {
+          kind: "paragraph",
+          text: "Specification ambiguity concentrates in the cases authors think least about: errors, limits, ties and unusual inputs. A rule that says what happens to valid input but not what happens when a value overflows, two items compare equal or a message arrives malformed leaves each implementation to decide, and in consensus-critical code every such decision has to be the same.",
+        },
+      ],
+    },
+    {
+      id: "protocol-modeling-content",
+      conceptId: "protocol-modeling",
+      definition:
+        "Protocol modeling is the construction of simplified representations of a protocol, its rules, its participants or its environment, so that properties can be studied before, and apart from, the deployed system.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each kind of model answers a different question. A state machine asks whether the rules can reach an invalid state, mechanism design whether self-interested participants will follow them, threat modeling what an attacker could do, and economic modeling how value and incentives behave over time. A protocol is understood only when these agree, including on their assumptions: a mechanism analyzed for rational participants says nothing about an adversary willing to lose money.",
+        },
+        {
+          kind: "paragraph",
+          text: "Analytic models and simulations trade clarity for realism. Equilibrium analysis gives clean conclusions under strong assumptions about participants, while agent-based modeling lets many differing, imperfectly informed participants interact and can reveal cascades, runs and other collective behavior that equilibrium analysis cannot see, with results that depend on the behavioral rules its authors chose.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reference models give everyone the same simplified picture to reason from. A shared description of the parts and their relations lets designers, implementers and reviewers discuss the same thing, and its simplifications are explicit choices: whatever a model leaves out is a place where the deployed system can surprise those who relied on it.",
+        },
+      ],
+    },
+    {
+      id: "prototyping-simulation-content",
+      conceptId: "prototyping-simulation",
+      definition:
+        "Prototyping and simulation test a protocol design before real value depends on it, through working prototypes, simulated networks and a sequence of increasingly realistic test environments.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Test environments trade control for realism step by step. A proof of concept shows that an idea works at all, a prototype that it works as a system; devnets are small and can be reset at will, testnets run publicly for long periods with many independent operators, and shadow forks copy the live network's state and replay its traffic, so that an upgrade meets real data and real load before it meets real users.",
+        },
+        {
+          kind: "paragraph",
+          text: "What every test network lacks is real value. Without it there are no profit-seeking attackers, no competition to order transactions, and little reason for participants to behave as they will when money is at stake, so properties that depend on incentives cannot be confirmed before launch, only modeled. A design that works on a testnet has shown that its mechanics run, not that its economics hold.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol simulation covers what live testing cannot arrange. Simulated networks can impose delays, partitions, failures and adversarial nodes at will, repeat a scenario exactly and run at scales no test network reaches, which makes them the place to explore rare and hostile conditions; their findings are as reliable as the resemblance between simulated and real behavior.",
+        },
+      ],
+    },
+    {
+      id: "protocol-implementation-content",
+      conceptId: "protocol-implementation",
+      definition:
+        "Protocol implementation is the work of turning a specification into running software, typically in several independent clients that must all behave identically.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Reference and production implementations serve different ends. A reference implementation follows the specification as directly as possible so that its behavior is easy to check; production implementations are optimized for speed and resource use, with caches, parallelism and data structures of their own, and those optimizations are where subtle differences from the specified behavior tend to enter.",
+        },
+        {
+          kind: "paragraph",
+          text: "Conformance testing makes agreement between implementations checkable. Shared test suites derived from the specification give every client the same inputs and expected outputs, and differential fuzzing feeds identical random inputs to several clients and flags any case where their results differ, catching consensus-breaking disagreements that no single client's tests would reveal.",
+        },
+        {
+          kind: "paragraph",
+          text: "Implementation drift accumulates quietly. Clients evolve, specifications are updated, and corners no test covers can come to behave differently in different clients without anyone noticing, until a rare transaction on the live network exercises one and the clients disagree. Keeping specification, test suites and implementations moving together is continuing work, not a launch milestone.",
+        },
+      ],
+    },
+    {
+      id: "pre-launch-validation-content",
+      conceptId: "pre-launch-validation",
+      definition:
+        "Pre-launch validation is the combined body of checks a protocol undergoes before it carries real value, establishing together whether it is the right design and whether it was built as designed.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The activities complement each other because each finds a different kind of flaw. Testing finds what the tests exercise, formal methods establish what has been stated as a property, auditing finds what experienced reviewers recognize, and bug bounties invite anyone motivated to look, so a flaw missed by one can be caught by another, and none can stand in for the rest.",
+        },
+        {
+          kind: "paragraph",
+          text: "Their order also matters. Formal methods and testing pay off earliest, while designs and code are still cheap to change; audits are most useful on code frozen for launch, since every later change escapes them; bug bounties run from shortly before launch onward, when the reward for finding a flaw is real.",
+        },
+        {
+          kind: "paragraph",
+          text: "Validation asks a separate question from all of these: whether the protocol is the right one for its users and its problem. Verification can show that code meets its specification perfectly while the specification describes something users do not need or that its economics cannot sustain. Launch readiness is finally a judgment weighing the risk left after all checks against the value the protocol will expose, made only once monitoring and response are ready for what the checks missed.",
+        },
+      ],
+    },
+    {
+      id: "deployment-launch-content",
+      conceptId: "deployment-launch",
+      definition:
+        "Deployment and launch are the transition of a protocol from tested software to a live system: deploying its contracts or starting its network, establishing its initial state, and opening it to real use.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Genesis fixes the starting point, and its mistakes last. The initial state of a new chain, with its first validators, balances and parameters, is agreed and started by all initial participants together, and the initial configuration of deployed contracts sets who holds which powers from the first block; errors at this stage are either permanent or require starting again.",
+        },
+        {
+          kind: "paragraph",
+          text: "A new network is weakest when it is newest. It needs validators, stake and liquidity to be secure and useful, but participants arrive only once it is secure and useful, so protocol bootstrapping usually relies on incentives, trusted early operators or borrowed security to cross the gap, and the early period runs on stronger trust assumptions than the design intends in the long run.",
+        },
+        {
+          kind: "paragraph",
+          text: "Phased rollouts limit what can go wrong while confidence builds. Caps on deposits, a reduced feature set, a restricted group of early users or administrative safeguards keep losses bounded while real conditions first test the design, and publishing the criteria and schedule for lifting each limit lets users judge how much of the eventual design they are actually relying on.",
+        },
+      ],
+    },
+    {
+      id: "parameterization-content",
+      conceptId: "parameterization",
+      definition:
+        "Parameterization is the choice and management of the adjustable values a protocol's rules depend on, such as limits, rates, thresholds and fees, from their initial setting through every later adjustment.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Initial parameters are usually best set conservatively and loosened with evidence. Values come from simulation, analysis and comparison with similar systems, all of them uncertain, and the two directions of correction are not symmetric: loosening a cap or a collateral requirement later costs existing users nothing, while tightening it can force positions closed or block activity they had planned on.",
+        },
+        {
+          kind: "paragraph",
+          text: "Parameters interact. A block size, a fee adjustment rate and a target level of use jointly decide how a fee market behaves, so tuning one in isolation can move the system into a regime none of the analyses covered. Parameter tuning is safest when the relationships between parameters are modeled together and each change is small enough to observe before the next.",
+        },
+        {
+          kind: "paragraph",
+          text: "Participants adapt to whatever values are set. A known threshold becomes a target to stay just inside, and frequent changes make the system harder to plan around while placing a steady load on whoever decides them, which is why some parameters follow rules that adjust them automatically to measured conditions, leaving people to set the rule rather than each value. Configuration management extends the same care to settings outside the protocol rules, since nodes run with different settings can behave differently on the same input.",
+        },
+      ],
+    },
+    {
+      id: "protocol-operations-content",
+      conceptId: "protocol-operations",
+      definition:
+        "Protocol operations are the continuing work of keeping a live protocol healthy: watching how it behaves, releasing fixes and updates, guiding the people who run it, and responding when something goes wrong.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Operating a decentralized network means persuading rather than deploying. A fix or improvement reaches the network only when independent node operators install it, and operators who upgrade late or not at all fall out of step when the rules change, so release schedules, clear communication and enough lead time are as much a part of operations as the code itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Network health is read from leading indicators. Participation in consensus, missed proposals, the time blocks take to spread, the share of each client in use and the number of reachable peers show a network degrading before it fails, which gives operators time to act while problems are still small.",
+        },
+        {
+          kind: "paragraph",
+          text: "Operational runbooks turn experience into procedure. Written steps for routine maintenance and for known failure modes let any qualified operator act correctly without depending on one person's memory, and incident response draws on them when a situation moves beyond routine; runbooks that have been rehearsed are the ones that work when needed.",
+        },
+      ],
+    },
+    {
+      id: "change-management-content",
+      conceptId: "change-management",
+      definition:
+        "Change management carries changes to a running protocol's rules from proposal through review and agreement into effect across everyone who runs it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How a change treats nodes that have not upgraded decides how risky it is. A soft fork only tightens the rules, so blocks valid under the new rules remain valid to old nodes, which keep following the chain but may accept blocks the new rules reject if too few participants enforce them. A hard fork changes or loosens the rules, so old nodes reject the new blocks outright and split off unless nearly everyone upgrades.",
+        },
+        {
+          kind: "paragraph",
+          text: "Upgrade coordination is mostly about timing and readiness. Changes usually activate at a fixed block or time announced well in advance, sometimes conditional on enough validators signaling readiness, so that the network switches together; a contentious change that part of the network refuses produces two chains, and transactions valid on both can be replayed from one to the other unless the change adds protection against it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Improvement proposals separate the technical question from the social one. A written proposal with motivation, specification, tests and a reference implementation can be reviewed openly and refined in stages, so that by the time participants decide whether to adopt it, they are deciding about a well-understood change rather than an idea.",
+        },
+      ],
+    },
+    {
+      id: "versioning-compatibility-content",
+      conceptId: "versioning-compatibility",
+      definition:
+        "Versioning and compatibility govern how a protocol changes without breaking what already depends on it: how versions are identified, which old behavior new versions preserve, and how existing state and users move across a change.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Deployed contracts make backward compatibility unusually binding. Code already on the ledger may never be updated, so changes to execution semantics have to preserve how existing contracts behave, or confine new behavior to new transaction or contract types; changing even the cost of an operation has broken contracts written on the assumption that it would stay the same.",
+        },
+        {
+          kind: "paragraph",
+          text: "Forward compatibility is designed in advance. Formats that carry an explicit version or type and leave room for fields not yet defined let later versions add features without breaking older software that reads them, while formats with no such room force every extension to become a breaking change.",
+        },
+        {
+          kind: "paragraph",
+          text: "State migrations are among the hardest changes a protocol makes. Changing how existing state is stored or structured means converting everything already recorded while the network keeps running, either all at once at an agreed point or gradually, with old and new forms coexisting for a time; either way, every client must perform the conversion identically, and a mistake corrupts state that cannot simply be restored.",
+        },
+      ],
+    },
+    {
+      id: "protocol-evolution-content",
+      conceptId: "protocol-evolution",
+      definition:
+        "Protocol evolution is the long-term course a protocol follows after launch: how it changes over years, who comes to control those changes, and how readily it changes at all.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Change becomes harder as a protocol matures. Each new user, application and dependency raises the cost of any rule change, until the protocol ossifies and stops changing in practice, whether or not anything forbids it. Ossification brings stability and credibility, since participants can rely on rules that no longer move, but it also freezes whatever problems remained unsolved, so when to let a protocol ossify is among the most consequential choices in its life.",
+        },
+        {
+          kind: "paragraph",
+          text: "Progressive decentralization describes a common path: a protocol launches with a small team holding upgrade keys, operating critical infrastructure and directing funds, and hands each of those powers over, or removes it, as the design proves itself. Each step removes a lever that could fix a problem quickly, so the path trades the ability to intervene for independence from those who could.",
+        },
+        {
+          kind: "paragraph",
+          text: "Lifecycle risks shift over time. Early on they are bugs, unproven economics and concentrated control; later they include accumulated complexity, aging cryptography and the question of who will keep maintaining clients once the protocol is mature and attention has moved elsewhere. A protocol that can no longer attract maintainers is at risk even if nothing in it has broken.",
+        },
+      ],
+    },
+    {
+      id: "deprecation-retirement-content",
+      conceptId: "deprecation-retirement",
+      definition:
+        "Deprecation and retirement are the managed ending of a protocol, a version or a feature: announcing that it will stop being supported, helping its users move elsewhere, and bringing support to a close.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On a ledger, retirement rarely means switching anything off. Deployed contracts keep running and keep holding whatever users leave in them, so retiring a protocol means ending development, interfaces, incentives and support, after which remaining funds sit in code that no one maintains or watches while new flaws may still be found in it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Migration paths must be easy enough that users actually take them. Many users never act on announcements, through inattention, lost keys or positions too small to bother with, so every migration leaves a long tail behind, and designs that try to move users automatically take on the risk of moving assets without their owners' direct consent.",
+        },
+        {
+          kind: "paragraph",
+          text: "Removing features from a base protocol is harder still. Deprecating an operation or a transaction format that deployed contracts or tools depend on breaks them, so removals are announced long in advance and often never completed, and legacy support keeps old behavior available at the cost of a maintenance burden every client carries for as long as it lasts.",
+        },
+      ],
+    },
+    {
       id: "ai-intelligent-systems-content",
       conceptId: "ai-intelligent-systems",
       definition: "An intelligent system is more than a learned model: its behavior emerges from model state, inputs and context, inference conditions, memory, tools, goals, authority, and the environment in which it acts.",
