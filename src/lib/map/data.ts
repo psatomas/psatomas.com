@@ -11521,7 +11521,17 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Each design family fails in its own way. Fiat-backed stablecoins depend on an issuer, its custodians and banks, and the legal system they answer to, any of which can freeze, lose or withhold reserves. Crypto-backed stablecoins carry the volatility of their collateral and rely on liquidations to stay covered. Algorithmic designs that rest on demand for a related asset rather than on outside backing are reflexive: confidence holds the price, and a falling price can destroy the confidence that held it.",
+          text: "The design families rest on different backing, and so fail differently.",
+        },
+        {
+          kind: "comparison",
+          label: "How stablecoin designs differ",
+          dimensions: ["What backs the peg", "How it fails"],
+          alternatives: [
+            { name: "Fiat-backed", values: ["Reserves held by an issuer through custodians and banks, under a legal system", "Any of them freezes, loses or withholds the reserves"] },
+            { name: "Crypto-backed", values: ["Crypto collateral, with liquidations keeping it ahead of the supply", "The collateral falls faster than liquidations restore coverage"] },
+            { name: "Algorithmic", values: ["Demand for a related asset rather than outside backing", "Reflexively: a falling price destroys the confidence that held it"] },
+          ],
         },
         {
           kind: "paragraph",
