@@ -1676,12 +1676,13 @@ test("the explorer view carries only a content flag, never exposition text", () 
 });
 
 test("exposition is normalized to ordered blocks: definition leads, no labelled scaffolding", () => {
-  const finality = mapKnowledge.content.find((content) => content.conceptId === "finality")!;
-  const exposition = toMapConceptExposition(finality);
-  assert.deepEqual(exposition.blocks, [
-    { kind: "paragraph", text: finality.definition },
-    { kind: "paragraph", text: finality.summary },
-    { kind: "paragraph", text: finality.whyItMatters },
+  // Legacy prose fields become plain paragraphs after the definition, before the body.
+  const legacy = { id: "legacy-content", conceptId: "legacy", definition: "Defined.", summary: "Summarized.", whyItMatters: "Mattering.", body: [{ kind: "terms", terms: ["A", "B"] }] } as const;
+  assert.deepEqual(toMapConceptExposition(legacy).blocks, [
+    { kind: "paragraph", text: "Defined." },
+    { kind: "paragraph", text: "Summarized." },
+    { kind: "paragraph", text: "Mattering." },
+    { kind: "terms", terms: ["A", "B"] },
   ]);
   const foundations = toMapConceptExposition(mapKnowledge.content.find((content) => content.conceptId === "foundations")!);
   assert.equal(foundations.blocks[0].kind, "paragraph");
