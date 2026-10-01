@@ -12590,6 +12590,286 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "scaling-content",
+      conceptId: "scaling",
+      definition:
+        "Scaling is increasing how much a protocol can process, whether transactions, computation or data, without giving up the properties that made it worth using.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Capacity is bounded by the least capable participant the protocol still wants to include. If every node must execute and store everything, throughput can rise only as far as a modest node can follow, and vertical scaling, demanding more powerful hardware, raises capacity by excluding those who cannot keep up. The ways of scaling that keep verification widely possible reduce what each participant must do, by checking a proof instead of re-executing, or sampling data instead of downloading it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Relieving one bottleneck exposes the next. Faster execution runs into the cost of reading and writing state, then into the bandwidth needed to spread blocks in time, and the ceiling moves to whichever resource is now scarcest. State growth differs from the rest because it accumulates: a burst of activity passes, but the state it created must be kept, so it constrains long-run capacity even when short-term throughput is ample.",
+        },
+        {
+          kind: "paragraph",
+          text: "Horizontal scaling and layer 2 scaling add capacity by running work in parallel places rather than making one place faster. Each new chain, shard or rollup adds throughput but also divides users, assets and liquidity among separate environments, so total capacity grows while the ease of moving between them becomes the new limit.",
+        },
+      ],
+    },
+    {
+      id: "rollups-content",
+      conceptId: "rollups",
+      definition:
+        "A rollup is a chain that executes transactions itself but publishes its transaction data to another layer, so that its state can be reconstructed and checked by anyone from what that layer records.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a rollup inherits from its base layer depends on two things. Because its data is published there, anyone can rebuild its state without the operator's cooperation; and where the base layer can also verify the rollup's state and lets users force their transactions in or withdraw directly, users can leave even if the operator stops serving them. A system that publishes its data elsewhere, or offers no forced exit, inherits correspondingly less.",
+        },
+        {
+          kind: "paragraph",
+          text: "Finality arrives in stages. A sequencer's confirmation is a promise; once the batch containing a transaction is published to the base layer, its order is fixed as firmly as that layer's history; and only when the resulting rollup state is proven, or its challenge period has passed, can the base layer act on it, for instance to release a withdrawal. Applications choose which stage to rely on according to what they risk.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rollup architecture varies in who orders transactions and who decides validity. Based rollups let the base layer's own proposers order their transactions, inheriting its liveness and resistance to censorship at the cost of its confirmation speed. Sovereign rollups use another layer only for data and ordering and leave validity to their own nodes, so no bridge contract enforces their state and changes to them are settled by their own community.",
+        },
+      ],
+    },
+    {
+      id: "optimistic-rollups-content",
+      conceptId: "optimistic-rollups",
+      definition:
+        "Optimistic rollups are rollups whose proposed state is accepted unless someone proves it wrong within a challenge period, rather than being proven correct in advance.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Their security needs only one honest watcher, but that watcher must be able to act in time. A single party that checks every state proposal and submits a fraud proof within the challenge period is enough to stop an invalid one, provided its challenge actually reaches the base layer, so the period is set long enough that censoring a challenger for its whole length would be impractical. A shorter window speeds withdrawals and weakens that margin.",
+        },
+        {
+          kind: "paragraph",
+          text: "Interactive fraud proofs keep disputes cheap. Rather than re-executing a whole batch on the base layer, the two sides narrow their disagreement step by step, in a dispute game, until it concerns a single instruction the base layer can execute directly. Games with many rounds give an attacker room to delay resolution by opening disputes, so bonds and time limits on each move decide how long a determined attacker can stall.",
+        },
+        {
+          kind: "paragraph",
+          text: "Withdrawal delays follow from the challenge period, and markets form around them. Users who need to leave quickly can sell their pending withdrawal to a liquidity provider who pays them now and waits out the period itself, charging for its capital and for the risk that the state it relied on turns out to be invalid.",
+        },
+      ],
+    },
+    {
+      id: "zk-rollups-content",
+      conceptId: "zk-rollups",
+      definition:
+        "ZK rollups are rollups that accompany each update of their state with a validity proof, so that the base layer accepts the new state only after verifying that it follows from the published transactions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A validity proof shows that the state transition matches the circuit, not that the circuit matches the intended rules. Encoding a full execution environment as circuits is large and intricate work, and a flaw there lets a proof certify a transition the rules forbid, so circuit bugs rather than broken cryptography are the main practical risk. Some systems require proofs from two independently built provers before accepting a state, so that a single flaw is not enough.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proving is expensive and slow compared with executing, so the base layer can act on new state only once its proof is ready. Proving costs are spread across many transactions by proving them in batches, and proof aggregation and recursion fold many proofs into one that is cheap to verify; larger batches lower the cost per transaction and lengthen the wait before it is settled.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whoever produces proofs also holds the system's progress. If only the operator can prove and it stops, withdrawals that depend on new proofs stop with it, which is why some designs let anyone submit proofs. zkEVMs trade compatibility against efficiency: the more exactly they reproduce an existing execution environment, the more existing tools work unchanged and the more costly that environment is to prove.",
+        },
+      ],
+    },
+    {
+      id: "off-chain-scaling-content",
+      conceptId: "off-chain-scaling",
+      definition:
+        "Off-chain scaling moves transaction processing outside a base layer while keeping some link to it, such as a bridge, a dispute mechanism or published commitments, that decides how far the base layer still protects users.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Designs differ by where the data lives and who checks validity. Validiums prove their state transitions valid but keep data off-chain with a committee, so withheld data can freeze users' funds even though a valid proof prevents their theft; plasma kept data off-chain and relied on users to watch for fraud and exit in time; sidechains run their own consensus, and their bridges trust that consensus outright. Each step away from publishing data to the base layer adds a party whose failure users can feel.",
+        },
+        {
+          kind: "paragraph",
+          text: "Channels take a different route. A fixed group locks funds on the base layer, exchanges signed updates among its members and settles only the final balances. Updates are instant and free, but each participant must remain able to dispute an outdated state, directly or through a watching service, and the funds stay tied to the channel's participants, which is why payments among many parties need routes through networks of channels.",
+        },
+        {
+          kind: "paragraph",
+          text: "The test of any design is what a user can do once its operators stop cooperating. Where users can always withdraw using data and rules on the base layer, that layer protects them; where withdrawal depends on data or signatures someone else holds, it does not. Plasma exposed a further limit: when everyone must exit at once, the base layer's own capacity decides how many succeed.",
+        },
+      ],
+    },
+    {
+      id: "modularity-content",
+      conceptId: "modularity",
+      definition:
+        "Modularity is building a blockchain system from separate components, each responsible for one function such as execution, ordering, data availability or settlement, that communicate through defined interfaces.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Separating functions lets each be optimized and replaced on its own. An execution environment can change without touching how data is published, and one data availability layer can serve many execution environments at once. Component interfaces then carry the system's assumptions: what one layer promises, the next relies on, and a mismatch at the boundary becomes a failure that no single component shows by itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Composition also determines security. A modular system is as strong as its weakest component and the connections between components, so strong execution proofs over a weak data availability layer give weak guarantees overall. Components shared by many systems, such as a common data layer, spread both their strength and their failures to every system that depends on them.",
+        },
+        {
+          kind: "paragraph",
+          text: "What monolithic designs keep is synchronous composability. When all execution shares one state, any contract can call any other within a single transaction; splitting execution across separate layers turns those calls into messages between environments, with delays and partial failures. Modular tradeoffs come down to whether the gains from specialization outweigh that loss.",
+        },
+      ],
+    },
+    {
+      id: "execution-layers-content",
+      conceptId: "execution-layers",
+      definition:
+        "An execution layer is the part of a modular system that runs transactions and computes the resulting state, within the execution environment it offers to programs.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How closely an execution layer reproduces an existing environment decides what carries over. EVM equivalence, behaving identically down to instructions and their costs, lets deployed contracts, audits and tools be reused unchanged; EVM compatibility at the level of source code is easier to reach but leaves differences in costs, instructions or built-in functions that can make the same contract behave differently, so an audit done in one environment does not automatically hold in the other.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many execution layers run a modified copy of a base layer's execution client. That inherits years of testing but obliges the layer to track every security fix and upgrade made upstream, and a layer that runs only one client has no second implementation to expose a defect in it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Alternative VMs offer different strengths, such as parallel execution or other programming languages, at the price of starting with fewer tools, libraries and developers. Each additional environment also adds a boundary that assets and messages must cross, so the variety that lets each layer specialize also divides the ecosystem that uses them.",
+        },
+      ],
+    },
+    {
+      id: "settlement-layers-content",
+      conceptId: "settlement-layers",
+      definition:
+        "A settlement layer is the layer on which an execution layer's state commitments are recorded and verified, and through which its bridged assets are held and withdrawn.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The settlement layer is where a rollup's state becomes something other contracts can rely on. Once a state commitment has been accepted there, by proof or after its challenge period, a withdrawal can be proven against it like any claim about committed state, and the settlement layer releases assets accordingly. Everything held in the rollup's bridge contract therefore depends on which commitments that contract accepts.",
+        },
+        {
+          kind: "paragraph",
+          text: "That bridge contract usually holds every asset users have deposited, which makes it the most valuable target in the system and its upgrade rights the system's ultimate control. Whoever can change the contract can change which state it accepts, so a rollup's security includes the delays and approvals that guard those upgrades.",
+        },
+        {
+          kind: "paragraph",
+          text: "Forced withdrawals protect only users who can actually use them. A path that lets users withdraw through the settlement layer when the operator ignores them is worth as much as its cost, its duration and the technical work it demands allow. The settlement layer's own security and liveness also bound the rollup's: settling on a weaker layer passes its weaknesses on.",
+        },
+      ],
+    },
+    {
+      id: "data-availability-layers-content",
+      conceptId: "data-availability-layers",
+      definition:
+        "A data availability layer is the component of a modular system whose job is to publish execution layers' data and keep it obtainable for anyone who needs to reconstruct or check their state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Where a rollup publishes its data is its largest cost decision and one of its largest trust decisions. Publishing to the same layer it settles on, as calldata or in blobs, keeps data and verification under one set of assumptions. Publishing to a separate layer is usually cheaper, but the settlement layer then has to learn that the data was published elsewhere, which means trusting an attestation from that layer's validators or committee.",
+        },
+        {
+          kind: "paragraph",
+          text: "Data availability layers sell one resource, space for data that must stay obtainable for a while, separately from execution. Many execution layers draw on the same capacity, so its price follows their combined demand, and a shortage or failure there reaches every system publishing to it at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "The guarantees such a layer can give rest on a few mechanisms: sampling lets light participants check availability for themselves, availability committees substitute trust in their members for that check, and calldata buys permanence and direct access from execution at a higher price. Alternative data availability arrangements combine these in different measures, and comparing them comes down to asking who must be trusted for the data to be there when it is needed.",
+        },
+      ],
+    },
+    {
+      id: "consensus-layers-content",
+      conceptId: "consensus-layers",
+      definition:
+        "Consensus layers are the parts of a modular stack that order and finalize data for the systems built on them, together with the arrangements through which those systems borrow that security.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Systems built on a consensus layer inherit its ordering and finality, and with them its failures. When the underlying layer reorganizes recent history, anything that acted on that history must reorganize too, and when it halts, so does everything waiting on it. Layer coupling sets how much passes through: tight coupling inherits guarantees and outages alike, while loose coupling isolates failures at the cost of guarantees.",
+        },
+        {
+          kind: "paragraph",
+          text: "Shared security can mean different things. Rollups inherit a base layer's consensus by posting to it; other designs ask one validator set to secure several chains at once, so each chain's security depends on how much attention and slashable stake those validators actually devote to it rather than on the validator set's total stake.",
+        },
+        {
+          kind: "paragraph",
+          text: "Restaking extends a validator's stake to additional services, each defining its own duties and slashing conditions. Operators choose which services to serve, so a service's security depends on which operators opt in and how much of their stake it can actually slash, and slashing conditions written separately by each service become another set of rules whose correctness every participating operator must trust.",
+        },
+      ],
+    },
+    {
+      id: "rollup-sequencing-content",
+      conceptId: "rollup-sequencing",
+      definition:
+        "Rollup sequencing is how a rollup's transactions are ordered before they are published: who orders them, how quickly users learn the order, and what happens when that party fails or refuses.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A single sequencer gives users fast confirmations and its operator full control of ordering. It decides what is included and in what order, captures the value of that ordering, and can delay or refuse transactions. Forced inclusion through the base layer bounds that power, since a transaction submitted there must be included after a set delay, and a fallback that lets anyone publish batches if the sequencer stops keeps sequencer liveness from becoming the chain's liveness.",
+        },
+        {
+          kind: "paragraph",
+          text: "Ordering is also a business. The difference between what users pay and what publishing costs, plus the value of ordering itself, is a large part of what a rollup earns, which gives operators reason to keep sequencing in their own hands. Decentralizing it means sharing that revenue and, in effect, building and running a consensus protocol for ordering, with the latency and complexity that brings.",
+        },
+        {
+          kind: "paragraph",
+          text: "Shared and based sequencing move ordering outside the individual rollup. A shared sequencer orders several rollups together, which allows ordering guarantees across them but concentrates ordering power for all of them in one place; based sequencing hands ordering to the base layer's proposers, removing the rollup's own sequencer at the cost of the base layer's slower confirmations and of giving those proposers the ordering value.",
+        },
+      ],
+    },
+    {
+      id: "batching-compression-content",
+      conceptId: "batching-compression",
+      definition:
+        "Batching and compression reduce what a rollup pays to publish its data, by grouping many transactions into each publication and encoding them in as few bytes as possible.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Publishing data is usually the largest part of a rollup's costs, and much of each publication's cost is fixed. Transaction batching spreads that fixed cost, including the overhead of each base-layer transaction and of verifying any accompanying proof, across everything in the batch, so cost amortization favors larger batches while users wait longer for theirs to be posted.",
+        },
+        {
+          kind: "paragraph",
+          text: "Transaction data compresses well because it repeats itself: the same addresses, the same contracts and many zero bytes. Signatures do not compress, but schemes that aggregate many signatures into one can remove most of their weight, and dictionaries of frequently used values shrink the rest.",
+        },
+        {
+          kind: "paragraph",
+          text: "State diffs publish only the net changes to state instead of the transactions that caused them, which saves space when many transactions touch the same values. They suit rollups whose correctness is established by validity proofs, since no one needs the individual transactions to dispute anything; a rollup that relies on fraud proofs must publish the transactions themselves, because challengers need them to show where execution went wrong. Where only state diffs are published, the history of individual transactions cannot be reconstructed from what was posted.",
+        },
+      ],
+    },
+    {
+      id: "scaling-tradeoffs-content",
+      conceptId: "scaling-tradeoffs",
+      definition:
+        "Scaling tradeoffs are the competing properties a design must balance when it adds capacity: throughput, confirmation latency, cost, decentralization and security.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Throughput and latency pull in different directions. Grouping work into larger batches and blocks raises how much a system processes per second while lengthening how long each transaction waits, and pipelining the stages of processing raises throughput without shortening the wait for any single transaction. Users feel confirmation latency; costs follow throughput.",
+        },
+        {
+          kind: "paragraph",
+          text: "The scalability trilemma, the claim that a design can fully achieve at most two of scalability, decentralization and security, is a heuristic about a given set of techniques rather than a theorem. Within those techniques, raising capacity by demanding more of each node reduces how many can participate; proofs, sampling and other methods that shrink what each participant must check loosen the constraint without abolishing it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Decentralization is several properties, and scaling choices move them separately. How many parties produce blocks, how many can verify them, how many independent clients exist and how widely operators are spread can each improve while another worsens, as when a rollup lets anyone verify its state but has one party ordering its transactions. Scaling costs also shift between parties: low fees for users can rest on expensive hardware for operators.",
+        },
+      ],
+    },
+    {
+      id: "rollup-security-content",
+      conceptId: "rollup-security",
+      definition:
+        "Rollup security is the set of conditions under which a rollup's users can rely on their funds and transactions being handled by its rules rather than by the discretion of its operators.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Security inheritance is decided property by property. A rollup may inherit data availability by publishing to its base layer, validity through proofs the base layer checks, and censorship resistance through forced inclusion, or it may lack any of these; its security is the combination it actually has, not the label it carries.",
+        },
+        {
+          kind: "paragraph",
+          text: "The decisive comparison is between how fast the rules can change and how fast users can leave. If an upgrade can take effect sooner than users can withdraw through the base layer, users are trusting whoever holds the upgrade keys; if every upgrade waits longer than an exit takes, users who object can leave first, and the rules bind those who stay by choice. Rollup maturity stages largely track this comparison.",
+        },
+        {
+          kind: "paragraph",
+          text: "Early rollups often keep a security council able to override the proof system, to correct a bug before it is exploited. That safety net is also a trust assumption: within its powers the council can overrule what the code would otherwise decide, so the mechanism that protects users against flawed proofs also asks them to trust the council not to misuse it.",
+        },
+      ],
+    },
+    {
       id: "security-correctness-resilience-content",
       conceptId: "security-correctness-resilience",
       definition: "Security protects relevant properties against adversaries, correctness establishes conformance to specifications, and resilience sustains bounded operation through faults or disruption under stated assumptions.",
