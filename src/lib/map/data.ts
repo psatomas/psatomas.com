@@ -14625,6 +14625,266 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "economic-agents-content",
+      conceptId: "economic-agents",
+      definition:
+        "Economic agents are the participants that hold resources and make economic decisions, whether people, programs, AI systems, organizations, protocols, or combinations of these.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On a ledger, every kind of agent looks alike. A person, a script, an AI system and a contract all appear as addresses that sign or execute transactions, so a counterparty usually cannot tell which it is dealing with, and often need not; what matters is what stands behind the address, who absorbs its failures, and what recourse exists if it does not perform.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agents differ most in how much discretion they have. A protocol such as an automated market maker acts by fixed rules with no discretion at all, which makes it perfectly predictable and therefore perfectly modelable by anyone looking for a way to profit from it; a person or an AI agent decides case by case, which makes it adaptable and harder to anticipate. Software and AI agents also act continuously and at machine speed, making viable the small, frequent transactions people would never bother with.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hybrid agents combine these forms, as when a person sets goals that an AI agent pursues through contracts, and the arrangement spreads responsibility across several parties. Knowing which part of a hybrid made a given decision matters for assigning losses and fixing errors, and it is often the hardest thing to reconstruct afterwards.",
+        },
+      ],
+    },
+    {
+      id: "agent-ownership-content",
+      conceptId: "agent-ownership",
+      definition:
+        "Agent ownership is the question of whose agent it is: who holds the claim to what an agent earns and holds, who bears its losses, and how that claim can change hands.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Ownership on a ledger is whatever the code recognizes. An agent's assets are controlled by its keys or by a contract's owner role, so whoever holds those controls can direct the agent regardless of who is said to own it, and an ownership claim the code does not encode can be enforced, if at all, only off-chain.",
+        },
+        {
+          kind: "paragraph",
+          text: "Beneficial ownership can be spread across many parties. An agent owned by an organization or a protocol earns for its members or token holders collectively, which raises the questions every shared asset raises: who decides how it is run, how earnings are distributed, and who absorbs its losses when it fails.",
+        },
+        {
+          kind: "paragraph",
+          text: "Transferring an agent is more than transferring its keys. An agent can carry open positions, standing commitments, credentials issued to it and a history that others rely on, and a buyer inherits some of these while counterparties may not learn that the owner behind them has changed. Ownership transfer that is recorded and visible lets those dealing with the agent reassess whom they are trusting.",
+        },
+      ],
+    },
+    {
+      id: "agent-wallets-content",
+      conceptId: "agent-wallets",
+      definition:
+        "Agent wallets are the accounts and key arrangements through which a software or AI agent holds and spends assets on its own, with no person signing off on each transaction.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An agent cannot click to confirm, so its signing authority must be usable unattended, and where that authority lives decides what a compromise costs. A key held on the machine running the agent is fast and fully exposed to whatever compromises that machine; a separate signing service holding the key can refuse requests that break its policy; and a smart account can give the agent only a session key whose scope the chain itself enforces.",
+        },
+        {
+          kind: "paragraph",
+          text: "Spending authority is best granted as an allowance rather than as access. Limits per transaction, per period and per counterparty, and a balance kept deliberately small and topped up by the principal as needed, bound what a misbehaving or compromised agent can lose to what it was trusted with at that moment.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recovery must stay with the principal. The ability to revoke an agent's keys or session authority, freeze its account and reclaim its funds has to be held outside the agent, so that an agent that has been taken over cannot also prevent its own shutdown.",
+        },
+      ],
+    },
+    {
+      id: "agent-capital-content",
+      conceptId: "agent-capital",
+      definition:
+        "Agent capital is the pool of assets an agent can use: what it holds, what it can readily spend, what it earns, and how it decides where its resources go.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agents spend continuously and earn unevenly. Compute, inference, data and transaction fees are paid as the agent works, while revenue may arrive later or irregularly, so an agent needs working capital to bridge the gap and a way to replenish it; an agent that runs out simply stops, possibly in the middle of a task, leaving positions half finished.",
+        },
+        {
+          kind: "paragraph",
+          text: "An agent allocating capital optimizes whatever objective it is set, and a bare objective such as maximizing return drifts toward whatever earns most, which is usually whatever carries most risk. Capital allocation by agents therefore runs inside explicit policy, such as approved assets, exposure limits and conditions that require human approval, defining the risk the principal is willing to bear.",
+        },
+        {
+          kind: "paragraph",
+          text: "Capital constraints work as a safety device as much as a limit. Capping what an agent controls caps what its errors or a compromise can cost, at the price of capping what it can earn, so the capital entrusted to an agent measures how much its principal trusts it, and can grow as its record does.",
+        },
+      ],
+    },
+    {
+      id: "agent-budgets-content",
+      conceptId: "agent-budgets",
+      definition:
+        "Agent budgets are the limits placed on what an agent may consume, in money, computation, external services or time, together with the policies that set them and the mechanisms that enforce them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Where a budget is enforced decides who can get around it. A limit enforced by a contract holds even if the agent is compromised; one enforced by the agent's own runtime holds only while that runtime is intact; and quotas set by service providers cap usage of one service without seeing the agent's spending elsewhere. Budget enforcement is strongest at a point the agent cannot reach.",
+        },
+        {
+          kind: "paragraph",
+          text: "Budget policies have to anticipate an adaptive spender. A limit per transaction invites splitting a large payment into many small ones, and a limit counted in transactions invites larger ones, so robust policies cap aggregate value over periods, per counterparty and per kind of action, rather than any single measure an optimizing agent can route around.",
+        },
+        {
+          kind: "paragraph",
+          text: "Budgets set in one unit are often spent in another. A budget fixed in a stable currency but paid in a volatile token, or one that must cover transaction fees that spike under congestion, can be exhausted far sooner than planned, so resource budgets need headroom for price movements and a defined behavior, such as pausing and reporting, for when they run low.",
+        },
+      ],
+    },
+    {
+      id: "agent-permissions-content",
+      conceptId: "agent-permissions",
+      definition:
+        "Agent permissions define which actions an agent is authorized to take, on whose behalf, under what conditions, and how that authorization can be narrowed, extended or withdrawn.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Capabilities fit agents better than roles. Granting an agent a specific right to perform particular actions, rather than an identity whose role implies broad powers, lets it act exactly within what it was given and pass a narrower part of that right to a sub-agent for a subtask, so that each layer of delegation can only reduce what the next may do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Escalation turns permission boundaries into decision points. An action that falls outside an agent's policy constraints, such as a payment above its threshold or a new counterparty, can be routed to its principal for approval instead of simply failing, which keeps routine work automatic and brings people in precisely for the exceptional cases.",
+        },
+        {
+          kind: "paragraph",
+          text: "Revocation has to be as fast as the agent. An agent can take many actions before anyone notices a problem, so withdrawing its permissions must take effect immediately and everywhere it holds them, across chains and services, and must reach any narrower permissions it delegated onward; a revocation that propagates slowly leaves a window in which the agent still acts.",
+        },
+      ],
+    },
+    {
+      id: "machine-payments-content",
+      conceptId: "machine-payments",
+      definition:
+        "Machine payments are transfers of value initiated and completed by software, typically in small amounts and at high frequency, as part of automated exchanges between programs.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Many machine payments are worth less than a transaction costs. Paying per request, per second of computation or per unit of data produces amounts far below the fee for settling each one individually, so machine payments rely on aggregation: prepaid balances drawn down off-chain, payment channels that settle the net result, batched settlement, or probabilistic payments in which a larger amount is paid with a small probability so that the expected value is right.",
+        },
+        {
+          kind: "paragraph",
+          text: "Streaming payments replace trust with granularity. When payment flows continuously as a service is delivered, either side can stop the moment the other fails, so neither is ever exposed to more than the latest small increment, and the need to trust the counterparty shrinks to the size of that increment.",
+        },
+        {
+          kind: "paragraph",
+          text: "Conditional payments work only with conditions a machine can verify. Releasing funds when a hash is revealed, a proof is supplied or a signed receipt arrives can be automated completely; releasing them when a service was delivered well cannot, unless quality has itself been reduced to something checkable. Automated settlement is as strong as the conditions it can test.",
+        },
+      ],
+    },
+    {
+      id: "machine-commerce-content",
+      conceptId: "machine-commerce",
+      definition:
+        "Machine commerce is the buying and selling of goods and services by software agents: finding what is offered, agreeing on terms, purchasing and settling, with little or no human involvement in each exchange.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Machines can trade only what is described in a form they can read. Service discovery depends on listings that state capabilities, prices and terms precisely enough for a program to compare them, which also makes it easy to publish misleading or fake listings at scale, so discovery leans on registries, reputation and the ability to test a service cheaply before relying on it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Price discovery and negotiation at machine speed behave differently from human markets. An agent can query and bargain with many sellers at once and update its offers continuously, which tightens prices, but pricing algorithms that learn from each other can also settle into high prices without any agreement, a form of collusion that is hard to detect and harder to attribute.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recurring purchases need standing permission to charge. Subscriptions let a seller draw payment repeatedly, which is convenient and exposes the buyer to overcharging or to charges after the service has stopped; paying per use avoids that exposure at the cost of a transaction for each use. Either way, commerce without people in the loop needs a way to resolve disputes, through escrow, reputation or an arbiter both sides accepted in advance.",
+        },
+      ],
+    },
+    {
+      id: "agent-markets-content",
+      conceptId: "agent-markets",
+      definition:
+        "Agent markets are the venues where software and AI agents buy and sell the resources their work requires and produces, such as computation, data, models, solutions and services.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What can be traded depends on what can be verified. Computation can often be checked, by recomputing, sampling or proof, so compute markets can pay for work delivered; the quality of data or information usually cannot be judged without seeing it, and seeing it hands it over, so data and information markets rely on reputation, samples, or arrangements that let a buyer evaluate without taking possession.",
+        },
+        {
+          kind: "paragraph",
+          text: "Digital goods copy freely, which shapes how they are sold. Once a model's weights or a dataset have been delivered, nothing stops the buyer from copying or reselling them, so model and data markets mostly sell access, running the model or querying the data on the seller's side, rather than the goods themselves, with usage restrictions that are hard to enforce once anything leaves the seller's control.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agents can be buyers and sellers in the same markets, each one's output feeding another's input, so markets for solutions and services become chains of automated exchanges. Quality along such chains is often secured by bonds that sellers forfeit if they fail to deliver, since no person reviews each step.",
+        },
+      ],
+    },
+    {
+      id: "agent-reputation-content",
+      conceptId: "agent-reputation",
+      definition:
+        "Agent reputation is the record of an agent's past conduct that others use to decide whether, and how far, to rely on it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Reputation built on small stakes can be spent on one large betrayal. An agent that behaves well across many small transactions can defect once the gain from a single large one exceeds the value of its future reputation, so reputation protects a counterparty only up to what it would cost the agent to lose it, and performance on small tasks says little about conduct when much more is at stake.",
+        },
+        {
+          kind: "paragraph",
+          text: "An agent's record describes the agent as it was. When its model, code, configuration or owner changes, its past behavior becomes weaker evidence about its future behavior, so reputation is most informative when tied to a specific configuration and allowed to decay, or reset, when that configuration changes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reputation systems attract their own attacks. Agents can rate themselves through accounts they control, rings of agents can vouch for each other, and an agent with a long, clean record can be bought to lend credibility to a new operator. Reputation portability across platforms widens both the value of a good record and the reach of these attacks, which is why portable reputation leans on attestations whose issuers and evidence can themselves be checked.",
+        },
+      ],
+    },
+    {
+      id: "agent-credit-content",
+      conceptId: "agent-credit",
+      definition:
+        "Agent credit is the extension of resources to an agent now in return for repayment later, secured by collateral, by the agent's expected revenue, or by the accountability of whoever stands behind it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An agent's creditworthiness is mostly borrowed from elsewhere. Unless it posts collateral, a lender's confidence rests on the principal who answers for the agent, or on revenue the agent reliably earns; an agent with neither offers nothing a lender can reach if it fails to repay.",
+        },
+        {
+          kind: "paragraph",
+          text: "Revenue can secure credit when it can be captured. If an agent's earnings flow through a contract that pays the lender first, repayment no longer depends on the agent's choice, and credit can be sized to the income observed rather than to assets held. Credit limits set this way can adjust continuously as revenue and repayment history change, which suits agents whose activity rises and falls quickly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Credit between agents can form chains. When agents lend to agents that lend in turn, a default at one point can leave every lender upstream short, at the speed automated systems act, so credit networks among agents need limits on exposure to any one counterparty and ways to see how far a failure could travel.",
+        },
+      ],
+    },
+    {
+      id: "agent-risk-content",
+      conceptId: "agent-risk",
+      definition:
+        "Agent risk is the range of ways an agent can lose value or cause harm: through operational failures, financial exposure, failing counterparties, flawed policies, or errors in the models and assumptions guiding its decisions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Model risk becomes systemic when many agents share a model. Agents built on the same model or following the same strategy tend to make the same mistakes at the same time, buying or selling together and failing on the same inputs, so errors that would be scattered among people acting independently arrive all at once. Diversity of models and strategies protects the system, not only each agent.",
+        },
+        {
+          kind: "paragraph",
+          text: "Risk limits have to act as fast as agents do. An agent can build a position or lose money in seconds, faster than anyone could review, so loss limits, position limits and automatic stops are enforced continuously and set conservatively, with exceptions handled by escalation rather than by relaxing the limits.",
+        },
+        {
+          kind: "paragraph",
+          text: "Operational and policy risks surround the model. Infrastructure outages, failures at the providers an agent depends on, compromised keys and loops that repeat an action are operational risks; a policy that leaves a harmful action permitted, or that its principal changes without anticipating the effect, is policy risk. Each needs its own controls, because a perfectly reliable model acting through a broken setup or under a flawed policy still loses.",
+        },
+      ],
+    },
+    {
+      id: "agent-incentives-content",
+      conceptId: "agent-incentives",
+      definition:
+        "Agent incentives are the rewards, penalties and objectives that connect an agent's actions to the interests of its principal and of the others it deals with.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An agent responds to incentives only through its objective or its controller. A program does not want rewards; it pursues whatever objective it was given, so an incentive offered to an agent reaches it only if its principal or operator built responsiveness into that objective, or if the incentive is aimed at the principal who directs it. Mechanisms that assume agents will react to rewards as people do may find that they react exactly as programmed, or not at all.",
+        },
+        {
+          kind: "paragraph",
+          text: "Principal-agent problems stack in layers. A user directs an agent run by an operator, built on a model from a provider and using tools from yet others, and each layer has interests of its own, as when an agent's provider earns commissions on what it recommends; the user's interests prevail only where every layer's incentives point the same way, and some of those incentives are invisible to the user.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agents probe incentive schemes faster and more systematically than people. A reward program, fee rebate or token distribution meant for genuine participants can be farmed by fleets of agents that find and repeat whatever qualifies, so incentive designs aimed at a population that includes agents have to assume that every exploitable rule will be found and used at scale.",
+        },
+      ],
+    },
+    {
       id: "autonomous-coordination-content",
       conceptId: "autonomous-coordination",
       definition: "Autonomous coordination concerns how independently acting agents communicate, discover one another, negotiate, delegate, allocate work and resources, and organize joint behavior under particular rules, authority, information, and constraints.",
