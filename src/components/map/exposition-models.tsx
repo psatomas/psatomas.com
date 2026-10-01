@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import type { MapFlowElement } from "@/lib/map";
+import type { MapComparisonAlternative, MapFlowElement } from "@/lib/map";
 import { describeCycle } from "./exposition-text";
 
 /**
@@ -247,6 +247,50 @@ export function CycleModel({ label, steps }: { label: string; steps: readonly st
           <ModelNode className="w-full">{step}</ModelNode>
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+const HEADER = "font-mono text-[11px] uppercase tracking-[0.12em] text-muted sm:text-xs";
+
+/**
+ * Alternatives compared along shared dimensions: an ARIA table whose header
+ * row names the dimensions and whose rows name the alternatives. Wide screens
+ * lay it out as a grid; narrow ones stack each alternative with its dimension
+ * names beside the values. Both layouts carry the same text, and assistive
+ * technology always reads the same table.
+ */
+export function ComparisonModel({ label, dimensions, alternatives }: { label: string; dimensions: readonly string[]; alternatives: readonly MapComparisonAlternative[] }) {
+  const columns: CSSProperties = { gridTemplateColumns: `minmax(0, 0.8fr) repeat(${dimensions.length}, minmax(0, 1fr))` };
+  return (
+    <div role="table" aria-label={label} className="w-full border-y border-border">
+      <div role="rowgroup" className="sr-only sm:not-sr-only">
+        <div role="row" className="border-b border-border py-3 sm:grid sm:gap-x-4" style={columns}>
+          <span role="columnheader" className={`block ${HEADER}`} />
+          {dimensions.map((dimension) => (
+            <span role="columnheader" key={dimension} className={`block ${HEADER} [overflow-wrap:anywhere]`}>
+              {dimension}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div role="rowgroup">
+        {alternatives.map((alternative) => (
+          <div role="row" key={alternative.name} className="border-b border-border py-3 last:border-b-0 sm:grid sm:items-baseline sm:gap-x-4" style={columns}>
+            <span role="rowheader" className={`block ${NODE_TEXT} tracking-[0.12em] [overflow-wrap:anywhere]`}>
+              {alternative.name}
+            </span>
+            {alternative.values.map((value, index) => (
+              <span role="cell" key={dimensions[index]} className="mt-1 block text-sm leading-6 text-foreground/80 [overflow-wrap:anywhere] sm:mt-0">
+                <span aria-hidden="true" className={`${HEADER} sm:sr-only`}>
+                  {dimensions[index]}:{" "}
+                </span>
+                {value}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

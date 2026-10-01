@@ -94,8 +94,8 @@ test("structures without a block are capability gaps, never silently mapped to a
   const loop = design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "state", purpose: "transitions can return" }] });
   assert.deepEqual(check(m, loop), []);
   assert.deepEqual(capabilityGaps(loop), ["state"]);
-  // Cycle has a block of its own: native, not a gap.
-  const native = design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "cycle", purpose: "feeds back" }] });
+  // Cycle and comparison have blocks of their own: native, not gaps.
+  const native = design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "cycle", purpose: "feeds back" }, { structure: "comparison", purpose: "alternatives by dimensions" }] });
   assert.deepEqual([check(m, native), capabilityGaps(native)], [[], []]);
   assert.match(check(m, { ...loop, classification: "keep" }).join(), /no capability gap/);
 });

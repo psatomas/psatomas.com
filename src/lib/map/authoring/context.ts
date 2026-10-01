@@ -182,6 +182,8 @@ export function describeMapContentBlock(block: MapContentBlock): string {
       return `[terms] ${block.terms.join(" · ")}`;
     case "cycle":
       return `[cycle] ${block.label}: ${[...block.steps, block.steps[0]].join(" → ")} …`;
+    case "comparison":
+      return `[comparison] ${block.label}: ${block.dimensions.join(" | ")}; ${block.alternatives.map((alternative) => `${alternative.name}: ${alternative.values.join(" | ")}`).join("; ")}`;
   }
 }
 

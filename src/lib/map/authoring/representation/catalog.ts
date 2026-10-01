@@ -57,11 +57,11 @@ export const REPRESENTATION_CATALOG: readonly CatalogEntry[] = [
   { structure: "vocabulary", block: "terms", fit: "native", expresses: "the terms a passage introduces, as a plain strip" },
   { structure: "cycle", block: "cycle", fit: "native", expresses: "a recurrent process whose last step feeds the next pass of the first (control and feedback loops)", limits: "one loop of at most six steps; not for a sequence that merely repeats or ends" },
   { structure: "state", fit: "gap", expresses: "states and the transitions between them, including returns and terminal states", limits: "a flow shows only a forward sequence of stages" },
-  { structure: "comparison", fit: "gap", expresses: "several alternatives compared along shared dimensions", limits: "no table or matrix block; tensions pair forces, not alternatives × dimensions" },
+  { structure: "comparison", block: "comparison", fit: "native", expresses: "several alternatives compared along the same explicit dimensions", limits: "two to six alternatives × two to four dimensions, short values; one dimension is variants, not a comparison" },
   { structure: "dependency", fit: "gap", expresses: "a graph of what relies on what, where dependencies are shared or form chains", limits: "a flow is a sequence, not a graph" },
 ];
 
 export const catalogEntry = (structure: string): CatalogEntry | undefined => REPRESENTATION_CATALOG.find((entry) => entry.structure === structure);
 
 /** Block kinds that carry structure rather than continuous prose. */
-export const STRUCTURED_KINDS: ReadonlySet<BlockKind> = new Set(["flow", "distinction", "tensions", "cycle"]);
+export const STRUCTURED_KINDS: ReadonlySet<BlockKind> = new Set(["flow", "distinction", "tensions", "cycle", "comparison"]);

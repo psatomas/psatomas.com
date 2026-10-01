@@ -62,7 +62,7 @@ export async function checkRender(conceptIds: readonly string[], base?: string):
                   current: control.getAttribute("aria-current"),
                   expanded: control.getAttribute("aria-expanded"),
                   beneath,
-                  unlabeled: [...exposition.querySelectorAll('[role="img"]')].filter((node) => (node.getAttribute("aria-label") ?? "").trim().length < 4).length,
+                  unlabeled: [...exposition.querySelectorAll('[role="img"], [role="table"]')].filter((node) => (node.getAttribute("aria-label") ?? "").trim().length < 4).length,
                   overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
                   text: exposition.innerText,
                 };

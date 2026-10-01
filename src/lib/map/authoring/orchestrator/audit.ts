@@ -9,7 +9,7 @@
  */
 import type { MapConceptContent, MapKnowledgeModel } from "../../types.ts";
 
-const BLOCK_LETTER: Record<string, string> = { paragraph: "P", heading: "H", flow: "F", distinction: "D", tensions: "T", terms: "S", cycle: "O" };
+const BLOCK_LETTER: Record<string, string> = { paragraph: "P", heading: "H", flow: "F", distinction: "D", tensions: "T", terms: "S", cycle: "O", comparison: "X" };
 const POSITIONAL = /\b(below|above|beneath|this domain|this section|the topics|the rows)\b/i;
 
 function text(record: MapConceptContent): string {
@@ -33,6 +33,8 @@ function text(record: MapConceptContent): string {
           return block.terms.join(" ");
         case "cycle":
           return [block.label, ...block.steps].join(" ");
+        case "comparison":
+          return [block.label, ...block.dimensions, ...block.alternatives.flatMap((alternative) => [alternative.name, ...alternative.values])].join(" ");
       }
     }),
   ]
