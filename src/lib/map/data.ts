@@ -15470,6 +15470,306 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "organizations-content",
+      conceptId: "organizations",
+      definition:
+        "An organization is a group of people and agents that, with shared resources and rules, acts as a unit toward common objectives and has an identity distinct from any of its members.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A decentralized autonomous organization keeps its rules, decisions and treasury on a ledger, but most of what it does still happens elsewhere. Code governs money and authority, while people and agents off-chain write software, negotiate deals and make judgments, so the organization is a hybrid whose on-chain part is transparent and enforceable and whose off-chain part depends on the same trust and accountability as any other organization.",
+        },
+        {
+          kind: "paragraph",
+          text: "Legal wrappers connect an on-chain organization to the legal world. Without a recognized legal form, members of some organizations can be treated as partners personally liable for its debts, and the organization cannot easily sign contracts, hold property off-chain or pay taxes; a wrapper supplies a legal person for these purposes, along with duties and jurisdictional obligations that may not match what its on-chain governance decides.",
+        },
+        {
+          kind: "paragraph",
+          text: "Organizational boundaries are often unclear. Whether token holders, contributors, users or delegates count as inside the organization decides who shares in its decisions, its gains and its liabilities, and organizations whose boundaries were never stated discover them only when a dispute, a lawsuit or a distribution of funds forces the question.",
+        },
+      ],
+    },
+    {
+      id: "organizational-membership-content",
+      conceptId: "organizational-membership",
+      definition:
+        "Organizational membership defines who belongs to an organization: the criteria for joining, how members are admitted, what rights and obligations membership carries, and how members leave.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Whether membership can be transferred shapes the whole organization. Membership held as a transferable token can be bought and sold, which opens the organization to anyone with capital and lets members leave by selling, but ties influence to holdings; membership that cannot be transferred, tied to a person or to contributions, keeps influence with participants and makes joining and leaving matters for the organization's own rules.",
+        },
+        {
+          kind: "paragraph",
+          text: "Member admission trades growth against cohesion. Admitting anyone who meets an automatic criterion, such as holding a token, grows an organization quickly and invites members whose interests differ from its purpose; admission by sponsorship or vote is slower and keeps closer control over who joins, at the risk of becoming a closed group.",
+        },
+        {
+          kind: "paragraph",
+          text: "Obligations are harder to enforce than rights. Membership rights, such as voting or a share of distributions, are granted by the organization's own contracts, while membership obligations, such as contributing work or upholding a code of conduct, bind pseudonymous members only through deposits they could forfeit or reputations they would lose, so many organizations end up with members who hold rights and owe nothing enforceable.",
+        },
+      ],
+    },
+    {
+      id: "roles-authority-content",
+      conceptId: "roles-authority",
+      definition:
+        "Roles and authority describe how an organization divides responsibility: which positions exist, who holds them, what each may decide or do, and how those powers relate to one another.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Roles exist twice, socially and in code, and the two can drift apart. A treasurer or an operations lead is a position people recognize and also a set of permissions in contracts; when someone leaves a role in practice but keeps the keys, or receives permissions beyond what the role was meant to include, the organization's real authority no longer matches its stated structure. Role assignment that updates permissions in the same step as the social change keeps the two aligned.",
+        },
+        {
+          kind: "paragraph",
+          text: "Role hierarchies make escalation clear and concentrate power at the top. A structure in which higher roles can override lower ones settles who decides when roles disagree, but every override is a power that can be misused; flatter structures with clear mandates for each role avoid that concentration at the cost of more coordination where mandates overlap.",
+        },
+        {
+          kind: "paragraph",
+          text: "How roles are filled affects how they are exercised. Holders elected by members answer to them, appointed holders answer to whoever appointed them, and roles that rotate or are earned automatically through contribution limit how long anyone holds a given power, so the assignment process shapes accountability as much as the powers attached to the role.",
+        },
+      ],
+    },
+    {
+      id: "organizational-structure-content",
+      conceptId: "organizational-structure",
+      definition:
+        "Organizational structure is how an organization arranges its units and the relationships between them: who works within which group, how groups relate, and how information and decisions flow among them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Structure follows the cost of coordination. In a small organization everyone can take part in everything, but the number of relationships to maintain grows much faster than the number of members, so growing organizations divide into units with their own scope, which lets each move faster and creates boundaries across which work and information must then be coordinated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Sub-organizations with their own budgets and decision processes act with real autonomy, and the parent's hold over them comes down to funding, mandate and the ability to override or dissolve them. Setting those terms at creation decides whether a sub-organization is an accountable part of the whole or an independent body that happens to share a name.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reporting lines are often weak in decentralized organizations. Contributors may answer to no single person, and accountability runs instead through public reports, reviews by councils and committees, and the periodic renewal of a group's funding; where renewal is automatic and reports go unread, nothing in the structure actually holds anyone to account.",
+        },
+      ],
+    },
+    {
+      id: "organizational-governance-content",
+      conceptId: "organizational-governance",
+      definition:
+        "Organizational governance is the particular arrangement through which an organization forms its decisions, combining a governance model, constitutional rules, proposals, voting and decision rules into one working process.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Components that are sound alone can combine badly. Token voting with a low quorum and short voting periods can be captured cheaply; the same voting combined with a council able to veto and a delay before execution is slower and much harder to abuse. Organizational governance is judged as a whole, by how its parts interact under pressure, not by the merits of each part separately.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hybrid governance joins modes that can disagree. An organization may vote on-chain, deliberate in public forums and act through a legal entity with its own board, and when an on-chain vote and the legal entity's obligations point in different directions, the organization needs a rule stating which prevails for which kinds of decision, written down before any conflict arises.",
+        },
+        {
+          kind: "paragraph",
+          text: "Governance has a limited capacity for decisions. Asking members to vote on everything exhausts their attention and invites apathy, so organizations route routine matters to roles with mandates and budgets and reserve collective votes for decisions that change the organization itself: its rules, its leadership or its major commitments of funds.",
+        },
+      ],
+    },
+    {
+      id: "organizational-decision-making-content",
+      conceptId: "organizational-decision-making",
+      definition:
+        "Organizational decision-making is how particular decisions are actually made within an organization: who holds the right to make each kind of decision, by what path it is reached, and how it is recorded.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Clear decision rights prevent both paralysis and conflict. When it is unclear which person, group or vote may decide a matter, either nothing is decided or several bodies decide it differently, so organizations that state which decisions belong to whom, and which require consultation or approval, spend less effort arguing about authority and more on the decisions themselves.",
+        },
+        {
+          kind: "paragraph",
+          text: "Automated decisions carry the judgment of whoever wrote them. Rules and contracts that pay contributors, adjust parameters or release funds when conditions are met remove delay and discretion from routine matters, but they keep applying the reasoning of the moment they were written; triggers for review, such as unusual amounts or changed conditions, keep automation from outliving its assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Decision records preserve why, not only what. A ledger can prove that a decision was taken and by whom, but the reasons, the alternatives considered and the information available usually live elsewhere, and organizations that record them give later members, and later disputes, the context needed to understand, continue or reverse a decision.",
+        },
+      ],
+    },
+    {
+      id: "treasuries-content",
+      conceptId: "treasuries",
+      definition:
+        "A treasury holds the assets an organization owns collectively to fund its work, under arrangements for keeping, growing and spending them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Treasury custody is usually tiered. A small operating balance held where a few people can spend it quickly covers routine payments, while reserves sit behind slower controls, such as governance-approved transfers with delays or multisignature arrangements with many independent signers, so that the funds most exposed to fast mistakes are also the smallest. Assets held off-chain, such as bank balances under a legal entity, add custodians and legal processes that on-chain controls do not cover.",
+        },
+        {
+          kind: "paragraph",
+          text: "Runway measures how long the treasury can fund planned spending, and it moves with prices. A treasury held mostly in a volatile token can lose much of its runway in a market fall without any change in spending, so organizations that plan their commitments in stable terms, holding enough stable value to cover them, keep a downturn from forcing them to cut work or sell at the worst time.",
+        },
+        {
+          kind: "paragraph",
+          text: "Putting idle treasury assets to work earns revenue and adds risk. Lending them, providing liquidity or staking them exposes the treasury to the protocols involved, their contracts, oracles and governance, so treasury yield is compensation for taking on other systems' risks, judged by what those risks could cost the organization as much as by the return.",
+        },
+      ],
+    },
+    {
+      id: "organizational-policies-content",
+      conceptId: "organizational-policies",
+      definition:
+        "Organizational policies are the standing rules an organization sets for its own conduct, such as how funds may be spent, how decisions are documented and how contributors are engaged, together with how those rules are set, related and changed.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Policy hierarchies settle conflicts between rules. When constitutional rules outrank organization-wide policies, which in turn outrank the rules of individual units, a rule that contradicts one of higher rank simply gives way, and units can be allowed to set their own policies within the space the higher-ranking ones leave, without each new rule having to be reconciled with every other.",
+        },
+        {
+          kind: "paragraph",
+          text: "Only some policies can be enforced by code. Spending limits and approval requirements can be built into the contracts that hold funds and enforced without exception, while policies on conduct, conflicts of interest or documentation depend on people following them and on someone noticing when they do not; deciding which policies to encode trades the certainty of mechanical enforcement against the flexibility of judgment.",
+        },
+        {
+          kind: "paragraph",
+          text: "Policy updates need defined transitions. A changed rule normally applies to decisions made after it takes effect, which leaves commitments already in progress under the old one, so stating effective dates and how existing commitments are treated avoids disputes about which rule applied, and publishing each change keeps members aware of the rules they are expected to follow.",
+        },
+      ],
+    },
+    {
+      id: "organizational-budgeting-content",
+      conceptId: "organizational-budgeting",
+      definition:
+        "Organizational budgeting is the periodic process by which an organization decides how much of its resources each unit, program or contributor may use, and under what approvals it is spent.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Budget cycles force a regular reckoning. Allocating funds for a fixed period and requiring each unit to account for its spending before the next allocation creates a point at which work is reviewed and priorities can change; fixed cycles respond slowly to opportunities in between, and rules that reclaim unspent funds at the end of a cycle reward spending them whether or not the work needs it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contributor compensation paid on a public ledger is visible to everyone. Amounts, frequency and recipients can be seen and compared by anyone, which supports accountability and exposes contributors' finances; paying in the organization's own token, often with vesting, ties compensation to the organization's long-term success and transfers its price risk to the people being paid.",
+        },
+        {
+          kind: "paragraph",
+          text: "Approved budgets let units act without approval for each expense. Once a unit's budget has been allocated, spending within it can proceed under the unit's own authority, with spending approvals reserved for amounts beyond it or outside its mandate, which keeps the organization's attention on exceptions rather than routine payments; how the budget is split among competing uses is a question of resource allocation.",
+        },
+      ],
+    },
+    {
+      id: "organizational-workflows-content",
+      conceptId: "organizational-workflows",
+      definition:
+        "Organizational workflows are the defined sequences through which recurring work moves within an organization: who does each step, who must approve it, and how it passes from one participant to the next.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Handoffs are where work is most often lost. When a task passes between people, agents or units, context, responsibility or both can fall between them, so workflows that make each handoff explicit, recording the state of the work and requiring the receiver to accept it, leave no gap in which a task belongs to no one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Workflow automation makes recurring processes run the same way every time. Encoding steps such as proposal, review, approval and payment lets them proceed without anyone remembering to start them, but the process encoded is the one that made sense when it was written; exceptions it does not anticipate need a defined path to a person, or participants will route around the automation altogether.",
+        },
+        {
+          kind: "paragraph",
+          text: "Service-level agreements state what one part of an organization, or an outside provider, commits to deliver, such as how fast it responds or how often it is available. They become more than expectations only when performance can be measured and a consequence, such as reduced payment, follows automatically when it falls short.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-operations-content",
+      conceptId: "autonomous-operations",
+      definition:
+        "Autonomous operations are the parts of an organization's ongoing work carried out by automated systems and agents rather than by people, within limits the organization sets and oversees.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Operating procedures written for agents must be precise in ways procedures written for people need not be. A person reading a procedure fills gaps with judgment and context; an agent workforce executes what the procedure actually says, so procedures become specifications, with explicit limits, exceptions and escalation paths, and their ambiguities become behavior.",
+        },
+        {
+          kind: "paragraph",
+          text: "How much an organization runs on its own is a choice about exposure. Automatic distributions, rebalancing or responses to routine requests make an organization fast and cheap to run, and each automated function is also a place where an error repeats until someone notices; organizational autonomy is safest when granted function by function, tied to measured performance and revocable without a lengthy process.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agent workforces change what an organization depends on. Work that once depended on hiring now depends on model providers, infrastructure and the services agents call, so an outage, a price change or a change in a provider's model can alter how the organization operates overnight, and organizations relying on agents treat those providers as critical suppliers, with alternatives ready.",
+        },
+      ],
+    },
+    {
+      id: "accountability-auditability-content",
+      conceptId: "accountability-auditability",
+      definition:
+        "Accountability and auditability are what let an organization's actions be examined after the fact and answered for: records that allow outsiders to check what happened, and arrangements that tie outcomes to those responsible for them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Automation spreads responsibility until it can belong to no one. When an agent acting under a policy members voted for causes harm, the voters, the policy's authors, the agent's operator and its developer each contributed, and each can point to the others; designating a responsible owner for every automated process, before anything goes wrong, is what keeps responsibility attribution possible.",
+        },
+        {
+          kind: "paragraph",
+          text: "Liability follows those who can be identified. Pseudonymous participation limits whom legal claims can reach, so when an organization causes harm, claims tend to fall on its identifiable members: developers, operators of its interfaces, large holders or the officers of its legal entity. A legal wrapper concentrates liability on the entity, which protects members wherever the wrapper is recognized.",
+        },
+        {
+          kind: "paragraph",
+          text: "Auditability is designed in. An organization whose funds and rules live on a ledger can be audited continuously by anyone, while its off-chain activities, contracts, payments and decisions are auditable only through the records and attestations it chooses to keep; organizations that want to be trusted make those parts checkable too, rather than letting the transparency of the on-chain part stand for the whole.",
+        },
+      ],
+    },
+    {
+      id: "disputes-emergency-controls-content",
+      conceptId: "disputes-emergency-controls",
+      definition:
+        "Disputes and emergency controls are the mechanisms an organization keeps for situations its ordinary processes cannot handle: disagreements that need an outside decision, and crises that need action faster than ordinary governance allows.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Choosing the forum in advance avoids a second dispute about the first. An organization that states, before any conflict, whether disagreements go to internal mediation, to an on-chain arbitration system or to a court in a named jurisdiction gives every party a known path; one that leaves the choice open invites each side to pick the forum it expects to favor it, which becomes a contest of its own.",
+        },
+        {
+          kind: "paragraph",
+          text: "Guardians need independence from what they guard against. A guardian able to pause the organization's contracts protects members only if it is not controlled by the people whose mistakes or misconduct it may need to stop, so guardian roles are often held by parties outside day-to-day operations, rotated periodically and required to explain each use of their powers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Emergency actions should themselves be reviewable. A pause or other emergency step taken without the usual process can be contested by members who think it unnecessary or self-serving, so organizations pair emergency controls with a review that ratifies or reverses each action within a set time, which keeps emergency authority accountable and gives incident response a defined end.",
+        },
+      ],
+    },
+    {
+      id: "organizational-lifecycle-content",
+      conceptId: "organizational-lifecycle",
+      definition:
+        "Organizational lifecycle covers how an organization comes into being, changes form over time and eventually ends: its formation, early growth, restructurings, mergers, transfers of leadership and dissolution.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Succession is easy to neglect and costly to lack. Organizations outlive the involvement of their founders and early contributors, and when the people holding keys, signing rights or essential knowledge leave without a planned handover, assets can become inaccessible and functions can stop; succession planning names who takes over each critical role and makes sure the means of control can actually be transferred.",
+        },
+        {
+          kind: "paragraph",
+          text: "Organizational mergers combine treasuries, tokens, governance and legal forms, and each is difficult. Members on both sides usually have to approve terms such as the rate at which one organization's tokens convert into the other's, and because deployed contracts rarely merge, one organization typically absorbs the other's assets and members, or both continue under a new overarching body.",
+        },
+        {
+          kind: "paragraph",
+          text: "Organizational dissolution has to settle obligations before it distributes what remains. Contributors owed payment, contracts in progress and the legal duties of any wrapping entity come first; only then can the remaining treasury be returned to members, usually in proportion to their holdings, and any contracts left on the ledger keep running after the organization behind them is gone.",
+        },
+      ],
+    },
+    {
+      id: "inter-organizational-coordination-content",
+      conceptId: "inter-organizational-coordination",
+      definition:
+        "Inter-organizational coordination is how separate organizations act together, through alliances, federations, joint ventures, shared services and agreements, while each keeps its own identity and governance.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Shared services gain efficiency and share risk. Organizations that rely on a common oracle, security council, legal entity or grants program avoid duplicating effort, and they also depend on the providing organization's governance and failures, so a decision or a fault in the shared service reaches all of them at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Federations keep their members' autonomy while handing a defined set of matters to a common body. How much the federation may decide, how members are represented in it and whether members can leave it set the balance between acting together and remaining independent, and federations whose central body gains powers by gradual accumulation tend to become the merged organization their members chose not to form.",
+        },
+        {
+          kind: "paragraph",
+          text: "Cross-organizational governance moves at the pace of its slowest participant. A decision affecting several organizations usually has to pass through each one's own process, with its own thresholds and timelines, before it binds them all, so joint decisions are slower than any one organization's and work best when each organization authorizes its representatives in advance to agree within stated limits.",
+        },
+      ],
+    },
+    {
       id: "autonomous-protocols-content",
       conceptId: "autonomous-protocols",
       definition: "Autonomous protocols observe protocol conditions and apply bounded, mechanism-defined adjustments, maintenance, responses, and verification under policies, invariants, authority, and override constraints.",
