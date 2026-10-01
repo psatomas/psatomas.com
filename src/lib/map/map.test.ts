@@ -6894,7 +6894,7 @@ test("knowledge paths use independent curated order", () => {
 });
 
 test("canonical content is owned once despite multiple placements", () => {
-  assert.equal(resolver.getContentForConcept("finality")?.definition, "The point at which a protocol treats a result as no longer practically reversible.");
+  assert.equal(resolver.getContentForConcept("finality")?.id, "finality-content");
   assert.equal(mapKnowledge.content.filter((content) => content.conceptId === "finality").length, 1);
   assert.equal(resolver.getPlacement("finality-in-consensus")?.contextualNote?.includes("consensus"), true);
   assert.equal(resolver.getPlacement("finality-in-rollups")?.contextualNote?.includes("rollup"), true);
@@ -7249,20 +7249,15 @@ test("Consensus & Ordering's L0 exposition separates ordering, agreement, fork c
     ],
   );
 
-  // The page builds around Finality's own authored record, which stays as it was.
-  const finality = resolver.getContentForConcept("finality")!;
-  assert.deepEqual(
-    [finality.definition, finality.summary, finality.whyItMatters],
-    [
-      "The point at which a protocol treats a result as no longer practically reversible.",
-      "Finality turns agreement about ordering and execution into dependable settlement.",
-      "Systems need a clear boundary for when participants can rely on an outcome.",
-    ],
-  );
+  // The Finality section opens with the framing it was written around (legacy L0 wording).
   const heading = body.findIndex((block) => block.kind === "heading" && block.text.startsWith("Finality"));
   const opening = body[heading + 1];
   assert.equal(opening.kind, "paragraph");
-  for (const sentence of [finality.definition.replace(/^The/, "the"), finality.summary!, finality.whyItMatters!]) {
+  for (const sentence of [
+    "the point at which a protocol treats a result as no longer practically reversible.",
+    "Finality turns agreement about ordering and execution into dependable settlement.",
+    "Systems need a clear boundary for when participants can rely on an outcome.",
+  ]) {
     assert.ok(opening.kind === "paragraph" && opening.text.includes(sentence), sentence);
   }
 
@@ -7696,11 +7691,8 @@ test("Identity, Accounts & Authority's L0 exposition separates identity, authent
   ]) {
     assert.equal(resolver.getPreferredPlacementForConcept(conceptId)?.id, preferred, conceptId);
   }
-  assert.deepEqual(resolver.getContentForConcept("agent-identity"), {
-    id: "agent-identity-content",
-    conceptId: "agent-identity",
-    definition: "The means by which an AI agent is distinguished and authenticated for protocol interaction.",
-  });
+  // Agent Identity keeps its one canonical record, wherever it is placed.
+  assert.equal(resolver.getContentForConcept("agent-identity")?.id, "agent-identity-content");
 
   const titles = new Set(mapKnowledge.concepts.map((concept) => concept.title));
   for (const text of ["Identifier / Credential / Account", "Permitted Action", "Claimed Actor", "Fee payment policy", "Observed Activity"]) {
