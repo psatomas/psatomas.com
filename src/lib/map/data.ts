@@ -10624,11 +10624,22 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Weighted aggregation trades that simplicity for another assumption. Weighting reports by stake, reputation or trading volume lets better-supported reports count for more, but it concentrates influence in whoever holds the largest weights, and weights that can be bought or manufactured, such as volume on a venue where anyone can trade with themselves, can be gamed by producing them.",
+          text: "Other rules trade that guarantee for different protections, each with a failure of its own.",
+        },
+        {
+          kind: "comparison",
+          label: "How aggregation rules differ",
+          dimensions: ["What it protects against", "When it fails"],
+          alternatives: [
+            { name: "Medianization", values: ["Fewer than half of the reports being dishonest", "Most reporters share a faulty source"] },
+            { name: "Weighted aggregation", values: ["Poorly supported reports counting as much as well-supported ones", "Weights can be bought or manufactured"] },
+            { name: "Outlier filtering", values: ["Isolated erroneous reports", "A sharp genuine move makes the first correct reports look like outliers"] },
+            { name: "Quorum aggregation", values: ["A few faulty reporters", "Too many reporters are offline, so no result forms"] },
+          ],
         },
         {
           kind: "paragraph",
-          text: "Outlier filtering and quorum aggregation each exchange one failure for another. Discarding reports far from the rest removes isolated errors, but during a sharp genuine move the first correct reports look like outliers, so filtering can delay a real change. Requiring a quorum resists a few faulty reporters, but when too many are offline no result forms at all. Choosing aggregation rules is choosing between wrong values and missing ones.",
+          text: "Weights deserve particular care: influence follows whoever holds the most of them, and some, such as trading volume on a venue where anyone can trade with themselves, can be produced at will. Across all the rules, the choice is between wrong values and missing ones: filtering delays real changes to avoid false ones, and a quorum yields nothing rather than an answer from too few.",
         },
       ],
     },
@@ -10658,6 +10669,11 @@ export const mapKnowledge: MapKnowledgeModel = {
       definition:
         "Oracle security is the protection of the whole path from an external source to the protocol action that uses its value, against anyone who could profit from a wrong value or from no value at all.",
       body: [
+        {
+          kind: "flow",
+          label: "Where a value can be attacked on its way to use",
+          stages: [["Source: manipulated or compromised"], ["Reporters: multiplied identities or collusion"], ["Aggregation: a rule gamed or reconfigured"], ["Delivery: delayed or withheld"], ["Consuming action on a false or stale value"]],
+        },
         {
           kind: "paragraph",
           text: "Much of it is decided by the consumer. A protocol can bound the damage any single value can do: limiting how far a value may move between updates, delaying actions that depend on a new value, capping how much can be settled against one feed, or comparing independent oracles and pausing when they disagree. Each bound costs responsiveness, and an oracle that is sound in general can still be unsafe for a consumer that stakes more on it than its security was built to carry.",

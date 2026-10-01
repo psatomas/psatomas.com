@@ -169,7 +169,15 @@
       "placements": [
         "oracle-aggregation"
       ],
-      "sourceFingerprint": "06a216817d058d71528fe24103e8bded4746c692f9967ab1426bd2485746eaa8"
+      "sourceFingerprint": "06a216817d058d71528fe24103e8bded4746c692f9967ab1426bd2485746eaa8",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "6a48ec5472335ad9449848da47c60ea5e60b10b90f1e1d7bc316fb99bb9051a7",
+        "note": "Four rules with two comparable attributes were spread over three paragraphs; the comparison sets them side by side, the median's precise guarantee stays in prose, and the closing paragraph keeps the weighting caveat and the wrong-versus-missing choice."
+      }
     },
     {
       "conceptId": "oracle-security",
@@ -213,7 +221,15 @@
         "oracle-security-in-domain-specific-security"
       ],
       "canonicalNote": "Also a leaf under Domain-Specific Security; the path is the same there.",
-      "sourceFingerprint": "ca2d76cda5590450971909d78fa99971a9aa253248a8188e8636f388a35d1c2a"
+      "sourceFingerprint": "ca2d76cda5590450971909d78fa99971a9aa253248a8188e8636f388a35d1c2a",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "flow"
+        ],
+        "resultFingerprint": "7b669ac9eb32bf80776ed8f3392f8fd90512950f0440f5b2b836440fed0ca97b",
+        "note": "The record defines oracle security as protecting a whole path that neither it nor the parent shows; the failure path draws the stages and the attack each admits, and the paragraphs on consumer bounds, irreversibility and administrative keys stay."
+      }
     },
     {
       "conceptId": "stablecoins",
