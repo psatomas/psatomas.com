@@ -765,7 +765,15 @@
       "placements": [
         "domain-specific-security"
       ],
-      "sourceFingerprint": "71b2732963124d979ad13ba41996e37092e5cfdbeb0fa69bfb78a78af39b8951"
+      "sourceFingerprint": "71b2732963124d979ad13ba41996e37092e5cfdbeb0fa69bfb78a78af39b8951",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "d5d793520c421cd441d23746faf07f81a8dfaf9238cff5c2cf33f8a19536854b",
+        "note": "Two attributes per domain were given in two separate paragraphs; the comparison joins them, and the cross-domain paths stay in prose."
+      }
     },
     {
       "conceptId": "formal-methods",
@@ -801,7 +809,15 @@
         "formal-methods-in-pre-launch-validation"
       ],
       "canonicalNote": "Also a leaf under Pre-Launch Validation.",
-      "sourceFingerprint": "30d9fda0074b1a87d239f424c3abbd1dfcb641a3afbc243f45b9a505c08b6d14"
+      "sourceFingerprint": "30d9fda0074b1a87d239f424c3abbd1dfcb641a3afbc243f45b9a505c08b6d14",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "2c6b6f45331e141f6fd38f6dce7991b20446aaabbebfb88cb4086f9621338422",
+        "note": "The effort-for-assurance trade among four techniques was one dense sentence; the comparison shows what each gives and what limits it."
+      }
     },
     {
       "conceptId": "incident-response",
@@ -843,7 +859,15 @@
         "incident-response-in-autonomous-security-responses"
       ],
       "canonicalNote": "Placed under Security (carrier), Protocol Operations, Disputes & Emergency Controls, Autonomous Security Responses and its preferred governance placement; the phases hold in every one.",
-      "sourceFingerprint": "3b6d73fe8bd844c01a1b1f2e15609acee9ba9318e28c58c5b0cc7fd4e7cdfdfc"
+      "sourceFingerprint": "3b6d73fe8bd844c01a1b1f2e15609acee9ba9318e28c58c5b0cc7fd4e7cdfdfc",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "flow"
+        ],
+        "resultFingerprint": "f29823c3feb2be5d1a2df54c0eab7a9827f4a06596c150c63b486d5d5e700506",
+        "note": "The record argues about timing (prepare before, warn early, explain after the fix, learn afterwards) without showing the course; the lifecycle places each point, and holds at all five placements."
+      }
     },
     {
       "conceptId": "architectural-tradeoffs",

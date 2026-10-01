@@ -13207,7 +13207,18 @@ export const mapKnowledge: MapKnowledgeModel = {
       body: [
         {
           kind: "paragraph",
-          text: "The techniques trade effort for assurance. Static analysis runs automatically and finds known patterns quickly, at the cost of false alarms and missed cases; symbolic execution explores program paths systematically until their number explodes; model checking examines every state of a bounded model; theorem proving establishes properties without bounds but demands expert effort for each one. Choosing among them depends on what is at stake and what can be afforded.",
+          text: "The techniques trade effort for assurance, and choosing among them depends on what is at stake and what can be afforded.",
+        },
+        {
+          kind: "comparison",
+          label: "How formal techniques trade effort for assurance",
+          dimensions: ["What it gives", "What limits it"],
+          alternatives: [
+            { name: "Static analysis", values: ["Automatic, fast detection of known patterns", "False alarms and missed cases"] },
+            { name: "Symbolic execution", values: ["Systematic exploration of program paths", "The number of paths explodes"] },
+            { name: "Model checking", values: ["Every state of a bounded model", "Nothing beyond the model's bounds"] },
+            { name: "Theorem proving", values: ["Properties established without bounds", "Expert effort for each property"] },
+          ],
         },
         {
           kind: "paragraph",
@@ -13346,6 +13357,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         "Incident response is the organized work of limiting harm once an attack or failure is under way: containing it, coordinating everyone who can help, informing those affected, and learning from what happened.",
       body: [
         {
+          kind: "flow",
+          label: "The course of an incident, from before it starts to after it ends",
+          stages: [["Preparation, before any incident"], ["Detection"], ["Containment"], ["Early warning: what users should do"], ["Fix, everywhere the flaw exists"], ["Full account of the cause"], ["Post-mortem"]],
+        },
+        {
           kind: "paragraph",
           text: "Speed comes from preparation. An exploit can complete in minutes, so the decisions that matter, such as who may pause what, whom to contact at exchanges, bridges and stablecoin issuers to freeze stolen funds, and how to reach the people holding emergency keys, have to be settled before an incident rather than during it. Response coordination that begins by working out who has authority has already lost time.",
         },
@@ -13427,11 +13443,19 @@ export const mapKnowledge: MapKnowledgeModel = {
       body: [
         {
           kind: "paragraph",
-          text: "What these domains share is a point of reliance. An oracle carries a claim about the outside world, a bridge or rollup carries a claim about another system's state, governance turns votes into authority, ordering decides who acts first, and a wallet turns a person's intent into a signature. In each, a system acts on something it cannot fully check itself, and that point of reliance is where value concentrates and attacks aim.",
+          text: "What these domains share is a point of reliance: in each, a system acts on something it cannot fully check itself, and that is where value concentrates and attacks aim. Each domain also has its own currency of attack, and knowing it shows which costs and limits actually deter an attacker there.",
         },
         {
-          kind: "paragraph",
-          text: "Each domain also has its own currency of attack. Against an oracle it is a moved price, against governance acquired voting weight, against a bridge or rollup a forged or unchallenged state claim, against users' transactions a profitable position in the order, and against a wallet a misleading request to sign. Knowing the currency shows which costs and limits actually deter an attacker in that domain.",
+          kind: "comparison",
+          label: "What each domain relies on, and what an attack on it is paid in",
+          dimensions: ["What is relied on", "What an attack is paid in"],
+          alternatives: [
+            { name: "Oracles", values: ["A claim about the outside world", "A moved price"] },
+            { name: "Governance", values: ["Votes turned into authority", "Acquired voting weight"] },
+            { name: "Bridges and rollups", values: ["A claim about another system's state", "A forged or unchallenged state claim"] },
+            { name: "Transaction ordering", values: ["Who acts first", "A profitable position in the order"] },
+            { name: "Wallets", values: ["A person's intent turned into a signature", "A misleading request to sign"] },
+          ],
         },
         {
           kind: "paragraph",
