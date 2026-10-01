@@ -14096,6 +14096,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         "Architectural tradeoffs are the competing qualities a protocol's structure must balance, such as independence between parts, flexibility for future change, simplicity, and the permanence of what has been deployed.",
       body: [
         {
+          kind: "tensions",
+          label: "What a protocol's structure balances",
+          pairs: [["Capability", "Verifiability"], ["Extensibility", "Attack surface"], ["Permanence of deployed code", "Ability to correct it"]],
+        },
+        {
           kind: "paragraph",
           text: "Complexity is a security cost. Each feature, parameter and extension point adds code paths and, more importantly, interactions with what already exists, and the number of interactions grows faster than the number of parts, so a slightly more capable design can be much harder to verify. Extensibility bought now is paid for in review effort and attack surface from then on.",
         },
