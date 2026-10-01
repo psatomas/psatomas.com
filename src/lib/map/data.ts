@@ -9772,7 +9772,17 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Availability guarantees differ in who must download how much. Publishing all data to the protocol makes every full node a witness, at a cost that grows with the data. Availability committees narrow the downloading to a designated set and replace each participant's own check with an assumption about enough of its members. Sampling spreads small random checks across many participants. Data publication through any of these is a choice of where the remaining assumption sits.",
+          text: "Availability guarantees differ in who must download how much, and each puts the assumption that remains in a different place, so choosing how data is published is choosing which assumption to rely on.",
+        },
+        {
+          kind: "comparison",
+          label: "How availability guarantees differ",
+          dimensions: ["Who downloads the data", "What a participant relies on", "Cost as the data grows"],
+          alternatives: [
+            { name: "Full publication", values: ["Every full node, all of it", "Its own download", "Grows for every full node"] },
+            { name: "Availability committee", values: ["A designated set of members", "Enough members holding and serving it", "Grows only for the committee"] },
+            { name: "Sampling", values: ["Many participants, a few random pieces each", "Its own samples and a correct encoding", "Stays small for each participant"] },
+          ],
         },
         {
           kind: "paragraph",
