@@ -15177,6 +15177,226 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "objectives-intents-content",
+      conceptId: "objectives-intents",
+      definition:
+        "Objectives and intents are the starting point of autonomous execution: what a principal wants, turned into requests and intents precise enough for a system to act on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Interpretation is where meaning is most easily lost. A goal expressed loosely, often in natural language, has to be turned into a precise specification of what to do, and everything after that step faithfully executes whatever the interpretation produced, so a misreading propagates without any later stage noticing. Reading the interpreted objective back to the principal before acting is the cheapest check available, and the one most worth making for consequential tasks.",
+        },
+        {
+          kind: "paragraph",
+          text: "The principal's constraints should pass through interpretation unchanged. A system that generates intents from a goal will fill in details by its own judgment, but limits the principal set explicitly, such as a maximum price, an allowed set of counterparties or a deadline, belong in the generated intent as hard execution constraints rather than as inputs the interpreter may weigh against others.",
+        },
+        {
+          kind: "paragraph",
+          text: "A task can finish autonomously only if its success can be recognized. Success criteria stated in terms a machine can check, such as a balance reached, a position closed or an output verified, let execution end on its own and be confirmed; objectives without them require someone to judge when the work is done, which brings a person back into the loop at the end.",
+        },
+      ],
+    },
+    {
+      id: "execution-planning-content",
+      conceptId: "execution-planning",
+      definition:
+        "Execution planning turns an objective into an ordered set of actions, with the dependencies between them, the resources they will need and the alternatives to use when something goes wrong.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Action dependencies decide what can run together and what must be grouped. Steps that need each other's results have to run in sequence, independent ones can run in parallel, and steps that must succeed or fail together are best placed in a single transaction where possible, so that a failure partway cannot leave the work half done.",
+        },
+        {
+          kind: "paragraph",
+          text: "Resource estimation is made against conditions that will have changed by execution time. Fees, prices, available liquidity and computation all move between planning and acting, so plans carry margins and checks that halt a step whose actual costs exceed the estimate, rather than discovering the shortfall after several steps have already run.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contingency planning decides in advance what to do when a step fails. Naming an alternative for each likely failure, such as another route, a smaller amount or a later attempt, and the conditions under which the whole task should be abandoned, spares the system from improvising under time pressure, which is when automated decisions are least reliable.",
+        },
+      ],
+    },
+    {
+      id: "action-selection-content",
+      conceptId: "action-selection",
+      definition:
+        "Action selection is choosing, from the actions possible at a given moment, the one an autonomous system will take, by generating candidates, estimating their costs and outcomes, and comparing them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Selection can be no better than the candidates generated. An action never proposed cannot be chosen, so the way candidates are produced, whether enumerated from known options or suggested by a model, sets a ceiling on the result, and a narrow or repetitive set of candidates quietly limits every decision made from it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Cost estimation has to include what an action exposes as well as what it charges. Beyond fees, an action's cost includes the price impact it causes, the value others can extract by seeing it, and the chance of failure multiplied by what failure would cost, so the candidate with the lowest posted price can be the most expensive once these are counted.",
+        },
+        {
+          kind: "paragraph",
+          text: "Choosing the candidate with the best estimate favors candidates whose estimates were too optimistic. Every estimate carries error, so the one that looks best is disproportionately likely to have been overrated and its realized value tends to disappoint; execution optimization that discounts uncertain estimates, or prefers options whose value is better known, counteracts this. Once an action is chosen, execution routing decides the path it takes.",
+        },
+      ],
+    },
+    {
+      id: "simulation-content",
+      conceptId: "simulation",
+      definition:
+        "Simulation, in autonomous execution, is running a proposed action against a model or a copy of the relevant state to see what it would do before doing it for real.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Simulation divergence has identifiable sources. A simulation run against a copy of current state does not include transactions that will be ordered before the real one, block-level values such as the time or the fee level that will apply, oracle updates that may land in between, or external services that answer differently the second time; each is a gap between what was simulated and what will execute.",
+        },
+        {
+          kind: "paragraph",
+          text: "Simulations can be deceived. A contract can detect features of a simulated environment and behave harmlessly there while behaving differently in a real block, so a clean simulation of an interaction with untrusted code is weak evidence, and safety cannot rest on simulation alone.",
+        },
+        {
+          kind: "paragraph",
+          text: "A simulation is worth most when its prediction becomes an enforced condition. Turning the predicted result into a minimum acceptable outcome that the transaction itself checks, so that execution fails rather than proceeds if reality departs from the simulation, converts a forecast into a limit on what the action is allowed to do.",
+        },
+      ],
+    },
+    {
+      id: "execution-policies-content",
+      conceptId: "execution-policies",
+      definition:
+        "Execution policies are the rules an autonomous system must satisfy before it acts, along with the engines that test each proposed action against them and whatever carries out their verdict.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Policies are easiest to trust when written in a form that can be analyzed. Declarative rules in a dedicated policy language can be checked for conflicts and gaps and reviewed by people who do not read code, while policies buried in general program logic can do anything and are verifiable only as any other program is; when rules do conflict, a fixed precedence, such as letting any denial override any permission, keeps outcomes predictable.",
+        },
+        {
+          kind: "paragraph",
+          text: "A policy engine must decide what happens when it cannot decide. If the data a rule needs is missing or the engine itself is unavailable, failing closed, refusing the action, keeps the system safe at the cost of halting it, while failing open keeps it running at the cost of acting unchecked; for actions that move value, the safe default is to refuse.",
+        },
+        {
+          kind: "paragraph",
+          text: "Risk checks are most useful when they read current conditions. An action acceptable in calm markets can be dangerous in volatile ones, so checks that take account of present prices, exposure and recent activity catch what fixed thresholds miss. Policy violations, including attempts that were blocked, are themselves signals worth recording, since a pattern of near misses often precedes a real failure.",
+        },
+      ],
+    },
+    {
+      id: "execution-authorization-content",
+      conceptId: "execution-authorization",
+      definition:
+        "Execution authorization is the decision, made when an autonomous system is about to act, that a specific action is permitted, by whom it is approved and within what scope.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An approval should bind exactly what was approved. Authorizing a class of actions, or an action described in general terms, leaves room for the action actually executed to differ from the one considered; approvals tied to specific parameters, or to the exact transaction to be submitted, and set to expire, ensure that what runs is what was authorized, under the conditions in which it was authorized.",
+        },
+        {
+          kind: "paragraph",
+          text: "Approval thresholds route actions by consequence. Routine, small and reversible actions can proceed automatically, larger ones can require a person's approval, and the largest or least reversible can require several independent approvers, which spends human attention where mistakes would cost most.",
+        },
+        {
+          kind: "paragraph",
+          text: "Authorization scopes keep each grant as narrow as its task. A grant limited to one task, one counterparty, one period or one kind of action leaves little to misuse if it leaks or the agent holding it goes astray, and scopes that end with the task they were issued for keep authority from accumulating over time.",
+        },
+      ],
+    },
+    {
+      id: "execution-environments-content",
+      conceptId: "execution-environments",
+      definition:
+        "Execution environments are the runtime settings in which an autonomous system's actions are carried out: what the running code can reach, what it is isolated from, and how long its surroundings persist.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Secrets belong outside the environment where untrusted work happens. Agents often generate and run code, process files and call outside services, and any of these can be turned against the environment they run in, so keys and credentials are best kept in a separate signer or vault that receives requests from the environment and applies its own checks, rather than inside the sandbox where a compromise could use them directly.",
+        },
+        {
+          kind: "paragraph",
+          text: "What an environment can reach decides what a compromise can do. Restricting network access to an allowed list of endpoints, and file and process access to what the task needs, limits both what a hijacked agent can damage and where it can send what it has learned; environment access granted broadly for convenience is access an attacker inherits.",
+        },
+        {
+          kind: "paragraph",
+          text: "Ephemeral environments, created for one task and destroyed after it, give each task a clean start. Nothing planted during one task survives into the next, and no data from one task leaks into another, at the cost of provisioning everything each task needs, credentials included, afresh and narrowly each time.",
+        },
+      ],
+    },
+    {
+      id: "action-execution-content",
+      conceptId: "action-execution",
+      definition:
+        "Action execution is the step at which an autonomous system actually acts: constructing and submitting transactions or calling tools, and following each action until its outcome is known.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Submitting a transaction starts a process rather than completing one. A submitted transaction may wait, be dropped, be replaced, be included and fail, be included and succeed, or be reversed by a reorganization, so execution has to follow each one until its outcome is final. Resubmitting with the same sequence number replaces a stuck transaction, while resubmitting with a new one can carry out the same action twice.",
+        },
+        {
+          kind: "paragraph",
+          text: "Idempotency is what makes retrying safe. Giving each intended action a unique identity, such as a fixed sequence number or a request identifier the receiving side records, ensures that a retry after an unclear failure cannot apply the action a second time, which matters most precisely when the system cannot tell whether the first attempt succeeded.",
+        },
+        {
+          kind: "paragraph",
+          text: "Actions spanning several steps can stop partway, and partial execution is safe only if progress is recorded. Writing down durably which steps have completed lets a restarted system resume where it stopped instead of starting over, and confirming each step's effect by reading the resulting state, rather than trusting a tool's report of success, keeps that record true.",
+        },
+      ],
+    },
+    {
+      id: "verification-settlement-content",
+      conceptId: "verification-settlement",
+      definition:
+        "Verification and settlement close out an autonomous action: confirming that it produced the intended outcome, recording evidence of what happened, and completing the transfers it was meant to cause.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Verification happens at more than one level. Confirming that a transaction executed as constructed is straightforward, since its receipt and the resulting state show it; confirming that the action achieved the principal's objective is harder, especially when the effect lies outside the chain, as with a service delivered or data supplied. Outcome verification has to be designed for the level that matters, not only the level that is easy to check.",
+        },
+        {
+          kind: "paragraph",
+          text: "Execution receipts make outcomes provable later. A signed acknowledgment from a counterparty or service, bound to the specific request it answers so it cannot be reused for another, records that something was delivered or received, and such receipts are what a dispute is decided on when the parties disagree about what happened.",
+        },
+        {
+          kind: "paragraph",
+          text: "Settlement can wait for a dispute window. When outcomes are hard to verify immediately, holding payment for a period during which either side can raise an execution dispute, with evidence and perhaps a bond, lets most exchanges settle automatically while leaving a path to contest the few that went wrong; the length of that window trades the speed of settlement against the time available to notice a problem.",
+        },
+      ],
+    },
+    {
+      id: "execution-monitoring-content",
+      conceptId: "execution-monitoring",
+      definition:
+        "Execution monitoring watches an autonomous system while it acts: it tracks progress, records what the system does and why, and raises signals when behavior departs from what is expected.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Monitoring an autonomous system means recording decisions as well as actions. Knowing that an agent sent a transaction says little without the inputs it saw, the model output it acted on and the policy checks it passed, so useful observability links each action to the reasoning and data behind it, making an unexpected action explainable afterwards.",
+        },
+        {
+          kind: "paragraph",
+          text: "Progress tracking catches failures that produce no error. An agent stuck repeating a step, spending its budget faster than its plan allows or drifting from the expected sequence of actions may never raise an exception, so monitoring compares actual progress and spending against the plan and treats unexpected patterns, not only failures, as signals.",
+        },
+        {
+          kind: "paragraph",
+          text: "Audit trails are worth most when the monitored party cannot rewrite them. Records that an agent or its operator could alter after the fact protect no one in a dispute, so trails are made tamper-evident, by chaining each entry to the previous one or anchoring periodic summaries on a ledger, so that any later change to the record shows.",
+        },
+      ],
+    },
+    {
+      id: "execution-recovery-content",
+      conceptId: "execution-recovery",
+      definition:
+        "Execution recovery is how an autonomous system responds when an action fails or goes wrong: deciding whether to retry, undo, compensate or stop, and carrying that decision out safely.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The right response depends on the kind of failure. A transient failure, such as a congested network or an unavailable service, is worth retrying; a deterministic one, such as an action the rules forbid or a price that will not return, fails again on every retry; and a failure that leaves state uncertain or unsafe calls for stopping before anything else is attempted. Classifying execution failures before responding keeps a system from repeating what cannot succeed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Confirmed on-chain effects cannot be rolled back, only offset. Once a transaction is final, recovery moves forward through compensating actions, such as buying back what was sold or returning what was sent, which cost money and may not restore the original position exactly, so steps that can be undone, held in escrow or delayed before taking effect are worth preferring wherever a mistake is plausible.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recovery at scale can cause its own failures. When many agents retry at once after an outage, their combined retries can overwhelm the service as it recovers and knock it down again; spacing retries out with increasing delays and some randomness, and capping how many are attempted, lets recovering systems come back without a stampede.",
+        },
+      ],
+    },
+    {
       id: "autonomous-organizations-content",
       conceptId: "autonomous-organizations",
       definition: "Autonomous organizations coordinate membership, authority, resources, work, accountability, and relationships across organizational boundaries through defined institutional and technical mechanisms.",
