@@ -392,7 +392,15 @@
         "proposals-in-organizational-governance"
       ],
       "canonicalNote": "Also a leaf under Organizational Governance; the lifecycle is the same.",
-      "sourceFingerprint": "09cf9056a3ced1a6f115bd9fa422cad21ab084c6c218d8d0dc8b69baa9d672f7"
+      "sourceFingerprint": "09cf9056a3ced1a6f115bd9fa422cad21ab084c6c218d8d0dc8b69baa9d672f7",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "flow"
+        ],
+        "resultFingerprint": "aa2ff22be2a6385dfd9be6a87fd1666278e497416a53947994be31479c8a5164",
+        "note": "The lifecycle's shape, an early cheap exit for weak proposals and a delay before execution for review and exit, is drawn after the paragraph that argues it; the stages are named without teaching the children."
+      }
     },
     {
       "conceptId": "modularity",

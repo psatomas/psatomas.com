@@ -12389,6 +12389,11 @@ export const mapKnowledge: MapKnowledgeModel = {
           kind: "paragraph",
           text: "The proposal lifecycle buys time for scrutiny. Deliberation and signaling votes test support before a binding vote, letting weak proposals fail cheaply, and the periods between submission, voting and execution give reviewers time to find problems and give those who disagree time to react. Shortening those periods speeds governance up and helps anyone who wants a change to pass unexamined.",
         },
+        {
+          kind: "flow",
+          label: "Where a proposal can stop, and where scrutiny gets its time",
+          stages: [["Submission past the threshold"], ["Deliberation"], ["Signaling vote"], ["Weak support: fails cheaply", ["Binding vote", "Delay for review and exit", "Execution"]]],
+        },
       ],
     },
     {
