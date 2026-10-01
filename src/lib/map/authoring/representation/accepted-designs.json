@@ -127,7 +127,15 @@
       "placements": [
         "wallets"
       ],
-      "sourceFingerprint": "5566c11aca42a878aae99c0c7a9180e76ff2a704cafd3b083eff17ba2822734f"
+      "sourceFingerprint": "5566c11aca42a878aae99c0c7a9180e76ff2a704cafd3b083eff17ba2822734f",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "distinction"
+        ],
+        "resultFingerprint": "a80b1ed656ed1a9c4c6249ff1fe84c08efd2c4e344f0f2e8ddb16f9146b67bb2",
+        "note": "The gap between what is shown and what is signed is the record's central security point and a conflation readers make; the parent only separates account from wallet. The paragraph explaining it stays."
+      }
     },
     {
       "conceptId": "oracle-aggregation",
