@@ -12943,6 +12943,406 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "security-models-content",
+      conceptId: "security-models",
+      definition:
+        "A security model is the explicit statement of what a system defends against and under what conditions: the adversaries it assumes, the boundaries it draws between trusted and untrusted parts, and the assumptions its guarantees depend on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every security claim is conditional, and the conditions age. A guarantee that holds while an adversary controls less than some share of resources, or while a cryptographic problem stays hard, can quietly lapse as computation gets cheaper, as stake concentrates, or as a system grows past the scale its assumptions were made for. Security assumptions need re-examining over a system's life, not only at its design.",
+        },
+        {
+          kind: "paragraph",
+          text: "Trust boundaries are where most failures enter. Wherever data or control passes from a less trusted part to a more trusted one, such as an external call, an oracle input or a user-supplied parameter, the receiving side must check what it accepts, and a model that draws its boundaries in the wrong place leaves unchecked exactly the inputs an attacker controls.",
+        },
+        {
+          kind: "paragraph",
+          text: "Defense in depth adds protection only when its layers fail independently. Controls written by the same team, relying on the same library or depending on the same key give the appearance of depth while sharing one weakness, so the useful question about each added layer is what it would still stop if every other layer had already failed.",
+        },
+      ],
+    },
+    {
+      id: "security-properties-content",
+      conceptId: "security-properties",
+      definition:
+        "Security properties are the specific protections a system claims to provide, such as preventing invalid states, guaranteeing progress, keeping data unaltered, keeping information private, keeping the service usable and admitting every valid action.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Public ledgers buy integrity and availability by replicating everything to everyone, which is exactly what makes confidentiality hard. Data that every node holds cannot be kept secret by access control, so confidentiality has to be added with cryptography, such as encryption or proofs that reveal only a conclusion, at a cost in computation and complexity. Because published data is kept indefinitely, a confidentiality failure on a ledger is also permanent.",
+        },
+        {
+          kind: "paragraph",
+          text: "Availability concerns the service as a whole; censorship resistance concerns each valid action. A network can be available to almost everyone while one party's transactions are consistently excluded, so the two are judged separately: one by how much of the time the system works, the other by how long a determined excluder can keep a given action out and at what cost.",
+        },
+        {
+          kind: "paragraph",
+          text: "Properties do not compose on their own. An application running on a chain with strong integrity can still corrupt its own state through a flawed contract, and a system built from components that are each safe can be unsafe in how they interact, so every claimed property needs a statement of the scope at which it holds.",
+        },
+      ],
+    },
+    {
+      id: "threat-modeling-content",
+      conceptId: "threat-modeling",
+      definition:
+        "Threat modeling is the systematic analysis of how a system could be attacked: what an attacker might want, which paths could get them there, and which of those paths the design must close.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Threat modeling starts from the attacker's goal and reasons back. An attack tree breaks a goal, such as draining a pool or halting a chain, into the alternative ways of reaching it and the steps each requires, and assigning a cost to each step shows the cheapest path. Effective security is set by that cheapest path, so strengthening an expensive branch while a cheap one remains open buys little.",
+        },
+        {
+          kind: "paragraph",
+          text: "In protocols, an attacker's payoff can often be estimated. The value an attack could capture, set against what each path costs, shows which threats are worth an attacker's effort, and risk assessment that ranks threats by that comparison directs scarce review time toward the paths that are both feasible and profitable.",
+        },
+        {
+          kind: "paragraph",
+          text: "The attack surface grows with every feature, integration and upgrade path. A new oracle, a new collateral token or a new administrative function each adds vectors an earlier model did not consider, so threat modeling done once at design time goes stale. It is most useful early, when its findings can still change the design, and repeated whenever the system changes, so that security requirements remain testable statements about the system as it actually is.",
+        },
+      ],
+    },
+    {
+      id: "attack-classes-content",
+      conceptId: "attack-classes",
+      definition:
+        "Attack classes are recurring patterns of adversarial behavior, such as flooding, posing as many identities, isolating a node, replaying messages, coordinating with others or causing harm at little cost, that appear across very different systems.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Denial of service exploits any asymmetry of cost. Wherever an attacker can make others do expensive work cheaply, such as verifying a large invalid proof, running an unbounded loop or relaying data that is never paid for, it can exhaust a defender's resources at little expense to itself. The general defense is to make whoever requests work pay for it before it is done, or to bound how much work any one request can cause.",
+        },
+        {
+          kind: "paragraph",
+          text: "An eclipse attack surrounds a node so that every peer it hears from is controlled by the attacker, giving it a false view of the network: a payment that never confirmed elsewhere, a chain that is not the canonical one, or simply nothing. The danger is greatest for anything that draws its view of a chain from few sources, such as light clients and the relays that feed bridges.",
+        },
+        {
+          kind: "paragraph",
+          text: "Attacks chain together. Creating many identities is often the step that makes an eclipse possible, by filling a node's connection slots, and an eclipse in turn sets up a double spend against the isolated node. Seeing classes as links in a chain rather than separate threats shows where breaking a single link, such as how peers are selected, defeats several attacks at once.",
+        },
+      ],
+    },
+    {
+      id: "vulnerabilities-exploits-content",
+      conceptId: "vulnerabilities-exploits",
+      definition:
+        "A vulnerability is a flaw through which a system can be made to violate a property it is meant to hold; an exploit is a concrete way of using that flaw, usually to take value or control.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On public chains, the time between discovery and exploitation can be zero. Contract code is visible to everyone and often cannot be patched quickly, so a vulnerability known to anyone outside the team may be used within minutes. Vulnerability disclosure therefore has to deliver a fix, or move the funds at risk, before details become public, and responders sometimes race an attacker by using the flaw themselves to move funds to safety.",
+        },
+        {
+          kind: "paragraph",
+          text: "Copied code shares its vulnerabilities. Many deployments reuse the same contracts with small changes, so an exploit against one is a recipe against all of them, and once the first exploit transaction is public, others can adapt it to every copy before their operators react.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bug bounties compete with exploitation. A finder who could take the funds at risk weighs that prize, with its legal and practical risks, against what reporting pays, so bounties sized as a share of the value at risk attract honest finders and those for whom reporting is close to the better option. A bounty sets a price for disclosure; it does not make anyone report.",
+        },
+      ],
+    },
+    {
+      id: "smart-contract-security-content",
+      conceptId: "smart-contract-security",
+      definition:
+        "Smart contract security concerns the flaws in contract code and its interactions that let someone make a contract behave in ways its authors did not intend, usually to take the assets it holds.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Most contract vulnerabilities come from trusting what the contract does not control. Calling out lets other code run before the call returns, and code that re-enters the contract in that window is what reentrancy exploits; likewise every value received from outside, such as a price, a token balance or a caller-supplied parameter, may have been chosen by an attacker. Finishing all checks and state updates before calling out, and treating external values as hostile until verified, removes much of that risk.",
+        },
+        {
+          kind: "paragraph",
+          text: "Small errors become large through repetition. A rounding error of a fraction of a unit, if it always favors the caller, can be triggered thousands of times until it drains a pool, so contract arithmetic has to round in the protocol's favor and guard against values that overflow or truncate. Access control flaws are often simpler still: a function left callable by anyone, or an initializer that someone else can run first.",
+        },
+        {
+          kind: "paragraph",
+          text: "Flash loans did not create new vulnerabilities; they removed the capital needed to exploit existing ones. Any flaw that would pay given a large enough position can now be used by anyone able to pay transaction fees, since the position can be borrowed and repaid within the attacking transaction, so a design that assumes attackers cannot afford something assumes nothing at all.",
+        },
+      ],
+    },
+    {
+      id: "protocol-security-content",
+      conceptId: "protocol-security",
+      definition:
+        "Protocol security is the security of a protocol as a whole system: its execution, consensus, networking, cryptography, data and incentives, and the assumptions each of these makes about the others.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The layers depend on each other in one direction. Execution assumes that consensus orders transactions as specified, consensus assumes the network delivers messages within its bounds, and all of them assume the cryptography holds; an attack on a more foundational layer invalidates the guarantees of every layer that depends on it, usually in ways those layers cannot detect from inside.",
+        },
+        {
+          kind: "paragraph",
+          text: "Cryptographic failures arrive slowly and then completely. Algorithms weaken gradually as analysis improves and computing changes, with threats such as large quantum computers to today's signature schemes, and migrating a live protocol to new primitives can take years, so the ability to replace algorithms without breaking accounts or history is itself part of a protocol's security.",
+        },
+        {
+          kind: "paragraph",
+          text: "Economic attacks use the rules rather than break them. An attacker who combines legitimate mechanisms in an unintended way, by timing, by scale or by holding several roles at once, exploits nothing a code fix can remove; the defense is a change to the incentives or rules themselves, which is why protocol security reviews have to examine what the rules permit, not only whether the code implements them.",
+        },
+      ],
+    },
+    {
+      id: "correctness-content",
+      conceptId: "correctness",
+      definition:
+        "Correctness means a system does what its specification says it should, in every situation the specification covers.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Correctness is measured against a specification, and inherits its gaps. Code can conform perfectly to a specification that permits the wrong behavior or omits a case nobody considered, and many costly failures come from exactly that. Validation, asking whether the specification describes what is actually wanted, matters as much as verification, asking whether the code meets it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Invariants connect intent to checking. A statement that must hold in every reachable state, such as that recorded balances never exceed the assets held, can be asserted at runtime so that a violation fails the transaction instead of corrupting state, tested by searching for inputs that break it, and proven for all inputs. The same invariant serves all three, which makes writing it down one of the most useful steps toward correctness.",
+        },
+        {
+          kind: "paragraph",
+          text: "A correctness proof covers a model, not the running system. It shows that a description of the code meets its specification under assumptions about the compiler, the execution environment and the libraries involved; a compiler bug, a gap between the modeled and the real environment, or an unexamined dependency can still make correct source code behave incorrectly.",
+        },
+      ],
+    },
+    {
+      id: "formal-methods-content",
+      conceptId: "formal-methods",
+      definition:
+        "Formal methods are mathematically rigorous techniques for describing a system and establishing its properties, through analysis that covers every case within a model instead of sampling some of them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The techniques trade effort for assurance. Static analysis runs automatically and finds known patterns quickly, at the cost of false alarms and missed cases; symbolic execution explores program paths systematically until their number explodes; model checking examines every state of a bounded model; theorem proving establishes properties without bounds but demands expert effort for each one. Choosing among them depends on what is at stake and what can be afforded.",
+        },
+        {
+          kind: "paragraph",
+          text: "Smart contracts suit these methods unusually well. They are small compared with typical software, deterministic, hold large value and are hard to change after deployment, so the effort of rigorous analysis buys more than it would in systems that can be patched freely and whose behavior depends on unpredictable environments.",
+        },
+        {
+          kind: "paragraph",
+          text: "Applied to designs rather than code, formal methods find a different class of error. Model checking a consensus or messaging protocol before it is implemented can expose interleavings of messages and failures that break its guarantees, design flaws that verifying the code later would only confirm the code faithfully implements.",
+        },
+      ],
+    },
+    {
+      id: "testing-content",
+      conceptId: "testing",
+      definition:
+        "Testing checks a system's behavior by running it on chosen or generated inputs and comparing what happens with what should happen.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Tests written by hand check the cases their authors thought of, which are rarely the ones that fail. Fuzzing and property-based testing generate large numbers of inputs, including sequences of many transactions, and check that stated properties survive all of them, finding the combinations and edge values people overlook.",
+        },
+        {
+          kind: "paragraph",
+          text: "Much of what breaks lies between components. A contract that behaves correctly in isolation can fail against the real tokens, oracles and protocols it integrates with, whose behavior may differ from what its authors assumed. Integration testing against a copy of live chain state, with the actual deployed contracts, exposes those assumptions before users do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Most tests confirm that intended behavior works; adversarial testing asks how the system could be made to pay out. Tests written from an attacker's point of view, trying to profit through unusual ordering, extreme amounts or borrowed capital, probe the paths that matter for security. High coverage of code lines says little here, since a line can run in a test without ever running in the state that makes it dangerous.",
+        },
+      ],
+    },
+    {
+      id: "auditing-content",
+      conceptId: "auditing",
+      definition:
+        "Auditing is independent expert review of a system's code and design, over a defined scope and period, aimed at finding flaws before attackers do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An audit covers a particular version of particular code. Changes made after it, components left outside its scope such as dependencies, deployment scripts or off-chain services, and configuration chosen at deployment are not covered, and the code actually deployed must be checked against the version that was reviewed. Many incidents occur in exactly these gaps.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reviewers find different things. Independent audits of the same code tend to report overlapping but distinct findings, and review contests that pay many reviewers per valid finding widen coverage further, so assurance grows with the number and independence of reviews, while no single review finds everything.",
+        },
+        {
+          kind: "paragraph",
+          text: "Remediation can introduce new flaws. Fixes are written quickly, often late, and change code that was reviewed in its earlier form, so they need review of their own, and audit findings that were acknowledged rather than fixed remain risks the system carries. For systems that keep changing, continuous auditing, reviewing each change as it is made, keeps assurance attached to the code actually running.",
+        },
+      ],
+    },
+    {
+      id: "access-control-content",
+      conceptId: "access-control",
+      definition:
+        "Access control is the set of mechanisms that decide which parties may perform which operations on a system, combining authentication of who is acting with authorization of what they may do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Least privilege matters most where a single key holds every power. A contract whose one administrator can pause, change parameters, upgrade and mint turns any compromise of that key into total compromise, while separate roles for each power, each held by the party that needs it and no one else, limit what any stolen key can do. Role-based access control makes that separation explicit, at the cost of more roles to manage and secure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Privilege escalation follows the relationships between roles. A role that may grant roles is in effect every role it can grant, and an operation that runs code chosen by its caller with the contract's own privileges hands those privileges to whoever chooses the code. Mapping which roles can reach which others shows the true privilege of each.",
+        },
+        {
+          kind: "paragraph",
+          text: "Authorization depends on asking about the right party. Checking the original signer of a transaction rather than the immediate caller lets any contract the user happens to interact with act with the user's authority, so authorization decisions have to concern the party actually making the call. Authentication establishes who that party is; what it may do is decided separately.",
+        },
+      ],
+    },
+    {
+      id: "key-security-content",
+      conceptId: "key-security",
+      definition:
+        "Key security covers the cryptographic keys that confer control over accounts, contracts and infrastructure: how they are generated, held, used, rotated and recovered without falling into the wrong hands.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Keys are rarely broken; they are taken or misused. Malware, phishing, insiders and social engineering reach keys through the people and machines that use them, which makes key security mostly a matter of operations rather than cryptography. Social engineering in particular targets the moment of use, persuading a legitimate holder to sign something they should not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hardware security modules and threshold schemes protect the key, not the decision to use it. A module that never releases its key will still sign whatever authorized software asks it to, and several signers of a multisignature account who review a transaction through the same compromised interface will all approve the same malicious request. Protection holds only when each signer can confirm independently, on its own device, what is actually being signed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Key rotation limits how long a stolen or leaked key stays useful, but only where the system can change which keys it trusts, and only if rotation is practiced. Validators, bridge operators and administrators whose keys are fixed in contracts or configuration often rotate rarely, so when a compromise forces a rotation, the procedure is being exercised for the first time under pressure.",
+        },
+      ],
+    },
+    {
+      id: "operational-security-content",
+      conceptId: "operational-security",
+      definition:
+        "Operational security addresses a system as it is actually deployed and run: its infrastructure, deployment process, configuration, dependencies and the people with access to them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Many losses begin with a configuration or deployment mistake rather than a flaw in the code. A parameter set wrong, a contract left uninitialized for anyone to claim, or administrative rights assigned to the wrong address can undo a carefully reviewed design, which is why deployment needs the same review as code, and a check afterwards that the state on-chain matches what was intended.",
+        },
+        {
+          kind: "paragraph",
+          text: "Users reach contracts through layers the contracts do not control. A compromised front-end, a hijacked domain or a malicious update to a software dependency can present users with transactions that drain them while the contracts remain sound, so supply chain security extends to everything between the user and the chain: hosting, domains, libraries and the build process.",
+        },
+        {
+          kind: "paragraph",
+          text: "People with access are part of the attack surface. Insider threats, whether malicious or coerced, are limited by separating duties so that no one person can deploy, configure and approve a change alone, and by keeping records of who did what. Operational failures nobody intended, such as an expired certificate or a crashed server, call for the same discipline, since an attacker often needs only to arrive while one is in progress.",
+        },
+      ],
+    },
+    {
+      id: "security-monitoring-content",
+      conceptId: "security-monitoring",
+      definition:
+        "Security monitoring is the continuous observation of a system and its environment for signs of attack or failure, producing alerts during an incident and evidence after it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Attacks on public chains often show themselves before they strike. An attacker typically funds an address, deploys a contract and sometimes tests it before the exploit itself, and on-chain monitoring that watches for such patterns, such as new contracts calling into a protocol in unusual ways or funds arriving from privacy services, can raise an alarm minutes or hours ahead. Where the exploit transaction passes through a public mempool, defenders may even see it before it is included.",
+        },
+        {
+          kind: "paragraph",
+          text: "Alerts are worth only the response they trigger. Monitoring tuned to catch everything floods its readers with false positives until real alerts are ignored, and an alert that reaches no one able to act in the middle of the night protects nothing, so detection rules, thresholds and recipients have to be designed together with the response.",
+        },
+        {
+          kind: "paragraph",
+          text: "After an incident, the public ledger becomes the main evidence. Forensics can trace stolen funds through every transfer, identify the contracts and addresses involved and reconstruct the exact sequence of the attack, which supports recovery and any legal action; the trail weakens where funds pass through mixing services or across chains, and it identifies addresses, not people.",
+        },
+      ],
+    },
+    {
+      id: "incident-response-content",
+      conceptId: "incident-response",
+      definition:
+        "Incident response is the organized work of limiting harm once an attack or failure is under way: containing it, coordinating everyone who can help, informing those affected, and learning from what happened.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Speed comes from preparation. An exploit can complete in minutes, so the decisions that matter, such as who may pause what, whom to contact at exchanges, bridges and stablecoin issuers to freeze stolen funds, and how to reach the people holding emergency keys, have to be settled before an incident rather than during it. Response coordination that begins by working out who has authority has already lost time.",
+        },
+        {
+          kind: "paragraph",
+          text: "Disclosure pulls in two directions. Users need to know quickly what to do, such as revoking approvals or withdrawing funds, but a detailed account of an unfixed flaw can guide copycats against the same or similar code. Incident disclosure therefore usually warns early about what to do and explains the cause once the flaw is fixed everywhere it is known to exist.",
+        },
+        {
+          kind: "paragraph",
+          text: "Post-mortems turn an incident into knowledge. A careful account of the root cause, the timeline and why existing defenses did not catch the problem helps the affected system improve and, when published, helps others running similar code or designs; accounts written to assign blame tend to hide exactly the details that would prevent a repeat.",
+        },
+      ],
+    },
+    {
+      id: "resilience-content",
+      conceptId: "resilience",
+      definition:
+        "Resilience is a system's ability to keep providing its essential functions through faults and disruptions, at reduced capacity if necessary, and to return to full operation afterwards.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Graceful degradation requires deciding in advance what matters most. A system that can stop accepting deposits while still honoring withdrawals, fall back to a secondary price source, or run more slowly instead of halting keeps its most important promises when parts of it fail, but only if those priorities and fallbacks were designed before the failure rather than improvised during it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Efficiency and resilience pull against each other. Redundancy costs money, and systems tuned for efficiency tend to concentrate on the cheapest provider, region or implementation, so many independent-looking nodes can depend on the same cloud host or software and fail together. Resilience is measured by the failures a system survives, and the ones that test it are usually correlated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recovering a decentralized system is itself a coordination problem. When a chain halts, its validators must agree off-chain on the state to restart from and act together to restart it, and when a safety failure has already let invalid results through, undoing them may require a change that participants must choose to adopt. Disaster recovery plans prove their worth in rehearsal, long before they are needed.",
+        },
+      ],
+    },
+    {
+      id: "security-economics-content",
+      conceptId: "security-economics",
+      definition:
+        "Security economics is the analysis of security in terms of costs and incentives: what defense costs, what an attack would cost and gain, and which guarantees rest on economics rather than on mathematics.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Cryptographic and economic security scale differently. Breaking a well-chosen signature scheme is infeasible whatever the signature protects, so cryptographic security does not weaken as value grows, while economic security is a finite cost an attacker can pay if the reward is large enough. Systems combine the two, typically relying on cryptography for who authorized what and on economics for agreement on order, so knowing which guarantee rests on which shows where growing value increases risk.",
+        },
+        {
+          kind: "paragraph",
+          text: "Defenders pay continuously and attackers pay once. Security spending through issuance or fees accrues every block, while an attacker needs the required resources only at the moment of attack, so it can wait for the moment they are cheapest, such as when the asset securing the system has fallen in price. Economic security is therefore best judged at its weakest recent point, not its average.",
+        },
+        {
+          kind: "paragraph",
+          text: "Security inheritance makes security a matter of dependencies as much as amounts. A system that borrows another's consensus, verification or stake inherits that system's assumptions and shares its capacity with everyone else borrowing it, so its economic security is not a figure it controls but one set elsewhere, which changes when the lender's conditions do.",
+        },
+      ],
+    },
+    {
+      id: "upgrade-security-content",
+      conceptId: "upgrade-security",
+      definition:
+        "Upgrade security concerns the risks of changing deployed code: who can change it, how changes are checked and delayed, and how the act of upgrading can itself break a system.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Upgradeable contracts usually keep their state in a proxy and their logic in a separate implementation that can be swapped, and the swap has failure modes of its own. A new implementation that arranges stored data differently reads existing state as something else and silently corrupts it, an implementation contract left uninitialized can be claimed by anyone, and functions of the proxy and the implementation can collide. Proxy upgrade risks are flaws of the mechanism, independent of what either version of the code is meant to do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Upgrade verification checks that the change is the change that was reviewed. The new implementation's deployed code must match the audited source, the upgrade transaction must point to that implementation and nothing else, and rehearsing the upgrade on a replica of the live chain shows whether stored data and invariants survive it. Skipping any of these steps turns a reviewed change into an unreviewed one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Emergency upgrades combine the least review with the most pressure. They exist to fix an active threat faster than the normal delay allows, which is exactly when new mistakes are most likely and the usual checks least available, and keys able to upgrade without delay are also the most valuable keys to steal. Upgrade keys therefore belong behind the strongest controls a system has, with their ordinary use held back by timelocks that give users time to react.",
+        },
+      ],
+    },
+    {
+      id: "domain-specific-security-content",
+      conceptId: "domain-specific-security",
+      definition:
+        "Domain-specific security applies security reasoning to particular kinds of systems, such as oracles, governance, rollups, bridges, transaction ordering and wallets, each with threats that general principles alone do not reveal.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What these domains share is a point of reliance. An oracle carries a claim about the outside world, a bridge or rollup carries a claim about another system's state, governance turns votes into authority, ordering decides who acts first, and a wallet turns a person's intent into a signature. In each, a system acts on something it cannot fully check itself, and that point of reliance is where value concentrates and attacks aim.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each domain also has its own currency of attack. Against an oracle it is a moved price, against governance acquired voting weight, against a bridge or rollup a forged or unchallenged state claim, against users' transactions a profitable position in the order, and against a wallet a misleading request to sign. Knowing the currency shows which costs and limits actually deter an attacker in that domain.",
+        },
+        {
+          kind: "paragraph",
+          text: "The domains also feed each other. A manipulated oracle price can trigger liquidations that become MEV, a captured governance process can upgrade a bridge, and a compromised wallet interface can sign an emergency action, so reviewing each domain in isolation misses the paths that run between them.",
+        },
+      ],
+    },
+    {
       id: "interoperability-abstraction-content",
       conceptId: "interoperability-abstraction",
       definition: "Interoperability and abstraction connect independently operated systems through architecture-specific interfaces, verification, execution, trust, and failure assumptions.",
