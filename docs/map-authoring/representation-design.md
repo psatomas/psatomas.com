@@ -36,6 +36,8 @@ Blocks are defined in [`types.ts`](../../src/lib/map/types.ts) and rendered by
 | `distinction` | `left`, `right`, optional `further` | An axiom "A ≠ B" on the structural axis, or a vertical chain. | `role="img"`, "A is not the same as B…". Centred, wraps at any width. |
 | `tensions` | `label`, `pairs` | Rows of node ↔ node. | List of `role="img"` pairs, "A in tension with B". Compact nodes on narrow screens. |
 | `terms` | `terms` | A mono strip of vocabulary. | `role="list"`, `aria-label="Key terms"`. |
+| `cycle` | `label`, `steps` (2 to 6) | Steps stack on the model's axis joined by forward arrows; a return rail leaves the last step and enters the first. | One `role="img"`, "label: A, then B, then C, then back to A, and again." The same column at every width. |
+| `comparison` | `label`, `dimensions` (2 to 4), `alternatives` (2 to 6), each with one value per dimension | Dimensions as column headers and alternatives as rows on wide screens; each alternative stacked with its dimension names beside the values on narrow ones. | An ARIA table (`role="table"`, column and row headers, labelled), the same table at every width, so values are read with their dimension and alternative. |
 
 What protects them:
 
@@ -44,8 +46,13 @@ What protects them:
 - The Foundations L0 test pins one record of each model kind.
 - The browser suite opens every L0 domain at five widths and every L1 context
   at two, checking overflow and clipping.
-- The render check verifies, for authored concepts, text alternatives,
-  overflow and identical text at every placement and width.
+- The render check verifies, for authored concepts, text alternatives (and
+  table labels), overflow and identical text at every placement and width.
+- The browser suite's `models` section serves a fixture exposition through
+  the content API and checks cycle and comparison in the real components at
+  1280 and 375 pixels: the generated text alternative, the return rail
+  joining last step to first, table headers and cells, both layouts, clipping,
+  overflow and identical text.
 
 ### Structures, and where each fits
 
@@ -66,9 +73,9 @@ content model writes it down.
 | interaction: who acts, in what order | flow | approximate, no message lanes |
 | tension: forces that pull against each other | tensions | native |
 | vocabulary | terms | native |
-| cycle: output fed back into input | none | **gap** |
+| cycle: a recurrent process whose output starts the next pass | cycle | native |
+| comparison: alternatives × shared dimensions | comparison | native |
 | state: states and transitions, including returns | none | **gap** |
-| comparison: alternatives × shared dimensions | none | **gap** |
 | dependency: a graph of what relies on what | none | **gap** |
 
 A gap is recorded in the design as needed capability. It is never forced
@@ -76,6 +83,39 @@ into the nearest block: a feedback loop drawn as a one-way flow teaches the
 wrong model. New primitives are added only when audits show a gap
 repeatedly justified by meaning, and through ordinary product work, not
 inside a content run.
+
+### Choosing among the structured blocks
+
+**`cycle` or `flow`.** Use `cycle` only when the process recurs and its last
+step feeds the next pass of its first: a controller measuring the effect of
+its own last adjustment, prices drawing in buyers who raise prices, an
+experiment chosen from the last result. The return is the meaning, and the
+model shows it. Use `flow` for a process that ends (a lifecycle, a pipeline, a
+cascade that runs out), and for one that merely repeats from scratch, such as
+a block produced every few seconds, where nothing of one pass feeds the next.
+A cycle whose loop the paragraph could state in one clause adds little; draw
+it when the loop's steps, and where delay or amplification enters it, are what
+the reader needs to see.
+
+**`comparison` or something else.** Use `comparison` when several
+alternatives differ along the same two or more named dimensions and the
+reader needs to read across them: which option costs what, waits how long,
+trusts whom. It is not a generic table to break up prose.
+
+- One dimension per alternative is a set of **variants**: a `flow` branching
+  into one short branch per kind, or simply a sentence.
+- Two notions a reader would conflate are a **`distinction`**, not a
+  two-row comparison.
+- Forces that pull against each other within one design are **`tensions`**;
+  a comparison sets alternatives side by side.
+- A list of vocabulary is **`terms`**.
+
+**Variants do not justify a block by themselves.** A concept having kinds,
+or alternatives, is common. Draw them only when seeing them side by side
+materially changes understanding: when the reader must compare what each
+implies and prose spreads that across sentences. Two or three alternatives
+explained in a paragraph each usually read better as prose. The same test
+applies to every structured block, including `cycle` and `comparison`.
 
 ## Roles by depth
 

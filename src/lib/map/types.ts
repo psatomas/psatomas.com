@@ -90,7 +90,21 @@ export type MapContentBlock =
   /** Recurring pairs of forces that pull against each other. */
   | { kind: "tensions"; label: string; pairs: readonly (readonly [string, string])[] }
   /** The vocabulary a passage introduces, as a plain strip of terms. */
-  | { kind: "terms"; terms: readonly string[] };
+  | { kind: "terms"; terms: readonly string[] }
+  /**
+   * A recurrent process: the steps run in order and the last feeds back into
+   * the first, so each pass starts from what the previous one produced. Not a
+   * flow drawn in a circle: the return is the meaning.
+   */
+  | { kind: "cycle"; label: string; steps: readonly string[] }
+  /**
+   * Alternatives compared along the same explicit dimensions: every
+   * alternative has one value per dimension, in dimension order.
+   */
+  | { kind: "comparison"; label: string; dimensions: readonly string[]; alternatives: readonly MapComparisonAlternative[] };
+
+/** One row of a comparison: an alternative and its value on each dimension. */
+export type MapComparisonAlternative = { name: string; values: readonly string[] };
 
 /** One element of a flow stage: a concept, or (in a parallel set) a branch of steps. */
 export type MapFlowElement = string | readonly string[];

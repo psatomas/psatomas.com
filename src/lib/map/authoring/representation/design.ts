@@ -75,7 +75,7 @@ export type RepresentationProfile = {
   proseOnly: boolean;
 };
 
-const LETTER: Record<BlockKind, string> = { paragraph: "P", heading: "H", flow: "F", distinction: "D", tensions: "T", terms: "S" };
+const LETTER: Record<BlockKind, string> = { paragraph: "P", heading: "H", flow: "F", distinction: "D", tensions: "T", terms: "S", cycle: "O", comparison: "X" };
 
 export function profileOf(record: MapConceptContent): RepresentationProfile {
   const body = record.body ?? [];

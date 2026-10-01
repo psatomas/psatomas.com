@@ -7963,6 +7963,47 @@ test("exposition validation reports every malformed block", () => {
   ]);
 });
 
+test("exposition validation holds cycles and comparisons to their semantic shapes", () => {
+  const steps = (count: number) => Array.from({ length: count }, (_, index) => `Step ${index + 1}`);
+  const row = (name: string, values: string[]) => ({ name, values });
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "model-blocks", conceptId: "economic-agency", definition: "Defined.",
+      body: [
+        { kind: "cycle", label: "A valid loop", steps: steps(3) },
+        { kind: "comparison", label: "A valid comparison", dimensions: ["Cost", "Trust"], alternatives: [row("One", ["Low", "High"]), row("Two", ["High", "Low"])] },
+        { kind: "cycle", label: " ", steps: steps(3) },
+        { kind: "cycle", label: "One step", steps: steps(1) },
+        { kind: "cycle", label: "Too long", steps: steps(7) },
+        { kind: "cycle", label: "Repeats", steps: ["A", "B", "A"] },
+        { kind: "comparison", label: "One dimension", dimensions: ["Cost"], alternatives: [row("One", ["Low"]), row("Two", ["High"])] },
+        { kind: "comparison", label: "Five dimensions", dimensions: ["A", "B", "C", "D", "E"], alternatives: [row("One", ["1", "2", "3", "4", "5"]), row("Two", ["1", "2", "3", "4", "5"])] },
+        { kind: "comparison", label: "One alternative", dimensions: ["Cost", "Trust"], alternatives: [row("One", ["Low", "High"])] },
+        { kind: "comparison", label: "Ragged", dimensions: ["Cost", "Trust"], alternatives: [row("One", ["Low"]), row("Two", ["High", "Low"])] },
+        { kind: "comparison", label: "Blank value", dimensions: ["Cost", "Trust"], alternatives: [row("One", ["Low", " "]), row("Two", ["High", "Low"])] },
+        { kind: "comparison", label: "Repeats", dimensions: ["Cost", "Cost"], alternatives: [row("One", ["Low", "High"]), row("One", ["High", "Low"])] },
+        { kind: "comparison", label: "Marked up", dimensions: ["Cost", "Trust"], alternatives: [row("One", ["**Low**", "High"]), row("Two", ["High", "Low"])] },
+      ],
+    }],
+  }));
+  // Validation reports errors sorted; compare as sets of problems.
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "model-blocks"')).sort(), [
+    'Content "model-blocks" block 2 (cycle) has no label',
+    'Content "model-blocks" block 3 (cycle) must contain at least two steps',
+    'Content "model-blocks" block 4 (cycle) has more than 6 steps',
+    'Content "model-blocks" block 5 (cycle) repeats a step',
+    'Content "model-blocks" block 6 (comparison) must compare at least two dimensions',
+    'Content "model-blocks" block 7 (comparison) has more than 4 dimensions',
+    'Content "model-blocks" block 8 (comparison) must compare at least two alternatives',
+    'Content "model-blocks" block 9 (comparison) has an alternative without exactly one value per dimension',
+    'Content "model-blocks" block 10 (comparison) has an empty alternative or value',
+    'Content "model-blocks" block 11 (comparison) repeats a dimension',
+    'Content "model-blocks" block 11 (comparison) repeats an alternative',
+    'Content "model-blocks" block 12 (comparison) contains markdown syntax',
+  ].sort());
+});
+
 test("exposition validation rejects blank definitions and prose the renderer cannot present", () => {
   const errors = errorsFor((model) => ({
     ...model,

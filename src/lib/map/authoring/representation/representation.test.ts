@@ -91,9 +91,12 @@ test("multi-placement concepts need a canonical note; multi-carrier concepts als
 
 test("structures without a block are capability gaps, never silently mapped to a block", () => {
   const m = model();
-  const loop = design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "cycle", purpose: "the output feeds back" }] });
+  const loop = design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "state", purpose: "transitions can return" }] });
   assert.deepEqual(check(m, loop), []);
-  assert.deepEqual(capabilityGaps(loop), ["cycle"]);
+  assert.deepEqual(capabilityGaps(loop), ["state"]);
+  // Cycle and comparison have blocks of their own: native, not gaps.
+  const native = design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "cycle", purpose: "feeds back" }, { structure: "comparison", purpose: "alternatives by dimensions" }] });
+  assert.deepEqual([check(m, native), capabilityGaps(native)], [[], []]);
   assert.match(check(m, { ...loop, classification: "keep" }).join(), /no capability gap/);
 });
 

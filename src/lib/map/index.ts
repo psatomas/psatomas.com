@@ -12,6 +12,7 @@ export { assertValidMapKnowledge, MapKnowledgeValidationError, validateMapKnowle
 export { MAP_RELATIONSHIP_TYPES } from "./types.ts";
 export type {
   MapConcept,
+  MapComparisonAlternative,
   MapConceptContent,
   MapContentBlock,
   MapFlowElement,

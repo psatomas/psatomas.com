@@ -58,6 +58,10 @@ function blockStrings(block: MapContentBlock): string[] {
       return [block.label, ...block.pairs.flat()];
     case "terms":
       return [...block.terms];
+    case "cycle":
+      return [block.label, ...block.steps];
+    case "comparison":
+      return [block.label, ...block.dimensions, ...block.alternatives.flatMap((alternative) => [alternative.name, ...alternative.values])];
     default:
       return [];
   }
@@ -85,6 +89,13 @@ function duplicateKeyProblems(block: MapContentBlock): string[] {
       return hasDuplicates(block.pairs.map(([left, right]) => `${left}-${right}`)) ? ["repeats a pair"] : [];
     case "terms":
       return hasDuplicates(block.terms) ? ["repeats a term"] : [];
+    case "cycle":
+      return hasDuplicates(block.steps) ? ["repeats a step"] : [];
+    case "comparison":
+      return [
+        ...(hasDuplicates(block.dimensions) ? ["repeats a dimension"] : []),
+        ...(hasDuplicates(block.alternatives.map((alternative) => alternative.name)) ? ["repeats an alternative"] : []),
+      ];
     default:
       return [];
   }
@@ -93,6 +104,14 @@ function duplicateKeyProblems(block: MapContentBlock): string[] {
 // A parallel set lays out as side-by-side columns sized for at most six within
 // the knowledge field (exposition-models.tsx, PARALLEL).
 const MAX_PARALLEL_ELEMENTS = 6;
+// A cycle is drawn as a column of steps with a return rail (exposition-models.tsx,
+// CycleModel); more than six steps stops reading as one loop.
+const MAX_CYCLE_STEPS = 6;
+// A comparison lays out its dimensions as columns beside the alternatives'
+// names within the knowledge field (ComparisonModel): at most four columns of
+// values, and at most six alternatives before it stops being a comparison.
+const MAX_COMPARISON_DIMENSIONS = 4;
+const MAX_COMPARISON_ALTERNATIVES = 6;
 
 function contentBlockProblems(block: MapContentBlock): string[] {
   const shape = contentBlockShapeProblems(block);
@@ -141,6 +160,24 @@ function contentBlockShapeProblems(block: MapContentBlock): string[] {
       return block.pairs.some((pair) => pair.length !== 2 || pair.some(blank)) ? ["has an incomplete pair"] : [];
     case "terms":
       return block.terms.length < 2 || block.terms.some(blank) ? ["must list at least two terms"] : [];
+    case "cycle":
+      if (blank(block.label)) return ["has no label"];
+      // A loop needs at least two steps for the return to mean anything.
+      if (block.steps.length < 2) return ["must contain at least two steps"];
+      if (block.steps.length > MAX_CYCLE_STEPS) return [`has more than ${MAX_CYCLE_STEPS} steps`];
+      return block.steps.some(blank) ? ["has an empty step"] : [];
+    case "comparison":
+      if (blank(block.label)) return ["has no label"];
+      // One dimension is a list of variants, and one alternative compares nothing.
+      if (block.dimensions.length < 2) return ["must compare at least two dimensions"];
+      if (block.dimensions.length > MAX_COMPARISON_DIMENSIONS) return [`has more than ${MAX_COMPARISON_DIMENSIONS} dimensions`];
+      if (block.alternatives.length < 2) return ["must compare at least two alternatives"];
+      if (block.alternatives.length > MAX_COMPARISON_ALTERNATIVES) return [`has more than ${MAX_COMPARISON_ALTERNATIVES} alternatives`];
+      if (block.dimensions.some(blank)) return ["has an empty dimension"];
+      if (block.alternatives.some((alternative) => alternative.values.length !== block.dimensions.length)) {
+        return ["has an alternative without exactly one value per dimension"];
+      }
+      return block.alternatives.some((alternative) => blank(alternative.name) || alternative.values.some(blank)) ? ["has an empty alternative or value"] : [];
     default:
       return [`is an unknown block kind`];
   }

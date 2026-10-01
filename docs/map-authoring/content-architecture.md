@@ -193,6 +193,8 @@ blocks by what the explanation needs:
 | `distinction` | A specific conflation the reader is likely to make ("A ≠ B", optionally a chain). | Heavily used from domain 13 onward; use it only where the confusion is real. |
 | `tensions` | Recurring pairs of forces that genuinely pull against each other. | Only 2 uses in the corpus. |
 | `terms` | The vocabulary a passage introduces, as plain text (not navigation). | L0 strips mirror taxonomy labels; that is an L0 convention, not a requirement elsewhere. |
+| `cycle` | A recurrent process whose last step feeds the next pass of the first, such as a control or feedback loop. Not a process that ends or merely repeats. | New; see [representation-design.md](representation-design.md#choosing-among-the-structured-blocks). |
+| `comparison` | Two to six alternatives read across the same two to four named dimensions. Not a table for its own sake, and not a set of variants with one attribute each. | New; see [representation-design.md](representation-design.md#choosing-among-the-structured-blocks). |
 
 - **Not every concept needs every block type, or a body.** A definition plus a
   few paragraphs can be complete. Sparse content is valid

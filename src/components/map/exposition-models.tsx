@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import type { MapFlowElement } from "@/lib/map";
+import type { MapComparisonAlternative, MapFlowElement } from "@/lib/map";
+import { describeCycle } from "./exposition-text";
 
 /**
  * A small visual grammar for MAP's conceptual models, deliberately not a
@@ -207,5 +208,89 @@ export function TensionPair({ left, right }: { left: string; right: string }) {
       </span>
       <ModelNode compact>{right}</ModelNode>
     </span>
+  );
+}
+
+/** An arrowhead pointing right, into the node beside it. */
+function ArrowHeadRight({ className = "", ...data }: { className?: string; "data-cycle-entry"?: string }) {
+  return <span {...data} className={`block h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-border ${className}`} />;
+}
+
+/**
+ * A recurrent process. Steps stack on the model's axis joined by forward
+ * relations, as in a flow; a return rail beside them leaves the last step and
+ * enters the first, so each pass visibly starts from what the previous one
+ * produced. The column keeps one geometry at every width.
+ */
+export function CycleModel({ label, steps }: { label: string; steps: readonly string[] }) {
+  const last = steps.length - 1;
+  return (
+    <div role="img" aria-label={describeCycle(label, steps)} className="mx-auto grid w-full max-w-md grid-cols-[1.75rem_minmax(0,1fr)]">
+      {steps.map((step, index) => (
+        <Fragment key={step}>
+          {index > 0 ? (
+            <>
+              <span aria-hidden="true" data-cycle-return="" className="relative">
+                <span className={`absolute inset-y-0 left-0 w-px ${LINE}`} />
+              </span>
+              <Relation />
+            </>
+          ) : null}
+          <span aria-hidden="true" data-cycle-return="" className="relative">
+            {/* The rail runs from the last step back up to the first. */}
+            <span className={`absolute left-0 w-px ${LINE} ${index === 0 ? "top-1/2 bottom-0" : index === last ? "top-0 bottom-1/2" : "inset-y-0"}`} />
+            {index === 0 || index === last ? (
+              <span className={`absolute top-1/2 left-0 h-px ${LINE} ${index === 0 ? "right-[6px]" : "right-0"}`} />
+            ) : null}
+            {index === 0 ? <ArrowHeadRight className="absolute top-1/2 right-0 -translate-y-1/2" data-cycle-entry="" /> : null}
+          </span>
+          <ModelNode className="w-full">{step}</ModelNode>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+const HEADER = "font-mono text-[11px] uppercase tracking-[0.12em] text-muted sm:text-xs";
+
+/**
+ * Alternatives compared along shared dimensions: an ARIA table whose header
+ * row names the dimensions and whose rows name the alternatives. Wide screens
+ * lay it out as a grid; narrow ones stack each alternative with its dimension
+ * names beside the values. Both layouts carry the same text, and assistive
+ * technology always reads the same table.
+ */
+export function ComparisonModel({ label, dimensions, alternatives }: { label: string; dimensions: readonly string[]; alternatives: readonly MapComparisonAlternative[] }) {
+  const columns: CSSProperties = { gridTemplateColumns: `minmax(0, 0.8fr) repeat(${dimensions.length}, minmax(0, 1fr))` };
+  return (
+    <div role="table" aria-label={label} className="w-full border-y border-border">
+      <div role="rowgroup" className="sr-only sm:not-sr-only">
+        <div role="row" className="border-b border-border py-3 sm:grid sm:gap-x-4" style={columns}>
+          <span role="columnheader" className={`block ${HEADER}`} />
+          {dimensions.map((dimension) => (
+            <span role="columnheader" key={dimension} className={`block ${HEADER} [overflow-wrap:anywhere]`}>
+              {dimension}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div role="rowgroup">
+        {alternatives.map((alternative) => (
+          <div role="row" key={alternative.name} className="border-b border-border py-3 last:border-b-0 sm:grid sm:items-baseline sm:gap-x-4" style={columns}>
+            <span role="rowheader" className={`block ${NODE_TEXT} tracking-[0.12em] [overflow-wrap:anywhere]`}>
+              {alternative.name}
+            </span>
+            {alternative.values.map((value, index) => (
+              <span role="cell" key={dimensions[index]} className="mt-1 block text-sm leading-6 text-foreground/80 [overflow-wrap:anywhere] sm:mt-0">
+                <span aria-hidden="true" className={`${HEADER} sm:sr-only`}>
+                  {dimensions[index]}:{" "}
+                </span>
+                {value}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
