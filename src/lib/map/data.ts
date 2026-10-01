@@ -10212,6 +10212,11 @@ export const mapKnowledge: MapKnowledgeModel = {
           text: "A signature protects exactly what was signed, while the participant approves what the wallet shows. Transaction construction encodes an intent as bytes, signing commits to those bytes, and the two meet only in the wallet's display. When a wallet cannot decode what it asks the participant to sign, a well-protected key still authorizes whatever the bytes say, so faithful display is part of wallet security rather than a convenience.",
         },
         {
+          kind: "distinction",
+          left: "Action the participant approves",
+          right: "Bytes the key signs",
+        },
+        {
           kind: "paragraph",
           text: "Construction also carries decisions the participant rarely sees: which fee to offer, which nonce to use, which contract to route through, and, at transaction submission, which provider receives the transaction first. A wallet that simulates a transaction before signing can show its expected effect, but the simulation holds only for the state it ran against, and the transaction will run on the state at the time of inclusion, which may differ.",
         },
