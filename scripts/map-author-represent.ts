@@ -8,7 +8,7 @@
 //
 //   represent catalog                                   structures and what the content model can express
 //   represent context <concept-id>                      analysis inputs for one concept
-//   represent record <concept-id> --file <design.json>  validate a design and store it against the current content
+//   represent record [<concept-id>] --file <design.json> validate designs (one, or an array) and store them against the current content
 //   represent audit [--concept <id> | --domain <id>] [--json] [--report <file.md>]
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -85,16 +85,33 @@ function commandContext(conceptId: string) {
   );
 }
 
-function commandRecord(conceptId: string, file: string) {
+function commandRecord(conceptId: string | undefined, file: string) {
   const problems = acceptedContentProblems(git("status", "--porcelain", "--untracked-files=no").split("\n").map((line) => line.slice(3)).filter(Boolean), [...CONTENT_FILES]);
   if (problems.length) throw new Error(problems.join("\n"));
-  const design = JSON.parse(readFileSync(file, "utf8")) as RepresentationDesign;
-  if (design.conceptId !== conceptId) throw new Error(`${file} is a design for ${design.conceptId}, not ${conceptId}`);
+  const parsed = JSON.parse(readFileSync(file, "utf8")) as RepresentationDesign | RepresentationDesign[];
+  // A batch is validated in full before anything is stored.
+  const designs = Array.isArray(parsed) ? parsed : [parsed];
+  if (conceptId && (designs.length !== 1 || designs[0].conceptId !== conceptId)) throw new Error(`${file} is not a single design for ${conceptId}`);
+  const failures: string[] = [];
+  for (const design of designs) {
+    try {
+      recordOne(design, new Date().toISOString(), true);
+    } catch (error) {
+      failures.push((error as Error).message);
+    }
+  }
+  if (failures.length) throw new Error(`nothing recorded:\n${failures.join("\n")}`);
+  for (const design of designs) recordOne(design, new Date().toISOString(), false);
+}
+
+function recordOne(design: RepresentationDesign, now: string, dryRun: boolean) {
+  const conceptId = design.conceptId;
   const record = mapKnowledge.content.find((candidate) => candidate.conceptId === conceptId);
   const facts = placementsOf(mapKnowledge, conceptId);
   if (!conceptsAtLevel(mapKnowledge, 1).includes(conceptId)) throw new Error(`${conceptId} is not an L1 concept with content`);
   const store = readStores().find((candidate) => candidate.domainId === facts.ownerDomainId) ?? emptyStore(facts.ownerDomainId);
-  const updated = recordDesign(store, design, record, facts, new Date().toISOString());
+  const updated = recordDesign(store, design, record, facts, now);
+  if (dryRun) return;
   mkdirSync(STORE_DIR, { recursive: true });
   writeFileSync(storePath(store.domainId), `${JSON.stringify(updated, null, 2)}\n`);
   console.log(`recorded ${conceptId}: ${design.classification} (${facts.ownerDomainId})`);
@@ -174,7 +191,7 @@ export function commandRepresent(positional: readonly string[], flag: (name: str
       commandContext(conceptId ?? fail("represent context needs a concept id"));
       break;
     case "record":
-      commandRecord(conceptId ?? fail("represent record needs a concept id"), flag("--file") ?? fail("represent record needs --file <design.json>"));
+      commandRecord(conceptId, flag("--file") ?? fail("represent record needs --file <design.json>"));
       break;
     case "audit": {
       const concept = flag("--concept");
