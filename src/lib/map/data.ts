@@ -16269,6 +16269,346 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "autonomous-economic-actors-content",
+      conceptId: "autonomous-economic-actors",
+      definition:
+        "Autonomous economic actors are the participants in an economy that act without human approval of each step, such as software agents, AI systems and protocols, considered both individually and as populations that enter, specialize and leave over time.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Economic agency is the capacity to hold resources, make commitments and bear their consequences, and for software these come apart. A program can control funds and sign agreements without being anyone who can be sued, taxed or held to a promise, so its agency in a practical sense depends on whoever or whatever stands behind it to absorb losses, or on collateral it has placed in advance.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many economic outcomes depend on the population rather than on any one actor. A market of agents that all run similar strategies on the same data tends to move together, amplifying swings that a mix of strategies would dampen, so actor heterogeneity, in information, objectives and methods, helps keep an economy of machines stable, and its absence is a systemic risk even when each actor behaves sensibly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Entry and exit are far cheaper for software than for firms. A new agent can be deployed in minutes and withdrawn just as fast, which lets populations respond quickly to opportunity, pushes profits toward zero where entry is open, and lets a single operator appear as many independent actors; specialization follows where some actors are better at a narrow task, and rewards differ enough to favor focusing on it.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-ownership-structures-content",
+      conceptId: "autonomous-ownership-structures",
+      definition:
+        "Autonomous ownership structures describe how assets are held where software, protocols or organizations rather than individual people appear as holders, and which determine who controls those assets and who ultimately benefits from them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Machine-owned assets are held by a program that controls them according to its code, such as an agent with its own account or a contract holding funds. The program has control, but in most legal systems it cannot be an owner, so somewhere behind it stands a person or organization whose interest the holding ultimately serves, even when the program's rules leave them little influence on its use.",
+        },
+        {
+          kind: "paragraph",
+          text: "Ownership chains link these layers: an agent controlled by a contract, owned by an organization, held through tokens by many people. Each link can be transparent on-chain or opaque, and the longer the chain, the harder it becomes to identify the beneficial owner, the person who actually receives the value, which matters for accountability, for regulation and for judging whether apparently independent actors share one interest.",
+        },
+        {
+          kind: "paragraph",
+          text: "Ownership concentration measures how much of the holdings, and the control that comes with them, sits with a few holders. Counting addresses understates concentration when one owner controls many of them, and overstates it when one address, such as an exchange or a pool, holds assets on behalf of many, so meaningful measures follow ownership chains back as far as they can before counting.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-markets-content",
+      conceptId: "autonomous-markets",
+      definition:
+        "Autonomous markets are markets in which buyers, sellers and the mechanisms that bring them together are largely automated, so that prices are set, offers matched and liquidity supplied by software acting on its own rules and goals.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Markets can form wherever automated participants find something to exchange. Once a resource such as compute, data or an API call can be described, priced and delivered by programs, a market for it can appear without any organizer, as agents begin to offer and request it; whether that market persists depends on enough participants on each side finding it worthwhile, and thin early markets often fail before they reach that point.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous supply and demand respond to price changes at machine speed. Software buyers and sellers can adjust within seconds, which brings prices to balance quickly when conditions are ordinary, but when many follow similar rules, they can react to the same signal at the same moment and produce sudden surges or collapses that slower, more varied human participants would have smoothed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous pricing and market clearing are distinct steps. A seller's algorithm can set its own price from costs, demand estimates and competitors' prices, while clearing is the process that matches orders at prices where both sides are willing; markets whose prices are set mostly by algorithms observing each other can drift away from underlying costs, so whether autonomous pricing supports price discovery depends on how much independent information enters it.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-commerce-content",
+      conceptId: "autonomous-commerce",
+      definition:
+        "Autonomous commerce is economic exchange carried out end to end by automated parties, from forming agreements and performing them to delivering goods or services and settling payment, including the supply chains and networks of trading relationships these form.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Autonomous contracting depends on terms precise enough for software to form and check. Two agents can agree on a price, a delivery condition and a penalty if the terms are expressed in a form both can evaluate, but most real agreements contain open terms, such as reasonable quality or best effort, which a program cannot decide; so automated contracts either restrict themselves to terms that are measurable or include a route to someone who can judge the rest.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contract enforcement is what gives automated agreements weight. Some terms enforce themselves, as when payment is released only on a verified delivery, but performance that happens off-chain, such as a service actually rendered, needs collateral that can be forfeited, reputations that can be lost, or recourse outside the system, and the strength of these means bounds how much automated parties can safely commit to one another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Supply chains and wider networks of trading relationships among automated parties link many such agreements, as each party buys inputs from others to produce what it sells. These links let agents assemble complex services from simple ones, and they also transmit failures: a supplier that stops delivering or settling affects everyone who depends on it downstream, quickly when every party reacts automatically.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-production-content",
+      conceptId: "autonomous-production",
+      definition:
+        "Autonomous production is the making of outputs, mostly services, by automated systems, in which software services perform work, combine into larger services and coordinate with one another to produce outputs that others use or buy.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Autonomous services are the basic units: programs that perform a defined function, such as translating text, running a model or verifying a computation, on request and for a price. Service composition builds larger services by combining these, so that one request may pass through a chain of providers, each paid from what the final customer pays.",
+        },
+        {
+          kind: "paragraph",
+          text: "In value chains of this kind, quality and reliability multiply rather than add. A service built from several components that each work almost always still fails noticeably often once their failures combine, and a fault in one is hard for the final customer to trace, so production coordination includes deciding who checks the intermediate results and who bears the cost when an output proves wrong.",
+        },
+        {
+          kind: "paragraph",
+          text: "Machine productivity can grow quickly because software scales without the constraints of hiring and training. Its gains are uneven, however: they are largest for work whose output can be checked automatically, and smaller where a person must still judge the result, so the value an autonomous production system creates rests on the cost of verifying its outputs no less than on the cost of making them.",
+        },
+      ],
+    },
+    {
+      id: "economic-sectors-content",
+      conceptId: "economic-sectors",
+      definition:
+        "Economic sectors are the distinct areas of an autonomous economy, grouped by the kind of participant or resource at their center, such as agents, protocols, data, compute, models and solvers, each with its own markets, costs and incentives.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Sectors differ most in what is scarce. Compute economies trade capacity that is used up as it is delivered and cannot be stored; data economies trade something that can be copied at almost no cost, so value depends on controlling access rather than on producing more; model economies combine both, with the expense concentrated in training a model and only small costs for each use.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol and inter-protocol economies are where value moves through code rather than through agreements: fees, rewards and assets flowing among protocols that build on one another. Solver economies sit between users and those protocols, competing to fulfil requests at the best price, and agent economies span all the others, as agents consume compute, data and models to act on users' behalf.",
+        },
+        {
+          kind: "paragraph",
+          text: "The sectors are tightly interdependent. An agent's costs depend on compute and model prices, a model's value depends on data, and a solver's profits depend on protocol fees, so a shock in one sector, such as a shortage of compute, passes quickly into the others; analyzing any sector alone misses how much of its behavior is set by its neighbors.",
+        },
+      ],
+    },
+    {
+      id: "capital-payment-flows-content",
+      conceptId: "capital-payment-flows",
+      definition:
+        "Capital and payment flows are the movements of value through an economy: capital moving toward investments and lending in search of return, and payments moving between parties to settle purchases and obligations.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The two move for different reasons and at different rhythms. Payments follow trade and must arrive when obligations fall due, whatever the conditions; capital follows expected returns and can wait, or leave all at once when expectations change. Systems that carry both, such as the same token pools serving as payment liquidity and as investment, find that a capital outflow can leave payments without the liquidity they need.",
+        },
+        {
+          kind: "paragraph",
+          text: "Liquidity networks are the routes and pools through which value can actually move between places, such as chains, protocols and venues. Systemic liquidity is the capacity of the whole network to absorb large movements without sharp price changes or failed settlements, and it can be much smaller than the sum of local liquidity when pools are fragmented, because moving between them costs time and fees and runs through a few bridges and routes that can become bottlenecks.",
+        },
+        {
+          kind: "paragraph",
+          text: "Capital mobility is unusually high where assets are programmable and venues are open to anyone. Capital can move to a higher yield within minutes, which quickly levels returns across protocols and rewards efficient ones, but it also means that a protocol's liquidity can vanish as quickly as it arrived, and that stress in one place draws capital out of others as holders sell what they can to cover losses where they cannot.",
+        },
+      ],
+    },
+    {
+      id: "economy-wide-allocation-content",
+      conceptId: "economy-wide-allocation",
+      definition:
+        "Economy-wide allocation is how an autonomous economy as a whole directs its capital and resources among competing uses, through markets, protocols and collective funding mechanisms, and how well the result serves its purposes.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Autonomous capital allocation moves capital by rule or algorithm, such as vaults shifting deposits toward the highest risk-adjusted yield or agents rebalancing portfolios continuously. Each allocator optimizes its own objective; the economy-wide result is the sum of many such decisions, and when allocators share models and signals they move capital in the same direction at once, concentrating it in a few uses and withdrawing it together when conditions turn.",
+        },
+        {
+          kind: "paragraph",
+          text: "Capital formation is the building up of productive capacity, such as infrastructure, services and the tools that later production relies on, from capital that is committed rather than traded. An economy whose capital moves very freely can still form little capital if most of it chases short-term returns, since building capacity needs funds that stay put for long enough to pay off.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some uses are underfunded by any market because their benefits cannot be captured by whoever pays: open-source software, research and shared infrastructure that everyone uses. Public goods funding supplies these through collective mechanisms such as protocol revenue set aside, matching schemes or grants, and judging allocation efficiency means counting such uses, not only the returns that markets can see.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-credit-systems-content",
+      conceptId: "autonomous-credit-systems",
+      definition:
+        "Autonomous credit systems let automated participants lend and borrow, creating claims to future repayment, assessing who can be trusted with them, and linking lenders and borrowers into networks of obligations.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Credit creation expands what participants can spend beyond what they hold. When a lending protocol lends deposited funds that remain claimable by their depositors, or an agent accepts a promise of later payment in place of payment now, the total of claims in circulation grows; the expansion supports activity, and its safety depends on whether the claims can all be honored if many are called at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Most automated lending today avoids judging creditworthiness by requiring borrowers to lock up more value than they borrow. That makes lending possible between strangers but limits credit to those who already hold assets, so extending credit beyond collateral depends on ways of assessing the borrower, such as track records, captured revenue or someone accountable behind them, and agent credit is one place where those methods are being worked out.",
+        },
+        {
+          kind: "paragraph",
+          text: "Systemic leverage is the borrowing in the system as a whole, including leverage stacked on leverage when borrowed assets are deposited as collateral to borrow again. It can be far higher than any single position suggests, since the same underlying asset may back several loans along a chain, and when prices fall, forced selling at each layer pushes prices lower for every other layer at once.",
+        },
+      ],
+    },
+    {
+      id: "monetary-systems-content",
+      conceptId: "monetary-systems",
+      definition:
+        "Monetary systems are the arrangements that define what serves as money in an economy, what it is measured in, how much of it exists and how that amount changes, including money designed for use by machines.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Machine money must suit how software transacts: amounts can be tiny, payments continuous and parties unknown to each other, so it must settle cheaply, quickly and without relying on trust between the parties. Programs care little about a currency's familiarity or social acceptance, but a great deal about predictability, since an agent paying for compute or data needs to know what its budget will buy tomorrow.",
+        },
+        {
+          kind: "paragraph",
+          text: "Prices and debts are measured in a unit of account, which can differ from the asset used to pay. Many on-chain markets price in a stablecoin tracking a national currency while settling in other tokens, so that accounts remain comparable and contracts remain meaningful even when the assets used for payment fluctuate; the unit chosen fixes what stability means for the system.",
+        },
+        {
+          kind: "paragraph",
+          text: "Together, the quantity of money, its velocity and the policy managing it describe how much money exists, how often it changes hands and how its quantity is managed. In programmable systems, supply can follow fixed schedules or rules that respond to demand, while velocity can be very high when agents trade continuously; the same quantity of money then supports far more activity, so a rule tied to quantity alone can misread how loose or tight conditions actually are.",
+        },
+      ],
+    },
+    {
+      id: "economic-institutions-content",
+      conceptId: "economic-institutions",
+      definition:
+        "Economic institutions are the durable rules and shared structures that make exchange possible beyond one-off encounters, such as property rights, reputation, trusted infrastructure and ways to settle disputes, whether upheld by law, by code or by convention.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Property rights define who may use, exclude others from and transfer a resource. On a ledger, control of an asset is enforced by the protocol, but control and right can diverge, as when stolen assets sit in an attacker's account; an economy of autonomous actors needs property rights recognized beyond the protocol, so that a holding can be challenged when control was obtained wrongly, and confirmed when it was not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reputation systems and trust infrastructure let parties rely on strangers. Records of past behavior, attestations from others and shared registries of verified identities reduce the cost of deciding whom to deal with, but only if reputations are costly to fake and to discard; where a new identity is free, an actor can exploit trust and then start over, so reputations must be tied to something that cannot be replaced cheaply.",
+        },
+        {
+          kind: "paragraph",
+          text: "Credible neutrality is what lets one institution serve everyone. Rules that are public, applied identically to all participants and hard for anyone to bend toward particular parties let competing actors rely on the same infrastructure, while an institution suspected of favoring some loses those it might disfavor; neutrality has to be demonstrable from the rules and their record, since it cannot be shown by assurance.",
+        },
+      ],
+    },
+    {
+      id: "economic-governance-content",
+      conceptId: "economic-governance",
+      definition:
+        "Economic governance is the setting of rules that determine how value is raised, rewarded, charged and redistributed within an autonomous economy, and by whom those rules are made.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Economic policy works through a few instruments: incentives that reward behavior the economy needs, fees that charge for use of shared capacity, taxation that raises funds for collective purposes, and redistribution that shifts resources among participants. In protocols these are often combined in one mechanism, as when a fee that prices congestion also funds a treasury, so changing one instrument usually changes several outcomes at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Taxation in an autonomous economy usually means a protocol-level levy, such as a share of fees or of new issuance directed to a common fund, rather than a charge imposed by a state. Unlike a fee, it is not a price for a particular use but a contribution to things no single user pays for, and its legitimacy rests on whether those who pay it have a say over how it is spent.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rent extraction is the capture of value through control of a position rather than through providing anything in return, such as a gatekeeper raising charges because users cannot easily leave. Governance can create rents, by granting privileged roles, or limit them, by keeping roles contestable; redistribution can correct the results, but designs that avoid creating unearned positions need less correcting.",
+        },
+      ],
+    },
+    {
+      id: "market-power-content",
+      conceptId: "market-power",
+      definition:
+        "Market power is the ability of a participant or group to influence prices, terms or access in a market beyond what competitive conditions would allow, by being large, hard to replace or coordinated with others.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Network effects are a common source of it in digital markets. A venue, protocol or platform becomes more useful as more participants use it, because liquidity attracts traders and traders attract liquidity, so an early lead can grow into dominance even without any advantage in quality; the leader can then raise fees or worsen terms up to the point where the cost of leaving its network outweighs the gain.",
+        },
+        {
+          kind: "paragraph",
+          text: "Market concentration is the visible measure, but it can mislead in either direction. A market dominated by one venue may still be disciplined if rivals can attract its users quickly, as when open protocols can be copied and their liquidity lured away; a market with many apparent competitors may be concentrated in practice when they depend on the same few builders, data sources or infrastructure providers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Algorithmic collusion is market power without agreement. When pricing agents learn by trial and observe each other's prices, they can settle on high prices that none would set alone, sustained because each has learned that undercutting provokes retaliation; since no one communicated or agreed, the rules against collusion, which look for agreements, find nothing to act on, and the result can only be judged by its effects on prices.",
+        },
+      ],
+    },
+    {
+      id: "economic-stability-content",
+      conceptId: "economic-stability",
+      definition:
+        "Economic stability is the condition of an economy that keeps functioning without severe disruption, in which disturbances stay contained instead of spreading and amplifying into failures across many participants at once.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Systemic risk lies in the connections among participants rather than in any one of them. Every actor can manage its own exposure prudently and the system still fail, if all hold similar positions, rely on the same collateral or the same oracle, or must sell the same assets when prices fall; contagion is the transmission of failure along these connections, from one participant's default to its creditors and from one asset's collapse to everyone holding it as collateral.",
+        },
+        {
+          kind: "paragraph",
+          text: "Procyclicality makes many rules worsen the conditions they react to. Collateral requirements that rise as prices fall force sales that push prices further down, and lending that expands when asset values rise feeds the rise; flash crashes are the fast version, when automated sellers respond to a sharp move by selling more and liquidity providers withdraw at once, so prices fall far below any reasonable value within minutes before recovering.",
+        },
+        {
+          kind: "paragraph",
+          text: "Automatic stabilizers work the other way, responding to a disturbance in a direction that dampens it without anyone needing to decide. Borrowing rates that rise sharply when a pool's funds run low draw in new deposits and discourage further borrowing, and fees that rise with volatility slow trading during panics; such mechanisms can restrain ordinary shocks, though a large enough shock can overwhelm them.",
+        },
+      ],
+    },
+    {
+      id: "economic-resilience-content",
+      conceptId: "economic-resilience",
+      definition:
+        "Economic resilience is an economy's capacity to absorb a shock, keep its essential functions running through it and recover afterwards, rather than to avoid shocks altogether.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Shock absorption depends on buffers placed where losses land. Capital that absorbs losses before they reach depositors, collateral margins that cover a price drop before positions become insolvent, and reserves that can pay out during a run all turn a shock into a loss someone was prepared to bear; backstops are buffers of last resort, such as a fund or a party committed to buying assets or covering deficits when the others are exhausted.",
+        },
+        {
+          kind: "paragraph",
+          text: "Economic diversification makes a shock in one area less likely to bring down the rest. An economy whose participants rely on many assets, venues, providers and sources of revenue can lose one without losing everything; diversification that exists only in name, such as several assets backed by the same collateral or several protocols relying on the same oracle, gives no protection when the shared dependency fails.",
+        },
+        {
+          kind: "paragraph",
+          text: "Economic recovery is the return to normal activity after a shock, and its speed depends on how losses are settled. When it is clear who bears which losses, participants can resume trading and lending quickly; prolonged uncertainty about whether claims will be honored keeps capital away long after the shock itself has passed, which is why stress testing and resolution rules fixed in advance shorten recovery as well as preventing failure.",
+        },
+      ],
+    },
+    {
+      id: "economic-dynamics-content",
+      conceptId: "economic-dynamics",
+      definition:
+        "Economic dynamics are the patterns by which an economy changes over time as participants respond to one another, from self-reinforcing and self-correcting cycles to growth and the gradual adaptation of the economy as a whole.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Economic feedback loops arise when the result of participants' actions changes the conditions for their next actions. A rising token price attracts buyers, whose purchases raise it further, until something breaks the loop; a falling price triggers liquidations that push it lower. Reinforcing loops like these drive booms and busts, while balancing loops, such as high yields drawing in capital until yields fall, pull the economy back toward stable levels.",
+        },
+        {
+          kind: "paragraph",
+          text: "Emergent economic behavior is what appears when many participants each follow their own rules, without any of them intending it: price patterns, sudden waves of selling or synchronized withdrawals that no single strategy describes. Such behavior can often be seen only in the aggregate, and models that capture each participant well can still fail to predict it, since the interactions rather than the participants produce it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Market cycles, economic growth and economic adaptation operate over longer spans. Cycles of expansion and contraction follow from credit, sentiment and leverage building up and unwinding; growth comes from new productive capacity rather than from rising prices; and adaptation is the economy's slow reshaping as participants learn from past shocks, adopting the practices that survived and abandoning those that failed.",
+        },
+      ],
+    },
+    {
+      id: "human-machine-economic-interaction-content",
+      conceptId: "human-machine-economic-interaction",
+      definition:
+        "Human–machine economic interaction is the set of relationships between people and the automated systems that act in the economy: people directing, overseeing, working alongside and being served by machines, and sharing in the value they create.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every automated economic actor ultimately serves principals, the people or organizations whose interests it is meant to advance and who bear its gains and losses. Economic alignment asks whether the system's actual behavior serves those interests, which can fail even when its incentives are well designed: an agent can follow its objective faithfully while that objective misses what the principal wanted, or serve one principal at the expense of others it affects.",
+        },
+        {
+          kind: "paragraph",
+          text: "Labor substitution occurs when machines take over work people did, lowering costs for buyers of that work and income for those who did it. The effects depend on whether the displaced people can move to other work and on how quickly; automation that removes some tasks often creates others around it, but the new roles may require different skills and appear in different places from the ones lost.",
+        },
+        {
+          kind: "paragraph",
+          text: "The remaining questions concern who gains and who is exposed. People dealing with automated sellers, lenders and agents need clear terms, redress when things go wrong and protection from systems exploiting their mistakes at scale; value distribution asks how the gains from automation are shared among those who own the systems, those who use them and those whose work or data they were built on.",
+        },
+      ],
+    },
+    {
       id: "frontier-systems-content", conceptId: "frontier-systems",
       definition: "Frontier systems are emerging compositions of machine-native ownership, institutions, governance, autonomy, infrastructure, and science that extend established protocol and social primitives under unresolved technical, legal, economic, and physical constraints.",
       body: [
