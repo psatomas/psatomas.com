@@ -13723,6 +13723,246 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "architectural-principles-content",
+      conceptId: "architectural-principles",
+      definition:
+        "Architectural principles are the general rules a protocol's design follows in deciding what belongs where: what goes into the base protocol, how responsibilities are divided, and how components are kept from depending on each other's details.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocol minimalism puts in the base only what cannot be done elsewhere. Every rule in the base protocol must be implemented by every client, verified by every node and changed only by coordinated upgrade, while functionality built on top of it can be replaced, competed with or abandoned freely, so features earn a place in the base only when building them on top would be impossible or unsafe.",
+        },
+        {
+          kind: "paragraph",
+          text: "Abstraction boundaries state what each side may assume about the other, and the narrower the boundary, the more each side can change on its own. A component that exposes a small, stable interface can be reimplemented, audited and upgraded without disturbing its users, while one whose users rely on its internal details freezes those details in place. Separation of concerns works through such boundaries: a part with one responsibility and a narrow interface can be reasoned about alone.",
+        },
+        {
+          kind: "paragraph",
+          text: "Credible neutrality and decentralization give the other principles their purpose at the base. A base protocol whose rules do not single out particular applications or users lets anyone build on it without fearing that the rules will be bent for or against them, and a small, neutral base is easier for many independent parties to run and check, which is what decentralization requires.",
+        },
+      ],
+    },
+    {
+      id: "protocol-layers-content",
+      conceptId: "protocol-layers",
+      definition:
+        "Protocol layers divide a protocol into levels, each providing a defined service to the levels built on it while relying on the services of the levels it is built on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Layering works when each guarantee has one clear owner. Ordering belongs to consensus, the rules of state change to execution, delivery to the network; when a property is split across layers, each can assume the other provides it, and the gap between them is where failures hide. Stating layer responsibilities explicitly is how a stack makes sure every property is provided by someone.",
+        },
+        {
+          kind: "paragraph",
+          text: "Real stacks bend their layering for performance and economics. Execution that adapts to how blocks are propagated, or consensus whose incentives depend on what blocks contain, couples layers meant to be independent, and such cross-layer dependencies are often discovered only when a change at one level breaks an assumption at another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Modularity turns layers into separable components that different systems can supply. Layering states which level depends on which; modularity lets each level be built, replaced and shared independently, so the same layered decomposition can describe a single integrated protocol or a stack assembled from several.",
+        },
+      ],
+    },
+    {
+      id: "components-interfaces-content",
+      conceptId: "components-interfaces",
+      definition:
+        "Components and interfaces describe a protocol as a set of parts with defined responsibilities, connected through specified points of interaction that determine how the parts may use and extend one another.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Extension points let others add behavior to a component without changing it, and every one is a place where the host runs code it did not write. A pool that calls a hook around each swap, or a token that notifies its recipient, gains flexibility and also hands control, at a defined moment, to code that may revert, exhaust resources or re-enter the host. Protocol hooks are safe only when the host bounds what they can do and assumes they may be hostile.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol standards turn interfaces into ecosystems. When many components implement the same interface, any of them can work with any consumer of it, which is what lets new assets or modules plug into existing applications. The same reach makes standards slow to change: a choice fixed in a widely adopted interface is carried by everything that implements it, so standards evolve mostly by adding optional extensions rather than revising the core.",
+        },
+        {
+          kind: "paragraph",
+          text: "Component dependencies carry behavior as well as functionality. A component that relies on another inherits its assumptions and is affected by its upgrades, which may change behavior without the dependent's involvement, so mapping dependencies, and which of them can change under whose control, is part of understanding what any component actually guarantees.",
+        },
+      ],
+    },
+    {
+      id: "state-architecture-content",
+      conceptId: "state-architecture",
+      definition:
+        "State architecture organizes a protocol's state: how it is divided, who may change which parts, and how operations on the same state are kept consistent.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How state is partitioned decides how much work can proceed in parallel. Transactions that touch disjoint parts of the state can be executed side by side, while state that many transactions touch, such as a popular trading pool, serializes everything that uses it. The architecture therefore fixes in advance where contention will arise, whatever execution strategy is applied later.",
+        },
+        {
+          kind: "paragraph",
+          text: "State ownership can remove the need for global ordering. When a piece of state can be changed only by its single owner, operations involving only that owner's state conflict with no one else's and can be confirmed without being ordered against the rest of the system; only shared state, which several parties can change, needs full agreement on order. Designs that distinguish the two can make the common case fast and reserve ordering for genuine contention.",
+        },
+        {
+          kind: "paragraph",
+          text: "State isolation lets components protect their own invariants. When each contract's storage can be changed only through its own code, the contract alone decides which changes are valid, while relationships spanning several contracts stay consistent only through the calls between them, so state architecture also determines which invariants can be enforced in one place and which depend on coordination.",
+        },
+      ],
+    },
+    {
+      id: "execution-architecture-content",
+      conceptId: "execution-architecture",
+      definition:
+        "Execution architecture is the structure through which a system carries out the work of executing transactions: how that work is divided into stages, scheduled, bounded and run concurrently, under the semantics its execution model fixes.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Execution can be pipelined like any other workload. Receiving, checking signatures, scheduling, executing and committing state can overlap across blocks, so that one block executes while the next is being ordered. Some designs go further and agree on transaction order before executing anything, computing the resulting state afterwards: this frees consensus from execution time, at the cost of ordering transactions that later turn out to fail and of state results that trail the agreed order.",
+        },
+        {
+          kind: "paragraph",
+          text: "Execution scheduling puts the execution model's freedom to use. The model fixes what the correct outcome is; scheduling decides which transactions run when and on which processors, using what is known or declared about the state each will touch, so the same semantics can run sequentially on one machine or spread across many.",
+        },
+        {
+          kind: "paragraph",
+          text: "Call graphs shape both risk and cost. Deeply nested calls between contracts multiply the points at which control passes to other code and run into depth and resource limits, while shallow, predictable call structures are easier to analyze and to schedule in parallel. Concurrency models then decide how calls touching shared state are kept apart, whether by locking, by detecting conflicts and retrying, or by forbidding concurrent access altogether.",
+        },
+      ],
+    },
+    {
+      id: "contract-architecture-content",
+      conceptId: "contract-architecture",
+      definition:
+        "Smart contract architecture is how a system's functionality is divided among deployed contracts and how those contracts find, call, create and upgrade one another.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Putting everything in one contract or splitting it across many trades efficiency against blast radius. A singleton contract that holds every pool can move value between them by internal accounting, cheaply and atomically, but concentrates all assets and all risk in one place; factory patterns that deploy a separate contract for each pool isolate a failure in one from the rest, at the cost of more expensive interaction between them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Shared code is shared risk. A contract library deployed once and called by many contracts saves deployment cost, but a flaw in it, or anyone's ability to disable it, reaches every contract that depends on it at once. Proxy patterns raise the same question for upgrades: an arrangement in which one beacon points many proxies to their implementation lets a single change upgrade every instance, which is efficient for fixes and equally efficient for mistakes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contract registries and predictable addresses decide how contracts find each other and how users find the genuine ones. Addresses derived deterministically from a factory and its parameters can be computed without a lookup, while a registry that lists official contracts becomes a point of trust: whoever can write to it decides what users and other contracts treat as the real system.",
+        },
+      ],
+    },
+    {
+      id: "client-architecture-content",
+      conceptId: "client-architecture",
+      definition:
+        "Client architecture is how the software that implements a protocol is organized: which programs perform which duties, how they communicate, and how many independent implementations exist.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Splitting a node into separate execution and consensus clients, connected through a defined interface, lets each half be built by different teams and combined freely by operators. The interface between them becomes as critical as the protocol rules themselves, since every pairing depends on it, and diversity can be judged for each half separately.",
+        },
+        {
+          kind: "paragraph",
+          text: "How much any one implementation's share matters depends on the protocol's fault thresholds. If a client run by less than the share consensus tolerates has a bug, its users fall out of step while the network continues; if a client run by more than the share needed to finalize has the same bug, the network can finalize an invalid result for everyone. Client diversity is therefore measured against those thresholds, not as a count of implementations.",
+        },
+        {
+          kind: "paragraph",
+          text: "Node roles are built from the same parts in different configurations. A validator, an archive node, a node serving applications and a light client run different subsets of the client stack and keep different amounts of data, and roles that depend on others for data, as light clients do, inherit assumptions about the nodes that serve them.",
+        },
+      ],
+    },
+    {
+      id: "network-architecture-content",
+      conceptId: "network-architecture",
+      definition:
+        "Network architecture is the structure of communication among a protocol's participants: who connects to whom, over which logical networks, and how traffic of different kinds is kept apart.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocols build logical networks over the internet rather than using it directly. Gossip meshes organized by topic carry blocks, transactions and other data to interested peers, and structured overlays such as distributed hash tables let a node find who holds a particular item; network segmentation keeps different kinds of traffic on separate overlays so that a flood of one cannot crowd out another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Peers are not all equal in practice. Validators, builders and relays often maintain direct, privileged connections among themselves that bypass the public network, cutting latency for those inside and creating a faster tier that public participants cannot join. Such private paths improve performance and quietly concentrate the advantages that speed confers.",
+        },
+        {
+          kind: "paragraph",
+          text: "The physical network shapes the logical one. Nodes concentrated in a few hosting providers and regions share their outages, routing failures or manipulation in internet infrastructure can cut groups of nodes off from each other, and geographic distance alone decides who receives information first. Network topology that looks well connected on paper depends on these physical facts.",
+        },
+      ],
+    },
+    {
+      id: "data-architecture-content",
+      conceptId: "data-architecture",
+      definition:
+        "Data architecture is the arrangement of a system's information: how it is modeled, where each kind of data is placed, how it flows between components, and in what formats it is stored and exchanged.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Data placement is decided item by item, by who needs the data and what guarantee they need. What execution must read lives in state; what others must be able to check is published where availability is guaranteed; history goes to archives; and application data too large or too private for any of these stays off-chain behind a commitment. A system's cost and its guarantees follow largely from these placements.",
+        },
+        {
+          kind: "paragraph",
+          text: "Following data flows reveals dependencies that an architecture diagram hides. Most applications read the chain not directly but through indexers, providers and caches that transform its data, and each transformation is a point where what the application sees can diverge from the canonical state, through lag, error or manipulation.",
+        },
+        {
+          kind: "paragraph",
+          text: "The data model shapes what is easy to express. Account balances, independent objects and unspent outputs each make different operations natural and different conflicts likely, and channels such as event logs, readable by off-chain consumers but not by contracts, carry information out of execution without making it part of state.",
+        },
+      ],
+    },
+    {
+      id: "trust-architecture-content",
+      conceptId: "trust-architecture",
+      definition:
+        "Trust architecture is the map of what a system relies on without checking, organized by component: which parts are trusted, for which guarantees, and how that trust is bounded.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each guarantee has its own trusted computing base, the set of components whose failure would break it. For a rollup's safety that base may include the proof verifier, the bridge contract and whoever holds upgrade keys; for its liveness, the sequencer as well. Listing the base guarantee by guarantee shows where effort should go, and keeping each base small is what makes it possible to review completely.",
+        },
+        {
+          kind: "paragraph",
+          text: "Trusted components need not be unaccountable. A component that is trusted to act but whose actions are recorded and can be challenged afterwards, through fraud proofs, signed logs or slashable commitments, limits the damage of a failure to what happens before detection, whereas a component trusted without any record can fail silently. Where removing trust is impractical, making it accountable is the next best design.",
+        },
+        {
+          kind: "paragraph",
+          text: "Trust dependencies are transitive. A trusted component relies on its own code, compiler, libraries, keys and operators, each of which becomes part of what is ultimately trusted, so architecture that keeps trusted components few and their own dependencies short keeps the true extent of trust visible.",
+        },
+      ],
+    },
+    {
+      id: "composability-content",
+      conceptId: "composability",
+      definition:
+        "Composability is the ability of independently built contracts and protocols to be combined, one using another's functions or outputs, into new applications without the original authors' involvement.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On open networks composition needs no permission. Anyone can build on any deployed contract, so new applications can assemble existing ones like parts, but the original authors neither approve nor even know of most integrations. Integrators routinely rely on behavior that was never promised, such as treating a market's instantaneous price as a fair valuation, and composability risks gather in those unstated assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Atomic composability makes whole sequences of interactions as easy to attempt as one. A single transaction can borrow, trade, deposit and repay across many protocols and either complete or leave no trace, which enables sophisticated strategies and equally sophisticated attacks: many exploits are compositions that drive several protocols into a combined state none of them anticipated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols can trade some composability for safety. Restricting which contracts may call a function, refusing calls from contracts altogether, or delaying effects to a later block narrows how others can build on a protocol and closes the paths that composed attacks rely on. Each restriction gives up some of the openness that made composition valuable.",
+        },
+      ],
+    },
+    {
+      id: "architectural-tradeoffs-content",
+      conceptId: "architectural-tradeoffs",
+      definition:
+        "Architectural tradeoffs are the competing qualities a protocol's structure must balance, such as independence between parts, flexibility for future change, simplicity, and the permanence of what has been deployed.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Complexity is a security cost. Each feature, parameter and extension point adds code paths and, more importantly, interactions with what already exists, and the number of interactions grows faster than the number of parts, so a slightly more capable design can be much harder to verify. Extensibility bought now is paid for in review effort and attack surface from then on.",
+        },
+        {
+          kind: "paragraph",
+          text: "Coupling in contracts is often invisible. Components that share storage, rely on each other's exact behavior or assume an order of calls are coupled even when their interfaces look independent, and no compiler reports it, so a change to one breaks the other in ways only careful review finds. Cohesive components, each owning its own state and responsibility, limit how far such breaks reach.",
+        },
+        {
+          kind: "paragraph",
+          text: "Technical debt is unusually expensive on a ledger. Deployed contracts cannot simply be refactored, so shortcuts persist until users are migrated, and in a base protocol every legacy behavior must be preserved by every client indefinitely for the sake of compatibility. Immutability turns early decisions into long commitments, which argues for spending more care before deployment than after.",
+        },
+      ],
+    },
+    {
       id: "protocol-design-lifecycle-content", conceptId: "protocol-design-lifecycle",
       definition: "Protocol design and lifecycle organize how a protocol is conceived, specified, implemented, operated, changed, evolved, and retired under conditions that remain system-specific.",
       body: [
