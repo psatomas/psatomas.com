@@ -179,8 +179,11 @@ appears with.
 
 ## Structure follows meaning
 
-The L0 block pattern is not a template for other roles. Choose blocks by what
-the explanation needs:
+Form is decided after the concept is understood: context, analysis, concept
+model, representation design, then authoring, audit and verification
+([representation-design.md](representation-design.md)). The L0 block pattern
+is not a template for other roles, and neither is any sibling's form. Choose
+blocks by what the explanation needs:
 
 | Block | Use it for | Corpus note |
 |---|---|---|

@@ -13,6 +13,8 @@
 //   npm run map:author -- stop --subject .. --evidence .. --why .. --decision ..
 //   npm run map:author -- resume --decision "..."       after a human decision resolved the stop
 //   npm run map:author -- run [--dry-run] [--trailer ".."] [--footer ".."] [--ci-wait <minutes>]
+//   npm run map:author -- represent catalog|context|record|audit ...  read-only representation audit
+//                                                       (scripts/map-author-represent.ts)
 //
 // Every command except domains/plan acts on the active run (the one unfinished
 // state file under .map-authoring/, or --domain). The tool never merges,
@@ -24,6 +26,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
+import { commandRepresent } from "./map-author-represent.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
 import { createMapAuthoringInspector, MapAuthoringContextError } from "../src/lib/map/authoring/context.ts";
 import { formatMapConceptAuthoringContext } from "../src/lib/map/authoring/format.ts";
@@ -914,6 +917,13 @@ try {
       break;
     case "run":
       await commandRun();
+      break;
+    case "represent":
+      try {
+        commandRepresent(positional, flag, (name) => flags.has(name));
+      } catch (error) {
+        fail((error as Error).message, 1);
+      }
       break;
     default:
       fail(`unknown command ${command ?? "(none)"}; see the header of scripts/map-author.ts or docs/map-authoring/domain-runbook.md`);

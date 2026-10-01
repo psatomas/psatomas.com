@@ -24,7 +24,10 @@ Read these before authoring. If they disagree, the earlier source wins.
    including when to stop and ask.
 4. [`quality-contract.md`](quality-contract.md) lists what code enforces and what
    review must judge.
-5. The code is the ground truth for shapes and rules:
+5. [`representation-design.md`](representation-design.md) is how an exposition's
+   form is chosen (analysis, concept model, representation design) and the
+   read-only representation audit.
+6. The code is the ground truth for shapes and rules:
    [`types.ts`](../../src/lib/map/types.ts) (content blocks),
    [`validation.ts`](../../src/lib/map/validation.ts) (structural rules),
    [`concept-exposition.tsx`](../../src/components/map/concept-exposition.tsx) and
