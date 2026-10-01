@@ -1,0 +1,930 @@
+{
+  "version": 1,
+  "designs": [
+    {
+      "conceptId": "proposer-builder-separation",
+      "domainId": "consensus-ordering",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain how separating building from proposing creates and resolves mutual exposure.",
+        "actors": [
+          "builder",
+          "relay or protocol",
+          "proposer"
+        ],
+        "sequence": [
+          "builder submits block and bid",
+          "proposer commits to a block it has not seen",
+          "contents are released",
+          "payment and validity are enforced by the relay or the protocol"
+        ],
+        "failures": [
+          "relay trust",
+          "inclusion power shifts to dominant builders"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "why each side is exposed and where exclusion power moves"
+        },
+        {
+          "structure": "interaction",
+          "purpose": "the blind-commit exchange between builder, relay and proposer, which the first two paragraphs describe as a sequence"
+        }
+      ],
+      "justification": "The parent's flow shows who hands what to whom but not the order that resolves mutual exposure: commit before seeing, reveal after. The record already states that order in prose; drawing it as a short actor sequence makes the resolution visible.",
+      "placements": [
+        "proposer-builder-separation"
+      ],
+      "sourceFingerprint": "34dff72360c996278fb251270c3e650003f6279a5265c230b2ac48d8fef5d106"
+    },
+    {
+      "conceptId": "data-availability",
+      "domainId": "storage-availability",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain availability as obtainability in time, and where each guarantee puts its remaining assumption.",
+        "variants": [
+          "full publication",
+          "availability committee",
+          "sampling"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "full publication, availability committees and sampling compared on who must download how much and what is trusted"
+        }
+      ],
+      "justification": "Re-audit: the second paragraph compares three guarantees on the same two dimensions, and the point that each choice moves the remaining assumption is easiest to see across a table.",
+      "placements": [
+        "data-availability",
+        "data-availability-in-data-availability-layers"
+      ],
+      "canonicalNote": "Also a leaf under Data Availability Layers, where these alternatives are exactly what such layers choose between.",
+      "sourceFingerprint": "0e55c8d8fc8b2261b7bff0e8734524650f7b9a2ff1b3a5153a99d9071c979cb1"
+    },
+    {
+      "conceptId": "wallets",
+      "domainId": "identity-accounts-authority",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain the wallet as the place where intent, bytes and approval meet.",
+        "distinctions": [
+          "displayed action ≠ signed bytes"
+        ],
+        "tradeoffs": [
+          "theft ↔ loss"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "hidden construction decisions and the theft/loss trade-off"
+        },
+        {
+          "structure": "distinction",
+          "purpose": "what the participant approves (the display) is not what the key authorizes (the bytes), the record's central security point, now stated only in prose"
+        }
+      ],
+      "justification": "The parent draws construction → signing → submission and account ≠ wallet; the conflation that makes faithful display a security property is the record's key insight and is exactly the kind a distinction makes unmissable.",
+      "placements": [
+        "wallets"
+      ],
+      "sourceFingerprint": "5566c11aca42a878aae99c0c7a9180e76ff2a704cafd3b083eff17ba2822734f"
+    },
+    {
+      "conceptId": "oracle-aggregation",
+      "domainId": "oracles-external-reality",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain each aggregation rule by what it guarantees and what failure it trades for.",
+        "variants": [
+          "medianization",
+          "weighted aggregation",
+          "outlier filtering",
+          "quorum aggregation"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "medianization, weighted aggregation, outlier filtering and quorum aggregation compared on what each protects against and when it fails"
+        }
+      ],
+      "justification": "Re-audit: four rules with two comparable attributes each are spread over three paragraphs; side by side they show the closing claim, that choosing a rule is choosing between wrong and missing values.",
+      "placements": [
+        "oracle-aggregation"
+      ],
+      "sourceFingerprint": "06a216817d058d71528fe24103e8bded4746c692f9967ab1426bd2485746eaa8"
+    },
+    {
+      "conceptId": "oracle-security",
+      "domainId": "oracles-external-reality",
+      "classification": "enhance",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain oracle security as defending the whole path from source to the action that uses a value.",
+        "sequence": [
+          "source",
+          "reporters",
+          "aggregation",
+          "delivery",
+          "consuming action"
+        ],
+        "failures": [
+          "source compromise",
+          "Sybil or collusion",
+          "aggregation manipulation",
+          "stale or withheld delivery",
+          "administrative override"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "consumer bounds, irreversibility and administrative paths"
+        },
+        {
+          "structure": "failure-path",
+          "purpose": "the path from source through reporters and aggregation to the consuming action, with the attack each step admits"
+        }
+      ],
+      "justification": "The definition and the parent both describe security over a path, yet neither shows it: the parent lists attacks in prose. A failure-path flow makes the surface at each step visible and is valid wherever oracle security is read.",
+      "placements": [
+        "oracle-security",
+        "oracle-security-in-domain-specific-security"
+      ],
+      "canonicalNote": "Also a leaf under Domain-Specific Security; the path is the same there.",
+      "sourceFingerprint": "ca2d76cda5590450971909d78fa99971a9aa253248a8188e8636f388a35d1c2a"
+    },
+    {
+      "conceptId": "stablecoins",
+      "domainId": "markets-financial-protocols",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain pegs held by redemption, family-specific failure modes and runs on backing.",
+        "variants": [
+          "fiat-backed: issuer, custody, legal",
+          "crypto-backed: collateral volatility and liquidations",
+          "algorithmic: reflexive confidence"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "fiat-backed, crypto-backed and algorithmic designs compared on what backs the peg and how it fails"
+        }
+      ],
+      "justification": "Re-audit: each family's backing and failure mode are compared in the second paragraph; the table makes the different failure surfaces readable at once.",
+      "placements": [
+        "stablecoins",
+        "stablecoins-in-monetary-systems"
+      ],
+      "canonicalNote": "Also a leaf under Monetary Systems; the families and their failures hold there.",
+      "sourceFingerprint": "36714603853541c13b6bb6ae646afbc781782838b3df860b32e2aa1c5e3931fe"
+    },
+    {
+      "conceptId": "intent-commitments",
+      "domainId": "intents-coordination",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain commitments by what enforces them and what each guarantee binds.",
+        "variants": [
+          "price guarantee: terms, not occurrence",
+          "execution guarantee: occurrence, not terms",
+          "firm quote: both"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "price guarantees, execution guarantees and firm quotes compared on whether terms are fixed and whether execution is"
+        }
+      ],
+      "justification": "Re-audit: the second paragraph is a small yes/no matrix squeezed into a sentence; laid out, what each guarantee leaves open is unmissable.",
+      "placements": [
+        "intent-commitments"
+      ],
+      "sourceFingerprint": "3d40f2b4007eda8eee96a0874404e0209a7d92d310b257f528a029d2f0faf00d"
+    },
+    {
+      "conceptId": "intent-discovery",
+      "domainId": "intents-coordination",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain discovery as a set of choices each trading one benefit for another cost.",
+        "tradeoffs": [
+          "more solvers ↔ more leakage",
+          "open access ↔ spam and exploitation",
+          "aggregation delay ↔ match rate"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "fragmented pools and how each choice plays out"
+        },
+        {
+          "structure": "tension",
+          "purpose": "competition ↔ information leakage, open access ↔ abuse, holding to match ↔ delay: the three trade-offs the record is built around"
+        }
+      ],
+      "justification": "Each paragraph is one tension stated in prose; a tensions block names all three together so the reader sees discovery as tuning, which is the record's model. The parent has only distinctions.",
+      "placements": [
+        "intent-discovery"
+      ],
+      "sourceFingerprint": "428f8019acc70677b33d9c88fd03f23760c35f03ddc490b063b51c339ccba51e"
+    },
+    {
+      "conceptId": "proposals",
+      "domainId": "governance-institutions",
+      "classification": "enhance",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain proposals as executable content that a lifecycle exposes to scrutiny.",
+        "lifecycle": [
+          "submission",
+          "deliberation",
+          "signaling vote",
+          "binding vote",
+          "delay",
+          "execution"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "executable content versus description, and thresholds"
+        },
+        {
+          "structure": "lifecycle",
+          "purpose": "submission, deliberation, signaling, binding vote, delay and execution, showing where scrutiny and exit happen"
+        }
+      ],
+      "justification": "The record argues that the lifecycle buys time but never shows its stages, and the parent has no flow; Proposal Lifecycle is a child the stages relate to without teaching. A lifecycle makes the claim about where scrutiny happens concrete.",
+      "placements": [
+        "proposals",
+        "proposals-in-organizational-governance"
+      ],
+      "canonicalNote": "Also a leaf under Organizational Governance; the lifecycle is the same.",
+      "sourceFingerprint": "09cf9056a3ced1a6f115bd9fa422cad21ab084c6c218d8d0dc8b69baa9d672f7"
+    },
+    {
+      "conceptId": "modularity",
+      "domainId": "scaling-modular-systems",
+      "classification": "enhance",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain modularity as composing separated functions through interfaces, with weakest-link security.",
+        "composition": [
+          "execution",
+          "ordering",
+          "data availability",
+          "settlement"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "interface assumptions, composed security and lost synchronous composability"
+        },
+        {
+          "structure": "composition",
+          "purpose": "a modular system decomposed into execution, ordering, data availability and settlement, the functions that the domain's layer topics each take up"
+        }
+      ],
+      "justification": "Nowhere in the domain is the stack shown: the parent has no structure and the definition lists the functions. A composition makes the mental model the sibling layer topics rely on visible, without teaching any of them.",
+      "placements": [
+        "modularity",
+        "modularity-in-protocol-layers"
+      ],
+      "canonicalNote": "Also a leaf under Protocol Layers; the composition is the concept itself, not this domain's layout.",
+      "sourceFingerprint": "7cbc70d45605640cb366fb8844c682e8cbd23341f912168a207b4ff31a8a736a"
+    },
+    {
+      "conceptId": "off-chain-scaling",
+      "domainId": "scaling-modular-systems",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain off-chain designs by where data lives, who checks validity and what users can do when operators stop cooperating.",
+        "variants": [
+          "validium",
+          "plasma",
+          "sidechain",
+          "channels"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "validiums, plasma, sidechains and channels compared on where data lives, who checks validity and what users can do when operators stop"
+        }
+      ],
+      "justification": "Re-audit: the clearest alternatives-by-dimensions content in its domain, previously a capability gap.",
+      "placements": [
+        "off-chain-scaling"
+      ],
+      "sourceFingerprint": "800519420430445470c6cff194f4857807e77af18ea3cf5b85bb5e92547fbcde"
+    },
+    {
+      "conceptId": "rollup-sequencing",
+      "domainId": "scaling-modular-systems",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain sequencing arrangements by who orders, what they gain and what users are protected by.",
+        "variants": [
+          "single sequencer: speed, full control",
+          "decentralized: shared revenue, consensus latency",
+          "shared: cross-rollup guarantees, concentrated power",
+          "based: base-layer ordering, slower confirmation"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "single, decentralized, shared and based sequencing compared on who orders, what it gains and what it costs"
+        }
+      ],
+      "justification": "Re-audit: four arrangements with three attributes each are spread over three paragraphs.",
+      "placements": [
+        "rollup-sequencing"
+      ],
+      "sourceFingerprint": "2b61662613409faea579d96ccec6fc280040867d7d9474d9965d0cb8c6fbf08e"
+    },
+    {
+      "conceptId": "scaling-tradeoffs",
+      "domainId": "scaling-modular-systems",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain the competing properties a scaling design balances.",
+        "tradeoffs": [
+          "throughput ↔ confirmation latency",
+          "per-node capacity ↔ participation",
+          "low user fees ↔ operator hardware"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the trilemma as heuristic and decentralization as several properties"
+        },
+        {
+          "structure": "tension",
+          "purpose": "throughput ↔ latency, capacity ↔ participation, low user fees ↔ operator costs, the pairs the record argues"
+        }
+      ],
+      "justification": "The concept is a set of tensions, and the record states three of them in prose; a tensions block is the native representation and is used only twice in the corpus. The parent has one distinction.",
+      "placements": [
+        "scaling-tradeoffs"
+      ],
+      "sourceFingerprint": "628081bb7353004c0f3d29ab476c75bb06975aa7c4e5b1675ea61e6951fb7228"
+    },
+    {
+      "conceptId": "asset-bridging",
+      "domainId": "interoperability-abstraction",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain bridging models by where each puts the risk.",
+        "variants": [
+          "lock-and-mint: the locked pool",
+          "burn-and-mint: mint authority",
+          "liquidity-based: providers and rebalancing"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "lock-and-mint, burn-and-mint and liquidity-based bridging compared on what arrives on the destination, where the risk sits and what limits capacity"
+        }
+      ],
+      "justification": "Re-audit: three models compared on three attributes across three paragraphs; read across, the holder's exposure under each is clear.",
+      "placements": [
+        "asset-bridging"
+      ],
+      "sourceFingerprint": "e739e6421b048764eb468243abbc16b27f0c0e97106bf9a5b0a55b5afdfbd482"
+    },
+    {
+      "conceptId": "cross-chain-verification",
+      "domainId": "interoperability-abstraction",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain verification as bounded by source finality, priced by method and maintained over time.",
+        "variants": [
+          "light client",
+          "ZK",
+          "optimistic",
+          "committee"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "light-client, ZK, optimistic and committee verification compared on cost to check, cost or delay to produce, and what is trusted"
+        }
+      ],
+      "justification": "Re-audit: four methods across the same dimensions, packed into one sentence; previously a capability gap. Interoperability Models keeps its range in prose so the comparison is drawn once.",
+      "placements": [
+        "cross-chain-verification"
+      ],
+      "sourceFingerprint": "621aff137b30a4dc9f8d0a8b29b9df7580bca92af88e8bc92e28c9201850deea"
+    },
+    {
+      "conceptId": "cross-domain-atomicity",
+      "domainId": "interoperability-abstraction",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain atomicity mechanisms by what each guarantees and costs.",
+        "variants": [
+          "HTLC: two-party, option, online",
+          "two-phase commit: locks, coordinator",
+          "compensation: eventual, not all-or-nothing"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "hashed timelocks, two-phase commit and compensating actions compared on whether it is all-or-nothing, what it costs and who must stay available"
+        }
+      ],
+      "justification": "Re-audit: one of the three is not atomic at all, which a table makes impossible to miss; costs and liveness needs are parallel across them.",
+      "placements": [
+        "cross-domain-atomicity",
+        "cross-domain-atomicity-in-interoperability-abstraction"
+      ],
+      "canonicalNote": "Preferred as a leaf under Intents & Coordination; the mechanisms are the same there.",
+      "sourceFingerprint": "beb0fdf2f7c6701891e771bdab72380afc4171fcfbfa08372acac02401eab667"
+    },
+    {
+      "conceptId": "trust-failure-modes",
+      "domainId": "interoperability-abstraction",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain trust failures by kind, shared points and isolation.",
+        "distinctions": [
+          "liveness failure ≠ safety failure"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "shared points of failure and isolation"
+        },
+        {
+          "structure": "distinction",
+          "purpose": "a liveness failure (stops, recoverable) is not a safety failure (wrong result, often irreversible), the record's organizing contrast"
+        }
+      ],
+      "justification": "The first paragraph rests on this contrast and every design choice described trades one for the other; the parent's distinction concerns isolation versus recovery, not this.",
+      "placements": [
+        "trust-failure-modes"
+      ],
+      "sourceFingerprint": "4f30512b7b510a665db90a595d21f83a1ef39d9dbbdcf19f9237c92254191bc9"
+    },
+    {
+      "conceptId": "domain-specific-security",
+      "domainId": "security-correctness-resilience",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain what specialized security domains share and what each attack is paid in.",
+        "variants": [
+          "oracles: moved price",
+          "governance: voting weight",
+          "bridges and rollups: forged state claim",
+          "ordering: position",
+          "wallets: misleading signing request"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "oracles, governance, bridges and rollups, ordering and wallets compared on what the system relies on and what an attack is paid in"
+        }
+      ],
+      "justification": "Re-audit: the first two paragraphs give two attributes for each domain in separate passes; a table joins them so the pattern across domains shows.",
+      "placements": [
+        "domain-specific-security"
+      ],
+      "sourceFingerprint": "71b2732963124d979ad13ba41996e37092e5cfdbeb0fa69bfb78a78af39b8951"
+    },
+    {
+      "conceptId": "formal-methods",
+      "domainId": "security-correctness-resilience",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain formal methods by what each technique buys for its effort, why contracts suit them and design-level checking.",
+        "variants": [
+          "static analysis",
+          "symbolic execution",
+          "model checking",
+          "theorem proving"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "static analysis, symbolic execution, model checking and theorem proving compared on how automatic it is and what it covers or misses"
+        }
+      ],
+      "justification": "Re-audit: the first paragraph's effort-versus-assurance trade is a comparison of four techniques on two attributes.",
+      "placements": [
+        "formal-methods",
+        "formal-methods-in-pre-launch-validation"
+      ],
+      "canonicalNote": "Also a leaf under Pre-Launch Validation.",
+      "sourceFingerprint": "30d9fda0074b1a87d239f424c3abbd1dfcb641a3afbc243f45b9a505c08b6d14"
+    },
+    {
+      "conceptId": "incident-response",
+      "domainId": "security-correctness-resilience",
+      "classification": "enhance",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain incident response as preparation before, containment and disclosure during, and learning after.",
+        "lifecycle": [
+          "preparation",
+          "detection",
+          "containment",
+          "early warning",
+          "fix",
+          "full disclosure",
+          "post-mortem"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "preparation, the disclosure dilemma and blameless post-mortems"
+        },
+        {
+          "structure": "lifecycle",
+          "purpose": "preparation, detection, containment, coordinated disclosure, fix, post-mortem: the course the record's three paragraphs refer to but never lay out"
+        }
+      ],
+      "justification": "The record is organized around phases yet never shows them, and none of its five placements draws them in a way that holds everywhere. A lifecycle makes the role of preparation and the timing of disclosure concrete.",
+      "placements": [
+        "incident-response",
+        "incident-response-in-security-correctness-resilience",
+        "incident-response-in-protocol-operations",
+        "incident-response-in-disputes-emergency-controls",
+        "incident-response-in-autonomous-security-responses"
+      ],
+      "canonicalNote": "Placed under Security (carrier), Protocol Operations, Disputes & Emergency Controls, Autonomous Security Responses and its preferred governance placement; the phases hold in every one.",
+      "sourceFingerprint": "3b6d73fe8bd844c01a1b1f2e15609acee9ba9318e28c58c5b0cc7fd4e7cdfdfc"
+    },
+    {
+      "conceptId": "architectural-tradeoffs",
+      "domainId": "protocol-architecture",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain the competing qualities a structure balances.",
+        "tradeoffs": [
+          "capability ↔ verifiability",
+          "extensibility ↔ attack surface",
+          "immutability ↔ correctability"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "invisible coupling and expensive technical debt"
+        },
+        {
+          "structure": "tension",
+          "purpose": "capability ↔ verifiability, extensibility ↔ attack surface, permanence ↔ correctability: the pairs the record argues"
+        }
+      ],
+      "justification": "The concept is a set of tensions and the record argues them in prose; a tensions block names them together. The parent states distinctions only.",
+      "placements": [
+        "architectural-tradeoffs"
+      ],
+      "sourceFingerprint": "6ff8f232a3fa54dc2e30f35865969037cae13437ac7d9c3ca92effa7f8249ddb"
+    },
+    {
+      "conceptId": "pre-launch-validation",
+      "domainId": "protocol-design-lifecycle",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain complementary assurance activities, their timing and the separate question of validation.",
+        "variants": [
+          "testing: what tests exercise; early",
+          "formal methods: stated properties; early",
+          "auditing: what reviewers recognize; frozen code",
+          "bug bounties: anyone motivated; from launch"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "testing, formal methods, auditing and bug bounties compared on what each finds and when it pays off"
+        }
+      ],
+      "justification": "Re-audit: complementarity and timing are two attributes of the same four activities, now split across two paragraphs.",
+      "placements": [
+        "pre-launch-validation"
+      ],
+      "sourceFingerprint": "348c3574b8489c5323cc08ff319e6fe7c949eb5cf6e0fc3d82564b0b6ac269fd"
+    },
+    {
+      "conceptId": "verifiable-ai",
+      "domainId": "ai-intelligent-systems",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain methods for checking AI claims by cost and trust, what checks establish and verifiable agents.",
+        "variants": [
+          "zkML: no trust, high cost",
+          "TEE: near-normal cost, hardware trust",
+          "re-execution on dispute: cheap, needs reproducibility"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "comparison",
+          "purpose": "zero-knowledge proofs, trusted execution and dispute-time re-execution compared on what it costs and what must be trusted"
+        }
+      ],
+      "justification": "Re-audit: the first paragraph compares three methods on two attributes in one dense sentence.",
+      "placements": [
+        "verifiable-ai"
+      ],
+      "sourceFingerprint": "66361f660be1c177e93fd20157bd06c7911be8019af561e2dafb5c0fe5e7b1b1"
+    },
+    {
+      "conceptId": "action-execution",
+      "domainId": "autonomous-execution",
+      "classification": "refactor",
+      "status": "blocked",
+      "blockedBy": [
+        "state"
+      ],
+      "model": {
+        "purpose": "Explain execution as following each action to a final outcome, idempotent retries and recorded progress.",
+        "lifecycle": [
+          "pending",
+          "dropped or replaced",
+          "included and failed",
+          "included and succeeded",
+          "reorganized",
+          "final"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "idempotency and durable progress"
+        },
+        {
+          "structure": "state",
+          "purpose": "a submitted transaction's states (pending, dropped, replaced, failed, succeeded, reorganized back to pending, final) and the transitions between them, which the first paragraph enumerates"
+        }
+      ],
+      "justification": "The first paragraph describes a state machine with returns; the parent's forward flow from construction to finality cannot show replacement or reorganization. A state representation is the faithful form, which no block provides today.",
+      "placements": [
+        "action-execution"
+      ],
+      "sourceFingerprint": "59f42d501dbbb8767273187aba7e14ed196c45ee1a278b71cfe7c44e25a65ed8"
+    },
+    {
+      "conceptId": "control-loops",
+      "domainId": "autonomous-protocols",
+      "classification": "refactor",
+      "status": "actionable",
+      "model": {
+        "purpose": "Explain why delay destabilizes loops, what PID's terms each answer, and anticipation by participants.",
+        "variants": [
+          "proportional: current error",
+          "integral: accumulated error, wind-up at bounds",
+          "derivative: rate of change"
+        ],
+        "relationships": [
+          "measure → compare → adjust → delayed effect → measure"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "the record's argument, conditions and causes"
+        },
+        {
+          "structure": "cycle",
+          "purpose": "measure, compare, adjust, and the delayed effect that is measured next, showing where the delay that causes overshoot sits in the loop"
+        }
+      ],
+      "justification": "Re-audit: the concept is a loop and its central claim is about where delay enters it, which only a drawn loop shows; the parent can draw it only as a forward flow. The PID terms stay in prose: one attribute each, with the wind-up qualification needing a sentence.",
+      "placements": [
+        "control-loops"
+      ],
+      "sourceFingerprint": "7b804b945bf4623cb65bbeba307f7288e7c000452eab2b85380796b5a3998577"
+    },
+    {
+      "conceptId": "protocol-adaptation",
+      "domainId": "autonomous-protocols",
+      "classification": "refactor",
+      "status": "blocked",
+      "blockedBy": [
+        "state"
+      ],
+      "model": {
+        "purpose": "Explain regime detection and mode switching, hysteresis against oscillation and bounded learning.",
+        "lifecycle": [
+          "normal mode",
+          "defensive mode"
+        ],
+        "invariants": [
+          "exit requires a stronger signal than entry"
+        ]
+      },
+      "current": {
+        "sequence": "def+P+P+P",
+        "structured": []
+      },
+      "target": [
+        {
+          "structure": "prose",
+          "purpose": "detection errors and learning limits"
+        },
+        {
+          "structure": "state",
+          "purpose": "normal and defensive modes with asymmetric entry and exit thresholds, the hysteresis the second paragraph explains"
+        }
+      ],
+      "justification": "Mode switching with different conditions to enter and to leave is a state structure with returns; a forward flow would misrepresent it, so this needs the state capability.",
+      "placements": [
+        "protocol-adaptation"
+      ],
+      "sourceFingerprint": "6e0a2961864875027c9fa94d1d245031a51daa1688fdd82016de7732c6a7e9ed"
+    }
+  ]
+}

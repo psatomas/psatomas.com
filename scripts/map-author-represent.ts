@@ -10,6 +10,8 @@
 //   represent context <concept-id>                      analysis inputs for one concept
 //   represent record [<concept-id>] --file <design.json> validate designs (one, or an array) and store them against the current content
 //   represent audit [--concept <id> | --domain <id>] [--json] [--report <file.md>]
+//   represent export-accepted                           write the audit's improvement designs as the
+//                                                       repository-owned spec (refactor runs read it)
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -19,6 +21,7 @@ import { createMapAuthoringInspector } from "../src/lib/map/authoring/context.ts
 import { formatMapConceptAuthoringContext } from "../src/lib/map/authoring/format.ts";
 import { CONTENT_FILES } from "../src/lib/map/authoring/orchestrator/diff-check.ts";
 import { REPRESENTATION_CATALOG } from "../src/lib/map/authoring/representation/catalog.ts";
+import { ACCEPTED_DESIGNS_FILE, exportAcceptedDesigns, specProblems, type AcceptedDesignSpec } from "../src/lib/map/authoring/representation/refactor.ts";
 import { emptyStore, placementsOf, profileOf, recordDesign, type DesignStore, type RepresentationDesign } from "../src/lib/map/authoring/representation/design.ts";
 import { acceptedContentProblems, aggregate, auditRepresentation, conceptsAtLevel, mutations, usageOf, type ConceptAuditEntry, type RepositorySnapshot } from "../src/lib/map/authoring/representation/audit.ts";
 
@@ -180,6 +183,30 @@ function commandAudit(scope: { conceptId: string } | { domainId: string } | { al
   } else console.log(text);
 }
 
+/**
+ * Writes the audit's improvement designs as the accepted-design spec. Content
+ * files are untouched; the spec is the one file written, and it is reviewed
+ * and accepted by merging. A spec that already records resolutions is never
+ * overwritten: a refactor campaign's history is not regenerated.
+ */
+function commandExportAccepted() {
+  const target = join(ROOT, ACCEPTED_DESIGNS_FILE);
+  if (existsSync(target)) {
+    const existing = JSON.parse(readFileSync(target, "utf8")) as AcceptedDesignSpec;
+    if (existing.designs.some((design) => design.resolution)) throw new Error(`${ACCEPTED_DESIGNS_FILE} records resolutions from refactor runs; it is not regenerated`);
+  }
+  const stores = readStores();
+  const spec = exportAcceptedDesigns(stores, mapKnowledge);
+  const problems = specProblems(spec, mapKnowledge);
+  const designed = stores.reduce((sum, store) => sum + Object.keys(store.designs).length, 0);
+  const expected = conceptsAtLevel(mapKnowledge, 1).length;
+  if (designed !== expected) problems.push(`the local audit designs ${designed} concepts, the L1 corpus has ${expected}; finish the audit first`);
+  if (problems.length) throw new Error(`not exported:\n  ${problems.join("\n  ")}`);
+  writeFileSync(target, `${JSON.stringify(spec, null, 2)}\n`);
+  const blocked = spec.designs.filter((design) => design.status === "blocked").length;
+  console.log(`wrote ${ACCEPTED_DESIGNS_FILE}: ${spec.designs.length - blocked} actionable, ${blocked} blocked; every other L1 concept is KEEP`);
+}
+
 export function commandRepresent(positional: readonly string[], flag: (name: string) => string | undefined, has: (name: string) => boolean) {
   const before = snapshot();
   const [sub, conceptId] = positional;
@@ -192,6 +219,9 @@ export function commandRepresent(positional: readonly string[], flag: (name: str
       break;
     case "record":
       commandRecord(conceptId, flag("--file") ?? fail("represent record needs --file <design.json>"));
+      break;
+    case "export-accepted":
+      commandExportAccepted();
       break;
     case "audit": {
       const concept = flag("--concept");
