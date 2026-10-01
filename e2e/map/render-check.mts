@@ -77,8 +77,10 @@ export async function checkRender(conceptIds: readonly string[], base?: string):
               if (leaked.length) problems.push(`facet leakage: other carriers' children rendered: ${leaked.join(", ")}`);
               if (facts.unlabeled) problems.push(`accessibility: ${facts.unlabeled} structured block(s) without a text alternative`);
               if (facts.overflow > 0) problems.push(`overflow: ${facts.overflow}px horizontal overflow`);
-              if (!reference) reference = { at: `${placementId}@${width}`, text: facts.text };
-              else if (facts.text !== reference.text) problems.push(`canonical text: differs from ${reference.at}`);
+              // Layout may change where lines break, never what the exposition says.
+              const text = facts.text.replace(/\s+/g, " ").trim();
+              if (!reference) reference = { at: `${placementId}@${width}`, text };
+              else if (text !== reference.text) problems.push(`canonical text: differs from ${reference.at}`);
             } catch (error) {
               problems.push(`exposition: did not render (${(error as Error).message.split("\n")[0]})`);
             } finally {

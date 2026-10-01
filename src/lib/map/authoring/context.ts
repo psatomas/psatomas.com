@@ -180,6 +180,8 @@ export function describeMapContentBlock(block: MapContentBlock): string {
       return `[tensions] ${block.label}: ${block.pairs.map(([left, right]) => `${left} ↔ ${right}`).join("; ")}`;
     case "terms":
       return `[terms] ${block.terms.join(" · ")}`;
+    case "cycle":
+      return `[cycle] ${block.label}: ${[...block.steps, block.steps[0]].join(" → ")} …`;
   }
 }
 

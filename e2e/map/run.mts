@@ -7,10 +7,11 @@
 // Prerequisites on a fresh checkout: `npm ci`, `npm run db:migrate:local`,
 // `npm run build`, and a browser (see launchBrowser in harness.mts).
 import { coverageSections } from "./coverage.mts";
+import { expositionSections } from "./exposition.mts";
 import { launchBrowser, startServer, type Section } from "./harness.mts";
 import { interactionSections } from "./interaction.mts";
 
-const sections: Section[] = [...interactionSections, ...coverageSections];
+const sections: Section[] = [...interactionSections, ...coverageSections, ...expositionSections];
 const option = (name: string) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const verbose = process.argv.includes("--verbose");
 const only = option("only")?.split(",");

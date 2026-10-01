@@ -7963,6 +7963,30 @@ test("exposition validation reports every malformed block", () => {
   ]);
 });
 
+test("exposition validation holds cycles to their semantic shape", () => {
+  const steps = (count: number) => Array.from({ length: count }, (_, index) => `Step ${index + 1}`);
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "model-blocks", conceptId: "economic-agency", definition: "Defined.",
+      body: [
+        { kind: "cycle", label: "A valid loop", steps: steps(3) },
+        { kind: "cycle", label: " ", steps: steps(3) },
+        { kind: "cycle", label: "One step", steps: steps(1) },
+        { kind: "cycle", label: "Too long", steps: steps(7) },
+        { kind: "cycle", label: "Repeats", steps: ["A", "B", "A"] },
+      ],
+    }],
+  }));
+  // Validation reports errors sorted; compare as sets of problems.
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "model-blocks"')).sort(), [
+    'Content "model-blocks" block 1 (cycle) has no label',
+    'Content "model-blocks" block 2 (cycle) must contain at least two steps',
+    'Content "model-blocks" block 3 (cycle) has more than 6 steps',
+    'Content "model-blocks" block 4 (cycle) repeats a step',
+  ].sort());
+});
+
 test("exposition validation rejects blank definitions and prose the renderer cannot present", () => {
   const errors = errorsFor((model) => ({
     ...model,

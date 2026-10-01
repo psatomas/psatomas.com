@@ -58,6 +58,8 @@ function blockStrings(block: MapContentBlock): string[] {
       return [block.label, ...block.pairs.flat()];
     case "terms":
       return [...block.terms];
+    case "cycle":
+      return [block.label, ...block.steps];
     default:
       return [];
   }
@@ -85,6 +87,8 @@ function duplicateKeyProblems(block: MapContentBlock): string[] {
       return hasDuplicates(block.pairs.map(([left, right]) => `${left}-${right}`)) ? ["repeats a pair"] : [];
     case "terms":
       return hasDuplicates(block.terms) ? ["repeats a term"] : [];
+    case "cycle":
+      return hasDuplicates(block.steps) ? ["repeats a step"] : [];
     default:
       return [];
   }
@@ -93,6 +97,9 @@ function duplicateKeyProblems(block: MapContentBlock): string[] {
 // A parallel set lays out as side-by-side columns sized for at most six within
 // the knowledge field (exposition-models.tsx, PARALLEL).
 const MAX_PARALLEL_ELEMENTS = 6;
+// A cycle is drawn as a column of steps with a return rail (exposition-models.tsx,
+// CycleModel); more than six steps stops reading as one loop.
+const MAX_CYCLE_STEPS = 6;
 
 function contentBlockProblems(block: MapContentBlock): string[] {
   const shape = contentBlockShapeProblems(block);
@@ -141,6 +148,12 @@ function contentBlockShapeProblems(block: MapContentBlock): string[] {
       return block.pairs.some((pair) => pair.length !== 2 || pair.some(blank)) ? ["has an incomplete pair"] : [];
     case "terms":
       return block.terms.length < 2 || block.terms.some(blank) ? ["must list at least two terms"] : [];
+    case "cycle":
+      if (blank(block.label)) return ["has no label"];
+      // A loop needs at least two steps for the return to mean anything.
+      if (block.steps.length < 2) return ["must contain at least two steps"];
+      if (block.steps.length > MAX_CYCLE_STEPS) return [`has more than ${MAX_CYCLE_STEPS} steps`];
+      return block.steps.some(blank) ? ["has an empty step"] : [];
     default:
       return [`is an unknown block kind`];
   }

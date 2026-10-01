@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { getMapConceptContentHref } from "./explorer-model";
 import type { MapConceptExposition } from "./explorer-model";
-import { FlowModel, TensionPair } from "./exposition-models";
+import { CycleModel, FlowModel, TensionPair } from "./exposition-models";
 import type { MapContentBlock } from "@/lib/map";
 
 const MONO = "font-mono text-[11px] uppercase tracking-[0.12em] sm:text-xs";
@@ -156,6 +156,12 @@ function ExpositionBlock({ block, lead }: { block: MapContentBlock; lead: boolea
           >
             {block.left} <span className="px-2 align-middle text-base leading-none text-muted">≠</span> {block.right}
           </p>
+        </div>
+      );
+    case "cycle":
+      return (
+        <div className={STRUCTURE}>
+          <CycleModel label={block.label} steps={block.steps} />
         </div>
       );
     case "tensions":

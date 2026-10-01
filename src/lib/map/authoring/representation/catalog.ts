@@ -55,7 +55,7 @@ export const REPRESENTATION_CATALOG: readonly CatalogEntry[] = [
   { structure: "interaction", block: "flow", fit: "approximate", expresses: "who acts, in what order, and what passes between participants", limits: "stages can name actors and actions, but messages between named lanes cannot be drawn" },
   { structure: "tension", block: "tensions", fit: "native", expresses: "recurring pairs of forces that pull against each other" },
   { structure: "vocabulary", block: "terms", fit: "native", expresses: "the terms a passage introduces, as a plain strip" },
-  { structure: "cycle", fit: "gap", expresses: "a loop that feeds its output back into its input (control and feedback loops)", limits: "a flow cannot return to an earlier stage" },
+  { structure: "cycle", block: "cycle", fit: "native", expresses: "a recurrent process whose last step feeds the next pass of the first (control and feedback loops)", limits: "one loop of at most six steps; not for a sequence that merely repeats or ends" },
   { structure: "state", fit: "gap", expresses: "states and the transitions between them, including returns and terminal states", limits: "a flow shows only a forward sequence of stages" },
   { structure: "comparison", fit: "gap", expresses: "several alternatives compared along shared dimensions", limits: "no table or matrix block; tensions pair forces, not alternatives × dimensions" },
   { structure: "dependency", fit: "gap", expresses: "a graph of what relies on what, where dependencies are shared or form chains", limits: "a flow is a sequence, not a graph" },
@@ -64,4 +64,4 @@ export const REPRESENTATION_CATALOG: readonly CatalogEntry[] = [
 export const catalogEntry = (structure: string): CatalogEntry | undefined => REPRESENTATION_CATALOG.find((entry) => entry.structure === structure);
 
 /** Block kinds that carry structure rather than continuous prose. */
-export const STRUCTURED_KINDS: ReadonlySet<BlockKind> = new Set(["flow", "distinction", "tensions"]);
+export const STRUCTURED_KINDS: ReadonlySet<BlockKind> = new Set(["flow", "distinction", "tensions", "cycle"]);
