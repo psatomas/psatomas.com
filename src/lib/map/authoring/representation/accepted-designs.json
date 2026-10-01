@@ -85,7 +85,15 @@
         "data-availability-in-data-availability-layers"
       ],
       "canonicalNote": "Also a leaf under Data Availability Layers, where these alternatives are exactly what such layers choose between.",
-      "sourceFingerprint": "0e55c8d8fc8b2261b7bff0e8734524650f7b9a2ff1b3a5153a99d9071c979cb1"
+      "sourceFingerprint": "0e55c8d8fc8b2261b7bff0e8734524650f7b9a2ff1b3a5153a99d9071c979cb1",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "d9742853fed339eecb91a0b39bfdec6e26c95adad0129e6f57d2fde7cc2a82cd",
+        "note": "Three guarantees compared on the same dimensions were packed into one paragraph; the comparison makes where each puts the remaining assumption readable, and the paragraph now states only the choice it frames."
+      }
     },
     {
       "conceptId": "wallets",
