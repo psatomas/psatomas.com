@@ -10,6 +10,7 @@
     "map:generate": "node scripts/generate-map-explorer-view.ts",
     "map:inspect": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/inspect-map-concept.ts",
     "map:author": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/map-author.ts",
+    "map:l2": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/map-l2-inventory.ts",
     "test": "node --test \"src/**/*.test.ts\"",
     "test:map:browser": "node e2e/map/run.mts",
     "test:map:render": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/map/render-check.mts",
