@@ -65,6 +65,7 @@ function parentSection(placement: MapAuthoringPlacementContext | undefined): str
   if (!placement?.parent) return ["  none (root placement or no placement)"];
   const parent = placement.parent;
   if (!parent.hasContent) return [`  ${parent.label} (${parent.conceptId}) has no exposition.`];
+  if (parent.section?.whole) return [`  ${parent.label}, whole exposition (it has no sections):`, ...parent.section.lines.map((line) => `${INDENT}${line}`)];
   if (parent.section) {
     return [
       `  ${parent.label}, section ${parent.section.index + 1}${parent.section.heading ? ` "${parent.section.heading}"` : " (before the first heading)"}:`,
