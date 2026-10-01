@@ -1,0 +1,66 @@
+{
+  "$comment": "Curated L2 authoring hazards from docs/map-authoring/l2-analysis.md (baseline 7bf7370). Judgments, not computed facts: future territory planning reads them as warnings. hazards.test.ts keeps every id valid against the taxonomy. Contextual-label homonyms are computed by inventoryL2 and are not listed here.",
+  "nearSynonyms": [
+    { "concepts": ["liquidators", "liquidation-searchers"], "note": "Lending-protocol role versus MEV actor; the same agents in practice. Needs a recorded facet split or a taxonomy decision." },
+    { "concepts": ["based-rollups", "based-sequencing"], "note": "A based rollup is one whose sequencing is based; split rollup architecture from the sequencing mechanism." },
+    { "concepts": ["interactive-fraud-proofs", "dispute-games"], "note": "Siblings under Optimistic Rollups; dispute games are the interactive protocol. Split purpose from protocol mechanics." },
+    { "concepts": ["escape-hatches", "forced-withdrawals"], "note": "Escape hatch is the general exit guarantee; forced withdrawal one realization." },
+    { "concepts": ["escape-hatches", "forced-inclusion"], "note": "Forced inclusion guarantees transactions, not exit; keep the guarantees apart." },
+    { "concepts": ["archival-state", "state-archiving"], "note": "State kept for history versus the act of moving state out of active storage." },
+    { "concepts": ["machine-money", "machine-native-money"], "note": "Autonomous Economy versus Frontier Systems; needs a defensible split or a taxonomy decision." },
+    { "concepts": ["capital-formation", "autonomous-capital-formation"], "note": "General capital formation versus its autonomous form; the general concept must not absorb the specific one." },
+    { "concepts": ["self-owning-agents", "self-sovereign-machines"], "note": "Siblings under Machine-Native Ownership; ownership versus sovereignty must be made precise or escalated." },
+    { "concepts": ["self-modifying-protocols", "self-improving-protocols"], "note": "Siblings; modification without and with an improvement objective." },
+    { "concepts": ["recursively-autonomous-systems", "nested-autonomy"], "note": "Siblings under Recursive Autonomy; likely a taxonomy question." },
+    { "concepts": ["approval-thresholds", "action-approval-thresholds"], "note": "Governance decision thresholds versus runtime action approval; the latter is labelled \"Approval Thresholds\"." },
+    { "concepts": ["autonomy-levels", "protocol-autonomy-levels"], "note": "Agent autonomy levels versus protocol autonomy levels." },
+    { "concepts": ["scheduled-execution", "execution-scheduling"], "note": "Different meanings with the same words: execution at set times versus ordering work in an execution pipeline." },
+    { "concepts": ["communication", "coordination-communication"], "note": "Same title, both in Foundations: message exchange between processes versus participants exchanging information to align action." }
+  ],
+  "categoryMembers": [
+    { "category": "hash-properties", "members": ["collision-resistance", "preimage-resistance"], "scope": "same group" },
+    { "category": "orders", "members": ["limit-orders", "market-orders"], "scope": "same group" },
+    { "category": "initial-synchronization", "members": ["full-sync", "snap-sync", "state-sync"], "scope": "same group" },
+    { "category": "formal-verification", "members": ["model-checking", "theorem-proving"], "scope": "same group" },
+    { "category": "positive-incentives", "members": ["rewards"], "scope": "same group" },
+    { "category": "negative-incentives", "members": ["penalties"], "scope": "same group" },
+    { "category": "fraud-proofs", "members": ["interactive-fraud-proofs"], "scope": "same group" },
+    { "category": "voting-mechanisms", "members": ["token-weighted-voting", "quadratic-voting", "conviction-voting"], "scope": "same group" },
+    { "category": "proof-of-storage", "members": ["proof-of-replication", "proof-of-retrievability"], "scope": "same group" },
+    { "category": "non-interactive-proofs", "members": ["snarks", "starks"], "scope": "same group" },
+    { "category": "commitment-schemes", "members": ["polynomial-commitments", "vector-commitments"], "scope": "same group" },
+    { "category": "atomic-swaps", "members": ["hashed-timelock-contracts"], "scope": "same group", "note": "Realized by, rather than a kind of." },
+    { "category": "collusion", "members": ["algorithmic-collusion"], "scope": "same group", "note": "Siblings under Market Power, whose parent already explains algorithmic collusion." },
+    { "category": "network-attacks", "members": ["eclipse-attacks", "denial-of-service-attacks"], "scope": "cross group" },
+    { "category": "vulnerability-classes", "members": ["reentrancy", "arithmetic-errors", "access-control-flaws", "unchecked-external-calls"], "scope": "cross group" },
+    { "category": "software-agents", "members": ["ai-agent"], "scope": "same group", "note": "ai-agent is dual-role and already authored." }
+  ],
+  "multiAxisGroups": [
+    { "group": "execution-models", "axes": ["determinism", "sequential or parallel", "optimistic or speculative"] },
+    { "group": "auctions", "axes": ["price rule", "bid visibility", "batching"] },
+    { "group": "bots", "axes": ["trigger", "purpose"] },
+    { "group": "interoperability-models", "axes": ["trust", "topology"] },
+    { "group": "governance-models", "axes": ["venue", "weighting", "decision mechanism"] },
+    { "group": "data-sources", "axes": ["distance from origin", "kind of data"] },
+    { "group": "arbitrage", "axes": ["venues", "execution"] }
+  ],
+  "facetWatch": [
+    { "concept": "verification", "note": "Checking instead of trusting, checking a computation, and checking code against a specification. One exposition only at the level of checking conformance to a stated claim by evidence." },
+    { "concept": "settlement", "note": "Preferred placement under Derivatives is the narrowest context; the exposition must be general." },
+    { "concept": "authority-escalation", "note": "Every placement means handing a decision upward; the title invites a privilege-escalation reading." },
+    { "concept": "collusion", "note": "Four placements; must not teach Algorithmic Collusion." },
+    { "concept": "fault-tolerance", "note": "Two parents already state its core; L2 must go beyond them." },
+    { "concept": "circuit-breakers", "note": "Five placements across governance, security, execution, autonomous protocols and economic resilience." },
+    { "concept": "pause-mechanisms", "note": "Five placements; parent sentences about pausing exist in several of them." },
+    { "concept": "constitutions", "note": "Governance, organizational and machine constitutions as facets of one meaning." },
+    { "concept": "capabilities", "note": "Capability-based authority throughout; not model capabilities." }
+  ],
+  "stateCandidates": {
+    "strong": ["transaction-lifecycle", "circuit-breakers", "pause-mechanisms", "mode-switching", "regime-detection", "recovery-modes", "automatic-failover", "graceful-degradation", "retries", "liquidation-thresholds", "workflow-definitions", "two-phase-commit"],
+    "moderate": ["revocation", "session-keys", "peg-stability", "depegging", "peg-defense", "reorganizations", "approval-workflows", "credit-default", "kill-switches", "dispute-games", "contract-lifecycle"]
+  },
+  "verticalBoundary": [
+    { "l1Concept": "action-execution", "l2Territory": ["transaction-lifecycle"], "note": "The blocked L1 State design draws a submitted transaction's states, which is Transaction Lifecycle's territory in another domain." },
+    { "l1Concept": "protocol-adaptation", "l2Territory": ["mode-switching", "regime-detection"], "note": "The blocked L1 State design draws modes with hysteresis, which is its children's territory." }
+  ]
+}

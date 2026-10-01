@@ -27,7 +27,10 @@ Read these before authoring. If they disagree, the earlier source wins.
 5. [`representation-design.md`](representation-design.md) is how an exposition's
    form is chosen (analysis, concept model, representation design) and the
    read-only representation audit.
-6. The code is the ground truth for shapes and rules:
+6. [`l2-analysis.md`](l2-analysis.md) is the read-only L2 analysis and the
+   proposed L2 authoring architecture. It is a proposal, not yet a
+   procedure; `npm run map:l2` prints the L2 inventory it is based on.
+7. The code is the ground truth for shapes and rules:
    [`types.ts`](../../src/lib/map/types.ts) (content blocks),
    [`validation.ts`](../../src/lib/map/validation.ts) (structural rules),
    [`concept-exposition.tsx`](../../src/components/map/concept-exposition.tsx) and
