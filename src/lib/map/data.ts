@@ -12267,6 +12267,306 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "governance-models-content",
+      conceptId: "governance-models",
+      definition:
+        "Governance models are the arrangements by which a protocol or organization makes collective decisions: who has a say, how much weight each has, and how a decision becomes binding.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The decisive question is where a decision becomes binding. On-chain governance executes approved changes automatically, which makes outcomes certain but also makes control purchasable by anyone who acquires enough voting weight. Off-chain governance needs someone to carry a decision out, and for a base protocol that ultimately means the operators who choose which software to run, so its outcomes bind only as far as those operators follow them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Models differ in what voting weight is made of. Token-based governance gives weight to holdings, which can be bought, borrowed or concentrated, so influence follows capital. Reputation-based governance gives weight that cannot be transferred, but then depends on whoever grants reputation. Futarchy lets markets on a measured outcome choose between proposals, which works only where the objective can be measured and its markets cannot be cheaply moved.",
+        },
+        {
+          kind: "paragraph",
+          text: "Governance minimization shrinks what can be decided at all. Fixing parameters, removing upgrade paths and limiting what governance controls reduces the room for capture and the value of attacking the process, at the cost of being unable to fix mistakes or adapt without building a new system. The choice is how much future flexibility to give up for present credibility.",
+        },
+      ],
+    },
+    {
+      id: "governance-participants-content",
+      conceptId: "governance-participants",
+      definition:
+        "Governance participants are the people and entities who take part in collective decisions: holding or exercising voting weight, delegating it, stewarding the process, or being affected by what is decided.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Most eligible voters do not vote, and for each of them that is a reasonable choice. Informing oneself about a proposal costs time while one holder's vote rarely changes the result, so voter participation stays low and decisions are made by the few who take part. Low turnout also lowers the cost of capture: an attacker needs to outweigh only those who show up, not everyone eligible.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delegation answers apathy by concentrating it. Holders hand their weight to delegates who follow proposals closely, and since they rarely revisit that choice, delegates accumulate lasting influence that rests on the continued inattention of the holders who granted it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Those who vote are not always those who are affected. Users, liquidity providers and developers can depend on a protocol's decisions without holding any of its voting weight, and token holders may favor what raises the token's value over what serves users, such as higher fees. Stewards and other appointed roles often exist to represent interests that the voting weight leaves out.",
+        },
+      ],
+    },
+    {
+      id: "proposals-content",
+      conceptId: "proposals",
+      definition:
+        "A proposal is a candidate decision put before a governance process: a change, expenditure or action described for participants to consider, and often the exact operations that would carry it out.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a proposal does is its executable content, not its description. On-chain proposals carry the calls that will run if they pass, and voters who read only the summary are trusting that it matches; a proposal whose code does more than its text says is among the simplest ways to attack governance. Proposal review that examines and simulates the actual operations is what makes a vote a decision about the change rather than about its description.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proposal thresholds set who can put a question to a vote. A high threshold keeps out spam and hostile proposals but also keeps out smaller participants, while a low one opens the agenda to anyone, including those who would flood it or slip harmful proposals through in quiet periods. Some designs let small participants submit when a larger one sponsors them, separating access to the agenda from voting weight.",
+        },
+        {
+          kind: "paragraph",
+          text: "The proposal lifecycle buys time for scrutiny. Deliberation and signaling votes test support before a binding vote, letting weak proposals fail cheaply, and the periods between submission, voting and execution give reviewers time to find problems and give those who disagree time to react. Shortening those periods speeds governance up and helps anyone who wants a change to pass unexamined.",
+        },
+      ],
+    },
+    {
+      id: "voting-content",
+      conceptId: "voting",
+      definition:
+        "Voting is the mechanism through which participants express support for or opposition to proposals, under rules that decide whose votes count, how much, when, and how they are combined.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every rule that gives smaller holders more say depends on knowing who is who. Quadratic voting makes each additional vote cost more than the last, so that many people with modest stakes can outweigh one large holder, but a large holder who splits holdings across many accounts escapes the rising cost entirely. Without a way to tell real participants apart, weighting rules meant to protect the many reduce to token-weighted voting.",
+        },
+        {
+          kind: "paragraph",
+          text: "The moment at which weight is measured shapes the vote as well. Counting holdings at a fixed point before voting opens stops participants from borrowing tokens just to vote; weighting votes by how long tokens are locked ties influence to long-term exposure; and conviction voting, in which support gains weight the longer it is held, resists last-minute swings at the cost of reacting slowly. Optimistic governance inverts the default, letting proposals pass unless enough participants object within a window, which is efficient when most decisions are uncontroversial and dangerous when no one is watching.",
+        },
+        {
+          kind: "paragraph",
+          text: "Public votes make bribery enforceable. When every vote is visible, a briber can pay for a vote and confirm it was cast, and voters feel pressure to follow early or prominent ones. Vote privacy until counting removes the briber's proof and the pressure to herd, but makes it harder for participants to see how those voting on their behalf actually voted.",
+        },
+      ],
+    },
+    {
+      id: "representation-content",
+      conceptId: "representation",
+      definition:
+        "Representation is the arrangement by which participants entrust part of their decision-making to others who act for them, within limits and subject to some means of holding them to account.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Liquid democracy makes representation continuous. Delegation can be withdrawn at any moment and passed on, so a delegate can in turn delegate what it received; this lets expertise be followed through chains of trust, but it can also gather large weight in a few hands at the ends of long chains, without most original holders knowing where their weight ended up.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delegate accountability on a public ledger rests on visibility rather than enforcement. Every vote a delegate casts is recorded, so delegators can see whether it acted as they expected, and their only remedy is to withdraw and delegate elsewhere. That remedy works only for delegators who look, which is why some systems add published rationales, regular reviews or terms after which delegates must be reaffirmed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Paying delegates changes who represents whom. Without compensation, the work of following proposals falls to those who can afford it or who have outside reasons to influence outcomes; with compensation from the protocol, delegates are drawn toward whoever controls the payments. Delegate incentives decide which of those dependencies representatives carry.",
+        },
+      ],
+    },
+    {
+      id: "decision-rules-content",
+      conceptId: "decision-rules",
+      definition:
+        "Decision rules turn a set of votes into an outcome: they say how much support a proposal needs, from how many participants, and who can stop it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Quorum requirements can make abstention a stronger weapon than opposition. If a proposal needs a minimum number of votes cast and opponents' votes count toward it, opponents do better by staying away than by voting no. Requiring that the votes in favor alone reach a minimum avoids that, at the cost of letting a proposal fail simply because its supporters did not turn up.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every threshold decides who bears the burden of change. A supermajority protects the existing state against a narrow majority, which suits rules meant to be stable and obstructs routine adjustments that a simple majority would handle well. Many systems therefore set approval thresholds by the stakes of the decision, with higher bars for constitutional matters than for ordinary parameters.",
+        },
+        {
+          kind: "paragraph",
+          text: "Veto rights let a designated party block without being able to initiate. They protect minorities or guard against harmful changes, but a veto holder can also hold decisions hostage, so vetoes are usually limited in time, scope or how often they can be used. Where no rule is satisfied, the default outcome is itself a decision rule, usually one that favors leaving things as they are.",
+        },
+      ],
+    },
+    {
+      id: "governance-execution-content",
+      conceptId: "governance-execution",
+      definition:
+        "Governance execution is the step that turns an accepted decision into an actual change, carried out by whatever holds the authority to act on the system.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A timelock turns the gap between decision and effect into an exit. Once a change is approved but not yet applied, participants who object can withdraw their assets or positions before it takes effect, so the delay protects them even when they lose the vote. Longer delays protect more and slow every change, including urgent ones, which is why systems with timelocks usually also define a narrower path for emergencies.",
+        },
+        {
+          kind: "paragraph",
+          text: "Governance's real power is whatever its executor can do. Approved proposals act through an executor that holds permissions over the system's contracts, and the scope of that execution authority, not the voting procedure, defines what governance can change. Parts of the system beyond the executor's reach cannot be changed by vote, which is how governance minimization is actually implemented.",
+        },
+        {
+          kind: "paragraph",
+          text: "Parameter changes and protocol upgrades carry very different risks. Adjusting a parameter within limits fixed in advance bounds what any decision, mistaken or malicious, can do; replacing code has no such bound, since new code can do anything the existing permissions allow. Confining governance to bounded parameters where possible keeps the damage a single bad decision can cause predictable.",
+        },
+      ],
+    },
+    {
+      id: "councils-committees-content",
+      conceptId: "councils-committees",
+      definition:
+        "Councils and committees are small bodies to which a larger governance system assigns specific functions, such as responding to emergencies, running a program or overseeing an area, with authority limited by a mandate.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Small bodies exist because some work cannot wait for a full vote or needs continuous attention. A security council can act within hours and a working group can follow an area day to day, neither of which is practical for a body of thousands of voters. The price is that a few members now hold authority the wider system must trust them to use only as intended.",
+        },
+        {
+          kind: "paragraph",
+          text: "A council's power is exercised through its signer set. Decisions usually take effect once enough members sign, so the threshold trades the risk of being unable to act, if too many members are unavailable, against the risk of acting wrongly, if too few must agree. Members' independence counts alongside their number, since members who share an employer, a jurisdiction or a key-management setup can fail or be pressured together.",
+        },
+        {
+          kind: "paragraph",
+          text: "Mandates and term limits keep delegated authority from becoming permanent. A mandate states what the body may do, and actions outside it can be challenged or reversed by the wider system, while terms that expire require members to be reselected rather than entrenched. Committee selection, whether by election, appointment or rotation, shapes whose interests the body is most likely to serve.",
+        },
+      ],
+    },
+    {
+      id: "treasury-governance-content",
+      conceptId: "treasury-governance",
+      definition:
+        "Treasury governance is how a protocol or organization decides what to do with funds it holds collectively: how they are kept, budgeted, granted and spent, and under what controls.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Treasuries are often held largely in the organization's own token, so their value rises and falls with the project they are meant to sustain, and paying expenses means selling that token into the market. Treasury management is therefore an investment policy as much as an accounting task: how much to diversify, how long the funds must last, and how much selling the market can absorb.",
+        },
+        {
+          kind: "paragraph",
+          text: "Funding work whose value is hard to judge in advance is the central difficulty of grants. Prospective grants pay for promised work and bear the risk that it is never delivered or never useful; retroactive funding pays for results already shown, which reduces that risk but requires builders to finance the work themselves first. Public goods funding often mixes the two, and each mix decides who carries the risk of failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Spending controls limit what a mistaken or captured decision can drain. Paying grants in streams or against milestones, capping what can leave the treasury in a period, and requiring separate approval for large transfers keep any single decision from emptying it, which also lowers the prize for anyone trying to take over governance to reach the funds.",
+        },
+      ],
+    },
+    {
+      id: "constitutional-rules-content",
+      conceptId: "constitutional-rules",
+      definition:
+        "Constitutional rules are the higher-order rules that govern how a system's other rules may be made and changed, and what governance itself may not do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A constitution binds only through something governance cannot override. Some limits are enforced by code: an executor that lacks permission over certain contracts cannot be voted into changing them. Others rest on social consensus, the willingness of participants, node operators and users to refuse a change that breaks shared commitments, which for a base protocol can mean following a fork rather than the governance outcome.",
+        },
+        {
+          kind: "paragraph",
+          text: "Amendment processes have to be harder than ordinary decisions, or a constitution is just another rule. Requiring larger majorities, longer delays or approval from several bodies protects the rules that define the system, but the amendment process is usually itself a constitutional rule, so whoever can change it can change everything else; some systems therefore make particular provisions unamendable.",
+        },
+        {
+          kind: "paragraph",
+          text: "Immutability is the strongest constitutional commitment and the hardest to correct. Code no one can change gives users certainty that its rules will hold, including against governance, but it also preserves its mistakes. Change then happens by migration: a new version is deployed and users choose whether to move, which turns rule changes into a competition between versions instead of a decision imposed on everyone.",
+        },
+      ],
+    },
+    {
+      id: "checks-balances-content",
+      conceptId: "checks-balances",
+      definition:
+        "Checks and balances are the arrangements that keep any one part of a governance system from acting without the possibility of being contested, limited or escaped by others.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Separation of powers works by requiring more than one body to complete a harmful action. When one group proposes, another approves and a third can delay or veto before execution, a single captured body cannot act alone; but bodies that share members, funders or keys collapse back into one, so separation is a property of who holds the roles, not of how many roles are defined.",
+        },
+        {
+          kind: "paragraph",
+          text: "In open systems, exit is the check that remains when others fail. Participants who can withdraw their assets, sell their stake or follow a fork discipline governance by leaving, and the cheaper leaving is, the stronger that discipline. Locked positions, network effects and assets that cannot easily move all make exit costly, and governance that faces little realistic exit faces little check.",
+        },
+        {
+          kind: "paragraph",
+          text: "Majorities can turn governance against minorities, for instance by redirecting shared funds to themselves. Minority protection answers with rules that redistributive decisions need broad support, that decisions apply uniformly, or that dissenters may withdraw their proportional share before a contested decision takes effect, which caps what a majority can take from those who disagree.",
+        },
+      ],
+    },
+    {
+      id: "dispute-resolution-content",
+      conceptId: "dispute-resolution",
+      definition:
+        "Dispute resolution settles disagreements between parties, such as whether agreed terms were met, by gathering evidence, reaching a ruling and enforcing it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A ruling can be enforced only against what the mechanism controls. When the disputed assets are held in escrow or bonded in advance, ruling enforcement is a transfer the system can carry out itself; obligations outside its reach, such as delivering goods or services in the world, still depend on courts or reputation elsewhere. Dispute systems are therefore designed around value locked before any disagreement arises.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many decentralized courts reward jurors for voting with the eventual majority. That makes coordinating on the obvious answer profitable and works well when one answer is clearly right, but it rewards predicting what others will vote rather than judging independently, falters on genuinely contested questions, and gives a briber a way in: persuading enough jurors that the majority will go one way can make it go that way.",
+        },
+        {
+          kind: "paragraph",
+          text: "Appeals send a dispute to larger and more expensive panels, raising the cost of corrupting the outcome at each level. Fees that rise with each round and fall on the losing side deter frivolous appeals, but they also favor the party better able to pay, so the structure of appeals decides whether the process tends toward the right answer or toward the richer party.",
+        },
+      ],
+    },
+    {
+      id: "emergency-governance-content",
+      conceptId: "emergency-governance",
+      definition:
+        "Emergency governance is the set of powers and procedures a system keeps for acting faster than its ordinary process allows while an attack, failure or other crisis is under way.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Emergency powers are safest when they can only stop things. A guardian that can pause a contract but cannot move funds or change rules can limit damage without being able to cause much itself, and a pause that lapses unless ordinary governance confirms it cannot become permanent rule by the few. Emergency upgrades and powers to redirect assets are far more dangerous, because they are exactly what an attacker who captured the guardian would want.",
+        },
+        {
+          kind: "paragraph",
+          text: "A pause protects and traps at once. Stopping a contract during an exploit can save what remains, but it also prevents users from withdrawing, so a pause key is also a key to freeze everyone's assets. Pause mechanisms that halt deposits, borrowing or new activity while leaving withdrawals open keep exit available while the problem is investigated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Circuit breakers act automatically on measurable conditions, such as unusually fast outflows or prices far from their references, and so can respond in the same block as the problem. Their thresholds must be set so that ordinary volatility does not trip them and an attacker cannot trip them deliberately to block others, and every automatic stop still needs incident response by people to decide what happens next.",
+        },
+      ],
+    },
+    {
+      id: "governance-attacks-content",
+      conceptId: "governance-attacks",
+      definition:
+        "Governance attacks are attempts to use a governance process to obtain outcomes it was meant to prevent, usually by acquiring enough decisive weight to pass, block or redirect decisions for the attacker's benefit.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The basic calculation compares what governance controls with what control costs. If a governance process can move a treasury, change fees or upgrade contracts that hold users' funds, and the voting weight needed to win can be acquired for less than that, capture is profitable regardless of anyone's intentions. The safety margin is the gap between the two, and it narrows whenever the value under governance grows faster than the cost of its votes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Voting weight need not be owned to be used. Governance tokens can be borrowed in lending markets or rented through derivative positions, and counting holdings at a snapshot taken before voting opens stops borrowing within a single transaction but not borrowing a day earlier. Holders who lend out their tokens for yield may therefore be supplying the very weight that is used against them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Not every governance failure is an attack. Plutocracy can arise without any adversary as holdings concentrate through accumulation and delegation, and hostile takeovers often proceed through entirely valid votes, which is why defenses focus less on detecting intent than on limiting what any winning coalition can do and keeping time for others to respond.",
+        },
+      ],
+    },
+    {
+      id: "institutional-design-content",
+      conceptId: "institutional-design",
+      definition:
+        "Institutional design is the deliberate shaping of the rules, roles and norms through which a community makes and keeps its collective decisions over time.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Legitimacy is what makes outcomes hold where enforcement cannot reach. Many decisions are carried out only because participants choose to follow them rather than leave or fork, and they do so when they see the process as fair and predictable, even after losing. Each controversial decision spends some of that legitimacy, and an institution that spends it faster than it earns it finds its decisions binding fewer and fewer people.",
+        },
+        {
+          kind: "paragraph",
+          text: "Credible neutrality asks that rules not favor identifiable parties, and that anyone be able to check that they do not. Simple rules applied the same way to everyone, in public, preserve it; interventions that pick winners, such as reversing one party's loss, erode it even when they seem justified, which is why institutions that value neutrality bind themselves against acting case by case.",
+        },
+        {
+          kind: "paragraph",
+          text: "Early choices shape everything after them. The initial distribution of voting weight, the first councils and the original rules decide who can later change what, so institutions tend to evolve by reinterpretation and added layers rather than by redesign. Plans to hand control from founders to a wider community work best when the handover is committed to in advance, since authority that must give itself up rarely chooses to.",
+        },
+      ],
+    },
+    {
       id: "scaling-modular-systems-content", conceptId: "scaling-modular-systems",
       definition: "Scaling and modular systems reorganize capacity and system responsibilities under architecture-specific resource, trust, security, and coordination assumptions.",
       body: [
