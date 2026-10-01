@@ -68,6 +68,14 @@ state how each was checked, especially where the answer is uncertain.
 10. **Meaningful progression.** Does each block follow from the one before,
     moving from definition to model to relations, so the exposition reads as
     continuous technical explanation rather than a list of facts?
+11. **Representation follows the concept.** Was the form decided from an
+    analysis of the concept ([representation-design.md](representation-design.md))?
+    Does each structured block show something prose would obscure: an order
+    that matters, a branch, a real conflation, forces in tension? Does
+    structure the concept clearly has (a process, a lifecycle, a failure path)
+    stay buried in paragraphs? An unnecessary structure fails this as much as
+    a missing one, and so does a form copied from sibling records. There is
+    no quota for any block type.
 
 ## Tests for authored content
 

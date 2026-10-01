@@ -82,9 +82,13 @@ the new tree. It then creates `feat/map-<domain-id>-l1` and records the base.
 
 1. `map:author -- context <concept>`: the bounded context. Never read the
    whole data file.
-2. Write the exposition and add the registry entry, as
+2. Analyse the concept and design its representation
+   ([representation-design.md](representation-design.md)) before writing. The
+   form is decided for this concept, never carried over from the previous
+   record.
+3. Write the exposition and add the registry entry, as
    [authoring-workflow.md](authoring-workflow.md) steps 3 to 6 describe.
-3. `map:author -- record <concept>`: confirms the inspector reports it
+4. `map:author -- record <concept>`: confirms the inspector reports it
    registered, regenerates the explorer view, runs the focused MAP tests,
    and records progress.
 

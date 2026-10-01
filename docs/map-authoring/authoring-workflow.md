@@ -90,9 +90,22 @@ Before writing, state in your working notes, and later in the report:
 - which children or siblings bound the scope, and what is left to them;
 - the model or explanation the exposition will give, in one or two sentences.
 
+Then analyse and design before writing
+([representation-design.md](representation-design.md)):
+
+- **Analyse** the concept into a model: its purpose, and only the structure it
+  actually has (actors, sequence, lifecycle, composition, dependencies,
+  invariants, variants, trade-offs, failure paths, distinctions).
+- **Design** the representation from that model: which structures, prose
+  included, communicate it best, and why each earns its place. Prose is not
+  the default, a structured block is not decoration, and neither is chosen to
+  match sibling records.
+
 If you cannot state these without guessing, [stop](#stop-and-escalate).
 
 ## 4. Author the canonical exposition
+
+Write the exposition in the form the design chose.
 
 - Add or edit exactly one record in `mapKnowledge.content`
   ([`data.ts`](../../src/lib/map/data.ts)), following
