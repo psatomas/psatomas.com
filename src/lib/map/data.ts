@@ -11314,6 +11314,246 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "assets-content",
+      conceptId: "assets",
+      definition:
+        "An asset is an object or claim that a protocol recognizes and that participants can hold and transfer, from a protocol's native unit to tokens that represent things existing elsewhere.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What an asset does is defined by the code that implements it. Tokens sharing a standard interface can still differ in what a transfer does: some take a fee on every transfer, some change balances without any transfer, and some let an issuer freeze, seize, mint or upgrade them. Protocols that hold or price an asset rely on assumptions about this behavior, and an asset that departs from them can break a system that never examined its code.",
+        },
+        {
+          kind: "paragraph",
+          text: "A native asset is governed by the protocol's own rules, which no issuer can override, while a token adds an issuer's contract, and whatever authority that contract retains, on top of those rules. Tokenized assets add custody and legal arrangements outside the protocol as well, so each step from native to tokenized to synthetic introduces a party or mechanism whose failure the holder bears.",
+        },
+        {
+          kind: "paragraph",
+          text: "Asset properties such as fungibility follow from rules and treatment rather than being given. Units of a fungible token become distinguishable once particular holdings can be frozen, or are refused by others because of their history, and a version of an asset carried to another network is a separate asset whose value depends on the mechanism that carried it.",
+        },
+      ],
+    },
+    {
+      id: "markets-content",
+      conceptId: "markets",
+      definition:
+        "A market is a setting in which participants exchange assets or claims under shared rules, revealing through what they trade, and on what terms, prices that others can observe.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On-chain markets are unusually transparent and unusually composable. Orders and trades are visible to anyone, often before they execute, which helps others see prices but also exposes each participant's intentions to whoever can act on them first. Any contract can trade on any market within a single transaction, so one trade can span several venues and succeed or fail as a whole.",
+        },
+        {
+          kind: "paragraph",
+          text: "An asset usually trades in many places at once, and its market prices differ between them. Arbitrage pulls those prices together by buying where an asset is cheap and selling where it is dear, so the price at any venue reflects how recently arbitrage reached it. Because a whole cycle of trades can execute atomically, arbitrage often needs no capital at risk, which tightens prices quickly; the profit it takes is paid by whoever traded at the stale price.",
+        },
+        {
+          kind: "paragraph",
+          text: "Market efficiency is bounded by the cost of acting. A price difference smaller than the fees, delay and execution costs of correcting it can persist indefinitely, so those costs set how far prices across venues can drift apart. Many market participants are programs acting for users or for themselves, and how quickly prices respond is a property of that automation as much as of anyone's judgment.",
+        },
+      ],
+    },
+    {
+      id: "liquidity-content",
+      conceptId: "liquidity",
+      definition:
+        "Liquidity is the capacity to trade an asset in meaningful size, near its prevailing price and without long delay, at the moment a participant needs to.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Liquidity tends to leave when it is needed. Providers on public networks can usually withdraw at any time and owe no one a quote, and sharp moves are exactly when providing capacity is most dangerous, so depth measured in calm conditions overstates what will be there under stress. Liquidity risk is therefore a question about bad moments more than about averages.",
+        },
+        {
+          kind: "paragraph",
+          text: "Providers are paid by one kind of counterparty and charged by another. Fees come from traders who trade for their own reasons, while losses come from traders who know the price has moved, such as arbitrageurs correcting a stale quote. Liquidity provision pays only while the first outweighs the second, which is why providers widen their terms or withdraw when informed trading dominates.",
+        },
+        {
+          kind: "paragraph",
+          text: "Liquidity bought with rewards behaves differently from liquidity that pays for itself. Capacity attracted by incentive payments tends to follow the highest reward and leave when it ends, so depth that depends on emissions is rented rather than owned. Liquidity fragmentation across venues and networks divides capacity further; routers can recombine it for a single trade, at the cost of extra execution and exposure to every venue on the route.",
+        },
+      ],
+    },
+    {
+      id: "automated-market-makers-content",
+      conceptId: "automated-market-makers",
+      definition:
+        "An automated market maker is a contract that quotes prices from the assets it holds and a fixed rule, so that anyone can trade against its pool at any time without a counterparty placing an order.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An AMM never updates its own price. Its price changes only when someone trades with it, so when the asset's price moves elsewhere the pool keeps quoting the old one until an arbitrageur trades it back into line, and the arbitrageur's profit comes out of the pool. That loss to better-informed traders is the main cost liquidity providers bear, and impermanent loss measures their outcome against the benchmark of simply holding the assets.",
+        },
+        {
+          kind: "paragraph",
+          text: "The invariant function sets how price responds to trade size. Under constant product a trade's price impact depends on its size relative to the pool reserves, and the curve spreads the pool's assets across every possible price, so most of them sit at prices that may never trade. Designs that let providers concentrate their assets in chosen price ranges use capital far more efficiently, but they turn providers into active managers whose assets stop earning, converted entirely into one asset, once the price leaves their range.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because a pool's price is whatever its state implies at that moment, a single transaction can move it and then restore it. A protocol that reads a pool's current price as a measure of value can therefore be fed a price that existed for one transaction only. Traders protect themselves from the same mobility by setting the worst price they will accept, so that a move before their trade executes makes it fail rather than fill badly.",
+        },
+      ],
+    },
+    {
+      id: "order-books-content",
+      conceptId: "order-books",
+      definition:
+        "An order book is a market structure that collects participants' standing offers to buy and sell at stated prices and matches compatible ones into trades.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Keeping a book current is expensive on a shared ledger. Market makers must move their quotes as prices change, and on-chain every placement and cancellation is a transaction that costs fees and waits for inclusion, so quotes that cannot be updated quickly enough are taken at stale prices. Many designs therefore match orders off-chain and settle on-chain, regaining speed but asking participants to trust the operator's matching, or run on networks built for the update rate a book needs.",
+        },
+        {
+          kind: "paragraph",
+          text: "A resting limit order is a free option for everyone else. Whoever posts it commits to trade at its price until it is cancelled, and when the market moves, takers race to fill it before its owner can withdraw it. On a ledger, which of them arrives first is decided by how transactions are ordered in a block, not by who sent theirs earlier, so a maker's protection against being picked off depends on how ordering is decided.",
+        },
+        {
+          kind: "paragraph",
+          text: "Time priority means something different when time is set by a block. Order matching that favors earlier orders at the same price rewards speed, but on-chain the earlier order is the one placed earlier in the block, so priority belongs to whoever controls or pays for position. Market orders face the same uncertainty from the other side: they fill against whatever depth is present at execution, which is why on-chain market orders are usually limit orders with a tolerance.",
+        },
+      ],
+    },
+    {
+      id: "lending-borrowing-content",
+      conceptId: "lending-borrowing",
+      definition:
+        "Lending and borrowing are arrangements in which suppliers make assets available to borrowers in exchange for interest, under rules that decide what borrowers must provide and owe, and what happens if they do not repay.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Without a way to pursue a borrower who defaults, repayment is a choice. A borrower whose collateral is worth more than the debt repays to get it back; one whose collateral is worth less can walk away and keep what was borrowed. Open lending protocols therefore secure loans with collateral worth more than the debt instead of a judgment of creditworthiness, and lending against reputation or identity works only where some consequence of default actually reaches the borrower.",
+        },
+        {
+          kind: "paragraph",
+          text: "In pooled lending markets, lenders hold a claim on the pool rather than on any particular loan. A lender can withdraw only what borrowers have not taken, so when utilization nears its limit, lenders may be unable to leave until borrowers repay. Interest rates that rise steeply once utilization passes a set level are meant to resolve that: they push borrowers to repay and draw in new supply, restoring room to withdraw.",
+        },
+        {
+          kind: "paragraph",
+          text: "A pool also shares losses. When collateral of one kind fails to cover the loans it backs, the shortfall falls on every lender in the pool, including those who would never have accepted that collateral. Isolating each market to one collateral type contains such losses, at the cost of splitting liquidity that a shared pool could use more efficiently.",
+        },
+      ],
+    },
+    {
+      id: "collateral-content",
+      conceptId: "collateral",
+      definition:
+        "Collateral is value a party commits so that, if it fails to meet an obligation, the counterparty or the protocol can take that value instead.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A collateral ratio is a buffer sized to time and price movement. The margin between the collateral's value and the obligation has to cover how far that value can fall in the time it takes to notice a shortfall and sell the collateral, including the price drop that selling a large amount itself causes. Volatile or thinly traded collateral needs a wider buffer, and collateral valuation at a quoted price says little about what forced selling would realize.",
+        },
+        {
+          kind: "paragraph",
+          text: "Collateral is weakest when it falls together with what it protects. A protocol's own token, or a claim on positions inside the same system, tends to lose value exactly when that system is under stress, so it can vanish at the moment it is needed. Collateral that is itself a claim on other collateral stacks their risks, and borrowing against an asset to buy more of it and pledge that again multiplies exposure to a single price.",
+        },
+        {
+          kind: "paragraph",
+          text: "Undercollateralization works only where something else enforces repayment. A loan that must be repaid within the same transaction needs no collateral at all, because if it is not repaid the transaction fails and the loan never happened. Beyond such atomic loans, posting less than the debt shifts the burden from the collateral to whatever other claim the lender holds on the borrower.",
+        },
+      ],
+    },
+    {
+      id: "liquidations-content",
+      conceptId: "liquidations",
+      definition:
+        "Liquidation is the forced closing of all or part of a position whose collateral no longer meets a protocol's requirements, using the collateral to repay the debt before the shortfall grows.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Liquidators are paid by a discount. Liquidation incentives typically let whoever repays the debt take collateral worth somewhat more, and the liquidation penalty charged to the borrower funds that bonus. When the bonus is fixed and liquidators compete for the same position, much of it goes to whoever secures the earliest inclusion, and so to block producers, while a bonus larger than necessary simply transfers value from borrowers. Liquidation auctions let competition set the discount, at the cost of time during which the position can deteriorate further.",
+        },
+        {
+          kind: "paragraph",
+          text: "Liquidations feed on each other. Selling seized collateral pushes its price down, which pushes other positions across their liquidation thresholds, and congestion during a crash raises the cost of every liquidation transaction. Positions too small to liquidate profitably at those costs are left alone, and losses beyond their collateral become bad debt. Closing only as much of a position as restores it to health limits both the penalty to the borrower and the selling pressure on the market.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every liquidation follows a price, so the source of that price decides who is liquidated. A stale price can leave insolvent positions open, and a briefly distorted one can liquidate positions that were sound, which is why the price a protocol liquidates against matters as much as the threshold it applies.",
+        },
+      ],
+    },
+    {
+      id: "stablecoins-content",
+      conceptId: "stablecoins",
+      definition:
+        "A stablecoin is a token designed to hold a steady value relative to a reference, usually a national currency, through reserves, collateral, redemption rights or market incentives.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Most pegs are held by arbitrage through redemption. When holders can exchange a unit for the reference value, a price below the peg lets anyone buy cheaply and redeem at full value, and that buying lifts the price. The peg is only as firm as that path: who may redeem, how quickly, in what amounts, and whether redemptions are honored under stress decide how far and how long the market price can wander.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each design family fails in its own way. Fiat-backed stablecoins depend on an issuer, its custodians and banks, and the legal system they answer to, any of which can freeze, lose or withhold reserves. Crypto-backed stablecoins carry the volatility of their collateral and rely on liquidations to stay covered. Algorithmic designs that rest on demand for a related asset rather than on outside backing are reflexive: confidence holds the price, and a falling price can destroy the confidence that held it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Peg stability under stress depends on how liquid the backing is, not only on how much there is. If reserves are worth the full supply but cannot all be turned into the reference quickly, early redeemers are paid in full and later ones wait or take less, which gives every holder a reason to redeem first. Depegging often begins that way, as a run on backing that was sufficient on paper.",
+        },
+      ],
+    },
+    {
+      id: "derivatives-content",
+      conceptId: "derivatives",
+      definition:
+        "A derivative is a contract whose value depends on another asset, rate or event, letting participants take, transfer or hedge exposure to that reference without holding it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A derivative moves value between its parties rather than creating it: one side's gain is the other's loss. A protocol that hosts derivatives must make sure losers can pay, by holding margin and marking positions to the reference as it moves, and must decide in advance who absorbs losses larger than a position's margin, whether an insurance fund, traders on the winning side, or every depositor. That order of absorption is part of what each participant has agreed to, whether or not they read it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Perpetuals keep a contract tied to its reference without an expiry date. Instead of settling on a fixed day, longs and shorts pay each other a funding rate that grows with the gap between the contract's price and an index of the underlying, pulling the two together. The contract is then only as sound as that index, since every funding payment, margin check and liquidation is computed from it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Options expose their sellers to losses that can be large and sudden, so on-chain designs often require sellers to lock the full amount they could owe, which is safe but ties up far more capital than margining would. Derivative pricing for options also needs an estimate of future volatility that no market observation fixes, so a protocol that quotes options automatically carries the risk of that estimate being wrong.",
+        },
+      ],
+    },
+    {
+      id: "risk-content",
+      conceptId: "risk",
+      definition:
+        "Risk in financial protocols is the set of ways a position, a market or a protocol can lose value or fail to meet its obligations, each arising from a different kind of dependency.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The categories turn into one another under stress. A sharp price fall is market risk until positions sink below their debts, when it becomes credit risk; recovering those debts means selling collateral, which turns it into liquidity risk; and where the same assets and protocols underlie many positions, the strain spreads as systemic risk. Treating each in isolation describes calm conditions well and stressed ones poorly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Composability makes counterparty risk transitive. A protocol that accepts another protocol's token as collateral, or routes funds through it, inherits that protocol's contracts, oracles and governance, and everything those depend on in turn. Holders usually see only the first layer, while a failure several layers down can reach them through each link of the chain.",
+        },
+        {
+          kind: "paragraph",
+          text: "Risk parameters are set from evidence that leaves out the events they most need to cover. Thresholds, caps and discounts are usually calibrated on observed history, and the moves that cause failures tend to exceed anything in it. Where governance can change these parameters, a change is itself an event that shifts every exposure depending on it, for better or worse.",
+        },
+      ],
+    },
+    {
+      id: "solvency-content",
+      conceptId: "solvency",
+      definition:
+        "Solvency is whether what a system holds is enough to meet everything it owes, valued under stated assumptions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On-chain, solvency can be checked continuously instead of being reported periodically. When both a protocol's holdings and the claims against it are recorded in contracts, anyone can compare assets and liabilities at any moment. That visibility ends where the ledger does: reserves held off-chain can only be attested to, and an attestation of reserves covers just one side of the balance.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whether a system is solvent depends on how its assets are valued. Marked at the last traded price, a large holding of a thinly traded asset can appear to cover every claim; marked at what selling it would actually fetch, the same holding may not. A protocol can be solvent at its own valuation and insolvent at the price it would receive on exit, and solvency constraints are only as conservative as the valuation behind them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Insolvency in a protocol has no court to resolve it. There is no lender of last resort and no bankruptcy process unless the protocol has written one, so a shortfall is resolved either by rules fixed in advance, such as reducing every claim in proportion, or by governance deciding afterwards who bears the loss. Rules fixed in advance let depositors know their position before a loss, rather than learn it in a dispute after one.",
+        },
+      ],
+    },
+    {
       id: "mev-execution-markets-content",
       conceptId: "mev-execution-markets",
       definition: "MEV and execution markets describe how control or influence over transaction visibility, selection, ordering, and inclusion can create economic opportunities under particular protocol rules.",
