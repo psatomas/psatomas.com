@@ -12747,7 +12747,18 @@ export const mapKnowledge: MapKnowledgeModel = {
       body: [
         {
           kind: "paragraph",
-          text: "Designs differ by where the data lives and who checks validity. Validiums prove their state transitions valid but keep data off-chain with a committee, so withheld data can freeze users' funds even though a valid proof prevents their theft; plasma kept data off-chain and relied on users to watch for fraud and exit in time; sidechains run their own consensus, and their bridges trust that consensus outright. Each step away from publishing data to the base layer adds a party whose failure users can feel.",
+          text: "Designs differ by where the data lives and who checks validity, and those two choices decide what users can still do when operators stop cooperating. Each step away from publishing data to the base layer adds a party whose failure users can feel.",
+        },
+        {
+          kind: "comparison",
+          label: "How off-chain scaling designs differ",
+          dimensions: ["Where the data lives", "Who checks validity", "If operators stop cooperating"],
+          alternatives: [
+            { name: "Validium", values: ["Off-chain, with a committee", "Validity proofs checked on the base layer", "Withheld data can freeze funds, though a valid proof prevents their theft"] },
+            { name: "Plasma", values: ["Off-chain, with its operators", "Users watching for fraud", "Users must exit in time"] },
+            { name: "Sidechain", values: ["On the sidechain itself", "Its own consensus, which its bridge trusts outright", "Funds depend on that consensus"] },
+            { name: "Channel", values: ["With the channel's participants", "Each participant, by disputing outdated states", "Participants settle the latest state on the base layer"] },
+          ],
         },
         {
           kind: "paragraph",
@@ -12875,7 +12886,18 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Shared and based sequencing move ordering outside the individual rollup. A shared sequencer orders several rollups together, which allows ordering guarantees across them but concentrates ordering power for all of them in one place; based sequencing hands ordering to the base layer's proposers, removing the rollup's own sequencer at the cost of the base layer's slower confirmations and of giving those proposers the ordering value.",
+          text: "Shared and based sequencing move ordering outside the individual rollup, and each arrangement places ordering power, and its price, somewhere different.",
+        },
+        {
+          kind: "comparison",
+          label: "How sequencing arrangements differ",
+          dimensions: ["Who orders", "What it gives", "What it costs"],
+          alternatives: [
+            { name: "Single sequencer", values: ["One operator", "Fast confirmations", "Ordering power and its value held by one party"] },
+            { name: "Decentralized", values: ["A set of sequencers under an agreement process", "No single party controls ordering", "Shared revenue and a consensus protocol's latency"] },
+            { name: "Shared", values: ["One sequencer for several rollups", "Ordering guarantees across them", "Ordering power concentrated for all of them"] },
+            { name: "Based", values: ["The base layer's proposers", "No sequencer of the rollup's own", "Slower confirmations, and the ordering value goes to those proposers"] },
+          ],
         },
       ],
     },
@@ -12905,6 +12927,11 @@ export const mapKnowledge: MapKnowledgeModel = {
       definition:
         "Scaling tradeoffs are the competing properties a design must balance when it adds capacity: throughput, confirmation latency, cost, decentralization and security.",
       body: [
+        {
+          kind: "tensions",
+          label: "What adding capacity pulls against",
+          pairs: [["Throughput", "Confirmation latency"], ["Capacity per node", "Who can participate"], ["Low fees for users", "Costly hardware for operators"]],
+        },
         {
           kind: "paragraph",
           text: "Throughput and latency pull in different directions. Grouping work into larger batches and blocks raises how much a system processes per second while lengthening how long each transaction waits, and pipelining the stages of processing raises throughput without shortening the wait for any single transaction. Users feel confirmation latency; costs follow throughput.",

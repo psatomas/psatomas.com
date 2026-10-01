@@ -436,7 +436,13 @@
         "modularity-in-protocol-layers"
       ],
       "canonicalNote": "Also a leaf under Protocol Layers; the composition is the concept itself, not this domain's layout.",
-      "sourceFingerprint": "7cbc70d45605640cb366fb8844c682e8cbd23341f912168a207b4ff31a8a736a"
+      "sourceFingerprint": "7cbc70d45605640cb366fb8844c682e8cbd23341f912168a207b4ff31a8a736a",
+      "resolution": {
+        "decision": "keep",
+        "structured": [],
+        "resultFingerprint": "7cbc70d45605640cb366fb8844c682e8cbd23341f912168a207b4ff31a8a736a",
+        "note": "Reconsidered: the four functions are the definition's own list, so a composition would restate it; the record's content (interfaces carrying assumptions, composed security, lost synchronous composability) is argument, and the domain's L0 already draws its scaling relationship."
+      }
     },
     {
       "conceptId": "off-chain-scaling",
@@ -470,7 +476,15 @@
       "placements": [
         "off-chain-scaling"
       ],
-      "sourceFingerprint": "800519420430445470c6cff194f4857807e77af18ea3cf5b85bb5e92547fbcde"
+      "sourceFingerprint": "800519420430445470c6cff194f4857807e77af18ea3cf5b85bb5e92547fbcde",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "d2854184b959f663e49beb5ab8276ef0272d181daa9eefefa16e75d0c0ca6ae6",
+        "note": "Four designs on the same three dimensions were packed into one sentence; the comparison shows them, and channels and the exit test stay in prose."
+      }
     },
     {
       "conceptId": "rollup-sequencing",
@@ -504,7 +518,15 @@
       "placements": [
         "rollup-sequencing"
       ],
-      "sourceFingerprint": "2b61662613409faea579d96ccec6fc280040867d7d9474d9965d0cb8c6fbf08e"
+      "sourceFingerprint": "2b61662613409faea579d96ccec6fc280040867d7d9474d9965d0cb8c6fbf08e",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "dd7821b0e1e3841a992d3400b16a7f0d0bb5d6351503d5cfdbeba927846b04ea",
+        "note": "Four arrangements with three attributes each were spread over three paragraphs; the comparison sets them side by side, and forced inclusion and sequencing economics stay in prose."
+      }
     },
     {
       "conceptId": "scaling-tradeoffs",
@@ -537,7 +559,15 @@
       "placements": [
         "scaling-tradeoffs"
       ],
-      "sourceFingerprint": "628081bb7353004c0f3d29ab476c75bb06975aa7c4e5b1675ea61e6951fb7228"
+      "sourceFingerprint": "628081bb7353004c0f3d29ab476c75bb06975aa7c4e5b1675ea61e6951fb7228",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "tensions"
+        ],
+        "resultFingerprint": "1988b8e3222caca0bec235615e774d2f1ce44e3015398432939429b0a873a64f",
+        "note": "The concept is a set of tensions; a tensions block names the three the record argues, before the paragraphs that explain them."
+      }
     },
     {
       "conceptId": "asset-bridging",
