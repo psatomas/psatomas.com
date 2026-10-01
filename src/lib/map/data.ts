@@ -11643,6 +11643,266 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "mev-content",
+      conceptId: "mev",
+      definition:
+        "MEV, maximal extractable value, is value obtainable by influencing which actions execute, in what order and under what conditions, beyond the fees those actions pay.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "MEV can be moved but not abolished. As long as some party chooses what executes and in what order, and the resulting state is worth more in one arrangement than in another, that difference exists and someone captures it. Designs differ in who: the searchers who find it, the builders who assemble it, the proposers or sequencers with the final say, the users whose actions create it, or the protocol itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Competition along the MEV supply chain pushes value toward the scarcest position. Searchers bid against each other for the same opportunity and builders compete for the proposer's selection, so in a competitive market most of what searchers find is paid onward, and the party controlling the final ordering keeps the largest share without doing any of the searching.",
+        },
+        {
+          kind: "paragraph",
+          text: "Large MEV puts pressure on consensus itself. Participants who capture more of it earn more, can stake or invest more, and win a larger share of future blocks, which concentrates the ordering role over time; and when recent blocks hold enough value, reorganizing them to capture it again can pay better than extending the chain. Whether an extraction counts as toxic depends on who bears its cost: correcting a stale price takes value from the liquidity provider who quoted it, while trading around a user's transaction takes it from that user directly.",
+        },
+      ],
+    },
+    {
+      id: "searchers-content",
+      conceptId: "searchers",
+      definition:
+        "Searchers are participants who look for execution opportunities, such as price differences or positions ready for liquidation, and submit transactions or bundles designed to capture them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Obvious opportunities are competed down to almost nothing. When many searchers see the same price difference, they bid most of its value away to whoever orders the block, so lasting margins come from what others lack: faster detection, better models of how rivals will bid, capital for larger positions, or order flow that only some can see.",
+        },
+        {
+          kind: "paragraph",
+          text: "How failed attempts are charged shapes the whole competition. Where losing transactions still land on-chain and pay fees, searchers compete by flooding the network with attempts and accept that most will fail. Where bundles are included only if they succeed, a failed attempt costs nothing and the competition moves into bidding. Searchers also guard against the gap between simulation and execution by having their contracts check that an opportunity still exists and revert if it does not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Information advantages pull searchers toward builders. A searcher whose bundles reach a builder exclusively, or who builds blocks itself, sees and orders more than its rivals, so the two roles tend to merge, and searcher competition becomes partly a contest among integrated searcher-builders.",
+        },
+      ],
+    },
+    {
+      id: "arbitrage-content",
+      conceptId: "arbitrage",
+      definition:
+        "Arbitrage is trading that profits from a difference between the prices, or states, of the same or related assets in different places, by buying where something is cheaper and selling where it is dearer.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Only some arbitrage can be atomic. Trades among pools on one network can be bundled so that every leg executes or none does, but when one side is on another network or on an exchange off-chain, the legs execute separately. Cross-market arbitrage therefore carries inventory and timing risk, needs capital waiting on each venue, and rewards whoever has the fastest access to both.",
+        },
+        {
+          kind: "paragraph",
+          text: "Finding the trade is a search over paths. Pools form a graph of assets linked by exchange rates, and a profitable cycle can pass through several of them, as in triangular arbitrage. The best size along a path is where its marginal price stops being favorable, and each extra hop adds execution cost and price impact, which limits how long a worthwhile path can be.",
+        },
+        {
+          kind: "paragraph",
+          text: "Arbitrage between related assets, rather than identical ones, depends on a way to convert one into the other. A wrapped token, a staked position or a stablecoin trading below its reference can be arbitraged only as far as it can be redeemed or converted, and when that conversion is slow, limited or suspended, what looks like arbitrage becomes a bet that the two prices will eventually meet.",
+        },
+      ],
+    },
+    {
+      id: "liquidation-mev-content",
+      conceptId: "liquidation-mev",
+      definition:
+        "Liquidation MEV is the value searchers compete for when lending or derivatives positions become eligible for liquidation and a protocol rewards whoever closes them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Eligibility usually arrives with a price update. A position becomes liquidatable when the oracle price it depends on crosses its threshold, so the decisive moment is the transaction that updates the price, and searchers compete to place their liquidation transactions immediately after it. Some protocols auction that position next to their own oracle updates and keep the proceeds, capturing for the protocol value that would otherwise go to searchers and block producers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Capital is rarely the barrier. A liquidator must repay a position's debt to receive its collateral, but a flash loan can supply that repayment within the same transaction, with the collateral sold and the loan repaid before the transaction ends. Liquidation competition is therefore open to whoever has the fastest detection and the best route for selling collateral, not only to those holding large balances.",
+        },
+        {
+          kind: "paragraph",
+          text: "Liquidation profit is settled when the collateral is sold, not when the debt is repaid. Collateral that can be swapped within the same transaction locks in the result; collateral that sells only slowly, or only off-chain, leaves the liquidator holding inventory whose price may keep falling, which is why thinly traded collateral attracts fewer liquidators exactly when its positions most need them.",
+        },
+      ],
+    },
+    {
+      id: "sandwiching-content",
+      conceptId: "sandwiching",
+      definition:
+        "Sandwiching is placing one trade just before a target transaction and another just after it, so that the target executes at a worse price and the difference goes to whoever placed the surrounding trades.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The victim's own tolerance sets the size of the take. A trade submitted with a limit on how far the price may move against it can be pushed right up to that limit: the front-running trade moves the price until the victim's transaction still barely executes, and the back-running trade sells into the price the victim then pushed further. A wide tolerance chosen to avoid failed trades is, under this pattern, the amount the trader has agreed to give away.",
+        },
+        {
+          kind: "paragraph",
+          text: "Only some trades are worth sandwiching. The attacker pays fees on both of its trades and moves the price against itself as well, so the strategy pays only when the victim's trade is large relative to the depth of the pool, its tolerance is wide, and pool fees are low. Splitting a large trade into smaller ones, or routing it through deeper liquidity, reduces the price impact an attacker can amplify.",
+        },
+        {
+          kind: "paragraph",
+          text: "Of the two halves, only front-running harms the victim directly. Back-running alone, trading after a large transaction to bring its price back into line with other venues, is ordinary arbitrage and leaves the earlier trader's price unchanged. The pattern depends on seeing the victim's transaction before it executes and controlling what lands around it, which is why defenses concentrate on keeping transactions out of sight while they wait.",
+        },
+      ],
+    },
+    {
+      id: "transaction-ordering-content",
+      conceptId: "transaction-ordering",
+      definition:
+        "Transaction ordering is the arrangement of transactions into the sequence in which they execute, together with the rules and rights that decide who sets that sequence.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every ordering rule sells position for something. Priority ordering by fee turns position into an auction paid in fees; time ordering by arrival turns it into a race paid in infrastructure, as participants spend on being closer and faster than others. The scarce thing allocated is the same, and the rule decides whether its value reaches the protocol and its producers or the builders of fast networks.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rules that take discretion away move the contest to the inputs. Ordering transactions by a pseudorandom function of their contents leaves the producer no choice, for instance, but lets participants submit many variants of a transaction and keep whichever lands best. An ordering policy is only as strong as the cost of manipulating whatever it orders by.",
+        },
+        {
+          kind: "paragraph",
+          text: "Control over consecutive blocks extends what ordering can do. Within one block a producer arranges a single sequence; a party that orders several blocks in a row can move a price in one and profit from it in the next, defeating measures, such as averages over several blocks, that assume each block's orderer acts independently. Who holds ordering rights is therefore no less important than the rule they follow.",
+        },
+      ],
+    },
+    {
+      id: "bundles-content",
+      conceptId: "bundles",
+      definition:
+        "A bundle is a group of transactions submitted together with the instruction that they be included in a given order, and usually all or none, as one unit within a block.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Bundles exist outside the protocol. The protocol sees only the transactions that end up in a block, so a bundle's ordering and its all-or-nothing atomicity hold because the builder honors them, not because any rule enforces them. A builder that sees a bundle could take its strategy for itself, which is why searchers rely on builders' reputations, on exclusive relationships, or on designs that keep bundle contents hidden from builders until they commit.",
+        },
+        {
+          kind: "paragraph",
+          text: "A bundle fixes only the relative order of its own transactions. It can place someone else's pending transaction between two of the searcher's, but where the bundle lands within the block, and what executes before it, is the builder's choice, and the bundle's value can depend on exactly that. Bundles that touch the same state conflict, so a builder merging many of them faces a combinatorial choice about which to include and in what sequence.",
+        },
+        {
+          kind: "paragraph",
+          text: "Sending a bundle to many builders raises its chance of inclusion and multiplies the parties who see it. Bundle submission is a trade between reach and exposure: the more builders a searcher trusts with a strategy, the more of them could copy it.",
+        },
+      ],
+    },
+    {
+      id: "builders-content",
+      conceptId: "builders",
+      definition:
+        "Builders are the participants who assemble candidate blocks from transactions and bundles, competing to have their block chosen by whoever proposes the next block.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Builders compete by bidding away a block's value. Each offers the proposer a payment for including its block, and since the proposer usually takes the highest offer, a builder keeps only the margin between its block's value and the next-best bid. Where many builders see the same transactions that margin shrinks toward nothing, so lasting advantage comes from transactions and bundles that reach only one builder.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bids change until the last moment. A builder keeps revising its block and its bid as new transactions arrive, and the winning block is the best one available when the proposer decides, so the speed of a builder's connection to the proposer, or to whatever relays bids, decides whether its latest and most valuable version arrives in time.",
+        },
+        {
+          kind: "paragraph",
+          text: "A builder may bid more than a block is worth to it. Winning blocks attracts more order flow, because senders prefer builders that include their transactions promptly, and that flow raises the value of future blocks, so a builder can accept losses to gain share. A builder's bids therefore reflect its strategy for future flow as well as the block in front of it.",
+        },
+      ],
+    },
+    {
+      id: "blockspace-markets-content",
+      conceptId: "blockspace-markets",
+      definition:
+        "Blockspace markets are the mechanisms through which a network's limited capacity to include and execute transactions is allocated and priced among those who want it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Blockspace is perishable. Capacity left unused in one block cannot be saved for the next, while demand arrives in bursts around market moves, launches and liquidations, so prices swing between near zero and sharp peaks rather than settling. Short-term supply is fixed by each block's limits and grows only through protocol changes or by moving demand elsewhere.",
+        },
+        {
+          kind: "paragraph",
+          text: "Not all blockspace is alike. A position at the start of a block, where a transaction executes before anything else can change the state it reads, is worth more than the same space at the end, and space in the next block is worth more to an urgent sender than space later on. Priority auctions price the first difference; inclusion markets that sell space in future blocks let users and applications secure capacity before a spike instead of bidding during one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Networks also compete as suppliers. Other chains and scaling layers offer more capacity, but their blockspace is not interchangeable with the original network's, because it comes with different security, different state and different access to the applications users need. Blockspace demand follows the state and applications, which limits how far added supply elsewhere relieves congestion on a busy network.",
+        },
+      ],
+    },
+    {
+      id: "order-flow-content",
+      conceptId: "order-flow",
+      definition:
+        "Order flow is the stream of users' transactions and orders on their way to execution, together with the routes that decide who receives each one first and what that recipient may do with it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Order flow is valued by what it reveals. Transactions from ordinary users, whose trades carry no information others lack, can be filled or followed profitably, while transactions from arbitrageurs and other informed traders cannot. Flow therefore has a price that depends on its source, and whoever first receives users' transactions holds something others will pay for.",
+        },
+        {
+          kind: "paragraph",
+          text: "That makes interfaces the gatekeepers of flow. The wallets and applications through which users sign transactions decide, mostly by default, where those transactions go, and users rarely change the default. Order flow payments let an interface sell that routing, and exclusive order flow arrangements send everything it receives to one recipient, concentrating flow, and the advantages that come with it, wherever the best offers come from.",
+        },
+        {
+          kind: "paragraph",
+          text: "Order flow auctions try to return part of that value to the users who created it. Searchers bid for the right to act on a user's transaction, typically to trade right after it, and part of the winning bid is paid back to the user. Bidders can bid only on what they are shown, so these auctions reveal at least part of each transaction to every bidder, and the user's share depends on how many independent bidders compete.",
+        },
+      ],
+    },
+    {
+      id: "mev-auctions-content",
+      conceptId: "mev-auctions",
+      definition:
+        "MEV auctions are mechanisms that sell the right to decide execution, such as building a block or ordering a set of transactions, to bidders, turning extractable value into bids.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What is sold, and how far in advance, decides what an auction prices. Auctioning each block as it is built prices the value actually present in that block; auctioning the right to build or order future blocks ahead of time prices only expected value, smooths the income of whoever sells the right, and hands the uncertainty to the buyers. Selling rights ahead of time also concentrates them in whoever bids most for that uncertainty.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where auction revenue goes is a policy choice with consequences for consensus. Paid to proposers, it raises the reward for staking and makes it uneven, since a proposer who happens to get a valuable block earns far more than average, a variance that favors large operators able to smooth it. Collected by the protocol and burned instead, the same revenue accrues to all holders, but only if the protocol itself can see and enforce the winning bid rather than relying on an intermediary to report it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Most of a block's value is visible to every serious bidder, so bids converge on that common value and revenue tracks what the second-best bidder could have built. What differs between bidders comes from flow only some of them see, so an auction's revenue depends as much on how widely order flow is distributed as on its rules.",
+        },
+      ],
+    },
+    {
+      id: "private-execution-content",
+      conceptId: "private-execution",
+      definition:
+        "Private execution is submitting transactions so that they stay hidden from some or all other participants until they are included, denying others the chance to act on them first.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Privacy covers the window before inclusion, not the action itself. Once a transaction executes its effects are public, and strategies that act on the result, such as trading right after it, remain available. What private execution removes is the chance to act on a transaction while it waits, which is where front-running and sandwiching operate.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hiding a transaction from the public means showing it to someone else. A private transaction goes to a builder, relay or service that could exploit it as easily as a public observer, so protection rests on that recipient's promise, enforced by its reputation and its dependence on continued flow, unless the design keeps contents unreadable even to the recipient until the ordering is settled, through encryption or trusted hardware.",
+        },
+        {
+          kind: "paragraph",
+          text: "Private routes trade exposure for reach. A transaction sent to one builder is included only when that builder's block wins, so it may wait longer than a public one, and sending it to many builders widens the circle of trust again. As more flow goes private, the public mempool also shows less of what is pending, which makes it harder for outside observers to notice transactions being excluded.",
+        },
+      ],
+    },
+    {
+      id: "mev-mitigation-content",
+      conceptId: "mev-mitigation",
+      definition:
+        "MEV mitigation is the set of designs that limit how much value can be extracted from users through execution choices, or change who receives it, by restricting the information, discretion or granularity with which transactions are ordered.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each mitigation closes one channel and leaves the others. Encrypting transactions until their order is fixed hides their contents, but their sender, size and timing can still reveal enough to act on, and a producer can still decide which encrypted transactions to include at all. Inclusion guarantees and ordering guarantees constrain that discretion instead, and batch execution removes the advantage of position within a batch. A design is mitigated against the channels it addresses, not against MEV in general.",
+        },
+        {
+          kind: "paragraph",
+          text: "Encryption moves trust to whoever can decrypt. When a committee holds the decryption key, enough of its members acting together could read transactions early and trade on them, and if too few take part, encrypted transactions cannot be opened at all, so protection rests on the committee's honesty and liveness on its availability. Designs that release contents after a fixed delay instead of by committee avoid the collusion risk at the cost of latency.",
+        },
+        {
+          kind: "paragraph",
+          text: "Applications can mitigate without waiting for protocol changes. A trading application that settles orders in batches, or asks competing parties to fill a user's stated outcome instead of broadcasting an exposed trade, removes much of the opportunity at its source. Protocol-level mitigation covers every application at once but changes slowly and must hold under consensus; application-level mitigation changes quickly but protects only that application's users.",
+        },
+      ],
+    },
+    {
       id: "intents-coordination-content",
       conceptId: "intents-coordination",
       definition: "Intents and coordination describe how parties express desired outcomes, discover and evaluate candidate ways to fulfill them, and coordinate conditional execution and settlement.",
