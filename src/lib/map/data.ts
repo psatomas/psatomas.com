@@ -11966,6 +11966,246 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "intents-content",
+      conceptId: "intents",
+      definition:
+        "An intent is a signed statement of the outcome a user wants and the conditions it must meet, leaving the steps that achieve it to whoever executes it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Signing an outcome instead of a path hands the choice of path to someone else. Whoever fills the intent picks the venues, the route and the timing, bound only by the constraints the user stated, so anything left unstated, such as how much better than the minimum the fill could have been, is the filler's to keep. An intent is a form of delegation, and its protection is exactly as wide as its terms.",
+        },
+        {
+          kind: "paragraph",
+          text: "In exchange, execution becomes something parties compete to provide. Several solvers can try to satisfy the same intent, the user need not hold the asset that pays fees or deal with each network involved, and a single statement can describe an outcome spanning several steps or chains. Intent languages and standards decide how much of a user's actual goal can be said precisely enough for anyone to execute and anyone to check.",
+        },
+        {
+          kind: "paragraph",
+          text: "A signed intent stays usable until it expires or is filled, which complicates the intent lifecycle. Withdrawing one that has already been shared may require an on-chain cancellation or waiting for its deadline, and until then anyone holding it can execute it whenever its conditions are met, including in circumstances the user no longer wants.",
+        },
+      ],
+    },
+    {
+      id: "intent-specification-content",
+      conceptId: "intent-specification",
+      definition:
+        "Intent specification is how a user states what an intent must achieve and under what conditions: the outcome, the limits it must respect, how long it stays valid, and whether it may be filled in parts.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Only what settlement can check is truly binding. A settlement contract can verify that the user received at least a stated amount of a stated asset by a stated time; it cannot verify that the fill was the best available, or that an off-chain condition held. Intent constraints therefore have to be written as conditions the settling code can test, and user preferences beyond them are guidance a solver may follow or ignore.",
+        },
+        {
+          kind: "paragraph",
+          text: "A validity window is an option the user grants. While an intent remains open, a filler can wait and execute only once the market has moved in its favor, so longer windows give fillers more to gain at the user's expense, and shorter ones risk no fill at all. Some designs let the acceptable price move step by step in the filler's favor across the window, so that competition decides how soon, and at what price, the intent is taken.",
+        },
+        {
+          kind: "paragraph",
+          text: "Partial fills let a large intent be met by several parties, each filling what it can, but they also leave the user holding whatever remains, possibly after prices have moved. Minimum fill sizes and rules for the remainder decide whether a partial result is useful or simply a smaller version of the original problem.",
+        },
+      ],
+    },
+    {
+      id: "intent-discovery-content",
+      conceptId: "intent-discovery",
+      definition:
+        "Intent discovery is how a signed intent reaches the parties who might fill it: where it is posted, who may see it, and in what form.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Showing an intent to more solvers buys competition and costs information. Every solver that sees an intent learns which way the user wants to trade and how much, and can act on that elsewhere, for instance by trading ahead on another venue, before or instead of filling it. Intent visibility is therefore tuned between enough solvers to compete the price down and few enough that the intent itself does not move the market against its owner.",
+        },
+        {
+          kind: "paragraph",
+          text: "Intent pools are mostly separate. Applications usually collect intents in their own pools and offer them to their own solvers, so an intent posted in one is invisible to solvers watching another, and fragmentation across pools limits competition much as fragmentation across venues limits liquidity. Intent propagation between pools, where it exists, widens reach at the price of more parties seeing each intent.",
+        },
+        {
+          kind: "paragraph",
+          text: "Solver access rules decide what kind of market forms. An open pool lets anyone compete but also lets anyone spam it or exploit what they see, while pools that admit only bonded or vetted solvers limit abuse at the cost of fewer competitors. Intent aggregation adds a timing choice: holding intents briefly so that opposite ones can meet directly improves the chance of a match, while every moment of holding delays users who wanted to trade at once.",
+        },
+      ],
+    },
+    {
+      id: "solvers-content",
+      conceptId: "solvers",
+      definition:
+        "Solvers are the parties that find and carry out ways to satisfy intents, competing to offer users the best outcome their constraints allow.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A solver's offer reflects its own balance sheet as much as the market. Many solvers fill intents from inventory they already hold and rebalance afterwards, especially when the user's outcome spans chains and moving assets takes time, so the price a solver can offer depends on its capital, its hedging costs and the risk it is willing to carry. Solver liquidity therefore favors well-capitalized solvers, particularly for large or cross-chain intents.",
+        },
+        {
+          kind: "paragraph",
+          text: "Solution search combines more than routes. A solver can match one user's intent against another's, draw on its own inventory and split the remainder across venues, so two solvers given the same intent can propose very different solutions. The search usually runs against a deadline, and a solver's strategy decides how much of any improvement it finds is passed to the user and how much it keeps.",
+        },
+        {
+          kind: "paragraph",
+          text: "Winning an intent and then failing to fill it harms users cheaply, and it also gives the solver a free option to fill only if the market stays favorable. Solver bonds make non-performance cost something and solver reputation decides who is admitted or preferred, but a bond deters only while it exceeds what defaulting could gain, and demanding large bonds keeps new solvers out of the market.",
+        },
+      ],
+    },
+    {
+      id: "solver-competition-content",
+      conceptId: "solver-competition",
+      definition:
+        "Solver competition is the mechanism that compares solvers' proposed solutions to an intent, or to a batch of intents, and selects which one executes.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Comparison needs a measure, and the measure becomes the target. Solution scoring usually counts the surplus a solution gives the user beyond what the intent required, net of costs, and solvers optimize that score rather than the user's welfare in any broader sense. Where the score depends on a reference price, the choice of reference decides what counts as improvement and how it can be gamed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Scoring a batch is harder than scoring one intent. A solution that maximizes the total surplus across many intents can leave one user worse off than that user would have been alone, so some designs add the rule that no user may receive less than their best stand-alone outcome, at the cost of rejecting solutions that are better in total.",
+        },
+        {
+          kind: "paragraph",
+          text: "How winners are paid shapes how honestly solvers compete. A winning solver that keeps whatever it does not pass on has reason to offer only slightly more than the runner-up, while rewarding winners according to how far they beat the next-best solution pushes solvers to submit their best, as a second-price rule does. Winner selection still names a winner, not an execution: the chosen solver can fail, and the mechanism needs a fallback when it does.",
+        },
+      ],
+    },
+    {
+      id: "intent-matching-content",
+      conceptId: "intent-matching",
+      definition:
+        "Intent matching is pairing or grouping intents that can satisfy one another directly, so that participants trade with each other instead of separately with a market.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A direct match avoids costs a market would charge. When one user's sale meets another's purchase, neither pays pool fees or moves a price, so both can do better than the market rate at once, and the gain has to be divided between them. Clearing every matched order at one price divides it one way and other rules divide it differently; the choice is a fairness decision, not a technical one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Matches need not be pairs. A ring trade links several participants in a cycle, each giving what the next one wants, which finds matches no pair could, but the number of possible combinations grows quickly with the number of intents, so how much matching a system finds depends on how much search it can afford before its deadline.",
+        },
+        {
+          kind: "paragraph",
+          text: "Matching depends on density. Opposite intents for the same pair of assets have to be present at the same time, which is common for heavily traded pairs and rare for others, so matching efficiency varies with volume. Partial matching settles the overlapping part directly and routes the remainder elsewhere, which is why matching complements markets rather than replacing them.",
+        },
+      ],
+    },
+    {
+      id: "intent-resolution-content",
+      conceptId: "intent-resolution",
+      definition:
+        "Intent resolution is the process that takes a chosen solution from selection to a fulfilled and verified outcome, or to a recorded failure.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Resolution often spans several steps, and something has to hold the user's position in between. Where every step can run in one transaction, fulfillment is all or nothing; where it cannot, as when an outcome is delivered on another network, a design must decide who carries the gap. The user's assets can be held in escrow until fulfillment is shown, or the solver can deliver first from its own funds and be repaid afterwards, taking the risk on itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Fulfillment verification is easy only where the outcome is visible to the code that pays. On a single network a settlement contract can check the user's balance directly; when the outcome happens elsewhere, the paying side must learn of it through a message or proof from the other side, which adds delay and the assumptions of whatever carries that evidence.",
+        },
+        {
+          kind: "paragraph",
+          text: "A failed intent has to unwind cleanly. Escrowed assets must return to the user when the intent expires, partial progress must be completed or reversed, and the costs of failed attempts have to fall somewhere, usually on the solver that tried, which is part of why solvers price the risk of failure into the outcomes they offer.",
+        },
+      ],
+    },
+    {
+      id: "execution-routing-content",
+      conceptId: "execution-routing",
+      definition:
+        "Execution routing is choosing the path an action takes to execution: which venues, contracts or networks it passes through, in what proportions and in what order.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A route is computed against a snapshot and executed against whatever state exists later. Prices and balances can change between the two, and in volatile conditions a route that was best when quoted may not be when it runs, so routes carry a minimum acceptable result and are recomputed when they would fall short of it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Split routing lowers the price impact of a large order by dividing it across venues, and the best division sends to each venue until the marginal price there matches the others. Each additional split adds its own execution cost, so the right number of splits grows with the size of the order: a small trade is best sent whole, a large one in pieces.",
+        },
+        {
+          kind: "paragraph",
+          text: "Routers are also points of exposure. A router contract that moves assets on a user's behalf usually needs permission to spend them, and that permission, together with whatever assets pass through the router, makes it a valuable target: a flaw in a widely used router can reach everyone who approved it. Choosing a route includes choosing which code to trust with the assets along the way.",
+        },
+      ],
+    },
+    {
+      id: "intent-commitments-content",
+      conceptId: "intent-commitments",
+      definition:
+        "Intent commitments are the promises made around an intent before it settles: what a solver undertakes to deliver, at what price or by when, and what happens if the promise is not kept.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A commitment is as strong as what enforces it. A quote the solver signs so that the user can submit it and claim its terms on-chain is enforced by construction, because the solver's signature itself authorizes the transfer; a promise that the solver will act later is enforced only by what it would forfeit by not acting, or by its reputation. The same words, a price guarantee, can describe either.",
+        },
+        {
+          kind: "paragraph",
+          text: "Different guarantees bind different things. A price guarantee fixes the terms but not whether or when execution happens, and an execution guarantee fixes that it will happen but not necessarily at what price; a firm quote the user may execute at will within its window binds both, and the solver prices that option into the quote.",
+        },
+        {
+          kind: "paragraph",
+          text: "A solver can commit only to its own actions. Whether a transaction is included, and where in a block, is decided by whoever controls ordering, which is why assurances about inclusion come from preconfirmations rather than from solvers. An outcome promised from end to end depends on both kinds of commitment holding at once.",
+        },
+      ],
+    },
+    {
+      id: "intent-settlement-content",
+      conceptId: "intent-settlement",
+      definition:
+        "Intent settlement is the final transfer of assets that carries out a resolved intent, performed by a settlement contract that checks the intent's conditions as it moves the funds.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The settlement contract is where an intent system's guarantees become enforceable. Users authorize it rather than any solver, it checks every condition the intent states before releasing anything, and solvers can reach users' assets only through it. Keeping that contract small and fixed makes it the one component everyone must trust, and a flaw in it reaches every intent that settles through it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Settling many intents together can reduce what has to move. In net settlement only each participant's net position changes hands, so opposite flows cancel instead of each being transferred, saving fees and avoiding unnecessary trades. The batch then succeeds or fails together, so one invalid component can hold back the rest unless the design can drop it and settle the remainder.",
+        },
+        {
+          kind: "paragraph",
+          text: "Settlement is itself a transaction, exposed to whatever touches it on its way to inclusion. A settlement that trades through public pools can be traded around like any other transaction, while one that settles matched intents at prices fixed for the whole batch leaves little for others to exploit, so how settlement reaches the chain affects whether the outcome the solver found is the outcome the user receives.",
+        },
+      ],
+    },
+    {
+      id: "multi-party-coordination-content",
+      conceptId: "multi-party-coordination",
+      definition:
+        "Multi-party coordination is how several independent parties reach a joint outcome that none can produce alone, without handing control to any one of them.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The central difficulty is who moves first. A party that commits before the others can be left exposed if they then withdraw or demand more, so each prefers to wait and the joint outcome may never happen. Joint execution that carries out every party's part in one atomic step, or not at all, removes that exposure: no one acts before everyone has.",
+        },
+        {
+          kind: "paragraph",
+          text: "Commitment devices extend the same idea to outcomes that take time. A contract that collects conditional pledges and executes them only once enough have arrived, refunding everyone otherwise, lets participants support collective action without risking a contribution that achieves nothing alone. The device changes what each party risks by committing; it does not create the willingness to commit.",
+        },
+        {
+          kind: "paragraph",
+          text: "Even parties who all prefer the same outcome can fail to reach it if none knows that the others will act. Commitments recorded on a shared ledger make each party's position visible to all, which supplies the common knowledge coordination needs; the coordination failures that remain usually come from disagreement about the outcome itself, or from parties whose interests the mechanism did not align.",
+        },
+      ],
+    },
+    {
+      id: "cross-domain-coordination-content",
+      conceptId: "cross-domain-coordination",
+      definition:
+        "Cross-domain coordination is carrying out a single outcome across separate chains or execution environments, each with its own ordering, state and finality.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Separate domains share no clock and no ordering. Each orders its own transactions, so the parts of a cross-domain action happen at different moments, and state on one side can change while the other is still pending. Making the parts behave as one requires either shared sequencing that orders both, which still cannot force both to succeed, or a lock that holds one side until the other is confirmed and releases it after a deadline if not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Finality differs between domains, and the gap is where the risk sits. Acting on one side before the other is final risks a reversal there while the completed side stands, so cross-domain settlement either waits for the slower or weaker finality or relies on someone, often a solver, to underwrite the risk of reversal in exchange for speed.",
+        },
+        {
+          kind: "paragraph",
+          text: "A cross-domain outcome inherits the guarantees of the weakest domain involved and of the mechanism that links them. Composing a well-secured chain with a weaker one, or with a bridge that relies on a small set of signers, gives the combined action the weaker guarantee, whatever the stronger side offers on its own.",
+        },
+      ],
+    },
+    {
       id: "governance-institutions-content",
       conceptId: "governance-institutions",
       definition: "Governance and institutions organize collective decisions, authority, constraints, and responses under particular rules, participants, and assumptions.",
