@@ -178,7 +178,8 @@ test("an explicit context becomes primary; other placements follow by domain ord
   assert.equal(context.placements.find((placement) => placement.isPreferred)?.placementId, "finality-in-consensus");
   assert.equal(context.placements[0].contextualNote, "Finality as a settlement property relevant to rollup systems.");
   assert.equal(context.content.exists, true);
-  assert.equal(context.content.lines[0], "The point at which a protocol treats a result as no longer practically reversible.");
+  // The definition leads the content lines, whatever its wording.
+  assert.equal(context.content.lines[0], resolver.getContentForConcept("finality")!.definition);
   assert.deepEqual(context.relationships.map((relation) => [relation.direction, relation.label, relation.conceptId]), [
     ["outgoing", "finalizes", "settlement"],
     ["incoming", "is depended on by", "rollups"],
