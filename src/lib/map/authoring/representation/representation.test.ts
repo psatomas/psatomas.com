@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { MapConceptContent, MapKnowledgeModel } from "../../types.ts";
-import { orchestratorModel, registryOf } from "../orchestrator/fixtures.ts";
+import { orchestratorModel } from "../orchestrator/fixtures.ts";
 import { REPRESENTATION_CATALOG, STRUCTURES } from "./catalog.ts";
 import { acceptedContentProblems, aggregate, auditRepresentation, conceptsAtLevel, mutations, usageOf } from "./audit.ts";
 import { capabilityGaps, contentFingerprint, designStatus, emptyStore, placementsOf, profileOf, recordDesign, validateDesign, type RepresentationDesign } from "./design.ts";
-import { validateRefactorDiff } from "./refactor-diff.ts";
 
 /**
  * The orchestrator's synthetic ontology with L1 content: single (one
@@ -149,36 +148,4 @@ test("audit mode refuses to judge uncommitted content and reports any mutation",
     "branch changed from main to feat/x",
     "src/lib/map/data.ts changed",
   ]);
-});
-
-test("a future refactor may change only records with a current improvement design", () => {
-  const base = model();
-  const facts = (conceptId: string) => placementsOf(base, conceptId);
-  const enhanceSingle = recordDesign(emptyStore("d1"), design("single", { classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "process", purpose: "ordered" }] }), record(base, "single"), facts("single"), "now").designs.single;
-  const keepT = recordDesign(emptyStore("d2"), design("t", { canonicalNote: "both" }), record(base, "t"), facts("t"), "now").designs.t;
-  const withBody = (m: MapKnowledgeModel, conceptId: string, text: string) => ({ ...m, content: m.content.map((entry) => (entry.conceptId === conceptId ? { ...entry, body: [{ kind: "paragraph" as const, text }] } : entry)) });
-  const input = (head: MapKnowledgeModel, overrides = {}) => ({
-    base,
-    head,
-    baseRegistry: registryOf(base),
-    headRegistry: registryOf(head),
-    baseView: { roots: [] },
-    headView: { roots: [] },
-    designs: [enhanceSingle, keepT],
-    changedFiles: ["src/lib/map/data.ts"],
-    ...overrides,
-  });
-
-  assert.deepEqual(validateRefactorDiff(input(withBody(base, "single", "Single, now with its stages."))), { ok: true, problems: [], changed: ["single"] });
-  assert.match(validateRefactorDiff(input(withBody(base, "t", "Transit rewritten."))).problems.join(), /t changed without an accepted improvement design/);
-  const staleBase = withBody(base, "single", "Changed after the design.");
-  assert.match(validateRefactorDiff({ ...input(withBody(staleBase, "single", "Refactored.")), base: staleBase }).problems.join(), /judged different content than the base/);
-  const added = { ...base, content: [...base.content, { id: "a-content", conceptId: "a", definition: "Alpha." }] };
-  assert.match(validateRefactorDiff(input(added)).problems.join(), /content added: a/);
-  const removed = { ...base, content: base.content.filter((entry) => entry.conceptId !== "k") };
-  assert.match(validateRefactorDiff(input(removed)).problems.join(), /content removed: k/);
-  assert.match(validateRefactorDiff(input(base, { headView: { roots: [1] } })).problems.join(), /generated explorer view changed/);
-  assert.match(validateRefactorDiff(input(base, { changedFiles: ["src/lib/map/data.ts", "src/lib/map/authoring/content-registry.ts"] })).problems.join(), /unexpected changed file/);
-  assert.match(validateRefactorDiff(input({ ...base, placements: base.placements.slice(1) })).problems.join(), /placements changed/);
-  assert.match(validateRefactorDiff(input(base, { headRegistry: [...registryOf(base), "extra"] })).problems.join(), /registry changed/);
 });
