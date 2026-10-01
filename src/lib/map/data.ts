@@ -12996,6 +12996,286 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "interoperability-models-content",
+      conceptId: "interoperability-models",
+      definition:
+        "Interoperability models describe how separate chains come to act on each other's state and messages, distinguished chiefly by what the receiving chain trusts about the sending one.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The central question is how the destination learns what happened on the source. It can verify the source's consensus or state transitions itself, through a light client or a proof it checks; it can accept a claim that watchers had a chance to dispute; or it can accept the attestation of an external set of signers. Each step along that range is cheaper and easier to build, and each adds a party whose honesty the destination must assume. Verifying another chain's consensus on-chain is costly and specific to that chain, which is why trusted committees remain common.",
+        },
+        {
+          kind: "paragraph",
+          text: "Topology spreads or concentrates that trust. Point-to-point connections between every pair of chains multiply the links to maintain, each with its own assumptions; routing everything through a hub reduces them to one link per chain but makes the hub a dependency of every connection, so its failure or capture reaches all of them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Native interoperability is easiest among chains that already share something, such as a settlement layer, a validator set or a proof system, because each can check the others with machinery it already trusts. Crossing between such groups usually falls back on one of the external models, so a chain's reach depends on which family it belongs to.",
+        },
+      ],
+    },
+    {
+      id: "cross-chain-messaging-content",
+      conceptId: "cross-chain-messaging",
+      definition:
+        "Cross-chain messaging is the transfer of an authenticated instruction or piece of information from a contract on one chain to a contract on another, for the receiving contract to act on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Everything rests on message authentication. The receiving contract acts because it accepts that the message was really emitted on the source chain, and how it reaches that belief, by checking a proof, by trusting attesters or by waiting out a dispute window, decides what an attacker would need to forge one. Delivery matters far less: once a message is authenticated, whoever carries it can affect only whether and when it arrives.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each message needs an identity that cannot recur. Replay protection typically combines the source chain, the sender and a sequence number, and the destination records what it has executed so that the same message cannot be applied twice. Message ordering is a separate choice: channels that deliver strictly in sequence let one stuck message block everything after it, while unordered delivery requires applications to cope with messages arriving in any order.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delivery can succeed while execution fails. By the time a message arrives, the source side has usually already acted, for instance by locking or burning assets, so a destination call that runs out of resources or reverts leaves the two sides inconsistent. Messaging designs therefore need a way to retry failed executions or to send the failure back so the source can undo its side.",
+        },
+      ],
+    },
+    {
+      id: "bridges-content",
+      conceptId: "bridges",
+      definition:
+        "A bridge is a system of contracts and operators that lets assets and messages pass between two chains, holding or controlling value on one side on the strength of what it believes happened on the other.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A bridge's security is fixed while the value it guards is not. The signers, proof system or dispute process that convinces the bridge stays the same whether it holds a little or a great deal, but the reward for corrupting it grows with every deposit, so a bridge that was adequately protected when small can become worth attacking without anything about it changing.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where bridges have failed, it has more often been through compromised keys or flawed contract logic than through broken cryptography. A bridge whose operators sign transfers depends on how those operators keep their keys and how independent they really are, and a verification contract with a single missing check can accept a forged message however sound the scheme behind it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Canonical bridges, built into a rollup or chain by its own developers, verify transfers with the machinery that secures the chain itself; third-party bridges add their own operators or proofs in exchange for speed or broader reach. Moving the same asset over different bridges produces different tokens, each backed only by the bridge that issued it.",
+        },
+      ],
+    },
+    {
+      id: "asset-bridging-content",
+      conceptId: "asset-bridging",
+      definition:
+        "Asset bridging makes an asset usable on a chain other than the one where it originates, either by issuing a representation there or by exchanging it for an equivalent asset already present.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "In lock-and-mint, the original stays locked on its home chain while a wrapped asset is minted elsewhere, so the wrapped asset is worth what the lock still holds. If the bridge is compromised and the originals are released to an attacker, the wrapped tokens stay in circulation with nothing behind them, and their holders, not holders of the original, bear the loss.",
+        },
+        {
+          kind: "paragraph",
+          text: "Burn-and-mint suits assets whose issuer controls supply on every chain: tokens are destroyed where they leave and created where they arrive, so no pool of locked originals waits to be stolen. The risk moves to mint authority instead, since whoever can authorize minting on any chain can create supply that is honored everywhere.",
+        },
+        {
+          kind: "paragraph",
+          text: "Liquidity-based bridging issues nothing new. Providers hold the asset on each chain, and a user hands it over on one side and receives the native asset from providers on the other, so what arrives is the real asset and the risk falls on the providers and on the mechanism that rebalances them; capacity is limited by what they hold. Where several wrapped versions of one asset exist, whichever the ecosystem treats as the canonical asset is where liquidity gathers.",
+        },
+      ],
+    },
+    {
+      id: "cross-chain-state-content",
+      conceptId: "cross-chain-state",
+      definition:
+        "Cross-chain state is information about one chain's state made usable on another, as a value the destination can rely on without depending on the honesty of whoever reports it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Reading another chain's state takes two steps. The destination first needs a state root it trusts for some block of the source, obtained through header relaying and whatever verification it accepts; a state proof then ties a specific value to the state behind that root. The second step is mechanical once the first is settled, so the trust in cross-chain state sits almost entirely in how the root was obtained.",
+        },
+        {
+          kind: "paragraph",
+          text: "Any value read this way is a value as of the block whose root was used. The source may have changed since, so applications either tolerate reading slightly old state or lock the relevant state on the source until the destination has acted, at the cost of coordinating the two.",
+        },
+        {
+          kind: "paragraph",
+          text: "State can be pulled when needed or pushed in advance. Cross-chain queries fetch and prove a value when an application asks, paying only for what is read but waiting for the proof; cross-chain state sync keeps selected state mirrored continuously, so reads are immediate but updates are paid for whether or not anyone uses them. Proof formats also differ between chains, since each organizes its state differently, so each pairing needs verification code that understands the other's structures.",
+        },
+      ],
+    },
+    {
+      id: "cross-chain-verification-content",
+      conceptId: "cross-chain-verification",
+      definition:
+        "Cross-chain verification is how a destination chain checks a claim about a source chain, such as that a block was finalized or a message emitted, before acting on it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Verification can be no faster than the source's finality. A destination that verifies a block the source later reorganizes away has verified something that no longer happened, so verification latency includes waiting for the source to finalize, and for sources whose finality is only probabilistic, waiting until reversal is unlikely enough for the value at stake.",
+        },
+        {
+          kind: "paragraph",
+          text: "Methods differ in what each check costs and how often it is paid. Checking a source's consensus signatures directly is expensive on most destinations, so light-client verification usually tracks the source's signer set through periodic updates; ZK verification compresses that work into a proof that is cheap to check but costly and slow to produce; optimistic verification is cheap to run but adds a waiting period for objections; committee verification is cheap and fast and asks the destination to trust the committee.",
+        },
+        {
+          kind: "paragraph",
+          text: "A verifier must also keep up with change on the source. Validator sets rotate, consensus rules are upgraded and signing keys change, and a light client that misses an update can no longer verify new blocks, or can be shown blocks signed by a set that is no longer authoritative. Maintaining verification over time is part of its cost, and an upgrade on the source can quietly break every verifier that follows it.",
+        },
+      ],
+    },
+    {
+      id: "interoperability-protocols-content",
+      conceptId: "interoperability-protocols",
+      definition:
+        "Interoperability protocols are the shared specifications and implementations that let chains exchange messages and assets in a common format, defining how connections are established, how messages are packaged and how they are verified.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Choosing a protocol is a long-lived security decision. An asset issued across chains under one messaging protocol's token standard depends on that protocol's verification everywhere it exists, so a failure of the protocol reaches every chain where the asset lives, and moving the asset to another protocol later means coordinating every holder and integration.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols built on light clients, such as inter-blockchain communication, give connections well-defined semantics, with explicit handshakes, channels and ordering guarantees, but require each chain to run a client of the other, which confines them mostly to chains built to support it. Protocols built around external verifiers connect more chains more easily and carry the trust assumptions of those verifiers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol adapters let an application send through several protocols and act only when enough of them agree. That raises the cost of forging a message to corrupting several independent systems, at the price of higher fees, slower delivery and a dependence on all of them staying live, turning the choice of protocol into a choice of how many to trust at once.",
+        },
+      ],
+    },
+    {
+      id: "cross-domain-execution-content",
+      conceptId: "cross-domain-execution",
+      definition:
+        "Cross-domain execution is carrying out an action on one chain or execution environment as a consequence of something initiated on another, such as a contract on one chain calling a contract on another.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A cross-chain call cannot return within the same transaction. The calling contract sends a request and finishes; the result, if any, arrives later in a separate callback, so logic that would be a single function call within one chain has to be split into a request and a response, with state on either side free to change in between. Execution callbacks that assume nothing changed in the meantime are a recurring source of errors.",
+        },
+        {
+          kind: "paragraph",
+          text: "Execution on the destination has to be paid for there. The initiator usually prepays an estimate of the destination's costs, and if the estimate is too low the action waits or fails, so pricing remote execution in advance, in another chain's fee market, is part of every cross-chain call.",
+        },
+        {
+          kind: "paragraph",
+          text: "Remote execution also needs a notion of who is acting. A contract on the destination sees the call arriving from the messaging system, not from the original sender, so the sender's identity has to be carried in the message and mapped to an address or permission on the destination. A mistake in that mapping lets one chain's caller act with another's authority.",
+        },
+      ],
+    },
+    {
+      id: "cross-domain-settlement-content",
+      conceptId: "cross-domain-settlement",
+      definition:
+        "Cross-domain settlement is the resolution of the obligations created when value moves between chains: proving on one side what happened on the other, and paying whoever is owed.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "When a solver delivers on the destination before being paid, settlement is the repayment leg. The solver proves on the origin that it filled the user's request and is reimbursed from the user's deposit, so settlement latency is how long the solver's capital stays committed, and its cost reappears in the price users are quoted. Settling many fills together, netting what each solver is owed across them, spreads the cost of settlement proofs over the batch.",
+        },
+        {
+          kind: "paragraph",
+          text: "Flows between chains are rarely balanced. When many users move value in the same direction, solvers accumulate inventory where it is not needed and run short where it is, and rebalancing it, often through slower canonical routes, has a cost that rises when flows are lopsided and is passed on in fees.",
+        },
+        {
+          kind: "paragraph",
+          text: "A solver that pays out because of a deposit on another chain is exposed if that deposit disappears in a reorganization. Solvers therefore scale how long they wait to how much is at stake, filling small amounts almost at once and large ones only after more of the origin's history has settled, so the speed users see depends on the size of what they move.",
+        },
+      ],
+    },
+    {
+      id: "cross-domain-atomicity-content",
+      conceptId: "cross-domain-atomicity",
+      definition:
+        "Cross-domain atomicity is the property that a set of actions on different chains either all take effect or none do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Hashed timelock contracts achieve it for swaps between two parties. Each locks its asset under the same secret, and revealing the secret to claim one side makes it public for claiming the other, with deadlines set so that the second party always has time to act. The arrangement gives the party holding the secret an option, since it can wait until the last moment and complete the swap only if prices have moved in its favor, and both parties must stay online until the deadlines pass.",
+        },
+        {
+          kind: "paragraph",
+          text: "Two-phase commit generalizes the idea: every chain first locks what it will change, and only when all have confirmed are the changes committed. The locks are the price, since state and liquidity stay frozen while the coordinator gathers confirmations, and if the coordinator fails partway, the locks hold until a timeout releases them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many systems settle for less than atomicity. They handle partial failures with compensating actions, refunding or reversing the completed side when another side fails, which restores balances eventually but is not all-or-nothing: for a time one side has happened and the other has not, and anyone acting on that intermediate state can be caught out. An atomicity guarantee is worth knowing precisely, including which of these it actually provides.",
+        },
+      ],
+    },
+    {
+      id: "chain-abstraction-content",
+      conceptId: "chain-abstraction",
+      definition:
+        "Chain abstraction presents several chains to users and applications as if they were one, so that people act on balances and applications without choosing or managing the individual chains involved.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A unified balance is a promise someone must keep. Showing a user one total across chains means that when they spend on a chain where they hold too little, something must move or advance the difference, usually a solver who pays on the destination and is repaid from the user's funds elsewhere. Resource locks make that safe: the user's funds on one chain are committed for a time to a spend that may happen on another, so the solver can advance funds knowing they cannot be spent twice.",
+        },
+        {
+          kind: "paragraph",
+          text: "Account abstraction supplies much of the machinery. Smart accounts let one authorization cover actions on several chains and let fees be paid in whatever asset the user holds, so chain abstraction builds on programmable validation rather than replacing it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hiding chains moves the choice of chain to whoever does the hiding. Chain routing decides where an action executes, and therefore under which chain's security, fees and finality it falls, often without the user seeing it. The simpler the interface, the more of those decisions, and the risks they carry, sit with the wallet or infrastructure making them.",
+        },
+      ],
+    },
+    {
+      id: "abstraction-layers-content",
+      conceptId: "abstraction-layers",
+      definition:
+        "Abstraction layers hide selected details of how blockchains work, such as which asset pays fees, where liquidity sits or where execution happens, behind simpler interfaces that some system manages on users' behalf.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Abstractions hold in ordinary conditions and leak under stress. When fees spike, a bridge pauses or liquidity runs short on one chain, the constraint the layer was hiding reappears, often as an unexplained failure or delay at the moment users most need the system to work, and in terms they were never shown.",
+        },
+        {
+          kind: "paragraph",
+          text: "Asset abstraction that treats different representations of an asset as one hides differences in what backs them: two tokens shown as the same asset may rest on different bridges or issuers, and a failure of one is not a failure of the other. Liquidity abstraction that draws on many venues and chains as one pool depends on continual rebalancing between them, and execution abstraction that chooses where computation runs decides on the user's behalf which environment's guarantees apply.",
+        },
+        {
+          kind: "paragraph",
+          text: "Layers stack, and responsibility thins as they do. An intent-based layer may rest on liquidity abstraction, which rests on asset abstraction and on the bridges those depend on, each operated by a different party with its own assumptions. When something fails, tracing which layer failed and who answers for it becomes harder with every layer added.",
+        },
+      ],
+    },
+    {
+      id: "interoperability-security-content",
+      conceptId: "interoperability-security",
+      definition:
+        "Interoperability security concerns the points where systems connect: defending them against forged messages, compromised verifiers, replayed instructions and the exploits that turn any of these into stolen funds.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Once a verifier is compromised, nothing downstream can tell a forged message from a real one. Every contract that trusts that verifier acts on whatever it accepts, so defenses beyond verification aim to limit what any single message can do: transfer limits cap how much can leave in a period, large transfers wait longer before release, and independent monitors can pause the system when outflows look wrong. Such limits turn a total loss into a bounded one and buy time to respond.",
+        },
+        {
+          kind: "paragraph",
+          text: "Replay attacks thrive where separation between domains is incomplete. A signature or message valid on one chain can be valid on another if nothing in it names the chain, the contract version or the deployment, which happens when chains split, contracts are redeployed at the same address, or an upgrade resets the record of what has already been processed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bridge exploits tend to complete in a few transactions, and the proceeds then move across chains, which makes recovery difficult: each hop leaves the reach of the system that was attacked, and freezing funds depends on the cooperation of whichever issuers and operators control the assets involved.",
+        },
+      ],
+    },
+    {
+      id: "trust-failure-modes-content",
+      conceptId: "trust-failure-modes",
+      definition:
+        "Trust failure modes are the ways an interoperating system can fail when one of its trust assumptions breaks, and the ways those failures spread or are contained.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Failures come in two kinds with very different consequences. A liveness failure stops the system, leaving messages undelivered or funds stuck, and is usually recoverable once the cause is fixed; a safety failure lets a wrong result through, such as a forged withdrawal, and is often irreversible. Designs choose which to risk: requiring more signatures or longer checks protects safety at the cost of liveness, and pause mechanisms deliberately give up liveness to protect safety when something looks wrong.",
+        },
+        {
+          kind: "paragraph",
+          text: "Connections that look independent can share a single point of failure. Several bridges built on the same messaging protocol, verifier or client software fail together when it does, so counting connections overstates resilience unless the trust behind them is genuinely separate.",
+        },
+        {
+          kind: "paragraph",
+          text: "Failure isolation limits how far one failure reaches. Separate limits for each route, separate pools for each chain and caps on how much any connection can affect the rest keep a broken link from draining the others, at the cost of liquidity divided into compartments. Without isolation, contagion follows the paths value takes, as tokens issued by a failed bridge carry their loss into every market that accepted them.",
+        },
+      ],
+    },
+    {
       id: "protocol-architecture-content",
       conceptId: "protocol-architecture",
       definition: "Protocol architecture organizes a system's responsibilities, components, interfaces, state, execution, data, trust, and tradeoffs without itself guaranteeing any resulting property.",
