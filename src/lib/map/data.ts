@@ -10932,6 +10932,226 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "incentives-content",
+      conceptId: "incentives",
+      definition:
+        "Incentives are the rewards and penalties a system attaches to actions so that participants pursuing their own interests are led toward the behavior the system needs.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A system can reward or penalize only what it can observe and attribute. Validating carefully, relaying promptly or refusing a bribe leave little trace a protocol can check, so designs attach incentives to observable proxies, such as signed votes, timely inclusion or uptime, and participants then optimize the proxy. Incentive alignment is therefore no better than the fit between the measured behavior and the behavior that matters.",
+        },
+        {
+          kind: "paragraph",
+          text: "Penalties need something to take. A system can impose negative incentives only on participants that have put up collateral or have something else it can withhold, so anonymous or newly arrived participants can be rewarded or excluded but not fined. Rewards carry the opposite exposure: they attract participants who come for the reward and produce the measured behavior without its intended effect.",
+        },
+        {
+          kind: "paragraph",
+          text: "The system does not set all the payoffs. Participants also face prices, bribes and opportunities outside it, and an action the protocol penalizes can still be worth taking if someone else pays more for it. Incentive compatibility shown within a mechanism therefore holds only while payoffs outside the mechanism do not outweigh those inside it.",
+        },
+      ],
+    },
+    {
+      id: "mechanism-design-content",
+      conceptId: "mechanism-design",
+      definition:
+        "Mechanism design is the practice of choosing the rules of an interaction so that participants acting in their own interest produce an outcome the designer wants.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "It works backwards from the outcome. Game theory takes the rules as given and asks how players will act; mechanism design fixes the objectives first and searches for allocation rules and payment rules under which self-interested responses deliver them. Participants are not assumed to cooperate, only to respond to the rules as the model says they will.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some objectives cannot be met together. Classic results show, for instance, that no rule for trade between one buyer and one seller can at once be efficient, make truthful reporting optimal, leave both willing to take part and need no outside subsidy. Mechanism constraints of this kind turn design into a choice of which property to give up, and a proposal that claims every desirable property usually rests on an assumption it has not stated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols add constraints that classical models often leave out. Participants can create many identities, actions may be visible to others before they take effect, and whoever runs the mechanism, such as the producer of the block in which an auction settles, may be a strategic participant able to insert, reorder or drop actions. In this setting a mechanism is credible only if its operator also has no profitable deviation from its rules.",
+        },
+      ],
+    },
+    {
+      id: "game-theory-content",
+      conceptId: "game-theory",
+      definition:
+        "Game theory is the analysis of decisions whose outcome for each participant depends on what the others choose, modeled as players choosing strategies that produce payoffs.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Dominant strategies are prized because they ask little of players. A player with a dominant strategy needs no prediction of what anyone else will do, so the outcome survives mistaken beliefs. A Nash equilibrium is more fragile: each choice is a best response only if the player expects the others to play their part, and when a game has several equilibria, which one occurs depends on expectations the model does not supply, such as which of two competing histories everyone expects everyone else to follow.",
+        },
+        {
+          kind: "paragraph",
+          text: "Equilibrium in the usual sense guards only against one player deviating alone. Protocols often face groups that can coordinate, such as validators, block producers or large holders acting together, and an outcome that is stable against every single deviation can still be profitable for a coalition to break. Analyses that bear on protocol security therefore ask what any group up to a given size could gain by deviating together.",
+        },
+        {
+          kind: "paragraph",
+          text: "Repetition changes what is rational. Behavior that pays once can be unprofitable when the same players meet again and future payoffs depend on present conduct, which is how long-lived participants can be held to cooperation that a single round would not support. The same reasoning warns that cooperation weakens as a player's horizon shortens, for instance just before it leaves the system.",
+        },
+      ],
+    },
+    {
+      id: "strategic-behavior-content",
+      conceptId: "strategic-behavior",
+      definition:
+        "Strategic behavior is participants choosing their actions in response to a system's rules and to one another, in pursuit of their own objectives, rather than following the workflow its designers had in mind.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Most of it breaks no rule. A deviation from the intended strategy is usually something the rules permit, such as timing an action, splitting it, or declining to do unpaid work, and a protocol can neither prevent nor punish what its rules allow. If a permitted action pays, someone will eventually take it, so the lasting answer to an unwanted strategy is a change of rules that makes it unprofitable.",
+        },
+        {
+          kind: "paragraph",
+          text: "Free riding is the natural response to work whose benefit is shared. Checking others' results, relaying their messages or keeping data for them benefits everyone while the cost falls on whoever does it, so each participant gains by leaving the work to others, and work that everyone assumes someone else performs can go undone. Griefing is measured the other way round, by how much harm an actor can impose on others for each unit of its own cost, and designs aim to keep that ratio low enough that griefing stays expensive.",
+        },
+        {
+          kind: "paragraph",
+          text: "Programmable systems make bribery easier to arrange. A bribe can be written as a contract that pays only if the bribed party acts as asked, so neither side needs to trust the other, and an outcome decided by a few participants can be bought for little more than what those participants stand to lose by selling it.",
+        },
+      ],
+    },
+    {
+      id: "token-economics-content",
+      conceptId: "token-economics",
+      definition:
+        "Token economics is the set of rules governing how a protocol's own asset is created, allocated, removed and used, together with the economic effects those rules have on holders and participants.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Issuance is a transfer, not a gift. New units paid to validators, contributors or others dilute every holder who does not receive them, so issuance moves a share of the asset from passive holders to its recipients. Who receives emissions, and whether ordinary holders can join them, for example by staking, decides whom that transfer favors.",
+        },
+        {
+          kind: "paragraph",
+          text: "Burns connect supply to use. When part of each fee is burned, net supply changes by issuance minus burns, shrinking when activity is high and growing when it is low. A burn of this kind transfers value from the users who paid the fee to the remaining holders, much as a share buyback does, rather than creating anything.",
+        },
+        {
+          kind: "paragraph",
+          text: "Token utility creates demand to hold only while holding is needed. A token required for fees can be bought just before each payment and sold just after, so heavy use can coexist with little demand to hold it, while roles that require holding over time, such as stake or collateral, keep supply tied up. Token distribution matters for the same reason: units scheduled for release to early recipients are known to be coming, and governance and stake follow whoever ends up holding the supply.",
+        },
+      ],
+    },
+    {
+      id: "fees-content",
+      conceptId: "fees",
+      definition:
+        "Fees are what participants pay to use a protocol's capacity, under rules that set the cost of each use, the party that bears it and the destination of the payment.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How a fee is set shapes how users bid. When each user names a price and the highest offers win, everyone must guess what others will pay, so users overpay in calm periods and underbid when demand jumps. Congestion pricing that moves a base price toward a target level of use makes the price largely predictable, so most users pay the posted amount and only those who need to be ahead of others add a priority fee.",
+        },
+        {
+          kind: "paragraph",
+          text: "Fee allocation affects behavior as much as the amount does. If the party that orders transactions receives the congestion price, it gains from raising that price, for instance by filling blocks with its own transactions; burning the base price removes that motive and leaves the producer only the priority fees. Where fees paid inside the protocol are small next to payments arranged outside it, ordering is in effect sold elsewhere, and the protocol's fee rules stop deciding it.",
+        },
+        {
+          kind: "paragraph",
+          text: "One price for many resources misprices most of them. Computation, state growth and published data strain different parts of a system, and a single fee per unit of work lets cheap use of one resource crowd out another. Fee calculation that prices resources separately, each against its own scarcity, allocates capacity more precisely, at the cost of a more complicated market for users to reason about.",
+        },
+      ],
+    },
+    {
+      id: "auctions-content",
+      conceptId: "auctions",
+      definition:
+        "Auctions are mechanisms that turn competing bids into a decision about who receives something scarce and what each winner pays.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The pricing rule shapes how honestly bidders bid. In a first-price auction a winner pays its own bid, so bidders shade their bids below what the item is worth to them and must guess how much others shade. In a second-price auction, paying the next bid makes bidding one's true value the best strategy, but only if the auctioneer cannot add bids of its own. A block producer running an auction can insert a bid just below the highest, so in protocols the second-price rule loses its main advantage unless the auctioneer is constrained.",
+        },
+        {
+          kind: "paragraph",
+          text: "Sealed bids have to stay sealed until the auction closes, and on a public network that takes work. Commit-reveal schemes hide bids until a reveal phase, but a bidder who dislikes how the reveals are going can decline to reveal, so such schemes usually forfeit a deposit from anyone who commits and then stays silent. Encrypting bids to a key that only a group can use together avoids that problem but requires trusting the group.",
+        },
+        {
+          kind: "paragraph",
+          text: "Batch auctions remove the advantage of acting first. Collecting orders over an interval and clearing them at one price means no order gains from landing just before another within the batch, which takes away much of the reward for watching and front-running pending orders. The cost is waiting for the batch to close, and the single price applies to everyone, including bidders who would have paid more.",
+        },
+      ],
+    },
+    {
+      id: "resource-allocation-content",
+      conceptId: "resource-allocation",
+      definition:
+        "Resource allocation is the assignment of something scarce, such as capacity, capital, computation, data or a service, among uses that compete for it, by a rule that decides who receives how much and when.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The same decisions can be approached from two directions. One asks how scarcity is resolved: by price, by rationing under fixed rules, by queueing, or by some mix, and how each method behaves under congestion. The other asks what is being allocated and among whom, because capital, computation, data and services differ in whether they can be divided, reused, stored or taken back once granted. Every particular allocation answers both: a method applied to a resource with properties of its own.",
+        },
+        {
+          kind: "paragraph",
+          text: "Pricing and rationing fail in different ways. Pricing directs a resource toward those willing to pay most, which tracks value only as far as willingness to pay does, and lets whoever has more funds outbid every other use. Rationing by shares, quotas or eligibility protects uses that cannot pay, but leaves the resource where the rule placed it even when others value it more, and invites effort spent on qualifying under the rule. A claim that either is efficient depends on what the allocation was meant to achieve.",
+        },
+        {
+          kind: "paragraph",
+          text: "Allocations also have to be revisable. Demand shifts, resources are consumed or withdrawn, and a budget, funds or capacity granted for one period may be needed elsewhere in the next. Allocations that expire or can be recalled keep resources moving toward current uses, while long commitments give recipients the certainty to plan, and every allocating system sets a balance between flexibility for the allocator and security for the recipient.",
+        },
+      ],
+    },
+    {
+      id: "staking-economics-content",
+      conceptId: "staking-economics",
+      definition:
+        "Staking economics concerns the costs, rewards and risks that determine how much value participants lock under a protocol's staking rules, who locks it, and what that locked value can be made to pay for misbehavior.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Staking rewards have to beat the alternatives. Locked capital could earn elsewhere, and staking adds the risk of penalties and of being unable to exit quickly, so participation settles where the reward for the marginal staker matches what that capital could earn otherwise with less risk. Reward schedules that fall as total stake rises aim participation at a level the protocol considers sufficient, rather than paying for as much stake as possible.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delegated stake separates control from exposure. Holders who delegate let an operator act with their stake while bearing much of the loss if the operator is slashed, so the operator's discipline comes largely from its own stake and its standing with delegators. Delegators tend to choose by convenience and yield, which concentrates stake in a few large operators or pooled services, a concentration that a count of individual validators does not show.",
+        },
+        {
+          kind: "paragraph",
+          text: "Slashing can be shaped to the risk it addresses. Penalties that grow with the number of validators slashed at the same time punish coordinated misbehavior heavily while treating an isolated mistake leniently, and withdrawal delays keep stake reachable long enough for misbehavior discovered late to be penalized. The price of that delay is illiquidity, which in turn creates demand for tokens that represent staked positions and can be traded while the stake itself stays locked.",
+        },
+      ],
+    },
+    {
+      id: "security-budgets-content",
+      conceptId: "security-budgets",
+      definition:
+        "A security budget is what a protocol spends, through issuance, fees or subsidies, to keep enough participants doing the work its security depends on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A budget means something only relative to what an attack could gain. Spending that makes an attack cost more than the value it could capture keeps attacking unprofitable, so as the value a protocol secures grows, a fixed security expenditure buys a shrinking margin. Comparing budgets across protocols without comparing what each one protects says little.",
+        },
+        {
+          kind: "paragraph",
+          text: "Funding sources shift over time and behave differently. Issuance-funded security often follows a declining schedule, moving the burden onto fees, and fee revenue rises and falls with demand. When fees make up most of what block producers earn, a block holding unusually large fees can be worth contesting, giving producers a reason to reorganize recent history instead of extending it. Security subsidies can bridge a gap, but only for as long as someone keeps paying them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Attack cost depends on whether the necessary resources must be bought or can be rented. Hardware or stake that an attacker must acquire and then forfeit makes an attack expensive, but where computation can be rented for the attack's duration, or stake borrowed or bribed, the cost of corruption falls to the rent or the bribe, which can be far below the value of the resources involved.",
+        },
+      ],
+    },
+    {
+      id: "cryptoeconomic-security-content",
+      conceptId: "cryptoeconomic-security",
+      definition:
+        "Cryptoeconomic security is protection that rests on making misbehavior cost more than it can gain, through capital participants put at risk and penalties a protocol can enforce, rather than on mathematics alone.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Its strongest form attaches a price to reversing an outcome. If finalizing conflicting outcomes requires signatures from validators holding at least a fixed share of the stake, those validators leave evidence of the conflict and can lose that stake, so economic finality can be stated as a minimum cost of reversal. The figure holds only if the penalty is actually applied, which requires the evidence to be included and acted on in the history participants go on to follow.",
+        },
+        {
+          kind: "paragraph",
+          text: "Penalties are usually paid in the protocol's own asset, which makes the guarantee reflexive. An attack that drives down the asset's price also shrinks the value of the stake meant to deter it, and an attacker who profits from that fall elsewhere, for instance through a position that gains when the asset drops, can come out ahead even after losing the stake.",
+        },
+        {
+          kind: "paragraph",
+          text: "The same stake is often counted more than once. When many applications rely on one protocol's security, or stake is reused to secure additional services, the value depending on that stake can exceed what its loss could compensate, and a penalty in one place can cascade into the others. Stake-based security is a fixed amount of exposure shared among everything that relies on it, not a fresh guarantee for each.",
+        },
+      ],
+    },
+    {
       id: "markets-financial-protocols-content",
       conceptId: "markets-financial-protocols",
       definition: "Markets and financial protocols organize assets, claims, exchange, obligations, and risk through rules whose execution can be deterministic while their economic outcomes remain conditional.",
