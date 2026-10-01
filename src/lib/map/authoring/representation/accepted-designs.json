@@ -264,7 +264,15 @@
         "stablecoins-in-monetary-systems"
       ],
       "canonicalNote": "Also a leaf under Monetary Systems; the families and their failures hold there.",
-      "sourceFingerprint": "36714603853541c13b6bb6ae646afbc781782838b3df860b32e2aa1c5e3931fe"
+      "sourceFingerprint": "36714603853541c13b6bb6ae646afbc781782838b3df860b32e2aa1c5e3931fe",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "comparison"
+        ],
+        "resultFingerprint": "be3d8a154fae25081d585815c994c6a720a06781f9384d4a6fae7315ed08b58c",
+        "note": "Backing and failure mode per design family were packed into one paragraph; the comparison shows the different failure surfaces side by side, while redemption arbitrage and runs on backing stay in prose."
+      }
     },
     {
       "conceptId": "intent-commitments",
