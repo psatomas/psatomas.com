@@ -111,10 +111,11 @@ function authoringConstraints(context: MapConceptAuthoringContext): string[] {
 function exposureConstraints(placements: number): string[] {
   return [
     `The exposition opens at every placement listed above (${placements}); it is canonical, not placement-specific.`,
-    "The definition leads; body blocks are paragraph, heading, flow, distinction, tensions and terms. Use only the blocks the explanation needs.",
+    "The definition leads; body blocks are paragraph, heading, flow, distinction, tensions, terms, cycle and comparison. Use only the blocks the explanation needs (docs/map-authoring/representation-design.md).",
     "All text is plain: no HTML, markdown or line breaks. Strings within one terms strip, distinction chain, tension list or flow stage/branch must be unique.",
     "Flows need at least two stages, never two parallel sets in a row, a branch only inside a parallel set, and at most six parallel elements.",
     "Terms strips need at least two terms; they are plain vocabulary, not navigation.",
+    "Cycles need a label and two to six distinct steps; comparisons need two to four dimensions and two to six alternatives, each with one value per dimension.",
   ];
 }
 

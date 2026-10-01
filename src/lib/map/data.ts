@@ -8454,8 +8454,13 @@ export const mapKnowledge: MapKnowledgeModel = {
           text: "The division creates a problem of mutual exposure. If the proposer could see a block's contents before committing to it, it could take the builder's arrangement for itself; if the builder revealed nothing, the proposer could not know that the block is valid or that the bid will be paid. Designs resolve this by having the proposer commit to a block it has not seen, with the contents revealed afterwards and something ensuring that each side's commitment holds.",
         },
         {
+          kind: "flow",
+          label: "How a relay lets the proposer commit before seeing the block",
+          stages: [["Builder sends block and bid to the relay"], ["Relay checks validity and payment"], ["Proposer signs the header without seeing the contents"], ["Relay releases the full block"], ["Block is published"]],
+        },
+        {
           kind: "paragraph",
-          text: "That something is either an intermediary or the protocol. A relay can hold the builder's block, check its validity and payment, and release it only once the proposer has committed, which works only as long as both sides trust the relay. Moving the exchange into the protocol's own rules removes that trusted party but adds the mechanism to consensus itself.",
+          text: "The ensuring party is either an intermediary or the protocol. A relay that holds the block and checks it works only as long as both sides trust that relay; moving the exchange into the protocol's own rules removes that trusted party but adds the mechanism to consensus itself.",
         },
         {
           kind: "paragraph",
