@@ -12058,6 +12058,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         "Intent discovery is how a signed intent reaches the parties who might fill it: where it is posted, who may see it, and in what form.",
       body: [
         {
+          kind: "tensions",
+          label: "What discovering an intent trades",
+          pairs: [["Competition among solvers", "Information given away"], ["Open solver access", "Spam and exploitation"], ["Holding intents to match them", "Delay for their owners"]],
+        },
+        {
           kind: "paragraph",
           text: "Showing an intent to more solvers buys competition and costs information. Every solver that sees an intent learns which way the user wants to trade and how much, and can act on that elsewhere, for instance by trading ahead on another venue, before or instead of filling it. Intent visibility is therefore tuned between enough solvers to compete the price down and few enough that the intent itself does not move the market against its owner.",
         },
@@ -12183,7 +12188,21 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Different guarantees bind different things. A price guarantee fixes the terms but not whether or when execution happens, and an execution guarantee fixes that it will happen but not necessarily at what price; a firm quote the user may execute at will within its window binds both, and the solver prices that option into the quote.",
+          text: "Different guarantees bind different things.",
+        },
+        {
+          kind: "comparison",
+          label: "What each guarantee binds",
+          dimensions: ["Fixes the terms", "Fixes that execution happens"],
+          alternatives: [
+            { name: "Price guarantee", values: ["Yes", "No, nor when it happens"] },
+            { name: "Execution guarantee", values: ["Not necessarily the price", "Yes"] },
+            { name: "Firm quote", values: ["Yes", "Yes, whenever the user chooses within its window"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A firm quote binds both, which gives the user an option, and the solver prices that option into the quote.",
         },
         {
           kind: "paragraph",
