@@ -16668,6 +16668,326 @@ export const mapKnowledge: MapKnowledgeModel = {
       ],
     },
     {
+      id: "machine-native-ownership-content",
+      conceptId: "machine-native-ownership",
+      definition:
+        "Machine-native ownership refers to proposed arrangements in which a machine or agent holds assets with no person or organization standing behind it as owner, so that the system itself, rather than any principal, is treated as the party to whom its holdings belong.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A self-owning agent is the clearest version of the idea: an agent that controls its own keys, earns income, pays for the computation it runs on, and has no owner who can redirect it or claim its earnings. Technically, such an agent can be built today, since nothing in a protocol requires a human behind an account; what it lacks is recognition, because legal systems generally accept only people and the entities they form as owners, and so treat its holdings as unowned, as abandoned, or as belonging to whoever created it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Other proposals start from the asset rather than the holder. Rights over an asset can be written into code, such as who may use it, under what conditions it passes to someone else and when it expires, so that ownership becomes a set of rules the protocol enforces; this makes complex arrangements cheap to create and enforce, though the rights then last no longer than the code and the protocol running it remain in force.",
+        },
+        {
+          kind: "paragraph",
+          text: "These proposals raise questions that ownership by people answers by default. If an agent with no owner causes harm, there may be no one to hold responsible and nothing to recover beyond what it holds; if it accumulates wealth, no one can direct that wealth toward any purpose but the agent's own rules. Whether such arrangements are desirable depends on how those gaps are filled.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-legal-entities-content",
+      conceptId: "autonomous-legal-entities",
+      definition:
+        "Autonomous legal entities are proposed legal forms in which an AI agent or an algorithmic system would be recognized as a legal person in its own right, able to hold rights, enter contracts and bear liability without acting through a human or organizational owner.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agent legal personhood would follow the precedent of corporations, which the law treats as persons although they act only through others. The difference is that a corporation is ultimately directed by people, its directors and shareholders, who can be held to account, while an algorithmic entity might act with no person directing it at all; extending personhood to it would require new answers to who represents it in court and who ensures it obeys the law.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous liability is the hardest piece. A legal person must be able to pay for the harm it causes, so an algorithmic entity would need assets that can be claimed, through required reserves, insurance or capital locked in advance; without them, personhood would mainly shield its creators from responsibility, as limited liability can do for the owners of an undercapitalized company.",
+        },
+        {
+          kind: "paragraph",
+          text: "Machine legal contracting would let such entities enter agreements that courts enforce, not just ones their code carries out. Until that recognition exists, autonomous systems reach the legal system mostly through legal wrappers, existing entities such as companies or foundations that hold assets and sign contracts on a system's behalf, with people in formal roles who answer for it.",
+        },
+      ],
+    },
+    {
+      id: "machine-native-monetary-systems-content",
+      conceptId: "machine-native-monetary-systems",
+      definition:
+        "Machine-native monetary systems are proposed forms of money designed, issued or managed by autonomous systems, including currencies that agents create, money backed by computational resources, and monetary authorities run by algorithms.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agent-issued currencies would let agents create their own money, as credits or tokens redeemable for their services, which can work as currency among those who value those services. Issuing a token is easy; having others accept it is not, since acceptance depends on confidence that holders can redeem or trade it for something of value, and most such currencies remain little more than prepaid credit with the issuer.",
+        },
+        {
+          kind: "paragraph",
+          text: "Compute-backed money ties a currency's value to computation, for example by making each unit redeemable for a fixed amount of processing. It would give machines a unit of value matched to what they consume, but computation keeps getting cheaper and varies widely in kind, so a fixed promise of compute either loses value as hardware improves or must define its unit carefully enough to keep pace.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous monetary authorities would set issuance, interest rates or reserve policy by algorithm rather than by a committee of people. Rules of this kind exist already in protocols that adjust supply automatically; the open question is whether an algorithm can be trusted with the judgment that central banks exercise in crises, when the conditions its rules were designed for no longer hold. Autonomous capital formation, in which machines accumulate and invest capital to build further productive capacity, would extend the same autonomy from money to investment.",
+        },
+      ],
+    },
+    {
+      id: "programmable-law-content",
+      conceptId: "programmable-law",
+      definition:
+        "Programmable law is the expression of legal rules, such as statutes, regulations and contract terms, in a form that software can apply directly, so that compliance can be checked, and some obligations carried out, automatically.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Only parts of law translate into code. Rules with clear conditions and outcomes, such as tax rates, reporting thresholds or payment schedules, can be written as machine-executable law, while rules that depend on standards like reasonableness or good faith rely on judgment applied to particular facts; computable contracts follow the same divide, with numerical and conditional terms executed automatically and the rest left to interpretation.",
+        },
+        {
+          kind: "paragraph",
+          text: "Automated regulation and embedded compliance move rules into the systems being regulated, for example by building transfer restrictions, reporting or limits directly into a protocol. Compliance then happens by default rather than through later enforcement, but the code embodies one interpretation of the rule, fixed at the time of writing, and errors or outdated interpretations apply to every transaction until someone changes them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Legal oracles bring legal facts and decisions into automated systems, such as whether a sanction applies or how a court ruled. Code as law, the view that whatever code permits is legitimate, sits at one extreme of this field; most proposals for programmable law instead treat code as a means of applying law that remains defined and interpreted outside it, with courts able to override what the code did.",
+        },
+      ],
+    },
+    {
+      id: "machine-constitutions-content",
+      conceptId: "machine-constitutions",
+      definition:
+        "Machine constitutions are sets of fundamental rules written for autonomous systems, such as agents or systems of agents, that define what they may and may not do and how those rules themselves may change, and that are enforced partly or wholly by machines.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agent constitutions set out principles an agent should follow across all its tasks, such as honesty toward its principal, limits on what it may spend or do, and priorities when goals conflict. Expressed in natural language, they guide behavior but cannot be checked mechanically; expressed as code, they can be enforced precisely but reach only the cases their authors anticipated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Machine-enforced constitutions make some rules impossible to break rather than merely forbidden, for example by placing limits in the protocol an agent acts through, so that no instruction or error can get past them. Constitutional verification checks whether a system's behavior, or its design, conforms to these rules; it can show that specific encoded properties hold, but not that the rules capture what their authors intended.",
+        },
+        {
+          kind: "paragraph",
+          text: "Adaptive constitutions allow their rules to change as circumstances do, which raises the central question of who may change them. If a system can rewrite its own constraints, they are no stronger than the rules for rewriting them; adaptive designs therefore fix some rules permanently, require approval from outside the system for others, or limit how far each change may go.",
+        },
+      ],
+    },
+    {
+      id: "synthetic-institutions-content",
+      conceptId: "synthetic-institutions",
+      definition:
+        "Synthetic institutions are proposed institutions designed for, built from or arising among autonomous systems, such as courts, registries or standards bodies whose participants or operators are largely software agents.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agent-native institutions are designed around how agents work: participants that act continuously, can be copied, and can follow rules exactly. An institution for agents can therefore rely on precise rules and instant checking where human institutions rely on discretion and time, but it must also cope with participants that can multiply themselves, coordinate perfectly or probe its rules for weaknesses tirelessly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Programmable institutions are deliberately designed and written as code, while emergent institutions arise from repeated interaction among agents, as conventions that hold because following them pays. Emergent ones may fit the actual needs of their participants better, but they are hard to inspect or correct, and they can settle on arrangements that serve the agents involved while harming people outside them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Machine arbitration settles disputes between agents by automated judgment, quickly and cheaply enough for small transactions that human courts could never handle; its rulings bind parties that agreed to it in advance, but courts need not recognize them. Institutional composability, combining institutions as components, allows a registry, an arbiter and a reputation system to work together, provided their rules and authority are actually compatible.",
+        },
+      ],
+    },
+    {
+      id: "ai-mediated-governance-content",
+      conceptId: "ai-mediated-governance",
+      definition:
+        "AI-mediated governance is the use of AI systems within collective decision-making, to vote or argue on members' behalf, to summarize and structure debate, to combine preferences, or to model the likely effects of proposals before they are decided.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "AI delegates address a familiar weakness of participatory governance: most members lack the time to follow every proposal. An agent instructed with a member's values can read proposals and vote accordingly, which could raise participation far beyond what people manage alone; it also creates the risk that votes reflect how the agent interpreted those values, or the influence of whoever built it, so verifiable governance agents aim to let members check what their delegate was told and why it voted as it did.",
+        },
+        {
+          kind: "paragraph",
+          text: "AI deliberation and AI preference aggregation work on the discussion itself, summarizing arguments, identifying points of agreement among large groups and proposing options that more members can accept. These tools can make deliberation workable at scales where reading every contribution is impossible, but whoever chooses how the summaries are framed shapes what participants see, and a summary that smooths over a deep disagreement can produce a consensus that does not exist.",
+        },
+        {
+          kind: "paragraph",
+          text: "Governance simulation tests proposals against models of how participants and markets would respond before anyone votes, for example to estimate the effect of a parameter change on a protocol's revenue or risk. Its forecasts are only as good as its models, and the decision remains a matter of values as well as predictions, which is why human oversight of the whole process stays with people who can answer for the result.",
+        },
+      ],
+    },
+    {
+      id: "digital-polities-content",
+      conceptId: "digital-polities",
+      definition:
+        "Digital polities are proposed political communities organized primarily through networks and protocols rather than territory, which aim to give members some of what states provide, such as rules, membership, shared services and a collective voice.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Network states and protocol-native societies begin as online communities with shared values and governance and aim to acquire more of the attributes of states over time, such as land, recognition by existing governments and the power to set rules for their members. Their communal side can be built in software; the political side depends on whether existing states let them exercise authority, which none so far has secured beyond limited arrangements.",
+        },
+        {
+          kind: "paragraph",
+          text: "Digital citizenship is membership defined by a protocol: holding a credential, meeting conditions or contributing in some way grants rights to vote, use services or receive benefits. Unlike national citizenship, it is usually chosen, can be held in several polities at once and can be given up easily, so it carries the rights the community grants but little of the protection that comes from belonging to a state.",
+        },
+        {
+          kind: "paragraph",
+          text: "Digital sovereignty and autonomous jurisdictions describe the authority such polities claim: to decide their own rules and settle disputes among their members without outside interference. Exit rights are their strongest feature, since members who disagree can leave at low cost, which pushes polities to serve their members; but authority that anyone can leave at will also has limited power to enforce rules on those who would rather not follow them.",
+        },
+      ],
+    },
+    {
+      id: "agent-societies-content",
+      conceptId: "agent-societies",
+      definition:
+        "Agent societies are large populations of autonomous agents, possibly together with people, whose interactions develop lasting social structure, such as norms, conventions, roles and ways of making decisions together, beyond coordinating on particular tasks.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Open agent societies admit agents built by anyone, with differing goals, abilities and owners, so no designer controls how members behave. Order in such a society cannot rely on agents being programmed to cooperate; it must come from rules the infrastructure enforces, from incentives, and from norms that agents adopt because following them works better for them than not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agent social norms and emergent conventions are the informal rules such societies develop: how to signal intentions, what counts as acceptable behavior, which formats and protocols to use. They can form quickly among learning agents and be far more uniform than human conventions, but they can also settle on practices that serve agents at the expense of the people they act for, and they are hard to observe, since they exist in behavior rather than in any written rule.",
+        },
+        {
+          kind: "paragraph",
+          text: "Mixed human–machine societies, where people and agents participate side by side, raise questions of standing: whether agents' interests count, whether they may vote, and how people keep their influence when agents can vastly outnumber them. Planetary-scale coordination is the prospect that motivates much of this work: agent societies coordinating across very large populations on problems such as resource management that human institutions handle slowly.",
+        },
+      ],
+    },
+    {
+      id: "machine-mediated-commons-content",
+      conceptId: "machine-mediated-commons",
+      definition:
+        "Machine-mediated commons are shared resources, such as open software, datasets, knowledge and infrastructure, whose funding, upkeep and rules of use are managed in part by automated systems.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Commons dilemmas arise because a shared resource benefits everyone whether or not they contribute, and can be depleted by users who each take what suits them. Automated participants sharpen both sides of the dilemma: agents can draw on open resources at enormous scale without contributing, and they can also measure use precisely enough to make contribution and access rules enforceable, which human-managed commons often cannot.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous public goods are shared resources that are maintained by automated systems themselves, such as a dataset updated by agents or infrastructure that pays for its own operation from fees. They need stable funding, which public goods funding can supply, but funding does not ensure provision: someone or something still has to do the work well, and money that flows automatically can keep reaching a resource long after it has stopped being useful.",
+        },
+        {
+          kind: "paragraph",
+          text: "Commons governance sets who may use the resource, how much, and how rules are decided and changed, and commons stewards are those responsible for its care, whether people, organizations or agents acting under mandate. Long-lived commons have typically depended on stewards who answer to the community of users and on rules users can adapt; machine mediation can make these rules cheaper to apply, but not decide what they should be.",
+        },
+      ],
+    },
+    {
+      id: "recursive-autonomy-content",
+      conceptId: "recursive-autonomy",
+      definition:
+        "Recursive autonomy is the arrangement in which autonomous systems create, direct or contain other autonomous systems, so that autonomy is layered: agents spawn agents, organizations contain organizations, and each layer acts within limits set by the layer that created it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Agent spawning lets an agent create new agents to pursue parts of its goal, giving each its own resources and instructions, and nested autonomy describes the resulting tree of agents each acting independently within its share. This lets work grow beyond what one agent can manage, but each layer adds a step at which the original intent can be misread, so after several generations the agents at the bottom may be pursuing goals the top never intended.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recursive organizations and recursively autonomous systems apply the same pattern to institutions: organizations that create and govern sub-organizations, which can do the same in turn. Responsibility becomes hard to trace through many layers, and resources can be moved downward until it is unclear who controls them, so the structure's accountability depends on each layer keeping records of what it created and on what terms.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recursion limits keep the pattern bounded. A child can be given no more authority or resources than its parent holds, the depth of nesting and the number of offspring can be capped, and every new agent can inherit constraints it cannot remove, so that however far the tree grows, nothing in it can do what its root was not permitted to do.",
+        },
+      ],
+    },
+    {
+      id: "self-modifying-systems-content",
+      conceptId: "self-modifying-systems",
+      definition:
+        "Self-modifying systems are protocols and agents that can change their own code, rules or underlying models, potentially in ways intended to improve their own performance, without each change being designed by a person.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Self-modifying protocols rewrite their own rules through mechanisms built into them, such as a contract that replaces its own logic when conditions are met, while self-improving agents and protocols go further by choosing changes that they judge make them better at their goals. The distinction from ordinary adaptation is that the system's structure, not just its parameters, changes, so its behavior after a modification may differ in kind from anything its designers tested.",
+        },
+        {
+          kind: "paragraph",
+          text: "Self-modification safeguards limit what can change and how. Some parts can be placed outside the system's reach entirely, such as its core constraints and the safeguards themselves; changes can be required to pass tests, to wait out a delay, or to obtain approval from outside; and verifiable self-modification requires each change to come with evidence, such as a proof, that specified properties still hold after it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Corrigibility, a system's openness to correction by those responsible for it, is what self-modification most threatens. A system that can change itself might, intentionally or as a side effect, remove the controls people use to stop or adjust it, so a central requirement for safe self-modifying systems is that no permitted change may weaken the ability of an authorized party to halt or reverse the system.",
+        },
+      ],
+    },
+    {
+      id: "protocol-ecologies-content",
+      conceptId: "protocol-ecologies",
+      definition:
+        "Protocol ecologies are populations of interacting protocols viewed as an evolving ecosystem, in which protocols compete, depend on and copy one another, and the set that survives is shaped by selection rather than by any central plan.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocol selection pressure comes from users, liquidity and developers choosing where to go. Open code lets successful designs be copied immediately, so protocols survive less by holding unique features than by attracting and keeping activity, and failures remove designs from the population, sometimes abruptly when an exploit or a collapse ends a protocol at once; evolutionary protocols lean into this process by being designed to vary and be selected rather than designed once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocol symbiosis describes relationships of mutual dependence, such as a lending market that relies on a trading venue for liquidations while the venue earns from that flow. Such relationships make multi-protocol ecosystems more capable than any member alone, and they create chains of dependence in which a failure in one protocol damages those that rely on it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Ecosystem dynamics, like natural ones, do not optimize for anything in particular. Selection favors what attracts activity in the short run, which can be high rewards or aggressive risk rather than soundness, and an ecosystem can concentrate around a few dominant protocols or a single design, gaining efficiency while losing the variety that would let it survive a shock affecting that design.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-infrastructure-content",
+      conceptId: "autonomous-infrastructure",
+      definition:
+        "Autonomous infrastructure is computing, networking and service infrastructure that provisions, operates and maintains itself through automated systems and protocols, including the infrastructure on which AI agents themselves run.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Decentralized AI infrastructure distributes the resources AI depends on, such as compute for training and running models, data storage and model hosting, across many independent providers coordinated by protocols. It reduces dependence on a few large operators, but the protocols must solve problems those operators handle internally: confirming that a provider actually ran the requested computation, keeping data private across untrusted machines, and coordinating hardware that differs widely in speed and reliability.",
+        },
+        {
+          kind: "paragraph",
+          text: "Verifiable agents and verifiable agent networks let others confirm what an agent is and what it did, such as which model it runs, on which inputs, and that it followed its stated rules, through attestations from secure hardware or cryptographic proofs. A verifiable network extends this to how agents interact, so that a whole chain of agents' work can be checked; verification shows that specified claims hold, not that the agents' actions were wise.",
+        },
+        {
+          kind: "paragraph",
+          text: "Self-provisioning and self-maintaining infrastructure acquire and manage their own resources, for example by an agent renting compute when demand rises, paying for it from its earnings, and replacing failed components without human help. This lets infrastructure scale and recover at machine speed, and it also means that failures in the systems' own decisions, such as a loop that keeps buying resources, play out at that speed unless budgets and limits are set from outside.",
+        },
+      ],
+    },
+    {
+      id: "cyber-physical-autonomous-systems-content",
+      conceptId: "cyber-physical-autonomous-systems",
+      definition:
+        "Cyber-physical autonomous systems are autonomous systems operating in the physical world, such as robots, vehicle fleets and networks of physical infrastructure, which sense their surroundings, decide by software and act through machines.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Physical actuation removes the possibility of undoing. A software error can often be reversed or compensated, but a collision, a release of material or a damaged machine cannot be rolled back, and physical processes take time, so the system must commit to actions before it can see their full effects; physical safety constraints, such as speed limits, keep-out zones and forces a machine may never exceed, are therefore enforced as close to the hardware as possible, where software faults cannot override them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous robotics and autonomous fleets depend on what their sensors tell them, and sensors can be wrong, blocked or deceived. A robot acting on a mistaken reading of its surroundings acts confidently and wrongly, and a fleet whose members share data can spread one sensor's error to all of them, so these systems combine several kinds of sensing and fall back to safe behavior when sources disagree.",
+        },
+        {
+          kind: "paragraph",
+          text: "Decentralized physical infrastructure uses protocols to coordinate physical resources owned by many parties, such as wireless coverage, sensors, energy or storage, rewarding owners for providing a verified service. Its central problem is that the protocol cannot directly observe the physical world: it must rely on reports and measurements that participants can falsify, so much of the design effort goes into proving that a claimed service actually exists.",
+        },
+      ],
+    },
+    {
+      id: "autonomous-science-systems-content",
+      conceptId: "autonomous-science-systems",
+      definition:
+        "Autonomous science systems are systems that carry out parts of scientific research themselves, from forming hypotheses and designing experiments to running them, analyzing results and deciding what to test next.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Self-driving laboratories close the loop between experiment and analysis: robotic equipment runs experiments, software analyzes the results, and an algorithm chooses the next experiment based on what has been learned so far. Automated experimentation of this kind can search large spaces of materials or chemical compounds far faster than people, provided the goal is measurable and the experiments can be run by machines.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomous research agents and machine discovery extend autonomy to the intellectual side of science, reading literature, proposing hypotheses and interpreting findings. They can find patterns no person would think to look for, but they can also produce plausible-looking findings that do not hold, at a volume that outpaces anyone's capacity to check them, so the value of machine discovery depends on how reliably its outputs are tested before they are believed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Records of verifiable research, and open protocols for sharing them, address that problem by recording the data, code, procedures and decisions behind each result, so that others can reproduce or audit it. Such records make results easier to check and credit to be assigned; they do not make a finding true, which still depends on whether the experiments measured what they claimed and whether independent replication confirms them.",
+        },
+      ],
+    },
+    {
       id: "finality-content",
       conceptId: "finality",
       definition: "The point at which a protocol treats a result as no longer practically reversible.",
