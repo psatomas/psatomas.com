@@ -62,6 +62,7 @@ content model writes it down.
 | lifecycle: stages from creation to retirement | flow | native, with no return to an earlier stage |
 | failure path: how a fault propagates or branches | flow | native |
 | composition: a whole and its parts | flow | approximate, one level |
+| variants: kinds of something, each with what follows from it | flow | approximate, one short branch per kind |
 | interaction: who acts, in what order | flow | approximate, no message lanes |
 | tension: forces that pull against each other | tensions | native |
 | vocabulary | terms | native |
