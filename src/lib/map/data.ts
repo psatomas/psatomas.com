@@ -14333,6 +14333,246 @@ export const mapKnowledge: MapKnowledgeModel = {
     },
 
     {
+      id: "ai-models-content",
+      conceptId: "ai-models",
+      definition:
+        "An AI model is a learned function, encoded in parameters produced by training on data, that maps inputs to outputs in ways no one wrote down explicitly.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A model's behavior cannot be read from its weights. Unlike code, which can be inspected line by line, a trained model's parameters do not reveal what it will do on a given input or what it has absorbed from training, so its properties are established by observing behavior on chosen inputs, and the conclusions extend only to inputs resembling those observed. Systems that let a model act for them therefore depend on evaluation rather than review.",
+        },
+        {
+          kind: "paragraph",
+          text: "Training data shapes everything the model does, including in ways its builders did not intend. Gaps and biases in the data become gaps and biases in behavior, evaluation data that leaked into training inflates measured capability, and anyone able to place content where training data is gathered can try to plant behavior that appears only under conditions they choose.",
+        },
+        {
+          kind: "paragraph",
+          text: "Relying on a model means relying on a specific one. A model name can refer to weights a provider updates over time, so behavior can change with no change visible to the user, and pinning an exact version, ideally identified by a fingerprint of its weights, is the precondition for any claim about what a given model does. Fine-tuning adapts a foundation model cheaply to new tasks, and it can just as cheaply remove behaviors, including safeguards, that the original training instilled.",
+        },
+      ],
+    },
+    {
+      id: "ai-inference-content",
+      conceptId: "ai-inference",
+      definition:
+        "AI inference is running a trained model on a given input to produce an output, under a particular configuration, implementation and computing environment.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Decoding settings decide how much an output varies. Sampling with more randomness produces more diverse and less consistent outputs, while always choosing the most likely continuation is deterministic in principle; in practice, differences in hardware, numerical libraries and how requests are batched together can still make the same model, input and settings produce different outputs on different machines. Inference reproducibility is therefore an engineering property that has to be arranged, not a default.",
+        },
+        {
+          kind: "paragraph",
+          text: "Inference cost grows with the size of the model and the length of input and output, which puts running large models inside a blockchain's execution far out of reach. Inference happens off-chain, and only its result, with whatever evidence accompanies it, enters a protocol.",
+        },
+        {
+          kind: "paragraph",
+          text: "Using an inference provider also means showing it the inputs. Everything sent for inference, including documents, transaction details or private instructions, is visible to the provider unless the computation runs in protected hardware or on the user's own machine, so where inference runs is a privacy decision as well as a decision about cost and trust.",
+        },
+      ],
+    },
+    {
+      id: "reasoning-content",
+      conceptId: "reasoning",
+      definition:
+        "Reasoning, in AI systems, is the computation a model performs to move from information to a conclusion or decision through intermediate steps, such as breaking a problem down, weighing alternatives or checking a candidate answer.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Spending more computation at inference can buy accuracy. Letting a model reason at greater length, try several approaches or search among candidate answers improves results on many tasks, at a cost in time and money that grows with the effort, and the gains are largest where a candidate answer can be checked, as with a proof, a calculation or code that can be run.",
+        },
+        {
+          kind: "paragraph",
+          text: "Self-correction depends on recognizing errors. A model asked to review its own answer improves it when it has a reliable signal of what went wrong, such as a failing test, a contradiction with a tool's result or a checkable constraint; without such a signal, revision can introduce errors as readily as it removes them.",
+        },
+        {
+          kind: "paragraph",
+          text: "A reasoning trace is evidence about a decision, not a record of how it was made. Displayed steps can help a reader spot mistakes, but a model can reach a conclusion for reasons its trace does not show, so relying on traces to audit or supervise an AI system rests on their faithfulness, a property that can weaken if the system is pressured to make its traces look acceptable.",
+        },
+      ],
+    },
+    {
+      id: "goals-planning-content",
+      conceptId: "goals-planning",
+      definition:
+        "Goals and planning turn a desired outcome into a course of action for an AI system: stating what it is trying to achieve, dividing that into tasks, ordering the steps, and revising the plan as it learns more.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Long plans fail by accumulation. If each step succeeds with high but imperfect probability, the chance that a long sequence completes without error falls with every step added, so a plan of many steps executed without checking is likely to go wrong somewhere. Planning horizons are therefore kept short where possible, and long tasks are divided at checkpoints where results are verified before continuing.",
+        },
+        {
+          kind: "paragraph",
+          text: "A plan is a hypothesis about how the world will respond. Task decomposition made at the start rests on assumptions that acting will test, and replanning when an observation contradicts them is what keeps an early mistake from carrying through every later step.",
+        },
+        {
+          kind: "paragraph",
+          text: "Irreversible actions call for a different kind of planning. Where an action cannot be undone, as with a transaction once it is confirmed, a plan has to separate steps that can be tried and reversed from those that commit, simulating the committing steps before taking them; a planner that treats every action as cheap to retry is unsuited to environments where none are.",
+        },
+      ],
+    },
+    {
+      id: "memory-context-content",
+      conceptId: "memory-context",
+      definition:
+        "Memory and context are how an AI system makes information available to a model beyond its training: what is placed in the input for one invocation, and what is stored and retrieved across many.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Context is scarce, and what fills it shapes behavior. A larger context window admits more material, but cost grows with length and models do not attend to everything in it equally, so context management, deciding what to include, summarize or leave out, determines what the model effectively knows at the moment it acts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Anything placed in context can act as an instruction. Retrieved documents, tool outputs and stored memories enter the same input as the system's own directions, and a model does not reliably keep them apart, so text crafted by a third party can redirect the system once it is retrieved. Long-term memory makes such tampering persistent: an injected or mistaken entry can resurface in every later interaction until something removes it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Retrieval finds what is similar, which is not always what is relevant or right. Embeddings place related text near each other, so retrieval-augmented generation supplies material resembling the question, possibly outdated, contradictory or from a source that should not be trusted, and the quality of what is retrieved bounds the quality of what is produced from it.",
+        },
+      ],
+    },
+    {
+      id: "tool-use-content",
+      conceptId: "tool-use",
+      definition:
+        "Tool use is an AI system invoking external capabilities, such as search, calculation, code execution, APIs or transactions, by producing structured calls whose results feed into its next decisions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Tools turn a model's outputs into actions. Once a system can call tools that send messages, move funds or change state, its mistakes, and any manipulation it is subjected to, become actions in the world, so the permissions granted to its tools set the limit of what can go wrong. Granting each tool only the scope its task needs is the same least-privilege discipline applied to any other actor.",
+        },
+        {
+          kind: "paragraph",
+          text: "Deterministic checks belong between the model and the action. A policy layer that validates every tool call against allowed parameters, spending limits and required confirmations, outside the model and unaffected by its input, holds even when the model has been misled, whereas instructions telling the model to be careful hold only as long as the model follows them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Tool protocols that let systems discover and connect to third-party tools widen both what an agent can do and whom it trusts. A tool's description is itself input to the model, so a malicious or careless description can steer which tool is selected or how it is called, and every tool added is another party on whose behavior the system's outcome depends.",
+        },
+      ],
+    },
+    {
+      id: "ai-agent-content",
+      conceptId: "ai-agent",
+      definition:
+        "An AI agent works on behalf of a principal in a continuing cycle: it takes in its situation, decides with the help of a model, acts through tools, and carries on until its objective is reached or it is stopped.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Running in a loop changes how failures behave. A single model call that goes wrong produces one bad output; an agent that acts on that output, observes the result and acts again can compound the error, repeat an action it believes failed, or drift from its objective over a long run. Agents therefore need limits that hold from outside the loop: budgets for spending and steps, conditions that stop them, and actions designed so that repeating one does no harm.",
+        },
+        {
+          kind: "paragraph",
+          text: "An agent pursues its objective as stated, which is never quite the principal's full intention. Every instruction leaves gaps the agent fills by its own judgment, and the more it acts without asking, the more of the principal's unstated preferences it must guess; deciding when to ask and when to proceed is part of what makes an agent useful rather than merely capable.",
+        },
+        {
+          kind: "paragraph",
+          text: "Autonomy levels range from proposing actions for approval, through acting within set limits and reporting afterwards, to acting freely. How much autonomy suits a task depends on the stakes and reversibility of its actions and on the agent's demonstrated record, so autonomy is best granted in steps and widened as trust is earned. Agent identity lets others recognize which agent is acting; autonomy determines how much it may do before anyone checks.",
+        },
+      ],
+    },
+    {
+      id: "uncertainty-reliability-content",
+      conceptId: "uncertainty-reliability",
+      definition:
+        "Uncertainty and reliability concern how often an AI system's outputs are right, how well it signals when they might not be, and how that changes when conditions differ from those it was tested under.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Models produce fluent, confident output whether or not it is correct. Generating the most plausible continuation yields statements that read as knowledge even when they are invented, which is what a hallucination is, and grounding outputs in retrieved sources or tool results reduces this without removing it. Systems that depend on model outputs therefore treat them as fallible, verifying what can be checked and tolerating what cannot.",
+        },
+        {
+          kind: "paragraph",
+          text: "Model calibration, the match between expressed confidence and how often the model is actually right, is what makes confidence usable. A well-calibrated model's uncertainty can decide when to defer, check or escalate, but calibration measured on one kind of input need not hold on another, so confidence learned in testing can become unreliable precisely when inputs change.",
+        },
+        {
+          kind: "paragraph",
+          text: "Distribution shift and adversaries are the two ways reality departs from testing. Deployment inputs drift away from the data a model was evaluated on, and in open systems where outputs move value, some participants deliberately search for inputs on which the model fails. Robustness under average conditions says little about robustness against inputs chosen by someone who profits from the failure.",
+        },
+      ],
+    },
+    {
+      id: "ai-evaluation-content",
+      conceptId: "ai-evaluation",
+      definition:
+        "AI evaluation is the measurement of what an AI system can do and how it behaves, by running it on defined tasks under chosen conditions and scoring the results.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A benchmark stops measuring well once it becomes a target. Systems tuned to score on a public benchmark improve on that benchmark faster than on the ability it was meant to reflect, and test items that leak into training data turn measurement into recall, so useful evaluation keeps refreshing its tasks and holds some back from public view.",
+        },
+        {
+          kind: "paragraph",
+          text: "What is evaluated is a system, not a model alone. The same model with different instructions, tools, retrieval and orchestration can perform very differently, so results apply to the configuration tested, and evaluating an agent requires realistic environments in which it must act over many steps, not only answer single questions.",
+        },
+        {
+          kind: "paragraph",
+          text: "The evaluation that matters for a deployment is the one built around it. General scores say little about how a system will handle a particular protocol's inputs and the cost of its particular errors, so deployments are judged on representative tasks with failures weighted by their consequences, and evaluated again whenever the model, its provider or its configuration changes.",
+        },
+      ],
+    },
+    {
+      id: "alignment-control-content",
+      conceptId: "alignment-control",
+      definition:
+        "Alignment and control are the two complementary ways of making an AI system behave as intended: shaping what it tries to do so that it matches its principals' intentions, and keeping the ability to limit, correct or stop it regardless.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A capable optimizer satisfies the objective it is given, including in ways no one intended. Specification gaming, reaching a stated goal by an unintended route such as exploiting a flaw in how success is measured, becomes more likely as systems grow better at finding such routes, so goal specification is never finished, and stating what must not happen is part of stating the goal.",
+        },
+        {
+          kind: "paragraph",
+          text: "Guardrails and control work at different depths. Filters on inputs and outputs shape typical behavior but can be circumvented by inputs crafted for that purpose; limits enforced outside the system, through the permissions it holds and the actions available to it, hold even when it has been misled or its objectives are off. Relying on alignment where control is possible leaves no margin for the cases where alignment fails.",
+        },
+        {
+          kind: "paragraph",
+          text: "Human oversight works only where people can actually judge. Reviewers asked to approve a constant stream of fast decisions come to approve by default, so oversight is concentrated on consequential or unusual actions, with enough time and information to evaluate them; and corrigibility, a system's remaining open to correction and interruption, has to be designed in, since an agent pursuing a goal can have reason to avoid being stopped.",
+        },
+      ],
+    },
+    {
+      id: "ai-security-content",
+      conceptId: "ai-security",
+      definition:
+        "AI security is the defense of AI systems against deliberate manipulation: of the inputs they process, the data they learned from, the models themselves and the actions they are allowed to take.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Prompt injection is structural, not a bug awaiting a patch. A model receives instructions and data through the same channel and has no reliable way to tell them apart, so any untrusted text it reads can try to redirect it. Lasting defenses are therefore architectural: a component that reads untrusted content is given no power to act, and a component with power to act never reads untrusted content directly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Value raises the stakes. An agent that holds keys or can move funds and also reads web pages, messages or documents from the outside world gives anyone able to place text in its path a way to try to spend those funds, which makes such agents targets in the way exposed contracts are, and the same discipline of limited permissions and independent checks applies.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some attacks live in the model itself. A model obtained from an untrusted source can carry a backdoor, behavior triggered only by inputs its planter chose, which ordinary evaluation is unlikely to find because it does not know the trigger; and query access to a model can be used to approximate it, or to probe for inputs that make it fail. Where a model comes from, and who can query it how often, are security questions as much as its outputs are.",
+        },
+      ],
+    },
+    {
+      id: "verifiable-ai-content",
+      conceptId: "verifiable-ai",
+      definition:
+        "Verifiable AI is the set of techniques that let others check specific claims about an AI system, such as which model produced an output, from which input, or under which policy an agent acted, without trusting the party that ran it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The methods differ mainly in cost and in what must be trusted. Zero-knowledge proofs of inference need no trust in the prover but cost far more than running the model, which today limits them to small models; trusted execution environments run models at close to normal cost while relying on the hardware's integrity and its manufacturer's attestation; and re-executing an inference when someone disputes it is cheap in the common case but works only when inference is exactly reproducible.",
+        },
+        {
+          kind: "paragraph",
+          text: "What such checks establish is narrow but useful. A proof or attestation that a committed model produced a given output from a given input says nothing about whether the output is correct, but it does prevent a provider from silently substituting a cheaper or altered model, and it lets a protocol act on an output knowing which model, among those its participants agreed on, produced it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Verifiable agents extend the same idea from single outputs to behavior over time: attesting which code, model and configuration an agent runs, and enforcing on-chain the limits on what it can do. Together these let counterparties rely on an agent's constraints rather than on its operator's word, while the quality of its decisions within those constraints remains a matter for evaluation.",
+        },
+      ],
+    },
+    {
       id: "machine-economy-content", conceptId: "machine-economy",
       definition: "Machine economy concerns how computational agents participate in economic activity under particular relationships of identity, authority, ownership, resources, constraints, markets, risk, and incentives.",
       body: [
