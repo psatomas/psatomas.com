@@ -16087,6 +16087,11 @@ export const mapKnowledge: MapKnowledgeModel = {
         "Control loops are mechanisms by which a protocol measures a quantity, compares it with a target and adjusts something it controls to reduce the difference, repeating continuously.",
       body: [
         {
+          kind: "cycle",
+          label: "A control loop, with the delays that cause overshoot",
+          steps: ["Measure the quantity, as it was a few blocks ago", "Compare it with the target", "Adjust what the protocol controls", "The effect appears after a further delay"],
+        },
+        {
           kind: "paragraph",
           text: "Delay is what makes control loops unstable. A controller that acts on measurements taken a few blocks ago, and whose adjustments take further time to change behavior, keeps correcting an error that has already begun to shrink, overshoots and must correct back; the more strongly it responds, the larger the swings, so control stability requires matching how hard a loop pushes to how slowly its effects appear.",
         },

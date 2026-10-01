@@ -1066,7 +1066,15 @@
       "placements": [
         "control-loops"
       ],
-      "sourceFingerprint": "7b804b945bf4623cb65bbeba307f7288e7c000452eab2b85380796b5a3998577"
+      "sourceFingerprint": "7b804b945bf4623cb65bbeba307f7288e7c000452eab2b85380796b5a3998577",
+      "resolution": {
+        "decision": "execute",
+        "structured": [
+          "cycle"
+        ],
+        "resultFingerprint": "2fd669da783d18f572c38e193ddedfbb701503975ffd51c1fb09591014b23ef5",
+        "note": "The record's claim is where delay enters a loop that the parent can draw only as a forward flow; the cycle shows the stale measurement and the late effect feeding the next pass, and the PID terms stay in prose."
+      }
     },
     {
       "conceptId": "protocol-adaptation",
