@@ -291,7 +291,8 @@ editing the record and recording again.
 - **Bounds.** Reopening fingerprints each concept's model and design and its
   group's territory. A repair changes the record within them. If the
   finding needs the model, design or territory changed, the repair records
-  the design or plan again first, which validates it. Only reopened
+  the plan again first (judged on territory), then the design (judged on the
+  model and design), which validates them. Only reopened
   concepts' territory may move: `record` refuses anything else
   (`repairScopeProblems`). A plan or design of a drafted concept cannot be
   recorded again outside a repair.

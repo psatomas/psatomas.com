@@ -49,11 +49,15 @@ export function repairBaseline(plans: readonly L2GroupFile[], conceptIds: readon
  *   record and audits judged the old territory.
  * `redesigned` and `replanned` are the designs and plans recorded since the
  * repair opened. Empty when the repair stays within its bounds.
+ *
+ * `territoryOnly` judges the territory alone: recording a plan comes first in
+ * a repair that changes territory, and the models (which mirror the plan's
+ * claims) are judged when their designs are recorded after it.
  */
-export function repairScopeProblems(input: { baseline: L2RepairBaseline; reopened: readonly string[]; plans: readonly L2GroupFile[]; redesigned: ReadonlySet<string>; replanned: ReadonlySet<string> }): string[] {
+export function repairScopeProblems(input: { baseline: L2RepairBaseline; reopened: readonly string[]; plans: readonly L2GroupFile[]; redesigned: ReadonlySet<string>; replanned: ReadonlySet<string>; territoryOnly?: boolean }): string[] {
   const now = repairBaseline(input.plans, Object.keys(input.baseline.work));
   const problems: string[] = [];
-  for (const [conceptId, before] of Object.entries(input.baseline.work)) {
+  for (const [conceptId, before] of input.territoryOnly ? [] : Object.entries(input.baseline.work)) {
     if (now.work[conceptId] !== before && !input.redesigned.has(conceptId)) problems.push(`${conceptId}: its model or design changed without being recorded again in the repair (\`l2 record design ${conceptId}\`)`);
   }
   const groupOf = (conceptId: string) => input.plans.find((plan) => plan.members.some((member) => member.conceptId === conceptId))?.group ?? "?";
