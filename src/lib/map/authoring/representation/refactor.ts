@@ -9,6 +9,8 @@
  * does not list. A run records, per actionable design, whether the agent
  * executed it, made a smaller change within it, or kept the record, and that
  * resolution is written back into the spec in the same commit as the content.
+ * A blocked design can only be resolved as keep, by re-review
+ * (reviewBlockedDesign).
  */
 import { createHash } from "node:crypto";
 import type { MapConceptContent, MapKnowledgeModel } from "../../types.ts";
@@ -86,7 +88,7 @@ export function specProblems(spec: AcceptedDesignSpec, model: MapKnowledgeModel)
     const gaps = gapsOf(design.target);
     if (design.status === "blocked" && !gaps.length) problems.push(`${at}: blocked without a missing primitive`);
     if (design.status === "actionable" && gaps.length) problems.push(`${at}: actionable but needs ${gaps.join(", ")}, which no block expresses`);
-    if (design.status === "blocked" && design.resolution) problems.push(`${at}: a blocked design cannot be resolved`);
+    if (design.status === "blocked" && design.resolution && design.resolution.decision !== "keep") problems.push(`${at}: a blocked design can only be resolved as keep, by re-review`);
     if (!design.justification?.trim()) problems.push(`${at}: needs a justification`);
     if (!design.resolution && design.sourceFingerprint !== contentFingerprint(record)) {
       problems.push(`${at}: the record changed since its design was accepted; review the design again`);
@@ -160,7 +162,7 @@ export function planRefactor(spec: AcceptedDesignSpec, model: MapKnowledgeModel,
     title: model.concepts.find((concept) => concept.id === root.conceptId)?.title ?? domainId,
     ordinal: String(roots.findIndex((candidate) => candidate.id === domainId) + 1).padStart(2, "0"),
     actionable,
-    blocked: listed.filter((design) => design.status === "blocked"),
+    blocked: listed.filter((design) => design.status === "blocked" && !design.resolution),
     resolved: listed.filter((design) => design.resolution),
     stale: actionable.filter((design) => design.sourceFingerprint !== contentFingerprint(recordOf(model, design.conceptId))).map((design) => design.conceptId),
     keep: [...new Set(topics)].filter((conceptId) => withContent.has(conceptId) && !listed.some((design) => design.conceptId === conceptId)),
@@ -226,6 +228,24 @@ export function resolveSpec(spec: AcceptedDesignSpec, decisions: Record<string, 
       return { ...design, resolution: { decision: recorded.decision, structured: structuredKinds(record), resultFingerprint: contentFingerprint(record), note: recorded.note } };
     }),
   };
+}
+
+/**
+ * Re-reviews a blocked design outside any run. When reconsideration shows its
+ * missing structure does not belong at the concept (it would teach another
+ * concept's mechanism, say), the design is resolved as keep. Keep is the only
+ * outcome: a blocked design cannot be executed, a different representation
+ * needs a new accepted design, and the record must be exactly the one reviewed.
+ */
+export function reviewBlockedDesign(spec: AcceptedDesignSpec, model: MapKnowledgeModel, conceptId: string, note: string): { spec?: AcceptedDesignSpec; problems: string[] } {
+  const design = spec.designs.find((candidate) => candidate.conceptId === conceptId);
+  const problems: string[] = [];
+  if (!design) problems.push(`${conceptId}: has no accepted design`);
+  else if (design.status !== "blocked") problems.push(`${conceptId}: not blocked; an actionable design is resolved by a refactor run`);
+  else if (design.resolution) problems.push(`${conceptId}: already resolved (${design.resolution.decision})`);
+  else if (contentFingerprint(recordOf(model, conceptId)) !== design.sourceFingerprint) problems.push(`${conceptId}: the record changed since its design was accepted; review the design again`);
+  if (!note.trim()) problems.push(`${conceptId}: a re-review needs a note giving its reason`);
+  return problems.length ? { problems } : { spec: resolveSpec(spec, { [conceptId]: { decision: "keep", note } }, model), problems };
 }
 
 /** The spec may change only by resolving this run's designs: nothing else, and no other domain. */

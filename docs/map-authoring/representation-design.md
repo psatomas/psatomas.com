@@ -238,7 +238,14 @@ is the governance for refactor runs, reviewed and accepted by merging it.
   list as actionable for its domain.
 - **Blocked designs** need a primitive no block expresses yet (today:
   `state`). They are kept visible, never executed, and never block other
-  designs in their domain.
+  designs in their domain. A blocked design can be **re-reviewed** outside a
+  run with `refactor review <concept-id> --decision keep --note "..."`. When
+  reconsideration shows that the missing structure does not belong at the
+  concept, for example because it would teach a child's or another concept's
+  mechanism, the design is resolved as keep. Keep is the only outcome: the
+  record must be exactly the one reviewed, nothing else in the spec changes,
+  and a different representation needs a new accepted design. The command
+  writes only the spec, which is committed and reviewed in its own PR.
 - **The spec is written from the audit** with `map:author -- represent
   export-accepted`. A spec that already records resolutions is never
   regenerated.
@@ -254,6 +261,7 @@ npm run map:author -- refactor plan --domain <id>
 npm run map:author -- refactor start --domain <id> [--dry-run]
 npm run map:author -- refactor context <concept-id>      # the concept, its accepted design and the boundary
 npm run map:author -- refactor record <concept-id> --decision execute|reduce|keep --note "..."
+npm run map:author -- refactor review <concept-id> --decision keep --note "..."   # a blocked design, outside a run
 npm run map:author -- refactor audit
 npm run map:author -- refactor complete audit --note "..."
 npm run map:author -- refactor run [--trailer ..] [--footer ..]

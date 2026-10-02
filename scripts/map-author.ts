@@ -29,6 +29,7 @@
 //   npm run map:author -- refactor start --domain <id> [--dry-run]
 //   npm run map:author -- refactor context <concept-id>       the concept, its accepted design and the boundary
 //   npm run map:author -- refactor record <concept-id> --decision execute|reduce|keep --note "..."
+//   npm run map:author -- refactor review <concept-id> --decision keep --note "..."   re-review a blocked design (outside a run)
 //   npm run map:author -- refactor status | next | audit | complete audit --note ".." | fix .. | stop .. | resume .. | run ..
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -47,7 +48,7 @@ import { validateContentDiff, validateFixes } from "../src/lib/map/authoring/orc
 import { planFixVerification } from "../src/lib/map/authoring/orchestrator/fix-verification.ts";
 import { listDomains, nextIncompleteDomain, planDomain, renderExpectations, renderSample } from "../src/lib/map/authoring/orchestrator/plan.ts";
 import { completionReport, contentCommitMessage, fixCommitMessage, prBody, prTitle, refactorCommitMessage, refactorCompletionReport, refactorPrBody, refactorPrTitle } from "../src/lib/map/authoring/orchestrator/report.ts";
-import { ACCEPTED_DESIGNS_FILE, decisionProblems, designSetFingerprint, MAP_RUN_BRANCH, planRefactor, refactorBranch, refactorCampaign, resolveSpec, specProblems, targetKinds, type AcceptedDesignSpec, type Decision, DECISIONS } from "../src/lib/map/authoring/representation/refactor.ts";
+import { ACCEPTED_DESIGNS_FILE, decisionProblems, designSetFingerprint, MAP_RUN_BRANCH, planRefactor, refactorBranch, refactorCampaign, resolveSpec, reviewBlockedDesign, specDiffProblems, specProblems, targetKinds, type AcceptedDesignSpec, type Decision, DECISIONS } from "../src/lib/map/authoring/representation/refactor.ts";
 import { validateRefactorDiff } from "../src/lib/map/authoring/representation/refactor-diff.ts";
 import {
   addFix,
@@ -332,16 +333,32 @@ function commandRefactorStatus() {
   if (flags.has("--json")) return console.log(JSON.stringify({ ...campaign, problems }, null, 2));
   for (const domain of campaign.domains) {
     const counts = [
-      ...(domain.state === "no work" ? [] : [`${domain.actionable} to reconsider`, `${domain.resolved} resolved`]),
+      ...(domain.state === "no work" ? (domain.resolved ? [`${domain.resolved} re-reviewed`] : []) : [`${domain.actionable} to reconsider`, `${domain.resolved} resolved`]),
       ...(domain.blocked ? [`${domain.blocked} blocked`] : []),
       ...(domain.stale ? [`${domain.stale} STALE`] : []),
     ].join(", ");
     console.log(`${domain.ordinal} ${domain.title.padEnd(36)} ${domain.state.padEnd(9)} ${counts}`);
   }
-  const blocked = spec.designs.filter((design) => design.status === "blocked");
+  const blocked = spec.designs.filter((design) => design.status === "blocked" && !design.resolution);
   if (blocked.length) console.log(`\nblocked: ${blocked.map((design) => `${design.conceptId} (${design.blockedBy?.join(", ")})`).join("; ")}`);
   for (const problem of problems) console.log(`SPEC PROBLEM: ${problem}`);
   console.log(campaign.next ? `\nnext with work: ${campaign.next} (not started; run \`${CLI} start --domain ${campaign.next}\`)` : "\nevery domain's actionable designs are resolved");
+}
+
+/** Resolves a blocked design as keep after re-review: the spec is the only file written. */
+function commandRefactorReview() {
+  const conceptId = positional[0] ?? fail(`review needs a concept id: ${CLI} review <concept-id> --decision keep --note "..."`);
+  if (flag("--decision") !== "keep") fail("a blocked design can only be re-reviewed as --decision keep; a different representation needs a new accepted design", 2);
+  if (git("status", "--porcelain", "--untracked-files=no", "--", "src/lib/map/data.ts").out.trim()) fail("commit or discard content changes first", 1);
+  // Uncommitted re-reviews may accumulate in the spec; any other change must be committed or discarded first.
+  const [committed, working] = [readSpec("HEAD"), readSpec()];
+  const reviewed = working.designs.filter((design) => design.status === "blocked" && design.resolution && !committed.designs.find((old) => old.conceptId === design.conceptId)?.resolution).map((design) => design.conceptId);
+  const unrelated = specDiffProblems(committed, working, reviewed);
+  if (unrelated.length) fail(`the spec has uncommitted changes other than re-reviews:\n${unrelated.join("\n")}`, 1);
+  const { spec, problems } = reviewBlockedDesign(working, mapKnowledge, conceptId, flag("--note") ?? "");
+  if (!spec) fail(problems.join("\n"), 1);
+  writeFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), `${JSON.stringify(spec, null, 2)}\n`);
+  console.log(`${conceptId}: blocked design re-reviewed and resolved as keep in ${ACCEPTED_DESIGNS_FILE}; the record is unchanged`);
 }
 
 function printRefactorPlan(domainId: string) {
@@ -1116,6 +1133,10 @@ try {
     case "context":
       if (refactor) commandRefactorContext();
       else commandContext();
+      break;
+    case "review":
+      if (!refactor) fail("review is a refactor command: map:author -- refactor review <concept-id> --decision keep --note \"...\"");
+      commandRefactorReview();
       break;
     case "record":
       if (refactor) await commandRefactorRecord();

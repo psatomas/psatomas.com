@@ -30,6 +30,8 @@ import {
   refactorBranch,
   refactorCampaign,
   resolveSpec,
+  reviewBlockedDesign,
+  specDiffProblems,
   specProblems,
   type AcceptedDesign,
   type AcceptedDesignSpec,
@@ -151,6 +153,23 @@ test("a domain's plan separates actionable, blocked, resolved and KEEP; the camp
   const edited = withRecord(m, "single", { body: [{ kind: "paragraph", text: "Edited elsewhere." }] });
   assert.deepEqual(planRefactor(spec(m), edited, "d1").stale, ["single"]);
   assert.equal(refactorCampaign(spec(m), edited).domains[0].state, "stale");
+});
+
+test("a blocked design is re-reviewed outside a run, and only as keep", () => {
+  const m = model();
+  const reviewed = reviewBlockedDesign(spec(m), m, "c", "the state machine belongs to a child");
+  assert.deepEqual(reviewed.problems, []);
+  assert.deepEqual(reviewed.spec!.designs[2].resolution, { decision: "keep", structured: ["distinction"], resultFingerprint: spec(m).designs[2].sourceFingerprint, note: "the state machine belongs to a child" });
+  assert.deepEqual(specProblems(reviewed.spec!, m), []);
+  assert.deepEqual(specDiffProblems(spec(m), reviewed.spec!, ["c"]), []);
+  const d2 = planRefactor(reviewed.spec!, m, "d2");
+  assert.deepEqual([d2.blocked, d2.resolved.map((entry) => entry.conceptId), d2.actionable.map((entry) => entry.conceptId)], [[], ["c"], ["t"]]);
+  assert.match(reviewBlockedDesign(spec(m), m, "single", "x").problems.join(), /not blocked; an actionable design is resolved by a refactor run/);
+  assert.match(reviewBlockedDesign(reviewed.spec!, m, "c", "x").problems.join(), /already resolved \(keep\)/);
+  assert.match(reviewBlockedDesign(spec(m), m, "c", " ").problems.join(), /needs a note/);
+  assert.match(reviewBlockedDesign(spec(m), withRecord(m, "c", { body: [{ kind: "paragraph", text: "Edited elsewhere." }] }), "c", "x").problems.join(), /record changed since its design was accepted/);
+  const executed = { ...spec(m), designs: spec(m).designs.map((entry) => (entry.conceptId === "c" ? { ...entry, resolution: { decision: "execute" as Decision, structured: [], resultFingerprint: entry.sourceFingerprint, note: "x" } } : entry)) };
+  assert.match(specProblems(executed, m).join(), /c: a blocked design can only be resolved as keep, by re-review/);
 });
 
 test("the execution boundary: execute, reduce or keep within the accepted design, and nothing else", () => {
