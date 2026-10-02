@@ -14,6 +14,7 @@
     "test": "node --test \"src/**/*.test.ts\"",
     "test:map:browser": "node e2e/map/run.mts",
     "test:map:render": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/map/render-check.mts",
+    "test:map:expansion": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/map/l2-expansion.mts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
