@@ -261,7 +261,7 @@ it, and refuses steps out of order:
    plan, which must not be stale.
 3. **Each concept drafted, then audited, in turn.**
    - `author` needs the record registered, the view regenerated, the focused
-     tests passing, and exactly the designed structures.
+     tests passing, exactly the designed structures, and American English.
      It is recorded once, bound to the record's fingerprint: check
      `l2 signals` before recording. Any later change is a repair.
    - `audit` needs every signal resolved and the record unchanged since it
