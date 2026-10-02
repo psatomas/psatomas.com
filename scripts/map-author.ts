@@ -12,7 +12,7 @@
 //   npm run map:author -- fix --kind test|fix --message "..." --files a,b --reason "..."
 //   npm run map:author -- stop --subject .. --evidence .. --why .. --decision ..
 //   npm run map:author -- resume --decision "..."       after a human decision resolved the stop
-//   npm run map:author -- run [--dry-run] [--trailer ".."] [--footer ".."] [--ci-wait <minutes>]
+//   npm run map:author -- run [--dry-run] [--until <stage>] [--trailer ".."] [--footer ".."] [--ci-wait <minutes>]
 //   npm run map:author -- represent catalog|context|record|audit ...  read-only representation audit
 //                                                       (scripts/map-author-represent.ts)
 //
@@ -37,6 +37,12 @@
 //   npm run map:author -- l2 context <concept-id> [--json]
 //   npm run map:author -- l2 territory <group> [--write]
 //   npm run map:author -- l2 check [--group <group>] [--json]
+//   npm run map:author -- l2 campaign                    every slice, the next one, and whether merging is authorized
+//   npm run map:author -- l2 start --slice <id> | --pilot [--dry-run]
+//   npm run map:author -- l2 record plan|design|author|audit|group-audit <subject> [--note ..]
+//   npm run map:author -- l2 checkpoint --decision ".."   the pilot's human review of plans and designs
+//   npm run map:author -- l2 authorize --authorization ".."   record a human's explicit campaign merge authorization
+//   npm run map:author -- l2 status | next | complete audit --note .. | fix .. | stop .. | resume .. | run [--until <stage>] ..
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -45,7 +51,13 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
-import { commandL2 } from "./map-author-l2.ts";
+import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
+import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
+import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
+import { driftReport } from "../src/lib/map/authoring/l2/signals.ts";
+import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, staleProblems, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
 import { createMapAuthoringInspector, MapAuthoringContextError } from "../src/lib/map/authoring/context.ts";
 import { formatMapConceptAuthoringContext } from "../src/lib/map/authoring/format.ts";
@@ -60,6 +72,10 @@ import { validateRefactorDiff } from "../src/lib/map/authoring/representation/re
 import {
   addFix,
   AGENT_STAGES,
+  clearL2Checkpoint,
+  createL2RunState,
+  pendingL2Steps,
+  recordL2Step,
   completeStage,
   changedConcepts,
   commitGroups,
@@ -107,7 +123,7 @@ const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
   const arg = rest[index];
   if (!arg.startsWith("--")) positional.push(arg);
-  else if (["--json", "--dry-run", "--write"].includes(arg)) flags.set(arg, true);
+  else if (["--json", "--dry-run", "--write", "--pilot"].includes(arg)) flags.set(arg, true);
   else {
     const value = rest[++index];
     if (value === undefined || value.startsWith("--")) fail(`${arg} needs a value`);
@@ -118,9 +134,13 @@ const flag = (name: string) => (typeof flags.get(name) === "string" ? (flags.get
 const dryRun = flags.has("--dry-run");
 /** `refactor <command>` runs the same commands over representation refactor state. */
 const refactor = first === "refactor";
-const command = refactor ? (positional.shift() ?? "domains") : first;
-const STATE_DIR = refactor ? join(STATE_ROOT, "refactor") : STATE_ROOT;
-const CLI = refactor ? "map:author -- refactor" : "map:author --";
+/** `l2 <command>` runs L2 slice runs (docs/map-authoring/l2-authoring.md); its read-only commands live in map-author-l2.ts. */
+const l2Mode = first === "l2";
+const L2_READ_ONLY = new Set(["context", "territory", "check", "signals", "drift"]);
+const command = refactor ? (positional.shift() ?? "domains") : l2Mode ? (positional.shift() ?? "campaign") : first;
+const STATE_DIR = refactor ? join(STATE_ROOT, "refactor") : l2Mode ? join(STATE_ROOT, "l2") : STATE_ROOT;
+const CLI = refactor ? "map:author -- refactor" : l2Mode ? "map:author -- l2" : "map:author --";
+const RUN_KIND = refactor ? "refactor" : l2Mode ? "l2" : undefined;
 
 function fail(message: string, code = 2): never {
   console.error(`map:author: ${message}`);
@@ -162,8 +182,8 @@ function readState(domainId: string): RunState | undefined {
   if (!existsSync(statePath(domainId))) return undefined;
   const state = JSON.parse(readFileSync(statePath(domainId), "utf8")) as RunState;
   if (state.version !== 1 || state.domainId !== domainId) fail(`${statePath(domainId)} is not a version-1 run for ${domainId}; inspect it before continuing`, 1);
-  // A run of one kind is never resumed as the other.
-  if ((state.kind === "refactor") !== refactor) fail(`${statePath(domainId)} is a ${state.kind ?? "domain authoring"} run, not a ${refactor ? "refactor" : "domain authoring"} run`, 1);
+  // A run of one kind is never resumed as another.
+  if (state.kind !== RUN_KIND) fail(`${statePath(domainId)} is a ${state.kind ?? "domain authoring"} run, not a ${RUN_KIND ?? "domain authoring"} run`, 1);
   return state;
 }
 function saveState(state: RunState) {
@@ -175,9 +195,9 @@ function activeState(): RunState {
   const domainId = flag("--domain");
   if (domainId) return readState(domainId) ?? fail(`no run for ${domainId}; start one with \`${CLI} start --domain ${domainId}\``);
   const runs = existsSync(STATE_DIR)
-    ? readdirSync(STATE_DIR).filter((file) => file.endsWith(".json")).map((file) => readState(file.slice(0, -5))!).filter((state) => state.stage !== "done")
+    ? readdirSync(STATE_DIR).filter((file) => file.endsWith(".json") && file !== L2_CAMPAIGN_FILE).map((file) => readState(file.slice(0, -5))!).filter((state) => state.stage !== "done")
     : [];
-  if (runs.length === 0) fail(`no active run; see \`${CLI} domains\`, then \`${CLI} start --domain <id>\``);
+  if (runs.length === 0) fail(l2Mode ? `no active run; see \`${CLI} campaign\`, then \`${CLI} start --slice <id>\` or \`--pilot\`` : `no active run; see \`${CLI} domains\`, then \`${CLI} start --domain <id>\``);
   if (runs.length > 1) fail(`several active runs (${runs.map((state) => state.domainId).join(", ")}); pass --domain`);
   return runs[0];
 }
@@ -297,6 +317,7 @@ function branchFromMain(branch: string): string | undefined {
 
 function commandStart() {
   if (refactor) return commandRefactorStart();
+  if (l2Mode) return commandL2Start();
   const domainId = flag("--domain") ?? fail("start needs an explicit --domain; see `map:author -- domains`");
   const plan = planDomain(mapKnowledge, domainId);
   const branch = `feat/map-${domainId}-l1`;
@@ -475,6 +496,171 @@ async function commandRefactorRecord() {
   commandNext(state);
 }
 
+// ---------------------------------------------------------------- L2 slice runs
+
+/** Local campaign state: the human's merge authorization, if any. Never committed. */
+const L2_CAMPAIGN_FILE = "campaign.json";
+type L2Campaign = { mergeAuthorization?: { at: string; authorization: string } };
+const campaignPath = () => join(STATE_ROOT, "l2", L2_CAMPAIGN_FILE);
+const readCampaign = (): L2Campaign => (existsSync(campaignPath()) ? (JSON.parse(readFileSync(campaignPath(), "utf8")) as L2Campaign) : {});
+const PILOT_FILE = "src/lib/map/authoring/l2/pilot.json";
+const l2Records = (state: RunState) => state.l2!;
+const recordOf = (conceptId: string) => mapKnowledge.content.find((entry) => entry.conceptId === conceptId);
+
+function campaignSlices(): { slices: L2Slice[]; finished: Set<string> } {
+  return { slices: l2Slices(mapKnowledge), finished: finishedConcepts(mapKnowledge, readPlans()) };
+}
+
+function commandL2Campaign() {
+  const { slices, finished } = campaignSlices();
+  const rows = slices.map((slice) => ({ slice, remaining: sliceRemaining(slice, finished).length, total: slice.groups.reduce((sum, group) => sum + group.concepts.length, 0) }));
+  if (flags.has("--json")) return console.log(JSON.stringify(rows.map((row) => ({ id: row.slice.id, groups: row.slice.groups.map((group) => group.group), remaining: row.remaining, total: row.total })), null, 2));
+  for (const row of rows) console.log(`${row.slice.ordinal} ${row.slice.id.padEnd(40)} ${row.remaining === 0 ? "complete" : `${row.total - row.remaining}/${row.total}`.padEnd(8)} ${row.slice.groups.length} group(s)`);
+  const next = rows.find((row) => row.remaining > 0);
+  const campaign = readCampaign();
+  const l2Total = rows.reduce((sum, row) => sum + row.total, 0);
+  console.log(`\n${rows.filter((row) => row.remaining === 0).length}/${rows.length} slices complete; ${l2Total - rows.reduce((sum, row) => sum + row.remaining, 0)}/${l2Total} L2 concepts finished`);
+  console.log(next ? `next: ${next.slice.id} (\`${CLI} start --slice ${next.slice.id}\`)` : "every slice is complete");
+  console.log(`merging: ${campaign.mergeAuthorization ? `authorized ${campaign.mergeAuthorization.at}: ${campaign.mergeAuthorization.authorization}` : "not authorized; each validated PR awaits human merge"}`);
+}
+
+function commandL2Authorize() {
+  const authorization = flag("--authorization") ?? fail('authorize needs --authorization "<the human\'s explicit campaign authorization, quoted>"');
+  mkdirSync(dirname(campaignPath()), { recursive: true });
+  writeFileSync(campaignPath(), `${JSON.stringify({ ...readCampaign(), mergeAuthorization: { at: now(), authorization } }, null, 2)}\n`);
+  console.log("recorded the campaign's merge authorization; runs started from now merge their own validated PRs (never the pilot)");
+}
+
+function commandL2Start() {
+  const inventory = inventoryL2(mapKnowledge);
+  if (inventory.problems.length) fail(`the L2 inventory has problems; resolve them first:\n  ${inventory.problems.join("\n  ")}`, 1);
+  const { slices, finished } = campaignSlices();
+  let slice: L2Slice;
+  if (flags.has("--pilot")) {
+    if (!existsSync(join(ROOT, PILOT_FILE))) fail(`no pilot definition at ${PILOT_FILE}`, 1);
+    slice = pilotSlice(mapKnowledge, (JSON.parse(readFileSync(join(ROOT, PILOT_FILE), "utf8")) as { groups: string[] }).groups);
+  } else {
+    const id = flag("--slice") ?? fail(`start needs --slice <id> or --pilot; see \`${CLI} campaign\``);
+    slice = slices.find((candidate) => candidate.id === id) ?? fail(`unknown slice ${id}; see \`${CLI} campaign\``, 1);
+  }
+  const remaining = sliceRemaining(slice, finished);
+  const branch = l2Branch(slice);
+  const existing = readState(slice.id);
+  if (existing && existing.stage !== "done") {
+    console.log(`a run for ${slice.id} already exists; resuming it`);
+    return commandStatus(existing);
+  }
+  const problems = [...(remaining.length ? [] : [`${slice.id} has nothing left to author`]), ...observeStart(branch, slice.id).filter((problem) => !(existing && /already exists/.test(problem)))];
+  for (const group of slice.groups) console.log(`  ${group.group.padEnd(48)} ${group.concepts.filter((conceptId) => remaining.includes(conceptId)).join(", ") || "(done)"}`);
+  if (problems.length) {
+    console.log(`\ncannot start ${slice.id}:\n  ${problems.join("\n  ")}`);
+    process.exit(1);
+  }
+  if (dryRun) return console.log(`\ndry run: would create ${branch} and author ${remaining.length} concept(s)`);
+  const baseSha = branchFromMain(branch);
+  if (!baseSha) return;
+  const pilot = slice.id === PILOT_SLICE;
+  let state = createL2RunState({ slice, remaining, branch, baseSha, now: now(), pilot });
+  const authorization = readCampaign().mergeAuthorization;
+  // The pilot always ends at a PR for detailed human review, whatever the campaign authorizes.
+  if (authorization && !pilot) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
+  saveState(state);
+  console.log(`\nstarted ${slice.id} on ${branch} at ${baseSha.slice(0, 7)}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
+  console.log(`next: ${(nextAction(state) as { message: string }).message}`);
+}
+
+function planOf(group: string): L2GroupFile {
+  const plan = readPlans().find((candidate) => candidate.group === group);
+  return plan ?? fail(`no plan for ${group}: \`${CLI} territory ${group} --write\``, 1);
+}
+
+/** Validates one judgment step against the repository, then records it; a failed validation changes nothing. */
+async function commandL2Record() {
+  let state = activeState();
+  if (state.stop) return printStop(state);
+  verifyGit(state);
+  const kind = positional[0] as L2StepKind;
+  const subject = positional[1] ?? fail("record needs <plan|design|author|audit|group-audit> <subject>");
+  const record = l2Records(state);
+  const group = kind === "plan" || kind === "group-audit" ? subject : record.slice.groups.find((entry) => entry.concepts.includes(subject))?.group;
+  if (!group) fail(`${subject} is not a concept of this slice`, 1);
+  const plans = readPlans();
+  const plan = planOf(group);
+  const refuse = (problems: string[]) => problems.length && fail(`cannot record ${kind} ${subject}:\n  ${problems.join("\n  ")}`, 1);
+  let blocks = false;
+  switch (kind) {
+    case "plan":
+      refuse([...planProblems(plan, mapKnowledge), ...staleProblems(plan, mapKnowledge).map((problem) => `stale: ${problem}`), ...crossPlanProblems(plans, inventoryL2(mapKnowledge)).filter((problem) => problem.includes(group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`)))]);
+      break;
+    case "design":
+      refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "designed")]);
+      blocks = (plan.concepts[subject] as L2ConceptWork).design.decision === "block";
+      break;
+    case "author": {
+      const registration = createMapAuthoringInspector(mapKnowledge).inspectConcept(subject).registration;
+      if (registration !== "registered") fail(`the inspector reports ${subject} as ${registration}; add its record and registry entry first`, 1);
+      refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "authored")]);
+      const generated = sh("npm", ["run", "--silent", "map:generate"]);
+      if (!generated.ok) fail(`map:generate failed\n${tail(generated.out)}`, 1);
+      const focused = sh("node", ["--test", ...FOCUSED_TESTS]);
+      if (!focused.ok) fail(`focused tests failed (${testCounts(focused.out)})\n${tail(focused.out, 40)}`, 1);
+      break;
+    }
+    case "audit":
+      refuse(workProblems(plan, subject, mapKnowledge, "audited", signalsOf(subject, plans).map((signal) => signal.id)));
+      break;
+    case "group-audit":
+      refuse(groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan).map((signal) => signal.id)));
+      break;
+    default:
+      fail("record needs <plan|design|author|audit|group-audit> <subject>");
+  }
+  try {
+    state = recordL2Step(state, { kind, subject }, now(), { blocks, note: flag("--note") });
+  } catch (error) {
+    if (error instanceof RunStateError) fail(error.message, 1);
+    throw error;
+  }
+  saveState(state);
+  console.log(`recorded ${kind} ${subject}; ${pendingL2Steps(state).length} step(s) to go`);
+  if (blocks) {
+    const design = (plan.concepts[subject] as L2ConceptWork).design as L2Design;
+    stop(state, {
+      subject: `representation gap: ${subject}`,
+      evidence: `${design.gap?.structure}: ${design.gap?.reason}`,
+      why: "a relationship the concept needs has no primitive and prose cannot carry it accurately",
+      decision: `leave ${subject} unauthored in this run (\`${CLI} resume --decision ..\`), or change its design`,
+    });
+  }
+  if (kind === "author" && (state.l2!.repairs[subject] ?? 0) > 2) {
+    stop(state, { subject: `audit repairs: ${subject}`, evidence: `${subject} was re-authored ${state.l2!.repairs[subject]} times after its audit`, why: "an audit still failing after two repairs needs a human look at the concept, its plan or its design", decision: "inspect the concept, then resume with the decision" });
+  }
+  commandNext(state);
+}
+
+function commandL2Checkpoint() {
+  let state = activeState();
+  const decision = flag("--decision") ?? fail('checkpoint needs --decision "<the human review decision on the plans and designs>"');
+  try {
+    state = clearL2Checkpoint(state, decision, now());
+  } catch (error) {
+    if (error instanceof RunStateError) fail(error.message, 1);
+    throw error;
+  }
+  saveState(state);
+  console.log("checkpoint cleared: drafting may begin");
+  commandNext(state);
+}
+
+/** The slice's authored records in order, for the drift check that closes its audit. */
+function sliceDrift(state: RunState) {
+  const authored = state.plan.eligible.filter((conceptId) => !state.l2!.blocked.includes(conceptId) && recordOf(conceptId));
+  return driftReport(authored.map((conceptId) => ({ title: mapKnowledge.concepts.find((concept) => concept.id === conceptId)!.title, record: recordOf(conceptId)! })));
+}
+
+/** Concepts an L2 run authored: every concept of the slice its design does not block. */
+const l2Authored = (state: RunState) => state.plan.eligible.filter((conceptId) => !state.l2!.blocked.includes(conceptId));
+
 function gitPosition(state: RunState): string {
   if (state.pr) return `in PR #${state.pr.number} ${state.pr.url}`;
   if (state.pushedSha) return `pushed at ${state.pushedSha.slice(0, 7)}`;
@@ -492,6 +678,15 @@ function commandStatus(state = activeState()) {
     refactor
       ? `decided ${done.length}/${state.plan.eligible.length}: ${done.map((conceptId) => `${conceptId} ${state.refactor!.decisions[conceptId]?.decision}`).join(", ") || "none"}${pendingConcepts(state).length ? ` | to reconsider: ${pendingConcepts(state).join(", ")}` : ""} | blocked: ${state.refactor!.blocked.join(", ") || "none"} | keep protected: ${state.refactor!.keep.length}`
       : `authored ${done.length}/${state.plan.eligible.length}: ${done.join(", ") || "none"}${pendingConcepts(state).length ? ` | pending: ${pendingConcepts(state).join(", ")}` : ""}`,
+    ...(state.l2
+      ? [
+          `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}`,
+          `steps recorded: ${Object.keys(state.l2.steps).length}; next steps: ${pendingL2Steps(state).slice(0, 4).map((step) => `${step.kind} ${step.subject}`).join(", ") || "none"}`,
+          `blocked: ${state.l2.blocked.join(", ") || "none"}; repairs: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
+          ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
+          `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}` : ""}`,
+        ]
+      : []),
     `already authored: ${state.plan.authored.join(", ") || "none"}`,
     `deferred: ${state.plan.deferred.map((entry) => `${entry.conceptId} (${entry.reason})`).join("; ") || "none"}`,
     `fixes: ${state.fixes.map((fix) => fix.message).join("; ") || "none"}`,
@@ -506,7 +701,7 @@ function commandStatus(state = activeState()) {
 
 function commandNext(state = activeState()) {
   const action = nextAction(state);
-  if (action.kind === "done") console.log(`next: nothing; the PR awaits human merge`);
+  if (action.kind === "done") console.log(state.l2?.merged ? `next: nothing; merged as ${state.l2.merged.sha.slice(0, 7)}; \`${CLI} campaign\` names the next slice` : `next: nothing; the PR awaits human merge`);
   else if (action.kind === "stop") printStop(state);
   else console.log(`next: ${action.message}`);
 }
@@ -586,7 +781,19 @@ async function commandComplete() {
     const notes = Object.fromEntries(Object.entries(state.refactor!.decisions).map(([conceptId, recorded]) => [conceptId, { decision: recorded.decision, note: recorded.note }]));
     writeFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), `${JSON.stringify(resolveSpec(readSpec(state.baseSha), notes, mapKnowledge), null, 2)}\n`);
   }
-  state = completeStage(state, stage, now(), note);
+  if (l2Mode && stage === "audit") {
+    // A convergence signal across the whole slice pauses the campaign for calibration, once.
+    const drift = sliceDrift(state);
+    if (drift.signals.length && !(state.resolvedStops ?? []).some((resolved) => resolved.subject === "slice drift")) {
+      stop(state, { subject: "slice drift", evidence: drift.signals.map((signal) => signal.detail).join("\n"), why: "the slice's records converge on one opening, opener, length or form: precedent may be standing in for decisions", decision: "review the flagged records against their designs, correct any that copied precedent, then resume with the calibration decision" });
+    }
+  }
+  try {
+    state = completeStage(state, stage, now(), note);
+  } catch (error) {
+    if (error instanceof RunStateError) fail(error.message, 1);
+    throw error;
+  }
   if (stage === "audit") state = { ...state, auditContent: contentFingerprint(state) };
   saveState(state);
   commandNext(state);
@@ -640,10 +847,11 @@ const blobAt = (ref: string, file: string) => {
   return result.ok ? result.out.trim() : DELETED;
 };
 
-/** Declared fix files that git does not track yet (a new test file, say). */
+/** Run files that git does not track yet: a declared fix's new test file, say, or an L2 run's new group files. */
 const untrackedFixFiles = (state: RunState) => {
   const untracked = new Set(lines(gitOut("ls-files", "--others", "--exclude-standard")));
-  return state.fixes.flatMap((fix) => fix.files).filter((file) => untracked.has(file));
+  const groupFiles = state.l2 ? state.l2.slice.groups.map((group) => groupFile(group.group)) : [];
+  return [...state.fixes.flatMap((fix) => fix.files), ...groupFiles].filter((file) => untracked.has(file));
 };
 
 /** Files that differ from the base: tracked changes (renames split into delete and add) plus untracked declared fix files. */
@@ -781,6 +989,8 @@ const buildId = () => (existsSync(join(ROOT, ".next/BUILD_ID")) ? readFileSync(j
 const contentFingerprint = (state: RunState) =>
   createHash("sha256")
     .update(JSON.stringify(state.plan.eligible.map((conceptId) => mapKnowledge.content.find((record) => record.conceptId === conceptId) ?? null)))
+    // An L2 run's audit also judged its group files: plans, models, designs and audits.
+    .update(state.l2 ? state.l2.slice.groups.map((group) => (existsSync(join(ROOT, groupFile(group.group))) ? readFileSync(join(ROOT, groupFile(group.group)), "utf8") : "")).join("\0") : "")
     .digest("hex");
 
 type Gate = { name: string; label: string; run: (state: RunState) => Result; detail: (result: Result) => string };
@@ -800,6 +1010,20 @@ const GATES: Gate[] = [
   { name: "lint", label: "lint (tracked tree)", run: (state) => sh("npx", ["eslint", ...lintIgnores(state), "."]), detail: () => "clean" },
   { name: "build", label: "build", run: () => sh("npm", ["run", "build"]), detail: () => "succeeded" },
 ];
+/** An L2 run's own gate: every plan valid and current, and each run group's work complete and audited. */
+const L2_GATE: Gate = {
+  name: "l2-check",
+  label: "L2 plans and concept work",
+  run: (state) => {
+    const groups = state.l2!.slice.groups.map((group) => group.group);
+    const missing = groups.filter((group) => !existsSync(join(ROOT, groupFile(group))));
+    if (missing.length) return { ok: false, status: 1, out: `no plan for ${missing.join(", ")}` };
+    const report = planReport(readPlans(), groups);
+    const problems = report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`));
+    return { ok: problems.length === 0, status: problems.length ? 1 : 0, out: problems.length ? problems.join("\n") : `${groups.length} group(s) valid, current and audited` };
+  },
+  detail: (result) => result.out,
+};
 
 async function runStage(state: RunState): Promise<RunState> {
   const stage = state.stage;
@@ -823,7 +1047,7 @@ async function runStage(state: RunState): Promise<RunState> {
   switch (stage) {
     case "gates": {
       let current = state;
-      for (const gate of GATES) {
+      for (const gate of l2Mode ? [...GATES, L2_GATE] : GATES) {
         const result = gate.run(current);
         current = check(current, gate.name, result, gate.detail(result), gate.label, `the ${gate.label} gate failed`);
       }
@@ -840,18 +1064,25 @@ async function runStage(state: RunState): Promise<RunState> {
     case "render": {
       const { checkRender, formatRenderFailures } = await import("../e2e/map/render-check.mts");
       // A refactor renders what it changed: every placement of every changed record.
-      const concepts = refactor ? changedConcepts(state) : state.plan.eligible;
+      const concepts = refactor ? changedConcepts(state) : l2Mode ? l2Authored(state) : state.plan.eligible;
       if (concepts.length === 0) return completeStage(check(state, "render", { ok: true, status: 0, out: "" }, "no changed record to render", "render verification", ""), "render", at);
       const targets = renderExpectations(mapKnowledge, concepts);
       const report = await checkRender(concepts);
       const evidence = formatRenderFailures(report);
       const placements = targets.reduce((sum, target) => sum + target.placements.length, 0);
       const detail = `${report.renders} renders across ${placements} placements`;
-      return completeStage(check(state, "render", { ok: report.ok, status: report.ok ? 0 : 1, out: evidence }, detail, "render verification", "an authored concept renders incorrectly at one of its placements"), "render", at);
+      const rendered = check(state, "render", { ok: report.ok, status: report.ok ? 0 : 1, out: evidence }, detail, "render verification", "an authored concept renders incorrectly at one of its placements");
+      if (!l2Mode) return completeStage(rendered, "render", at);
+      // L2 also enters every L2 placement the way a reader does: from its parent, by activating the row.
+      const { checkExpansion, formatExpansionFailures } = await import("../e2e/map/l2-expansion.mts");
+      const expansion = await checkExpansion(concepts);
+      const expanded = check(rendered, "expansion", { ok: expansion.ok, status: expansion.ok ? 0 : 1, out: formatExpansionFailures(expansion) }, `${expansion.expansions} expansions`, "L2 expansion", "an authored concept does not open correctly from one of its parents");
+      return completeStage(expanded, "render", at);
     }
     case "diff": {
       const base = await modelAt(state.baseSha);
       const files = changedFiles(state);
+      if (l2Mode) return completeStage(await diffL2(state, base, files, check, at, tree), "diff", at);
       if (refactor) {
         const baseSpec = readSpec(state.baseSha);
         if (designSetFingerprint(baseSpec, state.domainId) !== state.refactor!.designSet) {
@@ -916,16 +1147,155 @@ async function runStage(state: RunState): Promise<RunState> {
       return completeStage({ ...recorded, diff, validatedFiles }, "diff", at);
     }
     case "commit":
-      return completeStage(commit(state), "commit", at);
+      return completeStage(l2Mode ? commitL2(state) : commit(state), "commit", at);
     case "push":
       return completeStage(push(state), "push", at);
     case "pr":
       return completeStage(openPr(state), "pr", at);
     case "ci":
       return completeStage(watchCi(state), "ci", at);
+    case "merge":
+      return completeStage(mergeL2(state), "merge", at);
     default:
       throw new RunStateError(`${stage} is not a tool stage`);
   }
+}
+
+/** Every plan as committed at a revision. */
+function plansAt(sha: string): L2GroupFile[] {
+  const listed = git("ls-tree", "--name-only", sha, `${GROUPS_DIR}/`);
+  if (!listed.ok) return [];
+  return lines(listed.out).filter((file) => file.endsWith(".json")).map((file) => JSON.parse(gitOut("show", `${sha}:${file}`)) as L2GroupFile);
+}
+
+/** The L2 diff boundary (validateL2Diff); validated files are written as blobs so group commits can be rebuilt from them. */
+async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registry: readonly string[] }, files: string[], check: CheckFn, at: string, tree: string): Promise<RunState> {
+  const headPlans = readPlans();
+  const groups = state.l2!.slice.groups.map((group) => group.group);
+  const authored = l2Authored(state);
+  const report = validateL2Diff({
+    base: base.model,
+    head: mapKnowledge,
+    baseView: JSON.parse(gitOut("show", `${state.baseSha}:${VIEW_FILE}`)),
+    headView: JSON.parse(readFileSync(join(ROOT, VIEW_FILE), "utf8")),
+    baseRegistry: base.registry,
+    headRegistry: AUTHORED_CONTENT_CONCEPTS,
+    changedFiles: files,
+    data: fileDiff(state, "src/lib/map/data.ts"),
+    registry: fileDiff(state, "src/lib/map/authoring/content-registry.ts"),
+    fixes: state.fixes,
+    fixLines: fixLines(state, state.fixes.flatMap((fix) => fix.files)),
+    groups,
+    basePlans: plansAt(state.baseSha),
+    headPlans,
+    signals: Object.fromEntries(authored.filter((conceptId) => recordOf(conceptId)).map((conceptId) => [conceptId, signalsOf(conceptId, headPlans).map((signal) => signal.id)])),
+    groupSignals: Object.fromEntries(headPlans.filter((plan) => groups.includes(plan.group)).map((plan) => [plan.group, groupSignalsOf(plan).map((signal) => signal.id)])),
+  });
+  if (!report.ok) {
+    stop(recordCheck(state, "diff", false, `FAILED: ${report.problems.length} problem(s)`, at, tree), {
+      subject: "L2 diff",
+      evidence: report.problems.join("\n"),
+      why: "the diff contains more, less or other than the slice's planned, designed and audited concepts",
+      decision: "revert the unexpected change, or decide how the run should treat it",
+    });
+  }
+  const verified = await verifyFixesAlone(state, check);
+  // Written into the object store, so a group commit can be rebuilt from exactly the validated content.
+  const validatedFiles = Object.fromEntries(files.map((file) => [file, existsSync(join(ROOT, file)) ? gitOut("hash-object", "-w", "--", file) : DELETED]));
+  const recorded = check(verified, "diff", { ok: true, status: 0, out: "" }, `${report.authored.length} records, ${report.blocked.length} blocked, ${report.flipped.length} hasContent flips, ${files.length} files`, "L2 diff", "");
+  return { ...recorded, validatedFiles, diff: report, l2: { ...recorded.l2!, diff: { authored: report.authored, blocked: report.blocked, flipped: report.flipped } } };
+}
+
+/** Commits each declared fix, then one commit per ownership group, each the exact tree after that group; proves they compose to the validated tree. */
+function commitL2(state: RunState): RunState {
+  const validated = state.validatedFiles!;
+  const drifted = Object.entries(validated).filter(([file, hash]) => worktreeBlob(file) !== hash).map(([file]) => file);
+  if (state.commits.length === 0 && drifted.length) {
+    stop(state, { subject: "working tree", evidence: `changed since validation: ${drifted.join(", ")}`, why: "commits must reproduce the validated tree exactly", decision: "revert the later change, or keep it: `resume --decision ..` then `run` revalidates from the gates" });
+  }
+  if (lines(gitOut("diff", "--cached", "--name-only")).length) stop(state, { subject: "index", evidence: gitOut("diff", "--cached", "--name-only"), why: "files were staged outside the run", decision: "unstage them (`git restore --staged`)" });
+  const record = state.l2!;
+  const groups = record.slice.groups.map((group) => ({ group: group.group, title: group.title, authored: group.concepts.filter((conceptId) => !record.blocked.includes(conceptId)), blocked: group.concepts.filter((conceptId) => record.blocked.includes(conceptId)), file: groupFile(group.group) }));
+  const contentFiles = [L2_DATA_FILE, L2_REGISTRY_FILE, L2_VIEW_FILE, ...groups.map((group) => group.file)];
+  // Read untrimmed: the validated blobs and base files keep their final newlines.
+  const final = Object.fromEntries(contentFiles.map((file) => [file, validated[file] && validated[file] !== DELETED ? spawnSync("git", ["cat-file", "blob", validated[file]], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }).stdout : ""]));
+  const baseFiles = Object.fromEntries(contentFiles.map((file) => [file, git("cat-file", "-e", `${state.baseSha}:${file}`).ok ? spawnSync("git", ["show", `${state.baseSha}:${file}`], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }).stdout : undefined]));
+  const { problems, trees } = groupCommitTrees({ model: mapKnowledge, groups, final, base: baseFiles });
+  if (problems.length) stop(state, { subject: "group commits", evidence: problems.join("\n"), why: "the validated tree cannot be split into whole groups", decision: "inspect data.ts and the registry; nothing has been committed" });
+  let current = state;
+  const commitFiles = (candidates: string[], message: string) => {
+    // A later group's file does not exist yet in an earlier group's tree: stage only what exists or is tracked.
+    const files = candidates.filter((file) => existsSync(join(ROOT, file)) || blobAt("HEAD", file) !== DELETED);
+    gitOut("add", "--all", "--", ...files);
+    const staged = lines(gitOut("diff", "--cached", "--no-renames", "--name-only")).sort();
+    if (!staged.length) stop(current, { subject: "staging", evidence: `nothing staged for ${message.split("\n")[0]}`, why: "every commit carries its group's change", decision: "inspect the tree; nothing more has been committed" });
+    if (staged.some((file) => !files.includes(file))) stop(current, { subject: "staging", evidence: `staged ${staged.join(", ")}; expected only ${files.join(", ")}`, why: "only the group's intended files may be staged", decision: "inspect the index" });
+    const committed = sh("git", ["commit", "--quiet", "-F", "-"], { input: message });
+    if (!committed.ok) throw new ToolFailure("git commit", committed.out);
+    current = { ...current, commits: [...current.commits, { sha: head(), message, files: staged }] };
+    saveState(current);
+    console.log(`  ok  commit ${head().slice(0, 7)} ${message.split("\n")[0]}`);
+  };
+  for (const fix of state.fixes.slice(current.commits.length)) commitFiles(fix.files, fixCommitMessage(fix, state.attribution?.trailer));
+  for (let index = current.commits.length - state.fixes.length; index < groups.length; index++) {
+    for (const [file, text] of Object.entries(trees[index])) {
+      if (text === undefined) rmSync(join(ROOT, file), { force: true });
+      else {
+        mkdirSync(dirname(join(ROOT, file)), { recursive: true });
+        writeFileSync(join(ROOT, file), text);
+      }
+    }
+    commitFiles(contentFiles, groupCommitMessage(groups[index], state.attribution?.trailer));
+  }
+  const composition = compositionProblems(validated, { files: lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD")), blobAtHead: (file) => blobAt("HEAD", file) });
+  if (composition.length || trackedChanges().length) {
+    stop(current, { subject: "commits", evidence: `${composition.join("; ") || "commits match validation"}; left uncommitted: ${trackedChanges().join(", ") || "none"}`, why: "the commits do not compose to the validated tree", decision: "inspect the commits; nothing has been pushed" });
+  }
+  return current;
+}
+
+function l2Body(state: RunState): string {
+  const record = state.l2!;
+  return l2PrBody({
+    slice: record.slice,
+    groups: record.slice.groups.map((group) => ({ group: group.group, title: group.title, authored: group.concepts.filter((conceptId) => !record.blocked.includes(conceptId)), blocked: group.concepts.filter((conceptId) => record.blocked.includes(conceptId)) })),
+    checks: Object.fromEntries(Object.entries(state.checks).map(([name, entry]) => [name, { ok: entry.ok, detail: entry.detail }])),
+    fixes: state.fixes,
+    auditNotes: state.auditNotes,
+    footer: state.attribution?.footer,
+  });
+}
+
+/**
+ * Merges the run's own PR, only under a human's recorded campaign
+ * authorization, and only when it is exactly the validated run: open against
+ * main at the pushed commit, cleanly mergeable, CI passing and its files the
+ * validated set. Then main is synchronized and must contain the pushed head.
+ */
+function mergeL2(state: RunState): RunState {
+  if (!state.l2?.mergeAuthorized) stop(state, { subject: "merge", evidence: "no recorded authorization", why: "a run merges only under a human's explicit campaign authorization", decision: "merge by hand, or record the authorization" });
+  verifyGit(state);
+  const viewed = sh("gh", ["pr", "view", String(state.pr!.number), "--json", `${PR_FIELDS},mergeable,mergeStateStatus,files`]);
+  if (!viewed.ok) throw new ToolFailure("gh pr view", viewed.out);
+  const pr = JSON.parse(viewed.out) as RemotePr & { mergeable: string; mergeStateStatus: string; files: { path: string }[] };
+  const problems = [
+    prMismatch(state.pushedSha, pr, MAIN),
+    pr.mergeable !== "MERGEABLE" || pr.mergeStateStatus !== "CLEAN" ? `#${pr.number} is ${pr.mergeable}/${pr.mergeStateStatus}` : undefined,
+    JSON.stringify(pr.files.map((file) => file.path).sort()) !== JSON.stringify(Object.keys(state.validatedFiles ?? {}).sort()) ? `#${pr.number} changes ${pr.files.map((file) => file.path).sort().join(", ")}, not the validated files` : undefined,
+  ].filter(Boolean);
+  const ci = readCi(state);
+  if (ci.status !== "passing") problems.push(`CI is ${ci.status}: ${ci.detail}`);
+  if (problems.length) stop(state, { subject: `merging PR #${pr.number}`, evidence: problems.join("\n"), why: "the PR is not exactly the validated run with passing CI", decision: "reconcile the PR by hand; nothing was merged" });
+  const merged = sh("gh", ["pr", "merge", String(pr.number), "--merge", "--match-head-commit", state.pushedSha!]);
+  const result = sh("gh", ["pr", "view", String(pr.number), "--json", "state,mergeCommit"]);
+  const outcome = result.ok ? (JSON.parse(result.out) as { state: string; mergeCommit?: { oid: string } }) : undefined;
+  if (outcome?.state !== "MERGED" || !outcome.mergeCommit) throw new ToolFailure("gh pr merge", `${merged.out}\n${result.out}`);
+  gitOut("fetch", "--quiet", "origin", MAIN);
+  gitOut("switch", "--quiet", MAIN);
+  gitOut("merge", "--quiet", "--ff-only", `origin/${MAIN}`);
+  if (!git("merge-base", "--is-ancestor", state.pushedSha!, "HEAD").ok || head() !== remoteSha(`refs/heads/${MAIN}`)) throw new ToolFailure("synchronizing main after the merge", `HEAD ${head()}, origin/${MAIN} ${remoteSha(`refs/heads/${MAIN}`)}`);
+  console.log(`  ok  merged #${pr.number} as ${outcome.mergeCommit.oid.slice(0, 7)}; ${MAIN} is at ${head().slice(0, 7)}`);
+  return { ...state, l2: { ...state.l2!, merged: { sha: outcome.mergeCommit.oid, at: now() } } };
 }
 
 /** Commits each declared fix, then the content, and proves the commits compose to the validated tree. */
@@ -1029,8 +1399,8 @@ function openPr(state: RunState): RunState {
     console.log(`  ok  PR #${existing.number} already open at ${existing.headRefOid.slice(0, 7)}`);
     return { ...state, pr: { number: existing.number, url: existing.url } };
   }
-  const body = refactor ? refactorPrBody(state, state.refactor!.diff!, state.attribution?.footer) : prBody(state, state.diff!, state.attribution?.footer);
-  const title = refactor ? refactorPrTitle(state) : prTitle(state);
+  const body = refactor ? refactorPrBody(state, state.refactor!.diff!, state.attribution?.footer) : l2Mode ? l2Body(state) : prBody(state, state.diff!, state.attribution?.footer);
+  const title = refactor ? refactorPrTitle(state) : l2Mode ? l2PrTitle(state.l2!.slice) : prTitle(state);
   const result = sh("gh", ["pr", "create", "--base", MAIN, "--head", state.branch, "--title", title, "--body-file", "-"], { input: body });
   // The outcome is read back from GitHub, never inferred from the attempt.
   const created = matchingPr(state, branchPrs(state));
@@ -1099,7 +1469,10 @@ async function commandRun() {
   if (invalidated.reason) console.log(invalidated.reason);
   state = invalidated.state;
   saveState(state);
-  while (nextAction(state).kind === "tool") {
+  // `--until <stage>` stops after that stage: validate and commit locally without pushing, say.
+  const until = flag("--until") as Stage | undefined;
+  if (until && !STAGES.includes(until)) fail(`--until must be one of ${STAGES.join(", ")}`);
+  while (nextAction(state).kind === "tool" && !(until && state.completed[until])) {
     console.log(`${state.stage}`);
     const before = state.stage;
     try {
@@ -1112,15 +1485,26 @@ async function commandRun() {
     }
     saveState(state);
   }
-  if (state.stage === "done") console.log(`\n${refactor ? refactorCompletionReport(state, state.refactor?.diff) : completionReport(state)}`);
+  if (state.stage === "done") console.log(`\n${refactor ? refactorCompletionReport(state, state.refactor?.diff) : l2Mode ? l2CompletionReport(state) : completionReport(state)}`);
   else commandNext(state);
+}
+
+function l2CompletionReport(state: RunState): string {
+  const record = state.l2!;
+  return [
+    `${state.title}: ${record.merged ? `merged as ${record.merged.sha.slice(0, 7)}` : "validated PR awaiting human merge"}${state.pr ? ` (${state.pr.url})` : ""}`,
+    `authored: ${record.diff?.authored.join(", ") || "none"}`,
+    `blocked: ${record.blocked.join(", ") || "none"}`,
+    `commits: ${state.commits.map((entry) => `${entry.sha.slice(0, 7)} ${entry.message.split("\n")[0]}`).join("; ")}`,
+    `checks: ${Object.entries(state.checks).map(([name, entry]) => `${name} ${entry.ok ? "ok" : "FAILED"}`).join(", ")}`,
+  ].join("\n");
 }
 
 // ---------------------------------------------------------------- dispatch
 
-if (first === "l2") {
+if (l2Mode && L2_READ_ONLY.has(command)) {
   try {
-    commandL2(positional[0], positional.slice(1), flag, (name) => flags.has(name));
+    commandL2(command, positional, flag, (name) => flags.has(name));
   } catch (error) {
     fail((error as Error).message, 1);
   }
@@ -1156,7 +1540,20 @@ try {
       break;
     case "record":
       if (refactor) await commandRefactorRecord();
+      else if (l2Mode) await commandL2Record();
       else commandRecord();
+      break;
+    case "campaign":
+      if (!l2Mode) fail("campaign is an l2 command: map:author -- l2 campaign");
+      commandL2Campaign();
+      break;
+    case "authorize":
+      if (!l2Mode) fail("authorize is an l2 command");
+      commandL2Authorize();
+      break;
+    case "checkpoint":
+      if (!l2Mode) fail("checkpoint is an l2 command");
+      commandL2Checkpoint();
       break;
     case "audit":
       commandAudit();

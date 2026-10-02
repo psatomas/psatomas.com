@@ -16,6 +16,7 @@ import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-regi
 import type { MapConceptContent } from "../src/lib/map/types.ts";
 import { assembleL2Context, formatL2Context } from "../src/lib/map/authoring/l2/context.ts";
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { finishedConcepts } from "../src/lib/map/authoring/l2/campaign.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 import { conceptSignals, driftReport, groupSignals, type L2Signal } from "../src/lib/map/authoring/l2/signals.ts";
 import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, planSkeleton, staleProblems, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
@@ -56,13 +57,23 @@ export function groupSignalsOf(plan: L2GroupFile): L2Signal[] {
   return groupSignals(records);
 }
 
-/** Every problem with the plans: each on its own terms, staleness, consistency across plans, and each owned concept's work at its stage. */
-export function planReport(plans: readonly L2GroupFile[], only?: string): { group: string; problems: string[]; stale: string[] }[] {
+/**
+ * Every problem with the plans: each on its own terms, staleness, consistency
+ * across plans, and each owned concept's work at its stage. A plan whose
+ * owned concepts are all finished is a historical record: later legitimate
+ * changes (a reserved member authored by its owner, say) would otherwise make
+ * it "stale" for ever, so it is validated only when named in `only`, which a
+ * run does for its own groups.
+ */
+export function planReport(plans: readonly L2GroupFile[], only?: readonly string[]): { group: string; problems: string[]; stale: string[]; finished?: true }[] {
   const inventory = inventoryL2(mapKnowledge);
   const cross = crossPlanProblems(plans, inventory);
+  const finished = finishedConcepts(mapKnowledge, plans);
   return plans
-    .filter((plan) => !only || plan.group === only)
+    .filter((plan) => !only || only.includes(plan.group))
     .map((plan) => {
+      const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
+      if (!only && owned.every((conceptId) => finished.has(conceptId))) return { group: plan.group, problems: [], stale: [], finished: true as const };
       const work = Object.entries(plan.concepts ?? {}).flatMap(([conceptId, entry]) => {
         const audited = (entry as L2ConceptWork).audit;
         const stage = audited ? "audited" : recordOf(conceptId) ? "authored" : "designed";
@@ -104,11 +115,11 @@ export function commandL2(command: string | undefined, positional: string[], fla
       return;
     }
     case "check": {
-      const report = planReport(readPlans(), flag("--group"));
+      const report = planReport(readPlans(), flag("--group") ? [flag("--group")!] : undefined);
       if (json) console.log(JSON.stringify(report, null, 2));
       else {
         for (const entry of report) {
-          console.log(`${entry.problems.length || entry.stale.length ? "FAIL" : "ok  "}  ${entry.group}`);
+          console.log(`${entry.problems.length || entry.stale.length ? "FAIL" : entry.finished ? "done" : "ok  "}  ${entry.group}${entry.finished ? " (finished: a record, not revalidated)" : ""}`);
           for (const problem of entry.problems) console.log(`      ${problem}`);
           for (const problem of entry.stale) console.log(`      stale: ${problem}`);
         }

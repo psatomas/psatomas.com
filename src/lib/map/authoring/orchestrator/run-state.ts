@@ -8,8 +8,14 @@
 import { validateFixes, type DiffReport, type FixKind } from "./diff-check.ts";
 import type { DomainPlan } from "./plan.ts";
 import type { Decision, RefactorPlan } from "../representation/refactor.ts";
+import { sliceSteps, stepKey, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
 
-export const STAGES = ["author", "audit", "gates", "browser", "render", "diff", "commit", "push", "pr", "ci", "done"] as const;
+/**
+ * A run's stages. "merge" exists only for an L2 campaign run whose merging a
+ * human has explicitly authorized; every other run passes from "ci" to
+ * "done", a validated PR awaiting human merge.
+ */
+export const STAGES = ["author", "audit", "gates", "browser", "render", "diff", "commit", "push", "pr", "ci", "merge", "done"] as const;
 export type Stage = (typeof STAGES)[number];
 
 /** Stages whose work needs the agent's judgment; every other stage is run by the tool. */
@@ -36,11 +42,29 @@ export type RefactorRecord = {
   diff?: { changed: string[]; kept: string[] };
 };
 
+/** An L2 slice run's own record (docs/map-authoring/l2-authoring.md). */
+export type L2RunRecord = {
+  slice: L2Slice;
+  /** Each recorded judgment step ("plan:<group>", "design:<concept>", ...) and when. */
+  steps: Record<string, { at: string; note?: string }>;
+  /** Concepts whose design blocks them: they stay unauthored. */
+  blocked: string[];
+  /** Times each concept was re-authored after its audit: more than two stops the run. */
+  repairs: Record<string, number>;
+  /** The pilot's human checkpoint between design and drafting, and its resolution. */
+  checkpoint?: { required: true; clearedAt?: string; decision?: string };
+  /** Set only from a human's explicit campaign authorization: the run may merge its own validated PR. */
+  mergeAuthorized?: { at: string; authorization: string };
+  diff?: { authored: string[]; blocked: string[]; flipped: string[] };
+  merged?: { sha: string; at: string };
+};
+
 export type RunState = {
   version: 1;
   /** Absent for a domain authoring run. */
-  kind?: "refactor";
+  kind?: "refactor" | "l2";
   refactor?: RefactorRecord;
+  l2?: L2RunRecord;
   domainId: string;
   title: string;
   branch: string;
@@ -104,6 +128,8 @@ export function createRunState(input: { plan: DomainPlan; branch: string; baseSh
 }
 
 const nextStage = (stage: Stage): Stage => STAGES[Math.min(STAGES.indexOf(stage) + 1, STAGES.length - 1)];
+/** Whether the run may merge its own PR: only an L2 run with a recorded human authorization. */
+export const mayMerge = (state: RunState) => state.kind === "l2" && Boolean(state.l2?.mergeAuthorized);
 
 function assertLive(state: RunState) {
   if (state.stop) throw new RunStateError(`run is stopped at ${state.stop.stage}: ${state.stop.subject}`);
@@ -140,6 +166,87 @@ export function createRefactorRunState(input: { plan: RefactorPlan; designSet: s
     checks: {},
     commits: [],
   };
+}
+
+/**
+ * An L2 slice run: its concepts play the role an authoring run's eligible
+ * topics play, each done once audited (or blocked by its design). The
+ * judgment steps before and after them are recorded one by one (sliceSteps).
+ */
+export function createL2RunState(input: { slice: L2Slice; remaining: readonly string[]; branch: string; baseSha: string; now: string; pilot?: boolean }): RunState {
+  const groups = input.slice.groups.map((group) => ({ group: group.group, concepts: group.concepts.filter((conceptId) => input.remaining.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
+  const eligible = groups.flatMap((group) => group.concepts);
+  if (eligible.length === 0) throw new RunStateError(`slice ${input.slice.id} has nothing left to author`);
+  return {
+    version: 1,
+    kind: "l2",
+    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
+    domainId: input.slice.id,
+    title: input.slice.id === "pilot" ? "L2 pilot" : `${input.slice.domainTitle} L2, part ${input.slice.index}`,
+    branch: input.branch,
+    baseSha: input.baseSha,
+    createdAt: input.now,
+    stage: "author",
+    completed: {},
+    plan: { authored: [], eligible, deferred: [], facet: [] },
+    concepts: Object.fromEntries(eligible.map((conceptId) => [conceptId, { done: false }])),
+    fixes: [],
+    auditNotes: [],
+    checks: {},
+    commits: [],
+  };
+}
+
+/** The slice's judgment steps not yet recorded, in order; a blocked concept skips its drafting and audit. */
+export function pendingL2Steps(state: RunState): L2Step[] {
+  const record = state.l2!;
+  return sliceSteps(record.slice.groups).filter((step) => !record.steps[stepKey(step)] && !(record.blocked.includes(step.subject) && (step.kind === "author" || step.kind === "audit")));
+}
+
+/** Whether the pilot's checkpoint holds the run: every plan and design recorded, drafting not yet cleared. */
+export const atL2Checkpoint = (state: RunState) => Boolean(state.l2?.checkpoint && !state.l2.checkpoint.clearedAt && pendingL2Steps(state)[0]?.kind === "author");
+
+/**
+ * Records one judgment step after the tool has validated it. Steps run in
+ * order: a step before an earlier one is refused. Recording a concept's
+ * drafting again after its audit reopens the audit and counts a repair.
+ * Recording a design that blocks the concept marks it done and skips its
+ * drafting.
+ */
+export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject: string }, now: string, options: { blocks?: boolean; note?: string } = {}): RunState {
+  assertLive(state);
+  if (state.kind !== "l2" || !state.l2) throw new RunStateError("steps belong to L2 runs");
+  const record = state.l2;
+  const all = sliceSteps(record.slice.groups);
+  const key = stepKey(step);
+  const index = all.findIndex((candidate) => stepKey(candidate) === key);
+  if (index < 0) throw new RunStateError(`${key} is not a step of slice ${record.slice.id}`);
+  const expectedStage = step.kind === "group-audit" ? "audit" : "author";
+  if (state.stage !== expectedStage) throw new RunStateError(`cannot record ${key} at stage ${state.stage}`);
+  const earlier = pendingL2Steps(state).filter((pending) => all.findIndex((candidate) => stepKey(candidate) === stepKey(pending)) < index);
+  if (earlier.length) throw new RunStateError(`record ${stepKey(earlier[0])} first`);
+  if (step.kind === "author" && atL2Checkpoint(state)) throw new RunStateError("the pilot checkpoint holds drafting until a human has reviewed every plan and design");
+  const steps = { ...record.steps, [key]: { at: now, ...(options.note ? { note: options.note } : {}) } };
+  let repairs = record.repairs;
+  let concepts = state.concepts;
+  if (step.kind === "author" && record.steps[`audit:${step.subject}`]) {
+    delete steps[`audit:${step.subject}`];
+    repairs = { ...repairs, [step.subject]: (repairs[step.subject] ?? 0) + 1 };
+    concepts = { ...concepts, [step.subject]: { done: false } };
+  }
+  const blocked = step.kind === "design" && options.blocks ? [...new Set([...record.blocked, step.subject])] : step.kind === "design" ? record.blocked.filter((conceptId) => conceptId !== step.subject) : record.blocked;
+  if (step.kind === "audit" || (step.kind === "design" && options.blocks)) concepts = { ...concepts, [step.subject]: { done: true, at: now } };
+  let next: RunState = { ...state, concepts, l2: { ...record, steps, repairs, blocked } };
+  if (next.stage === "author" && pendingConcepts(next).length === 0) next = { ...next, stage: "audit", completed: { ...next.completed, author: { at: now } } };
+  return next;
+}
+
+/** A human cleared the pilot checkpoint after reviewing every plan and design. */
+export function clearL2Checkpoint(state: RunState, decision: string, now: string): RunState {
+  if (!state.l2?.checkpoint) throw new RunStateError("this run has no checkpoint");
+  if (!decision.trim()) throw new RunStateError("clearing the checkpoint needs the human decision");
+  if (pendingL2Steps(state).some((step) => step.kind === "plan" || step.kind === "design")) throw new RunStateError("every plan and design must be recorded before the checkpoint can be cleared");
+  return { ...state, l2: { ...state.l2, checkpoint: { required: true, clearedAt: now, decision } } };
 }
 
 /** Records the decision for one actionable design and marks it done; replaying the same decision is a no-op. */
@@ -243,7 +350,14 @@ export function completeStage(state: RunState, stage: Stage, now: string, detail
     throw new RunStateError(`cannot complete ${stage}: the run is at ${state.stage}`);
   }
   if (stage === "author" && pendingConcepts(state).length > 0) throw new RunStateError(`concepts still to author: ${pendingConcepts(state).join(", ")}`);
-  return { ...state, stage: nextStage(stage), completed: { ...state.completed, [stage]: { at: now, ...(detail ? { detail } : {}) } } };
+  if (state.kind === "l2" && stage === "audit") {
+    const missing = pendingL2Steps(state).filter((step) => step.kind === "group-audit");
+    if (missing.length) throw new RunStateError(`group audits still to record: ${missing.map((step) => step.subject).join(", ")}`);
+  }
+  const completed = { ...state.completed, [stage]: { at: now, ...(detail ? { detail } : {}) } };
+  // Without a human's authorization a run never merges: it ends at a validated PR awaiting human merge.
+  if (stage === "ci" && !mayMerge(state)) return { ...state, stage: "done", completed: { ...completed, merge: { at: now, detail: "awaiting human merge" } } };
+  return { ...state, stage: nextStage(stage), completed };
 }
 
 export function recordCheck(state: RunState, name: string, ok: boolean, detail: string, now: string, tree?: string): RunState {
@@ -376,6 +490,21 @@ export type NextAction =
 export function nextAction(state: RunState): NextAction {
   if (state.stop) return { kind: "stop", stage: state.stop.stage, stop: state.stop };
   if (state.stage === "done") return { kind: "done", stage: "done" };
+  if (state.kind === "l2" && (state.stage === "author" || state.stage === "audit")) {
+    if (atL2Checkpoint(state)) {
+      return { kind: "agent", stage: state.stage, message: "pilot checkpoint: every territory plan and design is recorded; a human reviews them before any drafting, then `map:author -- l2 checkpoint --decision \"...\"`" };
+    }
+    const [step] = pendingL2Steps(state);
+    if (!step) return { kind: "agent", stage: "audit", message: "every group audit is recorded: `map:author -- l2 complete audit --note \"...\"`" };
+    const messages: Record<L2StepKind, string> = {
+      plan: `write ${step.subject}'s territory plan: \`map:author -- l2 territory ${step.subject} --write\`, fill claims, reservations and splits, then \`map:author -- l2 record plan ${step.subject}\``,
+      design: `model and design ${step.subject} in ${step.group}'s group file from \`map:author -- l2 context ${step.subject}\`, then \`map:author -- l2 record design ${step.subject}\``,
+      author: `author ${step.subject} in a fresh context from \`map:author -- l2 context ${step.subject}\` and its design, register it, then \`map:author -- l2 record author ${step.subject}\``,
+      audit: `audit ${step.subject}: resolve every \`map:author -- l2 signals ${step.subject}\` signal in its audit, then \`map:author -- l2 record audit ${step.subject}\``,
+      "group-audit": `audit group ${step.subject} as a whole: resolve its group signals in groupAudit, then \`map:author -- l2 record group-audit ${step.subject}\``,
+    };
+    return { kind: "agent", stage: state.stage, conceptId: step.kind === "plan" || step.kind === "group-audit" ? undefined : step.subject, message: messages[step.kind] };
+  }
   if (state.stage === "author" && state.kind === "refactor") {
     const [conceptId] = pendingConcepts(state);
     return {
@@ -400,5 +529,5 @@ export function nextAction(state: RunState): NextAction {
   if (state.stage === "audit") {
     return { kind: "agent", stage: "audit", message: "audit the domain: read `map:author -- audit`, correct only the new content, then `map:author -- complete audit --note \"...\"`" };
   }
-  return { kind: "tool", stage: state.stage, message: `run \`map:author -- ${state.kind === "refactor" ? "refactor run" : "run"}\` to perform ${state.stage}` };
+  return { kind: "tool", stage: state.stage, message: `run \`map:author -- ${state.kind === "refactor" ? "refactor run" : state.kind === "l2" ? "l2 run" : "run"}\` to perform ${state.stage}` };
 }
