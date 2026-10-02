@@ -313,7 +313,9 @@ editing the record and recording again.
 (a merge commit, never a rebase), provided main changed none of the run's
 files. The run's diff is then measured from the new main and everything is
 validated again; the drafting and audits stand, because the content did not
-change.
+change. A merge of main already at HEAD (made by hand, or before the run had
+`sync`) is adopted instead, only if it is exactly the run's recorded head
+merged with a commit of main and adds nothing of its own.
 
 **The pilot** stops between design and drafting until a human reviews every
 plan and design and records the decision with `l2 checkpoint`. The pilot

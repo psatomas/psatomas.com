@@ -87,6 +87,7 @@ import {
   repairLimitSubject,
   staleL2Steps,
   syncL2Base,
+  unadoptableMerge,
   type ObservedAudits,
   completeStage,
   changedConcepts,
@@ -731,6 +732,30 @@ function commandL2Reopen() {
 }
 
 /**
+ * Adopts a merge of main already at HEAD as the run's synchronization
+ * (unadoptableMerge), after the same check `sync` makes before merging:
+ * main changed none of the run's files.
+ */
+function adoptMerge(state: RunState) {
+  const parents = gitOut("rev-list", "--parents", "-n", "1", "HEAD").split(" ").slice(1);
+  const merged = parents.length === 2 ? git("merge-tree", "--write-tree", parents[0], parents[1]) : undefined;
+  const problem = unadoptableMerge(state, {
+    parents,
+    secondParentInMain: parents.length === 2 && git("merge-base", "--is-ancestor", parents[1], `origin/${MAIN}`).ok,
+    cleanMerge: Boolean(merged?.ok && lines(merged.out)[0] === gitOut("rev-parse", "HEAD^{tree}")),
+    trackedChanges: trackedChanges(),
+  });
+  if (problem) fail(`HEAD is not the run's recorded head, nor a merge of ${MAIN} it can adopt: ${problem}`, 1);
+  const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, parents[0]));
+  const touched = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, parents[1])).filter((file) => runFiles.includes(file));
+  if (touched.length) fail(`the merged ${MAIN} changed files this run changes (${touched.join(", ")}); decide by hand`, 1);
+  state = syncL2Base(state, { base: parents[1], merge: head(), now: now() });
+  saveState(state);
+  console.log(`adopted ${head().slice(0, 7)} as the merge of ${MAIN} (${parents[1].slice(0, 7)}); the run revalidates from ${state.stage}`);
+  commandNext(state);
+}
+
+/**
  * Brings a moved main into an open run: merges origin/main into the run's
  * branch (never a rebase or a force-push), and rebases the run's
  * validation on it. Refused when main changed a file the run changes.
@@ -738,8 +763,9 @@ function commandL2Reopen() {
 function commandL2Sync() {
   let state = activeState();
   if (state.stop) return printStop(state);
-  verifyGit(state);
   gitOut("fetch", "--quiet", "origin", MAIN);
+  if (currentBranch() === state.branch && head() !== (state.commits.at(-1)?.sha ?? state.baseSha)) return adoptMerge(state);
+  verifyGit(state);
   const target = remoteSha(`refs/heads/${MAIN}`)!;
   if (git("merge-base", "--is-ancestor", target, "HEAD").ok) return console.log(`${state.branch} already contains origin/${MAIN} at ${target.slice(0, 7)}`);
   const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD"));

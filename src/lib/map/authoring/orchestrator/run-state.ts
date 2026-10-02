@@ -366,6 +366,23 @@ export function syncL2Base(state: RunState, input: { base: string; merge: string
   return synced;
 }
 
+/**
+ * Why a merge of main at HEAD that the run did not record cannot be adopted
+ * as its synchronization (made by hand, say, or by a tool older than
+ * \`l2 sync\`). It may be adopted only if it is exactly the run's recorded
+ * head merged with a commit of main, with nothing added in the merge itself
+ * and nothing uncommitted.
+ */
+export function unadoptableMerge(state: RunState, observed: { parents: readonly string[]; secondParentInMain: boolean; cleanMerge: boolean; trackedChanges: readonly string[] }): string | undefined {
+  const recorded = state.commits.at(-1)?.sha ?? state.baseSha;
+  if (observed.parents.length !== 2) return "HEAD is not a merge commit";
+  if (observed.parents[0] !== recorded) return `HEAD's first parent ${observed.parents[0].slice(0, 7)} is not the run's recorded head ${recorded.slice(0, 7)}`;
+  if (!observed.secondParentInMain) return `HEAD's second parent ${observed.parents[1].slice(0, 7)} is not a commit of main`;
+  if (!observed.cleanMerge) return "the merge commit changes more than merging its parents does";
+  if (observed.trackedChanges.length) return `tracked changes: ${observed.trackedChanges.join(", ")}`;
+  return undefined;
+}
+
 /** The records and audits as they are now, by fingerprint. */
 export type ObservedAudits = {
   records: Record<string, string | undefined>;
