@@ -101,7 +101,19 @@ export type MapContentBlock =
    * Alternatives compared along the same explicit dimensions: every
    * alternative has one value per dimension, in dimension order.
    */
-  | { kind: "comparison"; label: string; dimensions: readonly string[]; alternatives: readonly MapComparisonAlternative[] };
+  | { kind: "comparison"; label: string; dimensions: readonly string[]; alternatives: readonly MapComparisonAlternative[] }
+  /**
+   * A transition system: persistent states or modes, and the events or
+   * conditions that move the system from one to another, including at least
+   * one return to an earlier or the same state. States are listed in the
+   * order the system moves through them; the first is where it starts, and a
+   * state with no outgoing transition is final. Not a forward process (flow)
+   * and not a recurrence of actions (cycle).
+   */
+  | { kind: "state"; label: string; states: readonly string[]; transitions: readonly MapStateTransition[] };
+
+/** One transition of a state model: from a state, when an event or condition holds, to a state. */
+export type MapStateTransition = { from: string; to: string; when: string };
 
 /** One row of a comparison: an alternative and its value on each dimension. */
 export type MapComparisonAlternative = { name: string; values: readonly string[] };

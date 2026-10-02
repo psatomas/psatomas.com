@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import type { MapComparisonAlternative, MapFlowElement } from "@/lib/map";
-import { describeCycle } from "./exposition-text";
+import type { MapComparisonAlternative, MapFlowElement, MapStateTransition } from "@/lib/map";
+import { describeCycle, describeState, transitionDirection, transitionsFrom } from "./exposition-text";
 
 /**
  * A small visual grammar for MAP's conceptual models, deliberately not a
@@ -212,7 +212,7 @@ export function TensionPair({ left, right }: { left: string; right: string }) {
 }
 
 /** An arrowhead pointing right, into the node beside it. */
-function ArrowHeadRight({ className = "", ...data }: { className?: string; "data-cycle-entry"?: string }) {
+function ArrowHeadRight({ className = "", ...data }: { className?: string; "data-cycle-entry"?: string; "data-state-entry"?: string }) {
   return <span {...data} className={`block h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-border ${className}`} />;
 }
 
@@ -247,6 +247,57 @@ export function CycleModel({ label, steps }: { label: string; steps: readonly st
           <ModelNode className="w-full">{step}</ModelNode>
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+const DIRECTION = { forward: { glyph: "→", say: (to: string) => to }, return: { glyph: "↩", say: (to: string) => `back to ${to}` }, stay: { glyph: "↻", say: (to: string) => `stays in ${to}` } } as const;
+
+/**
+ * A transition system. States stack on the model's axis as bordered nodes, in
+ * the order the system moves through them; beneath each, on a rail, are its
+ * outgoing transitions: the event or condition, then where it leads. A return
+ * says it goes back, and a transition that keeps the system where it is says
+ * so, so direction never rests on a glyph, position or colour alone. The first
+ * state is entered from the side, as a cycle's first step is; a final state
+ * has a double border. The column keeps one geometry at every width.
+ */
+export function StateModel({ label, states, transitions }: { label: string; states: readonly string[]; transitions: readonly MapStateTransition[] }) {
+  return (
+    <div role="img" aria-label={describeState(label, states, transitions)} className="mx-auto grid w-full max-w-md grid-cols-[1.75rem_minmax(0,1fr)]">
+      {states.map((state, index) => {
+        const outgoing = transitionsFrom(transitions, state);
+        return (
+          <Fragment key={state}>
+            <span aria-hidden="true" className="relative">
+              {index === 0 ? (
+                <>
+                  <span className={`absolute top-1/2 right-[6px] left-0 h-px ${LINE}`} />
+                  <ArrowHeadRight className="absolute top-1/2 right-0 -translate-y-1/2" data-state-entry="" />
+                </>
+              ) : null}
+            </span>
+            <span data-state-node="" data-state-final={outgoing.length ? undefined : ""}>
+              <ModelNode className={`w-full ${outgoing.length ? "" : "border-[3px] border-double"}`}>{state}</ModelNode>
+            </span>
+            <span aria-hidden="true" />
+            <span className={`ml-4 flex flex-col gap-3 border-l border-border pl-4 ${outgoing.length ? "py-3" : ""} ${index < states.length - 1 ? "mb-3" : ""}`}>
+              {outgoing.map(({ to, when }) => {
+                const direction = DIRECTION[transitionDirection(states, state, to)];
+                return (
+                  <span key={to} data-state-transition={transitionDirection(states, state, to)} className="block">
+                    <span className="block text-sm leading-6 text-foreground/80 [overflow-wrap:anywhere]">{when}</span>
+                    <span className={`mt-1 flex items-baseline gap-2 tracking-[0.12em] [overflow-wrap:anywhere] ${NODE_TEXT}`}>
+                      <span className="w-4 shrink-0 text-center font-sans text-sm leading-none text-muted">{direction.glyph}</span>
+                      <span>{direction.say(to)}</span>
+                    </span>
+                  </span>
+                );
+              })}
+            </span>
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

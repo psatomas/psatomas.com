@@ -7996,6 +7996,49 @@ test("exposition validation holds cycles and comparisons to their semantic shape
   ].sort());
 });
 
+test("exposition validation holds state models to transition systems with a closing return", () => {
+  const go = (from: string, to: string, when = `${from} to ${to}`) => ({ from, to, when });
+  const errors = errorsFor((model) => ({
+    ...model,
+    content: [...model.content, {
+      id: "state-blocks", conceptId: "economic-agency", definition: "Defined.",
+      body: [
+        // Asymmetric entry and exit: the return is what makes it a state model.
+        { kind: "state", label: "Operating modes", states: ["Normal", "Defensive"], transitions: [go("Normal", "Defensive", "the signal rises above the entry threshold"), go("Defensive", "Normal", "the signal stays below a lower exit threshold")] },
+        // Branching, a return, a transition that stays, and final states.
+        { kind: "state", label: "Retries", states: ["Attempting", "Waiting", "Done", "Abandoned"], transitions: [go("Attempting", "Done"), go("Attempting", "Waiting"), go("Waiting", "Attempting"), go("Waiting", "Waiting", "another failure arrives"), go("Waiting", "Abandoned")] },
+        { kind: "state", label: "Forward only", states: ["Drafted", "Submitted", "Final"], transitions: [go("Drafted", "Submitted"), go("Submitted", "Final")] },
+        { kind: "state", label: "Unknown endpoint", states: ["A", "B"], transitions: [go("A", "B"), go("B", "C")] },
+        { kind: "state", label: " ", states: ["A", "B"], transitions: [go("A", "B"), go("B", "A")] },
+        { kind: "state", label: "One state", states: ["A"], transitions: [go("A", "A")] },
+        { kind: "state", label: "Too many", states: ["A", "B", "C", "D", "E", "F", "G"], transitions: [go("A", "B"), go("B", "A")] },
+        { kind: "state", label: "Repeats", states: ["A", "B", "A"], transitions: [go("A", "B"), go("B", "A")] },
+        { kind: "state", label: "Unlabelled", states: ["A", "B"], transitions: [go("A", "B"), go("B", "A", " ")] },
+        { kind: "state", label: "Twice", states: ["A", "B"], transitions: [go("A", "B"), go("A", "B", "again"), go("B", "A")] },
+        { kind: "state", label: "Unreachable", states: ["A", "B", "C"], transitions: [go("A", "B"), go("B", "A"), go("C", "A")] },
+        // Listed backwards: the only "return" never leads back, so the order misstates the process.
+        { kind: "state", label: "Misordered", states: ["Start", "Final", "Middle"], transitions: [go("Start", "Middle"), go("Middle", "Final")] },
+        { kind: "state", label: "Too many transitions", states: ["A", "B", "C"], transitions: [go("A", "A"), go("A", "B"), go("A", "C"), go("B", "A"), go("B", "B"), go("B", "C"), go("C", "A"), go("C", "B"), go("C", "C")] },
+        { kind: "state", label: "Marked up", states: ["A", "B"], transitions: [go("A", "B", "**now**"), go("B", "A")] },
+      ],
+    }],
+  }));
+  assert.deepEqual(errors.filter((error) => error.startsWith('Content "state-blocks"')).sort(), [
+    'Content "state-blocks" block 2 (state) has no transition back to an earlier or the same state: a forward process is a flow',
+    'Content "state-blocks" block 3 (state) has a transition from or to an undeclared state',
+    'Content "state-blocks" block 4 (state) has no label',
+    'Content "state-blocks" block 5 (state) must contain at least two states',
+    'Content "state-blocks" block 6 (state) has more than 6 states',
+    'Content "state-blocks" block 7 (state) repeats a state',
+    'Content "state-blocks" block 8 (state) has a transition without its event or condition',
+    'Content "state-blocks" block 9 (state) repeats a transition between the same states',
+    'Content "state-blocks" block 10 (state) has a state the first state never leads to',
+    'Content "state-blocks" block 11 (state) returns to an earlier state that never leads back: list the states in the order the system moves through them',
+    'Content "state-blocks" block 12 (state) has more than 8 transitions',
+    'Content "state-blocks" block 13 (state) contains markdown syntax',
+  ].sort());
+});
+
 test("exposition validation rejects blank definitions and prose the renderer cannot present", () => {
   const errors = errorsFor((model) => ({
     ...model,

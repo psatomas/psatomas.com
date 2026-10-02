@@ -461,6 +461,11 @@ analysis:
 
 ## 9. The State primitive
 
+> **Status:** implemented as the `state` block, following this section's
+> recommendation; see
+> [representation-design.md](representation-design.md#choosing-among-the-structured-blocks).
+> The analysis below is kept as written at its baseline.
+
 **Evidence from L2.** A scan of L2 titles for lifecycle, mode and state-like
 semantics found 172 candidates. Filtered by hand to concepts where returns,
 re-entry or persistent modes carry the meaning, about 12 are strong and 11

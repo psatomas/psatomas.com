@@ -195,6 +195,7 @@ blocks by what the explanation needs:
 | `terms` | The vocabulary a passage introduces, as plain text (not navigation). | L0 strips mirror taxonomy labels; that is an L0 convention, not a requirement elsewhere. |
 | `cycle` | A recurrent process whose last step feeds the next pass of the first, such as a control or feedback loop. Not a process that ends or merely repeats. | New; see [representation-design.md](representation-design.md#choosing-among-the-structured-blocks). |
 | `comparison` | Two to six alternatives read across the same two to four named dimensions. Not a table for its own sake, and not a set of variants with one attribute each. | New; see [representation-design.md](representation-design.md#choosing-among-the-structured-blocks). |
+| `state` | Persistent states or modes connected by the events or conditions that move between them, including returns: a breaker that trips and resets, modes entered and left on different signals. Not a forward process (a flow) or a recurrence of actions (a cycle). | New; see [representation-design.md](representation-design.md#choosing-among-the-structured-blocks). |
 
 - **Not every concept needs every block type, or a body.** A definition plus a
   few paragraphs can be complete. Sparse content is valid

@@ -1,5 +1,5 @@
 import { MAP_RELATIONSHIP_TYPES } from "./types.ts";
-import type { MapContentBlock, MapFlowElement, MapKnowledgeModel } from "./types.ts";
+import type { MapContentBlock, MapFlowElement, MapKnowledgeModel, MapStateTransition } from "./types.ts";
 
 const IDENTIFIER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -62,6 +62,8 @@ function blockStrings(block: MapContentBlock): string[] {
       return [block.label, ...block.steps];
     case "comparison":
       return [block.label, ...block.dimensions, ...block.alternatives.flatMap((alternative) => [alternative.name, ...alternative.values])];
+    case "state":
+      return [block.label, ...block.states, ...block.transitions.map((transition) => transition.when)];
     default:
       return [];
   }
@@ -112,6 +114,44 @@ const MAX_CYCLE_STEPS = 6;
 // values, and at most six alternatives before it stops being a comparison.
 const MAX_COMPARISON_DIMENSIONS = 4;
 const MAX_COMPARISON_ALTERNATIVES = 6;
+// A state model stacks its states in a column, each followed by its labelled
+// transitions (StateModel); beyond six states or eight transitions it stops
+// reading as one machine.
+const MAX_STATE_STATES = 6;
+const MAX_STATE_TRANSITIONS = 8;
+
+/**
+ * What makes a state model a transition system rather than a forward process.
+ * States are listed in the order the system moves through them. A back-edge is
+ * a transition to an earlier or the same listed state, and it must close a
+ * loop: its target leads back to its source. Without one the model is a
+ * forward process, which is a flow; with a "back-edge" that closes no loop the
+ * listed order is not the order the system moves in. Every state must be
+ * reachable from the first, where the system starts.
+ */
+function stateGraphProblems(states: readonly string[], transitions: readonly MapStateTransition[]): string[] {
+  const position = new Map(states.map((state, index) => [state, index]));
+  const reachable = (from: string) => {
+    const seen = new Set([from]);
+    const queue = [from];
+    while (queue.length) {
+      const state = queue.shift()!;
+      for (const transition of transitions) {
+        if (transition.from === state && !seen.has(transition.to)) {
+          seen.add(transition.to);
+          queue.push(transition.to);
+        }
+      }
+    }
+    return seen;
+  };
+  if (reachable(states[0]).size !== states.length) return ["has a state the first state never leads to"];
+  const backEdges = transitions.filter((transition) => position.get(transition.to)! <= position.get(transition.from)!);
+  if (backEdges.length === 0) return ["has no transition back to an earlier or the same state: a forward process is a flow"];
+  return backEdges.some((transition) => !reachable(transition.to).has(transition.from))
+    ? ["returns to an earlier state that never leads back: list the states in the order the system moves through them"]
+    : [];
+}
 
 function contentBlockProblems(block: MapContentBlock): string[] {
   const shape = contentBlockShapeProblems(block);
@@ -178,6 +218,22 @@ function contentBlockShapeProblems(block: MapContentBlock): string[] {
         return ["has an alternative without exactly one value per dimension"];
       }
       return block.alternatives.some((alternative) => blank(alternative.name) || alternative.values.some(blank)) ? ["has an empty alternative or value"] : [];
+    case "state": {
+      if (blank(block.label)) return ["has no label"];
+      // One state has nothing to move between.
+      if (block.states.length < 2) return ["must contain at least two states"];
+      if (block.states.length > MAX_STATE_STATES) return [`has more than ${MAX_STATE_STATES} states`];
+      if (block.states.some(blank)) return ["has an empty state"];
+      // States are named by their text, so a repeated name makes transitions ambiguous.
+      if (hasDuplicates(block.states)) return ["repeats a state"];
+      if (block.transitions.length > MAX_STATE_TRANSITIONS) return [`has more than ${MAX_STATE_TRANSITIONS} transitions`];
+      if (block.transitions.some((transition) => blank(transition.when))) return ["has a transition without its event or condition"];
+      const declared = new Set(block.states);
+      if (block.transitions.some((transition) => !declared.has(transition.from) || !declared.has(transition.to))) return ["has a transition from or to an undeclared state"];
+      // Two transitions between the same states are one transition with two conditions.
+      if (hasDuplicates(block.transitions.map((transition) => `${transition.from}>${transition.to}`))) return ["repeats a transition between the same states"];
+      return stateGraphProblems(block.states, block.transitions);
+    }
     default:
       return [`is an unknown block kind`];
   }

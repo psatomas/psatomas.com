@@ -270,8 +270,11 @@ Richer exposition is an ordered `body` of typed blocks following the
 definition, which leads: paragraphs, section headings, conceptual flows
 (ordered stages of one or more elements; an element of a parallel set may be a
 branch of several steps), distinctions ("A ≠ B", optionally a chain "A ≠ B ≠
-C"), tensions (pairs of forces), and term strips (the vocabulary a passage
-introduces, as plain text rather than navigation or new concepts).
+C"), tensions (pairs of forces), term strips (the vocabulary a passage
+introduces, as plain text rather than navigation or new concepts), cycles (a
+recurrent process whose last step feeds the first), comparisons (alternatives
+along shared dimensions), and state models (persistent states connected by the
+events or conditions that move between them, including returns).
 Blocks carry meaning and order only. Authoring prompts such as "why it
 matters" may guide writing but are never rendered as labelled sections: the
 reader meets continuous technical exposition, not a template.

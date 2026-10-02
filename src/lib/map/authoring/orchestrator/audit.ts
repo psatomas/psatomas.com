@@ -7,9 +7,9 @@
  * records. Judging which findings matter stays with the agent and the
  * quality contract (docs/map-authoring/quality-contract.md).
  */
-import type { MapConceptContent, MapKnowledgeModel } from "../../types.ts";
+import type { MapConceptContent, MapContentBlock, MapKnowledgeModel } from "../../types.ts";
 
-const BLOCK_LETTER: Record<string, string> = { paragraph: "P", heading: "H", flow: "F", distinction: "D", tensions: "T", terms: "S", cycle: "O", comparison: "X" };
+const BLOCK_LETTER: Record<MapContentBlock["kind"], string> = { paragraph: "P", heading: "H", flow: "F", distinction: "D", tensions: "T", terms: "S", cycle: "O", comparison: "X", state: "M" };
 const POSITIONAL = /\b(below|above|beneath|this domain|this section|the topics|the rows)\b/i;
 
 function text(record: MapConceptContent): string {
@@ -35,6 +35,8 @@ function text(record: MapConceptContent): string {
           return [block.label, ...block.steps].join(" ");
         case "comparison":
           return [block.label, ...block.dimensions, ...block.alternatives.flatMap((alternative) => [alternative.name, ...alternative.values])].join(" ");
+        case "state":
+          return [block.label, ...block.states, ...block.transitions.map((transition) => transition.when)].join(" ");
       }
     }),
   ]

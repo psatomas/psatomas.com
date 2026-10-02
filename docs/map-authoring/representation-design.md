@@ -38,6 +38,7 @@ Blocks are defined in [`types.ts`](../../src/lib/map/types.ts) and rendered by
 | `terms` | `terms` | A mono strip of vocabulary. | `role="list"`, `aria-label="Key terms"`. |
 | `cycle` | `label`, `steps` (2 to 6) | Steps stack on the model's axis joined by forward arrows; a return rail leaves the last step and enters the first. | One `role="img"`, "label: A, then B, then C, then back to A, and again." The same column at every width. |
 | `comparison` | `label`, `dimensions` (2 to 4), `alternatives` (2 to 6), each with one value per dimension | Dimensions as column headers and alternatives as rows on wide screens; each alternative stacked with its dimension names beside the values on narrow ones. | An ARIA table (`role="table"`, column and row headers, labelled), the same table at every width, so values are read with their dimension and alternative. |
+| `state` | `label`, `states` (2 to 6, in the order the system moves through them; the first is where it starts), `transitions` (at most 8, each `from`, `to` and `when`, the event or condition) | States stack on the model's axis as nodes; beneath each, on a rail, its outgoing transitions: the condition, then "→ target", "↩ back to" an earlier state or "↻ stays in" the same one. The first state is entered from the side; a state with no outgoing transition is final and has a double border. | One `role="img"`, "label: starts in A. From A, when X, to B. From B, when Y, back to A. C is final." Direction is in words, never only in a glyph or position. The same column at every width. |
 
 What protects them:
 
@@ -49,10 +50,12 @@ What protects them:
 - The render check verifies, for authored concepts, text alternatives (and
   table labels), overflow and identical text at every placement and width.
 - The browser suite's `models` section serves a fixture exposition through
-  the content API and checks cycle and comparison in the real components at
-  1280 and 375 pixels: the generated text alternative, the return rail
-  joining last step to first, table headers and cells, both layouts, clipping,
-  overflow and identical text.
+  the content API and checks cycle, comparison and state in the real
+  components at 1280 and 375 pixels: the generated text alternatives, the
+  return rail joining last step to first, table headers and cells, both
+  layouts, state order, final states, the entry into the first state, each
+  transition's condition, direction and target, clipping, overflow and
+  identical text.
 
 ### Structures, and where each fits
 
@@ -66,7 +69,7 @@ content model writes it down.
 | prose: argument, causation, conditions | paragraph | native |
 | distinction: likely conflations | distinction | native |
 | process: ordered stages, branching and converging | flow | native |
-| lifecycle: stages from creation to retirement | flow | native, with no return to an earlier stage |
+| lifecycle: stages from creation to retirement | flow | native, with no return to an earlier stage (with returns it is state) |
 | failure path: how a fault propagates or branches | flow | native |
 | composition: a whole and its parts | flow | approximate, one level |
 | variants: kinds of something, each with what follows from it | flow | approximate, one short branch per kind |
@@ -75,7 +78,7 @@ content model writes it down.
 | vocabulary | terms | native |
 | cycle: a recurrent process whose output starts the next pass | cycle | native |
 | comparison: alternatives × shared dimensions | comparison | native |
-| state: states and transitions, including returns | none | **gap** |
+| state: persistent states or modes, and the events or conditions between them, including returns | state | native |
 | dependency: a graph of what relies on what | none | **gap** |
 
 A gap is recorded in the design as needed capability. It is never forced
@@ -95,6 +98,21 @@ cascade that runs out), and for one that merely repeats from scratch, such as
 a block produced every few seconds, where nothing of one pass feeds the next.
 A cycle whose loop the paragraph could state in one clause adds little; draw
 it when the loop's steps, and where delay or amplification enters it, are what
+the reader needs to see.
+
+**`state`, `flow` or `cycle`.** Use `state` only when the system rests in
+states or modes, and events or conditions move it between them, including back
+to where it was: a breaker that trips open and, after a cooldown, tests
+whether to close; a protocol that enters a defensive mode on one signal and
+leaves it only on a stronger one; an action retried after a delay until it
+succeeds or is abandoned. The persistence and the conditions are the meaning,
+so every transition carries its event or condition. Validation requires at
+least one transition back to an earlier or the same state that closes a loop:
+a process that only moves forward, however it branches, is a `flow`. A
+recurrence whose steps are actions rather than states, with nothing to say
+about the conditions between them, is a `cycle`. Two persistent modes with
+asymmetric entry and exit conditions are the smallest real state model;
+draw it when the conditions, not merely the existence of two modes, are what
 the reader needs to see.
 
 **`comparison` or something else.** Use `comparison` when several
@@ -237,7 +255,7 @@ is the governance for refactor runs, reviewed and accepted by merging it.
 - **KEEP is everything else.** A run may change nothing the spec does not
   list as actionable for its domain.
 - **Blocked designs** need a primitive no block expresses yet (today:
-  `state`). They are kept visible, never executed, and never block other
+  `dependency`). They are kept visible, never executed, and never block other
   designs in their domain. A blocked design can be **re-reviewed** outside a
   run with `refactor review <concept-id> --decision keep --note "..."`. When
   reconsideration shows that the missing structure does not belong at the
