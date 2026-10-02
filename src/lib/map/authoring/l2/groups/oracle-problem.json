@@ -184,7 +184,7 @@
     "oracle-failure": {
       "model": {
         "meaning": "Oracle failure is any case in which an oracle does not deliver a correct and timely value a protocol depends on.",
-        "kind": "attack",
+        "kind": "failure",
         "parents": {
           "oracle-problem": "the forms of failure, their causes and their consequences, beyond silence and the responses to it"
         },
@@ -203,10 +203,13 @@
           "oracle-failure": "one placement"
         },
         "fields": {
-          "preconditions": [
-            "a protocol acting on reported values"
+          "causes": [
+            "errors at the data source",
+            "faulty or offline oracle nodes",
+            "network or update delay",
+            "deliberate manipulation, as one cause among several"
           ],
-          "mechanism": [
+          "manifestation": [
             "wrong, stale, missing or late values"
           ],
           "impact": [
@@ -216,6 +219,9 @@
           ],
           "detection": [
             "deviation and staleness checks, owned by freshness concepts"
+          ],
+          "recovery": [
+            "fallback sources, pauses and circuit breakers, named only"
           ]
         }
       },
@@ -226,7 +232,7 @@
           {
             "structure": "comparison",
             "purpose": "the forms of failure side by side",
-            "whyNotProse": "the forms differ along the same three dimensions, and reading across them shows why each needs a different defence"
+            "whyNotProse": "the forms differ along the same three dimensions, and reading across them shows why each needs a different response"
           }
         ],
         "level": "the failure modes are the concept's own",

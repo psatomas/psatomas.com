@@ -259,7 +259,7 @@
     "partial-failures": {
       "model": {
         "meaning": "A partial failure is a cross-chain action in which some legs take effect and others do not, leaving a state no participant intended.",
-        "kind": "attack",
+        "kind": "failure",
         "parents": {
           "cross-domain-atomicity": "the forms, detection and exposure of partial failure, beyond repair by compensation"
         },
@@ -277,11 +277,15 @@
           "partial-failures": "one placement"
         },
         "fields": {
-          "preconditions": [
-            "independent chains with no shared commit"
+          "causes": [
+            "a leg that reverts, stalls or times out",
+            "a confirmed leg reorganized away",
+            "a relayer or bridge fault",
+            "occasionally an adversary who withholds or delays a leg"
           ],
-          "mechanism": [
-            "one leg confirms while another reverts, stalls or is reorganized away"
+          "manifestation": [
+            "some legs final while others are reverted or still pending",
+            "independent chains with no shared commit to undo the finished legs"
           ],
           "impact": [
             "funds stranded or duplicated",
@@ -289,6 +293,9 @@
           ],
           "detection": [
             "watching every leg's confirmation and finality"
+          ],
+          "recovery": [
+            "compensating actions and rollbacks, owned by their own concepts"
           ]
         }
       },
