@@ -614,7 +614,7 @@ async function commandL2Record() {
   const refuse = (problems: string[]) => problems.length && fail(`cannot record ${kind} ${subject}:\n  ${problems.join("\n  ")}`, 1);
   const repair = record.repair;
   // A repair stays within the territory, models and designs it was reopened with, except what it re-records.
-  const scope = (extra: { redesigned?: string[]; replanned?: string[] } = {}) =>
+  const scope = (extra: { redesigned?: string[]; replanned?: string[]; territoryOnly?: boolean } = {}) =>
     repair
       ? repairScopeProblems({
           baseline: repair.baseline,
@@ -622,6 +622,7 @@ async function commandL2Record() {
           plans,
           redesigned: new Set([...repair.concepts.filter((conceptId) => (state.l2!.steps[`design:${conceptId}`]?.at ?? "") >= repair.at), ...(extra.redesigned ?? [])]),
           replanned: new Set([...repair.groups.filter((entry) => (state.l2!.steps[`plan:${entry}`]?.at ?? "") >= repair.at), ...(extra.replanned ?? [])]),
+          territoryOnly: extra.territoryOnly,
         })
       : [];
   const auditFile = flag("--audit-file");
@@ -630,7 +631,7 @@ async function commandL2Record() {
   let fingerprint: string | undefined;
   switch (kind) {
     case "plan":
-      refuse([...planProblems(plan, mapKnowledge), ...staleProblems(plan, mapKnowledge).map((problem) => `stale: ${problem}`), ...crossPlanProblems(plans, inventoryL2(mapKnowledge)).filter((problem) => problem.includes(group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`))), ...scope({ replanned: [group] })]);
+      refuse([...planProblems(plan, mapKnowledge), ...staleProblems(plan, mapKnowledge).map((problem) => `stale: ${problem}`), ...crossPlanProblems(plans, inventoryL2(mapKnowledge)).filter((problem) => problem.includes(group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`))), ...scope({ replanned: [group], territoryOnly: true })]);
       break;
     case "design":
       refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "designed"), ...scope({ redesigned: [subject] })]);
