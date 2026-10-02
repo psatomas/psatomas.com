@@ -32,6 +32,8 @@ Read these before authoring. If they disagree, the earlier source wins.
    procedure; `npm run map:l2` prints the L2 inventory it is based on.
    [`l2-content-scale.md`](l2-content-scale.md) measures whether the content
    architecture carries full L2, and records the decision (OPTIMIZE).
+   [`l2-authoring.md`](l2-authoring.md) is the L2 operating procedure as it is
+   built: territory plans, context, contracts and runs.
 7. The code is the ground truth for shapes and rules:
    [`types.ts`](../../src/lib/map/types.ts) (content blocks),
    [`validation.ts`](../../src/lib/map/validation.ts) (structural rules),

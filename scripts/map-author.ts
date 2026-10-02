@@ -31,6 +31,12 @@
 //   npm run map:author -- refactor record <concept-id> --decision execute|reduce|keep --note "..."
 //   npm run map:author -- refactor review <concept-id> --decision keep --note "..."   re-review a blocked design (outside a run)
 //   npm run map:author -- refactor status | next | audit | complete audit --note ".." | fix .. | stop .. | resume .. | run ..
+//
+// L2 authoring (docs/map-authoring/l2-authoring.md), from scripts/map-author-l2.ts:
+//
+//   npm run map:author -- l2 context <concept-id> [--json]
+//   npm run map:author -- l2 territory <group> [--write]
+//   npm run map:author -- l2 check [--group <group>] [--json]
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -39,6 +45,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
+import { commandL2 } from "./map-author-l2.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
 import { createMapAuthoringInspector, MapAuthoringContextError } from "../src/lib/map/authoring/context.ts";
 import { formatMapConceptAuthoringContext } from "../src/lib/map/authoring/format.ts";
@@ -100,7 +107,7 @@ const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
   const arg = rest[index];
   if (!arg.startsWith("--")) positional.push(arg);
-  else if (["--json", "--dry-run"].includes(arg)) flags.set(arg, true);
+  else if (["--json", "--dry-run", "--write"].includes(arg)) flags.set(arg, true);
   else {
     const value = rest[++index];
     if (value === undefined || value.startsWith("--")) fail(`${arg} needs a value`);
@@ -1110,6 +1117,15 @@ async function commandRun() {
 }
 
 // ---------------------------------------------------------------- dispatch
+
+if (first === "l2") {
+  try {
+    commandL2(positional[0], positional.slice(1), flag, (name) => flags.has(name));
+  } catch (error) {
+    fail((error as Error).message, 1);
+  }
+  process.exit(process.exitCode ?? 0);
+}
 
 try {
   switch (command) {
