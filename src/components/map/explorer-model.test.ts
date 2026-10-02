@@ -71,6 +71,16 @@ function assertRowsFollowContent(rows: readonly MapExplorerRow[]) {
   }
 }
 
+/**
+ * The expansion a deep entry starts with: the context's ancestors, and the
+ * context row itself when it can open (it has exposition or children).
+ * Derived from the row, so authoring a leaf never breaks the expectation.
+ */
+function expectedEntryExpansion(placementId: string, ancestors: readonly string[]): string[] {
+  const { node } = indexMapExplorerView(view).get(placementId)!;
+  return [...ancestors, ...(node.children.length || node.hasContent ? [placementId] : [])].sort();
+}
+
 // An L0 domain with no topics, added to the real model, for empty-domain
 // behaviour that must hold however many of the real domains are authored.
 const EMPTY_L0 = "unauthored-domain";
@@ -946,7 +956,7 @@ test("Scaling & Modular Systems L2 topics are ordinary placements: context, ance
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "fraud-proofs").expandedPlacementIds].sort(), ["optimistic-rollups", "scaling-modular-systems"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "fraud-proofs").expandedPlacementIds].sort(), expectedEntryExpansion("fraud-proofs", ["optimistic-rollups", "scaling-modular-systems"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "scaling-modular-systems" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 80);
@@ -968,7 +978,7 @@ test("Protocol Design & Lifecycle L2 topics are ordinary placements: context, an
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "hard-forks").expandedPlacementIds].sort(), ["change-management", "protocol-design-lifecycle"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "hard-forks").expandedPlacementIds].sort(), expectedEntryExpansion("hard-forks", ["change-management", "protocol-design-lifecycle"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "protocol-design-lifecycle" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 81);
@@ -990,7 +1000,7 @@ test("Protocol Architecture L2 topics are ordinary placements: context, ancestry
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "coupling").expandedPlacementIds].sort(), ["architectural-tradeoffs", "protocol-architecture"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "coupling").expandedPlacementIds].sort(), expectedEntryExpansion("coupling", ["architectural-tradeoffs", "protocol-architecture"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "protocol-architecture" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 68);
@@ -1013,7 +1023,7 @@ test("Security, Correctness & Resilience L2 topics are ordinary placements: cont
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "fuzzing").expandedPlacementIds].sort(), ["security-correctness-resilience", "testing"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "fuzzing").expandedPlacementIds].sort(), expectedEntryExpansion("fuzzing", ["security-correctness-resilience", "testing"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "security-correctness-resilience" && row.depth > 0);
   assert.equal(subtreeRows.length, 20 + 119);
@@ -1036,7 +1046,7 @@ test("Interoperability & Abstraction L2 topics are ordinary placements: context,
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "lock-and-mint").expandedPlacementIds].sort(), ["asset-bridging", "interoperability-abstraction"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "lock-and-mint").expandedPlacementIds].sort(), expectedEntryExpansion("lock-and-mint", ["asset-bridging", "interoperability-abstraction"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "interoperability-abstraction" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 82);
@@ -1059,7 +1069,7 @@ test("Governance & Institutions L2 topics are ordinary placements: context, ance
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "guardians").expandedPlacementIds].sort(), ["emergency-governance", "governance-institutions"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "guardians").expandedPlacementIds].sort(), expectedEntryExpansion("guardians", ["emergency-governance", "governance-institutions"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "governance-institutions" && row.depth > 0);
   assert.equal(subtreeRows.length, 15 + 89);
@@ -1083,7 +1093,7 @@ test("Intents & Coordination L2 topics are ordinary placements: context, ancestr
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "ring-trades").expandedPlacementIds].sort(), ["intent-matching", "intents-coordination"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "ring-trades").expandedPlacementIds].sort(), expectedEntryExpansion("ring-trades", ["intent-matching", "intents-coordination"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "intents-coordination" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 71);
@@ -1112,7 +1122,7 @@ test("MEV & Execution Markets L2 topics are ordinary placements: context, ancest
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
   assert.equal(resolveMapContextParam(index, ["builders-in-mev"]), null);
-  assert.deepEqual([...getInitialMapExplorerState(view, "fair-ordering").expandedPlacementIds].sort(), ["mev-execution-markets", "transaction-ordering-in-mev-execution-markets"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "fair-ordering").expandedPlacementIds].sort(), expectedEntryExpansion("fair-ordering", ["mev-execution-markets", "transaction-ordering-in-mev-execution-markets"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "mev-execution-markets" && row.depth > 0);
   assert.equal(subtreeRows.length, 13 + 79);
@@ -1139,7 +1149,7 @@ test("Markets & Financial Protocols L2 topics are ordinary placements: context, 
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
   assert.equal(resolveMapContextParam(index, ["liquidity-risk"]), null);
-  assert.deepEqual([...getInitialMapExplorerState(view, "bad-debt").expandedPlacementIds].sort(), ["liquidations", "markets-financial-protocols"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "bad-debt").expandedPlacementIds].sort(), expectedEntryExpansion("bad-debt", ["liquidations", "markets-financial-protocols"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "markets-financial-protocols" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 72);
@@ -1163,7 +1173,7 @@ test("Frontier Systems L2 topics are ordinary placements: context, ancestry, con
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "agent-spawning").expandedPlacementIds].sort(), ["frontier-systems", "recursive-autonomy"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "agent-spawning").expandedPlacementIds].sort(), expectedEntryExpansion("agent-spawning", ["frontier-systems", "recursive-autonomy"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "frontier-systems" && row.depth > 0);
   assert.equal(subtreeRows.length, 16 + 89);
@@ -1188,7 +1198,7 @@ test("Autonomous Economy L2 topics are ordinary placements: context, ancestry, c
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "flash-crashes").expandedPlacementIds].sort(), ["autonomous-economy", "economic-stability"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "flash-crashes").expandedPlacementIds].sort(), expectedEntryExpansion("flash-crashes", ["autonomous-economy", "economic-stability"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-economy" && row.depth > 0);
   assert.equal(subtreeRows.length, 17 + 102);
@@ -1213,7 +1223,7 @@ test("Autonomous Protocols L2 topics are ordinary placements: context, ancestry,
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "peg-defense").expandedPlacementIds].sort(), ["autonomous-liquidity-management", "autonomous-protocols"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "peg-defense").expandedPlacementIds].sort(), expectedEntryExpansion("peg-defense", ["autonomous-liquidity-management", "autonomous-protocols"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-protocols" && row.depth > 0);
   assert.equal(subtreeRows.length, 17 + 99);
@@ -1238,7 +1248,7 @@ test("Autonomous Organizations L2 topics are ordinary placements: context, ances
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "handoffs").expandedPlacementIds].sort(), ["autonomous-organizations", "organizational-workflows"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "handoffs").expandedPlacementIds].sort(), expectedEntryExpansion("handoffs", ["autonomous-organizations", "organizational-workflows"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-organizations" && row.depth > 0);
   assert.equal(subtreeRows.length, 15 + 88);
@@ -1262,7 +1272,7 @@ test("Autonomous Execution L2 topics are ordinary placements: context, ancestry,
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "sandboxing").expandedPlacementIds].sort(), ["autonomous-execution", "execution-environments"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "sandboxing").expandedPlacementIds].sort(), expectedEntryExpansion("sandboxing", ["autonomous-execution", "execution-environments"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-execution" && row.depth > 0);
   assert.equal(subtreeRows.length, 11 + 66);
@@ -1298,7 +1308,7 @@ test("Autonomous Coordination L2 topics are ordinary placements: context, ancest
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "coalition-stability").expandedPlacementIds].sort(), ["autonomous-coordination", "coalition-formation"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "coalition-stability").expandedPlacementIds].sort(), expectedEntryExpansion("coalition-stability", ["autonomous-coordination", "coalition-formation"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "autonomous-coordination" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 60);
@@ -1339,7 +1349,7 @@ test("Machine Economy L2 topics are ordinary placements: context, ancestry, cont
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "micropayments").expandedPlacementIds].sort(), ["machine-economy", "machine-payments"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "micropayments").expandedPlacementIds].sort(), expectedEntryExpansion("micropayments", ["machine-economy", "machine-payments"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "machine-economy" && row.depth > 0);
   assert.equal(subtreeRows.length, 14 + 84);
@@ -1372,9 +1382,9 @@ test("AI & Intelligent Systems L2 topics are ordinary placements: context, ances
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "prompt-injection").expandedPlacementIds].sort(), ["ai-intelligent-systems", "ai-security"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "prompt-injection").expandedPlacementIds].sort(), expectedEntryExpansion("prompt-injection", ["ai-intelligent-systems", "ai-security"]));
   // A context with exposition also opens itself to reveal it.
-  assert.deepEqual([...getInitialMapExplorerState(view, "agent-identity-in-ai-agents").expandedPlacementIds].sort(), ["agent-identity-in-ai-agents", "ai-agent", "ai-intelligent-systems"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "agent-identity-in-ai-agents").expandedPlacementIds].sort(), expectedEntryExpansion("agent-identity-in-ai-agents", ["ai-agent", "ai-intelligent-systems"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "ai-intelligent-systems" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 69);
@@ -1399,7 +1409,7 @@ test("Economics & Mechanism Design L2 topics are ordinary placements: context, a
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "slashing").expandedPlacementIds].sort(), ["economics-mechanism-design", "staking-economics"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "slashing").expandedPlacementIds].sort(), expectedEntryExpansion("slashing", ["economics-mechanism-design", "staking-economics"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "economics-mechanism-design" && row.depth > 0);
   assert.equal(subtreeRows.length, 11 + 66);
@@ -1430,7 +1440,7 @@ test("Oracles & External Reality L2 topics are ordinary placements: context, anc
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "staleness").expandedPlacementIds].sort(), ["freshness", "oracles-external-reality"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "staleness").expandedPlacementIds].sort(), expectedEntryExpansion("staleness", ["freshness", "oracles-external-reality"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "oracles-external-reality" && row.depth > 0);
   assert.equal(subtreeRows.length, 12 + 70);
@@ -1456,7 +1466,7 @@ test("Identity, Accounts & Authority L2 topics are ordinary placements: context,
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "session-keys").expandedPlacementIds].sort(), ["identity-accounts-authority", "smart-accounts"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "session-keys").expandedPlacementIds].sort(), expectedEntryExpansion("session-keys", ["identity-accounts-authority", "smart-accounts"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "identity-accounts-authority" && row.depth > 0);
   assert.equal(subtreeRows.length, 8 + 47);
@@ -1484,7 +1494,7 @@ test("Storage & Availability L2 topics are ordinary placements: context, ancestr
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "blob-pricing").expandedPlacementIds].sort(), ["blobs", "storage-availability"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "blob-pricing").expandedPlacementIds].sort(), expectedEntryExpansion("blob-pricing", ["blobs", "storage-availability"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "storage-availability" && row.depth > 0);
   assert.equal(subtreeRows.length, 9 + 51);
@@ -1513,7 +1523,7 @@ test("Cryptography & Proofs L2 topics are ordinary placements: context, ancestry
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "witnesses").expandedPlacementIds].sort(), ["cryptography-proofs", "zero-knowledge-proofs"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "witnesses").expandedPlacementIds].sort(), expectedEntryExpansion("witnesses", ["cryptography-proofs", "zero-knowledge-proofs"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "cryptography-proofs" && row.depth > 0);
   assert.equal(subtreeRows.length, 8 + 48);
@@ -1543,7 +1553,7 @@ test("Networks & Infrastructure L2 topics are ordinary placements: context, ance
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "bootnodes").expandedPlacementIds].sort(), ["networks-infrastructure", "nodes"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "bootnodes").expandedPlacementIds].sort(), expectedEntryExpansion("bootnodes", ["networks-infrastructure", "nodes"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "networks-infrastructure" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 58);
@@ -1571,7 +1581,7 @@ test("Consensus & Ordering L2 topics are ordinary placements: context, ancestry,
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
   assert.equal(resolveMapContextParam(index, ["proposers"]), null);
-  assert.deepEqual([...getInitialMapExplorerState(view, "justification").expandedPlacementIds].sort(), ["consensus-ordering", "finality-in-consensus"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "justification").expandedPlacementIds].sort(), expectedEntryExpansion("justification", ["consensus-ordering", "finality-in-consensus"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "consensus-ordering" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 58);
@@ -1599,7 +1609,7 @@ test("State & Data L2 topics are ordinary placements: context, ancestry, contain
   }
   // Placement, not concept: neither shared concept resolves as a context by its concept id.
   assert.equal(resolveMapContextParam(index, ["state-roots"]), null);
-  assert.deepEqual([...getInitialMapExplorerState(view, "valid-transitions").expandedPlacementIds].sort(), ["state-data", "transitions-in-state-data"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "valid-transitions").expandedPlacementIds].sort(), expectedEntryExpansion("valid-transitions", ["state-data", "transitions-in-state-data"]));
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "state-data" && row.depth > 0);
   assert.equal(subtreeRows.length, 10 + 59);
@@ -1625,7 +1635,7 @@ test("Computation & Execution L2 topics are ordinary placements: context, ancest
     assert.equal(resolveMapContextParam(index, [id]), id);
     assert.equal(getMapContextHref(id), `/map?context=${id}`);
   }
-  assert.deepEqual([...getInitialMapExplorerState(view, "gas").expandedPlacementIds].sort(), ["computation-execution", "resource-accounting"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "gas").expandedPlacementIds].sort(), expectedEntryExpansion("gas", ["computation-execution", "resource-accounting"]));
   // L1 topics open onto their topics; L2 topics are leaves (Verification has no exposition yet).
   const rows = getVisibleMapExplorerRows(view, new Set(mapKnowledge.placements.map((placement) => placement.id)));
   const subtreeRows = rows.filter((row) => getContainingMapL0(index, row.placementId) === "computation-execution" && row.depth > 0);
@@ -1653,7 +1663,7 @@ test("Foundations L2 topics are ordinary placements: context, ancestry, containi
   // Placement, not concept: State resolves per placement, never by concept id.
   assert.equal(resolveMapContextParam(index, ["state"]), null);
   // Entering an L2 context opens exactly its ancestry.
-  assert.deepEqual([...getInitialMapExplorerState(view, "state-in-state-machines").expandedPlacementIds].sort(), ["foundations", "state-machines"]);
+  assert.deepEqual([...getInitialMapExplorerState(view, "state-in-state-machines").expandedPlacementIds].sort(), expectedEntryExpansion("state-in-state-machines", ["foundations", "state-machines"]));
   // Every placement in the subtree sits in 01 Foundations.
   const subtree = mapKnowledge.placements.filter((placement) => getMapExplorerContext(index, placement.id).length > 1 && getMapExplorerContext(index, placement.id)[0].placementId === "foundations");
   assert.equal(subtree.length, 7 + 43);
