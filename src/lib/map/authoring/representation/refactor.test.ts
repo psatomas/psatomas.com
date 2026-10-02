@@ -78,14 +78,14 @@ function design(m: MapKnowledgeModel, conceptId: string, overrides: Partial<Acce
     ...overrides,
   };
 }
-/** single: refactor to a cycle; t: enhance with a comparison; c: blocked on state. */
+/** single: refactor to a cycle; t: enhance with a comparison; c: blocked on dependency, a missing primitive. */
 function spec(m: MapKnowledgeModel): AcceptedDesignSpec {
   return {
     version: 1,
     designs: [
       design(m, "single"),
       design(m, "t", { classification: "enhance", target: [{ structure: "prose", purpose: "argument" }, { structure: "comparison", purpose: "options by cost and trust" }], canonicalNote: "holds as a leaf in Domain One" }),
-      design(m, "c", { status: "blocked", blockedBy: ["state"], target: [{ structure: "prose", purpose: "argument" }, { structure: "state", purpose: "returns" }], facetNote: "relates both layers" }),
+      design(m, "c", { status: "blocked", blockedBy: ["dependency"], target: [{ structure: "prose", purpose: "argument" }, { structure: "dependency", purpose: "shared dependencies" }], facetNote: "relates both layers" }),
     ],
   };
 }
@@ -100,13 +100,13 @@ test("the accepted-design spec is checked as governance: shape, ownership, gaps 
       { ...s.designs[0], domainId: "d3" },
       s.designs[0],
       { ...s.designs[1], status: "blocked" as const },
-      { ...design(m, "k"), target: [{ structure: "state" as const, purpose: "x" }] },
+      { ...design(m, "k"), target: [{ structure: "dependency" as const, purpose: "x" }] },
       { ...design(m, "done"), sourceFingerprint: "reviewed-something-else" },
       { ...design(m, "a" as never) },
     ].filter((entry) => entry.conceptId !== "a"),
   };
   const problems = specProblems(broken, m).join("\n");
-  for (const expected of [/single: owned by d1, listed under d3/, /single: listed twice/, /t: blocked without a missing primitive/, /k: actionable but needs state/, /done: the record changed since its design was accepted/]) {
+  for (const expected of [/single: owned by d1, listed under d3/, /single: listed twice/, /t: blocked without a missing primitive/, /k: actionable but needs dependency/, /done: the record changed since its design was accepted/]) {
     assert.match(problems, expected);
   }
   const keptDifferently = { version: 1 as const, designs: [{ ...s.designs[0], resolution: { decision: "keep" as Decision, structured: [], resultFingerprint: "other", note: "x" } }] };
@@ -121,7 +121,7 @@ test("the spec is exported from an audit's designs: improvements only, blocked w
   d1 = recordDesign(d1, { conceptId: "single", classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "cycle", purpose: "loop" }], ...base }, recordOf(m, "single"), facts("single"), "now");
   d1 = recordDesign(d1, { conceptId: "done", classification: "keep", representation: [{ structure: "prose", purpose: "x" }], ...base }, recordOf(m, "done"), facts("done"), "now");
   let d2 = emptyStore("d2");
-  d2 = recordDesign(d2, { conceptId: "c", classification: "refactor", representation: [{ structure: "prose", purpose: "x" }, { structure: "state", purpose: "returns" }], canonicalNote: "both", facetNote: "both layers", ...base }, recordOf(m, "c"), facts("c"), "now");
+  d2 = recordDesign(d2, { conceptId: "c", classification: "refactor", representation: [{ structure: "prose", purpose: "x" }, { structure: "dependency", purpose: "shared dependencies" }], canonicalNote: "both", facetNote: "both layers", ...base }, recordOf(m, "c"), facts("c"), "now");
   d2 = recordDesign(d2, { conceptId: "t", classification: "enhance", representation: [{ structure: "prose", purpose: "x" }, { structure: "comparison", purpose: "options" }], canonicalNote: "leaf too", ...base }, recordOf(m, "t"), facts("t"), "now");
   const exported = exportAcceptedDesigns([d2, d1], m);
   assert.deepEqual(exported.designs.map((entry) => [entry.conceptId, entry.status, entry.domainId]), [["single", "actionable", "d1"], ["c", "blocked", "d2"], ["t", "actionable", "d2"]]);
@@ -157,9 +157,9 @@ test("a domain's plan separates actionable, blocked, resolved and KEEP; the camp
 
 test("a blocked design is re-reviewed outside a run, and only as keep", () => {
   const m = model();
-  const reviewed = reviewBlockedDesign(spec(m), m, "c", "the state machine belongs to a child");
+  const reviewed = reviewBlockedDesign(spec(m), m, "c", "the dependency graph belongs to a child");
   assert.deepEqual(reviewed.problems, []);
-  assert.deepEqual(reviewed.spec!.designs[2].resolution, { decision: "keep", structured: ["distinction"], resultFingerprint: spec(m).designs[2].sourceFingerprint, note: "the state machine belongs to a child" });
+  assert.deepEqual(reviewed.spec!.designs[2].resolution, { decision: "keep", structured: ["distinction"], resultFingerprint: spec(m).designs[2].sourceFingerprint, note: "the dependency graph belongs to a child" });
   assert.deepEqual(specProblems(reviewed.spec!, m), []);
   assert.deepEqual(specDiffProblems(spec(m), reviewed.spec!, ["c"]), []);
   const d2 = planRefactor(reviewed.spec!, m, "d2");
@@ -170,6 +170,15 @@ test("a blocked design is re-reviewed outside a run, and only as keep", () => {
   assert.match(reviewBlockedDesign(spec(m), withRecord(m, "c", { body: [{ kind: "paragraph", text: "Edited elsewhere." }] }), "c", "x").problems.join(), /record changed since its design was accepted/);
   const executed = { ...spec(m), designs: spec(m).designs.map((entry) => (entry.conceptId === "c" ? { ...entry, resolution: { decision: "execute" as Decision, structured: [], resultFingerprint: entry.sourceFingerprint, note: "x" } } : entry)) };
   assert.match(specProblems(executed, m).join(), /c: a blocked design can only be resolved as keep, by re-review/);
+});
+
+test("a design resolved while its primitive was missing stays valid once the primitive exists", () => {
+  const m = model();
+  const onState = design(m, "c", { status: "blocked", blockedBy: ["state"], target: [{ structure: "prose", purpose: "argument" }, { structure: "state", purpose: "returns" }], facetNote: "relates both layers" });
+  const kept = { ...onState, resolution: { decision: "keep" as Decision, structured: ["distinction" as const], resultFingerprint: onState.sourceFingerprint, note: "re-reviewed" } };
+  assert.deepEqual(specProblems({ version: 1, designs: [kept] }, m), []);
+  // Unresolved, the same design would now be blocked on nothing.
+  assert.match(specProblems({ version: 1, designs: [onState] }, m).join(), /c: blocked without a missing primitive/);
 });
 
 test("the execution boundary: execute, reduce or keep within the accepted design, and nothing else", () => {
@@ -191,7 +200,7 @@ test("the execution boundary: execute, reduce or keep within the accepted design
   assert.deepEqual(decisionProblems({ ...single, classification: "rewrite" }, base, { ...withCycle, definition: "A new definition." }, "execute"), []);
   // Blocked designs and designs reviewed against other content cannot be executed.
   const c = spec(m).designs[2];
-  assert.match(decisionProblems(c, recordOf(m, "c"), recordOf(m, "c"), "keep").join(), /blocked by state/);
+  assert.match(decisionProblems(c, recordOf(m, "c"), recordOf(m, "c"), "keep").join(), /blocked by dependency/);
   assert.match(decisionProblems(single, { ...base, definition: "Other." }, withCycle, "execute").join(), /not the one the design reviewed/);
 });
 

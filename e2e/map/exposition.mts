@@ -2,7 +2,7 @@
 // the real production components: the content API response for one placement is
 // replaced by a fixture, so the explorer renders it exactly as it would render
 // canonical content. Nothing here changes the product.
-import { describeCycle } from "../../src/components/map/exposition-text.ts";
+import { describeCycle, describeState, finalStates, transitionDirection } from "../../src/components/map/exposition-text.ts";
 import type { MapContentBlock } from "../../src/lib/map/index.ts";
 import { settle, waitForExposition, type Section } from "./harness.mts";
 
@@ -18,7 +18,31 @@ const COMPARISON = {
     { name: "Committee", values: ["Low", "Short", "A threshold of committee members"] },
   ],
 } as const;
-const BLOCKS: MapContentBlock[] = [{ kind: "paragraph", text: "A fixture exposition exercising cycle and comparison models." }, CYCLE, COMPARISON];
+// Synthetic state models: asymmetric entry and exit between two modes, and a
+// machine that branches, returns, stays and ends.
+const MODES = {
+  kind: "state",
+  label: "Operating modes",
+  states: ["Normal", "Defensive"],
+  transitions: [
+    { from: "Normal", to: "Defensive", when: "the signal rises above the entry threshold" },
+    { from: "Defensive", to: "Normal", when: "the signal stays below a lower exit threshold for a full window" },
+  ],
+} as const;
+const RETRIES = {
+  kind: "state",
+  label: "Retrying an action",
+  states: ["Attempting", "Waiting", "Done", "Abandoned"],
+  transitions: [
+    { from: "Attempting", to: "Done", when: "the effect is confirmed" },
+    { from: "Attempting", to: "Waiting", when: "it fails and retries remain" },
+    { from: "Waiting", to: "Attempting", when: "the backoff delay elapses" },
+    { from: "Waiting", to: "Waiting", when: "another failure is reported during the delay" },
+    { from: "Waiting", to: "Abandoned", when: "no retries remain" },
+  ],
+} as const;
+const STATES = [MODES, RETRIES];
+const BLOCKS: MapContentBlock[] = [{ kind: "paragraph", text: "A fixture exposition exercising cycle, comparison and state models." }, CYCLE, COMPARISON, ...STATES];
 const CONTENT = /\/api\/map\/content\/consensus$/;
 
 export const expositionSections: Section[] = [
@@ -64,7 +88,7 @@ export const expositionSections: Section[] = [
   },
   {
     name: "models",
-    title: "cycle and comparison models at desktop and 375px",
+    title: "cycle, comparison and state models at desktop and 375px",
     async run({ browser, base, check }) {
       const texts: string[] = [];
       for (const width of [1280, 375]) {
@@ -100,6 +124,21 @@ export const expositionSections: Section[] = [
             rowDisplay: getComputedStyle(rows[0]).display,
             cellLabelVisible: box(rows[0].querySelector('[role="cell"] [aria-hidden="true"]')!).width > 1,
             clipped,
+            states: [...exposition.querySelectorAll('[role="img"]')]
+              .filter((node) => node.querySelector("[data-state-node]"))
+              .map((model) => ({
+                label: model.getAttribute("aria-label"),
+                nodes: [...model.querySelectorAll("[data-state-node]")].map((node) => node.textContent),
+                finals: [...model.querySelectorAll("[data-state-final]")].map((node) => node.textContent),
+                entries: model.querySelectorAll("[data-state-entry]").length,
+                entryMeetsFirst: (() => {
+                  const entry = box(model.querySelector("[data-state-entry]")!);
+                  const first = box(model.querySelector("[data-state-node]")!);
+                  return Math.abs(entry.right - first.left) <= 1 && Math.abs(centre(entry) - centre(first)) <= 2;
+                })(),
+                transitions: [...model.querySelectorAll("[data-state-transition]")].map((row) => [row.getAttribute("data-state-transition"), (row as HTMLElement).innerText.replace(/\s+/g, " ").trim()]),
+                clipped: [...model.querySelectorAll("[data-state-node], [data-state-transition]")].filter((node) => node.scrollWidth > node.clientWidth + 1).length,
+              })),
             overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
             text: exposition.innerText.replace(/\s+/g, " ").trim(),
           };
@@ -116,6 +155,27 @@ export const expositionSections: Section[] = [
         const wide = width >= 640;
         check(facts.headerVisible === wide && (facts.rowDisplay === "grid") === wide && facts.cellLabelVisible === !wide, `${at} comparison: ${wide ? "grid with a visible header row" : "stacked rows with dimension names beside values"}`);
         check(facts.clipped === 0, `${at} comparison: no clipped cells`);
+        check(facts.states.length === STATES.length, `${at} state: every state model renders (${facts.states.length})`);
+        for (const [index, model] of STATES.entries()) {
+          const rendered = facts.states[index];
+          if (!rendered) continue;
+          const name = `${at} state "${model.label}"`;
+          check(rendered.label === describeState(model.label, model.states, model.transitions), `${name}: the text alternative states every transition, its direction and its condition`);
+          check(JSON.stringify(rendered.nodes) === JSON.stringify(model.states), `${name}: states render in the listed order`);
+          check(JSON.stringify(rendered.finals) === JSON.stringify(finalStates(model.states, model.transitions)), `${name}: exactly the final states are marked final`);
+          check(rendered.entries === 1 && rendered.entryMeetsFirst, `${name}: the entry marker enters the first state`);
+          const expected = model.states.flatMap((state) =>
+            model.transitions
+              .filter((transition) => transition.from === state)
+              .map((transition) => {
+                const direction = transitionDirection(model.states, transition.from, transition.to);
+                const target = (direction === "return" ? `back to ${transition.to}` : direction === "stay" ? `stays in ${transition.to}` : transition.to).toUpperCase();
+                return [direction, `${transition.when} ${direction === "return" ? "↩" : direction === "stay" ? "↻" : "→"} ${target}`];
+              }),
+          );
+          check(JSON.stringify(rendered.transitions) === JSON.stringify(expected), `${name}: each transition shows its condition, direction and target (${JSON.stringify(rendered.transitions)})`);
+          check(rendered.clipped === 0, `${name}: no clipped state or transition`);
+        }
         check(facts.overflow <= 0, `${at}: no horizontal overflow (${facts.overflow})`);
         texts.push(facts.text);
         await page.close();

@@ -23,4 +23,5 @@ export type {
   MapPlacement,
   MapRelationship,
   MapRelationshipTypeId,
+  MapStateTransition,
 } from "./types.ts";

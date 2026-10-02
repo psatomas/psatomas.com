@@ -48,7 +48,7 @@ export const REPRESENTATION_CATALOG: readonly CatalogEntry[] = [
   { structure: "prose", block: "paragraph", fit: "native", expresses: "argument, causation, conditions and qualification: reasoning that is not a shape" },
   { structure: "distinction", block: "distinction", fit: "native", expresses: "notions a reader is likely to conflate, as A ≠ B or a chain" },
   { structure: "process", block: "flow", fit: "native", expresses: "ordered stages, branching into alternatives or parallel work and converging again" },
-  { structure: "lifecycle", block: "flow", fit: "native", expresses: "the stages an entity passes through from creation to retirement", limits: "no return to an earlier stage" },
+  { structure: "lifecycle", block: "flow", fit: "native", expresses: "the stages an entity passes through from creation to retirement", limits: "no return to an earlier stage; a lifecycle with returns is a state model" },
   { structure: "failure-path", block: "flow", fit: "native", expresses: "how a fault propagates, or the outcomes a failure branches into" },
   { structure: "composition", block: "flow", fit: "approximate", expresses: "a whole and the parts or layers it is made of", limits: "drawn as a stage branching into parts; no nesting beyond one level" },
   { structure: "variants", block: "flow", fit: "approximate", expresses: "the kinds of something, each paired with what distinguishes it or what follows from it", limits: "drawn as a stage branching into one short branch per kind; one attribute per kind, not a table" },
@@ -56,7 +56,7 @@ export const REPRESENTATION_CATALOG: readonly CatalogEntry[] = [
   { structure: "tension", block: "tensions", fit: "native", expresses: "recurring pairs of forces that pull against each other" },
   { structure: "vocabulary", block: "terms", fit: "native", expresses: "the terms a passage introduces, as a plain strip" },
   { structure: "cycle", block: "cycle", fit: "native", expresses: "a recurrent process whose last step feeds the next pass of the first (control and feedback loops)", limits: "one loop of at most six steps; not for a sequence that merely repeats or ends" },
-  { structure: "state", fit: "gap", expresses: "states and the transitions between them, including returns and terminal states", limits: "a flow shows only a forward sequence of stages" },
+  { structure: "state", block: "state", fit: "native", expresses: "persistent states or modes, and the events or conditions that move between them, including returns, transitions that keep the system where it is, and final states", limits: "two to six states and at most eight labelled transitions; at least one transition returns to an earlier or the same state, closing a loop. A forward process is a flow, and a recurrence of actions with no conditions is a cycle" },
   { structure: "comparison", block: "comparison", fit: "native", expresses: "several alternatives compared along the same explicit dimensions", limits: "two to six alternatives × two to four dimensions, short values; one dimension is variants, not a comparison" },
   { structure: "dependency", fit: "gap", expresses: "a graph of what relies on what, where dependencies are shared or form chains", limits: "a flow is a sequence, not a graph" },
 ];
@@ -64,4 +64,4 @@ export const REPRESENTATION_CATALOG: readonly CatalogEntry[] = [
 export const catalogEntry = (structure: string): CatalogEntry | undefined => REPRESENTATION_CATALOG.find((entry) => entry.structure === structure);
 
 /** Block kinds that carry structure rather than continuous prose. */
-export const STRUCTURED_KINDS: ReadonlySet<BlockKind> = new Set(["flow", "distinction", "tensions", "cycle", "comparison"]);
+export const STRUCTURED_KINDS: ReadonlySet<BlockKind> = new Set(["flow", "distinction", "tensions", "cycle", "comparison", "state"]);

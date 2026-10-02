@@ -85,9 +85,11 @@ export function specProblems(spec: AcceptedDesignSpec, model: MapKnowledgeModel)
     const facts = placementsOf(model, at);
     if (facts.ownerDomainId !== design.domainId) problems.push(`${at}: owned by ${facts.ownerDomainId}, listed under ${design.domainId}`);
     for (const choice of design.target) if (!catalogEntry(choice.structure)) problems.push(`${at}: unknown structure "${choice.structure}"`);
+    // A resolution is the record of what happened to the design; a primitive
+    // added later does not reopen it.
     const gaps = gapsOf(design.target);
-    if (design.status === "blocked" && !gaps.length) problems.push(`${at}: blocked without a missing primitive`);
-    if (design.status === "actionable" && gaps.length) problems.push(`${at}: actionable but needs ${gaps.join(", ")}, which no block expresses`);
+    if (!design.resolution && design.status === "blocked" && !gaps.length) problems.push(`${at}: blocked without a missing primitive`);
+    if (!design.resolution && design.status === "actionable" && gaps.length) problems.push(`${at}: actionable but needs ${gaps.join(", ")}, which no block expresses`);
     if (design.status === "blocked" && design.resolution && design.resolution.decision !== "keep") problems.push(`${at}: a blocked design can only be resolved as keep, by re-review`);
     if (!design.justification?.trim()) problems.push(`${at}: needs a justification`);
     if (!design.resolution && design.sourceFingerprint !== contentFingerprint(record)) {

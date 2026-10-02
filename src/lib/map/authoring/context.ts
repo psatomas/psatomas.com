@@ -184,6 +184,8 @@ export function describeMapContentBlock(block: MapContentBlock): string {
       return `[cycle] ${block.label}: ${[...block.steps, block.steps[0]].join(" → ")} …`;
     case "comparison":
       return `[comparison] ${block.label}: ${block.dimensions.join(" | ")}; ${block.alternatives.map((alternative) => `${alternative.name}: ${alternative.values.join(" | ")}`).join("; ")}`;
+    case "state":
+      return `[state] ${block.label}: ${block.states.join(" | ")}; ${block.transitions.map((transition) => `${transition.from} → ${transition.to} when ${transition.when}`).join("; ")}`;
   }
 }
 
