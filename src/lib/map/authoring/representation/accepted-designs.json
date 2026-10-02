@@ -1030,7 +1030,13 @@
       "placements": [
         "action-execution"
       ],
-      "sourceFingerprint": "59f42d501dbbb8767273187aba7e14ed196c45ee1a278b71cfe7c44e25a65ed8"
+      "sourceFingerprint": "59f42d501dbbb8767273187aba7e14ed196c45ee1a278b71cfe7c44e25a65ed8",
+      "resolution": {
+        "decision": "keep",
+        "structured": [],
+        "resultFingerprint": "59f42d501dbbb8767273187aba7e14ed196c45ee1a278b71cfe7c44e25a65ed8",
+        "note": "Re-reviewed against the L2 vertical boundary (docs/map-authoring/l2-analysis.md). The submitted transaction's states (pending, dropped, replaced, included and failed or succeeded, reorganized, final) are the mechanism of Transaction Lifecycle under Transactions, with Transaction Submission and Reorganizations, all owned elsewhere; drawing them here would teach L2 territory. Action Execution's own model (follow each action to a known outcome, make retries idempotent, record progress) is an argument the prose carries, and the parent already draws the forward path from construction to finality, so no structure belongs at this concept."
+      }
     },
     {
       "conceptId": "control-loops",
@@ -1112,7 +1118,13 @@
       "placements": [
         "protocol-adaptation"
       ],
-      "sourceFingerprint": "6e0a2961864875027c9fa94d1d245031a51daa1688fdd82016de7732c6a7e9ed"
+      "sourceFingerprint": "6e0a2961864875027c9fa94d1d245031a51daa1688fdd82016de7732c6a7e9ed",
+      "resolution": {
+        "decision": "keep",
+        "structured": [],
+        "resultFingerprint": "6e0a2961864875027c9fa94d1d245031a51daa1688fdd82016de7732c6a7e9ed",
+        "note": "Re-reviewed against the L2 vertical boundary (docs/map-authoring/l2-analysis.md). Normal and defensive modes with asymmetric entry and exit are the mechanism of its children Mode Switching and Regime Detection; drawing the machine here would teach their territory. At L1 the record relates detection, switching, learning, limits and evaluation in prose; the parent already draws adaptation apart from upgrade, and the trade-offs each paragraph resolves would only be restated by a tensions block, so no structure belongs at this concept."
+      }
     }
   ]
 }
