@@ -1,0 +1,494 @@
+{
+  "version": 1,
+  "group": "cross-domain-atomicity-in-interoperability-abstraction",
+  "domain": "interoperability-abstraction",
+  "parentConceptId": "cross-domain-atomicity",
+  "basis": {
+    "membership": "02f82af625f615270882f61e62ef808f0c6a9f5aeb39e860a19e2491c054d4c5",
+    "parents": {
+      "cross-domain-atomicity": "beb0fdf2f7c6701891e771bdab72380afc4171fcfbfa08372acac02401eab667",
+      "interoperability-abstraction": "e639acb562e14b68b89e07a5afd8518103c9ede303078c3d5756130ae192f281"
+    },
+    "fixed": {},
+    "hazards": "47a2ac7a378750513e0b7992655ed3ef408224603ef8755532a941a03e46ad23"
+  },
+  "members": [
+    {
+      "conceptId": "atomic-swaps",
+      "placementId": "atomic-swaps",
+      "standing": "owned",
+      "claims": [
+        "the exchange problem an atomic swap solves: two parties on different chains trading assets without trusting each other or an intermediary",
+        "the constructions that realize a swap and what each assumes: hash-locked contracts, adaptor signatures and a shared settlement layer",
+        "what a swap does not provide: price discovery, a counterparty, or protection from the free option"
+      ],
+      "excludes": [
+        "hashed-timelock-contracts",
+        "shared-sequencing",
+        "two-phase-commit"
+      ]
+    },
+    {
+      "conceptId": "hashed-timelock-contracts",
+      "placementId": "hashed-timelock-contracts",
+      "standing": "owned",
+      "claims": [
+        "how the hashlock and the timelock are expressed on each chain, with their claim and refund paths",
+        "how the deadlines must be ordered against each chain's confirmation and finality times",
+        "the costs of an HTLC: capital locked for the timeout, griefing by abandoning a swap, and the shared hash linking both legs"
+      ],
+      "excludes": [
+        "atomic-swaps",
+        "finality"
+      ]
+    },
+    {
+      "conceptId": "two-phase-commit",
+      "placementId": "two-phase-commit",
+      "standing": "owned",
+      "claims": [
+        "the participant's uncertain state after it votes to commit, unable to commit or abort alone",
+        "how the coordinator's decision is recorded durably and recovered after failures",
+        "how two-phase commit maps onto chains: escrows as locks, a relayer or chain as coordinator, timeouts in place of a reliable coordinator"
+      ],
+      "excludes": [
+        "atomic-swaps",
+        "shared-sequencing",
+        "partial-failures"
+      ]
+    },
+    {
+      "conceptId": "shared-sequencing",
+      "placementId": "shared-sequencing-in-cross-chain-atomicity",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "whether atomic inclusion by a shared sequencer amounts to atomic execution across rollups"
+      ]
+    },
+    {
+      "conceptId": "partial-failures",
+      "placementId": "partial-failures",
+      "standing": "owned",
+      "claims": [
+        "the forms of a cross-chain partial failure: one leg confirmed and another reverted, stalled or reorganized away",
+        "how a partial failure is detected, and which side can observe what, and when",
+        "the exposure while a partial failure stands: who holds the risk and what can be exploited"
+      ],
+      "excludes": [
+        "compensating-actions",
+        "atomicity-guarantees",
+        "rollbacks"
+      ]
+    },
+    {
+      "conceptId": "atomicity-guarantees",
+      "placementId": "atomicity-guarantees",
+      "standing": "owned",
+      "claims": [
+        "the spectrum of cross-chain guarantees: all or nothing, all or refund, eventual compensation and best effort",
+        "what each guarantee depends on: shared sequencing, a common settlement layer, timeouts or honest relayers",
+        "reading a system's claimed atomicity: the failure it covers, the window it leaves open and who bears that gap"
+      ],
+      "excludes": [
+        "atomic-swaps",
+        "hashed-timelock-contracts",
+        "two-phase-commit",
+        "shared-sequencing",
+        "partial-failures"
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "atomic-swaps",
+        "hashed-timelock-contracts"
+      ],
+      "split": "Atomic Swaps owns the exchange problem and the families of construction; Hashed Timelock Contracts owns how one construction works on each chain, its deadlines and its costs. A swap names HTLCs as one realization and never explains their mechanism."
+    }
+  ],
+  "concepts": {
+    "atomic-swaps": {
+      "model": {
+        "meaning": "An atomic swap exchanges assets between parties on different chains so that either both transfers happen or neither does, without a trusted intermediary.",
+        "kind": "mechanism",
+        "parents": {
+          "cross-domain-atomicity": "the exchange problem and the families of construction, beyond HTLCs as one way to achieve atomicity"
+        },
+        "claims": [
+          "the exchange problem an atomic swap solves: two parties on different chains trading assets without trusting each other or an intermediary",
+          "the constructions that realize a swap and what each assumes: hash-locked contracts, adaptor signatures and a shared settlement layer",
+          "what a swap does not provide: price discovery, a counterparty, or protection from the free option"
+        ],
+        "excludes": [
+          "hashed-timelock-contracts",
+          "shared-sequencing",
+          "two-phase-commit"
+        ],
+        "placements": {
+          "atomic-swaps": "one placement"
+        },
+        "fields": {
+          "actors": [
+            "two counterparties"
+          ],
+          "assumptions": [
+            "both parties stay online until the deadlines",
+            "each chain enforces its lock"
+          ],
+          "variants": [
+            "hash-locked",
+            "adaptor signatures",
+            "shared settlement layer"
+          ],
+          "failures": [
+            "a counterparty abandoning the swap",
+            "the free option"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "the families of construction differ in one or two assumptions each, which a paragraph states more clearly than a table",
+        "relationship": "one goal realized by several constructions",
+        "level": "the swap problem itself; the parent names only HTLCs",
+        "territory": "the HTLC mechanism is its sibling's; the swap names it as one construction",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:07:47.035Z",
+        "note": "Checked all 11 criteria of quality-contract B against the single placement (Interoperability & Abstraction / Cross-Chain Atomicity / Atomic Swaps, a leaf). Repairs made in one round: (1) parent overlap and HTLC split: the hash-locked sentence 'lock each leg in a contract on its own chain and tie both legs to one secret' paraphrased the parent's 'Each locks its asset under the same secret' and the HTLC sibling's shared-hash claim; it now only names HTLCs as the realization that carries the link between legs in a contract on each chain. (2) Accuracy: 'both chains' signature schemes must support adaptor signatures' was an overclaim, since cross-chain adaptor swaps such as Bitcoin-Monero use an adaptor signature on one chain and reveal a key share that claims the other leg; now 'the signature scheme on at least one chain must support adaptor signatures, the other leg must be claimable with the secret that signature reveals'. (3) 'the same responsiveness' softened to 'comparable responsiveness'. (4) Progression and consistency: the first paragraph's condition 'each chain enforces its lock' contradicted the third family, where nothing is locked; now 'the chains enforce the conditions as written'. 'which is what separates a swap from a bridge transfer' became 'which separates them from a bridge transfer' because the third family can involve bridged representations. HTLC split: after the repair, HTLCs are named as one realization. Their chain-capability assumption (contracts that can check a hash and enforce a deadline) and the responsiveness they require are stated only as assumptions of the family. No sentence describes claim or refund paths, deadline ordering against confirmation or finality, capital lockup as an HTLC cost, or griefing mechanics. The free-option paragraph's 'nor the use of the asset while it was committed' gives a consequence of the option for both families, not the HTLC cost. Parent overlap: the responsiveness clause echoes the parent's 'both parties must stay online'. It is kept because it is one item in a comparison of assumptions across families, which this concept claims, and it later contrasts with the adaptor and shared-layer families. The free-option paragraph begins beyond the parent's HTLC-specific option sentence: it extends the option to the adaptor family and to signed orders, adds premium pricing, and adds why an exercised option cannot be told apart from an abandoned swap. Siblings and reservations: two-phase commit is not mentioned. The record covers no partial-failure forms or detection, because the text keeps atomicity holding throughout, and it does not set out the guarantee spectrum. 'Either receives the other asset or keeps its own' is the swap's own outcome, not the atomicity-guarantees spectrum. Shared Sequencing reservation (whether atomic inclusion by a shared sequencer amounts to atomic execution): no sequencer is mentioned. The closing sentence of the third family says chains posting to the same base chain do not get joint execution by default; that is the shared-settlement family's own assumption, not the reserved inclusion-versus-execution question. Trust Assumptions is reserved in the oracle-problem group ('what a system relies on without checking'), not in this group. The record states this concept's specific assumptions (chains enforcing conditions, bridge soundness for bridged assets) and gives no general account of trust assumptions. Accuracy: adaptor-signature mechanics are correct. Legs are under jointly controlled keys. The completing signature reveals the secret. The construction reaches chains without hash locks, such as Monero. Cooperative legs can look like plain payments ('can' hedged). Cross-curve swaps need a proof that one secret underlies both curves, a cross-group discrete-log equality proof. A deadline is needed on at least one chain. A premium forfeited by the option holder matches published premium-based designs ('some designs'). Hedges are present where practice varies ('generally', 'usually', 'can', 'by default'). Structure: the design is prose, the record is five paragraphs and no blocks, so it matches. The forms differ in one or two assumptions each, which prose carries. Canonical validity: there is one placement, no positional or time-sensitive words, and the record is self-sufficient at a leaf. Identity: the concept is the cross-chain exchange itself, not a DEX swap. Economy and progression: problem, then the three families and their assumptions, then what a swap does not provide (price discovery and counterparty, then the free option). Each paragraph follows from the one before.",
+        "resolutions": [
+          {
+            "id": "names-concept:0ad197358b",
+            "resolution": "Named, not explained. Hashed timelock contracts appear only as the realization of the hash-locked family. Its chain capability and the responsiveness it needs are stated as the family's assumptions. Claim and refund paths, deadline ordering and HTLC costs are absent, and after the repair the shared-secret linking, which the parent describes, is no longer paraphrased."
+          },
+          {
+            "id": "names-concept:40e61c9eea",
+            "resolution": "Named only, as one place where price discovery happens ('in order books, in quotes from market makers or in negotiation'). How order books work is not explained."
+          },
+          {
+            "id": "names-concept:e356bdd8ad",
+            "resolution": "Named only, to mark what a swap does not provide: the swap enforces an agreed rate without discovering it. How prices are discovered is not explained."
+          },
+          {
+            "id": "names-concept:4d13af81c8",
+            "resolution": "Named in the third family, which this concept claims ('a shared settlement layer'). The text gives only what the swap assumes of such a layer: it must execute both legs together, and assets on it are only as sound as their bridge. It does not explain settlement layers in general."
+          },
+          {
+            "id": "names-concept:62f2066d46",
+            "resolution": "Named only, in the adaptor-signature assumption that at least one chain's signature scheme supports adaptor signatures. Signature schemes themselves are not explained."
+          },
+          {
+            "id": "absolutes:1e1afba1ff",
+            "resolution": "Checked each: 'exposed to the other never sending' describes a risk and holds; 'chains that cannot express a hash lock' describes a class of chains (e.g. ones without scripting) and holds; 'a counterparty that never completes' describes an observed outcome and holds. None asserts an unconditional guarantee."
+          }
+        ],
+        "recordFingerprint": "590bb52e4059e510d93bde888fedffee43438218ca18c6dc69eb05b2b0e7df2f"
+      }
+    },
+    "hashed-timelock-contracts": {
+      "model": {
+        "meaning": "A hashed timelock contract locks an asset so that it can be claimed by whoever reveals a secret matching a hash before a deadline, and refunded to its owner after it.",
+        "kind": "mechanism",
+        "parents": {
+          "cross-domain-atomicity": "per-chain expression, deadline ordering and costs, beyond the shared secret and the free option"
+        },
+        "claims": [
+          "how the hashlock and the timelock are expressed on each chain, with their claim and refund paths",
+          "how the deadlines must be ordered against each chain's confirmation and finality times",
+          "the costs of an HTLC: capital locked for the timeout, griefing by abandoning a swap, and the shared hash linking both legs"
+        ],
+        "excludes": [
+          "atomic-swaps",
+          "finality"
+        ],
+        "placements": {
+          "hashed-timelock-contracts": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "the initiator locks with a long timeout",
+            "the counterparty locks with a shorter timeout",
+            "the initiator claims, revealing the secret",
+            "the counterparty claims with the secret, or each refunds after the deadlines"
+          ],
+          "assumptions": [
+            "deadlines leave margin beyond each chain's confirmation time"
+          ],
+          "failures": [
+            "the second deadline too close to the first",
+            "a reorganization undoing a claim"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "an ordered exchange between two parties that branches into claim or refund",
+        "structures": [
+          {
+            "structure": "interaction",
+            "purpose": "who locks and claims on which chain, in order, with the refund branch",
+            "whyNotProse": "the order of the locks and the two outcomes, with deadlines that must nest, are lost across sentences"
+          }
+        ],
+        "level": "the mechanism's own sequence; the parent states only the principle",
+        "territory": "draws the HTLC exchange, not the general swap or two-phase commit",
+        "placements": "one placement",
+        "division": "the prose explains deadline ordering and costs; the flow shows the order of locks and the branch into claim or refund"
+      },
+      "audit": {
+        "at": "2026-10-02T14:13:55.276Z",
+        "note": "Independent audit against quality contract section B. Split with Atomic Swaps holds: the record never restates the exchange problem (first move, trust, intermediaries), never names or contrasts adaptor-signature or shared-settlement swaps, and touches the free option only in one sentence tying its duration to the short deadline, an HTLC deadline cost, leaving the option's swap-level treatment (no protection, pricing, indistinguishable from abandonment) to Atomic Swaps; the only shared ground is that both chains must support a common hash, which Atomic Swaps states in one clause and this record develops (secret-length mismatch), so no overlap. Flow (interaction rendered as flow, as designed): it adds what prose would scatter, namely who locks on which chain in what order, which lock carries the long and which the short deadline, the finality gates before each dependent step, and the branch into claim (initiator claims on B, revealing the secret, then counterparty claims on A before the long deadline) or refund (counterparty refunds on B after the short deadline, then initiator on A after the long deadline); steps checked accurate. The prose does not re-walk the stages: it explains why the deadlines nest, what the gap must absorb, how reorganizations bound each step, the costs of abandonment, and the hash link. Parent overlap: the flow necessarily restates the parent's principle (same secret on both legs, revealing it to claim lets the other claim, timeouts refund) because a flow without the lock and reveal steps would not be complete; it adds chain, deadline and finality detail the parent lacks, so this is scaffolding, not a defect. The parent's 'both parties must stay online' is not restated. Reservation: Shared Sequencing is neither named nor explained; Two-Phase Commit is not mentioned; reorg exposure is kept to HTLC deadline ordering (model failure 'a reorganization undoing a claim'), not partial failures in general. Accuracy checked: Bitcoin-style two-branch script (hash plus recipient signature; owner signature with an absolute lock-time) and contract claim/refund functions are correct; the post-deadline race where a script's hash branch has no time condition, versus a contract closing the claim path, is correct and hedged ('commonly', 'can'); deadline order and the counterfactual (initiator claiming at the last moment and refunding if its refund opened no later) are correct; reorg risks on locks, on revealing against an unfinal lock, and on a near-deadline claim replaced by a refund are correct and hedged; the initiator's asset is committed longest in every path; griefing costs are correct and the liquidity-provider example fits; the secret-length mismatch attack is correctly attributed to the party that chose the secret, and 'commonly fix the secret's length' is hedged. Repair (accuracy): 'The hash also sits openly on both chains' overstated when the hash is visible, since a script locked behind a script hash (as on Bitcoin, the record's own example) exposes it only when spent; now 'becomes public on both chains, on some when a leg is locked and on others only when it is claimed'. An intermediate wording ('at the latest') raised a false dated-word signal and was replaced in the second round. No overclaims remain: 'commonly', 'can', 'could' qualify the variable practices. Canonical validity: one leaf placement under Cross-Chain Atomicity; no positional language; the text stands alone there. Economy and progression: definition, per-chain expression, flow, deadline ordering, finality bounds, capital and griefing costs, hash-link costs; each paragraph carries a claim and none repeats the definition.",
+        "resolutions": [
+          {
+            "id": "names-concept:40ffdb6733",
+            "resolution": "Not a defect. Finality (excluded) is named and applied to when an HTLC step is safe and how long deadlines must be, which is the accepted claim on ordering deadlines against confirmation and finality times; how chains reach finality is not explained."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "Not a defect. 'A common hash function' is named as a requirement of the shared hash; hash functions themselves are not explained."
+          },
+          {
+            "id": "names-concept:696f441f79",
+            "resolution": "Not a defect. A liquidity provider appears only as the example victim of repeated griefing, which it fits; the role is not explained."
+          },
+          {
+            "id": "names-concept:e2f878fbac",
+            "resolution": "Not a defect. 'A chain with general smart contracts' names the platform kind to contrast HTLC expression with scripts; only the HTLC contract's claim and refund functions are described, not smart contracts."
+          },
+          {
+            "id": "names-concept:5eac9d6aa8",
+            "resolution": "Not a defect. Fees are named as a pressure on getting a claim included and as the small cost of abandoning; fee mechanics are not explained."
+          }
+        ],
+        "recordFingerprint": "c136fe8b01e54c17431ba1af473caf82f78f2c411f2092d01c54fe9fb4bdbe87"
+      }
+    },
+    "two-phase-commit": {
+      "model": {
+        "meaning": "Two-phase commit coordinates a change across several participants by first having each prepare and promise to commit, then telling all of them to commit or all of them to abort.",
+        "kind": "mechanism",
+        "parents": {
+          "cross-domain-atomicity": "the blocked participant, the durable decision and the on-chain mapping, beyond locks and coordinator timeouts"
+        },
+        "claims": [
+          "the participant's uncertain state after it votes to commit, unable to commit or abort alone",
+          "how the coordinator's decision is recorded durably and recovered after failures",
+          "how two-phase commit maps onto chains: escrows as locks, a relayer or chain as coordinator, timeouts in place of a reliable coordinator"
+        ],
+        "excludes": [
+          "atomic-swaps",
+          "shared-sequencing",
+          "partial-failures"
+        ],
+        "placements": {
+          "two-phase-commit": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "prepare",
+            "vote",
+            "decide",
+            "commit or abort"
+          ],
+          "actors": [
+            "coordinator",
+            "participants"
+          ],
+          "failures": [
+            "the coordinator failing after the votes",
+            "locks held until timeout"
+          ],
+          "invariants": [
+            "no participant commits unless all voted to commit"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "two phases whose order is in the name; what matters is the blocked participant's uncertainty, an argument about information. State does not fit: nothing returns to an earlier state",
+        "relationship": "a prepared participant waiting on a decision it cannot make alone",
+        "level": "the protocol's own mechanism; the parent gives only its outline",
+        "territory": "shared sequencing and compensation are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:19:22.798Z",
+        "note": "Independent audit against quality-contract B. Accuracy: three repairs. (1) The softened 'may no longer back out on its own' read as a hedge on a protocol rule; in classic two-phase commit a participant that has voted yes cannot abort unilaterally, so it now says the protocol no longer lets it back out on its own (consistent with the timeout paragraph's 'the move the protocol otherwise forbids'). (2) Replication blocked 'only if a majority of the replicas fails', which is wrong for even replica counts and ignores partitions; it now says the decision stays readable while a majority is running and can communicate, and participants block only when no such majority is available. (3) The timeout refund 'keeps atomicity only if no commit can still take effect after it' missed a commit that took effect elsewhere before the refund; the condition is now that the coordinator has not decided commit and can no longer do so, and the cutoff sentence states the inference the deadline margin licenses (an escrow still in doubt at its deadline takes the absence of a commit as an abort), with the existing timing-failure sentence covering when that inference fails. Checked and accepted: cooperative termination (a participant that has the decision passes it on, one that has not voted can refuse and force abort, all-reachable-yes-and-uninformed blocks; 'may exist only at the coordinator' is correctly hedged since an unreachable participant may also know); logging before replying (prepared record forced before the yes vote, decision forced before announcement, commit record as the commit point); presumed abort (no record means abort because no participant can have been told to commit); keeping decisions until acknowledged (sufficient practice; presumed abort permits forgetting aborts earlier, an omission not an error); on-chain mapping (escrow as lock, yes vote as the escrow becoming final, reorg-safe counting, limits of escrowable state; relayer coordinator trusted unless contracts verify evidence, chain coordinator as durable as finality and as sound as the contract and its proof verification, relayers as messengers who can delay but not forge while verification holds). Parent overlap: the parent's lock-price and coordinator-timeout sentences are not restated; the timeout paragraph adds refund-as-unilateral-abort and the cutoff condition. Siblings and reservation: shared sequencing is neither named nor paraphrased (chain-as-coordinator is about a contract applying the commit rule to proofs, not about inclusion by a sequencer); atomic swaps, HTLCs and atomicity guarantees are not explained; the HTLC record's finality-ordering argument is touched only by the one 2PC-specific sentence that a vote counts once final; partial failure is named once as the outcome of a missed deadline. Overclaims: remaining absolutes are protocol facts or conditional ('only if', 'while', 'unless'); 'commonly' and 'a risk few owners accept' are hedged. Canonical validity: single L2 leaf placement, no positional language, self-sufficient. Economy and progression: seven paragraphs, each carrying one step (in-doubt state, blocking, durable logging, replication bridging to chains, escrows, coordinator choice, timeouts); none is redundant. Representation: prose, as designed; no structure written.",
+        "resolutions": [
+          {
+            "id": "names-concept:ef1a513230",
+            "resolution": "Real mention, not a defect: partial failure is named once, as the outcome when a commit decision misses an escrow's deadline, which is the 2PC timeout consequence the claims cover. Its forms, detection and exposure (the partial-failures sibling's claims) are not explained."
+          }
+        ],
+        "recordFingerprint": "3c76bc90e9e68c363641130c19e2ab1304536a986fbce2af75a1de91e0dab2f9"
+      }
+    },
+    "partial-failures": {
+      "model": {
+        "meaning": "A partial failure is a cross-chain action in which some legs take effect and others do not, leaving a state no participant intended.",
+        "kind": "failure",
+        "parents": {
+          "cross-domain-atomicity": "the forms, detection and exposure of partial failure, beyond repair by compensation"
+        },
+        "claims": [
+          "the forms of a cross-chain partial failure: one leg confirmed and another reverted, stalled or reorganized away",
+          "how a partial failure is detected, and which side can observe what, and when",
+          "the exposure while a partial failure stands: who holds the risk and what can be exploited"
+        ],
+        "excludes": [
+          "compensating-actions",
+          "atomicity-guarantees",
+          "rollbacks"
+        ],
+        "placements": {
+          "partial-failures": "one placement"
+        },
+        "fields": {
+          "causes": [
+            "a leg that reverts, stalls or times out",
+            "a confirmed leg reorganized away",
+            "a relayer or bridge fault",
+            "occasionally an adversary who withholds or delays a leg"
+          ],
+          "manifestation": [
+            "some legs final while others are reverted or still pending",
+            "independent chains with no shared commit to undo the finished legs"
+          ],
+          "impact": [
+            "funds stranded or duplicated",
+            "exposure to anyone who acts on the intermediate state"
+          ],
+          "detection": [
+            "watching every leg's confirmation and finality"
+          ],
+          "recovery": [
+            "compensating actions and rollbacks, owned by their own concepts"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "the forms of failure differ in cause and visibility, and prose relates them to detection and exposure better than a list",
+        "relationship": "how legs diverge and who sees it",
+        "level": "the failure itself; compensation is another concept",
+        "territory": "compensating actions and rollbacks are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:25:09.004Z",
+        "note": "Independent audit against quality-contract section B; one repair round. Failure-kind modelling holds: paragraphs move through causes (reverted, stalled, reorganized legs; relayer and bridge faults; an adversary only occasionally, producing an ordinary stalled leg), manifestation (independent finality, legs in mixed conditions), impact (stranded or duplicated value), detection (who sees what and when, provisional until final) and exposure; recovery is only named (compensating actions and rollbacks). Repairs: the definition said the state was one 'none of the participants intended', contradicted by the text's own adversarial counterparty, now 'the action was not meant to produce'; out-of-gas was listed as a failed checked condition, now a separate cause; 'applies none of its effects beyond the fee' now conditional on a chain charging for failed execution; bridge signers that 'misbehave' (which includes forging, not one of the three forms) narrowed to signers that fail; 'holds no record of the cross-chain action as a whole, so no commit point spans the legs' was false for two-phase-commit designs that record a decision yet still produce partial failures, now stated as no shared commit taking back a finalized leg whatever coordinated the action; the reorganized-deposit duplication now conditional on the deposit not being included again; resubmission duplication now conditional on no nonce or once-only message identifier rejecting the second attempt, and the detection paragraph's 'is how a late leg gets duplicated' hedged to 'risks duplicating it'; relayers 'may' deliver late or not at all; the unbacked-units loss 'can fall' on late redeemers rather than always doing so. Judged acceptable: the permissionless delivery-timing exploit is stated under its conditions (anyone can deliver, no deadline) and is not the swap free option; the confirmed-not-final payout exploit is conditional on reorganization costing less than the payout. Boundaries: no HTLC deadline ordering or claim-reorg mechanics, no two-phase-commit vote, in-doubt or timeout mechanics, no swap free option, nothing on the spectrum of atomicity guarantees, no shared sequencing. Parent overlap: the parent's intermediate-state and compensation sentences are elaborated into concrete forms, holders and exploits, not restated. Single leaf placement; no positional language; five prose paragraphs as designed; progression from forms to persistence to impact to detection to exposure.",
+        "resolutions": [
+          {
+            "id": "names-concept:6f4ce3eb11",
+            "resolution": "Named only: 'the territory of compensating actions and rollbacks' marks recovery as another concept; no mechanism is described."
+          },
+          {
+            "id": "names-concept:63fec5349b",
+            "resolution": "Named only: watchers 'follow the chain's fork choice' to notice a reorganization; fork-choice rules are not explained."
+          },
+          {
+            "id": "names-concept:696f441f79",
+            "resolution": "Named only: a liquidity provider appears as an example holder of the risk; its role is not explained."
+          },
+          {
+            "id": "names-concept:c288873469",
+            "resolution": "Named only, alongside compensating actions, as the territory for making legs consistent again; nothing about how rollbacks work."
+          }
+        ],
+        "recordFingerprint": "bd3bdb5d73a2fdba05a0fc6a9f9837ad4ff5a643e8c08afbf0cf96b4f7a41c9d"
+      }
+    },
+    "atomicity-guarantees": {
+      "model": {
+        "meaning": "An atomicity guarantee is a system's precise promise about what happens when one part of a cross-chain action fails: all or nothing, all or refund, eventual repair, or none.",
+        "kind": "property",
+        "parents": {
+          "cross-domain-atomicity": "the spectrum of guarantees and what each depends on, beyond knowing a guarantee precisely"
+        },
+        "claims": [
+          "the spectrum of cross-chain guarantees: all or nothing, all or refund, eventual compensation and best effort",
+          "what each guarantee depends on: shared sequencing, a common settlement layer, timeouts or honest relayers",
+          "reading a system's claimed atomicity: the failure it covers, the window it leaves open and who bears that gap"
+        ],
+        "excludes": [
+          "atomic-swaps",
+          "hashed-timelock-contracts",
+          "two-phase-commit",
+          "shared-sequencing",
+          "partial-failures"
+        ],
+        "placements": {
+          "atomicity-guarantees": "one placement"
+        },
+        "fields": {
+          "statement": "what outcome a system promises when a leg fails, and to whom",
+          "establishedBy": [
+            "shared sequencing",
+            "a common settlement layer",
+            "timeouts",
+            "honest relayers"
+          ],
+          "violatedBy": [
+            "a failure outside the covered cases"
+          ],
+          "confusions": [
+            "atomic inclusion versus atomic execution",
+            "eventual consistency versus atomicity"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "several guarantees compared on the same dimensions",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "each guarantee against its outcome on failure, what it relies on and the window it leaves",
+            "whyNotProse": "reading across four guarantees on three dimensions is what lets a reader place a system's claim"
+          }
+        ],
+        "level": "the spectrum is the property's own; the sibling mechanisms that realize it are not tabulated",
+        "territory": "rows are guarantee types, not the sibling mechanisms",
+        "placements": "one placement",
+        "division": "the prose explains how to read a claim; the table shows the guarantees side by side"
+      },
+      "audit": {
+        "at": "2026-10-02T14:31:11.525Z",
+        "note": "Audited against quality-contract section B at the single placement (Interoperability & Abstraction / Cross-Chain Atomicity / Atomicity Guarantees). Shared Sequencing reservation: the drafted All or nothing row listed 'Shared sequencing or a common settlement layer across all the legs' as what the guarantee relies on, beside 'No leg takes effect' and 'None between the legs'; read across the row this presents shared sequencing as delivering all-or-nothing execution, implicitly answering the reserved question (whether atomic inclusion by a shared sequencer amounts to atomic execution) and also reading a shared settlement layer as sufficient, which the authored Atomic Swaps record says it is not by default. Repaired minimally within the design: the reliance cell now states what is required ('All the legs ordered and executed together by one system, such as a common settlement layer applying them in one step') and the window cell refers to 'that system'; the closing paragraph keeps shared sequencing named only as something a guarantee may rest on whose sufficiency 'as all or nothing requires' is a question about shared sequencing itself, so the dependency is named and not decided. Comparison: rows are guarantee types (all or nothing, all or refund, eventual compensation, best effort), not sibling mechanisms; it adds reliance and window across four guarantees, which the prose does not spell out; the opening paragraph states the ordering principle (how much of a failure each hides) rather than the cells. Cells checked: all or nothing has no intermediate state and is only as final as the executing system (correct); all or refund leaves assets frozen until claimed or refunded with a late party exposed (correct, conditional on parties acting before deadlines, which the reliance cell states); eventual compensation window unbounded unless stated (correct); best effort correct. Accuracy: conditions are stated (deadline guarantees fail under congestion or halts; compensation fails under a lying relayer; guarantees protect responsive protocol-following parties; scope across bridge and trade). Liquidity-provider example fits the point it illustrates: a filler paying out before source finality moves the gap to the provider rather than closing it, and 'can look close to all or nothing from the user's side' is suitably hedged. Parent: extends the parent's last paragraph (compensation not all-or-nothing; know the guarantee precisely) with the spectrum, dependencies, reading method and the eventual-consistency confusion, without restating its sentences. Siblings atomic-swaps, hashed-timelock-contracts, two-phase-commit and partial-failures are not named by mechanism or paraphrased; the who-bears-the-gap paragraph overlaps partial-failures' exposure theme only at the level of the reading method (where a design relocates the gap), which is this concept's own claim. Canonical, no positional language, economical, progresses from definition to spectrum to reading a claim to the inclusion caveat.",
+        "resolutions": [
+          {
+            "id": "names-concept:696f441f79",
+            "resolution": "Liquidity providers are named as the party that holds the moved gap in one example; their role and mechanics are not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:4d13af81c8",
+            "resolution": "Settlement layer appears only as an example of a system that applies all legs in one step in the All or nothing reliance cell; not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:b7a026f7e7",
+            "resolution": "Shared sequencing (excluded, reserved) is named only in the closing paragraph as something a guarantee may rest on, with its sufficiency explicitly left to shared sequencing itself; after repair the comparison no longer presents it as delivering all-or-nothing. Named, not explained, and the reserved question is not answered."
+          },
+          {
+            "id": "absolutes:778dcc851d",
+            "resolution": "Nearly all hits are the concept's own noun 'guarantee'/'guarantees', which are not absolute claims. The one 'cannot' ('an honest party cannot act before its deadline') sits inside a condition (a chain congested or halted long enough), so it is conditional. No unconditional claim of security, finality or correctness; no dilution needed."
+          }
+        ],
+        "recordFingerprint": "380ebcc3ce2f242e9a3a513fafedbc41abefa621a134e4257bd964e3e83c4310"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-02T18:28:38.879Z",
+    "note": "Group audit, five owned members read side by side against the plan, the accepted Atomic Swaps / HTLC split and the Shared Sequencing reservation; quality-contract B4 and B9 at group level. 0 group signals. (1) Atomic Swaps / HTLC split holds. Atomic Swaps names HTLCs only as the realization that carries the link in a contract on each chain and states what that family assumes (hash and deadline support, both parties responsive); it never gives the script/contract forms, the claim and refund paths or the deadline ordering. HTLC never restates the exchange problem, intermediaries, adaptor-signature or shared-settlement swaps. Shared arguments are split, not repeated: the free option is developed once in Atomic Swaps (no protection, both families, priced by premium, indistinguishable from abandonment) and HTLC adds one sentence tying its duration to the short deadline; locked capital and griefing are developed once in HTLC, with Atomic Swaps' closing clause on losing the use of the committed asset only stating the residual cost; responsiveness is an assumption in Atomic Swaps and is turned into the deadline-gap requirements in HTLC. (2) Two-Phase Commit / Partial Failures / Atomicity Guarantees. The in-doubt state, the commit point (the durable commit record), coordinator recovery and timeouts in place of a coordinator are explained only in Two-Phase Commit. Deadline-gap reasoning appears in HTLC (counterparty's lock expires first; gap covers noticing, inclusion and finality) and in Two-Phase Commit (commit cutoff before every escrow deadline, by enough to deliver a proof and finalize); these are parallel applications to two different mechanisms, each within its own claims, not one argument made twice. Finality: HTLC applies it to each step of the exchange, Two-Phase Commit to when a vote counts, Partial Failures to the reorganized-away form and to exploiting confirmed-not-final legs, Atomicity Guarantees only to the liquidity-provider example; one sentence each per mechanism, consistent terms. Partial Failures' account (chains finalize legs independently; no shared commit can take back a leg its chain already finalized) agrees with Two-Phase Commit, whose timeout paragraph ends in exactly that outcome: an escrow that refunds while others commit is a partial failure rather than a blocked commit; Partial Failures' stalled-leg form (relayer offline, chain congested, definite only once a timeout rules it out) matches. Atomicity Guarantees' comparison agrees with the mechanisms: All or nothing requires all legs ordered and executed together by one system, consistent with Atomic Swaps' statement that a shared settlement layer is not enough unless it executes both legs together; All or refund (locked legs unwind, assets frozen until claimed or refunded, a party late to act exposed) matches HTLC's flow and its gap analysis and Atomic Swaps' 'honest party that stays responsive recovers its asset'; the deadline-failure condition in its prose (congested or halted chain) matches HTLC and Two-Phase Commit. One minor imprecision found and left as a judgment note rather than repaired: the All or refund reliance cell says 'Deadlines enforced on each chain', while Atomic Swaps correctly says adaptor-signature swaps need a deadline enforced on at least one chain (a leg on a chain without timelocks is recovered through the other chain's refund); the cell is true of hash-locked swaps and escrow-based two-phase commit, and the row's sense (the guarantee rests on enforced deadlines and timely parties) holds. A one-word repair ('enforced on chain') was attempted, but the run is at stage audit and `l2 record author` refuses re-authoring there, so the edit was reverted and the record is bound as audited; recommended as a follow-up repair if the run is reopened. (3) Shared Sequencing reservation is consistent across all five: Atomic Swaps, HTLC, Two-Phase Commit and Partial Failures do not mention shared sequencing (Atomic Swaps' settlement-layer caveat concerns chains posting to one base chain, not a sequencer); Atomicity Guarantees names it once, distinguishes inclusion from execution as claims, and leaves whether a sequencing arrangement makes included legs take effect together to Shared Sequencing; its All or nothing row requires ordering and execution together and does not credit shared sequencing. Shared Sequencing has no record yet, so nothing can contradict it. (4) No contradictions found. Terms are consistent: leg (Atomic Swaps, HTLC, Partial Failures, Atomicity Guarantees), escrow as two-phase commit's prepared state, lock for HTLC, deadline throughout with timeout and cutoff used only for the two-phase-commit roles, final versus confirmed kept distinct in HTLC, Two-Phase Commit and Partial Failures. (5) No template repetition: openings differ (the first move; how the two conditions are written; a yes vote is a promise; three forms recur; a spectrum rather than a yes-or-no property); paragraph patterns follow each concept (problem then families then limits; mechanism then deadlines then costs; vote, blocking, recovery, replication, chain mapping, timeouts; causes, persistence, impact, detection, exposure; spectrum, then a three-part reading method). Partial Failures' 'three forms' and Atomicity Guarantees' 'three things' are enumerations of each concept's own content, not a shared frame. Forms fit the concepts: prose for Atomic Swaps, Two-Phase Commit and Partial Failures, a flow for HTLC (order and a claim/refund branch matter), a comparison for Atomicity Guarantees (alternatives across dimensions); no form is shared by every member.",
+    "resolutions": [],
+    "records": {
+      "atomic-swaps": "590bb52e4059e510d93bde888fedffee43438218ca18c6dc69eb05b2b0e7df2f",
+      "hashed-timelock-contracts": "c136fe8b01e54c17431ba1af473caf82f78f2c411f2092d01c54fe9fb4bdbe87",
+      "two-phase-commit": "3c76bc90e9e68c363641130c19e2ab1304536a986fbce2af75a1de91e0dab2f9",
+      "partial-failures": "bd3bdb5d73a2fdba05a0fc6a9f9837ad4ff5a643e8c08afbf0cf96b4f7a41c9d",
+      "atomicity-guarantees": "380ebcc3ce2f242e9a3a513fafedbc41abefa621a134e4257bd964e3e83c4310"
+    }
+  }
+}

@@ -17211,6 +17211,732 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "emergency-powers-content",
+      conceptId: "emergency-powers",
+      definition:
+        "Emergency powers are authority a system or organization grants in advance so that someone can act faster than its ordinary process allows, bounded by what that authority may do, who may use it, under which conditions and how it ends.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The authority granted comes in three kinds that differ in what they can alter. A power to stop suspends functions such as deposits, transfers or withdrawals and leaves balances and rules as they were. A power to change alters code or parameters, for example replacing a contract's implementation, lowering a borrowing limit or switching a price source. A power to move transfers assets, for example sweeping funds out of a vulnerable contract to a safe address before an attacker reaches them. Deployed protocols commonly grant these separately, and a well-scoped grant says which kinds it includes and over which contracts: a power over one market's contracts limits what a single invocation can disturb, while one over everything the system administers lets the response to a narrow fault reach parts that were never at risk.",
+        },
+        {
+          kind: "paragraph",
+          text: "Emergency authority is not ordinary governance made faster. Ordinary governance decides what the system should be, through proposals, votes and delays that let participants object or leave; an emergency power is a narrower delegation from that process, valid only within the kinds, contracts and conditions it was granted for. Ordinary governance remains the source that grants it, can confirm or undo what it does and can take it back, so an action outside the grant is an unauthorized act rather than an emergency measure, even when the holder is technically able to perform it.",
+        },
+        {
+          kind: "paragraph",
+          text: "A grant names who may invoke it and when. The holder may be a small group of signers, a separate body such as a security council, a guardian, or token holders who together commit enough tokens to trigger it without a full vote, and the more a power can alter, the more independent approvals an invocation is usually made to need. The grant also declares the conditions it covers, such as an exploit in progress, a vulnerability reported privately or a dependency that has stopped working, and the evidence an invocation must rest on: the transactions showing an attack, a report reproducing a flaw, or readings showing a failure. Few of these conditions can be checked by the contract itself, since whether an attack is under way is a judgment rather than a value the code can read. Where a condition is measurable, the grant can require it in code; elsewhere the declared conditions bind the holder only through what happens after the power is used.",
+        },
+        {
+          kind: "paragraph",
+          text: "The end of one use differs from the end of the power. An individual action can expire after a fixed period, be ratified by ordinary governance and so become an ordinary decision, or be reversed. What happens when governance does nothing decides which way a failure points: an action that lapses unless ratified ends even if governance stalls, which may reopen a system still at risk, while one that stands until reversed leaves an unreviewed change in place for as long as governance is slow or divided. The power itself can carry a sunset, lapsing at a set time or after a set number of uses unless renewed, and ordinary governance can revoke it, which works only if revocation does not depend on the holder's cooperation. A grant with neither an end nor a working revocation outlasts the crisis that justified it and turns emergency authority into standing authority for a small group, a faster path into the system than anyone else has.",
+        },
+        {
+          kind: "paragraph",
+          text: "Accountability attaches to each use, not only to the grant. Disclosure states that the power was used, by whom and to what effect; on a public ledger the action itself is visible, but the reasons for it are not. Justification ties the use to the grant: which declared condition held, what evidence supported it, and why a narrower action would not have sufficed. Review afterwards, by ordinary governance or a body independent of the holders, judges whether the use stayed within the grant and was necessary, a question about the authority rather than about the cause of whatever prompted it. Review has force only when its findings can change something, by reversing the action, narrowing the grant or replacing the holders; without that, declared conditions and evidence requirements are statements of intent rather than limits.",
+        },
+      ],
+    },
+    {
+      id: "pause-mechanisms-content",
+      conceptId: "pause-mechanisms",
+      definition:
+        "A pause mechanism is a switch built into a system that suspends some or all of its operations until the pause is lifted, giving up liveness to protect safety while a problem is understood.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a pause can reach is fixed when the code is written, because only operations built to be stoppable can be stopped. A protocol-wide switch halts everything at once and needs no diagnosis before it is used, which suits the first minutes of an exploit whose path is not yet known, but it also stops markets and users the fault never touched. A switch on one function, such as borrowing, minting or liquidation, closes a single path through the code; one on a market isolates a single pool or trading pair; one on an asset halts a single token in every market of the protocol that uses it. A token contract able to pause its own transfers reaches further, into each protocol that holds or accepts the token, none of which chose to be paused. Finer switches let a response stop only what is at risk, provided someone can tell which part that is while the incident unfolds, and the order in which they are later reopened decides who gets to act first.",
+        },
+        {
+          kind: "paragraph",
+          text: "A pause stops transactions, not time. Between the trigger and the lift, while operations are halted and the cause is investigated, interest in lending designs that accrue by elapsed time keeps building up and is applied at the next interaction, so borrowers who were unable to repay still owe for the whole interval. Fees charged by the second, vesting schedules, and auction or option deadlines keep running, and prices outside the system keep moving even if the system has stopped reading them. When the pause lifts, all of this arrives at once: positions that were healthy when operations stopped can be liquidatable as soon as they resume, before their owners could respond, and if oracle updates were paused as well, the system resumes on stale prices until they catch up. Lifting a pause is therefore a reconciliation as much as a switch. A design can stop the accrual clock along with the operations, waive interest for the paused interval, extend deadlines that lapsed, refresh prices before anything else runs, or reopen repayments and deposits for a grace period before liquidations resume; reopening liquidations first instead hands the cost of the interval to borrowers.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many designs give the authority to pause and the authority to unpause to different parties on purpose. Pausing is made cheap, open to a single signer, a guardian with a small threshold, a monitoring bot or a circuit breaker, on the reasoning that an unnecessary pause costs less than one that comes too late. Unpausing is made expensive, requiring a larger signer threshold or an ordinary governance vote, sometimes behind a delay, because resuming before the flaw is understood can reopen it to the same attacker. The asymmetry favours safety, but it also means that whoever starts a pause often cannot end it, and that the length of a pause that does not lapse on its own, justified or mistaken, is set by the speed of the unpause path rather than by the urgency that started it. One key used in error can hold a protocol still for as long as a vote takes.",
+        },
+        {
+          kind: "paragraph",
+          text: "A pause meant to be temporary can become permanent when the unpause path stops working. The role allowed to unpause may have been renounced, for example when an administrator gives up control while the system happens to be paused, or its keys may be lost or its signers unreachable. The unpause call may itself depend on something the pause has stopped, such as a governance executor that acts through the paused contracts, or an upgrade may have removed the function altogether. If withdrawals were among the operations halted, such a pause traps every exit it covers, and for users it has much the same effect as losing the funds, even though nothing was taken.",
+        },
+        {
+          kind: "paragraph",
+          text: "Pauses can also be used to harm users rather than to protect them. A holder of pause authority can halt withdrawals just before an event users would want to exit ahead of, such as a contested governance change, or stop repayments while interest and prices move and let liquidations do the rest once operations resume; a holder with a position of its own at stake can pause the liquidations that would close it. The authority asymmetry amplifies such griefing, since each pause costs its victims as much time as the slow unpause path takes while costing its author a single call, and a pause that lapses after a fixed period limits little if the same key can simply pause again. Limits on how often one party may pause, or a deposit forfeited when a pause is judged unjustified, narrow this room, at the price of making a genuine emergency slightly harder to answer.",
+        },
+      ],
+    },
+    {
+      id: "guardians-content",
+      conceptId: "guardians",
+      definition:
+        "A guardian is a party, often a multisig, entrusted with a narrowly bounded set of emergency actions that it can take faster than ordinary governance.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The bound on a guardian is enforced by the contracts it acts on, not by its own restraint. Each protected function checks its caller against a role, and the guardian's address holds only the roles for the actions it is meant to take, such as calling a pause, so a call to move funds or change a parameter fails however the guardian is controlled. That bound is only as tight as the role structure around it. A guardian that administers its own role can grant itself more, and one that controls an upgrade path for the contracts it guards can replace the checks themselves, so a guardian's real reach is found in who administers each role and who can upgrade each contract, not in its stated mandate.",
+        },
+        {
+          kind: "paragraph",
+          text: "Two further bounds limit how and for how long it can act. A guardian held as a multisig needs a threshold of its signers, for example four of seven, to approve each action, so with any threshold of two or more a single lost or stolen key can invoke nothing; the threshold sets how many keys an attacker must gather, not what those keys can do once gathered. A time limit can be written into the role, as an expiry after which the contracts refuse the guardian's calls, or into each action, as a maximum duration after which its effect ends without further steps. None of these bounds reaches the guardian's judgment. Code can restrict which actions are possible and how many approvals they need, but not whether a particular use was warranted, so the guardian is still trusted to act only when it should.",
+        },
+        {
+          kind: "paragraph",
+          text: "A guardian fails in three ways, and its bounds trade them against one another. Capture is control of the guardian passing to someone it should guard against: an attacker who steals or phishes enough signer keys, or a party with a stake in the outcome that gains sway over enough signers. Collusion needs no outsider. A threshold assumes its signers decide independently, and signers who work for one organization or answer to one interest can meet it together, so that four of seven can offer little more than one of one; signers drawn from separate organizations with separate interests are what make the threshold count. Absence is the opposite failure: the guardian exists but cannot act while an exploit runs, because signers are asleep in other time zones, keys have been lost, signing tools have fallen out of working order since their last use, or the role expired before the crisis came.",
+        },
+        {
+          kind: "paragraph",
+          text: "Raising the threshold resists capture and collusion but makes absence more likely, and lowering it does the reverse. Many designs resolve this by keeping the guardian's power narrow enough that a low threshold is tolerable, since the narrower the power, the less a captured or colluding guardian can do with it, while an absent guardian fails the same way whatever its power, and by having signers act together in drills, so that a broken key or an unreachable signer is found before it is needed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where ordinary governance appoints a guardian, it does so by granting the role to an address through its usual proposal and delay, which lets participants see who will be trusted before the trust takes effect. An address is not a set of people, though. If the multisig can change its own signers and threshold, governance chose the guardian once and the guardian chooses itself thereafter, so designs meant to keep membership under governance put the signer list under governance control as well. Override keeps the guardian subordinate where governance holds the administrative authority over the guardian's role, so that it can narrow or reassign the role and reverse what the guardian did through its own slower path. Removal, by revoking the role or replacing the address, works only if the guardian cannot obstruct it. A guardian able to cancel proposals or to pause the contracts through which governance executes its decisions could block the very proposal that removes it, so designs that grant such powers either exempt the guardian's own removal from them or route removal through a path the guardian cannot reach.",
+        },
+      ],
+    },
+    {
+      id: "emergency-upgrades-content",
+      conceptId: "emergency-upgrades",
+      definition:
+        "An emergency upgrade replaces a system's code through a faster path than its ordinary upgrade process, to fix a problem that cannot wait for the ordinary delay.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The fast path is a separate route to the same upgrade function, governed by different rules and often held by a different party. On the ordinary path a change is proposed in public, approved by governance and held for a delay before it takes effect, so anyone can read the replacement code and anyone who objects can leave first. In many designs the emergency path skips both the public proposal and the delay: a small group of signers, such as a security council or an emergency multisig distinct from whoever holds the ordinary upgrade keys, approves the change and it applies at once. It is usually reserved for declared conditions, such as an exploit in progress or a privately reported vulnerability that is still exploitable. The second case is why the delay is skipped even when no attack is running: a fix queued in public for days shows anyone who reads it where the flaw is, while the vulnerable code stays live. What users give up is the chance to inspect a change, or to exit, before it applies to them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Skipping the delay need not mean skipping review; review can move to points that fit before or within the emergency. Pre-agreed patches move it earlier. Fixes for foreseeable classes of failure can be written, audited and approved by ordinary governance in advance, and the emergency path limited to deploying one of them, so the urgent decision is only when to act, not what to deploy. Where no prepared fix fits, a patch can still be reviewed privately by auditors or the original developers before deployment, under the same secrecy that justified the fast path. The signer threshold carries review as well as authorization: if each signer reads the change before approving it, a threshold of five of nine is five reviews, but signers asked to approve a diff within minutes can end up approving its description rather than its code, and then the threshold authorizes without reviewing. Narrowed scope limits what any of this can miss. An emergency path confined to particular contracts limits what one urgent change can reach, and one unable to change who holds upgrade authority, its own threshold or the ordinary delay cannot use that change to remove the controls on every later one.",
+        },
+        {
+          kind: "paragraph",
+          text: "The patch itself is where the path most directly fails. An emergency upgrade is the route by which a system can accept replacement code with little scrutiny and no exit window, so a change that fixes the reported flaw while adding another, by mistake or by design, passes through it more easily than through the ordinary path. A malicious patch does not require an outsider with stolen keys: a signer, a developer writing the fix under pressure, or a reporter who supplies a suggested fix can each introduce one. Pre-agreed patches and narrow scopes reduce how much a hostile change can do, and review by signers who did not write it reduces how likely it is to pass, but neither removes the possibility.",
+        },
+        {
+          kind: "paragraph",
+          text: "Unlike a pause, which can be built to lapse, an emergency upgrade does not end by itself. The replaced code stays live until another upgrade replaces it, so afterwards ordinary governance either ratifies the change, accepting through its usual process code that has already run, or reverts it. Ratification is the public review the emergency postponed: what was deployed, whether it did only what was declared, and whether the conditions for using the path held. Reverting is itself an upgrade, with its own review and its own risks, and restoring the previous code restores the flaw the patch closed, so governance that rejects an emergency patch generally needs a replacement fix rather than a plain return. Where the design does not require an explicit vote, governance that never takes up the question leaves the change in place as though it had approved it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The path can also fail gradually. Because it is quicker and cheaper than the ordinary one, changes that can be framed as urgent are drawn onto it: a minor bug fix, a parameter change a partner is waiting for, a feature released ahead of a competitor. Each use that passes without harm makes the next easier to justify, and a system whose changes mostly arrive through the emergency path has in practice moved its upgrade authority from governance to the signers, while the ordinary delay remains in its documentation and protects little. Drift shows in the record of uses: how often the path is taken, for what, and how many uses were ratified rather than merely left in place. Designs resist it by declaring narrow conditions for use, publishing each use with its justification, requiring ratification within a fixed period, and confining the path's scope so that it cannot carry the kinds of change the ordinary path exists for.",
+        },
+      ],
+    },
+    {
+      id: "circuit-breakers-content",
+      conceptId: "circuit-breakers",
+      definition:
+        "A circuit breaker automatically restricts an operation when a measured quantity crosses a set threshold, and restores the operation once a test shows that conditions have settled.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a breaker measures depends on what it guards, and most of the quantities fall into three kinds. Rates count how fast something happens: value leaving a lending pool or a bridge per hour, an agent's failed calls to a service per minute, transactions an agent submits per block. Deviations measure distance from a reference: a price against a second source or against its own recent average, or the price an agent's trade actually got against the price it expected. Volumes accumulate an amount over a period: tokens minted in a day, an agent's spending or losses since the period began. Protocols, autonomous execution systems and markets run the same machine on these quantities. Many stock markets halt all trading when an index falls by set percentages from the previous close, and halt a single stock when its price leaves a band around a recent reference price; software that calls remote services trips when too many recent calls have failed, so that further calls, retries included, fail at once instead of piling onto a service that is already struggling. What differs between settings is the quantity measured and who is stopped when the breaker trips.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each measure is taken over a window, even if only a single block, and the window decides both how fast the breaker reacts and how hard it is to fool. A measure read from one block reacts within that block, but it also jumps with each burst of legitimate activity, and a spot price read that way can be pushed across the threshold by one large trade in a thin market, which lets someone trip the breaker on purpose for the cost of that trade. A long window averages bursts out and costs more to move, but a drain fast enough to finish inside it can be over before the average crosses the threshold. Fixed windows, such as each calendar hour, are weak at their edges: activity bunched at the end of one window and the start of the next counts against two allowances, so up to twice the threshold can pass within minutes without a trip. Rolling windows, which look back the same length of time from each moment, close that gap at the cost of keeping a record of recent activity.",
+        },
+        {
+          kind: "paragraph",
+          text: "Choosing a threshold trades missed incidents against false trips, and its form matters as much as its level. An absolute threshold, such as a fixed amount per hour, grows too tight as the guarded system grows and too loose as it shrinks. A relative one, such as a share of a pool's balance, scales with the system but moves with it: as a pool drains, the same share lets less leave, which slows the drain, while an attacker who first deposits heavily enlarges the allowance the attack then draws against. Thresholds derived from recent volatility trip less often in rough markets, where false trips are costly, but they also widen when turbulence offers cover for manipulation. A threshold on a rate limits how fast something can happen, not how much: activity kept just short of it does not trip the breaker however long it continues, so designs concerned with totals also measure volume over a longer window. Several levels can be set for one quantity, so that the response grows with the severity of what is measured, as in markets where a deep enough fall ends trading for the rest of the day instead of halting it for minutes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Tripping changes how the guarded operation is treated, most often in one of three ways that cost legitimate users differently. A halt refuses the operation outright: it stops the most harm and blocks every legitimate use of that operation along with it. A throttle lets the operation continue at a reduced rate or size, so legitimate users are slowed rather than stopped, and so is an attacker, whose damage is bounded by time instead of ended. Requiring approval accepts the operation but holds it until a designated party signs off, which moves the decision from code to people for the operations that arrive while it is tripped; those operations wait as long as that party takes, so the breaker is then only as quick as its approvers. A halt can be carried out by triggering the system's pause mechanism, and a throttle can resemble an outflow limit; what makes either part of a breaker is that it is a mode entered on a measured trip and left through a test.",
+        },
+        {
+          kind: "state",
+          label: "What moves a circuit breaker between its states",
+          states: ["Normal", "Tripped", "Testing"],
+          transitions: [
+            { from: "Normal", to: "Tripped", when: "the measured quantity crosses its threshold within its window" },
+            { from: "Tripped", to: "Testing", when: "the cooldown elapses" },
+            { from: "Testing", to: "Normal", when: "the trial holds: the quantity stays within its threshold while limited activity resumes" },
+            { from: "Testing", to: "Tripped", when: "the trial fails: the quantity crosses its threshold again" },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The test is the delicate part, because it must restore the operation without recreating the condition that tripped it. Many software breakers let a single trial call through; a withdrawal breaker can admit a limited share of the queued demand; a halted stock often reopens through an auction that shows whether buyers and sellers can agree on a price within bounds before continuous trading resumes. A test that reopens at full capacity can trip again on the very demand the trip held back, since many users kept from withdrawing try at once, and a breaker that alternates between trip and trial in this way can disrupt users almost as much as a halt; designs that lengthen the cooldown after each failed test damp the oscillation. A breaker can also fail to reset at all. When its reset needs a person's confirmation that does not come, or its test measures a quantity that cannot recover while the operation is restricted, such as a price computed from trades in the very market the breaker has halted, it stays tripped indefinitely. Software vocabulary adds a confusion of its own: as in an electrical circuit, the tripped state is called open and the testing state half-open, so an open breaker is one that lets nothing through.",
+        },
+      ],
+    },
+    {
+      id: "atomic-swaps-content",
+      conceptId: "atomic-swaps",
+      definition:
+        "An atomic swap exchanges assets between two parties on different chains so that either both transfers take effect or neither does, without either party having to trust the other or an intermediary.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The problem a swap solves is the first move. Two chains generally do not verify each other's state, so a plain exchange between them needs one party to send first, and that party is exposed to the other never sending. Trades between strangers usually settle this exposure with trust, either in the counterparty or in an intermediary such as an exchange that takes custody of both assets and settles the trade on its own books, and can then freeze, lose or misuse them. A swap instead makes each transfer conditional on the other and leaves the enforcement to the chains, so that an honest party who follows the protocol either receives the other asset or keeps its own. That outcome is conditional: it holds while the chains enforce the conditions as written and each party meets what the construction demands of it, and those demands differ between the families of construction.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hash-locked swaps, realized as hashed timelock contracts, carry the link between the legs in a contract on each chain. They need both chains to run contracts that can check a hash and enforce a deadline, and they need both parties to remain responsive until the swap completes or unwinds. Adaptor-signature swaps move the link out of contracts and into signatures. Each leg is held under keys the two parties control jointly, and the signature that completes one leg is built so that publishing it reveals the secret the other party needs to complete its own. The chains then need little more than ordinary signature checks, so the construction reaches chains that cannot express a hash lock, and on chain the two legs can look like plain payments with nothing visible connecting them. Its assumptions move into the cryptography: the signature scheme on at least one chain must support adaptor signatures, the other leg must be claimable with the secret that signature reveals, and where the chains use different elliptic curves the parties must also prove to each other that one secret underlies both sides. It still needs a deadline, enforced on at least one chain, to unwind a swap that a party abandons, and so it asks comparable responsiveness of both parties.",
+        },
+        {
+          kind: "paragraph",
+          text: "In both of those families neither asset leaves its chain: each changes owner where it already is, which separates them from a bridge transfer. The third family brings the exchange to one place instead. When both assets exist on one chain, natively or as representations brought there, or when the parties' chains settle to a common layer able to apply transfers on both in one step, the exchange can be a single transaction that the layer applies whole or rejects. Nothing sits locked while one party waits on the other, so there are no refunds to claim and no deadline a party must be online to meet. The assumptions move to the layer and to what the assets on it are: atomicity holds where the exchange settles, and an asset that arrived there through a bridge is only as sound as the bridge that issued it. Sharing a settlement layer is not enough on its own, since the layer must actually execute both legs together, which chains that merely post their results to the same base chain do not obtain by default.",
+        },
+        {
+          kind: "paragraph",
+          text: "Atomicity covers execution and nothing before it. The rate and the amounts are agreed before the swap begins, and the swap enforces them without discovering them, so price discovery happens elsewhere, in order books, in quotes from market makers or in negotiation. Nor does a swap find the other party: someone willing to take the opposite side has to be found first, and the venue that does the matching sits outside the swap. A design can use a venue to find the trade and a swap to settle it, and the venue then need not take custody of either asset.",
+        },
+        {
+          kind: "paragraph",
+          text: "A swap also offers no protection from the free option. The hash-locked and adaptor-signature families both leave a stretch in which one party's asset is locked while the other can still decide whether to complete, and that decision is an option on the two assets' prices, granted without payment. A construction that binds one party while the other is still free to choose leaves the option in some form, including a signed order that a counterparty may fill until it expires. Some designs price it, charging the party that holds the option a premium it forfeits to the other if it lets the swap lapse. From outside, an exercised option looks like an abandoned swap: a counterparty that never completes may have gone offline or may have chosen to walk away. In both cases atomicity holds and nothing is exchanged, and an honest party that stays responsive recovers its asset, but not the trade it meant to make or the use of the asset while it was committed.",
+        },
+      ],
+    },
+    {
+      id: "hashed-timelock-contracts-content",
+      conceptId: "hashed-timelock-contracts",
+      definition:
+        "A hashed timelock contract locks an asset on one chain under two spending conditions: its intended recipient can claim it by presenting a secret whose hash matches the one fixed in the contract, and once a deadline has passed its owner can take it back instead.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How the two conditions are written depends on what the chain can express. On a chain with a small script language, such as Bitcoin, the locked output carries a script with two spending branches: one requires a value whose hash equals the stored hash together with the recipient's signature, and the other requires the owner's signature in a transaction the chain accepts only once a set block height or time has been reached. On a chain with general smart contracts, a contract holds the asset along with the hash, both parties' addresses and the deadline, and offers a claim function that checks the secret and pays the recipient, and a refund function that pays the owner once the deadline has passed. The two forms can differ at the deadline itself. A script's hash branch commonly carries no time condition, so after the deadline the claim and the refund are both valid and whichever is confirmed first takes the asset, whereas a contract can close the claim path at the deadline and leave only the refund.",
+        },
+        {
+          kind: "flow",
+          label: "A hashed timelock exchange across two chains, ending in claims or refunds",
+          stages: [
+            ["Initiator chooses a secret and shares only its hash"],
+            ["Initiator locks its asset on chain A under the hash, refundable after the long deadline"],
+            ["Counterparty, once that lock is final, locks its asset on chain B under the same hash, refundable after the short deadline"],
+            [
+              [
+                "Initiator, once chain B's lock is final, claims there before the short deadline and so reveals the secret",
+                "Counterparty reads the secret from chain B and claims on chain A before the long deadline",
+              ],
+              [
+                "Initiator does not claim in time",
+                "Counterparty refunds on chain B after the short deadline",
+                "Initiator refunds on chain A after the long deadline",
+              ],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The order of the deadlines follows from who holds the secret. The initiator chose it and decides when it becomes public, so the counterparty's lock has to expire first: if the initiator's own refund opened no later than that, the initiator could claim at the last moment and take its asset back before the counterparty could use the revealed secret. The gap between the two deadlines must cover more than the time to submit a transaction. Within it the counterparty has to notice the claim, get its own claim included on the other chain even while fees rise and blocks fill, and see that claim become final there. Each deadline is also counted in its own chain's units, block heights or block timestamps, which advance at different and uneven rates on the two chains, so the gap has to absorb that drift as well. A gap too short for all of this leaves the counterparty exposed even when both contracts are written correctly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Confirmation and finality times bound each step, not only the gap. A lock that can still be reorganized away is not yet a commitment: a counterparty that locks against it, or an initiator that reveals the secret against the counterparty's lock, risks the other leg vanishing after its own asset is committed or its secret is public. The end of the exchange is exposed in the same way. If a claim confirmed shortly before its deadline is undone by a reorganization after the deadline has passed, the owner's refund can take its place, so a party that claims close to a deadline has not secured the asset until its claim is final. Waiting for finality at each step lengthens the whole exchange, and the deadlines have to be long enough to absorb those waits on both chains.",
+        },
+        {
+          kind: "paragraph",
+          text: "Safety margins are paid for in locked capital. Each asset stays committed until it is claimed or its deadline passes, the initiator's for longest, and wider safety margins lengthen the locks. Abandoning an exchange costs the party that walks away little beyond transaction fees, while the other party's asset stays frozen until its deadline. A counterparty that does not lock after the initiator has locked ties up the initiator's asset for the full long deadline without committing anything of its own; an initiator that does not claim ties up the counterparty's asset until the short deadline, though at the price of its own longer lock. Repeated across many exchanges, such griefing can hold a liquidity provider's capital idle at little cost to the griefer. The same deadlines set how long the free option lasts, since the initiator can delay its claim until the short deadline nears.",
+        },
+        {
+          kind: "paragraph",
+          text: "The shared hash is what makes two separate contracts one exchange, and the link has costs of its own. Both chains have to support a common hash function, and both contracts have to accept the same secrets. If one chain rejected a secret the other accepted, for instance one longer than its script allows, the party that chose it could claim where the secret works while the other party could not use it on its own leg, which is why implementations commonly fix the secret's length on both sides. The hash also becomes public on both chains, on some when a leg is locked and on others only when it is claimed, and the secret appears on both once used, so anyone watching can link the two legs as one trade, and the parties' addresses with them. A secret used once is public from then on, so each exchange needs a fresh one.",
+        },
+      ],
+    },
+    {
+      id: "two-phase-commit-content",
+      conceptId: "two-phase-commit",
+      definition:
+        "Two-phase commit is a protocol for applying one change across several participants: a coordinator first asks each participant to prepare the change and vote on whether it can commit, then tells all of them to commit if all voted yes, and to abort otherwise.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A yes vote is a promise, and it costs the participant its freedom to decide. Until it votes, a participant can still refuse, and the coordinator treats a refusal, or a vote that does not arrive, as a no. Once it has voted yes, the protocol no longer lets it back out on its own: the coordinator may already have collected the remaining votes and decided to commit, and other participants may already have applied the change, so a unilateral abort could leave the change applied in some places and not others. Nor can it commit on its own, because another participant may have voted no, or the coordinator may have stopped waiting for a missing vote and decided to abort. From its vote until the decision reaches it, the participant is in doubt. It knows its own vote but not the outcome, and it has to keep what it prepared intact, neither applied nor released, until it learns which way the coordinator decided.",
+        },
+        {
+          kind: "paragraph",
+          text: "That doubt becomes a stall when the coordinator fails after collecting the votes. A participant in doubt can ask the others: one that has already received the decision can pass it on, and one that has not yet voted can refuse, which makes abort the only possible outcome. When all the participants it can reach have voted yes and none has heard the decision, the information they need may exist only at the coordinator, and they have to wait for it to recover, holding their prepared state meanwhile. For this reason two-phase commit is known as a blocking protocol: one failure at an unlucky moment can halt participants that are themselves working correctly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recovery depends on what each side wrote down before it spoke. A participant records its prepared state durably before sending a yes vote, so that after a crash it restarts knowing it made a promise and resumes waiting, instead of discarding the prepared change. The coordinator records its decision durably before telling anyone, and writing a commit record is the point at which the change is committed, whatever then happens to the messages that announce it. A recovering coordinator reads its log and resends the decisions it finds there. Under a common convention, presumed abort, it treats a transaction with no recorded decision as aborted, since without a commit record no participant can have been told to commit, and it answers participants that ask about such a transaction accordingly. It keeps each recorded decision until all participants have acknowledged it, because one still in doubt may ask again after recovering from its own crash.",
+        },
+        {
+          kind: "paragraph",
+          text: "A log on one machine makes the decision durable but not available: while that machine is down, the record exists and nobody can read it. Replicating the coordinator's record through a consensus protocol keeps the decision readable as long as a majority of the replicas are running and can communicate, so the participants block only when no such majority is available, at the cost of a consensus round for each decision. A blockchain's ledger is a replicated record of this kind, which is part of what makes a chain a candidate coordinator.",
+        },
+        {
+          kind: "paragraph",
+          text: "Carried onto chains, the participants become contracts on different chains, and preparing becomes escrowing. Each contract takes custody of what the change will move and holds it under a rule that releases it one way on commit and the other way on abort, and the yes vote is the escrow transaction becoming final on its chain. A vote should count only once it cannot be reorganized away, since a lock that disappears after the coordinator has counted it leaves a commit that one participant cannot honour. An escrow locks only what can be placed in it. A balance moves into a contract easily, but a change that depends on state other users also update, such as a pool's price, can be prepared only if the contract holding that state offers a pending mode that holds off conflicting updates, which contracts not designed for it do not provide.",
+        },
+        {
+          kind: "paragraph",
+          text: "Who coordinates decides what the participants have to trust. A relayer, an off-chain service that watches for the escrows, decides and submits the outcome to each chain, keeps its log in its own storage, and the participants act on its word unless each contract can check the decision against evidence, such as proofs that all the escrows were made. Where a chain coordinates, a contract on it receives proofs of the escrows, applies the commit-or-abort rule itself and records the outcome on its ledger, so the decision is as durable as that chain's finality and as sound as the contract and its verification of the proofs it accepts. Relayers still carry proofs in both directions, but as messengers: while the contracts verify what they deliver, a relayer can delay a decision without being able to forge it. A decision on a ledger is also readable by anyone who follows that chain, so a participant in doubt can be resolved by whoever delivers a proof of the record, instead of waiting for one particular process to come back.",
+        },
+        {
+          kind: "paragraph",
+          text: "Timeouts stand in for a coordinator that may not come back. A database participant can wait in doubt for as long as its coordinator takes to recover, but an escrow holds someone's asset, and leaving it frozen for as long as an operator stays away is a risk few owners accept, so escrows commonly carry a deadline after which they refund. That refund is a participant in doubt deciding abort alone, the move the protocol otherwise forbids, and it keeps atomicity only if the coordinator has not decided commit and can no longer do so. A design can arrange this by ordering time: the coordinator may decide commit only up to a cutoff, and each escrow's deadline falls after that cutoff by enough to deliver a proof of the decision and see the commit become final on the escrow's chain, so that an escrow still in doubt at its deadline can take the absence of a commit as an abort. If a commit decision exists but does not reach some escrow before its deadline, because relayers are offline or the chain is congested, that escrow refunds while others commit, and the result is a partial failure rather than a blocked commit. Timeouts thus trade blocking for a dependence on timely delivery: the participants' assets are released, and atomicity holds only while the timing assumptions do.",
+        },
+      ],
+    },
+    {
+      id: "partial-failures-content",
+      conceptId: "partial-failures",
+      definition:
+        "A partial failure is the outcome of a cross-chain action in which some of its legs take effect on their chains and others do not, leaving a combined state that the action was not meant to produce.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Three forms recur, differing in what happened to the leg that did not take effect, and each leaves a different trace. A reverted leg was included on its chain but its execution failed, because a condition it checked no longer held, such as a balance already spent or a price moved past the limit the leg allowed, or because the transaction ran out of gas. The chain records the attempt and applies none of its effects, apart from any fee it charges for the failed execution, so the leg's absence is definite there. A stalled leg has not reached execution. Its transaction waits unincluded while fees rise, or the message that would trigger it goes undelivered because a relayer is offline, a bridge is paused or its signers do not sign, or the destination chain has halted. A stalled leg may still execute later, and it becomes a definite failure only when a timeout, where the design has one, rules it out. A leg reorganized away was confirmed and then dropped when its chain switched to a branch without the block that held it; it may be included again, fail on re-execution or disappear, and the other legs may already have completed against it. Faults in the infrastructure between the chains, a relayer that crashes or a bridge whose contracts or signers fail, produce these same forms. Occasionally the cause is an adversary that withholds or delays a leg: a counterparty that does not submit its side, a relayer that holds a message back, or a block producer that leaves a transaction out. The result is a stalled leg like any other, and nothing on the chains marks it as deliberate.",
+        },
+        {
+          kind: "paragraph",
+          text: "The state persists because the chains finalize their legs independently. Each chain applies its own transactions under its own rules, and whatever coordinated the action, no shared commit can take back a leg that its own chain has already finalized because another leg failed. A partial failure therefore shows up as legs in different conditions at once: some final, others reverted, still pending, or confirmed but not yet final. Making the legs consistent again takes new transactions, the territory of compensating actions and rollbacks, and until those complete, the partial state is the actual state of the chains.",
+        },
+        {
+          kind: "paragraph",
+          text: "Its direct impact is on value, which ends up stranded or duplicated. Funds are stranded when the completed leg took them from one place and the failed leg has not delivered them to another: an asset locked or burned on its source chain with nothing released or minted on the destination, or a payment made for an asset that has not arrived. Funds are duplicated when the same value takes effect twice. A bridge that mints on the destination against a deposit later reorganized away on the source has issued units with nothing behind them, and unless the deposit is included again, the depositor still holds the original. A leg resubmitted after it was presumed lost can also land alongside the first attempt, if that attempt had only stalled and nothing, such as a nonce or a message identifier accepted once, rejects the second.",
+        },
+        {
+          kind: "paragraph",
+          text: "Detecting a partial failure means following each leg through inclusion, confirmation and finality on its own chain, which a single chain's view does not cover. A contract sees only the chain it runs on and learns about other chains through messages or proofs that relayers may deliver late or not at all, so the widest view belongs to off-chain observers that follow all the chains involved: the user's wallet, the relayers, a bridge's monitoring, or an independent watcher. A party that follows only its own chain can see that its leg has completed without learning whether the other leg reverted or is merely pending. Nor are the forms equally visible. A revert can be seen by anyone following its chain as soon as the failing transaction is included. A stall shows only as an absence, and an absence cannot by itself tell a late leg from one that will not come; it becomes a failure when a deadline or expiry makes the leg impossible, and a resubmission before then risks duplicating it. A reorganization can be seen only afterwards, by watchers that follow the chain's fork choice and notice that a leg they saw confirmed is no longer there. Each observation stays provisional until the leg it concerns is final: an apparent partial failure resolves if a stalled leg lands, and an apparent success becomes one if a confirmed leg is reorganized away. When the relayer or bridge is itself the faulty component, the system that would report the failure may be the one that missed it, and the failure is then noticed only if someone independent of it is watching.",
+        },
+        {
+          kind: "paragraph",
+          text: "While a partial failure stands, the risk sits with whoever has a final leg and is still waiting for its counterpart: the user whose deposit is locked on the source chain, the party to an exchange that delivered first, or the liquidity provider that paid out on the destination in expectation of a deposit that then failed. Duplication moves the risk elsewhere. Units minted without backing leave the asset's holders with more claims than reserves, so the loss can fall on those who redeem last or on the bridge if it covers the shortfall. The partial state can also be exploited. A system that acts on a leg once it is confirmed rather than final, by releasing collateral, crediting a balance or minting a representation, can be made to pay out by someone who arranges for that leg to be reorganized away, which turns a partial failure into a deliberate gain wherever reorganizing the source chain costs less than the payout. Where anyone can deliver a stalled message and it carries no deadline, its delivery can be timed so that the leg executes when its outcome most favours whoever delivers it, rather than under the conditions its sender expected. The exposure lasts as long as the partial state does, and it widens the longer detection takes.",
+        },
+      ],
+    },
+    {
+      id: "atomicity-guarantees-content",
+      conceptId: "atomicity-guarantees",
+      definition:
+        "An atomicity guarantee is a system's promise about the combined outcome of a cross-chain action when one of its legs fails: which end states can occur, for whom the promise holds, and under which assumptions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The guarantees in use form a spectrum rather than a yes-or-no property, ordered by how much of a failure they hide from the parties. The strongest leaves no state in which some legs have taken effect and others have not; the next lets such a state exist but fixes how it ends; the weaker ones promise a later repair, or nothing. Strength is bought with shared infrastructure: the more of a failure a guarantee hides, the more of the legs a single component has to handle.",
+        },
+        {
+          kind: "comparison",
+          label: "How cross-chain guarantees differ when a leg fails",
+          dimensions: ["If a leg fails", "What it relies on", "Window it leaves open"],
+          alternatives: [
+            { name: "All or nothing", values: ["No leg takes effect; the action is rejected whole", "All the legs ordered and executed together by one system, such as a common settlement layer applying them in one step", "None between the legs; the result is as final as that system"] },
+            { name: "All or refund", values: ["Locked legs unwind and each party recovers what it committed", "Deadlines enforced on each chain, and parties able to act before them", "Assets frozen until claimed or refunded; a party late to act is exposed"] },
+            { name: "Eventual compensation", values: ["The completed leg stands until a later action reverses or refunds it", "Honest, live relayers or an operator that detect the failure and fund the repair", "From the failure until the repair lands, unbounded unless the system states a bound"] },
+            { name: "Best effort", values: ["Whatever the legs did stays; no repair is promised", "Each chain and whatever carries messages between them", "Open until someone resolves the leftover state, if anyone does"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A claim of atomicity is read for three things its label leaves out, and the first is the failure it covers. Each guarantee is stated against a set of failures it handles, such as a leg that reverts, a party that goes offline or a relayer that stops, and a failure outside that set does not produce a weaker form of the same guarantee: the guarantee then says nothing about the outcome, which is whatever the legs happen to do. A guarantee resting on deadlines covers a counterparty that walks away, but not a chain congested or halted long enough that an honest party cannot act before its deadline; a compensation scheme covers a reverted leg, but not a relayer that reports a failed leg as completed. Scope matters in the same way. A route that bridges an asset and then trades it may be atomic within the trade and not across the bridge, and a guarantee made by one step does not extend to the steps around it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The second is the window the guarantee leaves open: the time during which the outcome is unsettled, assets are held, or a state the guarantee is meant to rule out can be observed. A guarantee can end correctly and still leave assets locked or legs mismatched for a long stretch, so how long that stretch can last, and whether the system bounds it at all, is part of what is promised. The window is also where atomicity gets confused with eventual consistency. Eventual consistency is a promise about where the state ends up once repair has run its course; atomicity restricts which states can exist along the way. A system that repairs failed actions after the fact can truthfully claim the first and not the second, and its repair carries conditions of its own: someone has to notice the failure, fund the reversal and see it confirmed.",
+        },
+        {
+          kind: "paragraph",
+          text: "The third is who bears that gap. A guarantee is made to someone, and it commonly protects a party that follows the protocol and stays responsive rather than the action as a whole, so a party that misses its deadline can lose its side even though the guarantee was honoured for everyone who acted in time. Designs also move the gap instead of closing it. A transfer that a liquidity provider pays out on the destination before the source leg is final can look close to all or nothing from the user's side, because the provider holds the exposure until it is repaid; a promise of compensation from a reserve places the loss on the reserve and on whoever relies on its solvency. Reading a claim means finding the party left holding the intermediate state and asking whether it knows, and whether it is paid for doing so.",
+        },
+        {
+          kind: "paragraph",
+          text: "Claims phrased in terms of inclusion need the same care. That the legs of an action are included together, ordered as one unit across chains, is a statement about inclusion; that they all take effect is a statement about execution, and a claim of one is not by itself a claim of the other. Whether a given sequencing arrangement, by including the legs together, also makes them take effect together, as all or nothing requires, is a question about shared sequencing itself, and a guarantee that rests on it is only as strong as the answer.",
+        },
+      ],
+    },
+    {
+      id: "formal-verification-content",
+      conceptId: "formal-verification",
+      definition:
+        "Formal verification is the use of mathematical reasoning to establish that a system, or a model of it, satisfies a formal specification in every case the model admits, or in every case up to a stated limit.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a successful verification establishes is a relation between two formal artefacts. One is the artefact verified: a design model, such as a state machine describing a protocol, or an implementation, which the tool reads through a formal account of what its programming language means. The other is the specification. Satisfaction is a precise relation between them; for an invariant, it means that no state the artefact can reach violates the invariant. A run ends in a proof that the relation holds, in a counterexample, an execution of the artefact that breaks it, or in neither, when the tool runs out of time or memory or cannot decide the question, and an inconclusive run establishes nothing about the property.",
+        },
+        {
+          kind: "paragraph",
+          text: "That relation is not the same as correct behaviour of the running system. The system includes what the artefact leaves out: the compiler that translates the code, the virtual machine or hardware that executes it, the contracts and libraries it calls, the network that carries its messages. A proof of a property that each behaviour must satisfy, such as an invariant, carries over to the system when every behaviour the system can produce is also a behaviour of the artefact; where the system can do something the artefact cannot, the proof is silent about it. An omitted part of the environment is enough to break that inclusion. A model of a contract that holds deposits and treats each external call as returning without side effects cannot represent a called contract that calls back in before the first call finishes, so a proof that balances stay consistent can hold of the model while the deployed contract is drained through that reentry. Verifying the implementation instead of a design narrows the gap without closing it, since what executes is the compiled code on a real machine, not the semantics the tool reasoned with. For counterexamples the gap runs the other way: a model that admits behaviours the system cannot exhibit can report violations that do not occur in practice.",
+        },
+        {
+          kind: "paragraph",
+          text: "The parts a result relies on without checking them form its trusted base. The specification is trusted to state what is wanted: a proof against a specification that requires total supply to be conserved, but says nothing about who may move a balance, is valid and says nothing about theft. The model is trusted to include the system's behaviours. The tools are trusted not to report success wrongly, and the verifier, the solvers it consults and any translation from source code into the tool's input can each, through a defect, turn a false property into an apparent proof. The assumptions, stated as axioms, preconditions or constraints on the environment, are taken as given; examples are an honest majority of validators, messages delivered within a known delay, or a hash function treated as collision-free. Each assumption also narrows what the result covers. A property proved for callers that supply valid inputs is silent about invalid ones, and assumptions that contradict one another leave no behaviour to examine, so that every property holds vacuously. A claim that a system is formally verified is therefore incomplete until it names what was verified, against which specification, under which assumptions and with which tools.",
+        },
+        {
+          kind: "paragraph",
+          text: "Results also differ in how much of the model they cover. A bounded check establishes the property for every case within a stated limit, such as executions of at most a fixed number of steps, a fixed number of participants, or values drawn from a small range, and its result is a statement about that limit: an error that appears only in a longer execution or a larger configuration lies outside it. An unbounded proof establishes the property for executions of any length and configurations of any size the model allows, so its statement carries no such qualifier. Failures are asymmetric in this respect, since one violating execution found within a bound shows that the property fails in the model whatever lies beyond it. A bounded pass becomes an unbounded result only through an additional argument that nothing beyond the limit can behave differently, such as an inductive step or a proof that the limit is large enough; without one, its weight depends on whether the errors sought would show up in small cases, a judgement about the system that the check itself does not make. Of the families of technique, model checking is commonly associated with the first kind of result and theorem proving with the second. The difference lies in coverage, not in the trusted base: an unbounded proof rests on a specification, a model, tools and assumptions in the same way, and is no more faithful to the running system than they are.",
+        },
+      ],
+    },
+    {
+      id: "model-checking-content",
+      conceptId: "model-checking",
+      definition:
+        "Model checking is an automatic technique that explores the reachable states of a finite model of a system to determine whether the model satisfies properties stated in temporal logic, and that reports an execution violating a property when it finds one.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The model a checker takes is a set of states and the transitions between them. A state assigns a value to each variable of the model, including each process's position in its code and the contents of each message channel. The transitions say which states can follow which; in a model of concurrent processes a transition is commonly one process taking a step or one message being delivered, so the different orders of those steps form different paths. An explicit-state checker starts from the initial states, generates the successors of each state it reaches, and stores the states it has seen in a table so that each is expanded once; the search finishes when no unexpanded state remains. A symbolic checker represents sets of states as decision diagrams or logical formulas and computes the successors of a whole set in one operation, which can handle spaces far too large to list state by state when their structure compresses well.",
+        },
+        {
+          kind: "paragraph",
+          text: "Temporal logic states how a property constrains the states along an execution. Linear temporal logic speaks about each execution as a sequence, with operators for at each point, eventually, until and next; computation tree logic speaks about the branching futures of a state, separating what holds on all continuations from what holds on some. What the search looks for depends on the kind of property. A safety property, such as that no two nodes decide different values, is violated by a finite execution that reaches a bad state, so checking it amounts to searching the reachable states, or the finite paths through them, for one. A liveness property, such as that each submitted request is eventually answered, is violated only by an infinite execution, and in a finite model such an execution must revisit a state, so the checker searches for a reachable cycle along which the awaited event does not occur, commonly by combining the model with an automaton that recognizes violations of the property. Liveness checks also tend to need fairness assumptions, which exclude executions in which a process that remains ready to act is passed over forever; without them, many models fail liveness properties only because the scheduler starves a process.",
+        },
+        {
+          kind: "paragraph",
+          text: "The cost of exploration grows with the number of reachable states, and that number grows multiplicatively. Independent components combine their local states, so three processes with ten local states each can reach up to a thousand combinations, and each further process multiplies the count again. Channels that can hold messages in different orders, and data variables with wide ranges, multiply it further: a single unconstrained 32-bit counter contributes some four billion values on its own. This is state explosion. The space can grow exponentially in the number of components, and a model that looks small can exhaust memory or time before its search finishes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Abstraction, bounding and symmetry reduction are among the techniques that contain it. Abstraction replaces the model with a smaller one that merges states differing only in details the property does not mention, for instance recording whether a balance is zero rather than its amount. An abstraction that keeps all of the original's behaviours, and possibly adds others, preserves a pass for a property required of all executions, but its counterexamples can be spurious; counterexample-guided refinement checks each abstract trace against the original model and, when the trace cannot occur there, refines the abstraction to rule it out and searches again. Bounding fixes the parameters that make the space large or infinite: the number of processes, the capacity of each channel, the range of each value, or the depth of the search. Symmetry reduction applies when processes are interchangeable. States that differ only in which of several identical processes holds which local state are then equivalent, so the checker stores one representative of each class, saving up to a factor equal to the number of orderings of those processes. The saving is sound only when the model and the property treat the processes alike; a model in which the node with the lowest identifier becomes leader distinguishes them, and merging their states would hide behaviour.",
+        },
+        {
+          kind: "paragraph",
+          text: "When a property fails, the checker reports a counterexample trace: a sequence of states of the model from an initial state, each step naming the transition taken, such as which process acted or which message was delivered. For a safety property the trace ends in the violating state. For a liveness property it has a lasso shape, a finite prefix followed by a loop that can repeat forever without the awaited event, and reading it includes asking whether a fair schedule would allow that loop, since a loop that starves a process ready to act points to a missing fairness assumption rather than a flaw in the design. Breadth-first exploration returns a shortest trace to a safety violation, while depth-first exploration can return one of thousands of steps that tools or engineers then shorten. Because each step is explicit, the trace can be replayed in the checker's simulator with the variables inspected at each state, and mapped onto events of an implementation, such as a message arriving late or a node restarting, to drive it through the same sequence as a test. A checker that stops at the first violation reports one way the property fails, not all of them, and a rerun after a fix may report another.",
+        },
+        {
+          kind: "paragraph",
+          text: "A pass is a statement about the model in the configuration, and to the depth, that were explored. Where the configuration is bounded but the search runs to completion, the checker has visited each state reachable in that configuration, so the pass covers executions of any length within it, yet says nothing about a fourth node when the model had three, a channel holding three messages when its capacity was two, or a counter that wraps when the model let it range only from zero to three. A depth bound leaves out more. Bounded model checking unrolls the transition relation a fixed number of steps and asks a satisfiability solver for a violating execution of at most that length, so a pass leaves longer executions unexplored, such as a fault that needs several rounds of a protocol to set up.",
+        },
+        {
+          kind: "paragraph",
+          text: "Model checking also has its own ways of reaching results that hold beyond a bound. For a safety property, a depth suffices once it reaches each reachable state, which holds when it is at least the longest of the shortest paths from an initial state to each reachable state; that length is hard to compute exactly, so tools work with over-estimates. The k-induction method adds a step check that any k consecutive states satisfying the property are followed by a state that also satisfies it; if that step succeeds and the first k steps pass a bounded check, the property holds at every depth. Property-directed reachability, also known as IC3, searches for an invariant that contains the initial states, is preserved by each transition and implies the property, and finding one establishes the property for executions of any length. For the size of a configuration, cutoff results show, for particular classes of protocol, that checking a small fixed number of processes covers any number, and they apply only to models that meet their conditions.",
+        },
+      ],
+    },
+    {
+      id: "theorem-proving-content",
+      conceptId: "theorem-proving",
+      definition:
+        "Theorem proving establishes properties of a system by constructing proofs in a formal logic, commonly with a proof assistant in which a person directs the proof and a small trusted kernel checks it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A proof assistant works over definitions and statements written in its logic. The proof engineer states the property as a theorem about definitions of the system and reduces it, through commands called tactics, to subgoals until each one is closed: unfolding a definition, splitting into cases, applying induction or a lemma already proved, or calling automation such as rewriting, arithmetic decision procedures and external solvers. None of that machinery has to be trusted, as long as the kernel checks what it produces. In the design descended from the LCF prover, a theorem is a value of an abstract type that only the kernel's few inference rules can create, so a tactic, however large or defective, can at worst fail to produce a theorem; in provers based on type theory, tactics build a proof term that the kernel type-checks on its own once the proof is finished. The kernel is kept small relative to the tactics and automation around it so that it can be inspected, and some kernels have been reimplemented independently to recheck exported proofs, or verified themselves. When automation calls an external solver, its answer is either reconstructed as kernel steps or accepted on the solver's word, and only reconstruction keeps the solver out of what must be trusted. Verifiers that send each proof obligation straight to an automatic solver have no kernel in this sense, and their results rest on the solver and on the tool that generates the obligations.",
+        },
+        {
+          kind: "paragraph",
+          text: "What the kernel's check establishes is that the stated theorem follows, by the rules of the logic, from the definitions and axioms in scope. It does not establish that a definition describes what its name suggests, and it accepts an axiom the user declares without asking for a proof. A proof left unfinished with a placeholder, or closed by admitting an axiom, still lets later proofs build on its result, so many proof assistants can report, for each theorem, the axioms and unproved placeholders it depends on. That report, the statement of the theorem and the definitions it uses are what a reviewer has to read; the proof script, however long, needs no reading once the kernel has accepted it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Most of the effort lies in what the proof needs and the tool cannot supply. A property of a system that runs for an unbounded number of steps is proved by induction over its executions: it holds in the initial states, and each transition from a state that satisfies it leads to a state that satisfies it. Properties as first stated seldom pass the second test. That no two nodes of a consensus protocol decide different values holds in each reachable state, but a state in which one node has decided while a quorum has already voted for another value also satisfies it, and a single step from there, a second node deciding on that quorum, violates it. That state is unreachable, yet the induction fails on it although the property is true. The engineer has to strengthen the property into an inductive invariant by adding facts that rule such states out: which votes can coexist, which messages can be in flight, how one node's record relates to what others have seen. Finding them takes an understanding of why the system works, and no procedure finds them for arbitrary programs, since whether a property is an invariant of an arbitrary program is undecidable; automatic inference succeeds for restricted classes of invariant. Lemmas call for the same judgement at a smaller scale: the intermediate facts that split a proof into steps the automation can close, a generalised induction hypothesis, a measure showing that a loop terminates, or a relation tying an implementation's state to the state of an abstract model.",
+        },
+        {
+          kind: "paragraph",
+          text: "The effort shows in the size of the result. Published proofs of operating system kernels and distributed protocols have run to many times the length of the code they cover and taken person-years of specialist work. The cost recurs, because a change to the code or to the specification can break proofs that relied on its details, and repairing them becomes part of maintaining the system. A stuck proof is also hard to read: it may mean that the property is false, that the invariant is too weak, or only that the automation needs one more lemma, and the proof assistant does not by itself say which. Some proof assistants therefore include counterexample finders that test a goal on small instances before effort goes into proving it.",
+        },
+        {
+          kind: "paragraph",
+          text: "To prove anything about code, the prover needs the code inside its logic. One way is to define the programming language's semantics in the prover, as definitions of what each construct does to the machine state, and to state theorems about a program's meaning under them. Another is to write the system as functions in the prover's own logic, prove properties of those, and generate executable code from them. A semantics is itself a definition, which the kernel accepts as written, so its soundness for the code that runs is an assumption of the proof, not something the proof checks. If it treats a 256-bit machine word as an unbounded mathematical integer, a proof that a deposit increases a balance holds of the model, while the deployed code, adding to a balance near the maximum, wraps around to a small number; the proof is correct, and it is a proof about the wrong model. The parser that brings source code into the prover, and the generator that turns the logic's functions into a program, lie outside the kernel's check too, unless they have been verified in turn, as some compilers and code generators have. Some semantics are written to be executable so that they can be run against an implementation's conformance tests, which builds confidence in the model without bringing it within the proof.",
+        },
+        {
+          kind: "paragraph",
+          text: "The environment enters as hypotheses. Another contract, the network or an adversary is commonly modelled as a step that can occur at each point of an execution, constrained only by what the theorem assumes of it: an attacker who may send whatever message it can build from what it has seen, or a called contract that may run arbitrary code and call back. The induction treats that step as one more transition the invariant must survive, which is how the theorem comes to cover every environment that meets its hypotheses. Leaving the number of participants as a variable in the statement, instead of fixing it, extends the result to configurations of each size, at the price of invariants that speak about arbitrary sets of nodes. Assumptions stated as hypotheses of the theorem stay in the statement a reviewer reads; declared as global axioms, they become available to every later proof without appearing in its statement. Constructing in the prover one environment that meets the hypotheses shows that they are not contradictory.",
+        },
+      ],
+    },
+    {
+      id: "symbolic-execution-content",
+      conceptId: "symbolic-execution",
+      definition:
+        "Symbolic execution analyses a program by running it on symbolic values in place of concrete inputs, recording for each path the conditions the inputs must meet to follow it, and asking a constraint solver whether some input meets them and which one does.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each input starts as an unknown, and each operation on it yields an expression over the unknowns rather than a number: after an assignment of x plus one to y, the executor holds y as that expression. A branch whose condition depends on the inputs has no single outcome, so the execution splits in two. One continuation adds the condition to its path condition, the conjunction of the conditions taken so far, and the other adds the condition's negation. The executor can ask a solver, commonly a satisfiability modulo theories solver with theories for fixed-width machine integers and arrays, whether the extended path condition has a solution, and drop a side that has none, since no input reaches it. Failures are found with the same kind of query. At an operation that can fail, such as a division, an array access, an addition checked for overflow or an assertion, the executor asks whether the path condition together with the failure condition is satisfiable; if it is, the solver returns a satisfying assignment, a concrete input that drives the program along that path into the failure. In a function that divides by x minus seven when x exceeds five, the path condition that x exceeds five, joined with the failure condition that x minus seven is zero, is satisfied by x equal to seven, and that value is the report.",
+        },
+        {
+          kind: "paragraph",
+          text: "The cost lies in the number of paths. Each branch on the inputs can double the paths reaching the code after it, so thirty such branches in sequence can yield up to about a billion paths, and a loop whose iteration count depends on an input has a separate path for each count, a number limited only by the input's range. Paths can far outnumber the distinct states they produce, since two paths that take different branches and arrive at the same values are still explored separately, each under its own path condition. The queries grow too: a path condition lengthens with each branch, and conditions that multiply, divide or hash wide machine integers can take a solver far longer than linear ones, or exceed its time limit.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bounding is the bluntest response. The executor unrolls each loop and recursion a fixed number of times, caps the length of a path, and stops when its allotted time runs out; whatever lies beyond the caps is not explored, and within that time the order in which the search picks paths decides which ones it reaches. Merging states attacks the count itself. Where two paths rejoin, as after both sides of a branch, the executor can continue with one state in place of two: its path condition is the disjunction of the two path conditions, and each variable whose values differ holds a conditional expression that selects between them according to the branch taken. Merging at each join of loop-free code leaves a single state at each program point, but the work moves into the solver, whose queries now carry the alternatives inside nested conditional expressions, so practical executors merge selectively, where they estimate that the paths saved outweigh the harder queries.",
+        },
+        {
+          kind: "paragraph",
+          text: "Concolic execution, a name formed from concrete and symbolic, changes how paths are produced rather than how many there are. It runs the program on an actual input while recording the path condition of the path that input takes. To reach another path it keeps a prefix of the recorded branch conditions, negates the next one, asks the solver for an input that satisfies the result and runs again on that input. Holding one path at a time, it needs no memory for forked states, and the concrete values let it continue where a purely symbolic executor would stall. A call into a library or the operating system that has no symbolic model is simply executed, and a hash or a nonlinear operation can be replaced by the value it took in this run. That substitution, called concretization, is where coverage is given up: the path condition now fixes the value this run happened to use, so paths that need a different value may go unexplored. A purely symbolic executor commonly meets the same calls with hand-written models of the environment, and a model that lets an external call return fewer results than the real callee can return hides the failures that depend on the missing ones.",
+        },
+        {
+          kind: "paragraph",
+          text: "A result, when there is one, is a failing path with an input that follows it. The input can be run against the real program, outside the executor, to confirm the failure, to debug it and to keep as a regression test. It reproduces when the executor modelled the program's semantics and environment faithfully along that path; where a model let an external call return a value the real callee does not produce, or the executor's arithmetic differed from that of the compiled code, replaying the input is what exposes the report as false. Run to produce an input for each path it explores rather than only for failures, the same machinery generates test suites that reach branches random testing seldom hits, such as a comparison of a 32-bit input against one specific value. In a smart contract the input is a sequence of transactions with their senders, arguments and attached value, and exploring sequences of several calls finds failures that a single call does not expose, such as state left by one transaction that lets a later one withdraw more than was deposited.",
+        },
+        {
+          kind: "paragraph",
+          text: "No report is a weaker result than it may appear. Symbolic execution under-approximates: where its models are faithful, each path it explores is one some input can take, but finding nothing says only that the explored paths, under the checks made, do not fail. Paths beyond a loop bound or a transaction-sequence length, paths the search had not reached when its time ran out, paths dropped because the solver timed out or returned unknown, and paths excluded by concretization remain unexamined. Only conditions the executor checks count as failures, so a path that completes with a wrong result passes unless an assertion states what the right result is. Where the program has finitely many paths, as when each loop has a fixed bound, and the search explores them all, the solver decides each query and the models are faithful, the absence of a report does hold for all inputs, for the checks made; outside those conditions it is evidence from the paths explored, not a conclusion about the program.",
+        },
+      ],
+    },
+    {
+      id: "static-analysis-content",
+      conceptId: "static-analysis",
+      definition:
+        "Static analysis examines a program's code, as source, bytecode or an intermediate representation, without running it, to find known patterns of error or to compute an approximation of the behaviours the program can have.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The simplest analyses match the program's syntax tree against patterns of known mistakes. A rule can flag a low-level call whose success flag is never checked, a comparison of a variable with itself, or, in a smart contract, an authorization check that tests the account that originated the transaction in place of the immediate caller. Matching on syntax alone sees the shape of the code, not the values that flow through it: it reports each place where the shape occurs, whether or not an execution could reach that place with values that make it harmful, and it misses a mistake written in a shape no rule describes. In return a pass over the syntax tree is cheap, and a rule written for a known class of defect points at the line where it occurs.",
+        },
+        {
+          kind: "paragraph",
+          text: "Data flow analysis follows how values move. It builds a control flow graph, whose nodes are statements and whose edges are the ways control can pass between them, and propagates facts along the edges: which assignments of a variable may reach a point, which variables may be read before they are written, whether a reference may be null. Where edges join, as after the two sides of a branch, the facts arriving along each are combined into one, and around a loop the propagation repeats until the facts stop changing, a fixed point, so the loop is summarised without following each possible number of iterations. Taint analysis is a common instance. Values from an untrusted source, such as a request parameter or a transaction's call data, are marked, the mark follows each assignment and call that copies them or computes from them, and a warning is raised where a marked value reaches a sensitive sink, such as a database query, the target of a delegated call or the amount of a transfer, without passing a check. Analyses that follow values across function calls are called interprocedural, and they cost more, since a function's effect depends on the contexts it is called from.",
+        },
+        {
+          kind: "paragraph",
+          text: "Abstract interpretation turns this propagation into a general theory of approximation. Each concrete value is replaced by an element of an abstract domain that stands for a set of values: a sign, an interval such as zero to one hundred, or a relation between variables, such as that an index stays smaller than an array's length. Each operation of the language gets an abstract counterpart, and when each counterpart covers every result its concrete operation could produce from the values its inputs stand for, the fixed point describes, at each program point, a set that includes every state the program can reach there, possibly along with states it cannot. Intervals could keep growing around a loop that increments a counter, so the analysis widens: after a few iterations it moves a bound that is still changing straight to infinity, an operation designed to make the iteration end, at the price of precision. The domain decides what can be expressed. Intervals can show that an index lies between zero and nine but not, in general, that two variables are equal, which relational domains such as octagons or polyhedra can show, at a higher cost in time and memory.",
+        },
+        {
+          kind: "paragraph",
+          text: "For programs in a general-purpose language, whether an execution can reach a given error is undecidable, so an analysis that is to finish on all of them has to approximate, and the choice is which way to err. A sound analysis over-approximates: it reasons about a superset of the behaviours, so it reports each error of the kinds it checks that its model of the language admits, and its silence means that no execution, as modelled, produces one. Its cost is false alarms, warnings about behaviours that exist only in the approximation. If one branch allocates an object and another leaves the reference null, combining the facts where the branches join leaves a reference that may be null, and a later use guarded by the same unchanged condition as the allocation is flagged although it never runs with the null value. Precision is how closely the approximation follows the real behaviours, and in a tool's output it shows as the share of warnings that are real. Keeping branches apart, or distinguishing the contexts a function is called from, removes such alarms and multiplies the facts to track, so a more precise analysis can fail to finish on a large program. The opposite choice is to report only what the analysis is confident of: many practical tools deliberately ignore reflection, dynamically computed call targets or aliasing they cannot resolve, which keeps their warnings credible at the cost of missed cases. The vocabulary runs in both directions, since some bug-finding work calls an analysis sound when each error it reports is real, so a claim of soundness needs to say which side it guarantees.",
+        },
+        {
+          kind: "paragraph",
+          text: "Those costs set its place in a development workflow. A pattern or data flow check over a changed file can finish within the time of a build, so it can run in the editor or on each commit, and that cheapness is what makes it continuous: each change is checked, not only a release candidate. Its warnings are triage, not verdicts. Teams tune rule sets, suppress warnings judged false with a recorded reason, and compare results against a baseline so that only new warnings block a change, because a growing backlog of unexamined alarms teaches people to ignore the tool. A warning that survives triage points heavier methods at code where they pay off: a test or fuzzing campaign aimed at the flagged function, symbolic execution of it, a property for model checking or theorem proving, or a reviewer's attention during auditing. Silence carries less weight. From a tool that skips hard features it means only that nothing it looks for was found, and even a sound analysis says nothing about properties it was not asked to check, such as whether the code does what its formal specifications, or its authors, intend.",
+        },
+      ],
+    },
+    {
+      id: "formal-specifications-content",
+      conceptId: "formal-specifications",
+      definition:
+        "A formal specification states what a system must do, and what it must not do, in a language whose meaning is defined mathematically, so that tools can check designs and code against it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Formality is a property of the language, not of how carefully a text is written. A prose rule, however precise, means what its readers take it to mean, so it remains open to specification ambiguity. A formal language has a semantics: a mathematical definition of which states, or which executions, satisfy each statement the language can express. That definition lets a tool take over the reader's role. Given a statement and a design or program described in terms the tool understands, it can search for a behaviour that fails the statement or attempt to show that no such behaviour exists, and it can check the specification itself, rejecting a clause that names an undefined variable or compares values of incompatible types. Being formal is also not the same as being runnable. A specification written as code is precise about what it computes, but a tool can reason about all of its inputs at once only if its language also has a defined semantics, and otherwise checking it means running it on chosen inputs; and a formal statement such as that no balance ever becomes negative constrains each implementation without describing how any of them computes. In either form the specification proves nothing by itself: it is what such checks are about.",
+        },
+        {
+          kind: "paragraph",
+          text: "An invariant is a condition on a single state that each reachable state must meet: that no account balance is negative, that a vault holds at least as many assets as its outstanding shares can redeem, or that no two nodes regard themselves as leader of the same term. It is written as a predicate over the variables of the state. For a contract it is commonly required to hold between transactions, at the entry and exit of each externally callable function, rather than after each instruction, since a function that updates several variables in turn passes through states that break it; where the specification draws that line is part of what it says.",
+        },
+        {
+          kind: "paragraph",
+          text: "Preconditions and postconditions specify one operation at a time. The precondition is what must hold when the operation starts, the postcondition what the operation guarantees when it finishes, and the guarantee is conditional: if the precondition did not hold, the specification promises nothing. A postcondition relates the final state to the initial one, so it can refer to old values. For a transfer, given a precondition that the sender holds at least the amount, it might say that the sender's balance has fallen by the amount and the recipient's has risen by it. The pair divides responsibility between caller and callee, which works inside a program whose callers can themselves be checked to establish the precondition. A publicly callable function has no caller that can be held to it, so a complete specification of such a function also states what happens when the precondition fails, for instance that the call reverts and leaves the state as it was.",
+        },
+        {
+          kind: "paragraph",
+          text: "Temporal properties describe whole executions of a protocol, how its states and events may follow one another over time, instead of what holds in one state or across one call. They express prohibitions that apply at each point, such as that a finalized block is not later reverted or that a validator signs at most one block per slot; obligations that must eventually be met, such as that a withdrawal request is in time either executed or refunded; and orderings, such as that a node votes in a round only after receiving that round's proposal. They are commonly written as formulas of a temporal logic, or as an abstract state machine, the protocol's initial states and permitted steps with implementation detail left out, together with the properties that machine must have. In the second form the machine is a specification in its own right: an implementation meets it when each of its behaviours corresponds to one the machine allows, while the machine is in turn checked against its properties.",
+        },
+        {
+          kind: "paragraph",
+          text: "Obligations that something eventually happens depend on the environment, since a network that loses each message stops a protocol from making progress. A protocol's specification therefore states its properties together with what they assume, for example that each message sent between honest nodes is eventually delivered, or that validators holding more than two thirds of the stake follow the protocol, and says that the protocol guarantees them under those assumptions. The assumptions belong to the specification's meaning, and a guarantee quoted without them claims more than was specified.",
+        },
+        {
+          kind: "paragraph",
+          text: "A formal specification can itself be wrong, and formality makes its errors precise without making them visible. The transfer postcondition that lowers the sender's balance and raises the recipient's cannot be met, for a nonzero amount, when the two are the same account, so a correct implementation fails to verify against it. Adding a precondition that excludes transfers to oneself makes the check pass and leaves that case unspecified, so an implementation in which such a transfer creates tokens meets the amended specification. A specification can also be incomplete. The same postcondition says nothing about accounts other than the two, so an implementation that also alters a third balance satisfies it unless a frame condition states that everything else is unchanged. A protocol specified only by prohibitions is met by an implementation that does nothing, since a system that stays in an acceptable initial state breaks no prohibition.",
+        },
+        {
+          kind: "paragraph",
+          text: "Errors in the two directions surface differently. A specification that is too strong rejects correct designs, and the failing check draws attention to it; one that is too weak admits incorrect designs while the check passes, so nothing in the check prompts a second look. Repairs carry the same risk, because weakening a property until it verifies is easy and each weakening can drop a case that mattered. Who writes the specification matters as well. Designers who write it alongside the design can state what they intend before code exists; verification engineers who write it for existing code recover intent from documentation and from the code itself, and a property read off the code can restate its bugs as requirements.",
+        },
+        {
+          kind: "paragraph",
+          text: "Intent is not formal, so no tool can confirm that a specification captures it, and checking one against intent combines human review with tests aimed at the specification rather than at the system. Reviewers who know what the system is for read each clause beside a plain statement of its meaning, and ask what it leaves out as well as whether it is right. Test cases derived from the specification probe it from both sides: concrete scenarios that ought to be allowed, such as a withdrawal by an account with enough funds, should satisfy it, and scenarios that ought to be forbidden should violate it. Asking a tool for an execution in which an intended event occurs, a withdrawal that succeeds or a block that is finalized, checks that the specification and model allow it at all; if they are so constrained that the event cannot happen, properties stating what must hold whenever it occurs are met trivially. Planting known faults, such as a missing access check or a wrong bound, and confirming that checking against the specification catches each of them shows what the specification would detect, and a planted fault that passes points to a property nobody wrote. These checks raise confidence in a specification without proving it complete.",
+        },
+      ],
+    },
+    {
+      id: "verification-limits-content",
+      conceptId: "verification-limits",
+      definition:
+        "Verification limits are the boundary between what a protocol can check about a report of facts outside it and what it has to accept without checking: whether the report is true of the world.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The checks open to a protocol reach four properties of a report. Its origin and integrity are checkable: a valid signature from a known key shows which key signed the report and that its content has not changed since. Its freshness is checkable against the protocol's own clock, by when the report was included or by a round number or timestamp it carries, though these date the report rather than the observation: a timestamp written by the signer records when the signer says it observed, not when it did. Its agreement with other reports on the same question is checkable too, and a protocol can reject a report that strays too far from the rest or from the previous value. Each of these is a fact about the report: who signed it, that it is unaltered, how old it is, how it relates to other reports. Whether its content corresponds to the world is a fact about the world. A protocol that learns of the world only through reports has nothing to hold the content against, so for such a protocol correspondence lies outside what checks on the report can establish, and it is taken on trust.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agreement comes closest to a check of truth and still falls short of one. Sources that read the same upstream feed, share a faulty method or act together can agree on a false value, and a bound on deviation admits a false value that happens to look plausible. A report can therefore be authentic, recent and in line with its peers, and wrong. Suppose a source is mistaken, or its own systems have been compromised, and it signs a false value. The signature is valid, the content is unaltered, the report is recent, and if the error is small or shared it agrees with the others. The checks pass because each is answered correctly: the report is exactly what that source said. This is not a breach of the limit but the case it leaves undetected, and it is where a protocol's exposure lies, since whatever the protocol does with the value it does on the source's word.",
+        },
+        {
+          kind: "paragraph",
+          text: "Attestation pushes what can be checked closer to the source, and each form of it stops at a definite point. When the provider that produces a value signs it itself, an exchange quoting its own trades or an agency publishing its own measurement, a protocol can check that the value is the provider's and was not altered by any relay or oracle node on the way. The intermediaries drop out of what has to be trusted, and the check stops at the provider. Whether the quoted trades were genuine, or the instrument was calibrated, is outside what the signature covers, and the protocol now relies on the provider's honesty and competence, and on the security of its signing key, in place of the relays'.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hardware attestation reaches into the computation. A trusted execution environment can produce a statement, signed with a key the hardware vendor certifies, that a particular program ran in isolation on genuine hardware and produced a given output, so a protocol can check that an output came from the expected code and not from an operator who changed it. Trust moves to the vendor, whose keys and attestation service vouch for the chip, and to the hardware having no exploitable flaw, a premise that side-channel attacks on such enclaves have broken more than once. The program still learns about the world from what it reads, so the attestation covers what it did with its input, not whether the input was true.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proofs over web data reach a website. A TLS session on its own gives the client nothing it could show to anyone else, so schemes for proving web data commonly bring a notary or proxy into the session and produce a proof, often a zero-knowledge one, that a given response came from the server holding the certificate for a given domain, revealing only the parts the prover chooses. Trust moves to the server's TLS key, to the certificate authorities that bind that key to the domain, and to the notary or proxy not colluding with the prover. What such a proof shows is what the site served: if the site publishes a wrong figure, the proof establishes, correctly, that the site published it. In each of these forms trust moves rather than disappears, from relays to the provider, from the operator to the chip vendor, from the oracle to the website and its key, and the step from the source's statement to the world stays where it was.",
+        },
+        {
+          kind: "paragraph",
+          text: "Designing around the limit means arranging for a false report to be unprofitable, contestable or outweighed, in place of verifying it. Economic guarantees require reporters to stake funds that are forfeited if a report is shown to be false. That turns a question the protocol cannot settle by checking the report, whether it is true, into one about incentives, whether lying would cost the reporter more than it gains, and the guarantee depends on a false report being shown false afterwards by some process the protocol accepts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Dispute windows provide such a process. A proposed value is accepted only after a period in which anyone may challenge it by posting a bond, and a challenged value goes to a resolver, such as a vote of token holders or an appointed arbiter, whose ruling the protocol applies. The protocol still checks nothing about the world: it checks that the window has elapsed, that bonds were posted and how the resolver ruled. Observation of the world moves to the challengers and the resolver, and the arrangement holds while someone who knows a value is false is watching and willing to challenge it, and while the resolver rules honestly. Each value also waits out the window, which suits questions settled once, such as the outcome of an event, more readily than prices needed within seconds.",
+        },
+        {
+          kind: "paragraph",
+          text: "Redundancy draws reports from many reporters and sources and combines them, for instance by taking the median, which stays within the range of the correct reports as long as fewer than half are wrong. It replaces verification of any one report with the condition that most reports are not wrong together, which is a condition on their independence: reporters that read one upstream source, or that can be bribed as a group, provide less of it than their number suggests. Like stake and disputes, redundancy bounds the exposure the limit creates without closing it, by stating conditions under which a false value is costly to submit or unlikely to be accepted.",
+        },
+      ],
+    },
+    {
+      id: "external-data-availability-content",
+      conceptId: "external-data-availability",
+      definition:
+        "External data availability is whether the information from outside a chain that a protocol depends on can be obtained when the protocol needs it, which takes a source that has the data, can be reached and keeps publishing it.",
+      body: [
+        { kind: "distinction", left: "External data availability", right: "Blockchain data availability" },
+        {
+          kind: "paragraph",
+          text: "The question is posed at a moment and at a rate of demand. A lending market that values collateral while positions can change needs a current price at short intervals, whereas a contract settling a wager needs one result, once, so a source can meet the second need and fail the first. Availability is also separate from accuracy, and either can fail without the other: a source can publish on schedule and be wrong, and a correct source can be unreachable at the moment it is asked. Checks on whether a value is right presuppose that a value arrived, so they cannot supply a missing one, and a steady supply of values says nothing about whether they are right. What a missing value then does to a protocol is a matter of oracle failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some causes belong to one source or to the path to it. An outage at a provider, at the service hosting its interface, or in the network between it and those who query it stops data for as long as it lasts. Rate limits stop it by policy: a provider caps how many requests a client may make in a period, so a protocol whose demand rises, as it can when updates are triggered by price moves in a volatile market, can have requests refused while the source itself is running. Censorship stops it by decision: a provider can refuse to serve certain clients or jurisdictions or withdraw a dataset under legal pressure, and an authority can block access to it within its territory. A source can also stop for good, when a provider discontinues a feed or a market delists the asset it quoted. Because these causes sit with a particular provider, host or jurisdiction, another source that does not share them can still have the data.",
+        },
+        {
+          kind: "paragraph",
+          text: "Other causes leave nothing to fetch. When the market for an asset is closed, as stock exchanges commonly are overnight, at weekends and on holidays, no trades happen and no new price forms, while a blockchain keeps running and a protocol built on it can keep needing one. Venues that trade outside those hours, where they exist, quote a different and often thinner market, so they offer another value rather than the missing one. Data that does not exist yet behaves the same way: the result of a match before it ends, an official statistic before its release, the price of an asset that has not begun trading. A fact that no one measures directly, such as rainfall at a field with no gauge nearby, has no source of its own, and estimates from radar or distant gauges give a different figure rather than the missing measurement. In these cases asking another source, or asking again before the market opens or the result is published, returns nothing new, because the absence lies in the world rather than in the path to it.",
+        },
+      ],
+    },
+    {
+      id: "oracle-failure-content",
+      conceptId: "oracle-failure",
+      definition:
+        "Oracle failure is a condition in which a protocol does not receive from its oracle a correct value in time for a decision that depends on it, because the value delivered is wrong or out of date, arrives after it was needed, or does not arrive at all.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Where a fault enters an oracle decides how far it travels. An error at a source, such as a mistaken trade print, a unit or decimal slip, or a feed mapped to the wrong asset, reaches every node that reads that source, so adding nodes does not contain it; it is contained only where the aggregate also draws on sources that do not share the error. A faulty or offline node is absorbed by aggregation while enough healthy nodes remain to produce an update, and becomes a failure of the feed when too few do. Delay acts last, on the update itself: a value that the sources and nodes got right still has to be included on chain, and congestion or a slow aggregation round holds it back whatever its quality. Deliberate manipulation belongs in the same list of causes rather than forming a separate kind of failure, since it yields the same forms as accidental faults; how it is carried out is the subject of oracle manipulation.",
+        },
+        {
+          kind: "paragraph",
+          text: "The form a protocol meets depends on how it reads the oracle as much as on the fault. When updates stop, a design that keeps the last pushed value on chain goes on reading it, so the halt shows up as a stale value, while a design that needs a fresh report with each use gets nothing, so the same halt shows up as a missing one. In the other direction, the protocol sees the form and not its cause: a wrong price from a decimal slip and one from a manipulated market arrive looking alike. Responses are therefore organized around the forms, which differ in what reaches the protocol, where they tend to come from and what they set off.",
+        },
+        {
+          kind: "comparison",
+          label: "How the forms of oracle failure differ",
+          dimensions: ["What the protocol sees", "Typical cause", "Consequence"],
+          alternatives: [
+            { name: "Wrong value", values: ["A fresh, well-formed value that is false", "A source error or faulty node, or manipulation", "Liquidations and loans at wrong prices"] },
+            { name: "Stale value", values: ["An old value that still reads as current", "Updates stopped by offline nodes or a halted source", "Trading and settlement on outdated values"] },
+            { name: "Missing value", values: ["No usable value, or a read that fails", "Too few working nodes, or a source with nothing to give", "A frozen market: actions that need the value halt"] },
+            { name: "Late value", values: ["The right value, after the decision that needed it", "Network congestion or a slow update round", "Decisions in the gap run on the previous value"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Damage spreads at the speed of whatever acts on the value. In a lending market, liquidators watch for positions that a new price makes eligible and close them within blocks, so a price that is wrong for a few minutes can liquidate solvent borrowers, and those liquidations stand once confirmed even after the price is corrected. A price that is too high works the other way, letting borrowers draw loans against collateral worth less than the protocol counts, a loss that surfaces as unpaid debt when the true price arrives. A contract that settles on an outdated value pays out on it, and correcting the record afterwards does not recover the funds. A late value opens a window in which anyone who already sees the coming price can trade against the protocol at the old one. A frozen market harms more slowly: while the value is missing, liquidations that depend on it cannot run, so positions that become unsafe stay open and losses can build up until the feed resumes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Failures also tend to arrive together. Sharp price moves bring a rush of trades and liquidations competing for block space, so updates are most likely to be delayed when prices move fastest and when liquidations depend on them most, and sources under the same load can report erratic prices or stop. Staleness checks and heartbeats exist to expose updates that are late or have stopped, and fallback sources, pauses and circuit breakers to contain the damage.",
+        },
+      ],
+    },
+    {
+      id: "evm-content",
+      conceptId: "evm",
+      definition:
+        "The EVM is the virtual machine that runs Ethereum's smart contracts, specifying the instructions they are compiled to, the spaces their data lives in and the cost of each operation, so that all nodes executing a contract reach the same result.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "EVM code is a sequence of one-byte instructions, some followed by the data they push, and the machine runs it as a stack machine: an instruction takes its operands from the top of a stack and pushes its result back, with no general-purpose registers. Each stack item is a 256-bit word, a width chosen so that a Keccak-256 hash fits in one item, with addresses and token balances fitting as well. Most processors, and general-purpose formats such as WASM, operate natively on 32- and 64-bit values; on the EVM a small integer still occupies a full word, so narrower types save nothing at the machine level, and arithmetic wraps around at 256 bits unless the compiler adds overflow checks. The stack holds at most 1024 items and instructions reach only those near its top, which limits how many local values a function can keep in play at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Data lives in separate spaces that differ in lifetime and in who may write them. Storage is a contract's persistent record: a map from 256-bit keys to 256-bit values, kept by every full node as part of the chain's state, and changed only by that contract's own code or by code it runs on its own behalf through a delegate call. Memory is a byte array that starts empty for each call and is discarded when the call returns, holding intermediate values and the data being prepared for a call or a return. Calldata is the read-only input a call arrives with, which by convention encodes the function to run and its arguments; the callee can read it but not change it. A contract cannot reach another contract's storage directly at all, only by calling that contract and receiving what its code chooses to return.",
+        },
+        {
+          kind: "paragraph",
+          text: "Operations are metered. Each instruction consumes a defined amount of gas, a call runs on a limited allowance, and execution that exhausts its allowance stops where it is, with the call's state changes undone. Metering is what lets the EVM accept loops and unbounded recursion in programs written by anyone: nodes cannot in general tell in advance whether a program halts, but they can count, and the allowance guarantees that execution ends. The charges are set to follow the burden an operation places on nodes, so arithmetic is cheap, reading state costs more, and writing new storage is among the most expensive things a program can do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contracts interact through message calls. A call names a target account, supplies calldata, may transfer ether, and forwards part of the caller's remaining gas; the target's code then runs in a new frame with fresh memory, against its own storage, and with the caller's address as the sender it sees. A call to a user account that holds no code runs nothing and simply moves any ether. When the frame ends, the caller receives a success flag and any return data. A failing callee has its own changes undone, but its failure does not by itself undo the caller's: the caller reads the flag and decides whether to continue or fail in turn. A static call adds one restriction, that the callee and anything it calls may not change state, so a contract can read from another without letting it write.",
+        },
+        {
+          kind: "paragraph",
+          text: "What distinguishes the kinds of call is the context a frame carries: whose storage and balance the code acts on, which address it sees as its caller, what value arrived with the call, and whether it may change state. A delegate call keeps the caller's context and borrows only the callee's code. That code runs against the caller's storage and balance and sees the caller's own sender and value, as if the original call had arrived directly. Libraries are reused this way, and proxy patterns are built on it. The price is complete trust in the borrowed code: it can write any slot of the caller's storage, and since it identifies slots by position, caller and callee have to agree on what each slot holds.",
+        },
+        {
+          kind: "paragraph",
+          text: "Programs are shaped by these choices. Because storage persists, is replicated by every full node and is charged accordingly, contracts keep as little of it as they can: they pack several small values into one word, recompute what can be derived, and record history in event logs, which are cheaper to write but cannot be read back by contracts. Calls nest at most 1024 frames deep, and because a caller can forward only part of its remaining gas, deep nesting generally runs out of gas before it reaches that limit. Either way, a call can fail for reasons unrelated to the callee's logic, so code has to check the outcome of each call it makes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Calling another contract also hands control to code the caller did not write, and a plain ether transfer made by a call to a contract runs that contract's code as well. The callee runs with the gas it was forwarded, can fail or spend its allowance deliberately, and can make calls of its own to any contract before it returns. A caller therefore cannot assume that nothing else has run between making a call and receiving its result; reentrancy is one class of bug that follows from this.",
+        },
+      ],
+    },
+    {
+      id: "wasm-content",
+      conceptId: "wasm",
+      definition:
+        "WASM, short for WebAssembly, is a portable binary instruction format, checked before it runs, that some blockchains adopt as their virtual machine so that programs written in general-purpose languages can be compiled and executed on-chain.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The format was designed for running untrusted code in web browsers at close to native speed, and it is specified independently of particular processors and operating systems. A module declares its functions, a linear memory, its global variables and the imports it expects from its host. Execution follows a stack machine: instructions take their operands from an implicit stack and push their results onto it, but each value has a type, such as a 32- or 64-bit integer or floating-point number, and the types on the stack are known at each point in the code. Control flow is structured. Code is nested into blocks, loops and conditionals, and a branch can only leave to the end of an enclosing block or return to the start of an enclosing loop, so the format has no jumps to arbitrary addresses.",
+        },
+        {
+          kind: "paragraph",
+          text: "These choices make code checkable before it runs. Validation confirms that each function uses the stack consistently with its declared types, that each branch targets an enclosing block, that direct calls match the signatures of their targets, and that the module refers only to the memory, functions and imports it declares. Code that passes cannot underflow the stack or jump into the middle of an instruction. What is left for runtime are checks the format makes explicit, such as a memory access staying within linear memory or an indirect call matching its expected signature, and a failed check traps, stopping execution. Because types and block boundaries are known in advance, an engine can compile a validated module into native machine code efficiently, which is where much of its speed comes from. A blockchain usually validates a module when it is deployed, so malformed code is rejected before anything can call it, and the same step is a natural place to enforce the chain's own restrictions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Portability is not the same as determinism. The specification fixes the result of nearly all instructions, but it leaves a few outcomes to the engine, while a blockchain needs all nodes to reach the same result bit for bit. Floating-point arithmetic is the clearest case: results follow the IEEE 754 standard, but when an operation produces NaN, the not-a-number value, the bits it carries may differ between engines and processors, and a program that inspects them could diverge. Chains handle this in different ways. Some reject floating-point instructions when code is deployed; others allow them but have the engine replace each NaN result with one canonical value. Features whose results can depend on timing, such as threads that share memory, are generally left disabled.",
+        },
+        {
+          kind: "paragraph",
+          text: "Memory growth needs the same treatment. A module can enlarge its linear memory while it runs, in pages of 65,536 bytes, and the specification lets an engine refuse a request for more memory when its host is short of resources, so whether growth succeeds could depend on the machine. A chain removes that freedom by setting a fixed maximum, and often a charge for each page, so that a request succeeds or fails identically on all nodes. How deeply calls may nest needs a similar bound, because an engine would otherwise run out of its own native stack at a depth that varies between implementations.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where a purpose-built machine such as the EVM defines the cost of each instruction in its specification, WASM attaches no cost to its instructions, so a chain that adopts it has to add metering itself. One approach rewrites the module at deployment: at the start of each stretch of straight-line code, it inserts a charge for that stretch's cost, which stops execution once the allowance is used up. Structured control flow makes this rewriting straightforward, because the points where execution can enter or leave a block are explicit in the code. The other approach builds the counting into the engine, which charges as it executes. Either way the chain has to assign a cost to each instruction and host function, and it has to account for work done before execution starts. An engine that compiles modules to native code spends effort that grows with code size, and with some compilers grows faster than code size on crafted inputs, so chains bound module size, charge for compilation, or choose compilers whose running time stays predictable.",
+        },
+        {
+          kind: "paragraph",
+          text: "Everything a module does beyond computing on its own memory goes through the interface its host provides, and on a blockchain the chain decides what that interface offers. Reading and writing contract storage, learning which account made the call, reading information about the current block, emitting events, calling another contract and checking a signature are typically host functions, which the module imports and the node implements natively. Some chains instead pass call and block information as arguments to the exported function the chain calls, or have the contract return messages, such as calls to other contracts, that the chain carries out once it finishes. The host interface therefore defines what a contract is able to do. Each host function has to be deterministic and metered like the instructions themselves, and a costly operation such as hashing can be offered natively instead of being compiled into each module. The same interface limits portability: two chains that both run WASM share an instruction format but not necessarily a host interface, so a contract written for one generally has to be rebuilt against the other's host functions before it can run there.",
+        },
+        {
+          kind: "paragraph",
+          text: "In exchange, a chain gains access to languages and tools built for ordinary software. Rust, C and C++ compile to WASM through the LLVM compiler infrastructure, and languages such as Go and AssemblyScript have compilers that emit it, so contract authors can use established compilers, type checkers, test frameworks and libraries instead of a language made for one machine. Chains typically supply a software development kit that presents their host functions as library calls in the language. Not all of a language comes along. Parts of a standard library that assume an operating system, such as files, threads or the clock, are unavailable; libraries that rely on floating point or on randomness may need replacing; and a language with a garbage collector generally has to ship its runtime inside the module, enlarging code that is stored on chain and charged for. Rust is a common choice partly because it needs no such runtime and can produce compact modules. A familiar language does not change the setting, though: the chain's costs and host interface still shape how a program has to be written.",
+        },
+      ],
+    },
+    {
+      id: "zkvms-content",
+      conceptId: "zkvms",
+      definition:
+        "A zkVM is a virtual machine designed so that running a program on it can yield a proof of that run, which lets others accept the computation's result without executing it again.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The proof systems zkVMs build on check constraints, not programs, so a zkVM specifies its machine twice: as an instruction set that programs are compiled to, and as a fixed system of constraints intended to hold for correct steps of that machine and to fail for incorrect ones. Running a program records a trace, a table with one row per step holding the program counter, the registers and the instruction being executed. The constraints relate each row to the next, so that a row can follow its predecessor only in the way the instruction's semantics allow, and further constraints bind the execution to the program it runs, the inputs it reads and the output it claims. Memory does not fit into a row, so reads and writes are recorded as well, and additional constraints show that each read returns the value last written to its address. A proof system then establishes that the whole record satisfies these constraints, and the verifier receives the proof, not the trace.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because the constraints describe the machine rather than a particular program, one constraint system serves each program compiled for it, and developers write ordinary code instead of expressing each computation as constraints by hand. A program is typically identified by a hash of its code that the proof refers to, so a proof speaks about one specific program. The trace is supplied by whoever generates the proof and the constraints merely check it, which permits a useful shortcut: a value that would take many constraints to compute but few to confirm, such as the result of an integer division, confirmed by multiplying the quotient back, adding the remainder and checking that the remainder is smaller than the divisor, can be supplied as advice and checked. Writing the constraints once also concentrates risk. A gap that lets an incorrect step satisfy them could undermine proofs for all programs on the machine, and a sound proof attests only that the compiled code ran as the machine defines it, not that the code does what its author intended.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proving cost follows from the shape of the trace. Each executed step adds to the trace, and the constraints have to cover whichever instruction a step holds, so both the number of instructions in the set and the complexity of each weigh on proving. A small, regular instruction set in the RISC style keeps the constraints per row few and uniform. Adopting an established one such as RISC-V adds a practical benefit: existing compilers can already target it, so programs written in common systems languages can often be proven without being rewritten for the machine. Other designs define a custom instruction set around what is cheap to prove, giving up that tool support in exchange for shorter traces and fewer constraints. zkEVMs face the same trade-off from the side of compatibility.",
+        },
+        {
+          kind: "paragraph",
+          text: "Arithmetic matters as much as the choice of instructions. Constraints are equations over a finite field, most often a prime field, in which addition and multiplication wrap around a prime modulus rather than a power of two. Field addition and multiplication are what a proof checks most cheaply, while operations that ordinary processors take for granted are not native to such a field: a 32-bit addition has to show that its result wrapped correctly, and bitwise operations and comparisons generally require splitting values into bits or small pieces, or consulting precomputed tables. Some machines therefore make the field element their native word, which makes field arithmetic cheap but leaves programs that expect ordinary integers to emulate them. For costly operations that programs perform often, such as hashing or checking signatures, many zkVMs add dedicated instructions, often called precompiles, backed by constraints written for that one operation, which can take far fewer rows than running the same computation as ordinary instructions. The hash a program relies on matters for the same reason: functions designed for field arithmetic are much cheaper to prove than functions built from bit operations.",
+        },
+        {
+          kind: "paragraph",
+          text: "Even with these choices, the cost of a zkVM lands on the prover. Proving work grows at least in proportion to the number of steps executed, and each step costs far more to prove than to run, so a long computation demands both time and the memory needed to hold its trace and the encodings derived from it. zkVMs commonly bound that memory by splitting a long execution into segments that are proven separately. Each segment's proof commits to the machine state where the segment begins and ends, so consecutive segments can be checked to join up, and segments can be proven in parallel on separate machines, with the resulting proofs combined through proof aggregation or recursive proofs into a single one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Verification is where the arrangement pays off. A verifier checks the proof against the program's identifier, the inputs and the claimed output, and with a succinct proof the check takes far less work than the execution did and grows slowly, if at all, with its length. Proof systems still divide the cost differently: those with faster proving often produce larger proofs that cost more to check, which matters when verification runs on a blockchain and is paid for in gas. A deployment therefore picks a point between prover cost and verification cost rather than minimizing both.",
+        },
+        {
+          kind: "paragraph",
+          text: "Zero knowledge is a separate property, and a zkVM may or may not provide it. When the aim is only to let others accept a result without re-running it, as when a rollup proves a batch of public transactions, there is nothing to hide, and leaving the property out keeps proving somewhat simpler and cheaper. When some inputs must stay private, the proof has to be made zero-knowledge, so that it reveals nothing about those inputs beyond what the output itself implies. That privacy holds against verifiers, not against the prover: in the usual arrangement, whoever generates the proof sees the whole trace, so handing proving to an outside service exposes private inputs to that service.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
