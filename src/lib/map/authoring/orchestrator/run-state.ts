@@ -282,9 +282,10 @@ export class RepairLimitError extends RunStateError {
 
 /**
  * Reopens drafted concepts for repair after their audit, their group's audit
- * or human review. Each concept counts one repair cycle, however often it
- * is edited within it; reopening more concepts while a repair is open joins
- * that cycle. The concepts' drafting and audits and their groups' audits must
+ * or human review. Each reopening counts one repair for each concept, however
+ * often it is edited before it is drafted again; reopening more concepts while
+ * a repair is open joins that cycle. Reopening a concept already re-drafted
+ * in the open cycle (its repair failed its audit) counts another repair. The concepts' drafting and audits and their groups' audits must
  * be recorded again, so a repair is re-audited in fresh context like the
  * first draft. The run returns to drafting from wherever it was, keeping its
  * commits, push and PR: the repair is validated in full and committed on top.
@@ -303,7 +304,8 @@ export function reopenL2(state: RunState, input: { concepts: readonly string[]; 
     if (record.blocked.includes(conceptId)) throw new RunStateError(`${conceptId} is blocked by its design: there is no record to repair`);
     if (!drafted(record, conceptId) && !record.repair?.concepts.includes(conceptId)) throw new RunStateError(`${conceptId} is not drafted yet: draft it, nothing to repair`);
   }
-  const fresh = input.concepts.filter((conceptId) => !record.repair?.concepts.includes(conceptId));
+  // A concept joins an open cycle without counting again, unless it was already re-drafted in it: reopening it then is another attempt.
+  const fresh = input.concepts.filter((conceptId) => !record.repair?.concepts.includes(conceptId) || drafted(record, conceptId));
   const over = fresh.filter((conceptId) => (record.repairs[conceptId] ?? 0) + 1 > repairAllowance(state, conceptId));
   if (over.length) throw new RepairLimitError(over);
   const groups = [...new Set(input.concepts.map((conceptId) => groupOf(record, conceptId)!))];
@@ -341,14 +343,14 @@ export function reopenL2(state: RunState, input: { concepts: readonly string[]; 
  * Merges a moved main into an open run (the tool made the merge commit) and
  * rebases the run on it: the run's diff is then measured from the new main,
  * and everything validated is validated again. Content is unchanged, so the
- * agent's stages stand. Never during an open repair, and never before the
- * run's first commits.
+ * agent's stages stand. Never before the run's first commits; during an open
+ * repair only with nothing uncommitted (the tool checks), and the repair
+ * stays open.
  */
 export function syncL2Base(state: RunState, input: { base: string; merge: string; now: string }): RunState {
   assertLive(state);
   if (state.kind !== "l2" || !state.l2) throw new RunStateError("only L2 runs synchronize their base");
   if (!state.l2.committed && !state.pushedSha) throw new RunStateError("the run has not committed yet: nothing to synchronize");
-  if (state.l2.repair) throw new RunStateError("a repair is open: finish it before synchronizing");
   const gates = STAGES.indexOf("gates");
   const synced: RunState = {
     ...state,

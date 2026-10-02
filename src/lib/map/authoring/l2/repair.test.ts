@@ -141,6 +141,10 @@ test("repair cycles are counted per concept, once per cycle, and a repeated repa
   state = reopenL2(state, { concepts: ["a", "b"], reason: "group audit", baseline: { ...baseline, work: { b: "w-b" } }, now: T1 });
   assert.deepEqual([state.l2!.repairs, state.l2!.repair!.cycle, state.l2!.repair!.concepts, state.l2!.repair!.reason], [{ a: 1, b: 1 }, 1, ["a", "b"], "first finding"]);
   assert.deepEqual(state.l2!.repair!.baseline.work, { a: "w-a", b: "w-b" });
+  // a is re-drafted in the cycle, then its audit finds the repair defective: reopening it again is another attempt.
+  const redrafted = recordL2Step(state, { kind: "author", subject: "a" }, T1, { fingerprint: "a-v2" });
+  const failedAudit = reopenL2(redrafted, { concepts: ["a"], reason: "audit: the repair overclaims", baseline, now: T1 });
+  assert.deepEqual([failedAudit.l2!.repairs, failedAudit.l2!.repair!.cycle, pendingL2Steps(failedAudit).map(stepKey)[0]], [{ a: 2, b: 1 }, 1, "author:a"]);
   const closed = { ...state, stage: "commit" as const, l2: { ...state.l2!, steps: { ...finishedRun().l2!.steps } } };
   const after = completeStage(closed, "commit", T2);
   const again = reopenL2({ ...after, stage: "done" }, { concepts: ["a"], reason: "second review", baseline, now: T2 });
@@ -201,7 +205,9 @@ test("merging a moved main rebases the run's validation without touching its con
   assert.deepEqual([synced.completed.author !== undefined, synced.completed.audit !== undefined, synced.completed.gates, synced.checks, synced.validatedFiles], [true, true, undefined, {}, undefined]);
   assert.deepEqual(synced.l2!.history, [{ kind: "sync", at: T1, from: "base", to: "main2", merge: "m1" }]);
   assert.deepEqual(gitProblems(synced, { branch: "feat/map-l2-pilot", head: "m1", baseIsAncestor: true, trackedChanges: [], remoteHead: "c1" }), []);
-  assert.throws(() => syncL2Base(reopenL2(done, { concepts: ["a"], reason: "r", baseline, now: T1 }), { base: "main2", merge: "m1", now: T1 }), /a repair is open/);
+  // During an open repair (with nothing uncommitted, which the tool checks) the repair stays open and drafting goes on.
+  const repairing = syncL2Base(reopenL2(done, { concepts: ["a"], reason: "r", baseline, now: T1 }), { base: "main2", merge: "m1", now: T1 });
+  assert.deepEqual([repairing.stage, repairing.l2!.repair?.concepts, repairing.baseSha], ["author", ["a"], "main2"]);
   const fresh = createL2RunState({ slice: pilotSlice(model(), ["g1"], REGISTRY), remaining: ["a", "b"], branch: "feat/map-l2-pilot", baseSha: "base", now: T0 });
   assert.throws(() => syncL2Base(fresh, { base: "main2", merge: "m1", now: T1 }), /has not committed yet/);
 });
