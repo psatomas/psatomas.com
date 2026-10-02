@@ -325,6 +325,23 @@ follow the new paths. E would lose most of them.
 The content route stays as it is. Its bundle copy is the measured price of a
 self-contained, prerendered, repository-owned API.
 
+**Implemented** (`perf(map)`, after #199), as specified:
+
+- **The projection:** `src/components/map/map-l0.generated.json`, written by
+  `npm run map:generate` and drift-tested in `explorer-model.test.ts`.
+- **The homepage:** `MapPreview` reads that projection.
+- **The guard:** `src/lib/map/runtime-boundary.test.ts`.
+
+Measured on the production build:
+
+| Measure | Before | After |
+|---|---|---|
+| Worker upload | 13,519 KiB | 12,354 KiB (−1,165 KiB) |
+| Gzip (reference) | 3,121 KiB | 2,812 KiB |
+| `handler.mjs` | 9,004,943 B | 7,864,096 B |
+| Corpus copies in the bundle | 2 | 1 (the content-route chunk) |
+| Exposition in client chunks | none | none |
+
 ## 12. Effect on L2 orchestration
 
 - **Content storage is unchanged:** `data.ts` and the registry, so plans,

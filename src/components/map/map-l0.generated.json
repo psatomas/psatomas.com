@@ -1,0 +1,191 @@
+[
+  {
+    "placementId": "foundations",
+    "conceptId": "foundations",
+    "label": "Foundations",
+    "ordinal": "01",
+    "href": "/map?context=foundations"
+  },
+  {
+    "placementId": "computation-execution",
+    "conceptId": "computation-execution",
+    "label": "Computation & Execution",
+    "ordinal": "02",
+    "href": "/map?context=computation-execution"
+  },
+  {
+    "placementId": "state-data",
+    "conceptId": "state-data",
+    "label": "State & Data",
+    "ordinal": "03",
+    "href": "/map?context=state-data"
+  },
+  {
+    "placementId": "consensus-ordering",
+    "conceptId": "consensus-ordering",
+    "label": "Consensus & Ordering",
+    "ordinal": "04",
+    "href": "/map?context=consensus-ordering"
+  },
+  {
+    "placementId": "networks-infrastructure",
+    "conceptId": "networks-infrastructure",
+    "label": "Networks & Infrastructure",
+    "ordinal": "05",
+    "href": "/map?context=networks-infrastructure"
+  },
+  {
+    "placementId": "cryptography-proofs",
+    "conceptId": "cryptography-proofs",
+    "label": "Cryptography & Proofs",
+    "ordinal": "06",
+    "href": "/map?context=cryptography-proofs"
+  },
+  {
+    "placementId": "storage-availability",
+    "conceptId": "storage-availability",
+    "label": "Storage & Availability",
+    "ordinal": "07",
+    "href": "/map?context=storage-availability"
+  },
+  {
+    "placementId": "identity-accounts-authority",
+    "conceptId": "identity-accounts-authority",
+    "label": "Identity, Accounts & Authority",
+    "ordinal": "08",
+    "href": "/map?context=identity-accounts-authority"
+  },
+  {
+    "placementId": "oracles-external-reality",
+    "conceptId": "oracles-external-reality",
+    "label": "Oracles & External Reality",
+    "ordinal": "09",
+    "href": "/map?context=oracles-external-reality"
+  },
+  {
+    "placementId": "economics-mechanism-design",
+    "conceptId": "economics-mechanism-design",
+    "label": "Economics & Mechanism Design",
+    "ordinal": "10",
+    "href": "/map?context=economics-mechanism-design"
+  },
+  {
+    "placementId": "markets-financial-protocols",
+    "conceptId": "markets-financial-protocols",
+    "label": "Markets & Financial Protocols",
+    "ordinal": "11",
+    "href": "/map?context=markets-financial-protocols"
+  },
+  {
+    "placementId": "mev-execution-markets",
+    "conceptId": "mev-execution-markets",
+    "label": "MEV & Execution Markets",
+    "ordinal": "12",
+    "href": "/map?context=mev-execution-markets"
+  },
+  {
+    "placementId": "intents-coordination",
+    "conceptId": "intents-coordination",
+    "label": "Intents & Coordination",
+    "ordinal": "13",
+    "href": "/map?context=intents-coordination"
+  },
+  {
+    "placementId": "governance-institutions",
+    "conceptId": "governance-institutions",
+    "label": "Governance & Institutions",
+    "ordinal": "14",
+    "href": "/map?context=governance-institutions"
+  },
+  {
+    "placementId": "scaling-modular-systems",
+    "conceptId": "scaling-modular-systems",
+    "label": "Scaling & Modular Systems",
+    "ordinal": "15",
+    "href": "/map?context=scaling-modular-systems"
+  },
+  {
+    "placementId": "interoperability-abstraction",
+    "conceptId": "interoperability-abstraction",
+    "label": "Interoperability & Abstraction",
+    "ordinal": "16",
+    "href": "/map?context=interoperability-abstraction"
+  },
+  {
+    "placementId": "security-correctness-resilience",
+    "conceptId": "security-correctness-resilience",
+    "label": "Security, Correctness & Resilience",
+    "ordinal": "17",
+    "href": "/map?context=security-correctness-resilience"
+  },
+  {
+    "placementId": "protocol-architecture",
+    "conceptId": "protocol-architecture",
+    "label": "Protocol Architecture",
+    "ordinal": "18",
+    "href": "/map?context=protocol-architecture"
+  },
+  {
+    "placementId": "protocol-design-lifecycle",
+    "conceptId": "protocol-design-lifecycle",
+    "label": "Protocol Design & Lifecycle",
+    "ordinal": "19",
+    "href": "/map?context=protocol-design-lifecycle"
+  },
+  {
+    "placementId": "ai-intelligent-systems",
+    "conceptId": "ai-intelligent-systems",
+    "label": "AI & Intelligent Systems",
+    "ordinal": "20",
+    "href": "/map?context=ai-intelligent-systems"
+  },
+  {
+    "placementId": "machine-economy",
+    "conceptId": "machine-economy",
+    "label": "Machine Economy",
+    "ordinal": "21",
+    "href": "/map?context=machine-economy"
+  },
+  {
+    "placementId": "autonomous-coordination",
+    "conceptId": "autonomous-coordination",
+    "label": "Autonomous Coordination",
+    "ordinal": "22",
+    "href": "/map?context=autonomous-coordination"
+  },
+  {
+    "placementId": "autonomous-execution",
+    "conceptId": "autonomous-execution",
+    "label": "Autonomous Execution",
+    "ordinal": "23",
+    "href": "/map?context=autonomous-execution"
+  },
+  {
+    "placementId": "autonomous-organizations",
+    "conceptId": "autonomous-organizations",
+    "label": "Autonomous Organizations",
+    "ordinal": "24",
+    "href": "/map?context=autonomous-organizations"
+  },
+  {
+    "placementId": "autonomous-protocols",
+    "conceptId": "autonomous-protocols",
+    "label": "Autonomous Protocols",
+    "ordinal": "25",
+    "href": "/map?context=autonomous-protocols"
+  },
+  {
+    "placementId": "autonomous-economy",
+    "conceptId": "autonomous-economy",
+    "label": "Autonomous Economy",
+    "ordinal": "26",
+    "href": "/map?context=autonomous-economy"
+  },
+  {
+    "placementId": "frontier-systems",
+    "conceptId": "frontier-systems",
+    "label": "Frontier Systems",
+    "ordinal": "27",
+    "href": "/map?context=frontier-systems"
+  }
+]
