@@ -18,6 +18,7 @@ import {
   STAGES,
   stopRun,
   syncL2Base,
+  unadoptableMerge,
   type RunState,
 } from "../orchestrator/run-state.ts";
 import { pilotSlice, recordSpans, repairCommitMessage, stepKey, withRecordsFrom } from "./campaign.ts";
@@ -227,4 +228,15 @@ test("a repair commit takes only its group's repaired records from the validated
   const message = repairCommitMessage({ title: "Group One", repaired: ["a"] }, { cycle: 2, reason: "review: overclaim" }, "Trailer: x");
   assert.deepEqual(message.split("\n").slice(0, 3), ["fix(map): repair Group One L2 topics", "", "Repair cycle 2: review: overclaim"]);
   assert.match(message, /Trailer: x$/);
+});
+
+test("a merge of main made outside the tool is adopted only if it is exactly the recorded head merged with main", () => {
+  const done = finishedRun();
+  const observed = { parents: ["c1", "main2"], secondParentInMain: true, cleanMerge: true, trackedChanges: [] };
+  assert.equal(unadoptableMerge(done, observed), undefined);
+  assert.match(unadoptableMerge(done, { ...observed, parents: ["c1"] }) ?? "", /not a merge commit/);
+  assert.match(unadoptableMerge(done, { ...observed, parents: ["c0", "main2"] }) ?? "", /first parent c0 is not the run's recorded head c1/);
+  assert.match(unadoptableMerge(done, { ...observed, secondParentInMain: false }) ?? "", /second parent main2 is not a commit of main/);
+  assert.match(unadoptableMerge(done, { ...observed, cleanMerge: false }) ?? "", /changes more than merging its parents/);
+  assert.match(unadoptableMerge(done, { ...observed, trackedChanges: ["x"] }) ?? "", /tracked changes: x/);
 });
