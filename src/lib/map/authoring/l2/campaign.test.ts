@@ -57,12 +57,8 @@ test("an L2 run records its steps in order, skips a blocked concept and counts r
   assert.equal(state.stage, "audit");
   assert.deepEqual(pendingL2Steps(state).map(stepKey), ["group-audit:g1"]);
   assert.throws(() => completeStage(state, "audit", NOW), /group audits still to record: g1/);
-  // Re-authoring after the audit is a repair, and reopens the concept.
-  const stepsBefore = recordL2Step(run(), { kind: "plan", subject: "g1" }, NOW);
-  let repaired = recordL2Step(recordL2Step(stepsBefore, { kind: "design", subject: "a" }, NOW), { kind: "design", subject: "b" }, NOW);
-  repaired = recordL2Step(recordL2Step(repaired, { kind: "author", subject: "a" }, NOW), { kind: "audit", subject: "a" }, NOW);
-  repaired = recordL2Step(repaired, { kind: "author", subject: "a" }, NOW);
-  assert.deepEqual([repaired.l2!.repairs.a, repaired.concepts.a.done, pendingL2Steps(repaired).map(stepKey)[0]], [1, false, "audit:a"]);
+  // Drafting is recorded once: a change after it is a repair (repair.test.ts).
+  assert.throws(() => recordL2Step(state, { kind: "author", subject: "a" }, NOW), /cannot record author:a at stage audit/);
   state = recordL2Step(state, { kind: "group-audit", subject: "g1" }, NOW);
   state = completeStage(state, "audit", NOW, "audited");
   assert.equal(state.stage, "gates");
