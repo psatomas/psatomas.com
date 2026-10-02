@@ -1,0 +1,239 @@
+{
+  "version": 1,
+  "group": "oracle-problem",
+  "domain": "oracles-external-reality",
+  "parentConceptId": "oracle-problem",
+  "basis": {
+    "membership": "5dbb7e7a5fcf107e3d662243777392735f71d2cfd9cffa42a52a252a2a620487",
+    "parents": {
+      "oracle-problem": "6c86b4260b570bac8b97e2725f7e981067d6ee808d9bd9c52d65652ac989a094",
+      "oracles-external-reality": "bf3d8f2ca5a93aea4e85ac8a7146b03333305857b104ece6ca334fb5c2e8283a"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "external-data",
+      "placementId": "external-data-in-oracle-problem",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "what counts as external data: facts a protocol cannot derive from its own state"
+      ]
+    },
+    {
+      "conceptId": "trust-assumptions",
+      "placementId": "trust-assumptions-in-oracle-problem",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "what a system relies on without checking, and for which claims"
+      ]
+    },
+    {
+      "conceptId": "verification-limits",
+      "placementId": "verification-limits",
+      "standing": "owned",
+      "claims": [
+        "what a protocol can establish about a report, its origin, integrity, freshness and agreement with other reports, and what it cannot: correspondence with the world",
+        "how far attestation pushes the limit: signed data at the source, hardware attestation and proofs over web data, and where each stops",
+        "designing around the limit: economic guarantees, dispute windows and redundancy in place of verification"
+      ],
+      "excludes": [
+        "authenticity",
+        "trust-assumptions",
+        "external-data"
+      ]
+    },
+    {
+      "conceptId": "authenticity",
+      "placementId": "authenticity-in-oracle-problem",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "establishing that data comes unaltered from its claimed source"
+      ]
+    },
+    {
+      "conceptId": "external-data-availability",
+      "placementId": "external-data-availability",
+      "standing": "owned",
+      "claims": [
+        "whether the external data a protocol needs can be obtained when it is needed: sources that exist, are reachable and keep publishing",
+        "external data availability as distinct from accuracy, and from data availability in blockchain storage",
+        "what makes external data unavailable: market closures, outages, rate limits, censorship and data that does not exist yet"
+      ],
+      "excludes": [
+        "data-availability",
+        "oracle-failure",
+        "external-data"
+      ]
+    },
+    {
+      "conceptId": "oracle-failure",
+      "placementId": "oracle-failure",
+      "standing": "owned",
+      "claims": [
+        "the forms of oracle failure: a wrong value, a stale value, no value and a value that arrives too late",
+        "how each form arises: source errors, node faults, manipulation and delay",
+        "what each form does downstream: liquidations at wrong prices, frozen markets and settlement on outdated values"
+      ],
+      "excludes": [
+        "staleness",
+        "heartbeats",
+        "deviation-thresholds",
+        "oracle-manipulation"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "verification-limits": {
+      "model": {
+        "meaning": "Verification limits are the boundary between what a protocol can check about an external report and what it must take on trust: whether the report is true of the world.",
+        "kind": "property",
+        "parents": {
+          "oracle-problem": "how far attestation moves the boundary and how protocols design around it, beyond where the boundary sits"
+        },
+        "claims": [
+          "what a protocol can establish about a report, its origin, integrity, freshness and agreement with other reports, and what it cannot: correspondence with the world",
+          "how far attestation pushes the limit: signed data at the source, hardware attestation and proofs over web data, and where each stops",
+          "designing around the limit: economic guarantees, dispute windows and redundancy in place of verification"
+        ],
+        "excludes": [
+          "authenticity",
+          "trust-assumptions",
+          "external-data"
+        ],
+        "placements": {
+          "verification-limits": "one placement"
+        },
+        "fields": {
+          "statement": "a protocol can check a report's origin and form, never its truth",
+          "establishedBy": [
+            "signatures",
+            "hardware attestation",
+            "proofs over data sources"
+          ],
+          "violatedBy": [
+            "a compromised or mistaken source signing a false value"
+          ],
+          "confusions": [
+            "authenticity versus truth"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a boundary and its consequences: an argument",
+        "relationship": "what can be checked against what must be trusted",
+        "level": "the limit itself; the parent locates it",
+        "territory": "authenticity and trust assumptions are named, not explained",
+        "placements": "one placement"
+      }
+    },
+    "external-data-availability": {
+      "model": {
+        "meaning": "External data availability is whether the outside information a protocol depends on can be obtained when the protocol needs it.",
+        "kind": "property",
+        "parents": {
+          "oracle-problem": "what makes external data unavailable and how availability differs from accuracy, beyond availability being part of the problem"
+        },
+        "claims": [
+          "whether the external data a protocol needs can be obtained when it is needed: sources that exist, are reachable and keep publishing",
+          "external data availability as distinct from accuracy, and from data availability in blockchain storage",
+          "what makes external data unavailable: market closures, outages, rate limits, censorship and data that does not exist yet"
+        ],
+        "excludes": [
+          "data-availability",
+          "oracle-failure",
+          "external-data"
+        ],
+        "placements": {
+          "external-data-availability": "one placement"
+        },
+        "fields": {
+          "statement": "the data a protocol needs exists and can be fetched in time",
+          "violatedBy": [
+            "market closures",
+            "outages",
+            "rate limits",
+            "censorship",
+            "data not yet produced"
+          ],
+          "confusions": [
+            "external data availability versus blockchain data availability",
+            "availability versus accuracy"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "a conflation the reader is likely to make with blockchain data availability, under the same visible label",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "this concept against data availability in blockchain storage",
+            "whyNotProse": "the label reads exactly like another concept's title, so the difference must stand out"
+          }
+        ],
+        "level": "the confusion is this concept's: its placement is labelled \"Data Availability\"",
+        "territory": "data availability is named only to be distinguished",
+        "placements": "one placement",
+        "division": "the prose explains causes of unavailability; the distinction marks the two meanings apart"
+      }
+    },
+    "oracle-failure": {
+      "model": {
+        "meaning": "Oracle failure is any case in which an oracle does not deliver a correct and timely value a protocol depends on.",
+        "kind": "attack",
+        "parents": {
+          "oracle-problem": "the forms of failure, their causes and their consequences, beyond silence and the responses to it"
+        },
+        "claims": [
+          "the forms of oracle failure: a wrong value, a stale value, no value and a value that arrives too late",
+          "how each form arises: source errors, node faults, manipulation and delay",
+          "what each form does downstream: liquidations at wrong prices, frozen markets and settlement on outdated values"
+        ],
+        "excludes": [
+          "staleness",
+          "heartbeats",
+          "deviation-thresholds",
+          "oracle-manipulation"
+        ],
+        "placements": {
+          "oracle-failure": "one placement"
+        },
+        "fields": {
+          "preconditions": [
+            "a protocol acting on reported values"
+          ],
+          "mechanism": [
+            "wrong, stale, missing or late values"
+          ],
+          "impact": [
+            "liquidations at wrong prices",
+            "frozen markets",
+            "settlement on outdated values"
+          ],
+          "detection": [
+            "deviation and staleness checks, owned by freshness concepts"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "four forms of failure compared on what the protocol sees, their typical cause and their consequence",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "the forms of failure side by side",
+            "whyNotProse": "the forms differ along the same three dimensions, and reading across them shows why each needs a different defence"
+          }
+        ],
+        "level": "the failure modes are the concept's own",
+        "territory": "detection mechanisms such as staleness and heartbeats are named only",
+        "placements": "one placement",
+        "division": "the prose explains how failures arise and propagate; the table compares the forms"
+      }
+    }
+  }
+}
