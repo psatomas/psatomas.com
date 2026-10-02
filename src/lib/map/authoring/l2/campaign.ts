@@ -148,6 +148,27 @@ export function withoutRecords(text: string, conceptIds: readonly string[]): str
   return text.split("\n").filter((_, index) => !drop.has(index)).join("\n");
 }
 
+/**
+ * `text` with the given concepts' records taken from `from`: a repair
+ * commit's data.ts, which carries one group's repaired records and leaves
+ * every other record as committed. Both must hold each record.
+ */
+export function withRecordsFrom(text: string, from: string, conceptIds: readonly string[]): string {
+  const target = recordSpans(text);
+  const source = recordSpans(from);
+  const sourceLines = from.split("\n");
+  let lines = text.split("\n");
+  // From the last span to the first, so earlier spans keep their line numbers.
+  const spans = conceptIds.map((conceptId) => {
+    const span = target.get(conceptId);
+    const replacement = source.get(conceptId);
+    if (!span || !replacement) throw new Error(`no record block for ${conceptId}`);
+    return { span, replacement: sourceLines.slice(replacement.start, replacement.end + 1) };
+  });
+  for (const { span, replacement } of spans.sort((a, b) => b.span.start - a.span.start)) lines = [...lines.slice(0, span.start), ...replacement, ...lines.slice(span.end + 1)];
+  return lines.join("\n");
+}
+
 /** The registry file without the given concepts' entries. */
 export function withoutRegistryEntries(text: string, conceptIds: readonly string[]): string {
   const drop = new Set(conceptIds.map((conceptId) => `  "${conceptId}",`));
@@ -220,6 +241,11 @@ export function groupCommitMessage(group: { title: string; authored: readonly st
   return [...lines, ...(trailer ? ["", trailer] : [])].join("\n");
 }
 
+export function repairCommitMessage(group: { title: string; repaired: readonly string[] }, repair: { cycle: number; reason: string }, trailer?: string): string {
+  const lines = [`fix(map): repair ${group.title} L2 topics`, "", `Repair cycle ${repair.cycle}: ${repair.reason}`, "", `Repaired and re-audited: ${group.repaired.join(", ")}.`, "", "The concept audits and the group audit in the group file are bound to the repaired records."];
+  return [...lines, ...(trailer ? ["", trailer] : [])].join("\n");
+}
+
 export const l2PrTitle = (slice: Pick<L2Slice, "id" | "domainTitle" | "index">) => (slice.id === PILOT_SLICE ? "feat(map): author the L2 pilot" : `feat(map): author ${slice.domainTitle} L2 topics, part ${slice.index}`);
 
 export function l2PrBody(input: {
@@ -228,6 +254,7 @@ export function l2PrBody(input: {
   checks: Readonly<Record<string, { ok: boolean; detail: string }>>;
   fixes: readonly { message: string; reason: string }[];
   auditNotes: readonly string[];
+  history?: readonly ({ kind: "repair"; cycle: number; reason: string; concepts: readonly string[] } | { kind: "sync"; from: string; to: string })[];
   footer?: string;
 }): string {
   const authored = input.groups.flatMap((group) => group.authored);
@@ -250,5 +277,8 @@ export function l2PrBody(input: {
   ];
   if (input.fixes.length) lines.push("", "## General fixes", "", ...input.fixes.map((fix) => `- ${fix.message}: ${fix.reason}`));
   if (input.auditNotes.length) lines.push("", "## Audit notes", "", ...input.auditNotes.map((note) => `- ${note}`));
+  if (input.history?.length) {
+    lines.push("", "## Repairs and base updates", "", ...input.history.map((entry) => (entry.kind === "repair" ? `- Repair cycle ${entry.cycle} (${entry.concepts.join(", ")}): ${entry.reason}` : `- Merged main: base ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)}`)));
+  }
   return [...lines, ...(input.footer ? ["", input.footer] : [])].join("\n");
 }

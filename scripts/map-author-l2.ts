@@ -8,6 +8,7 @@
 //   l2 check [--group <group>] [--json]       validate plans (completeness, claims, hazards, staleness, cross-plan)
 //                                             and each owned concept's work at the stage it has reached
 //   l2 signals <concept-id> [--json]          the audit signals of an authored concept, to resolve in its audit
+//   l2 group-signals <group> [--json]         the signals of a group's audit, over its owned members' records
 //   l2 drift [--window <n>] [--json]          convergence across the latest authored L2 records (descriptive)
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -139,6 +140,19 @@ export function commandL2(command: string | undefined, positional: string[], fla
       }
       return;
     }
+    case "group-signals": {
+      const group = positional[0];
+      if (!group) throw new Error("usage: l2 group-signals <group> [--json]");
+      const plan = readPlans().find((entry) => entry.group === group);
+      if (!plan) throw new Error(`no plan for ${group}`);
+      const signals = groupSignalsOf(plan);
+      if (json) console.log(JSON.stringify(signals, null, 2));
+      else {
+        for (const entry of signals) console.log(`signal ${entry.id}  ${entry.detail}`);
+        console.log(`${signals.length} group signal(s): resolve each in the group audit`);
+      }
+      return;
+    }
     case "drift": {
       const window = Number(flag("--window") ?? 30);
       const l2 = new Set(inventoryL2(mapKnowledge).concepts.filter((entry) => entry.role === "l2-only").map((entry) => entry.conceptId));
@@ -153,6 +167,6 @@ export function commandL2(command: string | undefined, positional: string[], fla
       return;
     }
     default:
-      throw new Error(`unknown l2 command ${command ?? "(none)"}: context, territory, check, signals, drift`);
+      throw new Error(`unknown l2 command ${command ?? "(none)"}: context, territory, check, signals, group-signals, drift`);
   }
 }

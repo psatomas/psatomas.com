@@ -39,7 +39,10 @@
 //   npm run map:author -- l2 check [--group <group>] [--json]
 //   npm run map:author -- l2 campaign                    every slice, the next one, and whether merging is authorized
 //   npm run map:author -- l2 start --slice <id> | --pilot [--dry-run]
-//   npm run map:author -- l2 record plan|design|author|audit|group-audit <subject> [--note ..]
+//   npm run map:author -- l2 record plan|design|author|audit|group-audit <subject> [--note ..] [--audit-file <json>]
+//   npm run map:author -- l2 group-signals <group>       a group audit's signals
+//   npm run map:author -- l2 reopen <id>[,<id>..] --reason ".."   repair drafted concepts (a counted cycle)
+//   npm run map:author -- l2 sync                        merge a moved main into the run's branch and revalidate
 //   npm run map:author -- l2 checkpoint --decision ".."   the pilot's human review of plans and designs
 //   npm run map:author -- l2 authorize --authorization ".."   record a human's explicit campaign merge authorization
 //   npm run map:author -- l2 status | next | complete audit --note .. | fix .. | stop .. | resume .. | run [--until <stage>] ..
@@ -52,7 +55,9 @@ import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
 import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
-import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { repairBaseline, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
+import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
@@ -76,6 +81,14 @@ import {
   createL2RunState,
   pendingL2Steps,
   recordL2Step,
+  reopenL2,
+  RepairLimitError,
+  repairAllowance,
+  repairLimitSubject,
+  staleL2Steps,
+  syncL2Base,
+  unadoptableMerge,
+  type ObservedAudits,
   completeStage,
   changedConcepts,
   commitGroups,
@@ -136,7 +149,7 @@ const dryRun = flags.has("--dry-run");
 const refactor = first === "refactor";
 /** `l2 <command>` runs L2 slice runs (docs/map-authoring/l2-authoring.md); its read-only commands live in map-author-l2.ts. */
 const l2Mode = first === "l2";
-const L2_READ_ONLY = new Set(["context", "territory", "check", "signals", "drift"]);
+const L2_READ_ONLY = new Set(["context", "territory", "check", "signals", "group-signals", "drift"]);
 const command = refactor ? (positional.shift() ?? "domains") : l2Mode ? (positional.shift() ?? "campaign") : first;
 const STATE_DIR = refactor ? join(STATE_ROOT, "refactor") : l2Mode ? join(STATE_ROOT, "l2") : STATE_ROOT;
 const CLI = refactor ? "map:author -- refactor" : l2Mode ? "map:author -- l2" : "map:author --";
@@ -505,6 +518,18 @@ const campaignPath = () => join(STATE_ROOT, "l2", L2_CAMPAIGN_FILE);
 const readCampaign = (): L2Campaign => (existsSync(campaignPath()) ? (JSON.parse(readFileSync(campaignPath(), "utf8")) as L2Campaign) : {});
 const PILOT_FILE = "src/lib/map/authoring/l2/pilot.json";
 const l2Records = (state: RunState) => state.l2!;
+
+/** The run's records and the fingerprints its audits are bound to, as the working tree holds them. */
+function observedAudits(state: RunState): ObservedAudits {
+  const plans = readPlans();
+  const concepts = state.l2!.slice.groups.flatMap((group) => group.concepts);
+  const workOf = (conceptId: string) => plans.flatMap((plan) => Object.entries(plan.concepts ?? {})).find(([id]) => id === conceptId)?.[1] as L2ConceptWork | undefined;
+  return {
+    records: Object.fromEntries(concepts.map((conceptId) => [conceptId, recordOf(conceptId) ? recordFingerprint(recordOf(conceptId)) : undefined])),
+    conceptAudits: Object.fromEntries(concepts.map((conceptId) => [conceptId, workOf(conceptId)?.audit?.recordFingerprint])),
+    groupAudits: Object.fromEntries(state.l2!.slice.groups.map((group) => [group.group, (plans.find((plan) => plan.group === group.group) as (L2GroupFile & { groupAudit?: L2GroupAudit }) | undefined)?.groupAudit?.records])),
+  };
+}
 const recordOf = (conceptId: string) => mapKnowledge.content.find((entry) => entry.conceptId === conceptId);
 
 function campaignSlices(): { slices: L2Slice[]; finished: Set<string> } {
@@ -587,36 +612,57 @@ async function commandL2Record() {
   const plans = readPlans();
   const plan = planOf(group);
   const refuse = (problems: string[]) => problems.length && fail(`cannot record ${kind} ${subject}:\n  ${problems.join("\n  ")}`, 1);
+  const repair = record.repair;
+  // A repair stays within the territory, models and designs it was reopened with, except what it re-records.
+  const scope = (extra: { redesigned?: string[]; replanned?: string[] } = {}) =>
+    repair
+      ? repairScopeProblems({
+          baseline: repair.baseline,
+          reopened: repair.concepts,
+          plans,
+          redesigned: new Set([...repair.concepts.filter((conceptId) => (state.l2!.steps[`design:${conceptId}`]?.at ?? "") >= repair.at), ...(extra.redesigned ?? [])]),
+          replanned: new Set([...repair.groups.filter((entry) => (state.l2!.steps[`plan:${entry}`]?.at ?? "") >= repair.at), ...(extra.replanned ?? [])]),
+        })
+      : [];
+  const auditFile = flag("--audit-file");
+  if (auditFile && (kind === "audit" || kind === "group-audit")) writeAudit(kind, subject, group, auditFile);
   let blocks = false;
+  let fingerprint: string | undefined;
   switch (kind) {
     case "plan":
-      refuse([...planProblems(plan, mapKnowledge), ...staleProblems(plan, mapKnowledge).map((problem) => `stale: ${problem}`), ...crossPlanProblems(plans, inventoryL2(mapKnowledge)).filter((problem) => problem.includes(group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`)))]);
+      refuse([...planProblems(plan, mapKnowledge), ...staleProblems(plan, mapKnowledge).map((problem) => `stale: ${problem}`), ...crossPlanProblems(plans, inventoryL2(mapKnowledge)).filter((problem) => problem.includes(group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`))), ...scope({ replanned: [group] })]);
       break;
     case "design":
-      refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "designed")]);
+      refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "designed"), ...scope({ redesigned: [subject] })]);
       blocks = (plan.concepts[subject] as L2ConceptWork).design.decision === "block";
       break;
     case "author": {
       const registration = createMapAuthoringInspector(mapKnowledge).inspectConcept(subject).registration;
       if (registration !== "registered") fail(`the inspector reports ${subject} as ${registration}; add its record and registry entry first`, 1);
-      refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "authored")]);
+      refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "authored"), ...scope()]);
+      fingerprint = recordFingerprint(recordOf(subject));
       const generated = sh("npm", ["run", "--silent", "map:generate"]);
       if (!generated.ok) fail(`map:generate failed\n${tail(generated.out)}`, 1);
       const focused = sh("node", ["--test", ...FOCUSED_TESTS]);
       if (!focused.ok) fail(`focused tests failed (${testCounts(focused.out)})\n${tail(focused.out, 40)}`, 1);
       break;
     }
-    case "audit":
-      refuse(workProblems(plan, subject, mapKnowledge, "audited", signalsOf(subject, plans).map((signal) => signal.id)));
+    case "audit": {
+      fingerprint = recordFingerprint(recordOf(subject));
+      const drafted = state.l2!.steps[`author:${subject}`]?.fingerprint;
+      // An audit that found a defect reopens the concept: a record edited in place would be a repair nobody counted.
+      if (drafted && drafted !== fingerprint) refuse([`${subject}'s record changed since it was drafted: an audit that finds a defect reopens it (\`${CLI} reopen ${subject} --reason ..\`), then it is drafted and audited again`]);
+      refuse([...workProblems(plan, subject, mapKnowledge, "audited", signalsOf(subject, plans).map((signal) => signal.id)), ...scope()]);
       break;
+    }
     case "group-audit":
-      refuse(groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan).map((signal) => signal.id)));
+      refuse([...groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan).map((signal) => signal.id)), ...scope()]);
       break;
     default:
       fail("record needs <plan|design|author|audit|group-audit> <subject>");
   }
   try {
-    state = recordL2Step(state, { kind, subject }, now(), { blocks, note: flag("--note") });
+    state = recordL2Step(state, { kind, subject }, now(), { blocks, note: flag("--note"), fingerprint });
   } catch (error) {
     if (error instanceof RunStateError) fail(error.message, 1);
     throw error;
@@ -632,9 +678,114 @@ async function commandL2Record() {
       decision: `leave ${subject} unauthored in this run (\`${CLI} resume --decision ..\`), or change its design`,
     });
   }
-  if (kind === "author" && (state.l2!.repairs[subject] ?? 0) > 2) {
-    stop(state, { subject: `audit repairs: ${subject}`, evidence: `${subject} was re-authored ${state.l2!.repairs[subject]} times after its audit`, why: "an audit still failing after two repairs needs a human look at the concept, its plan or its design", decision: "inspect the concept, then resume with the decision" });
+  commandNext(state);
+}
+
+/**
+ * Writes an audit into its group file, bound to exactly the records as they
+ * are now: a concept audit to its record's fingerprint, a group audit to
+ * every owned member's. The file holds { note, resolutions }. Recording
+ * then validates it like any audit.
+ */
+function writeAudit(kind: "audit" | "group-audit", subject: string, group: string, file: string) {
+  const input = JSON.parse(readFileSync(file, "utf8")) as { note?: string; resolutions?: { id: string; resolution: string }[] };
+  const path = join(ROOT, groupFile(group));
+  const plan = JSON.parse(readFileSync(path, "utf8")) as L2GroupFile & { groupAudit?: L2GroupAudit };
+  const audit = { at: now(), note: input.note ?? "", resolutions: input.resolutions ?? [] };
+  if (kind === "audit") (plan.concepts[subject] as L2ConceptWork).audit = { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) };
+  else {
+    const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
+    plan.groupAudit = { ...audit, records: Object.fromEntries(owned.map((conceptId) => [conceptId, recordFingerprint(recordOf(conceptId))])) };
   }
+  writeFileSync(path, `${JSON.stringify(plan, null, 2)}\n`);
+}
+
+/**
+ * Reopens drafted concepts for repair (reopenL2): after their audit, their
+ * group's audit, or a human review of the run's PR. A concept past its
+ * repair allowance stops the run for a human.
+ */
+function commandL2Reopen() {
+  let state = activeState();
+  if (state.stop) return printStop(state);
+  verifyGit(state);
+  const concepts = (positional[0] ?? fail(`reopen needs concept ids: ${CLI} reopen <id>[,<id>..] --reason ".."`)).split(",").map((conceptId) => conceptId.trim()).filter(Boolean);
+  const reason = flag("--reason") ?? fail("reopen needs --reason: the finding the repair answers");
+  try {
+    state = reopenL2(state, { concepts, reason, baseline: repairBaseline(readPlans(), concepts), now: now() });
+  } catch (error) {
+    if (error instanceof RepairLimitError) {
+      const [conceptId] = error.conceptIds;
+      stop(state, {
+        subject: repairLimitSubject(conceptId),
+        evidence: `${conceptId} was reopened in ${state.l2!.repairs[conceptId] ?? 0} repair cycle(s), its allowance (${repairAllowance(state, conceptId)}); this repair: ${reason}`,
+        why: "a concept still failing after its repairs needs a human look at the concept, its plan or its design",
+        decision: `inspect ${conceptId}; \`${CLI} resume --decision ..\` allows one more repair cycle, or change its plan or design first`,
+      });
+    }
+    if (error instanceof RunStateError) fail(error.message, 1);
+    throw error;
+  }
+  saveState(state);
+  console.log(`reopened ${concepts.join(", ")} in repair cycle ${state.l2!.repair!.cycle}: ${state.l2!.repair!.reason}`);
+  commandNext(state);
+}
+
+/**
+ * Adopts a merge of main already at HEAD as the run's synchronization
+ * (unadoptableMerge), after the same check `sync` makes before merging:
+ * main changed none of the run's files.
+ */
+function adoptMerge(state: RunState) {
+  const parents = gitOut("rev-list", "--parents", "-n", "1", "HEAD").split(" ").slice(1);
+  const merged = parents.length === 2 ? git("merge-tree", "--write-tree", parents[0], parents[1]) : undefined;
+  const problem = unadoptableMerge(state, {
+    parents,
+    secondParentInMain: parents.length === 2 && git("merge-base", "--is-ancestor", parents[1], `origin/${MAIN}`).ok,
+    cleanMerge: Boolean(merged?.ok && lines(merged.out)[0] === gitOut("rev-parse", "HEAD^{tree}")),
+    trackedChanges: trackedChanges(),
+  });
+  if (problem) fail(`HEAD is not the run's recorded head, nor a merge of ${MAIN} it can adopt: ${problem}`, 1);
+  const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, parents[0]));
+  const touched = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, parents[1])).filter((file) => runFiles.includes(file));
+  if (touched.length) fail(`the merged ${MAIN} changed files this run changes (${touched.join(", ")}); decide by hand`, 1);
+  state = syncL2Base(state, { base: parents[1], merge: head(), now: now() });
+  saveState(state);
+  console.log(`adopted ${head().slice(0, 7)} as the merge of ${MAIN} (${parents[1].slice(0, 7)}); the run revalidates from ${state.stage}`);
+  commandNext(state);
+}
+
+/**
+ * Brings a moved main into an open run: merges origin/main into the run's
+ * branch (never a rebase or a force-push), and rebases the run's
+ * validation on it. Refused when main changed a file the run changes.
+ */
+function commandL2Sync() {
+  let state = activeState();
+  if (state.stop) return printStop(state);
+  gitOut("fetch", "--quiet", "origin", MAIN);
+  if (currentBranch() === state.branch && head() !== (state.commits.at(-1)?.sha ?? state.baseSha)) return adoptMerge(state);
+  verifyGit(state);
+  const target = remoteSha(`refs/heads/${MAIN}`)!;
+  if (git("merge-base", "--is-ancestor", target, "HEAD").ok) return console.log(`${state.branch} already contains origin/${MAIN} at ${target.slice(0, 7)}`);
+  const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD"));
+  const touched = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, target)).filter((file) => runFiles.includes(file));
+  if (touched.length) fail(`origin/${MAIN} changed files this run changes (${touched.join(", ")}): merging would mix them into the run's content; decide by hand`, 1);
+  try {
+    syncL2Base({ ...state }, { base: target, merge: "pending", now: now() });
+  } catch (error) {
+    if (error instanceof RunStateError) fail(error.message, 1);
+    throw error;
+  }
+  const message = `Merge origin/${MAIN} into ${state.branch}${state.attribution?.trailer ? `\n\n${state.attribution.trailer}` : ""}`;
+  const merged = sh("git", ["merge", "--no-ff", "--quiet", "-m", message, `origin/${MAIN}`]);
+  if (!merged.ok) {
+    git("merge", "--abort");
+    fail(`merging origin/${MAIN} failed; nothing changed:\n${tail(merged.out)}`, 1);
+  }
+  state = syncL2Base(state, { base: target, merge: head(), now: now() });
+  saveState(state);
+  console.log(`merged origin/${MAIN} (${target.slice(0, 7)}) into ${state.branch} as ${head().slice(0, 7)}; the run revalidates from ${state.stage}`);
   commandNext(state);
 }
 
@@ -682,7 +833,10 @@ function commandStatus(state = activeState()) {
       ? [
           `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}`,
           `steps recorded: ${Object.keys(state.l2.steps).length}; next steps: ${pendingL2Steps(state).slice(0, 4).map((step) => `${step.kind} ${step.subject}`).join(", ") || "none"}`,
-          `blocked: ${state.l2.blocked.join(", ") || "none"}; repairs: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
+          `blocked: ${state.l2.blocked.join(", ") || "none"}; repair cycles: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
+          ...(state.l2.repair ? [`repair open: cycle ${state.l2.repair.cycle} (${state.l2.repair.concepts.join(", ")}): ${state.l2.repair.reason}`] : []),
+          ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
+          ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
           `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}` : ""}`,
         ]
@@ -1206,37 +1360,58 @@ async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registr
   return { ...recorded, validatedFiles, diff: report, l2: { ...recorded.l2!, diff: { authored: report.authored, blocked: report.blocked, flipped: report.flipped } } };
 }
 
-/** Commits each declared fix, then one commit per ownership group, each the exact tree after that group; proves they compose to the validated tree. */
+/** Stages exactly the candidate files that exist or are tracked, and commits them; anything else staged is a stop. */
+function commitStaged(state: RunState, candidates: string[], message: string): RunState {
+  // A later group's file does not exist yet in an earlier group's tree: stage only what exists or is tracked.
+  const files = candidates.filter((file) => existsSync(join(ROOT, file)) || blobAt("HEAD", file) !== DELETED);
+  gitOut("add", "--all", "--", ...files);
+  const staged = lines(gitOut("diff", "--cached", "--no-renames", "--name-only")).sort();
+  if (!staged.length) stop(state, { subject: "staging", evidence: `nothing staged for ${message.split("\n")[0]}`, why: "every commit carries its group's change", decision: "inspect the tree; nothing more has been committed" });
+  if (staged.some((file) => !files.includes(file))) stop(state, { subject: "staging", evidence: `staged ${staged.join(", ")}; expected only ${files.join(", ")}`, why: "only the group's intended files may be staged", decision: "inspect the index" });
+  const committed = sh("git", ["commit", "--quiet", "-F", "-"], { input: message });
+  if (!committed.ok) throw new ToolFailure("git commit", committed.out);
+  const next = { ...state, commits: [...state.commits, { sha: head(), message, files: staged }] };
+  saveState(next);
+  console.log(`  ok  commit ${head().slice(0, 7)} ${message.split("\n")[0]}`);
+  return next;
+}
+
+const blobText = (hash: string | undefined) => (hash && hash !== DELETED ? spawnSync("git", ["cat-file", "blob", hash], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }).stdout : "");
+
+/** HEAD must be exactly the validated tree, measured from the base, with nothing left uncommitted. */
+function assertComposition(state: RunState) {
+  const composition = compositionProblems(state.validatedFiles!, { files: lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD")), blobAtHead: (file) => blobAt("HEAD", file) });
+  if (composition.length || trackedChanges().length) {
+    stop(state, { subject: "commits", evidence: `${composition.join("; ") || "commits match validation"}; left uncommitted: ${trackedChanges().join(", ") || "none"}`, why: "the commits do not compose to the validated tree", decision: "inspect the commits; nothing has been pushed" });
+  }
+}
+
+/**
+ * Commits each declared fix, then one commit per ownership group, each the
+ * exact tree after that group; proves they compose to the validated tree.
+ * Once those exist, later content is a repair: one commit per repaired
+ * group on top, carrying only that group's repaired records and its group
+ * file. Every commit is a fast-forward; nothing is amended.
+ */
 function commitL2(state: RunState): RunState {
   const validated = state.validatedFiles!;
   const drifted = Object.entries(validated).filter(([file, hash]) => worktreeBlob(file) !== hash).map(([file]) => file);
-  if (state.commits.length === 0 && drifted.length) {
+  const record = state.l2!;
+  const firstCommitsDone = Boolean(record.committed || state.pushedSha);
+  if ((state.commits.length === 0 || firstCommitsDone) && drifted.length) {
     stop(state, { subject: "working tree", evidence: `changed since validation: ${drifted.join(", ")}`, why: "commits must reproduce the validated tree exactly", decision: "revert the later change, or keep it: `resume --decision ..` then `run` revalidates from the gates" });
   }
   if (lines(gitOut("diff", "--cached", "--name-only")).length) stop(state, { subject: "index", evidence: gitOut("diff", "--cached", "--name-only"), why: "files were staged outside the run", decision: "unstage them (`git restore --staged`)" });
-  const record = state.l2!;
+  if (firstCommitsDone) return commitL2Repair(state);
   const groups = record.slice.groups.map((group) => ({ group: group.group, title: group.title, authored: group.concepts.filter((conceptId) => !record.blocked.includes(conceptId)), blocked: group.concepts.filter((conceptId) => record.blocked.includes(conceptId)), file: groupFile(group.group) }));
   const contentFiles = [L2_DATA_FILE, L2_REGISTRY_FILE, L2_VIEW_FILE, ...groups.map((group) => group.file)];
   // Read untrimmed: the validated blobs and base files keep their final newlines.
-  const final = Object.fromEntries(contentFiles.map((file) => [file, validated[file] && validated[file] !== DELETED ? spawnSync("git", ["cat-file", "blob", validated[file]], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }).stdout : ""]));
+  const final = Object.fromEntries(contentFiles.map((file) => [file, blobText(validated[file])]));
   const baseFiles = Object.fromEntries(contentFiles.map((file) => [file, git("cat-file", "-e", `${state.baseSha}:${file}`).ok ? spawnSync("git", ["show", `${state.baseSha}:${file}`], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }).stdout : undefined]));
   const { problems, trees } = groupCommitTrees({ model: mapKnowledge, groups, final, base: baseFiles });
   if (problems.length) stop(state, { subject: "group commits", evidence: problems.join("\n"), why: "the validated tree cannot be split into whole groups", decision: "inspect data.ts and the registry; nothing has been committed" });
   let current = state;
-  const commitFiles = (candidates: string[], message: string) => {
-    // A later group's file does not exist yet in an earlier group's tree: stage only what exists or is tracked.
-    const files = candidates.filter((file) => existsSync(join(ROOT, file)) || blobAt("HEAD", file) !== DELETED);
-    gitOut("add", "--all", "--", ...files);
-    const staged = lines(gitOut("diff", "--cached", "--no-renames", "--name-only")).sort();
-    if (!staged.length) stop(current, { subject: "staging", evidence: `nothing staged for ${message.split("\n")[0]}`, why: "every commit carries its group's change", decision: "inspect the tree; nothing more has been committed" });
-    if (staged.some((file) => !files.includes(file))) stop(current, { subject: "staging", evidence: `staged ${staged.join(", ")}; expected only ${files.join(", ")}`, why: "only the group's intended files may be staged", decision: "inspect the index" });
-    const committed = sh("git", ["commit", "--quiet", "-F", "-"], { input: message });
-    if (!committed.ok) throw new ToolFailure("git commit", committed.out);
-    current = { ...current, commits: [...current.commits, { sha: head(), message, files: staged }] };
-    saveState(current);
-    console.log(`  ok  commit ${head().slice(0, 7)} ${message.split("\n")[0]}`);
-  };
-  for (const fix of state.fixes.slice(current.commits.length)) commitFiles(fix.files, fixCommitMessage(fix, state.attribution?.trailer));
+  for (const fix of state.fixes.slice(current.commits.length)) current = commitStaged(current, fix.files, fixCommitMessage(fix, state.attribution?.trailer));
   for (let index = current.commits.length - state.fixes.length; index < groups.length; index++) {
     for (const [file, text] of Object.entries(trees[index])) {
       if (text === undefined) rmSync(join(ROOT, file), { force: true });
@@ -1245,12 +1420,40 @@ function commitL2(state: RunState): RunState {
         writeFileSync(join(ROOT, file), text);
       }
     }
-    commitFiles(contentFiles, groupCommitMessage(groups[index], state.attribution?.trailer));
+    current = commitStaged(current, contentFiles, groupCommitMessage(groups[index], state.attribution?.trailer));
   }
-  const composition = compositionProblems(validated, { files: lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD")), blobAtHead: (file) => blobAt("HEAD", file) });
-  if (composition.length || trackedChanges().length) {
-    stop(current, { subject: "commits", evidence: `${composition.join("; ") || "commits match validation"}; left uncommitted: ${trackedChanges().join(", ") || "none"}`, why: "the commits do not compose to the validated tree", decision: "inspect the commits; nothing has been pushed" });
+  assertComposition(current);
+  return current;
+}
+
+/** After the first commits: the open repair, one commit per repaired group; without one, HEAD must already be the validated tree. */
+function commitL2Repair(state: RunState): RunState {
+  const record = state.l2!;
+  const changed = trackedChanges();
+  const repair = record.repair;
+  if (changed.length && !repair) stop(state, { subject: "uncommitted content", evidence: changed.join(", "), why: "content changed on top of the run's commits outside a repair", decision: `reopen the concepts concerned (\`${CLI} reopen ..\`), or revert the change` });
+  let current = state;
+  if (changed.length && repair) {
+    const groups = record.slice.groups.filter((group) => repair.groups.includes(group.group));
+    const allowed = [L2_DATA_FILE, ...groups.map((group) => groupFile(group.group))];
+    const outside = changed.filter((file) => !allowed.includes(file));
+    if (outside.length) stop(state, { subject: "repair scope", evidence: `changed outside the repaired records and group files: ${outside.join(", ")}`, why: "a repair changes only its reopened records and their groups' files", decision: "revert those files, or reopen what they belong to" });
+    const final = blobText(state.validatedFiles![L2_DATA_FILE]);
+    let data = spawnSync("git", ["show", `HEAD:${L2_DATA_FILE}`], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }).stdout;
+    for (const group of groups) {
+      const repaired = group.concepts.filter((conceptId) => repair.concepts.includes(conceptId));
+      data = withRecordsFrom(data, final, repaired);
+      writeFileSync(join(ROOT, L2_DATA_FILE), data);
+      writeFileSync(join(ROOT, groupFile(group.group)), blobText(state.validatedFiles![groupFile(group.group)]));
+      current = commitStaged(current, [L2_DATA_FILE, groupFile(group.group)], repairCommitMessage({ title: group.title, repaired }, repair, state.attribution?.trailer));
+    }
+    if (data !== final) {
+      writeFileSync(join(ROOT, L2_DATA_FILE), final);
+      stop(current, { subject: "repair scope", evidence: "data.ts differs from the validated tree outside the reopened records", why: "a repair changes only its reopened records", decision: "the validated data.ts is restored in the working tree; reopen the other records concerned, or revert them" });
+    }
   }
+  assertComposition(current);
+  if (!changed.length) console.log("  ok  no repair to commit: HEAD is the validated tree");
   return current;
 }
 
@@ -1262,6 +1465,7 @@ function l2Body(state: RunState): string {
     checks: Object.fromEntries(Object.entries(state.checks).map(([name, entry]) => [name, { ok: entry.ok, detail: entry.detail }])),
     fixes: state.fixes,
     auditNotes: state.auditNotes,
+    history: record.history,
     footer: state.attribution?.footer,
   });
 }
@@ -1362,8 +1566,16 @@ function push(state: RunState): RunState {
   assertBaseSafe(state);
   const remote = remoteSha(`refs/heads/${state.branch}`);
   const local = head();
-  if (remote && remote !== local) {
+  // A repair or a merged main adds commits on top of what the run pushed: a fast-forward of its own push.
+  const fastForward = Boolean(remote && remote !== local && remote === state.pushedSha && git("merge-base", "--is-ancestor", remote, local).ok);
+  if (remote && remote !== local && !fastForward) {
     stop(state, { subject: `origin/${state.branch}`, evidence: `remote is ${remote.slice(0, 7)}, local ${local.slice(0, 7)}`, why: "the remote branch holds work this run did not push; the tool never force-pushes", decision: "reconcile the remote branch by hand" });
+  }
+  if (fastForward) {
+    const result = sh("git", ["push", "--quiet", "origin", `HEAD:refs/heads/${state.branch}`]);
+    if (!result.ok) throw new ToolFailure("git push", result.out);
+    console.log(`  ok  pushed: ${state.branch} ${remote!.slice(0, 7)}..${local.slice(0, 7)}`);
+    return { ...state, pushedSha: local };
   }
   if (!remote) {
     const result = sh("git", ["push", "--quiet", "-u", "origin", state.branch]);
@@ -1392,10 +1604,25 @@ function matchingPr(state: RunState, prs: RemotePr[]): RemotePr | undefined {
   return open[0];
 }
 
+/** The branch's PRs once GitHub shows the pushed head: after a fast-forward push it may briefly show the previous one. */
+function settledBranchPrs(state: RunState): RemotePr[] {
+  for (let attempt = 0; ; attempt++) {
+    const prs = branchPrs(state);
+    const lagging = prs.some((pr) => pr.state === "OPEN" && pr.headRefOid !== state.pushedSha && state.l2?.history?.length);
+    if (!lagging || attempt >= 6) return prs;
+    spawnSync("sleep", ["10"]);
+  }
+}
+
 function openPr(state: RunState): RunState {
   verifyGit(state);
-  const existing = matchingPr(state, branchPrs(state));
+  const existing = matchingPr(state, settledBranchPrs(state));
   if (existing) {
+    // A repaired or resynchronized L2 run keeps its PR; its text is regenerated so it describes what is there now.
+    if (l2Mode) {
+      const edited = sh("gh", ["pr", "edit", String(existing.number), "--body-file", "-"], { input: l2Body(state) });
+      if (!edited.ok) throw new ToolFailure("gh pr edit", edited.out);
+    }
     console.log(`  ok  PR #${existing.number} already open at ${existing.headRefOid.slice(0, 7)}`);
     return { ...state, pr: { number: existing.number, url: existing.url } };
   }
@@ -1554,6 +1781,14 @@ try {
     case "checkpoint":
       if (!l2Mode) fail("checkpoint is an l2 command");
       commandL2Checkpoint();
+      break;
+    case "reopen":
+      if (!l2Mode) fail("reopen is an l2 command");
+      commandL2Reopen();
+      break;
+    case "sync":
+      if (!l2Mode) fail("sync is an l2 command");
+      commandL2Sync();
       break;
     case "audit":
       commandAudit();

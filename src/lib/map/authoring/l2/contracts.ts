@@ -153,6 +153,29 @@ export function recordDesignProblems(design: L2Design, record: MapConceptContent
   return JSON.stringify(actual) === JSON.stringify(expected) ? [] : [`the record writes ${actual.join(", ") || "prose only"}; the design decided ${expected.join(", ") || "prose only"}`];
 }
 
+/**
+ * MAP is written in American English, as the existing corpus is
+ * (docs/map-authoring/quality-contract.md). A fixed list of British forms
+ * that appear in technical prose, not a style checker: -our, -ise/-isation
+ * stems, doubled -ll- before a suffix, and a few nouns.
+ */
+const BRITISH = new RegExp(
+  [
+    "\\b(?:behaviour|favour|colour|honour|labour|neighbour|endeavour|rumour)\\w*",
+    "\\b(?:organis|recognis|generalis|summaris|minimis|maximis|optimis|prioritis|decentralis|centralis|finalis|deserialis|serialis|initialis|normalis|canonicalis|characteris|authoris|realis|specialis|standardis|utilis|synchronis|parallelis|randomis|tokenis|incentivis|monetis|customis|categoris|emphasis|formalis|visualis|materialis|stabilis|penalis|criticis|amortis)(?:e|es|ed|ing|ation|ations|er|ers)\\b",
+    "\\banalys(?:e|ed|ing)\\b",
+    "\\b(?:model|label|signal|travel|cancel|level|fuel|total)l(?:ed|ing)\\b",
+    "\\b(?:artefact|defence|offence|licence|catalogue|programme|centre|fibre)s?\\b",
+  ].join("|"),
+  "gi",
+);
+
+/** British spellings in a record, each named once. */
+export function spellingProblems(record: MapConceptContent | undefined): string[] {
+  const found = [...new Set((JSON.stringify(record ?? null).match(BRITISH) ?? []).map((word) => word.toLowerCase()))];
+  return found.length ? [`British spelling (${found.join(", ")}): MAP is written in American English`] : [];
+}
+
 /** Signals an audit leaves unresolved, or resolves without saying how. */
 export function resolutionProblems(signalIds: readonly string[], resolutions: readonly L2Resolution[]): string[] {
   const resolved = new Map(resolutions.map((entry) => [entry.id, entry.resolution]));
@@ -171,7 +194,7 @@ export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKno
   if (!work) return [`${conceptId}: no concept work in ${plan.group}`];
   const record = model.content.find((entry) => entry.conceptId === conceptId);
   const problems = [...modelProblems(work, conceptId, plan, model), ...designProblems(work.design)];
-  if (stage !== "designed" && work.design) problems.push(...recordDesignProblems(work.design, record));
+  if (stage !== "designed" && work.design) problems.push(...recordDesignProblems(work.design, record), ...spellingProblems(record));
   if (stage === "audited") {
     if (!work.audit) problems.push("the concept audit is missing");
     else {
