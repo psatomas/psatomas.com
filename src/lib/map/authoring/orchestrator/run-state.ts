@@ -9,6 +9,7 @@ import { validateFixes, type DiffReport, type FixKind } from "./diff-check.ts";
 import type { DomainPlan } from "./plan.ts";
 import type { Decision, RefactorPlan } from "../representation/refactor.ts";
 import { sliceSteps, stepKey, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
+import type { L2RepairBaseline } from "../l2/repair.ts";
 
 /**
  * A run's stages. "merge" exists only for an L2 campaign run whose merging a
@@ -42,15 +43,31 @@ export type RefactorRecord = {
   diff?: { changed: string[]; kept: string[] };
 };
 
+/**
+ * An open repair cycle: drafted concepts reopened after their audit, the
+ * group audit or review, to be repaired within the territory, model and
+ * design they were accepted with (the baseline), re-audited, and committed
+ * on top of the run's commits.
+ */
+export type L2Repair = { cycle: number; at: string; reason: string; concepts: string[]; groups: string[]; baseline: L2RepairBaseline };
+/** What happened to a run after its first drafting: closed repair cycles and base synchronizations, in order. */
+export type L2HistoryEntry =
+  | { kind: "repair"; cycle: number; at: string; reason: string; concepts: string[]; closedAt: string }
+  | { kind: "sync"; at: string; from: string; to: string; merge: string };
+
 /** An L2 slice run's own record (docs/map-authoring/l2-authoring.md). */
 export type L2RunRecord = {
   slice: L2Slice;
-  /** Each recorded judgment step ("plan:<group>", "design:<concept>", ...) and when. */
-  steps: Record<string, { at: string; note?: string }>;
+  /** Each recorded judgment step ("plan:<group>", "design:<concept>", ...), when, and for drafting and audits the record they bound. */
+  steps: Record<string, { at: string; note?: string; fingerprint?: string }>;
   /** Concepts whose design blocks them: they stay unauthored. */
   blocked: string[];
-  /** Times each concept was re-authored after its audit: more than two stops the run. */
+  /** Repair cycles each concept has been reopened in: more than the allowance stops the run (repairAllowance). */
   repairs: Record<string, number>;
+  repair?: L2Repair;
+  history?: L2HistoryEntry[];
+  /** Set once the run's first group commits exist; later content is committed as repairs on top of them. */
+  committed?: boolean;
   /** The pilot's human checkpoint between design and drafting, and its resolution. */
   checkpoint?: { required: true; clearedAt?: string; decision?: string };
   /** Set only from a human's explicit campaign authorization: the run may merge its own validated PR. */
@@ -206,14 +223,20 @@ export function pendingL2Steps(state: RunState): L2Step[] {
 /** Whether the pilot's checkpoint holds the run: every plan and design recorded, drafting not yet cleared. */
 export const atL2Checkpoint = (state: RunState) => Boolean(state.l2?.checkpoint && !state.l2.checkpoint.clearedAt && pendingL2Steps(state)[0]?.kind === "author");
 
+const drafted = (record: L2RunRecord, conceptId: string) => Boolean(record.steps[`author:${conceptId}`]);
+const groupOf = (record: L2RunRecord, conceptId: string) => record.slice.groups.find((group) => group.concepts.includes(conceptId))?.group;
+
 /**
  * Records one judgment step after the tool has validated it. Steps run in
- * order: a step before an earlier one is refused. Recording a concept's
- * drafting again after its audit reopens the audit and counts a repair.
- * Recording a design that blocks the concept marks it done and skips its
- * drafting.
+ * order: a step before an earlier one is refused. Recording a design that
+ * blocks the concept marks it done and skips its drafting.
+ *
+ * Drafting is recorded once. Any change to a drafted concept (its record,
+ * model, design or its group's territory) is a repair: it needs the concept
+ * reopened first (reopenL2), which counts the cycle. Re-recording an audit
+ * whose record is unchanged only replaces its note, and counts nothing.
  */
-export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject: string }, now: string, options: { blocks?: boolean; note?: string } = {}): RunState {
+export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject: string }, now: string, options: { blocks?: boolean; note?: string; fingerprint?: string } = {}): RunState {
   assertLive(state);
   if (state.kind !== "l2" || !state.l2) throw new RunStateError("steps belong to L2 runs");
   const record = state.l2;
@@ -221,24 +244,160 @@ export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject:
   const key = stepKey(step);
   const index = all.findIndex((candidate) => stepKey(candidate) === key);
   if (index < 0) throw new RunStateError(`${key} is not a step of slice ${record.slice.id}`);
-  const expectedStage = step.kind === "group-audit" ? "audit" : "author";
-  if (state.stage !== expectedStage) throw new RunStateError(`cannot record ${key} at stage ${state.stage}`);
+  const replacingAudit = step.kind === "audit" && Boolean(record.steps[key]);
+  const expectedStage = step.kind === "group-audit" ? ["audit"] : replacingAudit ? ["author", "audit"] : ["author"];
+  if (!expectedStage.includes(state.stage)) throw new RunStateError(`cannot record ${key} at stage ${state.stage}`);
+  const reopen = (conceptId: string) => `${conceptId} is drafted: changing it is a repair; reopen it first (\`l2 reopen ${conceptId} --reason ..\`)`;
+  if ((step.kind === "author" || step.kind === "design") && drafted(record, step.subject)) throw new RunStateError(reopen(step.subject));
+  if (step.kind === "plan") {
+    const closed = (record.slice.groups.find((group) => group.group === step.subject)?.concepts ?? []).filter((conceptId) => drafted(record, conceptId) && !record.repair?.concepts.includes(conceptId));
+    // Within a repair of the group, the tool checks that only reopened concepts' territory moved (repairScopeProblems).
+    if (closed.length && record.steps[key] && !record.repair?.groups.includes(step.subject)) throw new RunStateError(`${step.subject} has drafted concepts outside a repair (${closed.join(", ")}): changing its territory is a repair; reopen them first`);
+  }
   const earlier = pendingL2Steps(state).filter((pending) => all.findIndex((candidate) => stepKey(candidate) === stepKey(pending)) < index);
   if (earlier.length) throw new RunStateError(`record ${stepKey(earlier[0])} first`);
   if (step.kind === "author" && atL2Checkpoint(state)) throw new RunStateError("the pilot checkpoint holds drafting until a human has reviewed every plan and design");
-  const steps = { ...record.steps, [key]: { at: now, ...(options.note ? { note: options.note } : {}) } };
-  let repairs = record.repairs;
+  const steps = { ...record.steps, [key]: { at: now, ...(options.note ? { note: options.note } : {}), ...(options.fingerprint ? { fingerprint: options.fingerprint } : {}) } };
   let concepts = state.concepts;
-  if (step.kind === "author" && record.steps[`audit:${step.subject}`]) {
-    delete steps[`audit:${step.subject}`];
-    repairs = { ...repairs, [step.subject]: (repairs[step.subject] ?? 0) + 1 };
-    concepts = { ...concepts, [step.subject]: { done: false } };
-  }
   const blocked = step.kind === "design" && options.blocks ? [...new Set([...record.blocked, step.subject])] : step.kind === "design" ? record.blocked.filter((conceptId) => conceptId !== step.subject) : record.blocked;
   if (step.kind === "audit" || (step.kind === "design" && options.blocks)) concepts = { ...concepts, [step.subject]: { done: true, at: now } };
-  let next: RunState = { ...state, concepts, l2: { ...record, steps, repairs, blocked } };
+  let next: RunState = { ...state, concepts, l2: { ...record, steps, blocked } };
   if (next.stage === "author" && pendingConcepts(next).length === 0) next = { ...next, stage: "audit", completed: { ...next.completed, author: { at: now } } };
   return next;
+}
+
+/** Repair cycles a concept may be reopened in: two, plus one for each stop at its limit a human has resolved. */
+export const MAX_REPAIRS = 2;
+export const repairLimitSubject = (conceptId: string) => `repair limit: ${conceptId}`;
+export const repairAllowance = (state: RunState, conceptId: string) => MAX_REPAIRS + (state.resolvedStops ?? []).filter((resolved) => resolved.subject === repairLimitSubject(conceptId)).length;
+
+/** A reopen that would take concepts past their repair allowance: the run stops for a human. */
+export class RepairLimitError extends RunStateError {
+  readonly conceptIds: string[];
+  constructor(conceptIds: string[]) {
+    super(`${conceptIds.join(", ")} already used every allowed repair cycle`);
+    this.conceptIds = conceptIds;
+  }
+}
+
+/**
+ * Reopens drafted concepts for repair after their audit, their group's audit
+ * or human review. Each concept counts one repair cycle, however often it
+ * is edited within it; reopening more concepts while a repair is open joins
+ * that cycle. The concepts' drafting and audits and their groups' audits must
+ * be recorded again, so a repair is re-audited in fresh context like the
+ * first draft. The run returns to drafting from wherever it was, keeping its
+ * commits, push and PR: the repair is validated in full and committed on top.
+ * The baseline fixes the territory, models and designs the repair must stay
+ * within (repairScopeProblems).
+ */
+export function reopenL2(state: RunState, input: { concepts: readonly string[]; reason: string; baseline: L2RepairBaseline; now: string }): RunState {
+  assertLive(state);
+  if (state.kind !== "l2" || !state.l2) throw new RunStateError("only L2 runs reopen concepts");
+  const record = state.l2;
+  if (!input.reason.trim()) throw new RunStateError("a repair needs its reason: the finding it answers");
+  if (record.merged || state.stage === "merge") throw new RunStateError("the run's PR is merging or merged: repair in a new run");
+  if (!input.concepts.length) throw new RunStateError("name the concepts to reopen");
+  for (const conceptId of input.concepts) {
+    if (!(conceptId in state.concepts)) throw new RunStateError(`${conceptId} is not a concept of slice ${record.slice.id}`);
+    if (record.blocked.includes(conceptId)) throw new RunStateError(`${conceptId} is blocked by its design: there is no record to repair`);
+    if (!drafted(record, conceptId) && !record.repair?.concepts.includes(conceptId)) throw new RunStateError(`${conceptId} is not drafted yet: draft it, nothing to repair`);
+  }
+  const fresh = input.concepts.filter((conceptId) => !record.repair?.concepts.includes(conceptId));
+  const over = fresh.filter((conceptId) => (record.repairs[conceptId] ?? 0) + 1 > repairAllowance(state, conceptId));
+  if (over.length) throw new RepairLimitError(over);
+  const groups = [...new Set(input.concepts.map((conceptId) => groupOf(record, conceptId)!))];
+  const steps = { ...record.steps };
+  for (const conceptId of input.concepts) {
+    delete steps[`author:${conceptId}`];
+    delete steps[`audit:${conceptId}`];
+  }
+  for (const group of groups) delete steps[`group-audit:${group}`];
+  const repairs = { ...record.repairs };
+  for (const conceptId of fresh) repairs[conceptId] = (repairs[conceptId] ?? 0) + 1;
+  const open = record.repair;
+  const merge = <T>(earlier: Record<string, T>, later: Record<string, T>) => ({ ...later, ...earlier });
+  const repair: L2Repair = open
+    ? {
+        ...open,
+        concepts: [...new Set([...open.concepts, ...input.concepts])],
+        groups: [...new Set([...open.groups, ...groups])],
+        // The baseline is what the cycle started from: entries already fixed stay.
+        baseline: { work: merge(open.baseline.work, input.baseline.work), members: merge(open.baseline.members, input.baseline.members), splits: merge(open.baseline.splits, input.baseline.splits) },
+      }
+    : { cycle: (record.history ?? []).filter((entry) => entry.kind === "repair").length + 1, at: input.now, reason: input.reason, concepts: [...input.concepts], groups, baseline: input.baseline };
+  const concepts = { ...state.concepts };
+  for (const conceptId of input.concepts) concepts[conceptId] = { done: false };
+  const reopened: RunState = { ...state, stage: "author", completed: {}, concepts, checks: {}, l2: { ...record, steps, repairs, repair, diff: undefined } };
+  delete reopened.validatedFiles;
+  delete reopened.diff;
+  delete reopened.buildId;
+  delete reopened.auditContent;
+  delete reopened.ci;
+  return reopened;
+}
+
+/**
+ * Merges a moved main into an open run (the tool made the merge commit) and
+ * rebases the run on it: the run's diff is then measured from the new main,
+ * and everything validated is validated again. Content is unchanged, so the
+ * agent's stages stand. Never during an open repair, and never before the
+ * run's first commits.
+ */
+export function syncL2Base(state: RunState, input: { base: string; merge: string; now: string }): RunState {
+  assertLive(state);
+  if (state.kind !== "l2" || !state.l2) throw new RunStateError("only L2 runs synchronize their base");
+  if (!state.l2.committed && !state.pushedSha) throw new RunStateError("the run has not committed yet: nothing to synchronize");
+  if (state.l2.repair) throw new RunStateError("a repair is open: finish it before synchronizing");
+  const gates = STAGES.indexOf("gates");
+  const synced: RunState = {
+    ...state,
+    baseSha: input.base,
+    stage: STAGES.indexOf(state.stage) > gates ? "gates" : state.stage,
+    completed: Object.fromEntries(Object.entries(state.completed).filter(([stage]) => STAGES.indexOf(stage as Stage) < gates)),
+    checks: {},
+    commits: [...state.commits, { sha: input.merge, message: `Merge origin/main into ${state.branch}`, files: [] }],
+    l2: { ...state.l2, diff: undefined, history: [...(state.l2.history ?? []), { kind: "sync", at: input.now, from: state.baseSha, to: input.base, merge: input.merge }] },
+  };
+  delete synced.validatedFiles;
+  delete synced.diff;
+  delete synced.buildId;
+  delete synced.ci;
+  return synced;
+}
+
+/** The records and audits as they are now, by fingerprint. */
+export type ObservedAudits = {
+  records: Record<string, string | undefined>;
+  /** The record fingerprint each concept audit is bound to. */
+  conceptAudits: Record<string, string | undefined>;
+  /** The record fingerprints each group audit is bound to, by concept. */
+  groupAudits: Record<string, Record<string, string> | undefined>;
+};
+
+/**
+ * Recorded steps that no longer describe the records: a drafted record
+ * changed without being reopened, a concept audit or a group audit bound to
+ * a record that has since changed. Each is a repair to open, never to paper
+ * over.
+ */
+export function staleL2Steps(state: RunState, observed: ObservedAudits): { step: string; reason: string }[] {
+  const record = state.l2;
+  if (!record) return [];
+  const stale: { step: string; reason: string }[] = [];
+  for (const group of record.slice.groups) {
+    for (const conceptId of group.concepts) {
+      const current = observed.records[conceptId];
+      const authored = record.steps[`author:${conceptId}`];
+      if (authored?.fingerprint && authored.fingerprint !== current) stale.push({ step: `author:${conceptId}`, reason: `${conceptId}'s record changed since it was drafted, outside a repair` });
+      if (record.steps[`audit:${conceptId}`] && observed.conceptAudits[conceptId] !== current) stale.push({ step: `audit:${conceptId}`, reason: `${conceptId}'s audit judged a different record` });
+    }
+    if (!record.steps[`group-audit:${group.group}`]) continue;
+    const bound = observed.groupAudits[group.group];
+    const changed = group.concepts.filter((conceptId) => !record.blocked.includes(conceptId) && bound?.[conceptId] !== observed.records[conceptId]);
+    if (changed.length) stale.push({ step: `group-audit:${group.group}`, reason: `${group.group}'s group audit judged different records of ${changed.join(", ")}` });
+  }
+  return stale;
 }
 
 /** A human cleared the pilot checkpoint after reviewing every plan and design. */
@@ -300,8 +459,8 @@ export function gitProblems(state: RunState, observed: ObservedGit): string[] {
   if (!observed.baseIsAncestor) problems.push(`base ${state.baseSha.slice(0, 7)} is not an ancestor of HEAD`);
   const expectedHead = state.commits.at(-1)?.sha ?? state.baseSha;
   if (observed.head !== expectedHead) problems.push(`HEAD is ${observed.head.slice(0, 7)}, the run recorded ${expectedHead.slice(0, 7)}`);
-  // Once committed, the validated tree is HEAD; any tracked change on top of it was never validated.
-  if (state.commits.length > 0 && observed.trackedChanges.length) problems.push(`tracked changes after the run's commits: ${observed.trackedChanges.join(", ")}`);
+  // Once committed, the validated tree is HEAD; any tracked change on top of it was never validated, unless a repair is open.
+  if (state.commits.length > 0 && observed.trackedChanges.length && !state.l2?.repair) problems.push(`tracked changes after the run's commits: ${observed.trackedChanges.join(", ")}${state.kind === "l2" ? "; changing committed content is a repair: reopen the concepts concerned" : ""}`);
   if (state.pushedSha && observed.remoteHead !== state.pushedSha) problems.push(`origin/${state.branch} is ${observed.remoteHead?.slice(0, 7) ?? "missing"}, the run pushed ${state.pushedSha.slice(0, 7)}`);
   return problems;
 }
@@ -355,6 +514,12 @@ export function completeStage(state: RunState, stage: Stage, now: string, detail
     if (missing.length) throw new RunStateError(`group audits still to record: ${missing.map((step) => step.subject).join(", ")}`);
   }
   const completed = { ...state.completed, [stage]: { at: now, ...(detail ? { detail } : {}) } };
+  // A repair is committed by the commit stage: the cycle closes into the run's history.
+  if (stage === "commit" && state.l2) {
+    const { repair, ...rest } = state.l2;
+    const l2: L2RunRecord = { ...rest, committed: true, ...(repair ? { history: [...(rest.history ?? []), { kind: "repair" as const, cycle: repair.cycle, at: repair.at, reason: repair.reason, concepts: repair.concepts, closedAt: now }] } : {}) };
+    return { ...state, l2, stage: nextStage(stage), completed };
+  }
   // Without a human's authorization a run never merges: it ends at a validated PR awaiting human merge.
   if (stage === "ci" && !mayMerge(state)) return { ...state, stage: "done", completed: { ...completed, merge: { at: now, detail: "awaiting human merge" } } };
   return { ...state, stage: nextStage(stage), completed };
@@ -376,7 +541,7 @@ export const staleChecks = (state: RunState, tree: string) =>
  */
 export function revalidate(state: RunState): RunState {
   assertLive(state);
-  if (state.commits.length > 0) throw new RunStateError("cannot revalidate a run that has commits");
+  if (state.commits.length > 0 && !state.l2?.repair) throw new RunStateError("cannot revalidate a run that has commits");
   if (![...VALIDATION_STAGES, "commit"].includes(state.stage)) throw new RunStateError(`cannot revalidate at ${state.stage}`);
   const gates = STAGES.indexOf("gates");
   const rewound: RunState = {
@@ -407,7 +572,8 @@ export type Observed = { tree: string; content: string; buildId?: string };
  * Once commits exist nothing is rewound: the commits and git checks guard them.
  */
 export function invalidate(state: RunState, observed: Observed): { state: RunState; reason?: string } {
-  if (state.stop || state.commits.length > 0) return { state };
+  // An open repair's content is uncommitted on top of the run's commits, and is invalidated like a first draft.
+  if (state.stop || (state.commits.length > 0 && !state.l2?.repair)) return { state };
   const at = STAGES.indexOf(state.stage);
   if (state.completed.audit && state.auditContent !== undefined && state.auditContent !== observed.content) {
     const rewound: RunState = {
@@ -496,12 +662,22 @@ export function nextAction(state: RunState): NextAction {
     }
     const [step] = pendingL2Steps(state);
     if (!step) return { kind: "agent", stage: "audit", message: "every group audit is recorded: `map:author -- l2 complete audit --note \"...\"`" };
+    const repairing = state.l2!.repair;
+    if (repairing && (repairing.concepts.includes(step.subject) || repairing.groups.includes(step.subject))) {
+      const repairMessages: Partial<Record<L2StepKind, string>> = {
+        author: `repair ${step.subject} (cycle ${repairing.cycle}: ${repairing.reason}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
+        audit: `re-audit ${step.subject} in a fresh context against its record as repaired, then \`map:author -- l2 record audit ${step.subject} --audit-file <json>\``,
+        "group-audit": `re-audit group ${step.subject} in a fresh context with its repaired records, then \`map:author -- l2 record group-audit ${step.subject} --audit-file <json>\``,
+      };
+      const message = repairMessages[step.kind];
+      if (message) return { kind: "agent", stage: state.stage, conceptId: step.kind === "group-audit" ? undefined : step.subject, message };
+    }
     const messages: Record<L2StepKind, string> = {
       plan: `write ${step.subject}'s territory plan: \`map:author -- l2 territory ${step.subject} --write\`, fill claims, reservations and splits, then \`map:author -- l2 record plan ${step.subject}\``,
       design: `model and design ${step.subject} in ${step.group}'s group file from \`map:author -- l2 context ${step.subject}\`, then \`map:author -- l2 record design ${step.subject}\``,
-      author: `author ${step.subject} in a fresh context from \`map:author -- l2 context ${step.subject}\` and its design, register it, then \`map:author -- l2 record author ${step.subject}\``,
-      audit: `audit ${step.subject}: resolve every \`map:author -- l2 signals ${step.subject}\` signal in its audit, then \`map:author -- l2 record audit ${step.subject}\``,
-      "group-audit": `audit group ${step.subject} as a whole: resolve its group signals in groupAudit, then \`map:author -- l2 record group-audit ${step.subject}\``,
+      author: `author ${step.subject} in a fresh context from \`map:author -- l2 context ${step.subject}\` and its design, register it, check \`map:author -- l2 signals ${step.subject}\`, then \`map:author -- l2 record author ${step.subject}\` (recorded once: later changes are repairs)`,
+      audit: `audit ${step.subject} in a fresh context: resolve every \`map:author -- l2 signals ${step.subject}\` signal; a defect reopens it (\`map:author -- l2 reopen ${step.subject} --reason ..\`); otherwise \`map:author -- l2 record audit ${step.subject} --audit-file <json>\``,
+      "group-audit": `audit group ${step.subject} as a whole in a fresh context: resolve \`map:author -- l2 group-signals ${step.subject}\`; a defect reopens the member concerned; otherwise \`map:author -- l2 record group-audit ${step.subject} --audit-file <json>\``,
     };
     return { kind: "agent", stage: state.stage, conceptId: step.kind === "plan" || step.kind === "group-audit" ? undefined : step.subject, message: messages[step.kind] };
   }

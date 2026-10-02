@@ -232,7 +232,11 @@ are committed by the run.
 npm run map:author -- l2 campaign                         # every slice, the next one, merge authorization
 npm run map:author -- l2 start --slice <id> | --pilot
 npm run map:author -- l2 status | next
-npm run map:author -- l2 record plan <group> | design <id> | author <id> | audit <id> | group-audit <group>
+npm run map:author -- l2 record plan <group> | design <id> | author <id>
+npm run map:author -- l2 record audit <id> | group-audit <group> --audit-file <json>   # binds the audit to the records as they are
+npm run map:author -- l2 group-signals <group>            # the group audit's signals
+npm run map:author -- l2 reopen <id>[,<id>..] --reason ".."   # a repair (below); --domain <slice> for a finished run
+npm run map:author -- l2 sync                             # merge a moved main into the run's branch (below)
 npm run map:author -- l2 checkpoint --decision ".."       # the pilot's human review
 npm run map:author -- l2 complete audit --note ".."
 npm run map:author -- l2 run [--until <stage>]            # gates → browser → render+expansion → diff → commit → push → pr → ci (→ merge)
@@ -257,13 +261,59 @@ it, and refuses steps out of order:
    plan, which must not be stale.
 3. **Each concept drafted, then audited, in turn.**
    - `author` needs the record registered, the view regenerated, the focused
-     tests passing, and exactly the designed structures.
-   - `audit` needs every signal resolved, bound to the record.
-4. **Each group audit.**
+     tests passing, exactly the designed structures, and American English.
+     It is recorded once, bound to the record's fingerprint: check
+     `l2 signals` before recording. Any later change is a repair.
+   - `audit` needs every signal resolved and the record unchanged since it
+     was drafted. `--audit-file` writes `{ note, resolutions }` into the
+     group file bound to the record's fingerprint. Recording it again with
+     the record unchanged only replaces the note.
+4. **Each group audit**, bound the same way to every member's record.
 
 Each concept is modelled, designed, drafted and audited from its own
 `l2 context`, in a fresh bounded context. The campaign never runs as one
 growing conversation.
+
+## Repairs
+
+A defect found after a concept is drafted (by its audit, its group's audit,
+or a human review of the run's PR) is repaired through `l2 reopen`, never by
+editing the record and recording again.
+
+- **Reopening** names the concepts and the finding (`--reason`). Each
+  concept counts one repair cycle, however often it is edited within it;
+  concepts reopened while a cycle is open join it. Their drafting, their
+  audits and their groups' audits are then pending again, and the run
+  returns to drafting from wherever it was, keeping its commits, push and
+  PR. Everything validated is validated again.
+- **Bounds.** Reopening fingerprints each concept's model and design and its
+  group's territory. A repair changes the record within them. If the
+  finding needs the model, design or territory changed, the repair records
+  the design or plan again first, which validates it. Only reopened
+  concepts' territory may move: `record` refuses anything else
+  (`repairScopeProblems`). A plan or design of a drafted concept cannot be
+  recorded again outside a repair.
+- **Re-audit.** The repaired concept is drafted and audited again, and its
+  group audited again, each in a fresh context, with audits bound to the
+  repaired records.
+- **Staleness.** `l2 status` lists any recorded drafting, concept audit or
+  group audit whose record has changed since (`STALE`). The `l2-check` gate
+  and the diff refuse them. The remedy is always to reopen.
+- **Limit.** A third repair cycle for one concept stops the run
+  (`repair limit: <id>`). A human decision (`l2 resume --decision ..`)
+  allows one more.
+- **Commits.** Before the run's first commits, a repair is simply part of
+  the validated tree. After them, the commit stage adds one commit per
+  repaired group on top (`fix(map): repair <group> L2 topics`), carrying only
+  that group's repaired records and its group file. The push is a
+  fast-forward of the run's own push. The PR is kept and its text
+  regenerated with the repair history. Nothing is amended or force-pushed.
+
+**A moved main.** `l2 sync` merges `origin/main` into an open run's branch
+(a merge commit, never a rebase), provided main changed none of the run's
+files. The run's diff is then measured from the new main and everything is
+validated again; the drafting and audits stand, because the content did not
+change.
 
 **The pilot** stops between design and drafting until a human reviews every
 plan and design and records the decision with `l2 checkpoint`. The pilot
@@ -306,7 +356,8 @@ decision needed; `resume --decision ..` continues after a human decides.
 | A representation gap prose cannot carry (design `block`) | `record design` stops; resuming leaves the concept unauthored |
 | A territory conflict | `record plan` refuses: claim owned twice, or a reservation not honoured |
 | A stale plan or design | `record design` and `record author` refuse; the `l2-check` gate and the diff stop |
-| An audit failing after two repairs | `record author` counts re-authoring after an audit; the third stops |
+| A concept still failing after two repair cycles | `reopen` counts cycles; the third stops until a human allows one more |
+| A record, audit or group audit changed outside a repair | `l2 status` marks it stale; `record`, the `l2-check` gate and the diff refuse it |
 | Unexpected existing content, or other diff scope | The diff stage |
 | Inventory problems | `start` refuses |
 | Slice-wide drift | `complete audit` stops once; resume with the calibration decision |

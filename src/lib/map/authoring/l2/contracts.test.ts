@@ -3,7 +3,7 @@ import test from "node:test";
 import type { MapConceptContent } from "../../types.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import { assembleL2Context } from "./context.ts";
-import { designProblems, groupAuditProblems, modelProblems, recordDesignProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
+import { designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
 import { filledG1, model, options } from "./fixtures.ts";
 import { conceptSignals, containment, driftReport, groupSignals, mentionedConcepts } from "./signals.ts";
 
@@ -157,4 +157,11 @@ test("the drift report describes a window and flags convergence without asking f
   // Uniform prose alone never trips the form flag: prose is a valid majority, not a target to diversify away from.
   assert.equal(report.signals.some((entry) => entry.check === "drift-form"), false);
   assert.deepEqual(driftReport(uniform.slice(0, 5)).signals, []);
+});
+
+test("L2 records are written in American English: a fixed list of British forms is refused", () => {
+  const record = (text: string) => ({ id: "a-content", conceptId: "a", definition: "Alpha.", body: [{ kind: "paragraph" as const, text }] });
+  assert.deepEqual(spellingProblems(record("Its behaviour is modelled and summarised; the artefact favours honour.")), ["British spelling (behaviour, modelled, summarised, artefact, favours, honour): MAP is written in American English"]);
+  // American forms, and words that only look British, pass.
+  assert.deepEqual(spellingProblems(record("Its behavior is modeled; analyses, the specialist, emphasis, a premise, otherwise precise, a promise, its exercise.")), []);
 });

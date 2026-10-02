@@ -76,6 +76,11 @@ state how each was checked, especially where the answer is uncertain.
     stay buried in paragraphs? An unnecessary structure fails this as much as
     a missing one, and so does a form copied from sibling records. There is
     no quota for any block type.
+12. **American English.** The corpus is written in American English
+    (behavior, modeled, artifact, -ize): about 96% of it when this rule was
+    set. L2 records are held to it mechanically by a short list of British
+    forms (`spellingProblems` in `l2/contracts.ts`); other records by
+    review.
 
 ## Tests for authored content
 
