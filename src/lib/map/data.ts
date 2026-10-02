@@ -17733,6 +17733,102 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "verification-limits-content",
+      conceptId: "verification-limits",
+      definition:
+        "Verification limits are the boundary between what a protocol can check about a report of facts outside it and what it has to accept without checking: whether the report is true of the world.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The checks open to a protocol reach four properties of a report. Its origin and integrity are checkable: a valid signature from a known key shows which key signed the report and that its content has not changed since. Its freshness is checkable against the protocol's own clock, by when the report was included or by a round number or timestamp it carries, though these date the report rather than the observation: a timestamp written by the signer records when the signer says it observed, not when it did. Its agreement with other reports on the same question is checkable too, and a protocol can reject a report that strays too far from the rest or from the previous value. Each of these is a fact about the report: who signed it, that it is unaltered, how old it is, how it relates to other reports. Whether its content corresponds to the world is a fact about the world. A protocol that learns of the world only through reports has nothing to hold the content against, so for such a protocol correspondence lies outside what checks on the report can establish, and it is taken on trust.",
+        },
+        {
+          kind: "paragraph",
+          text: "Agreement comes closest to a check of truth and still falls short of one. Sources that read the same upstream feed, share a faulty method or act together can agree on a false value, and a bound on deviation admits a false value that happens to look plausible. A report can therefore be authentic, recent and in line with its peers, and wrong. Suppose a source is mistaken, or its own systems have been compromised, and it signs a false value. The signature is valid, the content is unaltered, the report is recent, and if the error is small or shared it agrees with the others. The checks pass because each is answered correctly: the report is exactly what that source said. This is not a breach of the limit but the case it leaves undetected, and it is where a protocol's exposure lies, since whatever the protocol does with the value it does on the source's word.",
+        },
+        {
+          kind: "paragraph",
+          text: "Attestation pushes what can be checked closer to the source, and each form of it stops at a definite point. When the provider that produces a value signs it itself, an exchange quoting its own trades or an agency publishing its own measurement, a protocol can check that the value is the provider's and was not altered by any relay or oracle node on the way. The intermediaries drop out of what has to be trusted, and the check stops at the provider. Whether the quoted trades were genuine, or the instrument was calibrated, is outside what the signature covers, and the protocol now relies on the provider's honesty and competence, and on the security of its signing key, in place of the relays'.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hardware attestation reaches into the computation. A trusted execution environment can produce a statement, signed with a key the hardware vendor certifies, that a particular program ran in isolation on genuine hardware and produced a given output, so a protocol can check that an output came from the expected code and not from an operator who changed it. Trust moves to the vendor, whose keys and attestation service vouch for the chip, and to the hardware having no exploitable flaw, a premise that side-channel attacks on such enclaves have broken more than once. The program still learns about the world from what it reads, so the attestation covers what it did with its input, not whether the input was true.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proofs over web data reach a website. A TLS session on its own gives the client nothing it could show to anyone else, so schemes for proving web data commonly bring a notary or proxy into the session and produce a proof, often a zero-knowledge one, that a given response came from the server holding the certificate for a given domain, revealing only the parts the prover chooses. Trust moves to the server's TLS key, to the certificate authorities that bind that key to the domain, and to the notary or proxy not colluding with the prover. What such a proof shows is what the site served: if the site publishes a wrong figure, the proof establishes, correctly, that the site published it. In each of these forms trust moves rather than disappears, from relays to the provider, from the operator to the chip vendor, from the oracle to the website and its key, and the step from the source's statement to the world stays where it was.",
+        },
+        {
+          kind: "paragraph",
+          text: "Designing around the limit means arranging for a false report to be unprofitable, contestable or outweighed, in place of verifying it. Economic guarantees require reporters to stake funds that are forfeited if a report is shown to be false. That turns a question the protocol cannot settle by checking the report, whether it is true, into one about incentives, whether lying would cost the reporter more than it gains, and the guarantee depends on a false report being shown false afterwards by some process the protocol accepts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Dispute windows provide such a process. A proposed value is accepted only after a period in which anyone may challenge it by posting a bond, and a challenged value goes to a resolver, such as a vote of token holders or an appointed arbiter, whose ruling the protocol applies. The protocol still checks nothing about the world: it checks that the window has elapsed, that bonds were posted and how the resolver ruled. Observation of the world moves to the challengers and the resolver, and the arrangement holds while someone who knows a value is false is watching and willing to challenge it, and while the resolver rules honestly. Each value also waits out the window, which suits questions settled once, such as the outcome of an event, more readily than prices needed within seconds.",
+        },
+        {
+          kind: "paragraph",
+          text: "Redundancy draws reports from many reporters and sources and combines them, for instance by taking the median, which stays within the range of the correct reports as long as fewer than half are wrong. It replaces verification of any one report with the condition that most reports are not wrong together, which is a condition on their independence: reporters that read one upstream source, or that can be bribed as a group, provide less of it than their number suggests. Like stake and disputes, redundancy bounds the exposure the limit creates without closing it, by stating conditions under which a false value is costly to submit or unlikely to be accepted.",
+        },
+      ],
+    },
+    {
+      id: "external-data-availability-content",
+      conceptId: "external-data-availability",
+      definition:
+        "External data availability is whether the information from outside a chain that a protocol depends on can be obtained when the protocol needs it, which takes a source that has the data, can be reached and keeps publishing it.",
+      body: [
+        { kind: "distinction", left: "External data availability", right: "Blockchain data availability" },
+        {
+          kind: "paragraph",
+          text: "The question is posed at a moment and at a rate of demand. A lending market that values collateral while positions can change needs a current price at short intervals, whereas a contract settling a wager needs one result, once, so a source can meet the second need and fail the first. Availability is also separate from accuracy, and either can fail without the other: a source can publish on schedule and be wrong, and a correct source can be unreachable at the moment it is asked. Checks on whether a value is right presuppose that a value arrived, so they cannot supply a missing one, and a steady supply of values says nothing about whether they are right. What a missing value then does to a protocol is a matter of oracle failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some causes belong to one source or to the path to it. An outage at a provider, at the service hosting its interface, or in the network between it and those who query it stops data for as long as it lasts. Rate limits stop it by policy: a provider caps how many requests a client may make in a period, so a protocol whose demand rises, as it can when updates are triggered by price moves in a volatile market, can have requests refused while the source itself is running. Censorship stops it by decision: a provider can refuse to serve certain clients or jurisdictions or withdraw a dataset under legal pressure, and an authority can block access to it within its territory. A source can also stop for good, when a provider discontinues a feed or a market delists the asset it quoted. Because these causes sit with a particular provider, host or jurisdiction, another source that does not share them can still have the data.",
+        },
+        {
+          kind: "paragraph",
+          text: "Other causes leave nothing to fetch. When the market for an asset is closed, as stock exchanges commonly are overnight, at weekends and on holidays, no trades happen and no new price forms, while a blockchain keeps running and a protocol built on it can keep needing one. Venues that trade outside those hours, where they exist, quote a different and often thinner market, so they offer another value rather than the missing one. Data that does not exist yet behaves the same way: the result of a match before it ends, an official statistic before its release, the price of an asset that has not begun trading. A fact that no one measures directly, such as rainfall at a field with no gauge nearby, has no source of its own, and estimates from radar or distant gauges give a different figure rather than the missing measurement. In these cases asking another source, or asking again before the market opens or the result is published, returns nothing new, because the absence lies in the world rather than in the path to it.",
+        },
+      ],
+    },
+    {
+      id: "oracle-failure-content",
+      conceptId: "oracle-failure",
+      definition:
+        "Oracle failure is a condition in which a protocol does not receive from its oracle a correct value in time for a decision that depends on it, because the value delivered is wrong or out of date, arrives after it was needed, or does not arrive at all.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Where a fault enters an oracle decides how far it travels. An error at a source, such as a mistaken trade print, a unit or decimal slip, or a feed mapped to the wrong asset, reaches every node that reads that source, so adding nodes does not contain it; it is contained only where the aggregate also draws on sources that do not share the error. A faulty or offline node is absorbed by aggregation while enough healthy nodes remain to produce an update, and becomes a failure of the feed when too few do. Delay acts last, on the update itself: a value that the sources and nodes got right still has to be included on chain, and congestion or a slow aggregation round holds it back whatever its quality. Deliberate manipulation belongs in the same list of causes rather than forming a separate kind of failure, since it yields the same forms as accidental faults; how it is carried out is the subject of oracle manipulation.",
+        },
+        {
+          kind: "paragraph",
+          text: "The form a protocol meets depends on how it reads the oracle as much as on the fault. When updates stop, a design that keeps the last pushed value on chain goes on reading it, so the halt shows up as a stale value, while a design that needs a fresh report with each use gets nothing, so the same halt shows up as a missing one. In the other direction, the protocol sees the form and not its cause: a wrong price from a decimal slip and one from a manipulated market arrive looking alike. Responses are therefore organized around the forms, which differ in what reaches the protocol, where they tend to come from and what they set off.",
+        },
+        {
+          kind: "comparison",
+          label: "How the forms of oracle failure differ",
+          dimensions: ["What the protocol sees", "Typical cause", "Consequence"],
+          alternatives: [
+            { name: "Wrong value", values: ["A fresh, well-formed value that is false", "A source error or faulty node, or manipulation", "Liquidations and loans at wrong prices"] },
+            { name: "Stale value", values: ["An old value that still reads as current", "Updates stopped by offline nodes or a halted source", "Trading and settlement on outdated values"] },
+            { name: "Missing value", values: ["No usable value, or a read that fails", "Too few working nodes, or a source with nothing to give", "A frozen market: actions that need the value halt"] },
+            { name: "Late value", values: ["The right value, after the decision that needed it", "Network congestion or a slow update round", "Decisions in the gap run on the previous value"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Damage spreads at the speed of whatever acts on the value. In a lending market, liquidators watch for positions that a new price makes eligible and close them within blocks, so a price that is wrong for a few minutes can liquidate solvent borrowers, and those liquidations stand once confirmed even after the price is corrected. A price that is too high works the other way, letting borrowers draw loans against collateral worth less than the protocol counts, a loss that surfaces as unpaid debt when the true price arrives. A contract that settles on an outdated value pays out on it, and correcting the record afterwards does not recover the funds. A late value opens a window in which anyone who already sees the coming price can trade against the protocol at the old one. A frozen market harms more slowly: while the value is missing, liquidations that depend on it cannot run, so positions that become unsafe stay open and losses can build up until the feed resumes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Failures also tend to arrive together. Sharp price moves bring a rush of trades and liquidations competing for block space, so updates are most likely to be delayed when prices move fastest and when liquidations depend on them most, and sources under the same load can report erratic prices or stop. Staleness checks and heartbeats exist to expose updates that are late or have stopped, and fallback sources, pauses and circuit breakers to contain the damage.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

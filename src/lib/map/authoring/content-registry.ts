@@ -379,4 +379,7 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "symbolic-execution",
   "static-analysis",
   "formal-specifications",
+  "verification-limits",
+  "external-data-availability",
+  "oracle-failure",
 ];
