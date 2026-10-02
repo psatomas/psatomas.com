@@ -766,6 +766,7 @@ function commandL2Sync() {
   gitOut("fetch", "--quiet", "origin", MAIN);
   if (currentBranch() === state.branch && head() !== (state.commits.at(-1)?.sha ?? state.baseSha)) return adoptMerge(state);
   verifyGit(state);
+  if (trackedChanges().length) fail(`commit or reopen nothing first: sync merges into a clean tree (uncommitted: ${trackedChanges().join(", ")})`, 1);
   const target = remoteSha(`refs/heads/${MAIN}`)!;
   if (git("merge-base", "--is-ancestor", target, "HEAD").ok) return console.log(`${state.branch} already contains origin/${MAIN} at ${target.slice(0, 7)}`);
   const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD"));
