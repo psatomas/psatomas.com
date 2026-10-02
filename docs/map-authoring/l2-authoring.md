@@ -98,8 +98,13 @@ validates it at the stage it has reached.
 **Model** (before any prose):
 
 - `meaning`, a single sentence;
-- `kind`: mechanism, property, actor, attack, parameter, artifact,
-  technology or institutional;
+- `kind`: mechanism, property, actor, attack, failure, parameter,
+  artifact, technology or institutional. An attack is deliberate (an
+  adversary acting for gain, answered by defences: `preconditions`,
+  `mechanism`, `impact`, `defences`, `detection`). A failure is a condition
+  in which a system does not deliver, from any cause, adversaries included
+  (answered by detection and recovery: `causes`, `manifestation`, `impact`,
+  `detection`, `recovery`);
 - `parents`: what the concept adds beyond each parent;
 - `claims` and `excludes`, exactly the plan's;
 - `placements`: why the exposition holds at each placement;

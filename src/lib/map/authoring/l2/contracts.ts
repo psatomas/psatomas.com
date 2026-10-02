@@ -12,15 +12,23 @@ import { catalogEntry, STRUCTURED_KINDS, type BlockKind, type Structure } from "
 import { contentFingerprint } from "../representation/design.ts";
 import type { L2GroupFile } from "./territory.ts";
 
-export const L2_KINDS = ["mechanism", "property", "actor", "attack", "parameter", "artifact", "technology", "institutional"] as const;
+export const L2_KINDS = ["mechanism", "property", "actor", "attack", "failure", "parameter", "artifact", "technology", "institutional"] as const;
 export type L2Kind = (typeof L2_KINDS)[number];
 
-/** The fields each kind of concept owes its explanation (section 14); two of them, at least, must be worked out. */
+/**
+ * The fields each kind of concept owes its explanation (section 14); two of
+ * them, at least, must be worked out. An attack is deliberate: an adversary
+ * acting for gain, answered by defences. A failure is a condition in which a
+ * system does not deliver what it should, from any cause (faults, delay,
+ * error, and adversaries among them), answered by detection and recovery.
+ * The L2 pilot showed the two cannot share one set of fields.
+ */
 export const KIND_FIELDS: Record<L2Kind, readonly string[]> = {
   mechanism: ["sequence", "actors", "inputs", "outputs", "assumptions", "failures"],
   property: ["statement", "establishedBy", "violatedBy", "confusions"],
   actor: ["role", "powers", "incentives", "trustPlaced", "misbehaviour"],
   attack: ["preconditions", "mechanism", "impact", "defences", "detection"],
+  failure: ["causes", "manifestation", "impact", "detection", "recovery"],
   parameter: ["measures", "setBy", "tradeoff", "extremes"],
   artifact: ["contents", "producedBy", "checkedBy", "proves", "lifetime"],
   technology: ["designChoices", "consequences", "nearestAlternative", "datedFacts"],
