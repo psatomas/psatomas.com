@@ -214,3 +214,95 @@ placement the way a reader does. At 1280 and 375 pixels it:
 
 An L2 run's render stage runs both checks for every placement of every
 concept it authored.
+
+## Runs
+
+An L2 run authors one **slice** from a clean, current `main` to a validated
+PR. It reuses the domain run's machinery
+([domain-runbook.md](domain-runbook.md)) with L2 stages and checks. Run
+state is local, in `.map-authoring/l2/<slice>.json`. Group files and content
+are committed by the run.
+
+```bash
+npm run map:author -- l2 campaign                         # every slice, the next one, merge authorization
+npm run map:author -- l2 start --slice <id> | --pilot
+npm run map:author -- l2 status | next
+npm run map:author -- l2 record plan <group> | design <id> | author <id> | audit <id> | group-audit <group>
+npm run map:author -- l2 checkpoint --decision ".."       # the pilot's human review
+npm run map:author -- l2 complete audit --note ".."
+npm run map:author -- l2 run [--until <stage>]            # gates → browser → render+expansion → diff → commit → push → pr → ci (→ merge)
+npm run map:author -- l2 fix | stop | resume              # as for domain runs
+npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
+```
+
+**Slices.** Each domain's ownership groups, in L1 order, are split into the
+fewest slices of at most 30 owned concepts, balanced, never splitting a
+group: 66 slices in all ([`campaign.ts`](../../src/lib/map/authoring/l2/campaign.ts)).
+A slice keeps its identity as the campaign advances. A concept is finished
+once it has content, or once its group's plan records a design that blocks
+it. Branches are `feat/map-<domain>-l2-<n>`, and `feat/map-l2-pilot` for the
+pilot. An open PR from any MAP run branch blocks starting another run.
+
+**Steps.** `record` validates each step deterministically before recording
+it, and refuses steps out of order:
+
+1. **Every group's plan.** Recorded when it is valid, current and consistent
+   with every plan.
+2. **Every concept's model and design.** Each must be valid against the
+   plan, which must not be stale.
+3. **Each concept drafted, then audited, in turn.**
+   - `author` needs the record registered, the view regenerated, the focused
+     tests passing, and exactly the designed structures.
+   - `audit` needs every signal resolved, bound to the record.
+4. **Each group audit.**
+
+Each concept is modelled, designed, drafted and audited from its own
+`l2 context`, in a fresh bounded context. The campaign never runs as one
+growing conversation.
+
+**The pilot** stops between design and drafting until a human reviews every
+plan and design and records the decision with `l2 checkpoint`. The pilot
+never merges its own PR.
+
+**Tool stages:**
+
+- **Gates:** the domain gates (generate without drift, unit tests, lint,
+  build), plus `l2-check`: every run group valid, current and audited.
+- **Browser:** the full browser suite.
+- **Render:** the render check and the expansion check, for every
+  placement of every authored concept.
+- **Diff:** `validateL2Diff`. Validated files are written to git's object
+  store.
+- **Commits:** declared fixes first, then one commit per ownership group.
+  Each is the exact tree after that group: the later groups' records,
+  registry entries, `hasContent` flips and group files are removed from the
+  validated tree. Removing them all must give back the base byte for byte,
+  so every commit holds whole records and nothing else.
+- **Push, PR (generated text) and CI,** as for domain runs.
+
+**Merging.** A run ends at "validated PR awaiting human merge" unless a human
+has authorized the campaign (`l2 authorize`). Then the run's `merge` stage
+merges its own PR, but only when all of these hold:
+
+- the PR is open against `main` at exactly the pushed commit;
+- it is cleanly mergeable;
+- CI passes;
+- its files are exactly the validated set.
+
+It then synchronizes `main` and proves the pushed head is in it.
+
+**Stop conditions.** Each stops the run with evidence and the smallest
+decision needed; `resume --decision ..` continues after a human decides.
+
+| Condition | Where |
+|---|---|
+| A near-synonym or category pair without a defensible split | `record plan`: the hazard stays unanswered; stop by hand if no split exists |
+| Incompatible meanings across placements; an unsupportable factual claim | Agent judgment: `l2 stop` |
+| A representation gap prose cannot carry (design `block`) | `record design` stops; resuming leaves the concept unauthored |
+| A territory conflict | `record plan` refuses: claim owned twice, or a reservation not honoured |
+| A stale plan or design | `record design` and `record author` refuse; the `l2-check` gate and the diff stop |
+| An audit failing after two repairs | `record author` counts re-authoring after an audit; the third stops |
+| Unexpected existing content, or other diff scope | The diff stage |
+| Inventory problems | `start` refuses |
+| Slice-wide drift | `complete audit` stops once; resume with the calibration decision |
+| Verification failure; git, remote or PR mismatch; a PR that cannot merge | As for domain runs; the merge stage refuses anything but the validated PR |
