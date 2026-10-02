@@ -30,6 +30,8 @@ Read these before authoring. If they disagree, the earlier source wins.
 6. [`l2-analysis.md`](l2-analysis.md) is the read-only L2 analysis and the
    proposed L2 authoring architecture. It is a proposal, not yet a
    procedure; `npm run map:l2` prints the L2 inventory it is based on.
+   [`l2-content-scale.md`](l2-content-scale.md) measures whether the content
+   architecture carries full L2, and records the decision (OPTIMIZE).
 7. The code is the ground truth for shapes and rules:
    [`types.ts`](../../src/lib/map/types.ts) (content blocks),
    [`validation.ts`](../../src/lib/map/validation.ts) (structural rules),

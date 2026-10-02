@@ -957,7 +957,9 @@ Dependency-ordered. Nothing here is executed by this analysis.
 4. **Prepare for scale:** measure the Worker bundle and assets; decide
    whether to keep exposition out of the runtime module graph and split
    content storage per domain. Do this before content volume grows, not
-   after.
+   after. *Measured in [l2-content-scale.md](l2-content-scale.md): OPTIMIZE.
+   Give the homepage a topology-only projection and keep content storage as
+   it is.*
 5. **L2 read-only tooling:**
    - a context assembler with sentences from every parent;
    - sibling claims and cluster detection;
