@@ -35,6 +35,23 @@ test("a concept model works out its kind and carries the plan, every parent and 
   assert.match(modelProblems(work(), "b", plan, model()).join(), /claims must be the plan's/);
 });
 
+test("a failure is its own kind: causes and manifestations, not an attacker's preconditions and defences", () => {
+  const plan = filledG1();
+  const failure = work();
+  failure.model.kind = "failure";
+  failure.model.fields = { causes: ["a stalled relay", "a reorganization"], manifestation: ["one leg confirmed, the other not"], impact: ["funds stranded"] };
+  assert.deepEqual(modelProblems(failure, "a", plan, model()), []);
+  // An attack's fields do not describe a failure, and a failure's do not describe an attack.
+  failure.model.fields = { preconditions: ["x"], defences: ["y"], causes: ["z"] };
+  const problems = modelProblems(failure, "a", plan, model()).join("\n");
+  assert.match(problems, /field "preconditions" belongs to no failure model/);
+  assert.match(problems, /a failure model works out at least 2 of causes, manifestation, impact, detection, recovery/);
+  const attack = work();
+  attack.model.kind = "attack";
+  attack.model.fields = { preconditions: ["x"], mechanism: ["y"], recovery: ["z"] };
+  assert.match(modelProblems(attack, "a", plan, model()).join(), /field "recovery" belongs to no attack model/);
+});
+
 test("a design decides prose, structure or block, and justifies the decision both ways", () => {
   assert.deepEqual(designProblems(work().design), []);
   const structure: L2Design = { ...work().design, decision: "structure", structures: [{ structure: "state", purpose: "modes and returns", whyNotProse: "the return is lost in prose" }], division: "prose says why; the model shows the transitions" };

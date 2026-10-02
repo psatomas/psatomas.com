@@ -247,7 +247,9 @@ reference, not a length target.
      and how it is violated;
    - an actor or role: incentives, powers, the trust placed in it, its
      misbehaviour;
-   - an attack or failure: preconditions, mechanism, impact, defences;
+   - an attack: preconditions, mechanism, impact, defences;
+   - a failure (from any cause, not only an adversary): causes, how it
+     shows, impact, detection, recovery;
    - a parameter or metric: what it controls, how it is set, sensitivity at
      the bounds;
    - an artifact or structure: contents, how it is produced and checked,
@@ -673,11 +675,17 @@ optional):**
 | Mechanism or process | `sequence`, `actors`, `inputs`, `outputs`, `assumptions`, `failures`; `states` when it has modes or returns |
 | Property | `statement` (what, for whom, under which conditions), `establishedBy`, `violatedBy`, `confusions` |
 | Actor or role | `role`, `powers`, `incentives`, `trustPlaced`, `misbehaviour` |
-| Attack or failure | `preconditions`, `mechanism`, `impact`, `defences`, `detection` |
+| Attack | `preconditions`, `mechanism`, `impact`, `defences`, `detection` |
+| Failure | `causes`, `manifestation`, `impact`, `detection`, `recovery` |
 | Parameter or metric | `measures`, `setBy`, `tradeoff`, `extremes`; `relation` when quantitative |
 | Artifact or structure | `contents`, `producedBy`, `checkedBy`, `proves`, `lifetime` |
 | Named technology | `designChoices`, `consequences`, `nearestAlternative` (one), `datedFacts` (what to avoid) |
 | Institutional | `distinctions`, `consequences`, `conditions`, `status` (established, emerging or speculative) |
+
+*Pilot finding:* attack and failure were first one kind. The pilot's Partial
+Failures and Oracle Failure are not adversarial, and the corpus holds about 29
+such failure conditions in 16 domains beside about 45 attacks, so failure is
+its own kind.
 
 Cross-kind optional fields: `states` and `transitions`, `invariants`,
 `tradeoffs`, internal `variants` (never taxonomy siblings), `relation`
