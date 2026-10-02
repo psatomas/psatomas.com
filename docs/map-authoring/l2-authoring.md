@@ -88,3 +88,78 @@ npm run map:author -- l2 context <concept-id>         # one concept's bounded co
 
 Full parent texts and unrelated records are on demand. A domain is never
 dumped into the context.
+
+## Concept work: model, design and audits
+
+Each owned member's work lives in its group file under `concepts.<id>`
+([`contracts.ts`](../../src/lib/map/authoring/l2/contracts.ts)). `l2 check`
+validates it at the stage it has reached.
+
+**Model** (before any prose):
+
+- `meaning`, a single sentence;
+- `kind`: mechanism, property, actor, attack, parameter, artifact,
+  technology or institutional;
+- `parents`: what the concept adds beyond each parent;
+- `claims` and `excludes`, exactly the plan's;
+- `placements`: why the exposition holds at each placement;
+- `fields`: at least two of the kind's fields (for a mechanism, sequence,
+  actors, inputs, outputs, assumptions and failures), plus cross-kind fields
+  where the concept has them (states, transitions, invariants, trade-offs,
+  internal variants, a relation). Leave out what the concept does not have.
+
+**Design:**
+
+- `decision`: one of
+  - `prose`, with `whyProse`;
+  - `structure`, where each structure carries its `purpose` and
+    `whyNotProse`, plus a `division` saying what the prose explains and what
+    the structure shows;
+  - `block`, a catalog gap with the reason prose cannot carry it.
+- Always: `relationship`, `level` (why at this concept, not its parent or
+  another), `territory` (why it draws no sibling's or reserved relationship)
+  and `placements`.
+
+No diagram is improvised for a gap. Once authored, the record must write
+exactly the designed structures (prose, none).
+
+**Concept audit:** a `note`, plus a resolution for every signal from
+`l2 signals <id>`. It is bound to the record's fingerprint, so editing the
+record after the audit reopens it.
+
+**Group audit:** `groupAudit` in the group file, with a note and a resolution
+for every group signal (sibling overlap, a shared opening, one form for
+every member). It is bound to every owned member's record.
+
+## Signals
+
+Tools surface candidates; the audit decides. Every signal needs a written
+resolution, and none is a failure, target or quota on its own
+([`signals.ts`](../../src/lib/map/authoring/l2/signals.ts)).
+
+| Kind | Checks |
+|---|---|
+| Deterministic facts | Positional language; dated or time-sensitive words and versions; the definition repeated in the body; a circular definition; every other concept named (multi-word titles anywhere; single-word titles only for siblings, hazard partners and excludes): confirm each is named, not explained |
+| Heuristic | Overlap with a parent sentence that mentions the concept; overlap with authored siblings or hazard partners; three or more unhedged absolutes; too few conditional words in an emerging domain (L0 order 19 onward); a mathematical symbol (state the relation in words); prose spelling out a structure's entries; a model field that barely reaches the text |
+| Group | Sibling text overlapping; three or more members opening alike; every member having one structured form |
+
+## Drift
+
+`l2 drift [--window n]` describes the latest authored L2 records. It
+reports:
+
+- the top form and its share;
+- the top definition opening;
+- the top paragraph opener;
+- how much paragraph lengths vary.
+
+It flags, as audit attention, a window of at least ten records where:
+
+- more than half of definitions open alike;
+- a quarter of paragraphs open alike;
+- paragraph lengths barely vary;
+- more than 85% of records share one structured form.
+
+A prose majority is never flagged: prose is the expected default, not a
+target to diversify away from. A flag persisting across a whole slice pauses
+the campaign for calibration (see the campaign stop conditions).
