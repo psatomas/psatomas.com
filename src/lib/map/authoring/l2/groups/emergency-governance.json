@@ -1,0 +1,531 @@
+{
+  "version": 1,
+  "group": "emergency-governance",
+  "domain": "governance-institutions",
+  "parentConceptId": "emergency-governance",
+  "basis": {
+    "membership": "65786efe7572cd050c867ef08d22e854c8dda57594a954135780c49d8c186645",
+    "parents": {
+      "autonomous-economy": "efb90123efb513bdef8dfb84d18620db659feb9e814d93adb8eadb217d7997b0",
+      "autonomous-execution": "8e3ad3ec1831b117f913c374fc2fd29941a890938251a08f7e2110b2e2135ab0",
+      "autonomous-organizations": "dbf72a9be09411167a6ca2281806187b0ee2864932fbda74611cc2a64c4927df",
+      "autonomous-protocols": "41d33417081334f1dbb93c8bcd637897bce7e4b9e7f945187855ff5913863118",
+      "autonomous-security-responses": "4f777eff09d009bebb7164b528a41ce6840d96d96be2a1ae65d52eaf402a3c3c",
+      "disputes-emergency-controls": "2d25def96b0eb25162f2253e8e6ff79af6c1616907249dc6f0d036763fb4845c",
+      "economic-resilience": "fa7b4177517332024418537106a5f1017aeabc7405c06b72115025acc0f7de89",
+      "emergency-governance": "d863268c9999d1b93a04b64a083a855631fa6ba8141699c35fa99f54dc2000b6",
+      "execution-recovery": "30b316ce6ce345bdcad100376b8541b1755a4b51fd982955fcb44d2af078e0fa",
+      "governance-institutions": "d8b4b4aad9c9ee14ec163c6efa8038042f32489d1599d32e655a3c1b03d43860",
+      "incident-response": "f29823c3feb2be5d1a2df54c0eab7a9827f4a06596c150c63b486d5d5e700506",
+      "interoperability-abstraction": "e639acb562e14b68b89e07a5afd8518103c9ede303078c3d5756130ae192f281",
+      "security-correctness-resilience": "ce9d0a9865bf71ddae0e4d92f467dea6522f9ce6faf0193fd710921ce8de06be",
+      "trust-failure-modes": "3240787a0d389dda8d00b8047e01c65da9334cf1c6afe9732b29f4a38bec863c",
+      "upgrade-security": "283237ff9bb0939351aa8a7239bb53f5f35fb6f0a6eaa268a2b7b92362b58c29"
+    },
+    "fixed": {
+      "incident-response": "f29823c3feb2be5d1a2df54c0eab7a9827f4a06596c150c63b486d5d5e700506"
+    },
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "emergency-powers",
+      "placementId": "emergency-powers",
+      "standing": "owned",
+      "claims": [
+        "the kinds of authority an emergency power can grant: to stop, to change or to move, and over which contracts",
+        "who may invoke an emergency power, on what evidence and under what declared conditions",
+        "how an emergency power ends: expiry, ratification by ordinary governance, or revocation",
+        "the accountability attached to each use: disclosure, justification and review afterwards"
+      ],
+      "excludes": [
+        "pause-mechanisms",
+        "guardians",
+        "emergency-upgrades",
+        "circuit-breakers",
+        "incident-response"
+      ]
+    },
+    {
+      "conceptId": "pause-mechanisms",
+      "placementId": "pause-mechanisms",
+      "standing": "owned",
+      "claims": [
+        "the granularity of a pause: a whole protocol, one function, one market or one asset",
+        "what keeps accruing while operations are paused, such as interest, fees or oracle updates, and what lifting the pause must reconcile",
+        "the asymmetry between the authority to pause and the authority to unpause",
+        "pauses that cannot be lifted, and pauses triggered to grief users"
+      ],
+      "excludes": [
+        "circuit-breakers",
+        "guardians",
+        "emergency-powers",
+        "kill-switches",
+        "containment",
+        "incident-response"
+      ]
+    },
+    {
+      "conceptId": "guardians",
+      "placementId": "guardians",
+      "standing": "owned",
+      "claims": [
+        "how a guardian's power is bounded mechanically, by a role that can call only certain functions, a signer threshold or a time limit, rather than by promise",
+        "how a guardian itself fails: capture, collusion and unavailability when it is needed",
+        "how ordinary governance appoints, overrides and removes a guardian"
+      ],
+      "excludes": [
+        "emergency-powers",
+        "pause-mechanisms",
+        "councils-committees",
+        "incident-response"
+      ]
+    },
+    {
+      "conceptId": "emergency-upgrades",
+      "placementId": "emergency-upgrades",
+      "standing": "owned",
+      "claims": [
+        "the emergency upgrade path itself: who may replace code outside the ordinary delay, under which conditions, and how it differs from the ordinary path",
+        "the review an emergency still allows: pre-agreed patches, signer thresholds and narrowed scopes",
+        "ratifying or reverting an emergency upgrade afterwards through ordinary governance",
+        "the drift of an emergency path into the normal way of changing a system"
+      ],
+      "excludes": [
+        "protocol-upgrades",
+        "timelocks",
+        "upgrade-keys",
+        "proxy-upgrade-risks",
+        "upgrade-verification",
+        "guardians"
+      ]
+    },
+    {
+      "conceptId": "circuit-breakers",
+      "placementId": "circuit-breakers",
+      "standing": "owned",
+      "claims": [
+        "the states a circuit breaker moves through and the conditions that trip, test and reset it",
+        "what a breaker measures and over which window: rates, deviations and volumes",
+        "what tripping does to the guarded operation: halt it, throttle it or require approval for it",
+        "the same mechanism under different measured quantities in protocols, execution systems and markets"
+      ],
+      "excludes": [
+        "kill-switches",
+        "pause-mechanisms",
+        "incident-response",
+        "outflow-limits",
+        "containment",
+        "rollbacks"
+      ]
+    },
+    {
+      "conceptId": "incident-response",
+      "placementId": "incident-response",
+      "standing": "dual-role"
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "emergency-powers": {
+      "model": {
+        "meaning": "Emergency powers are authority a system grants in advance to act faster than its ordinary process, bounded by what they may do, who may use them and how they end.",
+        "kind": "institutional",
+        "parents": {
+          "emergency-governance": "the kinds of emergency authority, how they are invoked and how they end, beyond the principle that stopping is safest",
+          "disputes-emergency-controls": "the same powers as organizational controls: invocation, sunset and accountability"
+        },
+        "claims": [
+          "the kinds of authority an emergency power can grant: to stop, to change or to move, and over which contracts",
+          "who may invoke an emergency power, on what evidence and under what declared conditions",
+          "how an emergency power ends: expiry, ratification by ordinary governance, or revocation",
+          "the accountability attached to each use: disclosure, justification and review afterwards"
+        ],
+        "excludes": [
+          "pause-mechanisms",
+          "guardians",
+          "emergency-upgrades",
+          "circuit-breakers",
+          "incident-response"
+        ],
+        "placements": {
+          "emergency-powers": "holds as a governance concept and as an organizational control",
+          "emergency-powers-in-disputes-emergency-controls": "holds as a governance concept and as an organizational control"
+        },
+        "fields": {
+          "distinctions": [
+            "stopping versus changing versus moving",
+            "emergency authority versus ordinary governance authority"
+          ],
+          "consequences": [
+            "a power that does not expire becomes standing rule by the few"
+          ],
+          "conditions": [
+            "declared triggers",
+            "evidence required to invoke"
+          ],
+          "status": "established practice in deployed protocols"
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "an argument about scope, triggers and sunset; no order or shape organizes it",
+        "relationship": "kinds of authority, their conditions and their end",
+        "level": "the taxonomy and lifecycle of authority belong to the power itself; the parent states only that stopping is safest",
+        "territory": "pausing, guardians, upgrades and breakers are named as instances, never explained",
+        "placements": "holds as a governance concept and as an organizational control"
+      },
+      "audit": {
+        "at": "2026-10-02T13:36:52.155Z",
+        "note": "Checked all 11 quality-contract §B criteria against the record at both placements (Emergency Governance; Disputes & Emergency Controls, a leaf at both). Parent overlap: the definition shares the parent's 'faster than its ordinary process allows' because that is part of the meaning; every other sentence goes beyond. Emergency Governance says only that stopping is safest and that a pause lapsing unless confirmed cannot become rule by the few. The record never repeats that ranking. It explains the three kinds of power and their contract scope, separates the end of one use from the end of the power, and gives the downside of lapse-by-default, which may reopen a system still at risk. Disputes & Emergency Controls says only that emergency actions should be reviewable within a set time. The record covers what disclosure, justification and review contain, and says review needs force (reversal, a narrower grant, new holders). Domain sentences (bounded capabilities; no rollback implied) are not restated. Territory: the five paragraphs follow the four claims in order (kinds and contracts; invocation, evidence and conditions; ending; accountability), plus the model's distinction from ordinary governance. Excludes are only named or shown as instances: a guardian is listed as a possible holder; stopping is not developed into pause granularity, accrual or unpause asymmetry; the replace-implementation example and 'more approvals for more power' stay generic, not the emergency-upgrade path; measurable conditions enforced in code are mentioned without breaker states or metrics; review is separated from finding the cause, leaving incident response its post-mortem. Disclosure here is disclosure of a use of authority, not incident disclosure to users. 'Switching a price source' is an example of a change and does not explain External Data. Trust Assumptions is not explained. No hazard split is listed in the context. Structure: the design is prose and the record is prose only (5 paragraphs, no blocks), as designed. Accuracy: the record defined a power to move as one that 'transfers assets' and gave 'freezing a balance' as an example. Freezing transfers nothing and leaves the balance as it was, which is the record's own test for a stop, so the taxonomy contradicted itself. Repaired by deleting ', or freezing a balance'. Other claims are hedged or supported: 'commonly grant these separately' (separate pause guardians and governance executors); token-holder triggers by committing tokens (MakerDAO's emergency shutdown module); security councils; 'usually' more approvals; 'on a public ledger'; 'may reopen'. 'Ordinary governance remains the source that grants it' is the model's distinction between emergency and ordinary authority; para 4 limits it (revocation works only without the holder's cooperation) and para 5 says review needs force, so it is not an unconditional guarantee. Canonical validity: 'system or organization' holds as a governance concept and as an organizational control; no positional or time-sensitive words. Identity, economy and progression are sound: definition, kinds, distinction, invocation, end, accountability, with no repeated hedges.",
+        "resolutions": [
+          {
+            "id": "names-concept:466b2570f6",
+            "resolution": "Not a defect. Guardians appears only as one item in a list of possible holders ('a guardian'). Nothing about guardian bounds, failure modes or appointment is explained."
+          },
+          {
+            "id": "names-concept:500ea34667",
+            "resolution": "Not a defect. Security councils appears only as an example holder ('a separate body such as a security council'). Its composition and operation are not explained."
+          },
+          {
+            "id": "names-concept:f44257243d",
+            "resolution": "Not a defect. Token holders appear as a possible invoker; the clause 'together commit enough tokens to trigger it without a full vote' describes how this power is invoked, which is this concept's claim, and does not explain token holders as a concept."
+          }
+        ],
+        "recordFingerprint": "54c653cf11c8a5e06cc3ddc4dfdfd3affc5381041ad33ee36d08b67df110d649"
+      }
+    },
+    "pause-mechanisms": {
+      "model": {
+        "meaning": "A pause mechanism suspends some or all of a system's operations until it is lifted, trading liveness for safety while a problem is understood.",
+        "kind": "mechanism",
+        "parents": {
+          "emergency-governance": "granularity, what accrues while paused and the authority asymmetry, beyond pausing deposits but not withdrawals",
+          "trust-failure-modes": "how a pause gives up liveness in practice, beyond the trade the parent names",
+          "incident-response": "the pause as a containment tool, with its costs",
+          "disputes-emergency-controls": "the pause as an organizational control",
+          "autonomous-security-responses": "pauses triggered automatically as well as by people"
+        },
+        "claims": [
+          "the granularity of a pause: a whole protocol, one function, one market or one asset",
+          "what keeps accruing while operations are paused, such as interest, fees or oracle updates, and what lifting the pause must reconcile",
+          "the asymmetry between the authority to pause and the authority to unpause",
+          "pauses that cannot be lifted, and pauses triggered to grief users"
+        ],
+        "excludes": [
+          "circuit-breakers",
+          "guardians",
+          "emergency-powers",
+          "kill-switches",
+          "containment",
+          "incident-response"
+        ],
+        "placements": {
+          "pause-mechanisms": "true whether the pause is a governance power, an incident tool, an organizational control or an automated response",
+          "pause-mechanisms-in-trust-failure-modes": "true whether the pause is a governance power, an incident tool, an organizational control or an automated response",
+          "pause-mechanisms-in-incident-response": "true whether the pause is a governance power, an incident tool, an organizational control or an automated response",
+          "pause-mechanisms-in-disputes-emergency-controls": "true whether the pause is a governance power, an incident tool, an organizational control or an automated response",
+          "pause-mechanisms-in-autonomous-security-responses": "true whether the pause is a governance power, an incident tool, an organizational control or an automated response"
+        },
+        "fields": {
+          "sequence": [
+            "trigger",
+            "operations halted",
+            "investigation",
+            "lift and reconcile"
+          ],
+          "actors": [
+            "guardians",
+            "circuit breakers",
+            "governance"
+          ],
+          "failures": [
+            "a pause that cannot be lifted",
+            "a pause that traps exits",
+            "a pause used to grief"
+          ],
+          "states": [
+            "running",
+            "paused"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "two modes with one transition each way: the asymmetry between who may pause and who may unpause reads in one sentence, and a two-state model would only restate it",
+        "relationship": "granularity, accrual during the pause and the authority asymmetry",
+        "level": "the pause's own mechanism; the parent states only its basic trade",
+        "territory": "circuit breakers trip pauses and guardians call them; both are named, not explained",
+        "placements": "true whether the pause is a governance power, an incident tool, an organizational control or an automated response"
+      },
+      "audit": {
+        "at": "2026-10-02T13:41:36.683Z",
+        "note": "Checked all eleven quality-contract B criteria against the record, the accepted model and prose design, all five placements and their parents (emergency-governance, trust-failure-modes, incident-response, disputes-emergency-controls, autonomous-security-responses), and the authored neighbours emergency-powers and incident-response. One repair round fixed two accuracy overclaims in the authority-asymmetry paragraph. 'usually given to different parties' became 'Many designs give ... to different parties', because many pausable contracts let one role both pause and unpause. 'the length of any pause' became 'the length of a pause that does not lapse on its own', because the record itself later mentions pauses that lapse after a fixed period. Parent overlap: the definition carries the liveness-for-safety trade that trust-failure-modes names, but that trade is the accepted meaning and the body starts beyond it. Emergency-governance's withdrawals-open sentence and its 'pause key freezes assets' sentence are not restated; the record goes on to permanence and griefing instead. The other three parents say nothing specific that is repeated. Sibling and territory: the body follows the four claims in order (granularity, accrual and reconciliation, pause/unpause asymmetry, unliftable pauses and griefing). Guardians and circuit breakers appear only as parties that can trigger a pause, matching the design's territory note. Emergency powers, kill switches, containment and incident response are not explained, including by paraphrase. The unliftable-pause paragraph covers accidental permanence, not a deliberate shutdown, so it does not explain kill switches. The protocol-wide versus narrow switch contrast echoes emergency-powers' scope-over-contracts point, but here it is the claimed granularity of the switch, not the scope of a grant. A pause lapsing is mentioned only as a weak limit on griefing; how an emergency power ends is not explained. Oracle staleness is mentioned only as something to reconcile, which the accrual claim covers, so the External Data reservation is not explained. The record does not touch Shared Sequencing, Trust Assumptions or Authenticity. Hazards: facet watch is honoured, because no parent sentence is restated and nothing is facet-specific. On the state candidate, the design chose prose with reasons and the record writes prose only, as designed. Accuracy: lazy time-based interest accrual, liquidation after unpause, grace periods before liquidations resume, pausable tokens reaching integrating protocols, ownership renounced while paused, and unpause depending on paused contracts are all correct and stated conditionally. Each example fits its category (function, market and asset switches; griefing by withdrawal halts, repayment halts and self-interested liquidation pauses). Placements: the record contains no positional or time-sensitive words. It holds whether the pause is a governance power, an incident tool, an organizational control or an automated response (monitoring bots and circuit breakers are named as triggers), and it is self-sufficient as a leaf at all five placements. Economy and progression: every paragraph carries one claim, moving from what a pause reaches, to what continues during it, to who controls its ends, to how it fails or is abused. There are no restated definitions or redundant hedges.",
+        "resolutions": [
+          {
+            "id": "names-concept:03d0217930",
+            "resolution": "Not a defect. Circuit breakers are named once, in the asymmetry paragraph, as one of the parties to whom pausing is opened ('a monitoring bot or a circuit breaker'). The text says nothing about breaker states, trip conditions, measured quantities or windows, or throttling. That is exactly the design's territory: 'circuit breakers trip pauses ... named, not explained'."
+          },
+          {
+            "id": "names-concept:466b2570f6",
+            "resolution": "Not a defect. Guardians are named once, as a party that can pause ('a guardian with a small threshold'), in contrast with the larger threshold that unpausing requires. The threshold is the pause-side half of the claimed authority asymmetry. It does not explain how a guardian is bounded, how it fails, or how it is appointed or removed. I read the paragraph against guardians' claims and found no paraphrase of them."
+          }
+        ],
+        "recordFingerprint": "69291c3a3d30c34b2ab9073333b7b61c3f97247048ce8b3b4d2635fa0bd27353"
+      }
+    },
+    "guardians": {
+      "model": {
+        "meaning": "A guardian is a party, often a multisig or committee, entrusted with narrowly bounded emergency actions it can take faster than governance.",
+        "kind": "actor",
+        "parents": {
+          "emergency-governance": "how the bound is enforced and how a guardian fails, beyond guardians that can only pause",
+          "disputes-emergency-controls": "appointment, override and removal, beyond the independence and rotation the parent states"
+        },
+        "claims": [
+          "how a guardian's power is bounded mechanically, by a role that can call only certain functions, a signer threshold or a time limit, rather than by promise",
+          "how a guardian itself fails: capture, collusion and unavailability when it is needed",
+          "how ordinary governance appoints, overrides and removes a guardian"
+        ],
+        "excludes": [
+          "emergency-powers",
+          "pause-mechanisms",
+          "councils-committees",
+          "incident-response"
+        ],
+        "placements": {
+          "guardians": "holds for protocol and organizational guardians alike",
+          "guardians-in-disputes-emergency-controls": "holds for protocol and organizational guardians alike"
+        },
+        "fields": {
+          "role": "a fast actor with narrowly bounded emergency powers",
+          "powers": [
+            "call designated functions such as pause"
+          ],
+          "trustPlaced": [
+            "acts only when warranted",
+            "is reachable when needed"
+          ],
+          "misbehaviour": [
+            "capture",
+            "collusion",
+            "absence"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "an actor's bounds, failures and checks: an argument, not a sequence",
+        "relationship": "bounded powers against the ways the bounds fail",
+        "level": "the actor itself; the parents state only its ideal shape",
+        "territory": "emergency powers and pauses are named, not explained",
+        "placements": "holds for protocol and organizational guardians alike"
+      },
+      "audit": {
+        "at": "2026-10-02T13:48:16.721Z",
+        "note": "Checked all 11 quality-contract §B criteria against the accepted actor model (role, powers, trustPlaced, misbehaviour all reach the text) and the prose design; the record is prose only, as designed. Parent overlap: against Emergency Governance, the role-check paragraph names pause versus move-funds/change-parameter only to explain the enforcement mechanism (role checks, role administration, upgrade paths) that the parent leaves out; one clause restating the parent's 'narrow power limits damage' point at the end of the bounds paragraph was cut, and the remaining narrowness clause in the threshold paragraph serves a new argument (narrowness makes a low threshold tolerable against absence). Against Disputes & Emergency Controls, independence, rotation and explaining each use are not restated; capture and collusion go beyond independence from the guarded. Sibling territory: emergency-powers' kinds, invocation conditions, ending and accountability are not explained (time limit appears only as a mechanical bound, as the claim allows; override/removal are explained from the actor side through role administration and obstruction, not as revocation of a power); pause-mechanisms is used only as an example action and as the obstruction route for removal, not its granularity, accrual, asymmetry or permanence; incident-response appears only as drills that mitigate absence, within the unavailability claim; councils-committees is not touched. No reservation applies. No hazard split is named in the context. Accuracy repairs: (1) 'a single lost or stolen key can invoke nothing' held only for thresholds of two or more, now stated so; (2) 'share one signing setup' and 'keys on separate devices' illustrated correlated compromise by an outsider, which is capture, under collusion defined as needing no outsider; removed so the collusion example fits its category; (3) override now conditional on governance holding the role's administrative authority, matching the conditional appointment sentence. Remaining claims checked as correct and conditional: role-admin self-grant and upgrade-path bypass, threshold vs time-limit forms, threshold trade-off between capture/collusion and absence, multisig self-membership, removal obstruction via proposal cancellation or pausing the executor. Canonical validity: no positional or dated words; reads true for protocol and organizational guardians at both placements (leaf at each). Economy and progression: definition, mechanical bounds, limits of bounds, failures, trade-off, governance relation.",
+        "resolutions": [
+          {
+            "id": "absolutes:85d51ee685",
+            "resolution": "Read all three 'cannot': 'cannot act while an exploit runs' defines absence, so it holds by definition; 'works only if the guardian cannot obstruct it' is itself the condition on removal; 'a path the guardian cannot reach' states a design requirement for that path, not a claim about all systems. Other strong words checked too: 'fails however the guardian is controlled' is qualified at once by the role-structure caveat, and the single-key claim is now conditioned on a threshold of two or more. Not a defect."
+          }
+        ],
+        "recordFingerprint": "6f4a1986a99fde98284479e5b7c475535ed396234d5cf92b2e3b9c7f83200bec"
+      }
+    },
+    "emergency-upgrades": {
+      "model": {
+        "meaning": "An emergency upgrade replaces a system's code through a faster path than its ordinary upgrade process, to fix a problem that cannot wait.",
+        "kind": "mechanism",
+        "parents": {
+          "emergency-governance": "the fast path, its remaining review and its ratification, beyond its danger",
+          "upgrade-security": "the path's controls, beyond least review and most pressure"
+        },
+        "claims": [
+          "the emergency upgrade path itself: who may replace code outside the ordinary delay, under which conditions, and how it differs from the ordinary path",
+          "the review an emergency still allows: pre-agreed patches, signer thresholds and narrowed scopes",
+          "ratifying or reverting an emergency upgrade afterwards through ordinary governance",
+          "the drift of an emergency path into the normal way of changing a system"
+        ],
+        "excludes": [
+          "protocol-upgrades",
+          "timelocks",
+          "upgrade-keys",
+          "proxy-upgrade-risks",
+          "upgrade-verification",
+          "guardians"
+        ],
+        "placements": {
+          "emergency-upgrades": "holds as an emergency power and as an upgrade-security risk",
+          "emergency-upgrades-in-upgrade-security": "holds as an emergency power and as an upgrade-security risk"
+        },
+        "fields": {
+          "sequence": [
+            "declare the emergency",
+            "approve under a threshold",
+            "deploy",
+            "ratify or revert"
+          ],
+          "actors": [
+            "signers",
+            "ordinary governance"
+          ],
+          "assumptions": [
+            "a pre-agreed scope"
+          ],
+          "failures": [
+            "a malicious patch through the fast path",
+            "the emergency path becoming routine"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "the controls on a fast path are conditions and their trade-offs, which prose carries",
+        "relationship": "speed against review",
+        "level": "the emergency path itself; ordinary upgrades and timelocks are other concepts",
+        "territory": "upgrade keys, timelocks and proxy risks are named, not explained",
+        "placements": "holds as an emergency power and as an upgrade-security risk"
+      },
+      "audit": {
+        "at": "2026-10-02T13:53:39.774Z",
+        "note": "Checked all 11 section-B criteria against the accepted model (kind mechanism, four claims) and prose-only design; the record is five paragraphs, no structured blocks, matching the design exactly. Parent overlap: Emergency Governance's sentence (emergency upgrades are dangerous because a captured guardian would want them) is not restated; Upgrade Security's sentence (least review, most pressure, mistakes likely, no-delay keys valuable to steal) is not paraphrased - the record starts beyond it with the shape of the fast path, where review moves, malicious patches from insiders and reporters (not only stolen keys), ratification/reversion and drift; the domain sentence that emergency upgrades are not inherently safe is not echoed. Sibling/exclude territory: timelocks are not named and the ordinary delay is described only in one contrast sentence (read code, exit first), which the first claim (how it differs from the ordinary path) requires, with no timelock mechanics; upgrade keys, security councils and parameter changes are named only; guardians, proxy upgrade risks, upgrade verification and protocol upgrades are not explained (the 'approving its description rather than its code' point is about signer diligence as review, within the signer-threshold claim, not bytecode-to-source verification). Emergency Powers: declared conditions and ratification appear only as applied to the upgrade path, which this concept claims (who may replace code under which conditions; ratifying or reverting); the upgrade-specific additions (public queue reveals the flaw; replaced code stays live; reverting restores the flaw) carry the paragraphs, and the silent-default sentence is the upgrade instance, not a restatement of the general kinds/end of emergency powers; disclosure/justification is only listed as a drift countermeasure. Guardians: the threshold is treated as review, not as a mechanical bound or capture resistance; no capture/collusion explanation. Pause Mechanisms and Incident Response: a pause is named for contrast only; the disclosure point is used only to justify skipping the delay. No reservation (Shared Sequencing, Trust Assumptions, External Data, Authenticity) is touched; no hazard split is listed in the context. Accuracy repairs (round 1): (1) 'held by a different party under different rules' overclaimed - some fast paths are the same holder with a shortened or bypassed delay; now 'governed by different rules and often held by a different party'; (2) 'moves review to points the emergency cannot remove' contradicted the paragraph's own point that rushed signers stop reviewing; now 'review can move to points that fit before or within the emergency'; (3) 'confined to particular contracts, or unable to change ... cannot remove the controls' was false for contract confinement alone (the confined contracts may hold upgrade authority); split so confinement limits reach and only inability to change authority/threshold/delay prevents removing later controls; (4) 'the one moment a system accepts replacement code with little scrutiny' conflicted with fully reviewed pre-agreed patches; now 'the route by which a system can accept'; (5) 'Unlike a pause, an emergency upgrade does not end by itself' implied pauses end by themselves, which many do not; now 'Unlike a pause, which can be built to lapse'; (6) 'every change that can be framed as urgent is drawn onto it' overclaimed a tendency; now 'changes that can be framed as urgent'. Remaining claims checked: public queued fixes reveal the flaw; signer threshold as N reviews only conditionally; reverting is itself an upgrade and restores the flaw; non-required ratification leaves the change in place - all correct and conditional where needed. Canonical validity: read at both placements (Emergency Governance and Upgrade Security, both leaves); no positional or time-sensitive words; true as an emergency power and as an upgrade-security risk. Identity, economy (one paragraph per claim plus the patch failure), progression (path, retained review, patch failure, ratification, drift) are sound; prose fits the design's 'speed against review' relationship.",
+        "resolutions": [
+          {
+            "id": "names-concept:c1341144da",
+            "resolution": "parameter-changes appears only as one example of a non-urgent change drawn onto the emergency path ('a parameter change a partner is waiting for'); named, not explained."
+          },
+          {
+            "id": "names-concept:500ea34667",
+            "resolution": "security-councils appears only as an example of who may hold the fast path ('such as a security council or an emergency multisig'); its composition and mandate are not explained."
+          },
+          {
+            "id": "names-concept:af3f9a0055",
+            "resolution": "upgrade-keys (excluded) appears only to distinguish the emergency signers from 'whoever holds the ordinary upgrade keys'; nothing about key custody or control is explained."
+          },
+          {
+            "id": "absolutes:7634c11755",
+            "resolution": "Each checked: 'cannot wait for the ordinary delay' (definition, the category's defining condition); 'unable to change who holds upgrade authority, its own threshold or the ordinary delay cannot use that change to remove the controls' holds by construction (after repair, which removed the false case of contract confinement alone); 'governance that never takes up the question' is a conditional scenario, not a claim; 'so that it cannot carry the kinds of change' states a design's purpose. Earlier overclaims (fast path always held by a different party, review points the emergency 'cannot remove', 'every change', 'the one moment', pause ending by itself) were repaired."
+          }
+        ],
+        "recordFingerprint": "d1076c23811d2a6de7992c7371b7fa367267cf8bea16285f6b1de8a852e401c8"
+      }
+    },
+    "circuit-breakers": {
+      "model": {
+        "meaning": "A circuit breaker automatically restricts an operation when a measured quantity crosses a threshold, and restores it once conditions are shown to have settled.",
+        "kind": "mechanism",
+        "parents": {
+          "emergency-governance": "the states and transitions of a breaker, beyond automatic action on measured conditions",
+          "incident-response": "the breaker as an automatic first response",
+          "execution-recovery": "the breaker guarding an agent's own actions",
+          "autonomous-security-responses": "breakers within automated protection",
+          "economic-resilience": "trading halts as the same mechanism"
+        },
+        "claims": [
+          "the states a circuit breaker moves through and the conditions that trip, test and reset it",
+          "what a breaker measures and over which window: rates, deviations and volumes",
+          "what tripping does to the guarded operation: halt it, throttle it or require approval for it",
+          "the same mechanism under different measured quantities in protocols, execution systems and markets"
+        ],
+        "excludes": [
+          "kill-switches",
+          "pause-mechanisms",
+          "incident-response",
+          "outflow-limits",
+          "containment",
+          "rollbacks"
+        ],
+        "placements": {
+          "circuit-breakers": "the same machine under each placement's measured quantity",
+          "circuit-breakers-in-incident-response": "the same machine under each placement's measured quantity",
+          "circuit-breakers-in-execution-recovery": "the same machine under each placement's measured quantity",
+          "circuit-breakers-in-autonomous-security-responses": "the same machine under each placement's measured quantity",
+          "circuit-breakers-in-economic-resilience": "the same machine under each placement's measured quantity"
+        },
+        "fields": {
+          "sequence": [
+            "measure",
+            "compare with a threshold",
+            "trip",
+            "cool down",
+            "test",
+            "reset"
+          ],
+          "inputs": [
+            "rates",
+            "deviations",
+            "volumes"
+          ],
+          "outputs": [
+            "halt",
+            "throttle",
+            "approval required"
+          ],
+          "failures": [
+            "tripping on ordinary volatility",
+            "tripping deliberately to block others",
+            "never resetting"
+          ],
+          "states": [
+            "normal",
+            "tripped",
+            "testing"
+          ],
+          "transitions": [
+            "trip on threshold",
+            "test after cooldown",
+            "reset when the test holds",
+            "trip again when it fails"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "persistent modes with returns: tripping, testing and resetting",
+        "structures": [
+          {
+            "structure": "state",
+            "purpose": "normal, tripped and testing, with the conditions that move between them",
+            "whyNotProse": "two returns, one from testing back to normal and one from testing back to tripped, with different conditions, are what the reader must see together"
+          }
+        ],
+        "level": "the breaker's own state machine; the parent states only that it acts automatically",
+        "territory": "kill switches and pauses are named as other controls; the model draws only the breaker",
+        "placements": "the same machine under each placement's measured quantity",
+        "division": "the prose explains what is measured and how thresholds are chosen; the model shows the states and their transitions"
+      },
+      "audit": {
+        "at": "2026-10-02T14:01:00.078Z",
+        "note": "Checked all 11 section-B criteria against the record, the accepted model/design and all five placements. Parent overlap: only Emergency Governance mentions breakers (automatic action on measurable conditions such as fast outflows or off-reference prices, same-block response, thresholds resisting ordinary volatility and deliberate trips, incident response afterwards); the record starts beyond each point (three kinds of measure, window trade-offs including why a one-block spot measure is cheap to trip deliberately, threshold form, the response modes and the state model) without restating them, and never explains incident response. Incident Response, Execution Recovery, Autonomous Security Responses and Economic Resilience parents say nothing about breakers; the record's 'activity kept just short of a rate threshold' is about rate versus total, not the exploit-detection evasion point, and 'retries included ... piling onto a struggling service' names the software breaker's purpose without re-explaining the parent's retry-storm backoff. Siblings and excludes: pause mechanism and outflow limit are named once to draw the boundary (a halt can be carried out through a pause; a throttle can resemble an outflow limit; what makes either a breaker is a measured trip and a test); kill switches, containment, rollbacks and incident response are not mentioned; nothing paraphrases pause-mechanisms' claims (granularity, accrual/reconciliation, authority asymmetry, unliftable or griefing pauses): the never-reset case is the breaker's own reset condition, a model failure, and was reworded to avoid echoing the pause record. No guardian, emergency-power or upgrade claim is explained; 'a designated party signs off' does not explain guardians. No reservation applies. Territory: every paragraph serves one of the four claims (measures and windows, thresholds, trip responses, states and the test, same machine across protocols, execution systems and markets). Structure: the state block matches the design exactly (Normal, Tripped, Testing; trip on threshold, test after cooldown, reset when the trial holds, trip again when it fails) and is a genuine state model with two returns from Testing under different conditions; the prose refers to trip and test but does not enumerate the transitions, and it carries what the model cannot (how the test is run in software, protocols and markets, oscillation, failure to reset, open/half-open vocabulary). Transitions hold for breakers generally (software half-open trials, market reopening auctions that extend the halt when no price forms within bounds, protocol partial reopening). Accuracy repairs made: (1) dropped the volume example 'shares traded in one instrument', since market halts are not commonly triggered by traded volume; (2) single-stock bands are set around a 'recent reference price' rather than 'recent average', since the five-minute average is the US limit-up/limit-down reference while European volatility interruptions use last or auction prices; (3) 'in one of three ways' hedged to 'most often', since breakers can also switch to a fallback (for example a backup price source); (4) approval holds 'the operations that arrive while it is tripped' rather than 'exactly the operations that tripped the breaker', consistent with the state model; (5) the never-reset sentence no longer claims the breaker becomes 'a halt with no end' (wrong when its response is a throttle or approval, and when a person eventually confirms); it now says a reset that needs a confirmation that does not come, or a test on a quantity that cannot recover while restricted, leaves it tripped indefinitely. Verified remaining claims: market-wide index halts at set percentages from the previous close with a deepest level ending the day (US 7/13/20 percent; similar in other markets, hence 'many'); software breakers tripping on recent failure rates and failing fast, single trial call in many implementations, open/half-open naming; fixed-window boundary doubling and rolling-window record cost; relative thresholds shrinking as a pool drains and growing with attacker deposits. Canonical validity: read under governance, security incident response, execution recovery, autonomous security responses and economic resilience; the examples span protocols, agents and markets, so it holds at each, with no positional or dated words. Identity, economy and progression (definition, measures, windows, thresholds, responses, states, test) are sound; the open/half-open sentence earns its place as a real vocabulary trap.",
+        "resolutions": [
+          {
+            "id": "names-concept:b1c81ed14b",
+            "resolution": "Not a defect. 'autonomous execution systems' appears once as one of the three settings that run the same breaker; the domain is named as a setting, not explained."
+          },
+          {
+            "id": "names-concept:2a4003d002",
+            "resolution": "Not a defect. 'a throttle can resemble an outflow limit' names the excluded concept only to draw the boundary (a breaker is a mode entered on a measured trip and left through a test); outflow limits' mechanism is not explained, and the window and threshold discussion is about the breaker's own measures, inside its claims."
+          },
+          {
+            "id": "names-concept:333bd9b905",
+            "resolution": "Not a defect. 'A halt can be carried out by triggering the system's pause mechanism' names the excluded concept as the actuator a halt may use; no pause-mechanisms claim (granularity, accrual and reconciliation, pause/unpause asymmetry, unliftable or griefing pauses) is explained or paraphrased, and the breaker's failure to reset is stated as its own reset condition."
+          }
+        ],
+        "recordFingerprint": "3865840308c47fb65e59331863411c52c46dbca58faf1f7cdfb6a34c7d67c59b"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-02T18:25:08.683Z",
+    "note": "Read the five owned records side by side with the parent (Emergency Governance) and the dual-role sibling Incident Response; group signals report 0, so the judgment rests on reading. No repair was needed. Overlap pairs checked. (1) Emergency Powers / Guardians: Emergency Powers names a guardian only as one possible holder; Guardians explains the holder side (role checks, role administration, threshold, capture/collusion/absence, appointment, override, removal). Both contain a two-level time limit (power sunset vs action expiry; role expiry vs action duration) and both say code cannot judge whether a use was warranted, but each serves its own claim: Emergency Powers asks what happens when governance does nothing (lapse vs stand), Guardians asks how the contracts enforce the limit; the principle that revocation must not depend on the holder's cooperation is one clause in Emergency Powers and is made concrete in Guardians (cancelling proposals, pausing the governance executor). Accepted as a general/specific pairing, not leakage. (2) Pause Mechanisms / Circuit Breakers: the breaker names the pause once as one way a halt can be carried out and owns measurement, windows, thresholds, trip responses and the state model; the pause owns granularity, accrual and reconciliation, authority asymmetry, unliftable and griefing pauses. Both describe a stop that fails to end, from different causes (unpause role renounced/keys lost/unpause depends on paused contracts vs a reset needing a confirmation that does not come or a test on a quantity that cannot recover); both mention reopening order/demand, again from different angles (who acts first and reconciliation vs a test re-tripping on held-back demand). No sentence of one explains the other's claim. (3) Emergency Powers / Emergency Upgrades: the closest pair. Emergency Upgrades applies four of Emergency Powers' general points to the upgrade path: the same two example conditions (exploit in progress, privately reported vulnerability), scope confined to particular contracts, ratification or reversal, and review of whether the declared conditions held; and both note that a change left unratified stays in place when governance does nothing. Each instance carries an upgrade-specific consequence that Emergency Powers does not have (a queued public fix reveals the flaw; a confined path unable to change its own threshold or delay cannot remove later controls; replaced code does not lapse; reverting is itself an upgrade and restores the flaw; ratification is the postponed public review of the code), so it specialises rather than restates; judged acceptable and left as written, but the plan's split puts ratification in both claim sets and this is the thinnest boundary in the group. Drift (Emergency Upgrades) and standing authority from a grant without end (Emergency Powers) reach a similar conclusion through different mechanisms (frequency of use vs absence of sunset/revocation). (4) Pause Mechanisms / Guardians: both observe that pausing the contracts through which governance executes can block governance; Pause Mechanisms uses it as a cause of an unliftable pause, Guardians as obstruction of its own removal; each in its own claim. Guardians names a pause only as an example action; Pause Mechanisms names guardians and breakers only as parties that can pause. (5) Each member / Incident Response: Emergency Powers' disclosure and review concern the use of authority and explicitly separate review from finding the cause, leaving the post-mortem to Incident Response; Guardians' drills address signer absence, not response preparation generally; Pause Mechanisms' 'needs no diagnosis' and Emergency Upgrades' 'public queue reveals the flaw' do not explain detection, containment or disclosure to users; Circuit Breakers does not mention it. Coverage and consistency: together the members cover the parent's layer (kinds of authority, the stop mechanism, its holder, the code-replacement path, the automatic trigger) with the parent's own points (stop-only safest, pause protects and traps, withdrawals left open, thresholds resisting volatility and deliberate trips) not restated. No contradiction on lapse: Pause Mechanisms treats lapse as a design option ('a pause that does not lapse on its own'; lapse limits little against re-pausing), Emergency Upgrades says 'unlike a pause, which can be built to lapse', Guardians has per-action maximum durations, Emergency Powers gives both defaults and their failure directions; all consistent with the parent's 'a pause that lapses unless ordinary governance confirms it'. Thresholds are treated consistently and from different facets (Guardians: capture/collusion vs absence; Emergency Upgrades: threshold as review; Emergency Powers: more power, more approvals; Pause Mechanisms: low pause threshold, high unpause threshold). Terms: 'ordinary governance', 'signers', 'threshold', 'security council', 'ratify', 'revoke', 'lift/unpause', 'trip/test/reset' are used consistently; 'revert' in Emergency Upgrades means restoring prior code and 'reverse' elsewhere means undoing an action, which is accurate to each. Repetition and forms: openings differ (Emergency Powers 'are authority ... grants', Pause Mechanisms 'is a switch', Guardians 'is a party', Emergency Upgrades 'replaces', Circuit Breakers 'automatically restricts'); second paragraphs open differently. Triads recur (three kinds of authority, three guardian failures, three kinds of measure, three trip responses), but each comes from the plan's claims, and the phrasing varies ('comes in three kinds', 'fall into three kinds', 'fails in three ways', 'one of three ways'); every member has five body paragraphs, which follows the claim counts and is not perceptible as a template given the different paragraph functions and lengths. 'Many designs' / 'designs ... by' as a closing move appears in several members; it is a domain voice for hedged design responses, not a cloned structure. Forms are per concept as designed: four prose (Emergency Powers, Pause Mechanisms, Guardians, Emergency Upgrades) and one state model (Circuit Breakers, a genuine loop with two returns from Testing); no distinction or flow was copied across members.",
+    "resolutions": [],
+    "records": {
+      "emergency-powers": "54c653cf11c8a5e06cc3ddc4dfdfd3affc5381041ad33ee36d08b67df110d649",
+      "pause-mechanisms": "69291c3a3d30c34b2ab9073333b7b61c3f97247048ce8b3b4d2635fa0bd27353",
+      "guardians": "6f4a1986a99fde98284479e5b7c475535ed396234d5cf92b2e3b9c7f83200bec",
+      "emergency-upgrades": "d1076c23811d2a6de7992c7371b7fa367267cf8bea16285f6b1de8a852e401c8",
+      "circuit-breakers": "3865840308c47fb65e59331863411c52c46dbca58faf1f7cdfb6a34c7d67c59b"
+    }
+  }
+}

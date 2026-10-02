@@ -363,4 +363,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "autonomous-infrastructure",
   "cyber-physical-autonomous-systems",
   "autonomous-science-systems",
+  "emergency-powers",
+  "pause-mechanisms",
+  "guardians",
+  "emergency-upgrades",
+  "circuit-breakers",
 ];
