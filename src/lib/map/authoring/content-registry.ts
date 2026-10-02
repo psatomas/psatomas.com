@@ -373,4 +373,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "two-phase-commit",
   "partial-failures",
   "atomicity-guarantees",
+  "formal-verification",
+  "model-checking",
+  "theorem-proving",
+  "symbolic-execution",
+  "static-analysis",
+  "formal-specifications",
 ];

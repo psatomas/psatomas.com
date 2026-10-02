@@ -1,0 +1,547 @@
+{
+  "version": 1,
+  "group": "formal-methods",
+  "domain": "security-correctness-resilience",
+  "parentConceptId": "formal-methods",
+  "basis": {
+    "membership": "830cb9c03ced076e12d67602afbb290b4e3be99b1bbe151d1e7bdc89c0ce0c15",
+    "parents": {
+      "formal-methods": "2c6b6f45331e141f6fd38f6dce7991b20446aaabbebfb88cb4086f9621338422",
+      "protocol-design-lifecycle": "5d9f5ed13feaeb943e640c41b07243a86c13837527d859e8c118e40fb8039b76",
+      "protocol-specification": "0eb9a29747a38636d872f106037b60ddd32ef1a074f382c7ad3017c3d705a9a1",
+      "security-correctness-resilience": "ce9d0a9865bf71ddae0e4d92f467dea6522f9ce6faf0193fd710921ce8de06be"
+    },
+    "fixed": {},
+    "hazards": "5cf967f03eb43e64e9830b5d346f93f5a11fc4723bfdf3d0f7af882ff83f6aa0"
+  },
+  "members": [
+    {
+      "conceptId": "formal-verification",
+      "placementId": "formal-verification",
+      "standing": "owned",
+      "claims": [
+        "what formal verification establishes: that an implementation or model satisfies a formal specification, and the gap between that and the system's real behaviour",
+        "the trusted base of a verification: the specification, the model, the tools and the assumptions",
+        "how the strength of a result differs between bounded checking and unbounded proof"
+      ],
+      "excludes": [
+        "model-checking",
+        "theorem-proving",
+        "formal-specifications",
+        "verification"
+      ]
+    },
+    {
+      "conceptId": "model-checking",
+      "placementId": "model-checking",
+      "standing": "owned",
+      "claims": [
+        "how a model checker explores a state space against properties stated in temporal logic",
+        "state explosion and the techniques that contain it: abstraction, bounding and symmetry reduction",
+        "counterexamples as the result: what a reported trace shows, and what passing within bounds does not"
+      ],
+      "excludes": [
+        "formal-verification",
+        "theorem-proving"
+      ]
+    },
+    {
+      "conceptId": "theorem-proving",
+      "placementId": "theorem-proving",
+      "standing": "owned",
+      "claims": [
+        "how a proof assistant establishes a property: statements checked by a small trusted kernel",
+        "the human effort a proof needs: invariants and lemmas the tool cannot find alone",
+        "what an unbounded proof covers and what it rests on: the model of the language and the environment"
+      ],
+      "excludes": [
+        "formal-verification",
+        "model-checking"
+      ]
+    },
+    {
+      "conceptId": "symbolic-execution",
+      "placementId": "symbolic-execution",
+      "standing": "owned",
+      "claims": [
+        "running a program on symbolic inputs: path conditions and solver queries",
+        "path explosion and its mitigations: bounding loops, merging states and concolic execution",
+        "what symbolic execution finds, failing paths with concrete inputs, and what it cannot conclude"
+      ],
+      "excludes": [
+        "static-analysis",
+        "model-checking"
+      ]
+    },
+    {
+      "conceptId": "static-analysis",
+      "placementId": "static-analysis",
+      "standing": "owned",
+      "claims": [
+        "analysis without running the program: pattern matching, data flow and abstract interpretation",
+        "the trade between soundness and precision: false alarms against missed cases",
+        "static analysis in a workflow: cheap, continuous triage ahead of heavier methods"
+      ],
+      "excludes": [
+        "symbolic-execution",
+        "auditing"
+      ]
+    },
+    {
+      "conceptId": "formal-specifications",
+      "placementId": "formal-specifications",
+      "standing": "owned",
+      "claims": [
+        "what makes a specification formal: a language with defined semantics that a tool can check",
+        "what formal specifications state: invariants, preconditions and postconditions, and temporal properties of protocols",
+        "the risk that a formal specification is itself wrong or incomplete, and how it is checked against intent"
+      ],
+      "excludes": [
+        "specifications",
+        "specification-languages",
+        "specification-ambiguity",
+        "validation",
+        "formal-verification"
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "formal-verification",
+        "model-checking"
+      ],
+      "split": "Formal Verification owns what any verification establishes, its trusted base and the strength of its result; Model Checking owns how state-space exploration works and fails."
+    },
+    {
+      "concepts": [
+        "formal-verification",
+        "theorem-proving"
+      ],
+      "split": "Formal Verification owns what any verification establishes and its trusted base; Theorem Proving owns how proofs are built and checked, and their cost."
+    }
+  ],
+  "concepts": {
+    "formal-verification": {
+      "model": {
+        "meaning": "Formal verification proves, by mathematical methods, that a system or a model of it satisfies a formal specification in every case the model covers.",
+        "kind": "mechanism",
+        "parents": {
+          "formal-methods": "what verification establishes and rests on, beyond the parent's comparison of techniques"
+        },
+        "claims": [
+          "what formal verification establishes: that an implementation or model satisfies a formal specification, and the gap between that and the system's real behaviour",
+          "the trusted base of a verification: the specification, the model, the tools and the assumptions",
+          "how the strength of a result differs between bounded checking and unbounded proof"
+        ],
+        "excludes": [
+          "model-checking",
+          "theorem-proving",
+          "formal-specifications",
+          "verification"
+        ],
+        "placements": {
+          "formal-verification": "one placement"
+        },
+        "fields": {
+          "inputs": [
+            "a formal specification",
+            "a model or implementation"
+          ],
+          "outputs": [
+            "a proof or a counterexample"
+          ],
+          "assumptions": [
+            "the specification states what is wanted",
+            "the model matches the system"
+          ],
+          "failures": [
+            "verifying the wrong property",
+            "a model that omits the environment"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "the claim is about what a result means, an argument the parent's comparison already frames",
+        "relationship": "a result and the assumptions it rests on",
+        "level": "the goal shared by the techniques; their mechanisms are the siblings'",
+        "territory": "model checking and theorem proving are named as families, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:37:45.826Z",
+        "note": "Independent audit against quality-contract §B. One leaf placement (Formal Methods); no positional language; reads as a complete explanation. Progression: definition, the relation a result establishes and its three outcomes, the gap to the running system, the trusted base, then result strength; prose fits the approved design. Parent: adds to Formal Methods' technique comparison and to the domain sentence about faults verification does not rule out, without restating either. Repairs (accuracy): (1) the definition said every case the model admits, contradicting the body's bounded checks; it now adds 'or in every case up to a stated limit'. (2) The trace-inclusion sentence claimed any proof carries over when system behaviours are a subset of the artefact's; that fails for properties of sets of behaviours such as confidentiality, so it is now limited to properties each behaviour must satisfy, such as an invariant. (3) 'integers of a fixed width' as a bound made the stated asymmetry false (a narrowed width is an abstraction, so a violation there need not exist in the model); replaced by 'values drawn from a small range', which are cases of the model. (4) Example fit: a 'token contract' being 'drained' became 'a contract that holds deposits', so the reentrancy example shows a model that leaves out the environment, as the model's failures field says. Accepted after checking: vacuous truth from contradictory assumptions is correct; 'one violating execution within a bound shows the property fails in the model' is correctly limited to the model, and the system-level caveat (spurious counterexamples from a model that admits too much) is stated in the gap paragraph; the specification example (supply conservation silent on theft) shows that the specification is part of the trusted base without explaining how it is checked against intent, which is Formal Specifications' territory; 'model checking is commonly associated with the first kind of result' is accurate under the paragraph's own definition of bounded (finite instances, bounded depth), and the hedge reflects the fact that model checkers can also give unbounded results; it is a one-clause bridge to the parent's comparison, not a restatement of it. 'Nothing beyond the limit can behave differently' is loose but reads in context as 'with respect to the property'. Split FV ~ Model Checking: holds. The text never explains state-space exploration, temporal logic, state explosion or how to read a trace. A counterexample is defined once as one of a run's three outcomes, and the bounded paragraph says what a bounded pass is worth in general, for any bounded technique; how a model checker bounds, unrolls or reports a trace stays Model Checking's. This is close to Model Checking's claim 'what passing within bounds does not', but the two claims overlap inherently and the text keeps to the general level. Split FV ~ Theorem Proving: holds. Kernels, tactics, lemmas, invariant discovery and proof cost do not appear. 'An unbounded proof establishes the property for executions of any length' says only what the result covers, at the level needed to compare strengths. The closing sentence on what an unbounded proof rests on is FV's general trusted base, not the language or environment model of Theorem Proving's claim; the language semantics appears only as how an implementation becomes a formal artefact and as a source of the gap. Symbolic execution and static analysis are not named; formal specifications only as the artefact verified against.",
+        "resolutions": [
+          {
+            "id": "names-concept:c9700141d1",
+            "resolution": "Named only: 'formal specification' is the artefact verified against. Its formality, contents and the check against intent are not explained; the supply-conservation example only shows the specification is trusted."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "Named only, in an example assumption ('a hash function treated as collision-free'); no mechanism given."
+          },
+          {
+            "id": "names-concept:7157c3e55a",
+            "resolution": "Named only, once, as a family commonly associated with bounded results. Exploration, state explosion and trace reading are not explained; the split holds."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "Named only, as an example of a design model ('a state machine describing a protocol')."
+          },
+          {
+            "id": "names-concept:6d37642d82",
+            "resolution": "Named only, once, as the family associated with unbounded proof. Kernel checking, human effort and its language or environment model are not explained; the split holds."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "The generic word 'verification' is used only as part of this concept's own name and its runs; the broader Verification concept is not explained."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "Named only, as one environment component a model leaves out ('the virtual machine or hardware that executes it')."
+          },
+          {
+            "id": "absolutes:0fb0b6de0d",
+            "resolution": "Not a defect. Each 'cannot' holds: a tool that cannot decide the question (it describes an outcome); where the system can do something the artefact cannot (a conditional); a model that treats calls as side-effect-free cannot represent reentry (true by construction); behaviours the system cannot exhibit (a conditional)."
+          }
+        ],
+        "recordFingerprint": "9ec4329f50527a51146ec378e934a9b0de53356abaaac99e7793f98cd8723fb0"
+      }
+    },
+    "model-checking": {
+      "model": {
+        "meaning": "Model checking exhaustively explores every reachable state of a finite model to test whether stated properties hold, returning a counterexample when one fails.",
+        "kind": "mechanism",
+        "parents": {
+          "formal-methods": "how exploration works and what its results mean, beyond its row in the comparison and its use on designs"
+        },
+        "claims": [
+          "how a model checker explores a state space against properties stated in temporal logic",
+          "state explosion and the techniques that contain it: abstraction, bounding and symmetry reduction",
+          "counterexamples as the result: what a reported trace shows, and what passing within bounds does not"
+        ],
+        "excludes": [
+          "formal-verification",
+          "theorem-proving"
+        ],
+        "placements": {
+          "model-checking": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "model the system as states and transitions",
+            "state properties in temporal logic",
+            "explore reachable states",
+            "report a counterexample or a pass within bounds"
+          ],
+          "failures": [
+            "state explosion",
+            "a pass that holds only within bounds"
+          ],
+          "assumptions": [
+            "the model is faithful"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "its steps read naturally in a sentence; the substance is state explosion and the meaning of results",
+        "relationship": "exploration against the size of the state space",
+        "level": "the technique's own mechanism",
+        "territory": "theorem proving and symbolic execution are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:43:48.597Z",
+        "note": "Independent audit against quality-contract section B at the single placement (Formal Methods / Model Checking, leaf). Accuracy checked claim by claim: explicit-state search with a seen-state table versus symbolic search over sets of states (decision diagrams or formulas) is correct; safety as violated by a finite execution (bad state, or finite paths for the general case) and liveness as violated only by infinite executions, found in a finite model as a reachable cycle via a product with a violation automaton, with fairness excluding starvation of a continuously enabled process, is correct; three processes of ten local states giving up to a thousand combinations and 2^32 values for a 32-bit counter are right; an over-approximating abstraction preserves passes of universal properties and CEGAR checks abstract traces against the original model and refines, correct; symmetry reduction saving up to a factor of the number of process orderings and sound only when model and property treat processes alike, correct; a complete search of a bounded configuration covers executions of any length within it, correct; the safety completeness depth described is the reachability diameter, with over-estimates (e.g. recurrence diameter) in practice, correct; k-induction, IC3/PDR as inductive-invariant search, and cutoff results limited to particular protocol classes are stated correctly and conditionally; breadth-first returns shortest safety traces; replay and mapping onto implementation events are accurate. One repair: the last paragraph opened 'Checkers also have their own ways of reaching results that hold beyond a depth', which mis-scoped a paragraph that ends with cutoff results (a configuration bound, and a theoretical result rather than a checker mechanism); now 'Model checking also has its own ways of reaching results that hold beyond a bound.' Formal Verification split: held. FV owns the general strength-of-result points (a bounded check is a statement about its limit; one violation within a bound shows failure in the model; a bounded pass becomes unbounded only through an extra argument such as an inductive step or a proof the limit suffices; models admitting extra behaviour report violations that do not occur in practice). Checked sentence by sentence, Model Checking restates none of them: its pass paragraph opens by naming the two model-checking bound dimensions (configuration and depth) and its substance is model-checking-specific (a completed search covers any length within a bounded configuration; concrete unexplored behaviours such as a fourth node, a third queued message or counter wrap; bounded model checking's unrolling and what it leaves unexplored); the unbounded paragraph supplies the model-checking mechanisms behind FV's 'extra argument' (diameter, k-induction, IC3/PDR, cutoffs) without restating that a bounded pass needs one; the counterexample paragraph covers trace anatomy, lasso reading, shortest traces, replay and first-violation reporting, not FV's asymmetry of failures. The abstraction sentence on spurious counterexamples concerns the relation between an abstract model and the original model inside the checker, which is what motivates CEGAR and comes with the pass-preservation condition for universal properties; it is the model-checking-specific point, not a restatement of FV's model-versus-system sentence. Theorem proving, symbolic execution and static analysis are not named or explained ('symbolic checker' is symbolic model checking; abstraction here is model abstraction, not abstract interpretation). Formal Specifications boundary: the brief LTL/CTL sentence and safety/liveness classification are kept to what the search looks for, within the claim 'against properties stated in temporal logic'; flagged for the group audit once Formal Specifications is authored. Parent: adds to the comparison row (separates configuration and depth bounds rather than restating 'nothing beyond the model's bounds') and reuses protocol examples without restating the design-versus-code point. Canonical validity: single leaf placement, no positional language. Economy and progression: seven body paragraphs move model and search, property kinds, explosion, containment, counterexamples, bounded passes, unbounded results; each carries distinct content. Prose decision matches the design. Minor simplification accepted: 'violated by a finite execution that reaches a bad state' is exact for invariants and the following clause ('or the finite paths through them') covers general safety.",
+        "resolutions": [
+          {
+            "id": "names-concept:d09b7e8456",
+            "resolution": "Not a defect. 'local state(s)' is used in its standard model-checking sense, a process's own component of the global state, in the state-explosion and symmetry sentences. It does not refer to the State & Data concept Local State (per-account or per-contract state), which is neither named as a concept nor explained; identity discipline holds."
+          }
+        ],
+        "recordFingerprint": "a5cb8885ad343973a69c5aeb3c98e359a66809084e2d832a6d951f3a2b279670"
+      }
+    },
+    "theorem-proving": {
+      "model": {
+        "meaning": "Theorem proving establishes properties of a system by constructing proofs, often interactively, that a small trusted kernel checks.",
+        "kind": "mechanism",
+        "parents": {
+          "formal-methods": "how proofs are built and checked and what they rest on, beyond its row in the comparison"
+        },
+        "claims": [
+          "how a proof assistant establishes a property: statements checked by a small trusted kernel",
+          "the human effort a proof needs: invariants and lemmas the tool cannot find alone",
+          "what an unbounded proof covers and what it rests on: the model of the language and the environment"
+        ],
+        "excludes": [
+          "formal-verification",
+          "model-checking"
+        ],
+        "placements": {
+          "theorem-proving": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "state the property",
+            "supply invariants and lemmas",
+            "construct the proof",
+            "check it in the kernel"
+          ],
+          "actors": [
+            "proof engineers"
+          ],
+          "assumptions": [
+            "the model of the language and environment is sound"
+          ],
+          "failures": [
+            "proving a property of the wrong model"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "its effort and its trusted base are arguments, not a shape",
+        "relationship": "unbounded assurance against human effort",
+        "level": "the technique's own mechanism",
+        "territory": "model checking is named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:50:12.332Z",
+        "note": "Independent audit against quality-contract section B; one leaf placement, read in full against the Formal Methods parent, the accepted model/design (prose) and the authored Formal Verification and Model Checking records. Two minimal accuracy repairs: (1) 'None of that machinery has to be trusted' was an unconditional absolute that the paragraph itself later contradicts (solver answers accepted on the solver's word); it now reads 'as long as the kernel checks what it produces'. (2) 'That report and the statement of the theorem are what a reviewer has to read' under-claimed the trusted reading, since the previous sentence says the kernel does not check that a definition means what its name suggests; it now includes 'the definitions it uses'. Accuracy otherwise holds: LCF abstract theorem type vs type-theoretic proof terms checked by the kernel; solver output reconstructed vs trusted; independent rechecking and verified kernels and compilers hedged with 'some'; axioms and placeholders reported per theorem by 'many' assistants; the consensus non-inductive example is correct (the counterexample-to-induction state satisfies agreement, is unreachable, and one step breaks it); 'properties as first stated seldom pass the second test' is the standard practitioner observation for system invariants (Lamport, Ivy) and is scoped by the preceding sentence to properties of unbounded-step systems, judged not an overclaim; undecidability of invariance for arbitrary programs with inference for restricted classes is correct; brittleness and stuck-proof ambiguity correct; the 256-bit word modelled as an unbounded integer is an explicit hypothetical; parser and code generator outside the kernel, hedged for verified ones. No versions, product names or time-bound claims. Parent: adds the mechanism behind the row 'without bounds / expert effort' without restating it. Model Checking, symbolic execution, static analysis and formal specifications are not named or explained; 'automatic inference succeeds for restricted classes of invariant' and counterexample finders do not explain any model-checking mechanism. FV split (FV: what any verification establishes and its trusted base; TP: how proofs are built and checked, and their cost) holds sentence by sentence: every trust statement in the record is framed against the kernel (what the kernel check covers, what passes through it, what lies outside it), not FV's general list. The solver-only verifiers sentence is the contrast that defines 'small trusted kernel' for the technique, not a restatement of FV's 'tools are trusted', and is kept. The 'not contradictory' sentence gives the prover-specific remedy (constructing a witness environment in the prover) for the vacuity that FV explains; it does not re-explain vacuity and is kept. The semantics paragraph's wrong-model example parallels FV's reentrancy example in shape but illustrates a distinct cause (the embedded language semantics) under TP's own claim; the parametric-participants sentence explains how a prover reaches FV's 'configurations of any size'. Economy and progression: definition, kernel mechanism, what the check establishes, inductive invariants and lemmas, cost, embedded semantics, environment as hypotheses; each paragraph carries a distinct claim. Prose suits the design (arguments, not a shape). No signals before or after repair.",
+        "resolutions": [],
+        "recordFingerprint": "b68930cda37dd82b93ade6599ba59109452eb1c376f89fc4b6fea27ef53517ab"
+      }
+    },
+    "symbolic-execution": {
+      "model": {
+        "meaning": "Symbolic execution runs a program on symbolic inputs, accumulating the conditions each path requires and asking a solver for concrete inputs that reach it.",
+        "kind": "mechanism",
+        "parents": {
+          "formal-methods": "path conditions, path explosion and what the results mean, beyond its row in the comparison"
+        },
+        "claims": [
+          "running a program on symbolic inputs: path conditions and solver queries",
+          "path explosion and its mitigations: bounding loops, merging states and concolic execution",
+          "what symbolic execution finds, failing paths with concrete inputs, and what it cannot conclude"
+        ],
+        "excludes": [
+          "static-analysis",
+          "model-checking"
+        ],
+        "placements": {
+          "symbolic-execution": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "execute with symbolic inputs",
+            "collect path conditions",
+            "query a solver",
+            "report reachable failures with inputs"
+          ],
+          "failures": [
+            "path explosion",
+            "unmodelled environment calls"
+          ],
+          "outputs": [
+            "concrete inputs reaching a failure"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a short mechanism whose interest is its limits, which prose states directly",
+        "relationship": "paths explored against paths possible",
+        "level": "the technique's own mechanism",
+        "territory": "static analysis is named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:55:31.866Z",
+        "note": "Audited against quality-contract B at the single placement (Formal Methods / Symbolic Execution). Parent: adds path conditions, solver queries, the mechanics and mitigations of path explosion and the meaning of results beyond the comparison row; no parent sentence restated. Siblings: model checking, theorem proving and static analysis are not mentioned; nothing explains state-space exploration, temporal logic or proof assistants; soundness/precision, abstract interpretation and workflow triage are absent; formal specifications are not discussed (the oracle sentence is the executor's own check, not what a specification states). FV boundary: the replay paragraph is the technique-specific consequence of carrying a concrete input (a false report is exposed by running it), not FV's general point about over-permissive models; the closing paragraph states symbolic-execution-specific conditions (finite paths, full exploration, decided queries, no concretization, faithful models) rather than bounded versus unbounded results in general; no trusted-base discussion. Accuracy checked: x = 7 satisfies x > 5 and x - 7 = 0 (unique also under wraparound); 2^30 is about 1.07 billion, hedged 'up to about'; full merging at each join of loop-free code leaves one state per program point with disjunctive path conditions and conditional expressions; concolic generational negation, no forked-state memory, concretization losing coverage; environment models that under-report results hide failures; solver timeouts/unknown drop paths; absence of a report covers all inputs only under the stated conditions. Repairs: (1) accuracy/unconditional claim: 'Symbolic execution under-approximates: each path it explores is one some input can take' contradicted the preceding paragraph on unfaithful models producing false reports; now 'where its models are faithful, each path it explores is one some input can take'. (2) readability: 'fewer results than the real callee can hides' now 'can return hides'. Economy (definition plus six paragraphs, each carrying distinct content), progression (mechanism, cost, bounding and merging, concolic, results, limits), prose decision and model fields (sequence, failures, outputs) all reached. No positional language.",
+        "resolutions": [
+          {
+            "id": "names-concept:e2f878fbac",
+            "resolution": "Not a defect: smart contracts appear once as an application context (inputs as transaction sequences with senders, arguments and value; multi-call failures); nothing about smart contracts themselves is explained."
+          }
+        ],
+        "recordFingerprint": "1ed3889e5419400744871e7ba3626e55e9850c6c871f2b7b5c5271283048d31d"
+      }
+    },
+    "static-analysis": {
+      "model": {
+        "meaning": "Static analysis examines a program's code without running it, to find known patterns of error or to approximate its possible behaviours.",
+        "kind": "mechanism",
+        "parents": {
+          "formal-methods": "kinds of analysis, the soundness and precision trade and its place in a workflow, beyond its row in the comparison"
+        },
+        "claims": [
+          "analysis without running the program: pattern matching, data flow and abstract interpretation",
+          "the trade between soundness and precision: false alarms against missed cases",
+          "static analysis in a workflow: cheap, continuous triage ahead of heavier methods"
+        ],
+        "excludes": [
+          "symbolic-execution",
+          "auditing"
+        ],
+        "placements": {
+          "static-analysis": "one placement"
+        },
+        "fields": {
+          "variants": [
+            "pattern matching",
+            "data flow analysis",
+            "abstract interpretation"
+          ],
+          "tradeoffs": [
+            "soundness against precision"
+          ],
+          "outputs": [
+            "warnings"
+          ],
+          "failures": [
+            "false alarms",
+            "missed cases"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "three kinds and one trade-off: a paragraph each, no table",
+        "relationship": "approximation against precision",
+        "level": "the technique itself",
+        "territory": "symbolic execution and auditing are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T14:59:42.387Z",
+        "note": "Independent audit against quality-contract §B; no repair needed. Accuracy: pattern matching is described as syntax-tree rules (unchecked low-level call result, self-comparison, origin-for-caller authorization) with the right limits (shape not values, so reports regardless of reachability, misses unruled shapes). Data flow analysis: control flow graph, facts propagated along edges, combination at joins, loop fixed point; taint (source, propagation, sink, check) and interprocedural cost from calling contexts are correct. Abstract interpretation: abstract domains and abstract operations, the over-approximation condition stated conditionally, widening to infinity on still-changing bounds at the price of precision; intervals as non-relational (no equality between variables in general) against octagons/polyhedra at higher cost is correct. Soundness: undecidability motivates approximation; a sound analysis over-approximates and its silence holds only as modelled, so soundness is conditional on the analysis's model of the language; the join-point null false alarm (use guarded by the same unchanged condition as the allocation) is a correct path-insensitivity example; precision and its cost (path and context separation multiplying facts) is right; the soundy practice of ignoring reflection, dynamic call targets and unresolved aliasing, and the opposite usage of 'sound' in bug-finding work, are accurately stated. Workflow: per-change speed, triage by tuning, recorded suppressions and baselines, warnings pointing heavier methods, and the limited weight of silence are accurate and hedged. Parent: expands Formal Methods' comparison row (fast detection of known patterns; false alarms and missed cases) without restating its sentences. Siblings: no account of what a verification establishes or its trusted base beyond the one conditional 'as modelled' needed for this concept's own soundness claim; nothing on bounded versus unbounded results, state-space search, counterexample traces, proof assistants, path conditions, solvers or path explosion; the join and path/context sensitivity are data-flow-analysis matters described from the analysis side, not symbolic execution's state merging. Symbolic execution and auditing (excluded) and model checking, theorem proving and formal specifications are named once each in the workflow paragraph only. Canonical validity: single L2 leaf placement, no positional language; smart-contract examples are labelled as examples alongside general ones. Economy and progression: definition, three kinds in increasing power, the trade they force, then their place in a workflow; paragraphs are long but each carries distinct mechanism. Representation matches the accepted prose design.",
+        "resolutions": [
+          {
+            "id": "names-concept:c909e10be5",
+            "resolution": "Auditing (excluded) is named once as a reviewer's attention during auditing, a destination for triaged warnings; nothing about auditing is explained."
+          },
+          {
+            "id": "names-concept:ecbb321a88",
+            "resolution": "Homonym, not the Data Flows concept: 'data flow analysis' is the compiler/program-analysis technique over a control flow graph, while data-flows is Protocol Architecture's movement of data between components (indexers, providers, caches). No reference or explanation of that concept."
+          },
+          {
+            "id": "names-concept:1617ce9e68",
+            "resolution": "Formal specifications named once, as a property a static analysis does not check; nothing of what makes a specification formal, what it states or its own correctness risk is explained."
+          },
+          {
+            "id": "names-concept:9bcfc91a0a",
+            "resolution": "Model checking named once as a heavier method a triaged warning can point to; no state-space exploration, temporal logic, state explosion or counterexample traces."
+          },
+          {
+            "id": "names-concept:e2f878fbac",
+            "resolution": "Smart contracts named only as the setting of example rules and taint sinks (origin check, delegated call target, transfer amount), alongside general-purpose examples; not explained."
+          },
+          {
+            "id": "names-concept:b0d5a1629e",
+            "resolution": "Symbolic execution (excluded) named once as a heavier method aimed at a flagged function; no path conditions, solver queries, path explosion or its mitigations. Path and context sensitivity are mentioned only as the precision side of this concept's own trade."
+          },
+          {
+            "id": "names-concept:9acc3d45cc",
+            "resolution": "Theorem proving named once as a heavier method; no proof assistant, kernel, invariant effort or unbounded-proof discussion."
+          },
+          {
+            "id": "absolutes:6b1d8770e4",
+            "resolution": "Each holds: 'never checked' describes the defect a rule flags; 'states it cannot' reach is definitional of over-approximation; 'never runs with the null value' is true by construction of the example (use guarded by the same unchanged condition); 'aliasing they cannot resolve' is conditional on the tool; 'which side it guarantees' asks the claim to qualify itself. No unconditional claim about tools or programs."
+          }
+        ],
+        "recordFingerprint": "030cdfb4f3c02fdec9f5079c2f9256b08286c3f43510c272e4d0383dcd5a4c3a"
+      }
+    },
+    "formal-specifications": {
+      "model": {
+        "meaning": "A formal specification states what a system must do in a language with precise mathematical meaning, so that tools can check designs and code against it.",
+        "kind": "artifact",
+        "parents": {
+          "formal-methods": "what a formal specification states and how it can be wrong",
+          "protocol-specification": "what formality adds to a protocol specification, beyond specifications in general"
+        },
+        "claims": [
+          "what makes a specification formal: a language with defined semantics that a tool can check",
+          "what formal specifications state: invariants, preconditions and postconditions, and temporal properties of protocols",
+          "the risk that a formal specification is itself wrong or incomplete, and how it is checked against intent"
+        ],
+        "excludes": [
+          "specifications",
+          "specification-languages",
+          "specification-ambiguity",
+          "validation",
+          "formal-verification"
+        ],
+        "placements": {
+          "formal-specifications": "holds as a formal method's input and as a protocol specification",
+          "formal-specifications-in-protocol-specification": "holds as a formal method's input and as a protocol specification"
+        },
+        "fields": {
+          "contents": [
+            "invariants",
+            "preconditions and postconditions",
+            "temporal properties"
+          ],
+          "producedBy": [
+            "designers and verification engineers"
+          ],
+          "checkedBy": [
+            "review against intent",
+            "test cases derived from it"
+          ],
+          "proves": [
+            "nothing by itself: it is what proofs are about"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "what a specification contains and how it fails are best stated, not drawn",
+        "relationship": "a precise statement against the intent it captures",
+        "level": "the artifact itself",
+        "territory": "specifications in general, languages and ambiguity are siblings' or another group's",
+        "placements": "holds as a formal method's input and as a protocol specification"
+      },
+      "audit": {
+        "at": "2026-10-02T17:43:24.576Z",
+        "note": "Independent audit against quality-contract B, at both placements. Accuracy: formality is located in a language with defined semantics, separated from careful prose (specification ambiguity only named) and from runnability; the runnable-versus-formal sentences add to Protocol Specification's executable-specification paragraph rather than restating it (no test vectors, no readability trade). Invariants as single-state predicates, with contract invariants commonly required only at the boundaries of externally callable functions, are correct; pre/postconditions as a conditional guarantee, the caller/callee split and the public-function case are correct; the self-transfer postcondition is unsatisfiable for a nonzero amount, and the precondition fix leaves the case unspecified so a token-creating implementation passes, consistent with the conditional guarantee stated earlier; the frame-condition and do-nothing examples are correct. Temporal properties are given from the specification side as prohibitions, eventual obligations and orderings, with temporal logic and abstract state machines named as forms and refinement stated briefly; the record never uses safety/liveness as search targets, lasso traces, fairness, operators or exploration, so it does not re-explain Model Checking. The reachability check is adjacent to FV's vacuity point but distinct: FV covers contradictory assumptions emptying all behaviour as a trusted-base risk; this covers an over-constrained specification making one intended event unreachable and the witness query that detects it, which is the claimed checking-against-intent territory. Repairs (accuracy): postconditions 'can' refer to old values rather than always do; the assumptions paragraph now attaches assumptions to the protocol's properties generally rather than to obligations alone, since the two-thirds-stake example also underwrites prohibitions such as finality; and an unreachable event makes properties about what holds whenever it occurs trivial, not every property about it (an obligation that it eventually occurs would fail). Excludes (specifications, specification-languages, specification-ambiguity, validation, formal-verification) are named or untouched, never explained. Economy: the eight body paragraphs each carry a distinct claim component (formality, invariants, pre/postconditions, temporal properties, assumptions, how specs are wrong, asymmetry of error visibility and authorship, checking against intent); paragraph seven's precondition fix and paragraph eight's weakening-repairs sentence overlap in idea but eight generalises it, so both stay. The 'property read off the code can restate its bugs' sentence echoes Protocol Specification's 'its bugs become rules' but concerns verification engineers deriving properties from code, a different mechanism; accepted. Text is placement-neutral and true at both placements; progression runs definition, contents, failure, checking. Prose matches the accepted design.",
+        "resolutions": [
+          {
+            "id": "names-concept:9fa754258f",
+            "resolution": "Specification ambiguity is named once to say prose remains open to it; its causes and effects are not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:36c396ba18",
+            "resolution": "Specifications is matched by the concept's own title words; specifications in general are never explained, only formality's addition. Named, not explained."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "'Abstract state machine' is named as one form a temporal specification takes, with a one-clause gloss of what it lists in that role; the state-machine concept itself is not explained. Named, not explained."
+          },
+          {
+            "id": "absolutes:0f90516310",
+            "resolution": "Each holds: 'guarantees'/'guarantee' are stated as conditional on the precondition or on named assumptions; 'cannot be met' is an arithmetic fact for a nonzero self-transfer; 'no tool can confirm' intent follows from intent not being formal; 'cannot happen' is inside a conditional clause. No change needed."
+          }
+        ],
+        "recordFingerprint": "dbd07402e8ce28ebca6f132df9de34e1bbce61808dae25eb728137184f1cb61d"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-02T18:33:09.902Z",
+    "note": "Read the six owned records side by side with the parent (Formal Methods); group signals report 0, so the judgment rests on reading. No contradiction found; no blocking duplication; one minor argument-level repetition (FV/FS assumptions) and two consistency nits are recorded below for the reviewer, with fixes, since the tooling cannot record a member repair at this stage. Pairs checked. (1) FV / MC, bounded passes: FV states the general result (a bounded check is a statement about its limit; a failure within a bound settles the model; a bounded pass becomes unbounded only through an extra argument, such as an inductive step or a proof that the limit is large enough; MC is 'commonly associated' with bounded results). MC refines without contradicting: a complete search of a bounded configuration covers executions of any length within it, a depth bound leaves out more, and its last paragraph supplies the concrete instances of FV's two named arguments (completeness depth, k-induction, IC3, cutoffs). General/specific layering, which is the accepted split; FV's 'commonly' keeps MC's unbounded routes consistent. Counterexamples: FV's spurious violations are model-vs-system; MC's are abstraction-vs-original-model and handled by refinement; MC's fairness reading of a lasso ('a missing fairness assumption rather than a flaw in the design') is consistent with FV's 'fails in the model'. (2) FV / TP: FV says an unbounded proof rests on specification, model, tools and assumptions like any other and is no more faithful than they are; TP demonstrates the same thesis through its mechanism (kernel accepts definitions and axioms as written; semantics as an unchecked definition, 256-bit wraparound; parser and code generator outside the kernel; environment as hypotheses). FV's 'verifier, solvers, translation from source' and TP's 'no kernel in this sense ... rests on the solver and the obligation generator' touch the same tools-in-the-trusted-base point, but TP's is about what a kernel removes from that base, which is TP's claim. Vacuity appears three times from three sides: FV the danger (contradictory assumptions), TP the prover's remedy (construct one environment meeting the hypotheses), FS the specification-level check (ask for an execution where an intended event occurs); complementary, not repeated. Reentrancy is used by FV as the omitted-environment gap and by TP as how an environment step covers it; complementary. (3) MC / FS, temporal properties: MC owns the logics (LTL/CTL), the safety/liveness search shapes and fairness; FS owns what a protocol specification says (prohibitions, eventual obligations, orderings), its two written forms and refinement, and that liveness depends on stated environment assumptions. MC's fairness (scheduler) and FS's delivery assumptions (network) are different assumptions. Nit: FS never names safety and liveness, so the two records describe the same split in different vocabulary; optional fix in FS's temporal paragraph: 'They express prohibitions that apply at each point (safety properties) ... obligations that must eventually be met (liveness properties) ...'. (4) SE / MC, bounding and exploration: SE bounds loops, path length and time and merges paths at joins; MC bounds processes, channels, values and depth and merges symmetric states; SE's 'paths can far outnumber the distinct states they produce' draws the boundary. No shared argument. (5) SA / SE / FV, soundness and silence: 'sound' is used consistently in the over-approximating sense everywhere it appears (SA's definition; MC's abstraction and symmetry reduction; TP's soundness of a semantics); SA alone notes the bug-finding sense and SE says 'under-approximates' without using 'sound', so there is no clash. FV's inclusion condition, MC's pass-preserving abstraction and SA's sound analysis are one principle applied at three layers (system/model, model/abstraction, program/analysis). Silence: FV (inconclusive run establishes nothing), SE (no report is evidence from explored paths; exhaustive only under stated conditions), SA (silence of a skipping tool vs a sound one; nothing about unasked properties) are each tool-specific; the shared point that only checked properties count is one clause each in SE and SA and is owned by FV's specification example. Minor repetition found: FV and FS both make the argument that a guarantee quoted without its assumptions overclaims, with parallel examples. FV (trusted-base paragraph): 'examples are an honest majority of validators, messages delivered within a known delay ... A claim that a system is formally verified is therefore incomplete until it names what was verified, against which specification, under which assumptions and with which tools.' FS (environment paragraph): 'for example that each message sent between honest nodes is eventually delivered, or that validators holding more than two thirds of the stake follow the protocol ... The assumptions belong to the specification's meaning, and a guarantee quoted without them claims more than was specified.' FV also has 'A property proved for callers that supply valid inputs is silent about invalid ones', close to FS's 'if the precondition did not hold, the specification promises nothing'. Each sits in its own claim (FV trusted base; FS what specifications state), so it is not leakage, but the overclaim conclusion is said twice. Proposed fix (FS): end that paragraph at 'The assumptions belong to the specification's meaning.' and drop ', and a guarantee quoted without them claims more than was specified', leaving the overclaim conclusion to FV. Contradictions: none found on what 'sound' means, whether a bounded pass covers executions of any length (FV's limit-relative statement and MC's configuration/depth distinction agree), or what a counterexample proves (fails in the model; may be spurious against the system or the original model). Terms: model, specification, property and bound are used compatibly. Spelling nit: the six records mix -ise and -ize (TP 'generalised', SA 'summarised' vs MC 'recognizes', FS 'finalized') and use British 'behaviour', 'modelled', 'artefact' while the parent and the corpus are predominantly American ('behavior' about 200 times); proposed fix is a pilot-wide decision, not a per-record repair. Example reuse: the agreement property 'no two nodes decide different values' appears in MC (a safety example) and TP (the non-inductive invariant); cosmetic. Template repetition: definitions open distinctly ('is the use of', 'is an automatic technique', 'establishes properties by', 'analyses a program by', 'examines a program's code', 'states what a system must do'); second paragraphs open differently. MC and SE share an arc (mechanism, explosion, mitigations, result, what absence shows) and close cost openers ('The cost of exploration grows' / 'The cost lies in the number of paths'); the arc follows from parallel planned claims and the concepts' real kinship as exhaustive explorations, and the content of each step differs, so accepted. All six are prose; each whyProse is concept-specific. The strongest structure candidates read together are the concolic loop (SE) and counterexample-guided refinement (MC), both recurrences that a cycle block could show; each is one or two sentences inside a paragraph whose substance is the trade-off around it, so prose is defensible and no repair is proposed.",
+    "resolutions": [],
+    "records": {
+      "formal-verification": "9ec4329f50527a51146ec378e934a9b0de53356abaaac99e7793f98cd8723fb0",
+      "model-checking": "a5cb8885ad343973a69c5aeb3c98e359a66809084e2d832a6d951f3a2b279670",
+      "theorem-proving": "b68930cda37dd82b93ade6599ba59109452eb1c376f89fc4b6fea27ef53517ab",
+      "symbolic-execution": "1ed3889e5419400744871e7ba3626e55e9850c6c871f2b7b5c5271283048d31d",
+      "static-analysis": "030cdfb4f3c02fdec9f5079c2f9256b08286c3f43510c272e4d0383dcd5a4c3a",
+      "formal-specifications": "dbd07402e8ce28ebca6f132df9de34e1bbce61808dae25eb728137184f1cb61d"
+    }
+  }
+}
