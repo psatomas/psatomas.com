@@ -368,4 +368,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "guardians",
   "emergency-upgrades",
   "circuit-breakers",
+  "atomic-swaps",
+  "hashed-timelock-contracts",
+  "two-phase-commit",
+  "partial-failures",
+  "atomicity-guarantees",
 ];

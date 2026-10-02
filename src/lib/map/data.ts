@@ -17362,6 +17362,185 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "atomic-swaps-content",
+      conceptId: "atomic-swaps",
+      definition:
+        "An atomic swap exchanges assets between two parties on different chains so that either both transfers take effect or neither does, without either party having to trust the other or an intermediary.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The problem a swap solves is the first move. Two chains generally do not verify each other's state, so a plain exchange between them needs one party to send first, and that party is exposed to the other never sending. Trades between strangers usually settle this exposure with trust, either in the counterparty or in an intermediary such as an exchange that takes custody of both assets and settles the trade on its own books, and can then freeze, lose or misuse them. A swap instead makes each transfer conditional on the other and leaves the enforcement to the chains, so that an honest party who follows the protocol either receives the other asset or keeps its own. That outcome is conditional: it holds while the chains enforce the conditions as written and each party meets what the construction demands of it, and those demands differ between the families of construction.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hash-locked swaps, realized as hashed timelock contracts, carry the link between the legs in a contract on each chain. They need both chains to run contracts that can check a hash and enforce a deadline, and they need both parties to remain responsive until the swap completes or unwinds. Adaptor-signature swaps move the link out of contracts and into signatures. Each leg is held under keys the two parties control jointly, and the signature that completes one leg is built so that publishing it reveals the secret the other party needs to complete its own. The chains then need little more than ordinary signature checks, so the construction reaches chains that cannot express a hash lock, and on chain the two legs can look like plain payments with nothing visible connecting them. Its assumptions move into the cryptography: the signature scheme on at least one chain must support adaptor signatures, the other leg must be claimable with the secret that signature reveals, and where the chains use different elliptic curves the parties must also prove to each other that one secret underlies both sides. It still needs a deadline, enforced on at least one chain, to unwind a swap that a party abandons, and so it asks comparable responsiveness of both parties.",
+        },
+        {
+          kind: "paragraph",
+          text: "In both of those families neither asset leaves its chain: each changes owner where it already is, which separates them from a bridge transfer. The third family brings the exchange to one place instead. When both assets exist on one chain, natively or as representations brought there, or when the parties' chains settle to a common layer able to apply transfers on both in one step, the exchange can be a single transaction that the layer applies whole or rejects. Nothing sits locked while one party waits on the other, so there are no refunds to claim and no deadline a party must be online to meet. The assumptions move to the layer and to what the assets on it are: atomicity holds where the exchange settles, and an asset that arrived there through a bridge is only as sound as the bridge that issued it. Sharing a settlement layer is not enough on its own, since the layer must actually execute both legs together, which chains that merely post their results to the same base chain do not obtain by default.",
+        },
+        {
+          kind: "paragraph",
+          text: "Atomicity covers execution and nothing before it. The rate and the amounts are agreed before the swap begins, and the swap enforces them without discovering them, so price discovery happens elsewhere, in order books, in quotes from market makers or in negotiation. Nor does a swap find the other party: someone willing to take the opposite side has to be found first, and the venue that does the matching sits outside the swap. A design can use a venue to find the trade and a swap to settle it, and the venue then need not take custody of either asset.",
+        },
+        {
+          kind: "paragraph",
+          text: "A swap also offers no protection from the free option. The hash-locked and adaptor-signature families both leave a stretch in which one party's asset is locked while the other can still decide whether to complete, and that decision is an option on the two assets' prices, granted without payment. A construction that binds one party while the other is still free to choose leaves the option in some form, including a signed order that a counterparty may fill until it expires. Some designs price it, charging the party that holds the option a premium it forfeits to the other if it lets the swap lapse. From outside, an exercised option looks like an abandoned swap: a counterparty that never completes may have gone offline or may have chosen to walk away. In both cases atomicity holds and nothing is exchanged, and an honest party that stays responsive recovers its asset, but not the trade it meant to make or the use of the asset while it was committed.",
+        },
+      ],
+    },
+    {
+      id: "hashed-timelock-contracts-content",
+      conceptId: "hashed-timelock-contracts",
+      definition:
+        "A hashed timelock contract locks an asset on one chain under two spending conditions: its intended recipient can claim it by presenting a secret whose hash matches the one fixed in the contract, and once a deadline has passed its owner can take it back instead.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "How the two conditions are written depends on what the chain can express. On a chain with a small script language, such as Bitcoin, the locked output carries a script with two spending branches: one requires a value whose hash equals the stored hash together with the recipient's signature, and the other requires the owner's signature in a transaction the chain accepts only once a set block height or time has been reached. On a chain with general smart contracts, a contract holds the asset along with the hash, both parties' addresses and the deadline, and offers a claim function that checks the secret and pays the recipient, and a refund function that pays the owner once the deadline has passed. The two forms can differ at the deadline itself. A script's hash branch commonly carries no time condition, so after the deadline the claim and the refund are both valid and whichever is confirmed first takes the asset, whereas a contract can close the claim path at the deadline and leave only the refund.",
+        },
+        {
+          kind: "flow",
+          label: "A hashed timelock exchange across two chains, ending in claims or refunds",
+          stages: [
+            ["Initiator chooses a secret and shares only its hash"],
+            ["Initiator locks its asset on chain A under the hash, refundable after the long deadline"],
+            ["Counterparty, once that lock is final, locks its asset on chain B under the same hash, refundable after the short deadline"],
+            [
+              [
+                "Initiator, once chain B's lock is final, claims there before the short deadline and so reveals the secret",
+                "Counterparty reads the secret from chain B and claims on chain A before the long deadline",
+              ],
+              [
+                "Initiator does not claim in time",
+                "Counterparty refunds on chain B after the short deadline",
+                "Initiator refunds on chain A after the long deadline",
+              ],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The order of the deadlines follows from who holds the secret. The initiator chose it and decides when it becomes public, so the counterparty's lock has to expire first: if the initiator's own refund opened no later than that, the initiator could claim at the last moment and take its asset back before the counterparty could use the revealed secret. The gap between the two deadlines must cover more than the time to submit a transaction. Within it the counterparty has to notice the claim, get its own claim included on the other chain even while fees rise and blocks fill, and see that claim become final there. Each deadline is also counted in its own chain's units, block heights or block timestamps, which advance at different and uneven rates on the two chains, so the gap has to absorb that drift as well. A gap too short for all of this leaves the counterparty exposed even when both contracts are written correctly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Confirmation and finality times bound each step, not only the gap. A lock that can still be reorganized away is not yet a commitment: a counterparty that locks against it, or an initiator that reveals the secret against the counterparty's lock, risks the other leg vanishing after its own asset is committed or its secret is public. The end of the exchange is exposed in the same way. If a claim confirmed shortly before its deadline is undone by a reorganization after the deadline has passed, the owner's refund can take its place, so a party that claims close to a deadline has not secured the asset until its claim is final. Waiting for finality at each step lengthens the whole exchange, and the deadlines have to be long enough to absorb those waits on both chains.",
+        },
+        {
+          kind: "paragraph",
+          text: "Safety margins are paid for in locked capital. Each asset stays committed until it is claimed or its deadline passes, the initiator's for longest, and wider safety margins lengthen the locks. Abandoning an exchange costs the party that walks away little beyond transaction fees, while the other party's asset stays frozen until its deadline. A counterparty that does not lock after the initiator has locked ties up the initiator's asset for the full long deadline without committing anything of its own; an initiator that does not claim ties up the counterparty's asset until the short deadline, though at the price of its own longer lock. Repeated across many exchanges, such griefing can hold a liquidity provider's capital idle at little cost to the griefer. The same deadlines set how long the free option lasts, since the initiator can delay its claim until the short deadline nears.",
+        },
+        {
+          kind: "paragraph",
+          text: "The shared hash is what makes two separate contracts one exchange, and the link has costs of its own. Both chains have to support a common hash function, and both contracts have to accept the same secrets. If one chain rejected a secret the other accepted, for instance one longer than its script allows, the party that chose it could claim where the secret works while the other party could not use it on its own leg, which is why implementations commonly fix the secret's length on both sides. The hash also becomes public on both chains, on some when a leg is locked and on others only when it is claimed, and the secret appears on both once used, so anyone watching can link the two legs as one trade, and the parties' addresses with them. A secret used once is public from then on, so each exchange needs a fresh one.",
+        },
+      ],
+    },
+    {
+      id: "two-phase-commit-content",
+      conceptId: "two-phase-commit",
+      definition:
+        "Two-phase commit is a protocol for applying one change across several participants: a coordinator first asks each participant to prepare the change and vote on whether it can commit, then tells all of them to commit if all voted yes, and to abort otherwise.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A yes vote is a promise, and it costs the participant its freedom to decide. Until it votes, a participant can still refuse, and the coordinator treats a refusal, or a vote that does not arrive, as a no. Once it has voted yes, the protocol no longer lets it back out on its own: the coordinator may already have collected the remaining votes and decided to commit, and other participants may already have applied the change, so a unilateral abort could leave the change applied in some places and not others. Nor can it commit on its own, because another participant may have voted no, or the coordinator may have stopped waiting for a missing vote and decided to abort. From its vote until the decision reaches it, the participant is in doubt. It knows its own vote but not the outcome, and it has to keep what it prepared intact, neither applied nor released, until it learns which way the coordinator decided.",
+        },
+        {
+          kind: "paragraph",
+          text: "That doubt becomes a stall when the coordinator fails after collecting the votes. A participant in doubt can ask the others: one that has already received the decision can pass it on, and one that has not yet voted can refuse, which makes abort the only possible outcome. When all the participants it can reach have voted yes and none has heard the decision, the information they need may exist only at the coordinator, and they have to wait for it to recover, holding their prepared state meanwhile. For this reason two-phase commit is known as a blocking protocol: one failure at an unlucky moment can halt participants that are themselves working correctly.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recovery depends on what each side wrote down before it spoke. A participant records its prepared state durably before sending a yes vote, so that after a crash it restarts knowing it made a promise and resumes waiting, instead of discarding the prepared change. The coordinator records its decision durably before telling anyone, and writing a commit record is the point at which the change is committed, whatever then happens to the messages that announce it. A recovering coordinator reads its log and resends the decisions it finds there. Under a common convention, presumed abort, it treats a transaction with no recorded decision as aborted, since without a commit record no participant can have been told to commit, and it answers participants that ask about such a transaction accordingly. It keeps each recorded decision until all participants have acknowledged it, because one still in doubt may ask again after recovering from its own crash.",
+        },
+        {
+          kind: "paragraph",
+          text: "A log on one machine makes the decision durable but not available: while that machine is down, the record exists and nobody can read it. Replicating the coordinator's record through a consensus protocol keeps the decision readable as long as a majority of the replicas are running and can communicate, so the participants block only when no such majority is available, at the cost of a consensus round for each decision. A blockchain's ledger is a replicated record of this kind, which is part of what makes a chain a candidate coordinator.",
+        },
+        {
+          kind: "paragraph",
+          text: "Carried onto chains, the participants become contracts on different chains, and preparing becomes escrowing. Each contract takes custody of what the change will move and holds it under a rule that releases it one way on commit and the other way on abort, and the yes vote is the escrow transaction becoming final on its chain. A vote should count only once it cannot be reorganized away, since a lock that disappears after the coordinator has counted it leaves a commit that one participant cannot honour. An escrow locks only what can be placed in it. A balance moves into a contract easily, but a change that depends on state other users also update, such as a pool's price, can be prepared only if the contract holding that state offers a pending mode that holds off conflicting updates, which contracts not designed for it do not provide.",
+        },
+        {
+          kind: "paragraph",
+          text: "Who coordinates decides what the participants have to trust. A relayer, an off-chain service that watches for the escrows, decides and submits the outcome to each chain, keeps its log in its own storage, and the participants act on its word unless each contract can check the decision against evidence, such as proofs that all the escrows were made. Where a chain coordinates, a contract on it receives proofs of the escrows, applies the commit-or-abort rule itself and records the outcome on its ledger, so the decision is as durable as that chain's finality and as sound as the contract and its verification of the proofs it accepts. Relayers still carry proofs in both directions, but as messengers: while the contracts verify what they deliver, a relayer can delay a decision without being able to forge it. A decision on a ledger is also readable by anyone who follows that chain, so a participant in doubt can be resolved by whoever delivers a proof of the record, instead of waiting for one particular process to come back.",
+        },
+        {
+          kind: "paragraph",
+          text: "Timeouts stand in for a coordinator that may not come back. A database participant can wait in doubt for as long as its coordinator takes to recover, but an escrow holds someone's asset, and leaving it frozen for as long as an operator stays away is a risk few owners accept, so escrows commonly carry a deadline after which they refund. That refund is a participant in doubt deciding abort alone, the move the protocol otherwise forbids, and it keeps atomicity only if the coordinator has not decided commit and can no longer do so. A design can arrange this by ordering time: the coordinator may decide commit only up to a cutoff, and each escrow's deadline falls after that cutoff by enough to deliver a proof of the decision and see the commit become final on the escrow's chain, so that an escrow still in doubt at its deadline can take the absence of a commit as an abort. If a commit decision exists but does not reach some escrow before its deadline, because relayers are offline or the chain is congested, that escrow refunds while others commit, and the result is a partial failure rather than a blocked commit. Timeouts thus trade blocking for a dependence on timely delivery: the participants' assets are released, and atomicity holds only while the timing assumptions do.",
+        },
+      ],
+    },
+    {
+      id: "partial-failures-content",
+      conceptId: "partial-failures",
+      definition:
+        "A partial failure is the outcome of a cross-chain action in which some of its legs take effect on their chains and others do not, leaving a combined state that the action was not meant to produce.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Three forms recur, differing in what happened to the leg that did not take effect, and each leaves a different trace. A reverted leg was included on its chain but its execution failed, because a condition it checked no longer held, such as a balance already spent or a price moved past the limit the leg allowed, or because the transaction ran out of gas. The chain records the attempt and applies none of its effects, apart from any fee it charges for the failed execution, so the leg's absence is definite there. A stalled leg has not reached execution. Its transaction waits unincluded while fees rise, or the message that would trigger it goes undelivered because a relayer is offline, a bridge is paused or its signers do not sign, or the destination chain has halted. A stalled leg may still execute later, and it becomes a definite failure only when a timeout, where the design has one, rules it out. A leg reorganized away was confirmed and then dropped when its chain switched to a branch without the block that held it; it may be included again, fail on re-execution or disappear, and the other legs may already have completed against it. Faults in the infrastructure between the chains, a relayer that crashes or a bridge whose contracts or signers fail, produce these same forms. Occasionally the cause is an adversary that withholds or delays a leg: a counterparty that does not submit its side, a relayer that holds a message back, or a block producer that leaves a transaction out. The result is a stalled leg like any other, and nothing on the chains marks it as deliberate.",
+        },
+        {
+          kind: "paragraph",
+          text: "The state persists because the chains finalize their legs independently. Each chain applies its own transactions under its own rules, and whatever coordinated the action, no shared commit can take back a leg that its own chain has already finalized because another leg failed. A partial failure therefore shows up as legs in different conditions at once: some final, others reverted, still pending, or confirmed but not yet final. Making the legs consistent again takes new transactions, the territory of compensating actions and rollbacks, and until those complete, the partial state is the actual state of the chains.",
+        },
+        {
+          kind: "paragraph",
+          text: "Its direct impact is on value, which ends up stranded or duplicated. Funds are stranded when the completed leg took them from one place and the failed leg has not delivered them to another: an asset locked or burned on its source chain with nothing released or minted on the destination, or a payment made for an asset that has not arrived. Funds are duplicated when the same value takes effect twice. A bridge that mints on the destination against a deposit later reorganized away on the source has issued units with nothing behind them, and unless the deposit is included again, the depositor still holds the original. A leg resubmitted after it was presumed lost can also land alongside the first attempt, if that attempt had only stalled and nothing, such as a nonce or a message identifier accepted once, rejects the second.",
+        },
+        {
+          kind: "paragraph",
+          text: "Detecting a partial failure means following each leg through inclusion, confirmation and finality on its own chain, which a single chain's view does not cover. A contract sees only the chain it runs on and learns about other chains through messages or proofs that relayers may deliver late or not at all, so the widest view belongs to off-chain observers that follow all the chains involved: the user's wallet, the relayers, a bridge's monitoring, or an independent watcher. A party that follows only its own chain can see that its leg has completed without learning whether the other leg reverted or is merely pending. Nor are the forms equally visible. A revert can be seen by anyone following its chain as soon as the failing transaction is included. A stall shows only as an absence, and an absence cannot by itself tell a late leg from one that will not come; it becomes a failure when a deadline or expiry makes the leg impossible, and a resubmission before then risks duplicating it. A reorganization can be seen only afterwards, by watchers that follow the chain's fork choice and notice that a leg they saw confirmed is no longer there. Each observation stays provisional until the leg it concerns is final: an apparent partial failure resolves if a stalled leg lands, and an apparent success becomes one if a confirmed leg is reorganized away. When the relayer or bridge is itself the faulty component, the system that would report the failure may be the one that missed it, and the failure is then noticed only if someone independent of it is watching.",
+        },
+        {
+          kind: "paragraph",
+          text: "While a partial failure stands, the risk sits with whoever has a final leg and is still waiting for its counterpart: the user whose deposit is locked on the source chain, the party to an exchange that delivered first, or the liquidity provider that paid out on the destination in expectation of a deposit that then failed. Duplication moves the risk elsewhere. Units minted without backing leave the asset's holders with more claims than reserves, so the loss can fall on those who redeem last or on the bridge if it covers the shortfall. The partial state can also be exploited. A system that acts on a leg once it is confirmed rather than final, by releasing collateral, crediting a balance or minting a representation, can be made to pay out by someone who arranges for that leg to be reorganized away, which turns a partial failure into a deliberate gain wherever reorganizing the source chain costs less than the payout. Where anyone can deliver a stalled message and it carries no deadline, its delivery can be timed so that the leg executes when its outcome most favours whoever delivers it, rather than under the conditions its sender expected. The exposure lasts as long as the partial state does, and it widens the longer detection takes.",
+        },
+      ],
+    },
+    {
+      id: "atomicity-guarantees-content",
+      conceptId: "atomicity-guarantees",
+      definition:
+        "An atomicity guarantee is a system's promise about the combined outcome of a cross-chain action when one of its legs fails: which end states can occur, for whom the promise holds, and under which assumptions.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The guarantees in use form a spectrum rather than a yes-or-no property, ordered by how much of a failure they hide from the parties. The strongest leaves no state in which some legs have taken effect and others have not; the next lets such a state exist but fixes how it ends; the weaker ones promise a later repair, or nothing. Strength is bought with shared infrastructure: the more of a failure a guarantee hides, the more of the legs a single component has to handle.",
+        },
+        {
+          kind: "comparison",
+          label: "How cross-chain guarantees differ when a leg fails",
+          dimensions: ["If a leg fails", "What it relies on", "Window it leaves open"],
+          alternatives: [
+            { name: "All or nothing", values: ["No leg takes effect; the action is rejected whole", "All the legs ordered and executed together by one system, such as a common settlement layer applying them in one step", "None between the legs; the result is as final as that system"] },
+            { name: "All or refund", values: ["Locked legs unwind and each party recovers what it committed", "Deadlines enforced on each chain, and parties able to act before them", "Assets frozen until claimed or refunded; a party late to act is exposed"] },
+            { name: "Eventual compensation", values: ["The completed leg stands until a later action reverses or refunds it", "Honest, live relayers or an operator that detect the failure and fund the repair", "From the failure until the repair lands, unbounded unless the system states a bound"] },
+            { name: "Best effort", values: ["Whatever the legs did stays; no repair is promised", "Each chain and whatever carries messages between them", "Open until someone resolves the leftover state, if anyone does"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A claim of atomicity is read for three things its label leaves out, and the first is the failure it covers. Each guarantee is stated against a set of failures it handles, such as a leg that reverts, a party that goes offline or a relayer that stops, and a failure outside that set does not produce a weaker form of the same guarantee: the guarantee then says nothing about the outcome, which is whatever the legs happen to do. A guarantee resting on deadlines covers a counterparty that walks away, but not a chain congested or halted long enough that an honest party cannot act before its deadline; a compensation scheme covers a reverted leg, but not a relayer that reports a failed leg as completed. Scope matters in the same way. A route that bridges an asset and then trades it may be atomic within the trade and not across the bridge, and a guarantee made by one step does not extend to the steps around it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The second is the window the guarantee leaves open: the time during which the outcome is unsettled, assets are held, or a state the guarantee is meant to rule out can be observed. A guarantee can end correctly and still leave assets locked or legs mismatched for a long stretch, so how long that stretch can last, and whether the system bounds it at all, is part of what is promised. The window is also where atomicity gets confused with eventual consistency. Eventual consistency is a promise about where the state ends up once repair has run its course; atomicity restricts which states can exist along the way. A system that repairs failed actions after the fact can truthfully claim the first and not the second, and its repair carries conditions of its own: someone has to notice the failure, fund the reversal and see it confirmed.",
+        },
+        {
+          kind: "paragraph",
+          text: "The third is who bears that gap. A guarantee is made to someone, and it commonly protects a party that follows the protocol and stays responsive rather than the action as a whole, so a party that misses its deadline can lose its side even though the guarantee was honoured for everyone who acted in time. Designs also move the gap instead of closing it. A transfer that a liquidity provider pays out on the destination before the source leg is final can look close to all or nothing from the user's side, because the provider holds the exposure until it is repaid; a promise of compensation from a reserve places the loss on the reserve and on whoever relies on its solvency. Reading a claim means finding the party left holding the intermediate state and asking whether it knows, and whether it is paid for doing so.",
+        },
+        {
+          kind: "paragraph",
+          text: "Claims phrased in terms of inclusion need the same care. That the legs of an action are included together, ordered as one unit across chains, is a statement about inclusion; that they all take effect is a statement about execution, and a claim of one is not by itself a claim of the other. Whether a given sequencing arrangement, by including the legs together, also makes them take effect together, as all or nothing requires, is a question about shared sequencing itself, and a guarantee that rests on it is only as strong as the answer.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
