@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "group": "virtual-machines",
+  "domain": "computation-execution",
+  "parentConceptId": "virtual-machines",
+  "basis": {
+    "membership": "85619c199a8f08fc21dea1274f20c5b856f2bd095b9289fdcb7cfc6f04ec93ce",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "virtual-machines": "58c42b2866b2e8e7ef494601fae1d75509c393d4ef2a52de7bd3374a6601068b"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "evm",
+      "placementId": "evm",
+      "standing": "owned",
+      "claims": [
+        "the EVM's execution model: a stack machine with 256-bit words, metered operations, and storage, memory and calldata as distinct spaces",
+        "its call model: message calls, delegate calls and the context they carry",
+        "the consequences of its design for programs: expensive storage, bounded call depth and control passing to external code"
+      ],
+      "excludes": [
+        "evm-equivalence",
+        "evm-compatibility",
+        "zkevms",
+        "alternative-vms",
+        "reentrancy",
+        "gas"
+      ]
+    },
+    {
+      "conceptId": "wasm",
+      "placementId": "wasm",
+      "standing": "owned",
+      "claims": [
+        "WASM as a portable instruction format: a typed stack machine with structured control flow, validated before it runs",
+        "what a blockchain must constrain to run WASM deterministically: floating point, memory growth, metering and host functions",
+        "the languages and toolchains WASM opens to on-chain programs"
+      ],
+      "excludes": [
+        "alternative-vms",
+        "evm"
+      ]
+    },
+    {
+      "conceptId": "zkvms",
+      "placementId": "zkvms",
+      "standing": "owned",
+      "claims": [
+        "what makes a virtual machine provable: execution recorded as a trace that a proof system checks against constraints",
+        "instruction-set choices that keep proving cheap: RISC-style or custom instructions and field-friendly arithmetic",
+        "the costs of a zkVM: prover time and memory against verification cost, with zero knowledge optional"
+      ],
+      "excludes": [
+        "zkevms",
+        "snarks",
+        "starks",
+        "provers",
+        "recursive-proofs"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "evm": {
+      "model": {
+        "meaning": "The EVM is the virtual machine that executes Ethereum's smart contracts, defining their instructions, memory spaces and gas costs identically for every node.",
+        "kind": "technology",
+        "parents": {
+          "virtual-machines": "the EVM's own model and its consequences for programs, beyond the value of compatibility"
+        },
+        "claims": [
+          "the EVM's execution model: a stack machine with 256-bit words, metered operations, and storage, memory and calldata as distinct spaces",
+          "its call model: message calls, delegate calls and the context they carry",
+          "the consequences of its design for programs: expensive storage, bounded call depth and control passing to external code"
+        ],
+        "excludes": [
+          "evm-equivalence",
+          "evm-compatibility",
+          "zkevms",
+          "alternative-vms",
+          "reentrancy",
+          "gas"
+        ],
+        "placements": {
+          "evm": "one placement"
+        },
+        "fields": {
+          "designChoices": [
+            "256-bit words",
+            "stack machine",
+            "per-operation gas",
+            "separate storage, memory and calldata"
+          ],
+          "consequences": [
+            "costly storage",
+            "control passing to called contracts"
+          ],
+          "nearestAlternative": "WASM's general-purpose design",
+          "datedFacts": [
+            "avoid naming specific forks or opcode prices"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "design choices and their consequences pair best in sentences",
+        "relationship": "design choices against their consequences",
+        "level": "the technology itself; the parent compares virtual machines",
+        "territory": "EVM equivalence and compatibility are named, not explained",
+        "placements": "one placement"
+      }
+    },
+    "wasm": {
+      "model": {
+        "meaning": "WASM is a portable, validated instruction format that blockchains adopt as a virtual machine so that programs written in general-purpose languages can run on-chain.",
+        "kind": "technology",
+        "parents": {
+          "virtual-machines": "what blockchains must constrain to use WASM, beyond toolchains and performance"
+        },
+        "claims": [
+          "WASM as a portable instruction format: a typed stack machine with structured control flow, validated before it runs",
+          "what a blockchain must constrain to run WASM deterministically: floating point, memory growth, metering and host functions",
+          "the languages and toolchains WASM opens to on-chain programs"
+        ],
+        "excludes": [
+          "alternative-vms",
+          "evm"
+        ],
+        "placements": {
+          "wasm": "one placement"
+        },
+        "fields": {
+          "designChoices": [
+            "typed stack machine",
+            "structured control flow",
+            "validation before execution"
+          ],
+          "consequences": [
+            "determinism must be imposed on floats and memory",
+            "host functions define capability"
+          ],
+          "nearestAlternative": "the EVM's purpose-built design"
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a format and the constraints chains impose: argument, not shape",
+        "relationship": "portability against determinism",
+        "level": "the technology itself",
+        "territory": "alternative VMs are named, not explained",
+        "placements": "one placement"
+      }
+    },
+    "zkvms": {
+      "model": {
+        "meaning": "A zkVM is a virtual machine designed so that its execution can be proven, letting anyone verify a computation's result without re-running it.",
+        "kind": "technology",
+        "parents": {
+          "virtual-machines": "what makes a VM provable and what it costs, beyond suitability for proving"
+        },
+        "claims": [
+          "what makes a virtual machine provable: execution recorded as a trace that a proof system checks against constraints",
+          "instruction-set choices that keep proving cheap: RISC-style or custom instructions and field-friendly arithmetic",
+          "the costs of a zkVM: prover time and memory against verification cost, with zero knowledge optional"
+        ],
+        "excludes": [
+          "zkevms",
+          "snarks",
+          "starks",
+          "provers",
+          "recursive-proofs"
+        ],
+        "placements": {
+          "zkvms": "one placement"
+        },
+        "fields": {
+          "designChoices": [
+            "execution trace",
+            "constraint system",
+            "proving-friendly instruction set"
+          ],
+          "consequences": [
+            "heavy proving",
+            "light verification"
+          ],
+          "nearestAlternative": "the zkEVM's compatibility-first design"
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a cost trade-off and its causes, carried by prose; the parent already holds the virtual-machine tensions",
+        "relationship": "prover cost against verification cost",
+        "level": "the technology itself",
+        "territory": "zkEVMs and proof systems are named, not explained",
+        "placements": "one placement"
+      }
+    }
+  }
+}
