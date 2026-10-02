@@ -196,3 +196,21 @@ unauthored.
 **Each authored concept** is audited against exactly its record, with every
 signal resolved, and **each group** carries a group audit bound to its
 members' records.
+
+## Expansion
+
+The render check (`npm run test:map:render`) enters every placement by URL.
+L2 adds `npm run test:map:expansion -- <concept-id>...`
+([`l2-expansion.mts`](../../e2e/map/l2-expansion.mts)), which enters every L2
+placement the way a reader does. At 1280 and 375 pixels it:
+
+1. opens the parent L1 context and waits for its exposition to settle;
+2. checks the L2 row is closed, then activates it;
+3. checks the row becomes the context (URL, `aria-current`) and opens
+   (`aria-expanded`);
+4. checks the exposition settles (on `aria-busy`, never a fixed wait) and
+   opens with the concept's own definition;
+5. checks nothing overflows.
+
+An L2 run's render stage runs both checks for every placement of every
+concept it authored.
