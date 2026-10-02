@@ -1,0 +1,314 @@
+{
+  "version": 1,
+  "group": "virtual-machines",
+  "domain": "computation-execution",
+  "parentConceptId": "virtual-machines",
+  "basis": {
+    "membership": "85619c199a8f08fc21dea1274f20c5b856f2bd095b9289fdcb7cfc6f04ec93ce",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "virtual-machines": "58c42b2866b2e8e7ef494601fae1d75509c393d4ef2a52de7bd3374a6601068b"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "evm",
+      "placementId": "evm",
+      "standing": "owned",
+      "claims": [
+        "the EVM's execution model: a stack machine with 256-bit words, metered operations, and storage, memory and calldata as distinct spaces",
+        "its call model: message calls, delegate calls and the context they carry",
+        "the consequences of its design for programs: expensive storage, bounded call depth and control passing to external code"
+      ],
+      "excludes": [
+        "evm-equivalence",
+        "evm-compatibility",
+        "zkevms",
+        "alternative-vms",
+        "reentrancy",
+        "gas"
+      ]
+    },
+    {
+      "conceptId": "wasm",
+      "placementId": "wasm",
+      "standing": "owned",
+      "claims": [
+        "WASM as a portable instruction format: a typed stack machine with structured control flow, validated before it runs",
+        "what a blockchain must constrain to run WASM deterministically: floating point, memory growth, metering and host functions",
+        "the languages and toolchains WASM opens to on-chain programs"
+      ],
+      "excludes": [
+        "alternative-vms",
+        "evm"
+      ]
+    },
+    {
+      "conceptId": "zkvms",
+      "placementId": "zkvms",
+      "standing": "owned",
+      "claims": [
+        "what makes a virtual machine provable: execution recorded as a trace that a proof system checks against constraints",
+        "instruction-set choices that keep proving cheap: RISC-style or custom instructions and field-friendly arithmetic",
+        "the costs of a zkVM: prover time and memory against verification cost, with zero knowledge optional"
+      ],
+      "excludes": [
+        "zkevms",
+        "snarks",
+        "starks",
+        "provers",
+        "recursive-proofs"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "evm": {
+      "model": {
+        "meaning": "The EVM is the virtual machine that executes Ethereum's smart contracts, defining their instructions, memory spaces and gas costs identically for every node.",
+        "kind": "technology",
+        "parents": {
+          "virtual-machines": "the EVM's own model and its consequences for programs, beyond the value of compatibility"
+        },
+        "claims": [
+          "the EVM's execution model: a stack machine with 256-bit words, metered operations, and storage, memory and calldata as distinct spaces",
+          "its call model: message calls, delegate calls and the context they carry",
+          "the consequences of its design for programs: expensive storage, bounded call depth and control passing to external code"
+        ],
+        "excludes": [
+          "evm-equivalence",
+          "evm-compatibility",
+          "zkevms",
+          "alternative-vms",
+          "reentrancy",
+          "gas"
+        ],
+        "placements": {
+          "evm": "one placement"
+        },
+        "fields": {
+          "designChoices": [
+            "256-bit words",
+            "stack machine",
+            "per-operation gas",
+            "separate storage, memory and calldata"
+          ],
+          "consequences": [
+            "costly storage",
+            "control passing to called contracts"
+          ],
+          "nearestAlternative": "WASM's general-purpose design",
+          "datedFacts": [
+            "avoid naming specific forks or opcode prices"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "design choices and their consequences pair best in sentences",
+        "relationship": "design choices against their consequences",
+        "level": "the technology itself; the parent compares virtual machines",
+        "territory": "EVM equivalence and compatibility are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T18:09:38.521Z",
+        "note": "Audited against every quality-contract section B criterion at the single placement (Computation & Execution / Virtual Machines / EVM, leaf). Three minimal repairs. Accuracy: 'a call to an externally owned account, which has no code, runs nothing' is no longer true once accounts can carry delegated code, so it now reads 'a call to a user account that holds no code runs nothing', which is true over time and does not sweep in precompiles. Level and territory: the clause on how Solidity handles failed calls was removed because it describes language behaviour rather than what the EVM does, and it edged into how programs handle call results. The proxy-patterns gloss ('to keep one address and its storage while the logic behind them changes') was cut to a name only ('proxy patterns are built on it'). The call-model boundary holds: the record explains message calls, static calls and delegate calls only as the EVM's call model and the context a frame carries, which is an accepted claim. It leaves the message-calls concept its own detail: opcodes and their variants, call stipends, revert data, a transaction as the outermost message, and creation messages. Execution context is described only as what distinguishes call kinds. The excludes are respected. Gas is named as the metering unit only, with no account of units, pricing, fees or refunds. Reentrancy is named as one class of bug that follows from control passing to external code, and the record does not describe the state-ordering exploit. EVM equivalence, EVM compatibility, zkEVMs and alternative VMs are absent. WASM appears only as a one-clause word-width contrast, the model's nearest alternative, and zkVMs are not touched. The facts check out. The stack holds at most 1024 items and instructions reach only those near its top; call depth is limited to 1024 frames. Partial gas forwarding is stated without naming a fork, and so are the storage, memory and calldata distinction, static-call restrictions, logs that contracts cannot read, out-of-allowance halting with the call's changes undone, and termination guaranteed by metering. No forks, opcode prices or version numbers appear. 'One-byte instructions, some followed by the data they push' describes the current bytecode format and is accepted as the deployed design. There is no duplication of the Virtual Machines parent, which states only that instructions carry costs and that the EVM draws value from compatibility. Seven paragraphs move from instruction format to data spaces, metering, the call model, frame context and then consequences, and none is redundant. The approved prose design is followed.",
+        "resolutions": [
+          {
+            "id": "names-concept:97d08c7182",
+            "resolution": "Full nodes are named twice, as the holders that replicate storage. They are not explained."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "Gas (excluded) is named as the unit operations consume and calls forward. The record explains only the claimed metering: allowance, halting and relative cost ordering. It does not explain what gas is, its pricing, fees or refunds. Accepted."
+          },
+          {
+            "id": "names-concept:9df1bc09ca",
+            "resolution": "Message calls are named and described only as the EVM's call model (frame, context, success flag, failure scope, static and delegate variants), which is an accepted claim. Repairs removed the Solidity-level failure handling. Opcode-level variants, stipends, revert data and transaction-level messages remain for the message-calls concept. Accepted."
+          },
+          {
+            "id": "names-concept:ffa6f4d5e2",
+            "resolution": "Repaired: the clause explaining what proxy patterns achieve was cut. They are now only named as built on delegate calls."
+          },
+          {
+            "id": "names-concept:1d880b9d9f",
+            "resolution": "Reentrancy (excluded) is named once as a class of bug following from control passing to external code (a claimed consequence). Its mechanism, re-entry before state updates, is not described, not even by paraphrase. Accepted."
+          },
+          {
+            "id": "names-concept:e2f878fbac",
+            "resolution": "Smart contracts are named in the definition as what the EVM runs. They are not explained."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "'Virtual machine' is used only as the EVM's genus in the definition and is not explained. The parent concept is not restated."
+          },
+          {
+            "id": "names-concept:e5838a68ba",
+            "resolution": "WASM, a sibling, is named once as the model's nearest alternative, in a word-width contrast (native 32- and 64-bit values). None of WASM's claimed territory (typing, validation, determinism constraints, toolchains) is touched."
+          },
+          {
+            "id": "absolutes:2dcf9df8b0",
+            "resolution": "Each holds unconditionally within the EVM. Logs cannot be read by contracts. A contract cannot reach another's storage directly. Nodes cannot in general decide halting. A caller cannot assume nothing ran during a call. The allowance guarantees termination."
+          },
+          {
+            "id": "model-unused:ef14c60d40",
+            "resolution": "Not a defect. The model's datedFacts field is an avoidance instruction ('avoid naming specific forks or opcode prices'), not content to carry. The text follows it: no forks, opcode prices or versions."
+          }
+        ],
+        "recordFingerprint": "fb9d017c93157e499705145a509a6e09ce5d371eb4dda05168cee7b9d7571ba8"
+      }
+    },
+    "wasm": {
+      "model": {
+        "meaning": "WASM is a portable, validated instruction format that blockchains adopt as a virtual machine so that programs written in general-purpose languages can run on-chain.",
+        "kind": "technology",
+        "parents": {
+          "virtual-machines": "what blockchains must constrain to use WASM, beyond toolchains and performance"
+        },
+        "claims": [
+          "WASM as a portable instruction format: a typed stack machine with structured control flow, validated before it runs",
+          "what a blockchain must constrain to run WASM deterministically: floating point, memory growth, metering and host functions",
+          "the languages and toolchains WASM opens to on-chain programs"
+        ],
+        "excludes": [
+          "alternative-vms",
+          "evm"
+        ],
+        "placements": {
+          "wasm": "one placement"
+        },
+        "fields": {
+          "designChoices": [
+            "typed stack machine",
+            "structured control flow",
+            "validation before execution"
+          ],
+          "consequences": [
+            "determinism must be imposed on floats and memory",
+            "host functions define capability"
+          ],
+          "nearestAlternative": "the EVM's purpose-built design"
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a format and the constraints chains impose: argument, not shape",
+        "relationship": "portability against determinism",
+        "level": "the technology itself",
+        "territory": "alternative VMs are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T18:15:02.317Z",
+        "note": "Independent audit against quality-contract section B. Accuracy: typed stack machine, structured control flow (branches only to enclosing block ends or loop starts), validation guarantees and explicit runtime traps, NaN bit-pattern nondeterminism with rejection or canonicalisation, 65,536-byte pages and engine-permitted growth failure, instrumentation at deployment versus engine counting, super-linear compile time on crafted inputs, host functions and toolchains (LLVM for Rust/C/C++, Go, AssemblyScript) all checked correct. Three overclaims repaired: validation 'before it is stored' became 'usually when deployed, rejected before anything can call it' (some chains validate at a later activation step); the host-function paragraph no longer says everything goes through imports and the listed operations are 'all host functions' (actor-model chains pass sender and block data as entry arguments and take calls and events as returned messages), now 'typically host functions' plus one sentence on that alternative; a garbage-collected language 'generally' ships its runtime (WASM's standard GC extension makes 'has to' time-fragile). A generic 'entry point' was reworded to avoid colliding with the distinct Entry Points concept (account abstraction). Call-nesting depth: kept; it is the same resource-exhaustion nondeterminism as memory growth (native stack overflow at an engine-dependent depth), one sentence, squarely within 'what a blockchain must constrain to run WASM deterministically', whose list reads as principal cases; the threads sentence is likewise within it. It does not touch the EVM's 1024-frame limit, which has a different cause. Territory: EVM named once as a one-attribute contrast (costs fixed in its specification), no gas schedule, allowance mechanics or frame semantics re-explained; gas never named or explained; nothing on proving (zkVMs); alternative VMs unnamed. Parent: builds on the parent's toolchains-and-performance line and its general determinism argument without restating sentences. Canonical validity: one L2 leaf placement, no positional language, true as stated there. Economy and progression: seven paragraphs, each distinct (format, validation, float determinism, memory and stack bounds, metering and compile cost, host interface, languages), moving from definition to constraints to consequences; prose decision matches the design and the record writes no structures.",
+        "resolutions": [
+          {
+            "id": "names-concept:ed0d2d3661",
+            "resolution": "Named, not explained: the EVM appears once as a contrast (a purpose-built machine that defines instruction costs in its specification) to motivate WASM's lack of built-in costs; its metering mechanism, gas and allowance semantics are not described."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "Named, not explained: 'virtual machine' appears only as the role blockchains adopt WASM in; what a virtual machine is stays with the parent."
+          }
+        ],
+        "recordFingerprint": "136d65c67c1f30716a70a5ce65601e2c9ed666af24904bd84846796643924e0c"
+      }
+    },
+    "zkvms": {
+      "model": {
+        "meaning": "A zkVM is a virtual machine designed so that its execution can be proven, letting anyone verify a computation's result without re-running it.",
+        "kind": "technology",
+        "parents": {
+          "virtual-machines": "what makes a VM provable and what it costs, beyond suitability for proving"
+        },
+        "claims": [
+          "what makes a virtual machine provable: execution recorded as a trace that a proof system checks against constraints",
+          "instruction-set choices that keep proving cheap: RISC-style or custom instructions and field-friendly arithmetic",
+          "the costs of a zkVM: prover time and memory against verification cost, with zero knowledge optional"
+        ],
+        "excludes": [
+          "zkevms",
+          "snarks",
+          "starks",
+          "provers",
+          "recursive-proofs"
+        ],
+        "placements": {
+          "zkvms": "one placement"
+        },
+        "fields": {
+          "designChoices": [
+            "execution trace",
+            "constraint system",
+            "proving-friendly instruction set"
+          ],
+          "consequences": [
+            "heavy proving",
+            "light verification"
+          ],
+          "nearestAlternative": "the zkEVM's compatibility-first design"
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a cost trade-off and its causes, carried by prose; the parent already holds the virtual-machine tensions",
+        "relationship": "prover cost against verification cost",
+        "level": "the technology itself",
+        "territory": "zkEVMs and proof systems are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-02T18:21:55.170Z",
+        "note": "Audited the 7-paragraph prose record (design: prose) against quality-contract §B at its single placement, Computation & Execution / Virtual Machines / zkVMs (leaf), reading the Virtual Machines parent record, the computation-execution domain sentence, the authored EVM and WASM siblings, and the placements of the other concepts it touches. Accuracy: the trace/constraint mechanism, memory checking, program identification by a hash, advice, concentrated constraint risk, RISC-style vs custom ISAs, prime-field arithmetic vs 32-bit and bitwise work, precompiles, field-friendly hashes, prover time and memory with segmenting, joined segment proofs, faster proving often yielding larger proofs, on-chain verification cost and optional zero knowledge are correct and hedged where they vary (typically, often, commonly, could, in the usual arrangement). Five minimal repairs were made: (1) the opening claim that a proof system in general checks constraints was narrowed to the proof systems zkVMs build on; (2) the boundary constraints no longer say the first row holds the program and inputs (inputs are commonly read during execution), but that further constraints bind the execution to its program, inputs and claimed output; (3) the integer-division advice example now includes the remainder-smaller-than-divisor check, without which the check as written was insufficient and contradicted the paragraph's own warning about constraint gaps; (4) the zero-knowledge paragraph drops the clause on how zero knowledge is obtained (randomness in the trace encoding), which explained the Zero-Knowledge concept's mechanism beyond what the 'ZK optional' claim needs; (5) paragraph two now attributes 'developers write ordinary code' to the universal constraint system rather than to program hashing. Boundaries: the zkEVM sentence ('zkEVMs face the same trade-off from the side of compatibility') is judged acceptable: it is the approved nearestAlternative, placing zkEVMs at the compatibility end of the tool-support vs proving-cost trade-off the paragraph has just explained, without any mechanism or definition of a zkEVM. SNARKs and STARKs are not named; 'succinct proof' is used only for the verification-cost claim. Execution Traces (Verifiable Computation) is explained only as the zkVM's trace checked against constraints, not as a general concept; Proving Costs only as prover time and memory driven by trace shape and ISA, not rollup proving economics; Proof Aggregation and Recursive Proofs only as the way segment proofs are combined, with no mechanism; Zero-Knowledge only as what the optional property hides and from whom. No parent sentence is restated (the parent's proving-cost tension is expanded, not repeated); EVM and WASM are not mentioned; no positional or dated language; the single placement is a leaf and the record stands alone there. Economy and progression: each paragraph carries a distinct step from mechanism to ISA and arithmetic costs to prover cost, verification and privacy; the length is justified by the three claims.",
+        "resolutions": [
+          {
+            "id": "names-concept:5ff432bceb",
+            "resolution": "Named, not explained: proof aggregation appears once as one of two ways segment proofs are combined into one; no mechanism is given and it is owned under ZK Rollups."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "Named, not explained: proof systems appear as what checks the constraints and as differing in prover/verifier cost split, both required by the claims; the opener was narrowed to the proof systems zkVMs build on so it no longer generalizes about proof systems as a whole."
+          },
+          {
+            "id": "names-concept:71c87012d1",
+            "resolution": "Excluded, named only: 'the prover' appears as the party bearing the cost and seeing the whole trace, which the cost and ZK-optional claims require; nothing explains what provers are, how they work or how they are operated."
+          },
+          {
+            "id": "names-concept:5308e83e2e",
+            "resolution": "Named, explained only for zkVMs: 'proving cost' is tied to trace shape, instruction set and arithmetic, the record's own claims; rollup proving-cost economics are untouched."
+          },
+          {
+            "id": "names-concept:a170d6c2c2",
+            "resolution": "Excluded, named only: recursive proofs appear once beside proof aggregation as a way to combine segment proofs; no gloss of how recursion works."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "Parent concept named in the definition ('a virtual machine designed so that...'); the record does not re-explain what a virtual machine is."
+          },
+          {
+            "id": "names-concept:82febaaef6",
+            "resolution": "Named, explained only as far as the claim requires: zero knowledge is stated to be optional, what it hides (private inputs beyond what the output implies) and from whom (verifiers, not the prover); the clause on how it is achieved was removed in repair."
+          },
+          {
+            "id": "names-concept:e77b84ce14",
+            "resolution": "Excluded, named only: the single sentence places zkEVMs at the compatibility end of the instruction-set trade-off as the approved nearest alternative; it gives no definition or mechanism of a zkEVM."
+          }
+        ],
+        "recordFingerprint": "2fb0ce92eb375f435af8af97a8ce4cda98461b371879e948dbf4f98dd5445740"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-02T18:38:45.418Z",
+    "note": "Group audit of evm, wasm and zkvms (all owned, all prose, seven paragraphs each), read side by side against the Virtual Machines parent. No blocking defect. Pairs checked. EVM/WASM: both describe themselves as stack machines and both gloss the term (operands taken from the stack, results pushed back); the overlap is one clause each and each leaf must stand alone, and the distinguishing content differs (untyped 256-bit words and no registers against typed values known at each point and structured control flow). Word size agrees: EVM's contrast that general-purpose formats such as WASM work natively on 32- and 64-bit values matches WASM's i32/i64 typing. Metering is explained once per machine, not as gas twice: EVM carries the gas allowance, out-of-allowance halting with changes undone and the halting-problem argument; WASM names the EVM only to say its costs are fixed by specification and then explains only what is specific to WASM (no intrinsic cost, instrumentation at deployment against engine counting, host-function and compile-time costs), and never names gas. It also explains how a WASM chain makes the parent's claim that each instruction carries a defined cost true, so there is no tension with the parent. Call-depth bounds appear in both but with different causes (EVM's 1024 contract frames against an engine's native stack), and neither ties them together, so there is no contradiction. Determinism is argued only in WASM (NaN bits, memory growth, threads, native stack depth), refining the parent's processor-difference argument. WASM/zkVMs: both rest part of their case on reusing established compilers (LLVM to WASM; RISC-V targets for zkVMs). They are two instances of the parent's compatibility against design-freedom tension. zkVMs gives it one subordinate sentence within its instruction-set claim, with no LLVM or language list, so the argument is not made twice. EVM/zkVMs: zkVMs never mentions the EVM's 256-bit word or Keccak; its points on costly bit operations, 32-bit wraparound and non-field-friendly hashes stay general. A reader could infer why proving the EVM is costly, but no member draws that inference, and zkEVMs get one boundary sentence. Alternative VMs (Scaling & Modular Systems / Execution Layers) are not explained collectively: WASM's portability-across-WASM-chains point and its toolchain benefit are about WASM itself, and no member makes the case for an execution layer leaving the EVM. Contradictions: none found. Template repetition: the openings differ (a named machine, a format, a class of machines). The arcs differ too: EVM is model, then calls, then consequences for programs; WASM is format, then validation, then the determinism constraints a chain imposes, then the gains; zkVMs is mechanism, then design choices, then prover and verifier cost, then the optional property. The equal paragraph count follows from three claims each, not from a copied skeleton, and each design gives its own whyProse. Minor, non-blocking items for the human reviewer: (1) zkvms, paragraph 2, 'a table with one row per step holding the program counter, the registers and the instruction being executed': read after two stack-machine members, this reads as if every zkVM were a register machine, but stack-based zkVMs exist. Proposed fix: 'holding the program counter, the registers or stack entries the step uses, and the instruction being executed'. (2) zkvms, paragraph 4, 'zkEVMs face the same trade-off from the side of compatibility': the parent's tensions label spells it 'tradeoffs', and the corpus prefers 'tradeoff' 27 to 9. Proposed fix: 'tradeoff'. (3) wasm writes 'executed on-chain' in its definition and 'stored on chain' in its last paragraph. Both occur in the corpus, so this is cosmetic. No British spellings appear in the three records. (4) This is a weakness of the approved design, not a defect. EVM paragraph 6 lists four dimensions a call frame carries (storage and balance acted on, caller seen, value, whether state may change) across three call kinds, and the static call sits in paragraph 5. That is a 3-by-4 comparison which prose spreads over two paragraphs, so a future revision could weigh a comparison block there.",
+    "resolutions": [],
+    "records": {
+      "evm": "fb9d017c93157e499705145a509a6e09ce5d371eb4dda05168cee7b9d7571ba8",
+      "wasm": "136d65c67c1f30716a70a5ce65601e2c9ed666af24904bd84846796643924e0c",
+      "zkvms": "2fb0ce92eb375f435af8af97a8ce4cda98461b371879e948dbf4f98dd5445740"
+    }
+  }
+}

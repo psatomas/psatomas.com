@@ -17829,6 +17829,114 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "evm-content",
+      conceptId: "evm",
+      definition:
+        "The EVM is the virtual machine that runs Ethereum's smart contracts, specifying the instructions they are compiled to, the spaces their data lives in and the cost of each operation, so that all nodes executing a contract reach the same result.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "EVM code is a sequence of one-byte instructions, some followed by the data they push, and the machine runs it as a stack machine: an instruction takes its operands from the top of a stack and pushes its result back, with no general-purpose registers. Each stack item is a 256-bit word, a width chosen so that a Keccak-256 hash fits in one item, with addresses and token balances fitting as well. Most processors, and general-purpose formats such as WASM, operate natively on 32- and 64-bit values; on the EVM a small integer still occupies a full word, so narrower types save nothing at the machine level, and arithmetic wraps around at 256 bits unless the compiler adds overflow checks. The stack holds at most 1024 items and instructions reach only those near its top, which limits how many local values a function can keep in play at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Data lives in separate spaces that differ in lifetime and in who may write them. Storage is a contract's persistent record: a map from 256-bit keys to 256-bit values, kept by every full node as part of the chain's state, and changed only by that contract's own code or by code it runs on its own behalf through a delegate call. Memory is a byte array that starts empty for each call and is discarded when the call returns, holding intermediate values and the data being prepared for a call or a return. Calldata is the read-only input a call arrives with, which by convention encodes the function to run and its arguments; the callee can read it but not change it. A contract cannot reach another contract's storage directly at all, only by calling that contract and receiving what its code chooses to return.",
+        },
+        {
+          kind: "paragraph",
+          text: "Operations are metered. Each instruction consumes a defined amount of gas, a call runs on a limited allowance, and execution that exhausts its allowance stops where it is, with the call's state changes undone. Metering is what lets the EVM accept loops and unbounded recursion in programs written by anyone: nodes cannot in general tell in advance whether a program halts, but they can count, and the allowance guarantees that execution ends. The charges are set to follow the burden an operation places on nodes, so arithmetic is cheap, reading state costs more, and writing new storage is among the most expensive things a program can do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Contracts interact through message calls. A call names a target account, supplies calldata, may transfer ether, and forwards part of the caller's remaining gas; the target's code then runs in a new frame with fresh memory, against its own storage, and with the caller's address as the sender it sees. A call to a user account that holds no code runs nothing and simply moves any ether. When the frame ends, the caller receives a success flag and any return data. A failing callee has its own changes undone, but its failure does not by itself undo the caller's: the caller reads the flag and decides whether to continue or fail in turn. A static call adds one restriction, that the callee and anything it calls may not change state, so a contract can read from another without letting it write.",
+        },
+        {
+          kind: "paragraph",
+          text: "What distinguishes the kinds of call is the context a frame carries: whose storage and balance the code acts on, which address it sees as its caller, what value arrived with the call, and whether it may change state. A delegate call keeps the caller's context and borrows only the callee's code. That code runs against the caller's storage and balance and sees the caller's own sender and value, as if the original call had arrived directly. Libraries are reused this way, and proxy patterns are built on it. The price is complete trust in the borrowed code: it can write any slot of the caller's storage, and since it identifies slots by position, caller and callee have to agree on what each slot holds.",
+        },
+        {
+          kind: "paragraph",
+          text: "Programs are shaped by these choices. Because storage persists, is replicated by every full node and is charged accordingly, contracts keep as little of it as they can: they pack several small values into one word, recompute what can be derived, and record history in event logs, which are cheaper to write but cannot be read back by contracts. Calls nest at most 1024 frames deep, and because a caller can forward only part of its remaining gas, deep nesting generally runs out of gas before it reaches that limit. Either way, a call can fail for reasons unrelated to the callee's logic, so code has to check the outcome of each call it makes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Calling another contract also hands control to code the caller did not write, and a plain ether transfer made by a call to a contract runs that contract's code as well. The callee runs with the gas it was forwarded, can fail or spend its allowance deliberately, and can make calls of its own to any contract before it returns. A caller therefore cannot assume that nothing else has run between making a call and receiving its result; reentrancy is one class of bug that follows from this.",
+        },
+      ],
+    },
+    {
+      id: "wasm-content",
+      conceptId: "wasm",
+      definition:
+        "WASM, short for WebAssembly, is a portable binary instruction format, checked before it runs, that some blockchains adopt as their virtual machine so that programs written in general-purpose languages can be compiled and executed on-chain.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The format was designed for running untrusted code in web browsers at close to native speed, and it is specified independently of particular processors and operating systems. A module declares its functions, a linear memory, its global variables and the imports it expects from its host. Execution follows a stack machine: instructions take their operands from an implicit stack and push their results onto it, but each value has a type, such as a 32- or 64-bit integer or floating-point number, and the types on the stack are known at each point in the code. Control flow is structured. Code is nested into blocks, loops and conditionals, and a branch can only leave to the end of an enclosing block or return to the start of an enclosing loop, so the format has no jumps to arbitrary addresses.",
+        },
+        {
+          kind: "paragraph",
+          text: "These choices make code checkable before it runs. Validation confirms that each function uses the stack consistently with its declared types, that each branch targets an enclosing block, that direct calls match the signatures of their targets, and that the module refers only to the memory, functions and imports it declares. Code that passes cannot underflow the stack or jump into the middle of an instruction. What is left for runtime are checks the format makes explicit, such as a memory access staying within linear memory or an indirect call matching its expected signature, and a failed check traps, stopping execution. Because types and block boundaries are known in advance, an engine can compile a validated module into native machine code efficiently, which is where much of its speed comes from. A blockchain usually validates a module when it is deployed, so malformed code is rejected before anything can call it, and the same step is a natural place to enforce the chain's own restrictions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Portability is not the same as determinism. The specification fixes the result of nearly all instructions, but it leaves a few outcomes to the engine, while a blockchain needs all nodes to reach the same result bit for bit. Floating-point arithmetic is the clearest case: results follow the IEEE 754 standard, but when an operation produces NaN, the not-a-number value, the bits it carries may differ between engines and processors, and a program that inspects them could diverge. Chains handle this in different ways. Some reject floating-point instructions when code is deployed; others allow them but have the engine replace each NaN result with one canonical value. Features whose results can depend on timing, such as threads that share memory, are generally left disabled.",
+        },
+        {
+          kind: "paragraph",
+          text: "Memory growth needs the same treatment. A module can enlarge its linear memory while it runs, in pages of 65,536 bytes, and the specification lets an engine refuse a request for more memory when its host is short of resources, so whether growth succeeds could depend on the machine. A chain removes that freedom by setting a fixed maximum, and often a charge for each page, so that a request succeeds or fails identically on all nodes. How deeply calls may nest needs a similar bound, because an engine would otherwise run out of its own native stack at a depth that varies between implementations.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where a purpose-built machine such as the EVM defines the cost of each instruction in its specification, WASM attaches no cost to its instructions, so a chain that adopts it has to add metering itself. One approach rewrites the module at deployment: at the start of each stretch of straight-line code, it inserts a charge for that stretch's cost, which stops execution once the allowance is used up. Structured control flow makes this rewriting straightforward, because the points where execution can enter or leave a block are explicit in the code. The other approach builds the counting into the engine, which charges as it executes. Either way the chain has to assign a cost to each instruction and host function, and it has to account for work done before execution starts. An engine that compiles modules to native code spends effort that grows with code size, and with some compilers grows faster than code size on crafted inputs, so chains bound module size, charge for compilation, or choose compilers whose running time stays predictable.",
+        },
+        {
+          kind: "paragraph",
+          text: "Everything a module does beyond computing on its own memory goes through the interface its host provides, and on a blockchain the chain decides what that interface offers. Reading and writing contract storage, learning which account made the call, reading information about the current block, emitting events, calling another contract and checking a signature are typically host functions, which the module imports and the node implements natively. Some chains instead pass call and block information as arguments to the exported function the chain calls, or have the contract return messages, such as calls to other contracts, that the chain carries out once it finishes. The host interface therefore defines what a contract is able to do. Each host function has to be deterministic and metered like the instructions themselves, and a costly operation such as hashing can be offered natively instead of being compiled into each module. The same interface limits portability: two chains that both run WASM share an instruction format but not necessarily a host interface, so a contract written for one generally has to be rebuilt against the other's host functions before it can run there.",
+        },
+        {
+          kind: "paragraph",
+          text: "In exchange, a chain gains access to languages and tools built for ordinary software. Rust, C and C++ compile to WASM through the LLVM compiler infrastructure, and languages such as Go and AssemblyScript have compilers that emit it, so contract authors can use established compilers, type checkers, test frameworks and libraries instead of a language made for one machine. Chains typically supply a software development kit that presents their host functions as library calls in the language. Not all of a language comes along. Parts of a standard library that assume an operating system, such as files, threads or the clock, are unavailable; libraries that rely on floating point or on randomness may need replacing; and a language with a garbage collector generally has to ship its runtime inside the module, enlarging code that is stored on chain and charged for. Rust is a common choice partly because it needs no such runtime and can produce compact modules. A familiar language does not change the setting, though: the chain's costs and host interface still shape how a program has to be written.",
+        },
+      ],
+    },
+    {
+      id: "zkvms-content",
+      conceptId: "zkvms",
+      definition:
+        "A zkVM is a virtual machine designed so that running a program on it can yield a proof of that run, which lets others accept the computation's result without executing it again.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The proof systems zkVMs build on check constraints, not programs, so a zkVM specifies its machine twice: as an instruction set that programs are compiled to, and as a fixed system of constraints intended to hold for correct steps of that machine and to fail for incorrect ones. Running a program records a trace, a table with one row per step holding the program counter, the registers and the instruction being executed. The constraints relate each row to the next, so that a row can follow its predecessor only in the way the instruction's semantics allow, and further constraints bind the execution to the program it runs, the inputs it reads and the output it claims. Memory does not fit into a row, so reads and writes are recorded as well, and additional constraints show that each read returns the value last written to its address. A proof system then establishes that the whole record satisfies these constraints, and the verifier receives the proof, not the trace.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because the constraints describe the machine rather than a particular program, one constraint system serves each program compiled for it, and developers write ordinary code instead of expressing each computation as constraints by hand. A program is typically identified by a hash of its code that the proof refers to, so a proof speaks about one specific program. The trace is supplied by whoever generates the proof and the constraints merely check it, which permits a useful shortcut: a value that would take many constraints to compute but few to confirm, such as the result of an integer division, confirmed by multiplying the quotient back, adding the remainder and checking that the remainder is smaller than the divisor, can be supplied as advice and checked. Writing the constraints once also concentrates risk. A gap that lets an incorrect step satisfy them could undermine proofs for all programs on the machine, and a sound proof attests only that the compiled code ran as the machine defines it, not that the code does what its author intended.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proving cost follows from the shape of the trace. Each executed step adds to the trace, and the constraints have to cover whichever instruction a step holds, so both the number of instructions in the set and the complexity of each weigh on proving. A small, regular instruction set in the RISC style keeps the constraints per row few and uniform. Adopting an established one such as RISC-V adds a practical benefit: existing compilers can already target it, so programs written in common systems languages can often be proven without being rewritten for the machine. Other designs define a custom instruction set around what is cheap to prove, giving up that tool support in exchange for shorter traces and fewer constraints. zkEVMs face the same trade-off from the side of compatibility.",
+        },
+        {
+          kind: "paragraph",
+          text: "Arithmetic matters as much as the choice of instructions. Constraints are equations over a finite field, most often a prime field, in which addition and multiplication wrap around a prime modulus rather than a power of two. Field addition and multiplication are what a proof checks most cheaply, while operations that ordinary processors take for granted are not native to such a field: a 32-bit addition has to show that its result wrapped correctly, and bitwise operations and comparisons generally require splitting values into bits or small pieces, or consulting precomputed tables. Some machines therefore make the field element their native word, which makes field arithmetic cheap but leaves programs that expect ordinary integers to emulate them. For costly operations that programs perform often, such as hashing or checking signatures, many zkVMs add dedicated instructions, often called precompiles, backed by constraints written for that one operation, which can take far fewer rows than running the same computation as ordinary instructions. The hash a program relies on matters for the same reason: functions designed for field arithmetic are much cheaper to prove than functions built from bit operations.",
+        },
+        {
+          kind: "paragraph",
+          text: "Even with these choices, the cost of a zkVM lands on the prover. Proving work grows at least in proportion to the number of steps executed, and each step costs far more to prove than to run, so a long computation demands both time and the memory needed to hold its trace and the encodings derived from it. zkVMs commonly bound that memory by splitting a long execution into segments that are proven separately. Each segment's proof commits to the machine state where the segment begins and ends, so consecutive segments can be checked to join up, and segments can be proven in parallel on separate machines, with the resulting proofs combined through proof aggregation or recursive proofs into a single one.",
+        },
+        {
+          kind: "paragraph",
+          text: "Verification is where the arrangement pays off. A verifier checks the proof against the program's identifier, the inputs and the claimed output, and with a succinct proof the check takes far less work than the execution did and grows slowly, if at all, with its length. Proof systems still divide the cost differently: those with faster proving often produce larger proofs that cost more to check, which matters when verification runs on a blockchain and is paid for in gas. A deployment therefore picks a point between prover cost and verification cost rather than minimizing both.",
+        },
+        {
+          kind: "paragraph",
+          text: "Zero knowledge is a separate property, and a zkVM may or may not provide it. When the aim is only to let others accept a result without re-running it, as when a rollup proves a batch of public transactions, there is nothing to hide, and leaving the property out keeps proving somewhat simpler and cheaper. When some inputs must stay private, the proof has to be made zero-knowledge, so that it reveals nothing about those inputs beyond what the output itself implies. That privacy holds against verifiers, not against the prover: in the usual arrangement, whoever generates the proof sees the whole trace, so handing proving to an outside service exposes private inputs to that service.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

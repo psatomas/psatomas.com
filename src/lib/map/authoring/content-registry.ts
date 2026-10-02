@@ -382,4 +382,7 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "verification-limits",
   "external-data-availability",
   "oracle-failure",
+  "evm",
+  "wasm",
+  "zkvms",
 ];
