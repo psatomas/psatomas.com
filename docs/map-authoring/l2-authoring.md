@@ -163,3 +163,36 @@ It flags, as audit attention, a window of at least ten records where:
 A prose majority is never flagged: prose is the expected default, not a
 target to diversify away from. A flag persisting across a whole slice pauses
 the campaign for calibration (see the campaign stop conditions).
+
+## Diff boundary
+
+Before anything is committed, an L2 run's diff is validated against its base
+([`diff.ts`](../../src/lib/map/authoring/l2/diff.ts)). It extends the domain
+run's content diff ([`diff-check.ts`](../../src/lib/map/authoring/orchestrator/diff-check.ts)).
+
+**What a run may change:**
+
+- `data.ts`, the registry and the generated view;
+- its own group files;
+- declared general fixes.
+
+**What a run may not do:**
+
+- change any existing record, L0, L1 or L2;
+- change taxonomy, relationships, mechanisms or paths;
+- change the generated view beyond `hasContent` flips at every placement of
+  the authored concepts.
+
+**The authored set is derived, never supplied:** every owned member of the
+run's groups whose design does not block it. Members it blocks stay
+unauthored.
+
+**Every other group file is byte-identical.** Each run group must be:
+
+- valid on its own terms;
+- not stale;
+- consistent with every plan.
+
+**Each authored concept** is audited against exactly its record, with every
+signal resolved, and **each group** carries a group audit bound to its
+members' records.
