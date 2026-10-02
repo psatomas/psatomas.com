@@ -1690,6 +1690,14 @@ test("exposition is normalized to ordered blocks: definition leads, no labelled 
   assert.equal(getMapConceptContentHref("foundations"), "/api/map/content/foundations");
 });
 
+test("the homepage's L0 projection is exactly the canonical 27 L0 entries, and taxonomy only", () => {
+  // The homepage preview ships this generated file instead of loading the
+  // knowledge model; regenerate it with `npm run map:generate`.
+  const text = readFileSync(new URL("./map-l0.generated.json", import.meta.url), "utf8");
+  assert.deepEqual(JSON.parse(text), getMapL0Entries(resolver), "map-l0.generated.json is stale: run npm run map:generate");
+  for (const content of mapKnowledge.content) assert.ok(!text.includes(content.definition), `no exposition of ${content.conceptId}`);
+});
+
 test("the /map domain index is the canonical 27 L0 entries, identical to the homepage's", () => {
   const entries = getMapL0IndexEntries(view);
   assert.equal(entries.length, 27);

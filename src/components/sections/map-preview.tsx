@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { getMapL0Entries } from "@/components/map/explorer-model";
-import { mapResolver } from "@/lib/map";
+import type { MapL0Entry } from "@/components/map/explorer-model";
+import l0Entries from "@/components/map/map-l0.generated.json";
 
 /**
  * MAP's homepage introduction. As with Systems/Research/Lab, the identity
  * plane is the environment's single gateway link and uses the same active
  * plane treatment. Below it, its sibling previews MAP's breadth through the 27
  * L0 domains, each a contextual entry link to /map?context=<placementId>. The
- * domains, their order, and their placement identities are read from the
- * canonical MAP model (server-side), so the homepage holds no second copy of
- * MAP identity. No tree, no disclosure, no internal scrolling.
+ * domains, their order, and their placement identities come from the L0
+ * projection that `npm run map:generate` derives from the canonical model, so
+ * the homepage holds no second copy of MAP identity and never loads the
+ * knowledge model or its exposition. No tree, no disclosure, no internal
+ * scrolling.
  */
 export function MapPreview() {
-  const domains = getMapL0Entries(mapResolver);
+  const domains: readonly MapL0Entry[] = l0Entries;
 
   return (
     <section
