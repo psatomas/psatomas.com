@@ -306,3 +306,35 @@ decision needed; `resume --decision ..` continues after a human decides.
 | Inventory problems | `start` refuses |
 | Slice-wide drift | `complete audit` stops once; resume with the calibration decision |
 | Verification failure; git, remote or PR mismatch; a PR that cannot merge | As for domain runs; the merge stage refuses anything but the validated PR |
+
+## Pilot
+
+The pilot ([`pilot.json`](../../src/lib/map/authoring/l2/pilot.json)) is the
+five groups chosen in [l2-analysis.md](l2-analysis.md#20-pilot), with 22
+owned concepts:
+
+- Emergency Governance;
+- Cross-Domain Atomicity (in Interoperability & Abstraction);
+- Formal Methods;
+- Oracle Problem;
+- Virtual Machines.
+
+It runs out of canonical order, so its reservations for concepts owned by
+earlier domains (Shared Sequencing, Trust Assumptions, External Data,
+Authenticity) are written before those owners' plans exist. Those owners'
+plans must later claim or revise them.
+
+```bash
+npm run map:author -- l2 start --pilot
+```
+
+**Procedure:**
+
+1. Write and record every plan, then every model and design.
+2. The run holds at the checkpoint. The proposed plans and designs are
+   offered for review on a separate, never-merged branch.
+3. A human records the review decision with `l2 checkpoint --decision ".."`.
+4. Drafting and audits follow, then one PR for detailed review. The pilot
+   never merges its own PR.
+5. Refine the contracts and tooling from what the pilot shows before the
+   campaign.

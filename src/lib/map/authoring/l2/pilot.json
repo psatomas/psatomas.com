@@ -1,0 +1,10 @@
+{
+  "$comment": "The L2 pilot (docs/map-authoring/l2-analysis.md, section 20): five ownership groups, 22 owned concepts, run out of canonical order to test the architecture. `map:author -- l2 start --pilot` reads it; the pilot stops at a human checkpoint after every plan and design and never merges its own PR.",
+  "groups": [
+    "emergency-governance",
+    "cross-domain-atomicity-in-interoperability-abstraction",
+    "formal-methods",
+    "oracle-problem",
+    "virtual-machines"
+  ]
+}
