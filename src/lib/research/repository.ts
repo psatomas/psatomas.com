@@ -4,6 +4,8 @@ import type {
   ResearchArticle,
   ResearchArticleMetadata,
   ResearchArticleRecord,
+  GuestInvitation,
+  NewGuestInvitation,
 } from "./domain";
 
 /**
@@ -18,6 +20,19 @@ export interface PublicResearchRepository {
   getPublishedArticles(): Promise<ResearchArticleMetadata[]>;
   getPublishedArticleBySlug(slug: string): Promise<ResearchArticle | undefined>;
   getAdjacentPublishedArticles(slug: string): Promise<AdjacentArticles>;
+}
+
+/** Storage contract used by the two deliberately small capability services.
+ * It has no knowledge of cookies, sessions, or bearer tokens. */
+export interface GuestInvitationRepository {
+  createInvitation(input: NewGuestInvitation): Promise<GuestInvitation>;
+  listInvitations(): Promise<GuestInvitation[]>;
+  revokeInvitation(id: string, revokedAt: string): Promise<boolean>;
+  getInvitationByCapabilityHash(capabilityHash: string): Promise<GuestInvitation | null>;
+  getContribution(invitationId: string): Promise<ResearchArticleRecord | null>;
+  createContribution(invitationId: string, input: DraftInput): Promise<ResearchArticleRecord | null>;
+  updateContribution(invitationId: string, input: Partial<DraftInput>): Promise<ResearchArticleRecord | null>;
+  submitContribution(invitationId: string, submittedAt: string): Promise<boolean>;
 }
 
 /**

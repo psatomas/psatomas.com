@@ -96,3 +96,23 @@ export type DraftInput = {
   tags: string[];
   content: string;
 };
+
+export type GuestInvitationState = "active" | "submitted" | "revoked";
+
+/** Owner-visible metadata. The bearer secret is deliberately never part of
+ * this shape (and is never persisted). */
+export type GuestInvitation = {
+  id: string;
+  guestName: string;
+  guestEmail: string;
+  state: GuestInvitationState;
+  createdAt: string;
+  expiresAt: string;
+  submittedAt: string | null;
+  revokedAt: string | null;
+  articleId: string | null;
+};
+
+export type NewGuestInvitation = Omit<GuestInvitation, "state" | "submittedAt" | "revokedAt" | "articleId"> & {
+  capabilityHash: string;
+};

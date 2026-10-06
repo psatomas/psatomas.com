@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { createInvitationService } from "./invitation-service.ts";
+import type { GuestInvitationRepository } from "./repository.ts";
+import type { AuthorizationResult } from "../auth/authorization.ts";
+
+const author:AuthorizationResult={authenticated:true,authorized:true,email:"author@example.com"};
+function repository(onCreate:(hash:string)=>void=()=>{}):GuestInvitationRepository { return { createInvitation:async input=>{onCreate(input.capabilityHash);return {id:input.id,guestName:input.guestName,guestEmail:input.guestEmail,state:"active",createdAt:input.createdAt,expiresAt:input.expiresAt,submittedAt:null,revokedAt:null,articleId:null};},listInvitations:async()=>[],revokeInvitation:async()=>true,getInvitationByCapabilityHash:async()=>null,getContribution:async()=>null,createContribution:async()=>null,updateContribution:async()=>null,submitContribution:async()=>false }; }
+test("only the owner can issue or revoke invitations",async()=>{for(const auth of [{authenticated:false,authorized:false},{authenticated:true,authorized:false,email:"no@example.com"}] as AuthorizationResult[]){let called=false;const service=createInvitationService({getAuthorization:async()=>auth,getRepository:async()=>{called=true;return repository();}});assert.equal((await service.create("Guest","guest@example.com")).ok,false);assert.equal((await service.revoke("id")).ok,false);assert.equal(called,false);}});
+test("invitation persistence receives a digest, while the raw secret is one-time output",async()=>{let stored="";const service=createInvitationService({getAuthorization:async()=>author,getRepository:async()=>repository(hash=>stored=hash),random:()=>"x".repeat(64),now:()=>new Date("2026-10-06T00:00:00.000Z")});const result=await service.create("Guest","guest@example.com");assert.equal(result.ok,true);if(result.ok){assert.equal(result.data.urlToken,"x".repeat(64));assert.notEqual(stored,result.data.urlToken);assert.match(stored,/^[a-f0-9]{64}$/);}});
