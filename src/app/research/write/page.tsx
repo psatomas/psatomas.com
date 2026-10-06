@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { authoringService } from "@/lib/research/authoring-service";
+import { invitationService } from "@/lib/research/invitation-service";
+import { InvitationManager } from "./invitation-manager";
 
 // Reads through next-auth's session cookie (via authoringService's own
 // authorization check) on every request, so this page is already dynamic
@@ -19,6 +21,7 @@ function formatUpdatedAt(iso: string): string {
 
 export default async function ResearchWritePage() {
   const result = await authoringService.listArticles();
+  const invitations = await invitationService.list();
 
   return (
     <Container as="main" className="flex flex-1 flex-col gap-10 py-16">
@@ -69,6 +72,7 @@ export default async function ResearchWritePage() {
           ))}
         </ul>
       )}
+      {invitations.ok && <InvitationManager invitations={invitations.data} />}
     </Container>
   );
 }

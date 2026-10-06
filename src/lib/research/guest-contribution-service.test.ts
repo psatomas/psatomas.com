@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { createGuestContributionService, hashCapability } from "./guest-contribution-service.ts";
+import type { GuestInvitation, ResearchArticleRecord } from "./domain.ts";
+import type { GuestInvitationRepository } from "./repository.ts";
+
+const token = "a".repeat(48); const now = new Date("2026-10-06T00:00:00.000Z");
+const invitation: GuestInvitation = { id:"invite-1",guestName:"Guest",guestEmail:"guest@example.com",state:"active",createdAt:"2026-10-05T00:00:00.000Z",expiresAt:"2026-10-09T00:00:00.000Z",submittedAt:null,revokedAt:null,articleId:null };
+const article: ResearchArticleRecord = {id:"article-1",slug:"guest",title:"Guest",description:"D",category:"EVM",tags:[],content:"Body",readingMinutes:1,status:"draft",publishedAt:null,createdAt:now.toISOString(),updatedAt:now.toISOString()};
+async function fake(state:GuestInvitation["state"]="active") { const digest=await hashCapability(token); let contribution:ResearchArticleRecord|null=null; const repo:GuestInvitationRepository={createInvitation:async()=>invitation,listInvitations:async()=>[],revokeInvitation:async()=>false,getInvitationByCapabilityHash:async h=>h===digest?{...invitation,state}:null,getContribution:async()=>contribution,createContribution:async()=>contribution??(contribution=article),updateContribution:async(_,input)=>contribution={...article,...input},submitContribution:async()=>{if(state!=="active")return false;state="submitted";return true;}}; return repo; }
+const input={title:"Guest",description:"D",category:"EVM" as const,tags:[],content:"Body"};
+test("invalid, expired, and revoked capabilities fail closed", async()=>{ for(const state of ["revoked","submitted"] as const){const service=createGuestContributionService({getRepository:async()=>await fake(state),now:()=>now});assert.equal((await service.save(token,input)).ok,false);} const expired={...(await fake()),getInvitationByCapabilityHash:async()=>({...invitation,expiresAt:"2026-10-01T00:00:00.000Z"})};const service=createGuestContributionService({getRepository:async()=>expired,now:()=>now});assert.equal((await service.save(token,input)).ok,false);assert.equal((await service.save("bad",input)).ok,false);});
+test("a capability saves only its single contribution and submission closes writes", async()=>{const repo=await fake();const service=createGuestContributionService({getRepository:async()=>repo,now:()=>now});assert.equal((await service.save(token,input)).ok,true);assert.equal((await service.save(token,{...input,content:"Updated"})).ok,true);assert.equal((await service.submit(token)).ok,true);const after=await service.save(token,input);assert.equal(after.ok,false);});

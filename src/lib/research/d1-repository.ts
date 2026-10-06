@@ -9,8 +9,10 @@ import type {
   ResearchArticleMetadata,
   ResearchArticleRecord,
   ResearchCategory,
+  GuestInvitation,
+  NewGuestInvitation,
 } from "./domain";
-import type { PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
+import type { GuestInvitationRepository, PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
 
 export { SlugTakenError } from "./errors.ts";
 
@@ -33,6 +35,18 @@ type ArticleRow = {
   created_at: string;
   updated_at: string;
 };
+
+type InvitationRow = {
+  id: string; guest_name: string; guest_email: string; state: string;
+  created_at: string; expires_at: string; submitted_at: string | null; revoked_at: string | null;
+  article_id: string | null;
+};
+
+function rowToInvitation(row: InvitationRow): GuestInvitation {
+  return { id: row.id, guestName: row.guest_name, guestEmail: row.guest_email,
+    state: row.state as GuestInvitation["state"], createdAt: row.created_at, expiresAt: row.expires_at,
+    submittedAt: row.submitted_at, revokedAt: row.revoked_at, articleId: row.article_id };
+}
 
 function rowToRecord(row: ArticleRow): ResearchArticleRecord {
   return {
@@ -78,7 +92,7 @@ function recordToMetadata(record: ResearchArticleRecord): ResearchArticleMetadat
  */
 export function createD1ResearchRepository(
   db: D1Database,
-): PublicResearchRepository & ResearchAuthoringRepository {
+): PublicResearchRepository & ResearchAuthoringRepository & GuestInvitationRepository {
   async function queryPublished(): Promise<ResearchArticleRecord[]> {
     const { results } = await db
       .prepare("SELECT * FROM articles WHERE status = 'published' ORDER BY published_at DESC")
@@ -94,6 +108,13 @@ export function createD1ResearchRepository(
   async function findById(id: string): Promise<ResearchArticleRecord | null> {
     const row = await db.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first<ArticleRow>();
     return row ? rowToRecord(row) : null;
+  }
+
+  async function findInvitationByHash(capabilityHash: string): Promise<GuestInvitation | null> {
+    const row = await db.prepare(`SELECT i.*, c.article_id FROM guest_invitations i
+      LEFT JOIN guest_contributions c ON c.invitation_id = i.id WHERE i.capability_hash = ?`)
+      .bind(capabilityHash).first<InvitationRow>();
+    return row ? rowToInvitation(row) : null;
   }
 
   /** Resolves the slug a write should actually use: the author's override
@@ -266,6 +287,64 @@ export function createD1ResearchRepository(
 
     async deleteArticle(id): Promise<void> {
       await db.prepare("DELETE FROM articles WHERE id = ?").bind(id).run();
+    },
+
+    // ---- GuestInvitationRepository ----
+    async createInvitation(input) {
+      await db.prepare(`INSERT INTO guest_invitations
+        (id, guest_name, guest_email, capability_hash, state, created_at, expires_at)
+        VALUES (?, ?, ?, ?, 'active', ?, ?)`)
+        .bind(input.id, input.guestName, input.guestEmail, input.capabilityHash, input.createdAt, input.expiresAt).run();
+      const invitation = await findInvitationByHash(input.capabilityHash);
+      if (!invitation) throw new Error("createInvitation: read-back failed");
+      return invitation;
+    },
+    async listInvitations() {
+      const { results } = await db.prepare(`SELECT i.*, c.article_id FROM guest_invitations i
+        LEFT JOIN guest_contributions c ON c.invitation_id = i.id ORDER BY i.created_at DESC`).all<InvitationRow>();
+      return results.map(rowToInvitation);
+    },
+    async revokeInvitation(id, revokedAt) {
+      const result = await db.prepare("UPDATE guest_invitations SET state = 'revoked', revoked_at = ? WHERE id = ? AND state = 'active'")
+        .bind(revokedAt, id).run();
+      return result.meta.changes === 1;
+    },
+    async getInvitationByCapabilityHash(capabilityHash) { return findInvitationByHash(capabilityHash); },
+    async getContribution(invitationId) {
+      const row = await db.prepare(`SELECT a.* FROM articles a JOIN guest_contributions c ON c.article_id = a.id
+        WHERE c.invitation_id = ?`).bind(invitationId).first<ArticleRow>();
+      return row ? rowToRecord(row) : null;
+    },
+    async createContribution(invitationId, input) {
+      const now = new Date().toISOString();
+      const id = crypto.randomUUID();
+      const slug = await resolveUniqueSlug(input.slug ?? input.title);
+      // D1 batch is transactional: the unique invitation_id constraint and
+      // active-state conditional insert make concurrent creation yield one article.
+      const articleStatement = db.prepare(`INSERT INTO articles (id, slug, title, description, category, tags, content, reading_minutes, status, published_at, created_at, updated_at)
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, 'draft', NULL, ?, ?
+        WHERE EXISTS (SELECT 1 FROM guest_invitations WHERE id = ? AND state = 'active' AND expires_at > ?)`)
+        .bind(id, slug, input.title, input.description, input.category, JSON.stringify(input.tags), input.content, estimateReadingMinutes(input.content), now, now, invitationId, now);
+      const linkStatement = db.prepare(`INSERT INTO guest_contributions (invitation_id, article_id)
+        SELECT id, ? FROM guest_invitations WHERE id = ? AND state = 'active' AND expires_at > ?`)
+        .bind(id, invitationId, now);
+      try { await db.batch([articleStatement, linkStatement]); } catch { return null; }
+      const contribution = await this.getContribution(invitationId);
+      return contribution;
+    },
+    async updateContribution(invitationId, input) {
+      const invitation = await db.prepare("SELECT state, expires_at FROM guest_invitations WHERE id = ?").bind(invitationId).first<{state:string; expires_at:string}>();
+      if (!invitation || invitation.state !== "active" || invitation.expires_at <= new Date().toISOString()) return null;
+      const contribution = await this.getContribution(invitationId);
+      if (!contribution) return null;
+      return this.updateDraft(contribution.id, input);
+    },
+    async submitContribution(invitationId, submittedAt) {
+      const result = await db.prepare(`UPDATE guest_invitations SET state = 'submitted', submitted_at = ?
+        WHERE id = ? AND state = 'active' AND expires_at > ? AND EXISTS
+        (SELECT 1 FROM guest_contributions WHERE invitation_id = guest_invitations.id)`)
+        .bind(submittedAt, invitationId, submittedAt).run();
+      return result.meta.changes === 1;
     },
   };
 }
