@@ -1,0 +1,333 @@
+{
+  "version": 1,
+  "group": "oracle-problem",
+  "domain": "oracles-external-reality",
+  "parentConceptId": "oracle-problem",
+  "basis": {
+    "membership": "5dbb7e7a5fcf107e3d662243777392735f71d2cfd9cffa42a52a252a2a620487",
+    "parents": {
+      "oracle-problem": "6c86b4260b570bac8b97e2725f7e981067d6ee808d9bd9c52d65652ac989a094",
+      "oracles-external-reality": "bf3d8f2ca5a93aea4e85ac8a7146b03333305857b104ece6ca334fb5c2e8283a"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "external-data",
+      "placementId": "external-data-in-oracle-problem",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "what counts as external data: facts a protocol cannot derive from its own state"
+      ]
+    },
+    {
+      "conceptId": "trust-assumptions",
+      "placementId": "trust-assumptions-in-oracle-problem",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "what a system relies on without checking, and for which claims"
+      ]
+    },
+    {
+      "conceptId": "verification-limits",
+      "placementId": "verification-limits",
+      "standing": "owned",
+      "claims": [
+        "what a protocol can establish about a report, its origin, integrity, freshness and agreement with other reports, and what it cannot: correspondence with the world",
+        "how far attestation pushes the limit: signed data at the source, hardware attestation and proofs over web data, and where each stops",
+        "designing around the limit: economic guarantees, dispute windows and redundancy in place of verification"
+      ],
+      "excludes": [
+        "authenticity",
+        "trust-assumptions",
+        "external-data"
+      ]
+    },
+    {
+      "conceptId": "authenticity",
+      "placementId": "authenticity-in-oracle-problem",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "establishing that data comes unaltered from its claimed source"
+      ]
+    },
+    {
+      "conceptId": "external-data-availability",
+      "placementId": "external-data-availability",
+      "standing": "owned",
+      "claims": [
+        "whether the external data a protocol needs can be obtained when it is needed: sources that exist, are reachable and keep publishing",
+        "external data availability as distinct from accuracy, and from data availability in blockchain storage",
+        "what makes external data unavailable: market closures, outages, rate limits, censorship and data that does not exist yet"
+      ],
+      "excludes": [
+        "data-availability",
+        "oracle-failure",
+        "external-data"
+      ]
+    },
+    {
+      "conceptId": "oracle-failure",
+      "placementId": "oracle-failure",
+      "standing": "owned",
+      "claims": [
+        "the forms of oracle failure: a wrong value, a stale value, no value and a value that arrives too late",
+        "how each form arises: source errors, node faults, manipulation and delay",
+        "what each form does downstream: liquidations at wrong prices, frozen markets and settlement on outdated values"
+      ],
+      "excludes": [
+        "staleness",
+        "heartbeats",
+        "deviation-thresholds",
+        "oracle-manipulation"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "verification-limits": {
+      "model": {
+        "meaning": "Verification limits are the boundary between what a protocol can check about an external report and what it must take on trust: whether the report is true of the world.",
+        "kind": "property",
+        "parents": {
+          "oracle-problem": "how far attestation moves the boundary and how protocols design around it, beyond where the boundary sits"
+        },
+        "claims": [
+          "what a protocol can establish about a report, its origin, integrity, freshness and agreement with other reports, and what it cannot: correspondence with the world",
+          "how far attestation pushes the limit: signed data at the source, hardware attestation and proofs over web data, and where each stops",
+          "designing around the limit: economic guarantees, dispute windows and redundancy in place of verification"
+        ],
+        "excludes": [
+          "authenticity",
+          "trust-assumptions",
+          "external-data"
+        ],
+        "placements": {
+          "verification-limits": "one placement"
+        },
+        "fields": {
+          "statement": "checks on a report establish who signed it, that it is unaltered, how recent it is and how it agrees with other reports; for a protocol that learns of the world only through reports, they cannot establish that the report is true of the world",
+          "establishedBy": [
+            "signatures",
+            "hardware attestation",
+            "proofs over data sources"
+          ],
+          "confusions": [
+            "authenticity versus truth"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "a boundary and its consequences: an argument",
+        "relationship": "what can be checked against what must be trusted",
+        "level": "the limit itself; the parent locates it",
+        "territory": "authenticity and trust assumptions are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-07T13:10:47.832Z",
+        "note": "Independent re-audit after repair cycle 1 (depth pass; 1134 -> 984 words, eight paragraphs, prose kept as designed). Authenticity boundary: applied. Each attestation form now says only what it lets a protocol check and where trust moves: source signing (the value is the provider's and unaltered by relays or oracle nodes; trust moves to the provider's honesty, competence and key security; whether the trades took place lies outside the signature), hardware attestation (the output came from the expected program on genuine hardware; trust moves to the vendor and to the hardware having no exploitable flaw, side-channel breaks kept; the attestation covers what the program did with its input, not whether the input was true), proofs over web data (the response came from the server holding the domain's certificate; trust moves to the TLS key, the CAs and, in the common notary or proxy schemes, to non-collusion; the proof shows what the site served). Mechanism detail removed: the vendor-certified signing key, the TLS non-transferability explanation, zero-knowledge and selective disclosure. Naming the CAs 'that bind that key to the domain' identifies where trust sits, not how binding works, so it stays within the boundary. Trust Assumptions and External Data remain named, not explained. The limit's wording: definition unchanged; paragraph 1 keeps the scoped condition 'for such a protocol [one that learns of the world only through reports] correspondence lies outside what checks on the report can establish'; the mistaken-or-compromised source case is still framed as 'not a breach of the limit but the case it leaves undetected', where the exposure lies. Earlier corrections retained: inclusion time, round numbers and timestamps date the report rather than the observation, with the signer-timestamp caveat; the median stays within the range of the correct reports while fewer than half are wrong; staking depends on a false report being shown false by an accepted process; dispute windows hold while a willing watcher exists and the resolver rules honestly, with the latency cost; redundancy is a condition on independence; all three bound the exposure without closing it. Sentence-by-sentence comparison: dropped material is either mechanism (above), duplicated illustration (the agency example, the calibrated instrument, the enumeration of non-independent sources, which survives in the redundancy paragraph as one upstream source or group bribery), or the closing summary of the web-data paragraph, whose conclusion (trust moves rather than disappears, short of the step from a source's statement to the world) now opens the attestation section. Nothing technically necessary lost. No new inaccuracy: 'ran unmodified' for remote attestation of a measured program is fair. Pronouns clear ('these' = inclusion time, round number, timestamp; 'it' in paragraph 2 = the case; 'the program' made explicit in paragraph 4). Quality contract B: accurate and conditional; L2 level; extends the parent's single sentence on the limit; no sibling leakage (oracle-failure owns forms, causes and downstream effects, not touched; external-data-availability not touched, the dispute delay is acceptance latency); canonical at its one leaf placement with no positional or time-sensitive wording; American English; prose only. Density remarks (not defects): the freshness clause 'from when the report was included or a round number or timestamp it carries' reads slightly loosely; the redundancy paragraph's closing 'Like stake and disputes...' sentence is summary but carries the bounded-not-closed conclusion for all three design-arounds, so it earns its place; little else is removable.",
+        "resolutions": [
+          {
+            "id": "names-concept:52820b90fc",
+            "resolution": "Economic Guarantees is named as one design-around (owned claim 3); the record says only what staking does for an oracle report and its dependence on a process that shows a report false, not a general account."
+          },
+          {
+            "id": "names-concept:97142102b8",
+            "resolution": "False match: 'trusted execution environment' contains the title of Execution Environments, a different concept; neither named nor explained."
+          },
+          {
+            "id": "names-concept:7ec9d5c6f1",
+            "resolution": "Oracle Nodes named once as an intermediary that source signing removes from what is trusted; not explained."
+          },
+          {
+            "id": "names-concept:f44257243d",
+            "resolution": "Token Holders named once as an example resolver ('a vote of token holders'); not explained."
+          },
+          {
+            "id": "names-concept:621132619b",
+            "resolution": "Trusted Execution named via 'trusted execution environment'; the record says only what hardware attestation lets a protocol check and where trust moves (owned claim 2); the repair removed the vendor-certified key mechanism."
+          },
+          {
+            "id": "absolutes:4621501749",
+            "resolution": "Not unhedged: 'Economic guarantees' is a concept name; 'the guarantee depends on a false report being shown false' is explicitly conditional; 'a question the protocol cannot settle by checking the report' is scoped to checks on the report under the stated condition."
+          }
+        ],
+        "recordFingerprint": "0ca0cf9b81958672e67a86387f2a724c42fba80a38d05fe40655458ac33ab93d"
+      }
+    },
+    "external-data-availability": {
+      "model": {
+        "meaning": "External data availability is whether the outside information a protocol depends on can be obtained when the protocol needs it.",
+        "kind": "property",
+        "parents": {
+          "oracle-problem": "what makes external data unavailable and how availability differs from accuracy, beyond availability being part of the problem"
+        },
+        "claims": [
+          "whether the external data a protocol needs can be obtained when it is needed: sources that exist, are reachable and keep publishing",
+          "external data availability as distinct from accuracy, and from data availability in blockchain storage",
+          "what makes external data unavailable: market closures, outages, rate limits, censorship and data that does not exist yet"
+        ],
+        "excludes": [
+          "data-availability",
+          "oracle-failure",
+          "external-data"
+        ],
+        "placements": {
+          "external-data-availability": "one placement"
+        },
+        "fields": {
+          "statement": "the data a protocol needs exists and can be fetched in time",
+          "violatedBy": [
+            "market closures",
+            "outages",
+            "rate limits",
+            "censorship",
+            "data not yet produced"
+          ],
+          "confusions": [
+            "external data availability versus blockchain data availability",
+            "availability versus accuracy"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "a conflation the reader is likely to make with blockchain data availability, under the same visible label",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "this concept against data availability in blockchain storage",
+            "whyNotProse": "the label reads exactly like another concept's title, so the difference must stand out"
+          }
+        ],
+        "level": "the confusion is this concept's: its placement is labelled \"Data Availability\"",
+        "territory": "data availability is named only to be distinguished",
+        "placements": "one placement",
+        "division": "the prose explains causes of unavailability; the distinction marks the two meanings apart"
+      },
+      "audit": {
+        "at": "2026-10-07T13:13:21.448Z",
+        "note": "Re-audit after repair cycle 1 (American English and editorial-depth pass), compared sentence by sentence with the pre-repair record, under the single placement labelled \"Data Availability\". Requirements: American English holds ('at weekends' is now 'on weekends'; no British forms remain); the depth pass removed only redundancy (529 to 504 words) with the same design, one bare distinction plus three paragraphs, and the definition unchanged. Changes judged: (1) 'The question is posed at a moment' became 'Availability is judged at a moment', giving the sentence an explicit subject. (2) The accuracy-versus-availability independence is kept intact ('either can fail without the other: a source can publish on schedule and be wrong, and a correct source can be unreachable'); the dropped tail 'a steady supply of values says nothing about whether they are right' restated its first half, so nothing is lost; 'presuppose that one arrived' refers unambiguously to 'a value'. (3) Pronoun rewrites are clearer and accurate: 'the network that reaches them' (the provider and the hosting service), 'for as long as the outage lasts', 'stop/stops the data', and 'block access to the provider within its territory' (formerly 'it', which could be read as the dataset). (4) 'so they offer another value' became 'offering another value', same meaning. (5) The example 'the price of an asset that has not begun trading' was removed; the claim 'data that does not exist yet' remains carried by the match result and the unreleased statistic, so no technically necessary content is lost. All three corrections of the earlier audit survive: the oracle-failure sentence is a bare boundary, rate limits state only the cap, and rainfall has 'no source of its own' with estimates giving a different figure. Quality contract B: claims accurate and conditional (exchanges 'commonly' closed; off-hours venues 'where they exist'; demand 'can' rise); L2 level; parent's availability-and-accuracy remark is extended, not restated; no sibling leakage (oracle failure named only as boundary, no overlap with verification-limits' checks, no explanation of external data, trust assumptions or authenticity); no positional or time-sensitive words ('yet' describes data not yet produced, not the corpus); progression definition, distinction, demand and accuracy, source-side causes, world-side causes. Distinction: still of value; the label 'Data Availability' is the blockchain storage concept's title, the prose never mentions that concept, so the block alone marks the conflation and the prose restates neither side. Valid under the label 'Data Availability' because the definition and distinction fix the external sense at once. Density remarks (not defects): the closing sentence of the third paragraph partly echoes its opener 'Other causes leave nothing to fetch', though it adds the consequence for fallback sources and retries; 'for as long as the outage lasts' could be trimmed. No new inaccuracy, overclaim, contradiction or unclear pronoun.",
+        "resolutions": [
+          {
+            "id": "names-concept:3a2dbfa58a",
+            "resolution": "data-availability appears only as the distinction's right label 'Blockchain data availability'; no publication, withholding or sampling mechanism is explained. Named, not explained; not a defect."
+          },
+          {
+            "id": "names-concept:85e76c75e2",
+            "resolution": "external-data appears only in this concept's own name and as 'information from outside a chain'; the reserved account of what counts as external data is neither stated nor paraphrased. Named, not explained; not a defect."
+          },
+          {
+            "id": "names-concept:67f86d2aa5",
+            "resolution": "'A lending market that values collateral' illustrates a demand pattern (a current price at short intervals); lending markets are not explained. Named, not explained; not a defect."
+          },
+          {
+            "id": "names-concept:ff7e908a65",
+            "resolution": "oracle-failure is named once as a boundary ('What a missing value then does to a protocol is a matter of oracle failure'); its forms, causes and effects are not listed. Named, not explained; not a defect."
+          }
+        ],
+        "recordFingerprint": "fe725d383993be1447056e3ecf2ea6ca7e48936143c985139fc091db75e79478"
+      }
+    },
+    "oracle-failure": {
+      "model": {
+        "meaning": "Oracle failure is any case in which an oracle does not deliver a correct and timely value a protocol depends on.",
+        "kind": "failure",
+        "parents": {
+          "oracle-problem": "the forms of failure, their causes and their consequences, beyond silence and the responses to it"
+        },
+        "claims": [
+          "the forms of oracle failure: a wrong value, a stale value, no value and a value that arrives too late",
+          "how each form arises: source errors, node faults, manipulation and delay",
+          "what each form does downstream: liquidations at wrong prices, frozen markets and settlement on outdated values"
+        ],
+        "excludes": [
+          "staleness",
+          "heartbeats",
+          "deviation-thresholds",
+          "oracle-manipulation"
+        ],
+        "placements": {
+          "oracle-failure": "one placement"
+        },
+        "fields": {
+          "causes": [
+            "errors at the data source",
+            "faulty or offline oracle nodes",
+            "network or update delay",
+            "deliberate manipulation, as one cause among several"
+          ],
+          "manifestation": [
+            "wrong, stale, missing or late values"
+          ],
+          "impact": [
+            "liquidations at wrong prices",
+            "frozen markets",
+            "settlement on outdated values"
+          ],
+          "detection": [
+            "deviation and staleness checks, owned by freshness concepts"
+          ],
+          "recovery": [
+            "fallback sources, pauses and circuit breakers, named only"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "four forms of failure compared on what the protocol sees, their typical cause and their consequence",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "the forms of failure side by side",
+            "whyNotProse": "the forms differ along the same three dimensions, and reading across them shows why each needs a different response"
+          }
+        ],
+        "level": "the failure modes are the concept's own",
+        "territory": "detection mechanisms such as staleness and heartbeats are named only",
+        "placements": "one placement",
+        "division": "the prose explains how failures arise and propagate; the table compares the forms"
+      },
+      "audit": {
+        "at": "2026-10-07T13:18:17.692Z",
+        "note": "Independent re-audit, repair cycle 1, after the second repair; read at the single placement (Oracles & External Reality / Oracle Problem / Oracle Failure, leaf), compared sentence by sentence with the pre-cycle record. Review finding: resolved and still resolved. 'Feed' no longer appears; one term per sense holds across prose and comparison: source (where a value originates), node (who reports), oracle (the system the protocol reads: 'the oracle itself fails', 'until the oracle reports again'), update (a value delivered on chain). The miscategorized 'feed mapped to the wrong asset' example is gone; the source-error examples left (mistaken trade print, unit or decimal slip) are genuine source errors. Reopen findings: both fixed. (1) 'liquidators close, within blocks, the positions that a new price makes eligible' now binds 'within blocks' to the closing and 'a new price makes eligible' to the positions; no ambiguity. (2) Paragraph 1 now says 'congestion or a slow update round', matching the Late value cause cell 'Network congestion or a slow update round'. The second repair changed nothing else. Comparison: unchanged across the cycle; cells still agree with the prose (too few working nodes -> missing; offline nodes or halted source -> stale; congestion or slow update round -> late). Lost material: none technically necessary. Dropped across the cycle: the mis-mapped example (required by the finding); P2's trailing clause previewing the comparison dimensions (redundant with the comparison label and its dimensions); 'works the other way' before the too-high price (the contrast with the preceding liquidation case stays evident); 'while the value is missing' folded into 'liquidations that need the missing value'. Earlier audit corrections retained: the consumer-side guard paraphrase of circuit breakers stays removed; 'exist to expose updates that are late or have stopped' stays; source errors are 'contained', not 'diluted'. New defects: none. No new inaccuracy, overclaim, contradiction or unclear pronoun; 'the oracle itself fails' when too few nodes remain is correct and consistent with the missing/stale rows. Contract B: accurate and conditional where needed (most likely, can); L2 level; no parent restatement (expands 'silence as well as falsehood' into four forms and their causes and consequences); siblings (External Information, Trust Assumptions, Data Authenticity, Data Availability, Verification Limits) not explained, 'a source with nothing to give' names Data Availability's category only; excludes named only; no positional language; failure-kind framing intact (condition definition, cause, manifestation, impact, correlation, detection and recovery named only). American English: 'organized'; no British forms; 'afterwards' is accepted US usage, unflagged by spellingProblems and dominant in the corpus. Depth: 702 -> 650 words, density improved by trimming restatement ('belongs in the same list of causes rather than forming' -> 'is one more cause, not'; 'In the other direction' -> 'Conversely') without losing claims. Minor style remark, not a defect: 'itself' appears in two adjacent paragraph-1 sentences ('the oracle itself fails', 'on the update itself').",
+        "resolutions": [
+          {
+            "id": "names-concept:359abd048f",
+            "resolution": "Circuit breakers are named once in the closing list of containment means; no sentence explains how a breaker trips or its trade-offs. Named, not explained."
+          },
+          {
+            "id": "names-concept:0c147a6fb8",
+            "resolution": "Heartbeats (excluded) are named once with a one-phrase role (expose updates that are late or have stopped); no interval or trigger is explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:67f86d2aa5",
+            "resolution": "'Lending market' is only the setting for the impact example; only the liquidation and borrowing behavior the impact needs is described, not how lending markets work. Named, not explained."
+          },
+          {
+            "id": "names-concept:b4c6d7587c",
+            "resolution": "Oracle manipulation (excluded) is named as the subject that covers how manipulation is carried out; the text only classifies manipulation as one cause yielding the same forms. Named, not explained."
+          },
+          {
+            "id": "names-concept:dc997a2e38",
+            "resolution": "Staleness (excluded) appears as 'staleness checks' named with a role and as the stale-value form, which is this concept's own claim; the freshness mechanism and its thresholds are not explained. Named, not explained."
+          }
+        ],
+        "recordFingerprint": "65542800eea339f4246ca5a8df07d8f34b7bdf60bae13a71144d2d379a55f5ec"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-07T18:07:11.316Z",
+    "note": "Group re-audit after repair cycle 1, members read side by side. Reservations: no member defines or explains External Data (VL says 'a report of facts outside it', EDA 'information from outside a chain'; neither states what counts as external), Trust Assumptions (VL applies the idea per attestation form, saying where trust moves, as its claim and the cycle decision allow, without explaining what a trust assumption is) or Authenticity (VL names origin and integrity as checkable in one sentence and says what each attestation form establishes; the TEE key-certification and TLS-notary/zero-knowledge mechanics present before the cycle are gone, matching the decision that Authenticity owns how authenticity is established). VL vs OF: the independence point now appears once in each register: VL's agreement paragraph says non-independent reports can agree falsely, VL's redundancy paragraph makes independence the condition that replaces verification (median within the range of correct reports while fewer than half are wrong, which is correct), and OF says where a source error travels and that only sources not sharing it contain it. These are distinct points (limit of checking, design condition, fault propagation), not a triple restatement. EDA vs OF: EDA covers why data cannot be obtained (outages, rate limits, censorship, discontinuation, closed markets, data not yet existing) and hands off with one sentence ('What a missing value then does to a protocol is a matter of oracle failure'); OF treats the missing value as a form the protocol sees, names its causes only briefly ('a source with nothing to give'), and explains how a halt shows up as stale or missing by read design, which EDA does not touch. No contradiction: unavailability is a cause, a missing value is a failure form. Freshness: VL says what checking freshness establishes (timestamps date the report, not the observation), EDA treats availability at a rate of demand, OF has the stale form and only names staleness checks and heartbeats (excluded concepts); nothing contradicts and nothing is said twice. Terms: 'source' means the upstream provider throughout (VL, EDA, OF); 'node' and 'oracle' are OF's in one sense each; 'update' means a value newly published by the oracle in both EDA and OF; 'report' is the submitted signed statement in VL and in OF's pull design; VL's 'reporter' is the generic submitting role suited to staking and dispute designs and does not clash with OF's 'node'; 'feed' appears once, in EDA, as a provider's data product, and OF no longer uses it. No depth-pass removal left another member relying on missing text. Forms differ by concept (VL prose, EDA distinction plus prose for the real collision with the 'Data Availability' label, OF prose plus a comparison of failure forms); openings differ. American English throughout. Zero group signals.",
+    "resolutions": [],
+    "records": {
+      "verification-limits": "0ca0cf9b81958672e67a86387f2a724c42fba80a38d05fe40655458ac33ab93d",
+      "external-data-availability": "fe725d383993be1447056e3ecf2ea6ca7e48936143c985139fc091db75e79478",
+      "oracle-failure": "65542800eea339f4246ca5a8df07d8f34b7bdf60bae13a71144d2d379a55f5ec"
+    }
+  }
+}

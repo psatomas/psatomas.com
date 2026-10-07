@@ -1,0 +1,494 @@
+{
+  "version": 1,
+  "group": "cross-domain-atomicity-in-interoperability-abstraction",
+  "domain": "interoperability-abstraction",
+  "parentConceptId": "cross-domain-atomicity",
+  "basis": {
+    "membership": "02f82af625f615270882f61e62ef808f0c6a9f5aeb39e860a19e2491c054d4c5",
+    "parents": {
+      "cross-domain-atomicity": "beb0fdf2f7c6701891e771bdab72380afc4171fcfbfa08372acac02401eab667",
+      "interoperability-abstraction": "e639acb562e14b68b89e07a5afd8518103c9ede303078c3d5756130ae192f281"
+    },
+    "fixed": {},
+    "hazards": "47a2ac7a378750513e0b7992655ed3ef408224603ef8755532a941a03e46ad23"
+  },
+  "members": [
+    {
+      "conceptId": "atomic-swaps",
+      "placementId": "atomic-swaps",
+      "standing": "owned",
+      "claims": [
+        "the exchange problem an atomic swap solves: two parties on different chains trading assets without trusting each other or an intermediary",
+        "the constructions that realize a swap and what each assumes: hash-locked contracts, adaptor signatures and a shared settlement layer",
+        "what a swap does not provide: price discovery, a counterparty, or protection from the free option"
+      ],
+      "excludes": [
+        "hashed-timelock-contracts",
+        "shared-sequencing",
+        "two-phase-commit"
+      ]
+    },
+    {
+      "conceptId": "hashed-timelock-contracts",
+      "placementId": "hashed-timelock-contracts",
+      "standing": "owned",
+      "claims": [
+        "how the hashlock and the timelock are expressed on each chain, with their claim and refund paths",
+        "how the deadlines must be ordered against each chain's confirmation and finality times",
+        "the costs of an HTLC: capital locked for the timeout, griefing by abandoning a swap, and the shared hash linking both legs"
+      ],
+      "excludes": [
+        "atomic-swaps",
+        "finality"
+      ]
+    },
+    {
+      "conceptId": "two-phase-commit",
+      "placementId": "two-phase-commit",
+      "standing": "owned",
+      "claims": [
+        "the participant's uncertain state after it votes to commit, unable to commit or abort alone",
+        "how the coordinator's decision is recorded durably and recovered after failures",
+        "how two-phase commit maps onto chains: escrows as locks, a relayer or chain as coordinator, timeouts in place of a reliable coordinator"
+      ],
+      "excludes": [
+        "atomic-swaps",
+        "shared-sequencing",
+        "partial-failures"
+      ]
+    },
+    {
+      "conceptId": "shared-sequencing",
+      "placementId": "shared-sequencing-in-cross-chain-atomicity",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "whether atomic inclusion by a shared sequencer amounts to atomic execution across rollups"
+      ]
+    },
+    {
+      "conceptId": "partial-failures",
+      "placementId": "partial-failures",
+      "standing": "owned",
+      "claims": [
+        "the forms of a cross-chain partial failure: one leg confirmed and another reverted, stalled or reorganized away",
+        "how a partial failure is detected, and which side can observe what, and when",
+        "the exposure while a partial failure stands: who holds the risk and what can be exploited"
+      ],
+      "excludes": [
+        "compensating-actions",
+        "atomicity-guarantees",
+        "rollbacks"
+      ]
+    },
+    {
+      "conceptId": "atomicity-guarantees",
+      "placementId": "atomicity-guarantees",
+      "standing": "owned",
+      "claims": [
+        "the spectrum of cross-chain guarantees: all or nothing, all or refund, eventual compensation and best effort",
+        "what each guarantee depends on: shared sequencing, a common settlement layer, timeouts or honest relayers",
+        "reading a system's claimed atomicity: the failure it covers, the window it leaves open and who bears that gap"
+      ],
+      "excludes": [
+        "atomic-swaps",
+        "hashed-timelock-contracts",
+        "two-phase-commit",
+        "shared-sequencing",
+        "partial-failures"
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "atomic-swaps",
+        "hashed-timelock-contracts"
+      ],
+      "split": "Atomic Swaps owns the exchange problem and the families of construction; Hashed Timelock Contracts owns how one construction works on each chain, its deadlines and its costs. A swap names HTLCs as one realization and never explains their mechanism."
+    }
+  ],
+  "concepts": {
+    "atomic-swaps": {
+      "model": {
+        "meaning": "An atomic swap exchanges assets between parties on different chains so that either both transfers happen or neither does, without a trusted intermediary.",
+        "kind": "mechanism",
+        "parents": {
+          "cross-domain-atomicity": "the exchange problem and the families of construction, beyond HTLCs as one way to achieve atomicity"
+        },
+        "claims": [
+          "the exchange problem an atomic swap solves: two parties on different chains trading assets without trusting each other or an intermediary",
+          "the constructions that realize a swap and what each assumes: hash-locked contracts, adaptor signatures and a shared settlement layer",
+          "what a swap does not provide: price discovery, a counterparty, or protection from the free option"
+        ],
+        "excludes": [
+          "hashed-timelock-contracts",
+          "shared-sequencing",
+          "two-phase-commit"
+        ],
+        "placements": {
+          "atomic-swaps": "one placement"
+        },
+        "fields": {
+          "actors": [
+            "two counterparties"
+          ],
+          "assumptions": [
+            "both parties stay online until the deadlines",
+            "each chain enforces its lock"
+          ],
+          "variants": [
+            "hash-locked",
+            "adaptor signatures",
+            "shared settlement layer"
+          ],
+          "failures": [
+            "a counterparty abandoning the swap",
+            "the free option"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "the families of construction differ in one or two assumptions each, which a paragraph states more clearly than a table",
+        "relationship": "one goal realized by several constructions",
+        "level": "the swap problem itself; the parent names only HTLCs",
+        "territory": "the HTLC mechanism is its sibling's; the swap names it as one construction",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-07T12:29:31.818Z",
+        "note": "Independent re-audit after repair cycle 1 (editorial-depth pass), comparing the pre-repair record with the current one sentence by sentence. Words 845 -> 789, five paragraphs both times; the definition is unchanged. Changes were condensations only: (P1) the intermediary example 'such as an exchange that takes custody of both assets and settles the trade on its own books' became 'an intermediary that takes custody of both assets and can then freeze, lose or misuse them'; the custodial point stays clear because custody and the three resulting risks are kept, and only the illustrative example and the book-settlement detail went. 'That outcome is conditional: it holds while ... meets what the construction demands of it' became 'That outcome holds only while ... each party meets what its construction demands'; the condition is kept and 'only while' correctly states necessary conditions; 'its' binds to 'each party' (the construction that party's swap uses), which reads unambiguously. (P2) 'run contracts that can check a hash and enforce a deadline' became 'check a hash and enforce a deadline' (the preceding sentence still places the link 'in a contract on each chain'); 'plain payments with nothing visible connecting them' became 'unrelated plain payments', still hedged by 'can'. Every earlier-audit hedge in P2 survives: 'at least one chain' for adaptor support, the other leg claimable with the revealed secret, the cross-curve proof, a deadline 'on at least one chain', 'comparable responsiveness'. (P3) 'neither asset leaves its chain: each changes owner where it already is' merged into 'each asset changes owner without leaving its chain'; 'which separates them from a bridge transfer' kept; bridged-asset soundness and the 'by default' hedge on shared base chains kept. (P4) the price-discovery venues compressed to a list; 'someone willing to take the opposite side has to be found first, and the venue that does the matching sits outside the swap' became 'the matching happens first, at a venue outside the swap', same content. (P5) 'stretch' -> 'interval'; otherwise unchanged, including the signed-order extension, the premium design ('some designs') and the indistinguishability of exercised option and abandoned swap. Nothing technically necessary was lost and no hedge from earlier audits was dropped. Split (Atomic Swaps / HTLC): kept; HTLCs are named as the realization of the hash-locked family with only the family's assumptions (hash and deadline checks, responsiveness); no claim/refund paths, deadline ordering, capital-lock or griefing costs, or shared-hash linking. Shared Sequencing reservation: no sequencer is mentioned; the third family's closing sentence states the shared-settlement family's own execution assumption, not the reserved inclusion-versus-execution question. Two-phase commit is not mentioned; no partial-failure forms or guarantee spectrum. Parent overlap: the responsiveness clause echoes the parent's 'both parties must stay online' and the free-option paragraph begins from the parent's HTLC option sentence; both are kept as before because they serve the cross-family comparison and extend the parent (adaptor family, signed orders, premium pricing, indistinguishability). Quality contract B checked: accurate and conditional; L2 level; no child (leaf); one placement, no positional or time-sensitive words; identity is the cross-chain exchange; prose only, which suits assumption-by-assumption comparison; progression problem -> families -> what a swap does not provide; American English throughout (no British forms). Density remarks (not defects): the condensation was modest; still removable without loss are the signed-order clause in P5 ('including a signed order that a counterparty may fill until it expires'), which extends the option beyond swaps, and the first paragraph's closing 'and the demands differ between the families of construction', which the next paragraph shows anyway. Neither repeats a parent's or sibling's territory.",
+        "resolutions": [
+          {
+            "id": "names-concept:0ad197358b",
+            "resolution": "Named, not explained: hashed timelock contracts appear only as the realization of the hash-locked family, with the family's assumptions (chains that check a hash and enforce a deadline, responsive parties). No claim or refund paths, deadline ordering, HTLC costs or shared-hash linking, all of which the sibling owns. Not a defect."
+          },
+          {
+            "id": "names-concept:40e61c9eea",
+            "resolution": "Named only, as one place price discovery happens ('in order books, market makers' quotes or negotiation'); order-book mechanics are not explained. Not a defect."
+          },
+          {
+            "id": "names-concept:e356bdd8ad",
+            "resolution": "Named only, to mark what a swap does not provide: it enforces an agreed rate without discovering it. How prices are discovered is not explained. Not a defect."
+          },
+          {
+            "id": "names-concept:4d13af81c8",
+            "resolution": "Named within the third family, which this concept claims; the text gives only what a swap assumes of such a layer (it must execute both legs together; bridged assets are only as sound as their bridge). Settlement layers in general are not explained. Not a defect."
+          },
+          {
+            "id": "names-concept:62f2066d46",
+            "resolution": "Named only, in the assumption that the signature scheme on at least one chain supports adaptor signatures; signature schemes themselves are not explained. Not a defect."
+          },
+          {
+            "id": "absolutes:1e1afba1ff",
+            "resolution": "Checked each: 'exposed to the other never sending' names a risk; 'chains that cannot express a hash lock' describes a class of chains (no hash-lock scripting, e.g. Monero); 'a counterparty that never completes' describes an observed outcome. None asserts an unconditional guarantee. Not a defect."
+          }
+        ],
+        "recordFingerprint": "92762a421dd8c53e21a3c866d7f5b3c1e27eec7c4ffee3cf890c04bee56b4e65"
+      }
+    },
+    "hashed-timelock-contracts": {
+      "model": {
+        "meaning": "A hashed timelock contract locks an asset so that it can be claimed by whoever reveals a secret matching a hash before a deadline, and refunded to its owner after it.",
+        "kind": "mechanism",
+        "parents": {
+          "cross-domain-atomicity": "per-chain expression, deadline ordering and costs, beyond the shared secret and the free option"
+        },
+        "claims": [
+          "how the hashlock and the timelock are expressed on each chain, with their claim and refund paths",
+          "how the deadlines must be ordered against each chain's confirmation and finality times",
+          "the costs of an HTLC: capital locked for the timeout, griefing by abandoning a swap, and the shared hash linking both legs"
+        ],
+        "excludes": [
+          "atomic-swaps",
+          "finality"
+        ],
+        "placements": {
+          "hashed-timelock-contracts": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "the initiator locks with a long timeout",
+            "the counterparty locks with a shorter timeout",
+            "the initiator claims, revealing the secret",
+            "the counterparty claims with the secret, or each refunds after the deadlines"
+          ],
+          "assumptions": [
+            "deadlines leave margin beyond each chain's confirmation time"
+          ],
+          "failures": [
+            "the second deadline too close to the first",
+            "a reorganization undoing a claim"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "an ordered exchange between two parties that branches into claim or refund",
+        "structures": [
+          {
+            "structure": "interaction",
+            "purpose": "who locks and claims on which chain, in order, with the refund branch",
+            "whyNotProse": "the order of the locks and the two outcomes, with deadlines that must nest, are lost across sentences"
+          }
+        ],
+        "level": "the mechanism's own sequence; the parent states only the principle",
+        "territory": "draws the HTLC exchange, not the general swap or two-phase commit",
+        "placements": "one placement",
+        "division": "the prose explains deadline ordering and costs; the flow shows the order of locks and the branch into claim or refund"
+      },
+      "audit": {
+        "at": "2026-10-07T12:32:55.919Z",
+        "note": "Independent re-audit after repair cycle 1 (editorial depth), compared sentence by sentence with the pre-repair record and checked against quality contract section B. Split with Atomic Swaps holds: the record never restates the exchange problem, never names adaptor-signature or shared-settlement swaps, and touches the free option in one sentence tying its duration to the short deadline; Shared Sequencing and Two-Phase Commit are not mentioned; finality is named and applied to HTLC step timing, not explained. Flow is unchanged and still shows the order (secret and hash, long-deadline lock on A, short-deadline lock on B after finality) and the claim/refund branch; the prose explains why the deadlines nest, what the gap absorbs, reorg exposure, costs and the hash link, without re-walking the stages. Depth outcome (935 to 885 words): changes are condensations that keep every condition and hedge. The definition drops 'intended'; the script/contract paragraph merges two sentences and keeps the post-deadline race ('commonly', 'can'); the deadline-ordering paragraph keeps the counterfactual, the notice/include-under-fee-pressure/finality components of the gap and the clock drift, and now names 'the secret' instead of 'it'; the finality paragraph keeps all three reorg risks (locking against an unfinal lock, revealing against an unfinal lock, a near-deadline claim replaced by a refund after a post-deadline reorg), with 'the claim's place' clearer than before; the cost paragraph keeps locked capital, the initiator's longest lock, both griefing directions and the liquidity-provider example, and drops 'at little cost to the griefer', which repeated the earlier 'costs the party that walks away little beyond transaction fees'; the free-option sentence keeps the duration link and drops the 'since the initiator can delay its claim' clause, which restates the parent's 'wait until the last moment' and leaves the option itself to Atomic Swaps, as the split requires; the hash paragraph keeps common hash function, secret-length mismatch attributed to the party that chose the secret ('commonly'), visibility timing per chain, linkability and fresh secrets, and replaces ambiguous 'it' with 'the secret'. No new inaccuracy, overclaim, contradiction or unclear pronoun; American English; no positional or time-sensitive words. Parent overlap remains the flow's necessary scaffolding (same secret, reveal enables the other claim, timeouts refund) with chain, deadline and finality detail the parent lacks. Density remarks (not defects): the closing sentence of the finality paragraph ('Waiting for finality at each step lengthens the exchange...') partly echoes the gap's finality component in the preceding paragraph; 'holds the asset with the hash' reads slightly less clearly than the former 'along with'. Nothing else removable without losing a condition.",
+        "resolutions": [
+          {
+            "id": "names-concept:40ffdb6733",
+            "resolution": "Not a defect. Finality (excluded) is named and applied to when an HTLC step is safe and how long the deadlines must be, the accepted claim on ordering deadlines against confirmation and finality times; how chains reach finality is not explained."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "Not a defect. 'A common hash function' is named as a requirement of the shared hash; hash functions are not explained."
+          },
+          {
+            "id": "names-concept:696f441f79",
+            "resolution": "Not a defect. A liquidity provider appears only as the example victim of repeated griefing; the role is not explained."
+          },
+          {
+            "id": "names-concept:e2f878fbac",
+            "resolution": "Not a defect. 'A chain with general smart contracts' names the platform kind to contrast with scripts; only the HTLC contract's claim and refund functions are described."
+          },
+          {
+            "id": "names-concept:5eac9d6aa8",
+            "resolution": "Not a defect. Fees are named as pressure on getting a claim included and as the small cost of abandoning; fee mechanics are not explained."
+          }
+        ],
+        "recordFingerprint": "f2cef3af9132c88f2787fb5af205271895e839f06acad228209e7114009dbb18"
+      }
+    },
+    "two-phase-commit": {
+      "model": {
+        "meaning": "Two-phase commit coordinates a change across several participants by first having each prepare and promise to commit, then telling all of them to commit or all of them to abort.",
+        "kind": "mechanism",
+        "parents": {
+          "cross-domain-atomicity": "the blocked participant, the durable decision and the on-chain mapping, beyond locks and coordinator timeouts"
+        },
+        "claims": [
+          "the participant's uncertain state after it votes to commit, unable to commit or abort alone",
+          "how the coordinator's decision is recorded durably and recovered after failures",
+          "how two-phase commit maps onto chains: escrows as locks, a relayer or chain as coordinator, timeouts in place of a reliable coordinator"
+        ],
+        "excludes": [
+          "atomic-swaps",
+          "shared-sequencing",
+          "partial-failures"
+        ],
+        "placements": {
+          "two-phase-commit": "one placement"
+        },
+        "fields": {
+          "sequence": [
+            "prepare",
+            "vote",
+            "decide",
+            "commit or abort"
+          ],
+          "actors": [
+            "coordinator",
+            "participants"
+          ],
+          "failures": [
+            "the coordinator failing after the votes",
+            "locks held until timeout"
+          ],
+          "invariants": [
+            "no participant commits unless all voted to commit"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "two phases whose order is in the name; what matters is the blocked participant's uncertainty, an argument about information. State does not fit: nothing returns to an earlier state",
+        "relationship": "a prepared participant waiting on a decision it cannot make alone",
+        "level": "the protocol's own mechanism; the parent gives only its outline",
+        "territory": "shared sequencing and compensation are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-07T12:36:02.742Z",
+        "note": "Independent re-audit after repair cycle 1 (American English plus editorial-depth pass), compared sentence by sentence with the pre-repair record. Requirements met: 'honour' is now 'honor' and no British forms remain; the depth pass condensed wording throughout (1116 to 1047 words, seven paragraphs kept) without dropping mechanism, conditions or failure modes. Conditions from earlier audits checked and intact: the yes-vote rule still reads 'the protocol no longer lets it back out on its own' (a protocol rule, consistent with 'the move the protocol otherwise forbids'); replication keeps the decision readable 'as long as a majority of the replicas are running and can communicate' and participants block only when no such majority is available; the refund keeps atomicity only if the coordinator has not decided commit and can no longer do so, with the commit cutoff, the deadline margin for delivering a proof and seeing the commit final, and the inference that an escrow still in doubt at its deadline takes the absence of a commit as an abort; the timing-failure sentence still yields a partial failure and the closing sentence keeps atomicity conditional on timing assumptions. Pool-price sentence: dropping 'which contracts not designed for it do not provide' loses no condition, since 'can be prepared only if the contract holding that state was built with a pending mode' now states the design requirement directly. Relayer sentence: the condition survives as 'while the contracts verify what relayers deliver, a relayer can delay a decision but not forge it', and the relayer-as-coordinator sentence still makes trust conditional on contracts checking evidence. Removed material was redundant or illustrative only: 'holding their prepared state meanwhile' (covered by the in-doubt paragraph), 'collected the remaining votes' (implied by deciding commit), 'restarts knowing it made a promise' (condensed to 'resumes waiting on its promise'), and the causes 'relayers are offline or the chain is congested' (illustrative). No new inaccuracy, overclaim, contradiction or unclear pronoun ('it' consistently the participant in the in-doubt paragraph, 'its word' the relayer). Quality contract B: accurate and conditional; L2 level; the parent's lock-price and coordinator-timeout sentences are not restated; siblings named only (partial failure once as an outcome), shared sequencing neither named nor paraphrased; leaf placement, no positional or time-sensitive words; prose only, as designed (the tool's state-candidate hazard was considered: the in-doubt progression is carried by argument rather than a state machine, so prose stays appropriate). Density remarks (not defects): the relayer-and-chain coordinator paragraph remains the longest and its last sentence on ledger readability could be tightened; the closing summary sentence of the timeout paragraph partly restates the preceding condition, though it frames the trade-off usefully. Neither repeats parent or sibling territory.",
+        "resolutions": [
+          {
+            "id": "names-concept:ef1a513230",
+            "resolution": "Not a defect: partial failure is named once, as the outcome when a commit decision misses an escrow's deadline, which is the 2PC timeout consequence this concept claims. Its forms, detection and exposure (the partial-failures sibling's claims) are not explained."
+          }
+        ],
+        "recordFingerprint": "26b3cc660178136289f8a3b7ab729d9894b7093523560b4e71544482008a65ad"
+      }
+    },
+    "partial-failures": {
+      "model": {
+        "meaning": "A partial failure is a cross-chain action in which some legs take effect and others do not, leaving a state the action was not meant to produce.",
+        "kind": "failure",
+        "parents": {
+          "cross-domain-atomicity": "the forms, detection and exposure of partial failure, beyond repair by compensation"
+        },
+        "claims": [
+          "the forms of a cross-chain partial failure: one leg confirmed and another reverted, stalled or reorganized away",
+          "how a partial failure is detected, and which side can observe what, and when",
+          "the exposure while a partial failure stands: who holds the risk and what can be exploited"
+        ],
+        "excludes": [
+          "compensating-actions",
+          "atomicity-guarantees",
+          "rollbacks"
+        ],
+        "placements": {
+          "partial-failures": "one placement"
+        },
+        "fields": {
+          "causes": [
+            "a leg that reverts, stalls or times out",
+            "a confirmed leg reorganized away",
+            "a relayer or bridge fault",
+            "occasionally an adversary who withholds or delays a leg"
+          ],
+          "manifestation": [
+            "some legs final while others are reverted or still pending",
+            "independent chains with no shared commit to undo the finished legs"
+          ],
+          "impact": [
+            "funds stranded or duplicated",
+            "exposure to anyone who acts on the intermediate state"
+          ],
+          "detection": [
+            "watching every leg's confirmation and finality"
+          ],
+          "recovery": [
+            "compensating actions and rollbacks, owned by their own concepts"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "whyProse": "the forms of failure differ in cause and visibility, and prose relates them to detection and exposure better than a list",
+        "relationship": "how legs diverge and who sees it",
+        "level": "the failure itself; compensation is another concept",
+        "territory": "compensating actions and rollbacks are named, not explained",
+        "placements": "one placement"
+      },
+      "audit": {
+        "at": "2026-10-07T12:39:06.555Z",
+        "note": "Independent re-audit after repair cycle 1 (depth pass), sentence-by-sentence against the pre-repair record and quality-contract section B. Requirements met: the definition keeps 'leaving a combined state the action was not meant to produce'; 'favours' is now 'favors' and no other British form or positional/time-sensitive word appears; the depth pass trimmed throat-clearing and repetition (1047 to 988 words, five prose paragraphs kept). Removed: 'and each leaves a different trace' (forward reference to detection), 'which a single chain's view does not cover' (restated by the next sentence), the separate 'Each chain applies its own transactions' sentence (folded into one), 'it becomes a failure when a deadline or expiry makes the leg impossible' (now carried by the first paragraph's timeout sentence and referenced as 'before a timeout rules it out'). Nothing technically necessary was lost and every hedge from the earlier audit survives: out-of-gas as a separate cause; fee clause conditional ('apart from any fee it charges for failed execution'); stalled leg definite only when a timeout, where the design has one, rules it out; bridge signers that fail (not misbehave); no shared commit takes back a finalized leg whatever coordinated the action; reorg-duplication conditional on the deposit not being included again; resubmission duplication conditional on no nonce or once-only identifier rejecting the second, with detection's 'risks duplicating it'; relayers 'may' deliver late; unbacked-unit loss 'can fall'; confirmed-not-final exploit conditional on a reorganization costing less than the payout ('which is profitable wherever'); delivery-timing exploit kept under both conditions (anyone can deliver, no deadline) and is not the swap free option. Clarity improved: 'independent of that system' replaces an ambiguous 'it'; 'slow detection prolongs both' (exposure and partial state) is accurate since repair waits on detection. No new inaccuracy, overclaim, contradiction or unclear pronoun found. Territory: stays within claims (forms, detection and visibility, exposure); compensating actions, rollbacks and atomicity guarantees only named; no HTLC deadline ordering, two-phase-commit vote or in-doubt mechanics, swap free option, or shared sequencing. Parent overlap: the parent's intermediate-state and compensation sentences are elaborated (concrete forms, holders, exploits), not restated. Single leaf placement, canonical. Density remarks (not defects): 'A party that follows only its own chain can see that its leg has completed without learning whether the other leg reverted or is merely pending' partly restates the preceding contract-view sentence and could be condensed; the stalled-leg cause list (fees rising, relayer offline, bridge paused, signers not signing, destination halted) is long but each item is a distinct cause.",
+        "resolutions": [
+          {
+            "id": "names-concept:6f4ce3eb11",
+            "resolution": "Not a defect: compensating actions are only named as 'the territory of compensating actions and rollbacks'; no mechanism explained."
+          },
+          {
+            "id": "names-concept:63fec5349b",
+            "resolution": "Not a defect: fork choice is only named (watchers 'follow the chain's fork choice'); its rules are not explained."
+          },
+          {
+            "id": "names-concept:696f441f79",
+            "resolution": "Not a defect: a liquidity provider appears only as an example holder of risk; its role is not explained."
+          },
+          {
+            "id": "names-concept:c288873469",
+            "resolution": "Not a defect: rollbacks are only named alongside compensating actions; nothing about how they work."
+          }
+        ],
+        "recordFingerprint": "0a1af3961a1a7bbaa4c2bbfb24b263a2dedb171b589b2b2a77e07628c1d0ef06"
+      }
+    },
+    "atomicity-guarantees": {
+      "model": {
+        "meaning": "An atomicity guarantee is a system's precise promise about what happens when one part of a cross-chain action fails: all or nothing, all or refund, eventual repair, or none.",
+        "kind": "property",
+        "parents": {
+          "cross-domain-atomicity": "the spectrum of guarantees and what each depends on, beyond knowing a guarantee precisely"
+        },
+        "claims": [
+          "the spectrum of cross-chain guarantees: all or nothing, all or refund, eventual compensation and best effort",
+          "what each guarantee depends on: shared sequencing, a common settlement layer, timeouts or honest relayers",
+          "reading a system's claimed atomicity: the failure it covers, the window it leaves open and who bears that gap"
+        ],
+        "excludes": [
+          "atomic-swaps",
+          "hashed-timelock-contracts",
+          "two-phase-commit",
+          "shared-sequencing",
+          "partial-failures"
+        ],
+        "placements": {
+          "atomicity-guarantees": "one placement"
+        },
+        "fields": {
+          "statement": "what outcome a system promises when a leg fails, and to whom",
+          "establishedBy": [
+            "shared sequencing",
+            "a common settlement layer",
+            "timeouts",
+            "honest relayers"
+          ],
+          "violatedBy": [
+            "a failure outside the covered cases"
+          ],
+          "confusions": [
+            "atomic inclusion versus atomic execution",
+            "eventual consistency versus atomicity"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "several guarantees compared on the same dimensions",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "each guarantee against its outcome on failure, what it relies on and the window it leaves",
+            "whyNotProse": "reading across four guarantees on three dimensions is what lets a reader place a system's claim"
+          }
+        ],
+        "level": "the spectrum is the property's own; the sibling mechanisms that realize it are not tabulated",
+        "territory": "rows are guarantee types, not the sibling mechanisms",
+        "placements": "one placement",
+        "division": "the prose explains how to read a claim; the table shows the guarantees side by side"
+      },
+      "audit": {
+        "at": "2026-10-07T12:44:16.088Z",
+        "note": "Independent re-audit, repair cycle 1, at the single placement (Interoperability & Abstraction / Cross-Chain Atomicity / Atomicity Guarantees), comparing the pre-cycle record with the current one sentence by sentence. Finding across both repairs: the All or refund reliance cell originally read 'Deadlines enforced on each chain', which contradicts adaptor-signature swaps whose unwinding deadline sits on one chain (the authored Atomic Swaps record: 'a deadline, enforced on at least one chain'). The first repair ('Deadlines enforced on the chains that hold refundable legs') still implied every chain and was reopened; the second repair's cell, 'A refund deadline enforced on at least one of the chains, and parties able to act before it', is correct for hash-locked swaps (deadlines on both chains satisfy 'at least one') and for adaptor-signature swaps, and matches Atomic Swaps. No other cell or sentence implies a deadline on every chain: the outcome cell (locked legs unwind, each party recovers what it committed) and window cell (assets frozen until claimed or refunded; a late party exposed) hold for one-chain-deadline constructions, and the prose's deadline mentions ('cannot act before its deadline', 'a party that misses its deadline') are per party, not per chain. Shared Sequencing reservation: the closing paragraph still separates inclusion from execution and leaves 'whether a sequencing arrangement that includes the legs together also makes them take effect together' as a question about shared sequencing itself; the All or nothing reliance cell names a common settlement layer applying the legs in one step, not shared sequencing, so the reserved question stays unanswered. Depth pass (855 to 799 words): cuts are density, not substance. The opening's description of the middle rungs ('the next lets such a state exist but fixes how it ends; the weaker ones promise a later repair') is dropped but carried by the comparison's All or refund and Eventual compensation rows; the failure-set examples list was dropped where the next sentence gives concrete covered and uncovered failures; the compensation conditions clause ('someone has to notice the failure, fund the reversal and see it confirmed') is dropped but its conditions remain in the Eventual compensation reliance cell (honest, live relayers or an operator that detect the failure and fund the repair) and window cell (until the repair lands). Hedges and conditions earlier audits recorded are all kept: deadline guarantees fail under congestion or halts, compensation fails under a lying relayer, guarantees protect responsive protocol-following parties, scope across bridge and trade, the liquidity-provider example remains hedged ('can look close to all or nothing from the user's side'). Rewordings checked: 'places the loss on the reserve' became 'moves the exposure to the reserve', which is more accurate and consistent with the paragraph; 'who bears that gap' became 'who bears the exposure while the window is open', tying the third reading to the second; 'the first and not the second' still refers correctly to eventual consistency and atomicity in that order. American English: 'honoured' removed; no British forms remain. Section B: accurate and conditional; L2 level; extends rather than restates the parent; siblings named only as boundaries (none paraphrased); canonical with no positional language; progression definition to spectrum to comparison to three readings to the inclusion caveat. The comparison still compares guarantee types, not sibling mechanisms, and adds reliance and window across four guarantees that the prose does not tabulate.",
+        "resolutions": [
+          {
+            "id": "names-concept:696f441f79",
+            "resolution": "Not a defect: liquidity providers appear only as the actor in the exposure-relocation example; nothing about them is explained."
+          },
+          {
+            "id": "names-concept:4d13af81c8",
+            "resolution": "Not a defect: a common settlement layer is named in the All or nothing reliance cell as an example of one system applying all legs in one step; settlement layers are not explained."
+          },
+          {
+            "id": "names-concept:b7a026f7e7",
+            "resolution": "Not a defect: shared sequencing is named only in the closing paragraph as something a guarantee may rest on, and whether its inclusion amounts to execution is left as a question about shared sequencing itself, honoring the exclusion and the reservation."
+          },
+          {
+            "id": "absolutes:d5cf0cc7ae",
+            "resolution": "Not a defect: 'guarantee'/'guarantees' are the concept's own noun, not unconditional promises; each guarantee is stated against its failure set, reliance and window. The one 'cannot' is conditioned ('a chain congested or halted long enough that an honest party cannot act before its deadline'). No unconditional claim of security, correctness or finality."
+          }
+        ],
+        "recordFingerprint": "438fc15e9e2da2268bf56e9a46d421815f78d1454b239d766d18cf6452717db1"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-07T18:01:57.448Z",
+    "note": "Repair cycle 1 group re-audit, the five owned members read side by side against the parent and the pre-cycle records. Split: Atomic Swaps keeps the exchange problem, the three construction families with their assumptions (hash-locked named as realized by HTLCs, never explained), what a swap does not provide and the free option; Hashed Timelock Contracts keeps the per-chain expression, deadline ordering against confirmation and finality, locked capital, griefing and the shared hash. The free option is explained once, in Atomic Swaps; HTLC only ties its duration to the short deadline (the depth pass dropped HTLC's restatement of why, which Atomic Swaps and the parent carry). Responsiveness is stated once in Atomic Swaps; deadline ordering and locked capital once in HTLC. Two-Phase Commit alone explains the in-doubt state, blocking, the commit point and recovery; its escrow timeouts end in a partial failure when a commit misses a deadline, consistent with Partial Failures' claim that no shared commit can take back a finalized leg and with its stalled leg becoming definite only when a timeout rules it out. Finality is used the same way in all members (a lock, vote or leg counts only once it cannot be reorganized away). Atomicity Guarantees' comparison agrees with the others: all or nothing matches Atomic Swaps' single settlement layer that must execute both legs together; the corrected all-or-refund cell (a refund deadline enforced on at least one chain, parties able to act before it) holds for HTLCs (deadlines on both) and adaptor-signature swaps (a deadline on at least one, as Atomic Swaps states), and its window cell matches HTLC's late-claim exposure. The Shared Sequencing reservation stays unanswered: Atomicity Guarantees separates inclusion from execution and defers the question to shared sequencing, Atomic Swaps speaks only of shared settlement, and the other three do not touch it. The depth pass removed nothing another member relies on (2PC's stall causes are carried by Partial Failures; Atomicity Guarantees' repair conditions by its comparison). Terms (leg, escrow, deadline, timeout, finality, refund) are used consistently. A liquidity provider paying out before the source leg is final appears in both Partial Failures (who holds the risk) and Atomicity Guarantees (a design moving exposure); each makes a different point, so it is not duplication. Forms differ by concept (prose; prose plus flow; prose; prose; prose plus comparison) and definitions and first paragraphs open differently. No group signals.",
+    "resolutions": [],
+    "records": {
+      "atomic-swaps": "92762a421dd8c53e21a3c866d7f5b3c1e27eec7c4ffee3cf890c04bee56b4e65",
+      "hashed-timelock-contracts": "f2cef3af9132c88f2787fb5af205271895e839f06acad228209e7114009dbb18",
+      "two-phase-commit": "26b3cc660178136289f8a3b7ab729d9894b7093523560b4e71544482008a65ad",
+      "partial-failures": "0a1af3961a1a7bbaa4c2bbfb24b263a2dedb171b589b2b2a77e07628c1d0ef06",
+      "atomicity-guarantees": "438fc15e9e2da2268bf56e9a46d421815f78d1454b239d766d18cf6452717db1"
+    }
+  }
+}
