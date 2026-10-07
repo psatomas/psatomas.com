@@ -347,7 +347,8 @@ Measured on the production build:
 - **Content storage is unchanged:** `data.ts` and the registry, so plans,
   fingerprints, diff validation and the render check are unaffected.
 - **A Worker budget check.** L2 PR verification records the dry-run Worker
-  upload and fails above the 32 MiB threshold. Domain-completion verification
+  upload and fails above the 32 MiB threshold. This is implemented as the
+  `worker-budget` check of an L2 run's diff stage (section 15). Domain-completion verification
   repeats the cold-load measurement of section 6.
 - **L2 diffs never touch the L0 projection,** and the generated explorer view
   still changes only by `hasContent` flips.
@@ -397,3 +398,90 @@ The client-chunk scan, the network capture (Playwright with
 `request.sizes()`) and the module-evaluation markers are described in
 sections 3, 4 and 7. Each uses only the production build and a temporary
 worktree.
+
+## 15. Re-measured with the pilot
+
+The 210-word "expected" scenario was the dual-role L1 scale, not L2 depth.
+The L2 pilot authored 22 real records ([l2-pilot.md](l2-pilot.md)), so the
+projection was measured again with their distribution:
+
+- **When and where:** 2026-10-07, on `main` at `151b7ce`, after the OPTIMIZE
+  change, so the homepage no longer bundles or evaluates the corpus.
+- **How:** with the same commands as section 14, in a separate checkout.
+
+**Scenarios.** Each adds one record per l2-only concept (1,604):
+
+- `expected`: the original 210-word scenario.
+- `empirical`: each synthetic record copies the exact shape of one real
+  pilot record, drawn at random: definition, paragraphs, structured blocks
+  and every string's word count. Corpus words replace the text
+  (`scripts/map-l2-synthetic.ts empirical … --records`). This was run once
+  with the original pilot records and once with the refined ones.
+- `empirical-upper`: draws only from the refined pilot's longest quarter, as
+  a reasonable upper bound.
+
+All values are **measured**.
+
+| Measure | Baseline (no L2) | 210-word assumption | Original pilot | Refined pilot | Upper bound |
+|---|---|---|---|---|---|
+| Median words per synthetic record | — | 210 | 986 | 931 | 1,078 |
+| Mean record JSON | — | 1,574 B | 6,418 B | 6,072 B | 7,410 B |
+| Projected L2 words (1,604 × mean words) | — | about 0.34 M | about 1.53 M | about 1.44 M | about 1.78 M |
+| `data.ts` | 1.37 MB | 4.23 MB | 12.24 MB | 11.67 MB | 13.76 MB |
+| `data.ts` gzip | 341 KB | 1,218 KB | 4,024 KB | 3,821 KB | 4,569 KB |
+| Worker upload (`Total Upload`) | 12,527 KiB (12.2 MiB) | 18,706 KiB (18.3 MiB) | 26,305 KiB (25.7 MiB) | 25,762 KiB (25.2 MiB) | 27,858 KiB (27.2 MiB) |
+| Worker upload, gzip (reference) | 2,849 KiB | 3,749 KiB | 6,483 KiB | 6,285 KiB | 7,031 KiB |
+| Share of the 64 MiB limit | 19% | 29% | 40% | 39% | 43% |
+| OpenNext build | 39.6 s | 40.7 s | 41.6 s | 41.7 s | 41.6 s |
+| `tsc --noEmit`, non-incremental | 27.6 s, 1.67 GB | — | — | 27.7 s, 1.92 GB | 28.0 s, 1.88 GB |
+| Cold model load (Node, median of 9) | 50 ms | 88 ms | 143 ms | 138 ms | 143 ms |
+| Heap after loading the model | 8.6 MB | 11.1 MB | 22.0 MB | 22.1 MB | 23.8 MB |
+| Content-API prerender files | 356 | 1,960 | 1,960 | 1,960 | 1,960 |
+| Static asset files after deploy copies the cache (derived) | about 400 | about 2,004 | about 2,004 | about 2,004 | about 2,004 |
+
+Projected words use the real records' means: 896 refined, 954 original, and
+1,112 for the refined pilot's longest quarter; the 210-word scenario uses
+its median. The synthetic medians differ slightly from the pilot's because
+templates are drawn at random.
+
+**Against the thresholds of section 11:**
+
+- **Worker upload:** 25.2 MiB for the refined pilot and 27.2 MiB at the upper
+  bound, below the 32 MiB MIGRATE threshold (half the 64 MiB limit). Upload
+  grows about 1,285 KiB per MB of `data.ts` (derived). The threshold would
+  be reached near a 17 MB `data.ts`: a mean record of about 9.8 KB, about
+  1.6 times the refined pilot (derived).
+- **Startup:** unaffected, since the corpus is not in global scope.
+- **Static asset files:** about 2,004 of 20,000 (10%).
+- **Memory:** about 22–24 MB per loaded model, of 128 MB per isolate.
+- **The cold model load (about 140 ms)** stays off every request path. Since
+  the OPTIMIZE change, the homepage reads the topology-only L0 projection,
+  and prerendered content-API hits do not evaluate the model (section 7). A
+  guard test keeps it so.
+- **Build, type-check and memory:** essentially flat. The data literal is
+  typed by annotation, not inferred.
+
+**Decision: keep the architecture.** Real L2 depth is about four times the
+assumption the decision was made with, and every hard limit still has
+ample headroom. The binding cost is the Worker upload, and the refined
+pilot uses 79% of the MIGRATE budget. Nothing measured justifies migrating
+content storage. Two safeguards keep it that way:
+
+- **The `worker-budget` check.** Every L2 run's diff stage builds the
+  production Worker with OpenNext, sizes it with
+  `wrangler deploy --dry-run`, and refuses above 32 MiB. The campaign can
+  therefore not cross the threshold silently.
+- **The depth policy's diagnostics** ([l2-authoring.md](l2-authoring.md#depth))
+  hold the corpus near the refined pilot's distribution. A record above
+  1,300 words or a slice median above 1,150 is audit attention.
+
+**Uncertainty, beyond section 13:**
+
+- **Template sampling.** The empirical scenarios sample 22 records from five
+  groups of five domains. Domains whose concepts carry less mechanism, such
+  as governance, ran shorter in the pilot. The full corpus may average below
+  the refined pilot or, for mechanism-heavy domains, above it. The upper
+  bound covers a corpus made entirely of the longest quarter.
+- **Text.** The text is synthetic, so compression is approximate. The gzip
+  column is reference only, since Cloudflare limits the uncompressed size.
+

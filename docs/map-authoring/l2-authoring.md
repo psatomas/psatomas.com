@@ -65,6 +65,9 @@ npm run map:author -- l2 context <concept-id>         # one concept's bounded co
 - a reservation that another concept claims;
 - a reservation the owner's plan neither claims nor revises;
 - an unknown excluded concept;
+- a claim that names, by a multi-word title, an unplanned concept of the
+  plan's own domain that the member does not exclude (a latent ownership
+  collision; see [Territory precedents](#territory-precedents));
 - an unanswered hazard;
 - concept work for a concept the group does not own;
 - a stale basis: a parent or fixed member changed, a reserved member was
@@ -146,6 +149,7 @@ resolution, and none is a failure, target or quota on its own
 |---|---|
 | Deterministic facts | Positional language; dated or time-sensitive words and versions; the definition repeated in the body; a circular definition; every other concept named (multi-word titles anywhere; single-word titles only for siblings, hazard partners and excludes): confirm each is named, not explained |
 | Heuristic | Overlap with a parent sentence that mentions the concept; overlap with authored siblings or hazard partners; three or more unhedged absolutes; too few conditional words in an emerging domain (L0 order 19 onward); a mathematical symbol (state the relation in words); prose spelling out a structure's entries; a model field that barely reaches the text |
+| Depth | A record above 1,300 words, or below 400 words with three or more claims ([Depth](#depth)) |
 | Group | Sibling text overlapping; three or more members opening alike; every member having one structured form |
 
 ## Drift
@@ -156,18 +160,117 @@ reports:
 - the top form and its share;
 - the top definition opening;
 - the top paragraph opener;
-- how much paragraph lengths vary.
+- how much paragraph lengths vary;
+- the median record length, and the commonest paragraph count and its share.
 
 It flags, as audit attention, a window of at least ten records where:
 
 - more than half of definitions open alike;
 - a quarter of paragraphs open alike;
 - paragraph lengths barely vary;
-- more than 85% of records share one structured form.
+- more than 85% of records share one structured form;
+- the median record is above 1,150 words;
+- more than 60% of records have the same number of paragraphs.
 
 A prose majority is never flagged: prose is the expected default, not a
 target to diversify away from. A flag persisting across a whole slice pauses
 the campaign for calibration (see the campaign stop conditions).
+
+## Depth
+
+L2 is MAP's terminal layer, so each record is complete for its concept. Its
+depth follows from its claims, never from a length. There is no word target
+and no cap.
+
+**What sets depth:**
+
+- **Claims set breadth.** The territory plan gives each concept two to four
+  claims. Each claim is a question only this concept answers.
+- **The claim's mechanism sets depth.** Each claim gets what the reader needs
+  to understand it on its own terms:
+  - how it works;
+  - under which conditions it holds;
+  - how it fails;
+  - what it is confused with;
+  - an example only where the claim needs one.
+
+  A claim about a protocol's mechanism needs more than a claim about a
+  distinction. Expect concepts to differ in length.
+
+**Keep:**
+
+- the concept's own mechanism, conditions and failure modes;
+- the important distinctions or confusions;
+- the conditions and hedges that make a claim true. A shorter sentence that
+  has lost its condition is a wrong sentence.
+
+**Remove or condense:**
+
+- a parent's sentence restated, or a sibling's or neighbour's territory
+  explained;
+- an excluded or reserved concept explained beyond naming;
+- background the claims do not need;
+- the same point made twice, within the record or across a group;
+- more examples than the point needs;
+- setup that announces and conclusion that repeats;
+- wording that says the same less precisely in more words.
+
+**Diagnostics.** These are attention signals, not limits. The thresholds are
+set from the refined pilot: 22 records, median 984 words, range 504 to 1,201
+([l2-pilot.md](l2-pilot.md)).
+
+| Diagnostic | Where | Asks the audit |
+|---|---|---|
+| A record above 1,300 words | `depth-long` signal | to tie each paragraph to a claim and condense the rest |
+| A record below 400 words with three or more claims | `depth-short` signal | whether each claim is explained, not only named |
+| A slice median above 1,150 words | `drift-depth` | whether depth follows the claims or padding |
+| More than 60% of a window with one paragraph count | `drift-paragraph-count` | whether each record's shape was decided for its concept |
+
+**Against template convergence.** The L1 corpus converged when neighbouring
+records copied each other's form. L2 prevents it in four ways:
+
+- Each concept is drafted and audited from its own context, never from a
+  sibling's record. Authored neighbours are read only to check a boundary.
+- No length, paragraph count, opening or form is ever a target.
+- The drift report flags convergence of form, opening, paragraph opener,
+  paragraph length, record length and paragraph count across a slice.
+- The group audit judges the members side by side for shared arcs,
+  openings and enumeration patterns. Repetition that follows the claims is
+  not convergence, but the audit must say so.
+
+## Territory precedents
+
+The pilot resolved four overlaps that will recur across the campaign. Each
+is one of three kinds:
+
+- **Legitimate contextual overlap:** both concepts must discuss it, from
+  different angles. Divide by angle, record the division, and have each
+  record say only what its angle needs.
+- **Reference only:** one concept names the other's subject to say what it
+  works on. Naming is enough; the other concept explains.
+- **Ownership collision:** one plan's claim takes another concept's core
+  territory. Narrow the claim, add the concept to the excludes, and repair
+  the record through `l2 reopen`. Do this even when the other concept's plan
+  does not exist yet: cross-plan checks see a collision only once both
+  claims exist. `l2 check` now refuses a claim that names an unplanned
+  concept of its own domain unless the member excludes it. Naming across
+  domains stays a judgment for the plan's author and the audit.
+
+| Overlap | Kind | Precedent |
+|---|---|---|
+| Emergency Powers ↔ Emergency Upgrades: ratification | Legitimate (general / specific) | The general concept owns how a power or a use of it ends (expiry, ratification, reversal, revocation) and the conditions and review of a use. The specific one keeps only what is specific to it: replaced code does not lapse, and reverting is an upgrade that restores the flaw. |
+| Model Checking ↔ Formal Specifications: temporal properties | Reference only | A technique names the property language it checks, and safety and liveness only as shapes of search and counterexample. The specification concept owns what properties state and how they are written. |
+| EVM ↔ Message Calls, Contract Calls, Execution Context: the call model | Ownership collision (latent) | A machine owns the structure of its calls: frames, what persists per account, the depth bound, and the kinds of call by whose code runs against whose storage. What a call carries, how contracts call one another, and what the execution context exposes belong to those concepts. |
+| Verification Limits ↔ Authenticity: attestation | Legitimate (by angle) | The general concept owns how authenticity is established. The limit concept says what each attestation form establishes and where trust moves, not how the mechanism works. |
+
+Two cautions from the same cases:
+
+- A plan's claim is read as an authoring prompt. An inaccurate word in a
+  claim ("differ only in") reappears in the record, so claims need the same
+  accuracy as records.
+- A property that is a limit ("checks cannot establish truth") has no
+  violation. Leave `violatedBy` out, as the model contract allows for any
+  field a concept does not have, and state the exposure the limit leaves.
 
 ## Diff boundary
 
@@ -398,4 +501,5 @@ npm run map:author -- l2 start --pilot
 4. Drafting and audits follow, then one PR for detailed review. The pilot
    never merges its own PR.
 5. Refine the contracts and tooling from what the pilot shows before the
-   campaign.
+   campaign. What the pilot showed, and what changed, is recorded in
+   [l2-pilot.md](l2-pilot.md).
