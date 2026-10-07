@@ -164,6 +164,29 @@ function fail(message: string, code = 2): never {
 
 type Result = { ok: boolean; status: number | null; out: string };
 
+/**
+ * The Worker budget (docs/map-authoring/l2-content-scale.md, sections 11 and
+ * 15): the production Worker as `wrangler deploy --dry-run` sizes it, refused
+ * above half of Cloudflare's 64 MiB limit, where the decision says content
+ * storage must change. Builds with OpenNext, which rebuilds .next.
+ */
+const WORKER_BUDGET_MIB = 32;
+function workerBudget(): Result & { detail: string } {
+  rmSync(join(ROOT, ".open-next"), { recursive: true, force: true });
+  const built = sh("npx", ["opennextjs-cloudflare", "build"]);
+  if (!built.ok) return { ...built, detail: "the OpenNext build failed" };
+  const dir = mkdtempSync(join(tmpdir(), "map-worker-"));
+  try {
+    const dry = sh("npx", ["wrangler", "deploy", "--dry-run", "--outdir", dir]);
+    const kib = Number(dry.out.match(/Total Upload: ([\d.]+) KiB/)?.[1]);
+    if (!dry.ok || !kib) return { ok: false, status: dry.status, out: dry.out, detail: "the dry run reported no upload size" };
+    const mib = kib / 1024;
+    return { ok: mib <= WORKER_BUDGET_MIB, status: mib <= WORKER_BUDGET_MIB ? 0 : 1, out: `Total Upload ${kib} KiB`, detail: `${mib.toFixed(1)} MiB of the ${WORKER_BUDGET_MIB} MiB budget` };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 function sh(cmd: string, args: string[], options: { input?: string; cwd?: string } = {}): Result {
   const result = spawnSync(cmd, args, { cwd: options.cwd ?? ROOT, encoding: "utf8", input: options.input, maxBuffer: 1 << 28, env: { ...process.env, FORCE_COLOR: "0" } });
   const out = `${result.stdout ?? ""}${result.stderr ?? ""}`;
@@ -1256,7 +1279,12 @@ async function runStage(state: RunState): Promise<RunState> {
     case "diff": {
       const base = await modelAt(state.baseSha);
       const files = changedFiles(state);
-      if (l2Mode) return completeStage(await diffL2(state, base, files, check, at, tree), "diff", at);
+      if (l2Mode) {
+        // The corpus grows the production Worker; checked here, once the browser and render checks no longer need .next.
+        const budget = workerBudget();
+        const budgeted = check(state, "worker-budget", budget, budget.detail, "Worker budget", `the production Worker passes the ${WORKER_BUDGET_MIB} MiB budget, half Cloudflare's limit, at which storage must change (l2-content-scale.md)`);
+        return completeStage(await diffL2(budgeted, base, files, check, at, tree), "diff", at);
+      }
       if (refactor) {
         const baseSpec = readSpec(state.baseSha);
         if (designSetFingerprint(baseSpec, state.domainId) !== state.refactor!.designSet) {
