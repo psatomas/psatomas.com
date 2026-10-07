@@ -63,9 +63,20 @@ export function blockText(block: MapContentBlock): string[] {
 }
 const prose = (record: MapConceptContent) => [record.definition, ...(record.body ?? []).filter((block) => block.kind === "paragraph").map((block) => (block as { text: string }).text)];
 const allText = (record: MapConceptContent) => [record.definition, ...(record.body ?? []).flatMap(blockText)];
+/** Every word a record shows, blocks included. */
+export const recordWords = (record: MapConceptContent) => allText(record).join(" ").split(/\s+/).filter(Boolean).length;
+const paragraphCount = (record: MapConceptContent) => (record.body ?? []).filter((block) => block.kind === "paragraph").length;
 
-const POSITIONAL = /\b(below|above|beneath|the following|as (?:shown|noted|described) (?:above|earlier|before)|the previous (?:section|paragraph)|in this (?:domain|section|branch|layer|group)|this domain)\b/i;
-const DATED = /\b(19\d\d|20\d\d|currently|today|nowadays|as of|recently|at the time of writing|the latest|v\d+(?:\.\d+)*|\d+\.\d+\.\d+)\b/i;
+/**
+ * The depth policy's diagnostic thresholds (docs/map-authoring/l2-authoring.md#depth),
+ * set from the refined pilot (22 records: median 984 words, maximum 1,201).
+ * They ask the audit to look again; none is a limit or a target.
+ */
+export const DEPTH = { longRecord: 1300, shortRecord: 400, sliceMedian: 1150, sharedParagraphCount: 0.6 } as const;
+
+// "above" and "below" before a quantity compare values ("a threshold above one"); they point at text only otherwise.
+const POSITIONAL = /\b((?:below|above)(?!\s+(?:\d|zero|one|two|three|four|five|six|seven|eight|nine|ten|half|a (?:half|third|quarter)|its threshold|the threshold))|beneath|the following|as (?:shown|noted|described) (?:above|earlier|before)|the previous (?:section|paragraph)|in this (?:domain|section|branch|layer|group)|this domain)\b/i;
+const DATED = /\b(19\d\d|20\d\d|currently|today|nowadays|as of|recently|at the time of writing|(?<!\bat )the latest|v\d+(?:\.\d+)*|\d+\.\d+\.\d+)\b/i;
 const ABSOLUTES = /\b(always|never|guarantees?|guaranteed|cannot|impossible|ensures?|completely|entirely|every time)\b/gi;
 const HEDGES = /\b(may|might|could|would|can|if|unless|where|when|typically|often|usually|tends?|proposed|proposals?|in principle|depends?)\b/gi;
 const MATH = /[=×÷^≥≤√∑∏∞≈]|\b\d+\s*[*/]\s*\d+\b/;
@@ -98,6 +109,8 @@ export type L2SignalInput = {
 };
 
 export const SPECULATIVE_FROM = 19;
+/** Model fields that say what to avoid rather than what to explain. */
+const GUARD_FIELDS: ReadonlySet<string> = new Set(["datedFacts"]);
 
 export function conceptSignals(input: L2SignalInput): L2Signal[] {
   const { record, context, model, conceptId } = input;
@@ -141,7 +154,9 @@ export function conceptSignals(input: L2SignalInput): L2Signal[] {
     }
   }
   const joined = prose(record).join(" ");
-  const absolutes = joined.match(ABSOLUTES) ?? [];
+  // The concept's own words are not claims about it ("guarantee" in Atomicity Guarantees).
+  const own = new Set(tokens(context.concept.title).map((word) => word.replace(/s$/, "")));
+  const absolutes = (joined.match(ABSOLUTES) ?? []).filter((word) => !own.has(word.toLowerCase().replace(/s$/, "")));
   if (absolutes.length >= 3) found.push(signal("heuristic", "absolutes", `${absolutes.length} unhedged absolutes (${[...new Set(absolutes.map((word) => word.toLowerCase()))].join(", ")}): check each holds unconditionally`));
   const words = tokens(joined).length;
   const hedges = (joined.match(HEDGES) ?? []).length;
@@ -155,10 +170,15 @@ export function conceptSignals(input: L2SignalInput): L2Signal[] {
     const restated = strings.filter((value) => around.includes(` ${tokens(value).join(" ")} `)).length;
     if (strings.length >= 2 && restated / strings.length >= 0.6) found.push(signal("heuristic", "prose-narrates-structure", `${restated} of the ${block.kind}'s ${strings.length} entries are spelled out in the prose beside it`));
   });
-  const recordWords = new Set(tokens(texts.join(" ")));
+  const length = recordWords(record);
+  if (length > DEPTH.longRecord) found.push(signal("heuristic", "depth-long", `${length} words, more than ${DEPTH.longRecord}: tie each paragraph to a claim, and condense repetition, background and examples the claims do not need`));
+  if (length < DEPTH.shortRecord && (context.plan?.claims.length ?? 0) >= 3) found.push(signal("heuristic", "depth-short", `${length} words for ${context.plan!.claims.length} claims: is each claim explained, not only named?`));
+  const shownWords = new Set(tokens(texts.join(" ")));
   for (const [field, value] of Object.entries(input.work?.model.fields ?? {})) {
+    // A guard field lists what the text must avoid, so it never reaches the text.
+    if (GUARD_FIELDS.has(field)) continue;
     const content = [...new Set(tokens(Array.isArray(value) ? value.join(" ") : value).filter((word) => word.length >= 5))];
-    if (content.length >= 4 && content.filter((word) => recordWords.has(word)).length / content.length < 0.2) found.push(signal("heuristic", "model-unused", `the model's ${field} barely reaches the text: is the mechanism deep enough?`));
+    if (content.length >= 4 && content.filter((word) => shownWords.has(word)).length / content.length < 0.2) found.push(signal("heuristic", "model-unused", `the model's ${field} barely reaches the text: is the mechanism deep enough?`));
   }
   return dedupe(found);
 }
@@ -200,6 +220,9 @@ export type L2DriftReport = {
   topOpening: { frame: string; share: number };
   topParagraphOpener: { opener: string; share: number };
   paragraphLengthVariation: number;
+  /** The median record length in words, and the most common paragraph count and its share. */
+  medianWords: number;
+  topParagraphCount: { count: number; share: number };
   signals: L2Signal[];
 };
 
@@ -223,8 +246,13 @@ export function driftReport(records: readonly { title: string; record: MapConcep
   const lengths = records.flatMap((entry) => prose(entry.record).slice(1).map((paragraph) => tokens(paragraph).length));
   const mean = lengths.reduce((sum, value) => sum + value, 0) / (lengths.length || 1);
   const variation = lengths.length ? Math.sqrt(lengths.reduce((sum, value) => sum + (value - mean) ** 2, 0) / lengths.length) / (mean || 1) : 0;
+  const lengthsByRecord = records.map((entry) => recordWords(entry.record)).sort((a, b) => a - b);
+  const medianWords = lengthsByRecord.length ? lengthsByRecord[Math.floor(lengthsByRecord.length / 2)] : 0;
+  const counts = share(records.map((entry) => paragraphCount(entry.record)));
   const signals: L2Signal[] = [];
   if (records.length >= 10) {
+    if (medianWords > DEPTH.sliceMedian) signals.push(signal("heuristic", "drift-depth", `the median record is ${medianWords} words, more than ${DEPTH.sliceMedian}: is depth following the claims, or padding?`));
+    if (counts.share > DEPTH.sharedParagraphCount) signals.push(signal("heuristic", "drift-paragraph-count", `${(counts.share * 100).toFixed(0)}% of ${records.length} records have ${counts.top} paragraphs: is each record's shape decided for its concept?`));
     if (sequence.share > 0.85 && recordsStructured(records.map((entry) => entry.record))) signals.push(signal("heuristic", "drift-form", `${(sequence.share * 100).toFixed(0)}% of ${records.length} records share the form ${sequence.top}`));
     if (opening.share > 0.5) signals.push(signal("heuristic", "drift-opening", `${(opening.share * 100).toFixed(0)}% of definitions open "${opening.top} …"`));
     if (openers.length >= 20 && opener.share > 0.25) signals.push(signal("heuristic", "drift-opener", `${(opener.share * 100).toFixed(0)}% of paragraphs open "${opener.top} …"`));
@@ -236,6 +264,8 @@ export function driftReport(records: readonly { title: string; record: MapConcep
     topOpening: { frame: String(opening.top ?? ""), share: +opening.share.toFixed(2) },
     topParagraphOpener: { opener: String(opener.top ?? ""), share: +opener.share.toFixed(2) },
     paragraphLengthVariation: +variation.toFixed(2),
+    medianWords,
+    topParagraphCount: { count: Number(counts.top ?? 0), share: +counts.share.toFixed(2) },
     signals,
   };
 }

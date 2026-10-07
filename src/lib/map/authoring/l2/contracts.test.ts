@@ -5,7 +5,7 @@ import { contentFingerprint } from "../representation/design.ts";
 import { assembleL2Context } from "./context.ts";
 import { designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
 import { filledG1, model, options } from "./fixtures.ts";
-import { conceptSignals, containment, driftReport, groupSignals, mentionedConcepts } from "./signals.ts";
+import { conceptSignals, containment, DEPTH, driftReport, groupSignals, mentionedConcepts, recordWords } from "./signals.ts";
 
 const work = (): L2ConceptWork => ({
   model: {
@@ -135,6 +135,43 @@ test("heuristic signals: parent and neighbour overlap, absolutes, unhedged specu
   assert.deepEqual(signalsFor(ALPHA).filter((entry) => entry.kind === "heuristic"), []);
 });
 
+test("signals the pilot showed to be false positives are not raised", () => {
+  // A quantity compared, not text pointed at; "at the latest" is a deadline, not a date.
+  const comparisons: MapConceptContent = { ...ALPHA, body: [{ kind: "paragraph", text: "With any threshold above one, a single key signs nothing; values below 5 are refused, at the latest by the deadline." }] };
+  assert.deepEqual(checks(signalsFor(comparisons)).filter((check) => check === "positional" || check === "dated"), []);
+  const pointing: MapConceptContent = { ...ALPHA, body: [{ kind: "paragraph", text: "As the paragraph below shows, the latest release changed it." }] };
+  assert.deepEqual(checks(signalsFor(pointing)).filter((check) => check === "positional" || check === "dated"), ["dated", "positional"]);
+  // The concept's own title words are not absolutes about it.
+  const m = model([ALPHA]);
+  (m.concepts as unknown as { id: string; title: string }[]).find((concept) => concept.id === "a")!.title = "Alpha Guarantees";
+  const own: MapConceptContent = { ...ALPHA, body: [{ kind: "paragraph", text: "Each guarantee differs; the guarantees compared here are three, and one cannot hold under a halt." }] };
+  const ownSignals = conceptSignals({ conceptId: "a", record: own, context: assembleL2Context("a", m, [filledG1(m)], options), model: m, neighbours: [], domainOrder: 0 });
+  assert.ok(!checks(ownSignals).includes("absolutes"));
+  // A guard field says what to avoid, so the text never reflects it.
+  const guarded = { ...work(), model: { ...work().model, fields: { datedFacts: ["avoid naming specific forks, opcode prices or release versions"] } } };
+  assert.ok(!checks(signalsFor(ALPHA, { work: guarded })).includes("model-unused"));
+});
+
+test("depth diagnostics ask the audit to look again at a long or thin record, and at a slice converging in depth or shape", () => {
+  const sentence = "The coordinator logs its decision before it tells any participant. ";
+  const long: MapConceptContent = { ...ALPHA, body: Array.from({ length: 12 }, () => ({ kind: "paragraph" as const, text: sentence.repeat(12) })) };
+  assert.ok(recordWords(long) > DEPTH.longRecord);
+  assert.ok(checks(signalsFor(long)).includes("depth-long"));
+  // ALPHA is short, but its plan claims one thing: thin only when three or more claims share fewer words.
+  assert.ok(!checks(signalsFor(ALPHA)).includes("depth-short"));
+  const m = model([ALPHA]);
+  const plan = filledG1(m);
+  plan.members.find((member) => member.conceptId === "a")!.claims = ["how alpha starts", "how alpha stops", "how alpha fails"];
+  const thin = conceptSignals({ conceptId: "a", record: ALPHA, context: assembleL2Context("a", m, [plan], options), model: m, neighbours: [], domainOrder: 0 });
+  assert.ok(checks(thin).includes("depth-short"));
+  // A slice: every record long and of one paragraph count.
+  const window = Array.from({ length: 10 }, () => ({ title: "Alpha", record: { ...long, body: (long.body ?? []).slice(0, 5) } }));
+  const report = driftReport(window);
+  assert.deepEqual(report.topParagraphCount, { count: 5, share: 1 });
+  assert.ok(report.signals.some((entry) => entry.check === "drift-paragraph-count"));
+  assert.equal(report.signals.some((entry) => entry.check === "drift-depth"), report.medianWords > DEPTH.sliceMedian);
+});
+
 test("group signals: siblings overlapping, a shared opening, and one form for every member", () => {
   const same = (conceptId: string, title: string): { conceptId: string; title: string; record: MapConceptContent } => ({
     conceptId,
@@ -153,7 +190,7 @@ test("the drift report describes a window and flags convergence without asking f
   }));
   const report = driftReport(uniform);
   assert.equal(report.window, 12);
-  assert.deepEqual(checks(report.signals), ["drift-opener", "drift-opening", "drift-uniform-length"]);
+  assert.deepEqual(checks(report.signals), ["drift-opener", "drift-opening", "drift-paragraph-count", "drift-uniform-length"]);
   // Uniform prose alone never trips the form flag: prose is a valid majority, not a target to diversify away from.
   assert.equal(report.signals.some((entry) => entry.check === "drift-form"), false);
   assert.deepEqual(driftReport(uniform.slice(0, 5)).signals, []);
