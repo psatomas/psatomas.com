@@ -241,6 +241,12 @@ function printStop(state: RunState) {
 const currentBranch = () => gitOut("rev-parse", "--abbrev-ref", "HEAD");
 const head = () => gitOut("rev-parse", "HEAD");
 const trackedChanges = () => lines(gitOut("status", "--porcelain", "--untracked-files=no"));
+/** Paths of tracked files changed against HEAD, staged or not (trackedChanges' lines carry a status prefix). */
+const trackedPaths = () => lines(gitOut("diff", "--no-renames", "--name-only", "HEAD"));
+/** A run's own content files: the data file, the registry, the generated view and its group files. */
+const runContentFiles = (state: RunState) => [L2_DATA_FILE, L2_REGISTRY_FILE, L2_VIEW_FILE, ...state.l2!.slice.groups.map((group) => groupFile(group.group))];
+/** Uncommitted changes a merge of main may carry past: an open repair's content, nothing else. */
+const changesBlockingMerge = (state: RunState) => trackedPaths().filter((file) => !(state.l2?.repair && runContentFiles(state).includes(file)));
 const remoteSha = (ref: string) => lines(gitOut("ls-remote", "origin", ref))[0]?.split(/\s+/)[0];
 
 /** Recorded run versus the actual repository; any mismatch is a stop before anything else happens. */
@@ -745,7 +751,7 @@ function adoptMerge(state: RunState) {
     parents,
     secondParentInMain: parents.length === 2 && git("merge-base", "--is-ancestor", parents[1], `origin/${MAIN}`).ok,
     cleanMerge: Boolean(merged?.ok && lines(merged.out)[0] === gitOut("rev-parse", "HEAD^{tree}")),
-    trackedChanges: trackedChanges(),
+    trackedChanges: changesBlockingMerge(state),
   });
   if (problem) fail(`HEAD is not the run's recorded head, nor a merge of ${MAIN} it can adopt: ${problem}`, 1);
   const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, parents[0]));
@@ -768,7 +774,8 @@ function commandL2Sync() {
   gitOut("fetch", "--quiet", "origin", MAIN);
   if (currentBranch() === state.branch && head() !== (state.commits.at(-1)?.sha ?? state.baseSha)) return adoptMerge(state);
   verifyGit(state);
-  if (trackedChanges().length) fail(`commit or reopen nothing first: sync merges into a clean tree (uncommitted: ${trackedChanges().join(", ")})`, 1);
+  // An open repair's uncommitted content may stay: main is refused below if it touches any of the run's files.
+  if (changesBlockingMerge(state).length) fail(`sync merges main past an open repair's content only; uncommitted: ${changesBlockingMerge(state).join(", ")}`, 1);
   const target = remoteSha(`refs/heads/${MAIN}`)!;
   if (git("merge-base", "--is-ancestor", target, "HEAD").ok) return console.log(`${state.branch} already contains origin/${MAIN} at ${target.slice(0, 7)}`);
   const runFiles = lines(gitOut("diff", "--no-renames", "--name-only", state.baseSha, "HEAD"));
@@ -1442,7 +1449,7 @@ function commitL2(state: RunState): RunState {
 /** After the first commits: the open repair, one commit per repaired group; without one, HEAD must already be the validated tree. */
 function commitL2Repair(state: RunState): RunState {
   const record = state.l2!;
-  const changed = trackedChanges();
+  const changed = trackedPaths();
   const repair = record.repair;
   if (changed.length && !repair) stop(state, { subject: "uncommitted content", evidence: changed.join(", "), why: "content changed on top of the run's commits outside a repair", decision: `reopen the concepts concerned (\`${CLI} reopen ..\`), or revert the change` });
   let current = state;
