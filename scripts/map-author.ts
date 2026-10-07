@@ -609,6 +609,9 @@ async function commandL2Record() {
   const record = l2Records(state);
   const group = kind === "plan" || kind === "group-audit" ? subject : record.slice.groups.find((entry) => entry.concepts.includes(subject))?.group;
   if (!group) fail(`${subject} is not a concept of this slice`, 1);
+  // An audit given as a file is written first, so validation reads the audit as now bound to the records.
+  const auditFile = flag("--audit-file");
+  if (auditFile && (kind === "audit" || kind === "group-audit")) writeAudit(kind, subject, group, auditFile);
   const plans = readPlans();
   const plan = planOf(group);
   const refuse = (problems: string[]) => problems.length && fail(`cannot record ${kind} ${subject}:\n  ${problems.join("\n  ")}`, 1);
@@ -625,8 +628,6 @@ async function commandL2Record() {
           territoryOnly: extra.territoryOnly,
         })
       : [];
-  const auditFile = flag("--audit-file");
-  if (auditFile && (kind === "audit" || kind === "group-audit")) writeAudit(kind, subject, group, auditFile);
   let blocks = false;
   let fingerprint: string | undefined;
   switch (kind) {
