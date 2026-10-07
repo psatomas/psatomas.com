@@ -1165,7 +1165,17 @@ const GATES: Gate[] = [
   },
   { name: "test", label: "unit tests", run: () => sh("npm", ["test"]), detail: (result) => testCounts(result.out) },
   { name: "lint", label: "lint (tracked tree)", run: (state) => sh("npx", ["eslint", ...lintIgnores(state), "."]), detail: () => "clean" },
-  { name: "build", label: "build", run: () => sh("npm", ["run", "build"]), detail: () => "succeeded" },
+  {
+    name: "build",
+    label: "build",
+    run: () => {
+      // tsconfig includes a dev server's generated route types; left by a dev server on another branch, they
+      // name routes this tree lacks and fail the type-check. They are regenerated, never source.
+      rmSync(join(ROOT, ".next/dev/types"), { recursive: true, force: true });
+      return sh("npm", ["run", "build"]);
+    },
+    detail: () => "succeeded",
+  },
 ];
 /** An L2 run's own gate: every plan valid and current, and each run group's work complete and audited. */
 const L2_GATE: Gate = {
