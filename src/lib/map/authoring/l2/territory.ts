@@ -66,6 +66,43 @@ const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(valu
 const normalize = (claim: string) => claim.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const blank = (value: unknown) => typeof value !== "string" || !value.trim();
 
+/** The L0 domains a concept is placed under. */
+function domainsOf(model: MapKnowledgeModel, conceptId: string): Set<string> {
+  const byId = new Map(model.placements.map((placement) => [placement.id, placement]));
+  const root = (placementId: string): string => {
+    const placement = byId.get(placementId)!;
+    return placement.parentPlacementId ? root(placement.parentPlacementId) : placement.id;
+  };
+  return new Set(model.placements.filter((placement) => placement.conceptId === conceptId).map((placement) => root(placement.id)));
+}
+
+/**
+ * Unauthored concepts of the plan's own domain that an owned member's claims
+ * name by a multi-word title, though they are neither members of the group
+ * nor excluded. Such a claim takes territory a later plan of the same domain
+ * will claim: the EVM's "message calls" was one, invisible to cross-plan
+ * checks until both plans exist. Each is excluded (named only) or the claim
+ * is reworded. Single-word titles are everyday words and are not matched.
+ */
+export function claimCollisions(plan: L2GroupFile, model: MapKnowledgeModel): { conceptId: string; named: string }[] {
+  const words = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+  const authored = new Set(model.content.map((record) => record.conceptId));
+  const members = new Set((plan.members ?? []).map((member) => member.conceptId));
+  const found: { conceptId: string; named: string }[] = [];
+  for (const member of (plan.members ?? []).filter((entry) => entry.standing === "owned")) {
+    const text = ` ${words((member.claims ?? []).join(" ")).join(" ")} `;
+    for (const concept of model.concepts) {
+      if (members.has(concept.id) || authored.has(concept.id) || (member.excludes ?? []).includes(concept.id)) continue;
+      const title = words(concept.title);
+      if (title.length < 2) continue;
+      const singular = title.map((word, index) => (index === title.length - 1 ? word.replace(/s$/, "") : word)).join(" ");
+      if (!text.includes(` ${title.join(" ")} `) && !(singular.length > 3 && text.includes(` ${singular} `))) continue;
+      if (domainsOf(model, concept.id).has(plan.domain)) found.push({ conceptId: member.conceptId, named: concept.id });
+    }
+  }
+  return found;
+}
+
 /** Registry and hazards a plan is judged against; the repository's by default, synthetic ones in tests. */
 export type L2PlanOptions = { registry?: readonly string[]; hazards?: L2Hazards };
 
@@ -173,6 +210,9 @@ export function planProblems(plan: L2GroupFile, model: MapKnowledgeModel, { regi
     } else if (member.claims?.length || member.reserved?.length) {
       problems.push(`${at}: already authored, so its record is its fixed territory`);
     }
+  }
+  for (const collision of claimCollisions(plan, model)) {
+    problems.push(`${collision.conceptId}: a claim names ${collision.named}, an unplanned concept of this domain: exclude it (named only), or reword the claim if it is not that concept's territory`);
   }
   for (const member of plan.members ?? []) {
     for (const claim of member.reserved ?? []) {
