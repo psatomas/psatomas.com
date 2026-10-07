@@ -33,7 +33,9 @@ Read these before authoring. If they disagree, the earlier source wins.
    [`l2-content-scale.md`](l2-content-scale.md) measures whether the content
    architecture carries full L2, and records the decision (OPTIMIZE).
    [`l2-authoring.md`](l2-authoring.md) is the L2 operating procedure as it is
-   built: territory plans, context, contracts and runs.
+   built: territory plans, context, contracts, depth, territory precedents,
+   runs and repairs. [`l2-pilot.md`](l2-pilot.md) records what the 22-concept
+   pilot showed and what changed before the campaign.
 7. The code is the ground truth for shapes and rules:
    [`types.ts`](../../src/lib/map/types.ts) (content blocks),
    [`validation.ts`](../../src/lib/map/validation.ts) (structural rules),

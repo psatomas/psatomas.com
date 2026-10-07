@@ -6,6 +6,13 @@
 // write into this repository.
 //
 //   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/map-l2-synthetic.ts <low|expected|high> <other checkout>
+//   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/map-l2-synthetic.ts empirical|empirical-upper <other checkout> --records <records.json>
+//
+// The empirical scenarios take real authored L2 records (a JSON array, such as
+// the pilot's) as templates: each synthetic record copies one template's exact
+// shape (definition, every block and every string, by word count) with
+// corpus words in place of its text. `empirical` draws templates uniformly;
+// `empirical-upper` draws only from the longest quarter, as an upper bound.
 import { readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +20,8 @@ import { mapKnowledge } from "../src/lib/map/data.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 
 const [scenario, root] = process.argv.slice(2);
+const recordsFlag = process.argv.indexOf("--records");
+const templates: { definition: string; body?: unknown[] }[] = recordsFlag > 0 ? JSON.parse(readFileSync(process.argv[recordsFlag + 1], "utf8")) : [];
 const repository = realpathSync(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
 if (root && realpathSync(resolve(root)) === repository) throw new Error("refusing to write synthetic content into this repository; pass a separate checkout (git worktree add)");
 type Mix = { kind: string; share: number }[];
@@ -33,11 +42,13 @@ const SCENARIOS: Record<string, { definition: [number, number]; paragraphs: [num
     second: 0.1,
   },
 };
+const empirical = scenario === "empirical" || scenario === "empirical-upper";
 const plan = SCENARIOS[scenario];
-if (!plan || !root) throw new Error("usage: map-l2-synthetic.ts low|expected|high <other checkout>");
+if ((!plan && !empirical) || !root) throw new Error("usage: map-l2-synthetic.ts low|expected|high|empirical|empirical-upper <other checkout> [--records <records.json>]");
+if (empirical && templates.length === 0) throw new Error("the empirical scenarios need --records <a JSON array of authored records>");
 
 // Deterministic PRNG (mulberry32), seeded per scenario.
-let seed = { low: 1, expected: 2, high: 3 }[scenario as "low"]!;
+let seed = { low: 1, expected: 2, high: 3, empirical: 4, "empirical-upper": 5 }[scenario as "low"]!;
 const rand = () => {
   seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
   let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -63,10 +74,40 @@ function structure(kind: string): object {
   }
   throw new Error(kind);
 }
+/**
+ * A template's shape with corpus words: every string keeps its word count;
+ * keys and block kinds are kept. Within one record the same string always
+ * gets the same replacement, so references stay consistent (a state model's
+ * transitions name its states).
+ */
+const reshape = (value: unknown, key = "", same = new Map<string, string>()): unknown => {
+  if (typeof value === "string") {
+    if (key === "kind") return value;
+    if (!same.has(value)) {
+      // Distinct strings stay distinct: block entries such as states must not repeat.
+      const used = new Set(same.values());
+      let replacement: string;
+      do replacement = prose(value.split(/\s+/).filter(Boolean).length || 1).replace(/\.$/, value.trim().endsWith(".") ? "." : "");
+      while (used.has(replacement));
+      same.set(value, replacement);
+    }
+    return same.get(value);
+  }
+  if (Array.isArray(value)) return value.map((item) => reshape(item, key, same));
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([entryKey, entry]) => [entryKey, reshape(entry, entryKey, same)]));
+  return value;
+};
+const templateWords = (record: { definition: string; body?: unknown[] }) => JSON.stringify(record).split(/\s+/).length;
+const pool = scenario === "empirical-upper" ? [...templates].sort((a, b) => templateWords(b) - templateWords(a)).slice(0, Math.max(1, Math.ceil(templates.length / 4))) : templates;
 const pick = () => { let r = rand(); for (const { kind, share } of plan.structured) { if (r < share) return kind; r -= share; } return undefined; };
 
 const ids = inventoryL2(mapKnowledge).concepts.filter((facts) => facts.role === "l2-only").map((facts) => facts.conceptId);
 const records = ids.map((conceptId) => {
+  if (empirical) {
+    const template = pool[Math.floor(rand() * pool.length)];
+    const same = new Map<string, string>();
+    return { id: `${conceptId}-content`, conceptId, definition: String(reshape(template.definition, "", same)), body: (reshape(template.body ?? [], "", same) as object[]) };
+  }
   const body: object[] = Array.from({ length: between(plan.paragraphs) }, () => ({ kind: "paragraph", text: prose(between(plan.paragraphWords)) }));
   const kinds = [pick(), ...(rand() < plan.second ? [plan.structured[Math.floor(rand() * plan.structured.length)].kind] : [])].filter((kind): kind is string => !!kind);
   kinds.forEach((kind, index) => body.splice(1 + index * 2, 0, structure(kind)));
