@@ -161,7 +161,7 @@ export function commandL2(command: string | undefined, positional: string[], fla
       const report = driftReport(records);
       if (json) console.log(JSON.stringify(report, null, 2));
       else {
-        console.log(`window ${report.window}: top form ${report.topSequence.sequence || "-"} (${report.topSequence.share}), top opening "${report.topOpening.frame}" (${report.topOpening.share}), top paragraph opener "${report.topParagraphOpener.opener}" (${report.topParagraphOpener.share}), paragraph length variation ${report.paragraphLengthVariation}`);
+        console.log(`window ${report.window}: top form ${report.topSequence.sequence || "-"} (${report.topSequence.share}), top opening "${report.topOpening.frame}" (${report.topOpening.share}), top paragraph opener "${report.topParagraphOpener.opener}" (${report.topParagraphOpener.share}), paragraph length variation ${report.paragraphLengthVariation}, median ${report.medianWords} words, ${report.topParagraphCount.count} paragraphs in ${report.topParagraphCount.share} of records`);
         for (const entry of report.signals) console.log(`signal ${entry.id}  ${entry.detail}`);
       }
       return;

@@ -4,7 +4,7 @@ import { mapKnowledge } from "../../data.ts";
 import { assembleL2Context, formatL2Context, mentionsOf } from "./context.ts";
 import { filledG1, filledG2, HAZARDS, model, options, REGISTRY } from "./fixtures.ts";
 import { inventoryL2 } from "./inventory.ts";
-import { crossPlanProblems, planProblems, planSkeleton, staleProblems } from "./territory.ts";
+import { claimCollisions, crossPlanProblems, planProblems, planSkeleton, staleProblems } from "./territory.ts";
 
 test("a skeleton lists every member with its standing and leaves only judgments empty", () => {
   const plan = planSkeleton(model(), "g1", options);
@@ -35,6 +35,23 @@ test("a plan gives each claim one owner, keeps reservations apart and names only
     assert.match(problems, expected);
   }
   assert.match(planProblems({ ...filledG1(), members: filledG1().members.slice(1) }, model(), options).join(), /members must be the group's placements in order/);
+});
+
+test("a claim naming an unplanned concept of the same domain must exclude it or be reworded", () => {
+  // Domain One gains a group g3 with an unplanned "Shared Ledgers"; Domain Two an unplanned "Ledger Proofs".
+  const base = model();
+  const m = {
+    ...base,
+    concepts: [...base.concepts, { id: "g3", slug: "g3", title: "Group Three" }, { id: "x", slug: "x", title: "Shared Ledgers" }, { id: "y", slug: "y", title: "Ledger Proofs" }],
+    placements: [...base.placements, { id: "g3", conceptId: "g3", parentPlacementId: "d1", order: 1 }, { id: "x", conceptId: "x", parentPlacementId: "g3", order: 0 }, { id: "y", conceptId: "y", parentPlacementId: "g2", order: 4 }],
+  } as typeof base;
+  const plan = filledG1(m);
+  plan.members.find((member) => member.conceptId === "a")!.claims = ["how alpha writes to shared ledgers, checked by ledger proofs"];
+  assert.deepEqual(claimCollisions(plan, m), [{ conceptId: "a", named: "x" }]);
+  assert.match(planProblems(plan, m, options).join(), /a: a claim names x, an unplanned concept of this domain: exclude it/);
+  // Excluding it (named only) settles it; a concept of another domain is left to that domain's plan.
+  plan.members.find((member) => member.conceptId === "a")!.excludes = ["x"];
+  assert.deepEqual(claimCollisions(plan, m), []);
 });
 
 test("a plan goes stale when its parents, fixed members, membership or hazards change", () => {

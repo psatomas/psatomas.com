@@ -3,6 +3,7 @@
 import { authoringService } from "@/lib/research/authoring-service";
 import type { AuthoringResult } from "@/lib/research/authoring-service";
 import type { DraftInput, ResearchArticleRecord } from "@/lib/research";
+import { invitationService } from "@/lib/research/invitation-service";
 
 /**
  * Thin Server Action wrappers around authoring-service.ts — this file
@@ -41,3 +42,8 @@ export async function unpublishAction(id: string): Promise<AuthoringResult<Resea
 export async function deleteArticleAction(id: string): Promise<AuthoringResult<null>> {
   return authoringService.deleteArticle(id);
 }
+
+export async function createGuestInvitationAction(name: string, email: string) {
+  return invitationService.create(name, email);
+}
+export async function revokeGuestInvitationAction(id: string) { return invitationService.revoke(id); }

@@ -33,7 +33,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { createD1ResearchRepository } from "./d1-repository";
 import { createMdxResearchRepository } from "./mdx-repository";
-import type { PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
+import type { GuestInvitationRepository, PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
 
 export async function getResearchRepository(): Promise<PublicResearchRepository> {
   try {
@@ -73,6 +73,12 @@ export async function getResearchAuthoringRepository(): Promise<ResearchAuthorin
   return createD1ResearchRepository(env.RESEARCH_DB);
 }
 
+export async function getGuestInvitationRepository(): Promise<GuestInvitationRepository> {
+  const { env } = await getCloudflareContext({ async: true });
+  if (!env.RESEARCH_DB) throw new Error("Guest contributions require the RESEARCH_DB binding.");
+  return createD1ResearchRepository(env.RESEARCH_DB);
+}
+
 export { createMdxResearchRepository } from "./mdx-repository";
 export { createD1ResearchRepository, SlugTakenError } from "./d1-repository";
 export { slugify } from "./slug";
@@ -87,5 +93,8 @@ export type {
   ResearchArticleMetadata,
   ResearchArticleRecord,
   ResearchCategory,
+  GuestInvitation,
+  GuestInvitationState,
+  NewGuestInvitation,
 } from "./domain";
-export type { PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
+export type { GuestInvitationRepository, PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
