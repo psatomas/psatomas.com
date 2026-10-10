@@ -1,0 +1,32 @@
+# L2 record and plan rules (v2 digest)
+
+Canonical sources (read a section only if this digest leaves a question open): docs/map-authoring/l2-authoring.md,
+src/lib/map/authoring/l2/contracts.ts, src/lib/map/types.ts, src/lib/map/validation.ts (`contentBlockShapeProblems`).
+
+## Group file (src/lib/map/authoring/l2/groups/<group>.json)
+- Keep `basis` and the member order the skeleton has. Owned members: `claims` (2–4; each a question only this
+  concept answers, worded accurately, with conditions) and `excludes` (existing concept ids it may name, never explain).
+  Owned-elsewhere members: `reserved` (claims held for the owner). `splits`: one entry per hazard pair listed.
+- `concepts.<id> = { model, design }`. model: `meaning` (one sentence), `kind` (mechanism, property, actor, attack,
+  failure, parameter, artifact, technology, institutional), `parents` (what it adds beyond each parent), `claims` and
+  `excludes` exactly the plan's, `placements` (why one text holds at each), `fields` (at least two of the kind's fields;
+  contracts.ts lists them). design: `decision` "prose" (+ `whyProse`) or "structure" (`structures`: each `{structure,
+  purpose, whyNotProse}`, plus `division`), and `relationship`, `level`, `territory`, `placements`.
+- A structure only where it shows what prose would obscure: comparison (alternatives on shared dimensions),
+  distinction (a real conflation), flow (order matters), cycle, state (persistent states with returns), tensions.
+- Validate with `npm run -s map:author -- l2 check --group <group>`.
+
+## Record (src/lib/map/data.ts, `mapKnowledge.content`)
+- `{ id: "<concept>-content", conceptId: "<concept>", definition: "...", body: [ ...blocks ] }`, 4-space record
+  indentation, double quotes, trailing commas, appended before the line `  ],` that precedes `  mechanisms: [`.
+  Register the id as the last entry of `AUTHORED_CONTENT_CONCEPTS` in src/lib/map/authoring/content-registry.ts.
+- Blocks: `{ kind: "paragraph", text }`; structured blocks exactly the designed kinds (an interaction structure is a
+  `flow`); shapes per validation.ts (comparison: label, 2–4 dimensions, 2–6 alternatives `{name, values}`; distinction:
+  `{ kind: "distinction", left, right, further? }`; others per types.ts).
+- The definition states the meaning; the body never repeats it. One canonical text true at every placement.
+- Plain text, American English, no markdown, no line breaks, words rather than symbols.
+- Check with `node --test src/lib/map/map.test.ts` and `npm run -s map:author -- l2 check --group <group>`.
+
+## Never
+Edit other groups' files, other records, taxonomy, tests, tooling or docs. Read data.ts wholesale (use
+`npm run map:inspect -- <concept>`). Commit, push, switch branches.
