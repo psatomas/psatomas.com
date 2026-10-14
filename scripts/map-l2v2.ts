@@ -7,6 +7,7 @@
 //   npm run map:l2v2 -- audit --label <l> --concepts a,b [--slice <id> --fix]   deep audits (pilot); --fix repairs through the verified loop
 //   npm run map:l2v2 -- audit --label baseline --ref <git-ref> --concepts a,b   baseline audits of records at a commit (never counted, never fixed)
 //   npm run map:l2v2 -- meter --percent <n> [--note ..]       record a reading of the Claude usage meter
+//   npm run map:l2v2 -- clear-failures --note <why>           acknowledge reviewed failed sessions: the failure stop rule counts only later ones
 //   npm run map:l2v2 -- report                                tokens, time, defects and acceptance per batch
 //   npm run map:l2v2 -- finalize --slice <id>                 record the v1 steps (scoped to the slice), then `l2 run --until diff`
 //
@@ -21,7 +22,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { recordSpans } from "../src/lib/map/authoring/l2/campaign.ts";
 import {
-  allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason,
+  activeFailures, allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason,
   type BatchState, type BatchStatus, type Budget, type Finding, type SliceSample,
 } from "../src/lib/map/authoring/l2v2/core.ts";
 import { runClaude } from "../src/lib/map/authoring/l2v2/claude.ts";
@@ -384,6 +385,27 @@ function commandMeter() {
   console.log(`recorded meter ${percent}%`);
 }
 
+/**
+ * A human acknowledges the failed or interrupted sessions in the active
+ * failure window, after checking the CLI, the quota and the tree. It appends
+ * an entry; every failure stays in the ledger. It clears only that rule: never
+ * a parked concept, a known defect, a changed record or another stop rule,
+ * and never while a session is in flight or awaits recovery.
+ */
+function commandClearFailures() {
+  const note = flag("--note")?.trim();
+  if (!note || note.startsWith("--")) fail('clear-failures needs --note "<what was checked and why the failures are resolved>"');
+  const inFlight = allBatches().filter((state) => state.window?.inFlight).map((state) => `${state.slice}/${state.group} (${state.window!.inFlight!.role})`);
+  if (existsSync(join(ROOT, AUDIT_IN_FLIGHT))) inFlight.push("a deep audit");
+  if (inFlight.length) fail(`a session was interrupted and awaits recovery: ${inFlight.join(", ")}; run that batch or audit command first, so it is recorded and the tree inspected`, 3);
+  const { sessions, failed } = activeFailures(loadLedger(ROOT), budget());
+  if (!failed) fail(`no failed or interrupted session in the active window (${sessions} sessions): nothing to acknowledge`);
+  appendLedger(ROOT, { kind: "ack", at: now(), note: note!, failures: failed });
+  console.log(`acknowledged ${failed} failed or interrupted session(s) of the last ${sessions}; they stay in the ledger`);
+  const reason = stopReason(loadLedger(ROOT), budget());
+  console.log(`stop rule: ${reason ?? "none broken"}`);
+}
+
 function commandReport() {
   const ledger = loadLedger(ROOT);
   const rows = batchMetrics(ledger);
@@ -461,9 +483,12 @@ switch (args[0]) {
   case "report":
     commandReport();
     break;
+  case "clear-failures":
+    await locked(async () => commandClearFailures());
+    break;
   case "finalize":
     await locked(commandFinalize);
     break;
   default:
-    fail("usage: map:l2v2 -- run|status|resume|audit|meter|report|finalize (see the header of scripts/map-l2v2.ts)");
+    fail("usage: map:l2v2 -- run|status|resume|audit|meter|report|finalize|clear-failures (see the header of scripts/map-l2v2.ts)");
 }

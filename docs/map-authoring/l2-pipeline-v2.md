@@ -216,6 +216,9 @@ distilled from the Foundations audits.
   - Each session runs in its own process group, killed whole on a timeout,
     as soon as the session exits, and if the driver itself stops: nothing it
     started can still write after the guard has looked (Linux and macOS).
+    A timeout sends SIGTERM, then SIGKILL after a grace period to a group
+    that has not ended. The escalation is cancelled once the session has
+    closed, so it never signals a reused group id.
   - A timeout (default 30 minutes) kills the session.
   - Failures (timeout, non-zero exit, no JSON, an error result, a usage
     limit) are recorded as `session-failed` with no usage; usage the CLI did
@@ -294,12 +297,27 @@ output 5. `report` prints it all.
 - escalation runs above 40%, once there are at least 10 concepts;
 - any parked concept, until a human resumes its batch;
 - 3 or more of the last 10 sessions (any role, audits included) failed or
-  were interrupted;
+  were interrupted, counted after the latest acknowledgment (below);
 - 8 or more of the last 20 **campaign** audits have substantive defects
   (baselines never count);
 - within one weekly window, the meter rises more than 0.109% per accepted
   concept (use 0.163% for 3 weeks). A drop in the reading marks a weekly
   reset.
+
+**Acknowledging failures:**
+`npm run map:l2v2 -- clear-failures --note "<what was checked>"` is the only
+way out of the failure stop rule.
+- **Before running it:** a human checks the CLI, the quota and the tree.
+- **What it does:** it appends an `ack` entry to the ledger, and the rule then
+  counts only sessions after it. Every failure, timestamp and usage record
+  stays in the ledger; new failures can stop the campaign again.
+- **What it requires:** a non-empty note (an acknowledgment without one counts
+  as none). It refuses when there is nothing to acknowledge, and while any
+  batch or audit session is in flight or interrupted, until that is recorded
+  and inspected through its own command.
+- **What it never clears:** a `resume` or a meter reading never clears the
+  rule. The acknowledgment itself clears nothing else: parked concepts, known
+  defects, changed records and every other stop rule stand.
 
 ## Calibration pilot (before scaling)
 

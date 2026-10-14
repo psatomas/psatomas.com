@@ -497,7 +497,13 @@ export type LedgerEntry =
   | { kind: "deep-audit"; at: string; label: string; concept: string; substantive: number; campaign: boolean; fingerprint?: string }
   | { kind: "meter"; at: string; percent: number; note?: string }
   /** A human resumed a stopped batch: its parked concepts are decided, and stop counting as parked. */
-  | { kind: "resume"; at: string; slice: string; group: string; status: BatchStatus };
+  | { kind: "resume"; at: string; slice: string; group: string; status: BatchStatus }
+  /**
+   * A human reviewed the recent failed sessions (`clear-failures --note`): the
+   * failure stop rule counts only sessions after it. Nothing else is cleared,
+   * and the failures stay in the ledger.
+   */
+  | { kind: "ack"; at: string; note: string; failures: number };
 
 /**
  * Stop-rule thresholds and per-batch operational limits. Limits count
@@ -541,6 +547,17 @@ export function batchMetrics(ledger: readonly LedgerEntry[]): BatchMetrics[] {
   return [...out.values()];
 }
 
+/**
+ * The failure window: the last `failureWindow` sessions after the latest
+ * acknowledgment with a note (one without a note is no acknowledgment), and
+ * how many of them failed or were interrupted.
+ */
+export function activeFailures(ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET): { sessions: number; failed: number } {
+  const ack = ledger.findLastIndex((e) => e.kind === "ack" && e.note.trim().length > 0);
+  const sessions = ledger.slice(ack + 1).filter((e) => e.kind === "session" || e.kind === "session-failed").slice(-budget.failureWindow);
+  return { sessions: sessions.length, failed: sessions.filter((e) => e.kind === "session-failed").length };
+}
+
 /** The first stop rule a campaign's ledger breaks, or undefined. Thresholds stop the campaign; they never license a known defect. */
 export function stopReason(ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET): string | undefined {
   const done = batchMetrics(ledger).filter((m) => m.accepted + m.parked > 0);
@@ -555,9 +572,8 @@ export function stopReason(ledger: readonly LedgerEntry[], budget: Budget = DEFA
   if (concepts >= 10 && escalated / concepts > budget.maxEscalationRate) return `${escalated} of ${concepts} concepts escalated, over ${budget.maxEscalationRate * 100}%`;
   const parked = done.reduce((sum, m) => sum + m.parked, 0);
   if (parked) return `${parked} concept(s) parked with unresolved defects: a human decides`;
-  const sessions = ledger.filter((e) => e.kind === "session" || e.kind === "session-failed").slice(-budget.failureWindow);
-  const failed = sessions.filter((e) => e.kind === "session-failed").length;
-  if (failed >= budget.maxRecentFailures) return `${failed} of the last ${sessions.length} sessions failed or were interrupted: a human checks the CLI, the quota and the tree`;
+  const { sessions, failed } = activeFailures(ledger, budget);
+  if (failed >= budget.maxRecentFailures) return `${failed} of the last ${sessions} sessions failed or were interrupted: a human checks the CLI, the quota and the tree, then acknowledges them (\`clear-failures --note\`)`;
   const audits = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.campaign).slice(-budget.sampleWindow);
   const defective = audits.filter((e) => e.substantive > 0).length;
   if (defective >= budget.sampleMaxDefective) return `${defective} of the last ${audits.length} sampled concepts had substantive defects`;

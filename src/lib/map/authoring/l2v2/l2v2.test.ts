@@ -1123,3 +1123,93 @@ test("a session's whole process group dies with it: on a timeout and when it exi
     assert.ok(!existsSync(mark), `${name}: the background child never wrote`);
   }
 });
+
+// ---------------------------------------------------------------- acknowledged recovery from failures, and the kill escalation
+
+test("the failure stop rule: resume and meter entries never clear it; an acknowledgment with a note starts a new window and clears nothing else", () => {
+  const failed = (): LedgerEntry => ({ kind: "session-failed", at: T, slice: "s", group: "g", role: "draft", reason: "usage limit" });
+  const ok = (): LedgerEntry => ({ kind: "session", at: T, slice: "s", group: "g", role: "draft", sessionId: "s", durationMs: 1, turns: 1, usage: null, weighted: null });
+  const ack = (note = "Quota recovered; reviewed previous failures"): LedgerEntry => ({ kind: "ack", at: T, note, failures: 3 });
+  const three = [failed(), failed(), failed()];
+  assert.match(stopReason(three)!, /3 of the last 3 sessions failed or were interrupted/);
+  assert.match(stopReason([...three, { kind: "resume", at: T, slice: "s", group: "g", status: "drafted" }, { kind: "meter", at: T, percent: 5 }])!, /3 of the last 3/, "a resume or a meter reading is no acknowledgment");
+  assert.match(stopReason([...three, ack("   ")])!, /3 of the last 3/, "an acknowledgment without a note is none");
+  assert.equal(stopReason([...three, ack()]), undefined, "a new window starts");
+  assert.equal(stopReason([...three, ack(), ok(), ok()]), undefined, "sessions run again");
+  assert.match(stopReason([...three, ack(), ok(), failed(), failed(), failed()])!, /3 of the last 4/, "new failures stop it again");
+  // Only that rule: parked concepts and defective audits still stop the campaign.
+  const parked: LedgerEntry = { kind: "batch", at: T, slice: "s", group: "g", accepted: 1, parked: 1, escalated: 0, defects: 1 };
+  assert.match(stopReason([parked, ...three, ack()])!, /parked/);
+  const defective = Array.from({ length: 8 }, (_, i): LedgerEntry => ({ kind: "deep-audit", at: T, label: "pilot", concept: `c${i}`, substantive: 1, campaign: true }));
+  assert.match(stopReason([...defective, ...three, ack()])!, /sampled concepts had substantive defects/);
+});
+
+test("CLI clear-failures: a note is required; it appends an acknowledgment, keeps every failure, lets sessions run again and bypasses no other gate", async () => {
+  const root = await acceptedSlice();
+  const ledgerPath = join(root, ".map-authoring/l2v2/ledger.jsonl");
+  const audit = (bin: string) => cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: bin });
+  const broken = stub("exit 1");
+  for (let i = 0; i < 3; i++) assert.equal(audit(broken).status, 1);
+  assert.equal(audit(broken).status, 3, "the failure stop rule is broken");
+  const before = readFileSync(ledgerPath, "utf8");
+  for (const args of [["clear-failures"], ["clear-failures", "--note"], ["clear-failures", "--note", "   "]]) {
+    const refused = cli(root, args);
+    assert.equal(refused.status, 2, args.join(" "));
+    assert.match(refused.stderr, /clear-failures needs --note/);
+  }
+  // A session awaiting recovery is never acknowledged away: an interrupted audit, or a batch session in flight.
+  mkdirSync(join(root, ".map-authoring/l2v2/audits"), { recursive: true });
+  writeFileSync(join(root, ".map-authoring/l2v2/audits/in-flight.json"), JSON.stringify({ label: "pilot", concept: "y", startedAt: T }));
+  assert.match(cli(root, ["clear-failures", "--note", "checked"]).stderr, /awaits recovery: a deep audit/);
+  rmSync(join(root, ".map-authoring/l2v2/audits/in-flight.json"));
+  const state = loadBatch(root, "s", "g")!;
+  saveBatch(root, { ...state, window: { ...state.window!, inFlight: { role: "review", startedAt: T } } });
+  const blocked = cli(root, ["clear-failures", "--note", "checked"]);
+  assert.equal(blocked.status, 3);
+  assert.match(blocked.stderr, /awaits recovery: s\/g \(review\)/);
+  saveBatch(root, state);
+  assert.equal(readFileSync(ledgerPath, "utf8"), before, "nothing was appended by a refusal");
+  const acked = cli(root, ["clear-failures", "--note", "Quota recovered; reviewed previous failures"]);
+  assert.equal(acked.status, 0, acked.stderr);
+  assert.match(acked.stdout, /acknowledged 3 failed or interrupted session\(s\) of the last \d+; they stay in the ledger\nstop rule: none broken/);
+  const after = readFileSync(ledgerPath, "utf8");
+  assert.ok(after.startsWith(before), "every earlier entry, failures included, is kept as it was");
+  assert.deepEqual(JSON.parse(after.trim().split("\n").at(-1)!), { kind: "ack", at: (JSON.parse(after.trim().split("\n").at(-1)!) as { at: string }).at, note: "Quota recovered; reviewed previous failures", failures: 3 });
+  assert.equal(cli(root, ["clear-failures", "--note", "again"]).status, 2, "nothing left to acknowledge");
+  // Sessions run again.
+  assert.equal(audit(stubClaude(`"verdict":"pass","confidence":"high","substantive":[],"remarks":[],"coverage":[],"depth":"d"`)).status, 0);
+  // Other gates stand: an edited record and a known defect still block finalize.
+  writeFileSync(join(root, DATA), readFileSync(join(root, DATA), "utf8").replace("Fine text.", "Edited by hand."));
+  assert.match(cli(root, ["finalize", "--slice", "s"]).stderr, /changed outside the driver/);
+  writeFileSync(join(root, DATA), readFileSync(join(root, DATA), "utf8").replace("Edited by hand.", "Fine text."));
+  appendLedger(root, { kind: "deep-audit", at: "2026-10-09T01:00:00.000Z", label: "pilot", concept: "y", substantive: 1, campaign: true });
+  const known = cli(root, ["finalize", "--slice", "s"]);
+  assert.equal(known.status, 3);
+  assert.match(known.stderr, /known defects must be repaired first/);
+  // New failures stop it again.
+  for (let i = 0; i < 3; i++) assert.equal(audit(broken).status, 1);
+  assert.match(audit(broken).stderr, /stop rule: 3 of the last \d+ sessions failed/);
+});
+
+test("the SIGKILL escalation is cancelled once the session has closed, and still kills a group that ignores SIGTERM", async () => {
+  const original = process.kill;
+  const late: [number, unknown][] = [];
+  let settled = false;
+  process.kill = ((pid: number, signal?: string | number) => {
+    if (settled && pid < 0) late.push([pid, signal]);
+    return original.call(process, pid, signal as NodeJS.Signals);
+  }) as typeof process.kill;
+  try {
+    const ended = await runClaude({ ...options(stub("sleep 5"), 100), killGraceMs: 300 }, "p", []).catch((error: unknown) => error);
+    settled = true;
+    assert.ok(ended instanceof SessionError && ended.reason === "timeout");
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    assert.deepEqual(late, [], "no signal reaches the group id after the session closed");
+  } finally {
+    process.kill = original;
+  }
+  const started = Date.now();
+  const stubborn = await runClaude({ ...options(stub("trap '' TERM\nsleep 3"), 100), killGraceMs: 300 }, "p", []).catch((error: unknown) => error);
+  assert.ok(stubborn instanceof SessionError && stubborn.reason === "timeout");
+  assert.ok(Date.now() - started < 2000, "SIGKILL ended the group that ignored SIGTERM");
+});

@@ -21,7 +21,8 @@ export class SessionError extends Error {
   }
 }
 
-export type ClaudeOptions = { bin: string; cwd: string; timeoutMs: number; model?: string; maxBudgetUsd?: string };
+/** killGraceMs: how long a timed-out session has after SIGTERM before its group is killed (default 5 s). */
+export type ClaudeOptions = { bin: string; cwd: string; timeoutMs: number; model?: string; maxBudgetUsd?: string; killGraceMs?: number };
 
 export function claudeArgs(options: ClaudeOptions, tools: readonly string[], resume?: string, denied: readonly string[] = DENIED_TOOLS): string[] {
   return [
@@ -71,23 +72,29 @@ export function runClaude(options: ClaudeOptions, prompt: string, tools: readonl
     let out = "";
     let err = "";
     let timedOut = false;
+    // SIGTERM first, then SIGKILL for a group that has not ended; cancelled once the session has closed, so it never signals a reused group id.
+    let escalation: NodeJS.Timeout | undefined;
     const timer = setTimeout(() => {
       timedOut = true;
       killGroup("SIGTERM");
-      setTimeout(() => killGroup("SIGKILL"), 5000).unref();
+      escalation = setTimeout(() => killGroup("SIGKILL"), options.killGraceMs ?? 5000);
+      escalation.unref();
     }, options.timeoutMs);
+    const settle = () => {
+      clearTimeout(timer);
+      clearTimeout(escalation);
+      release();
+    };
     // Once the session itself has exited, nothing it started may outlive it.
     child.on("exit", () => killGroup("SIGKILL"));
     child.stdout.on("data", (chunk) => (out += chunk));
     child.stderr.on("data", (chunk) => (err += chunk));
     child.on("error", (error) => {
-      clearTimeout(timer);
-      release();
+      settle();
       reject(new SessionError("exit", `could not start ${options.bin}: ${error.message}`));
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
-      release();
+      settle();
       if (timedOut) return reject(new SessionError("timeout", `session exceeded ${options.timeoutMs} ms and was stopped`));
       let parsed: { session_id?: string; usage?: Partial<Usage>; duration_ms?: number; num_turns?: number; is_error?: boolean; result?: string; subtype?: string };
       try {
