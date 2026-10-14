@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
@@ -12,9 +12,11 @@ import {
   type ConceptReview, type Finding, type LedgerEntry,
 } from "./core.ts";
 import { claudeArgs, runClaude, SessionError } from "./claude.ts";
+import type { SliceSample } from "./core.ts";
 import { acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, groupPath, loadBatch, loadLedger, REGISTRY, repairAfterAudit, runBatch, saveBatch, type Env } from "./driver.ts";
 import { recordFingerprint, recordPlacement, recordsInPlaceProblems, renderRecord, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
 import { gitChangedPaths, gitHeadEntry, gitSurfaces, run as runCommand } from "./shell.ts";
+import { withoutRecords } from "../l2/campaign.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import type { MapContentBlock } from "../../types.ts";
 import type { SessionResult } from "./claude.ts";
@@ -884,13 +886,13 @@ async function acceptedSlice(): Promise<string> {
   writeFileSync(join(root, ".map-authoring/l2v2/s/sample.json"), JSON.stringify({ slice: "s", concepts: ["y"], audited: { y: { substantive: 0, repaired: false } } }));
   return root;
 }
-/** A stand-in for the claude CLI: writes the deep audit's output with `body` and, when asked, tampers with the campaign authorization. */
-function stubClaude(body: string, tamper = false): string {
+/** A stand-in for the claude CLI: writes the session's output (a deep audit's, by default) with `body` and, when asked, tampers with the campaign authorization. */
+function stubClaude(body: string, tamper = false, output = "\\.map-authoring/l2v2/audits/[^ ]*\\.audit\\.json"): string {
   const bin = join(mkdtempSync(join(tmpdir(), "l2v2-bin-")), "claude");
   writeFileSync(bin, [
     "#!/bin/sh",
     'prompt=$(cat)',
-    `out=$(printf '%s' "$prompt" | grep -o '\\.map-authoring/l2v2/audits/[^ ]*\\.audit\\.json' | head -1)`,
+    `out=$(printf '%s' "$prompt" | grep -o '${output}' | head -1)`,
     `run=$(printf '%s' "$prompt" | grep -o '"run": "[^"{}]*"' | head -1 | sed 's/"run": "\\(.*\\)"/\\1/')`,
     `printf '{"run":"%s",${body}}' "$run" > "$out"`,
     ...(tamper ? [`printf '{"merge":true}' > .map-authoring/campaign.json`] : []),
@@ -943,4 +945,181 @@ test("the CLI's deep audit runs under the guard: tampering is undone and reporte
   const entry = loadLedger(root).findLast((e) => e.kind === "deep-audit") as { fingerprint?: string };
   assert.equal(entry.fingerprint, recordFingerprint(loadBatch(root, "s", "g")!.records!.y), "the audit is bound to the record it read");
   assert.equal(cli(root, ["finalize", "--slice", "s"]).status, 3);
+});
+
+// ---------------------------------------------------------------- closure: resume, preservation, foreign records, audit bounds, process groups
+
+const REVIEW_PASS = `{"verdict":"pass","confidence":"high","findings":[],"coverage":[{"claim":0,"mechanism":true,"conditions":true,"failureOrConfusion":true}],"note":"n","resolutions":[]}`;
+/**
+ * A git checkout where the CLI can run a batch for real: stand-ins for the npm
+ * scripts the driver calls (`map:author -- l2 ...` and `map:generate`) and the
+ * focused tests, all committed, and a v1 run of slice s with group g.
+ */
+function cliCheckout(): string {
+  const root = fixture();
+  const git = (...args: string[]) => spawnSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", ...args], { cwd: root, encoding: "utf8" });
+  writeFileSync(join(root, ".gitignore"), "/.map-authoring/\n/node_modules/\n.claude/\n");
+  writeFileSync(join(root, "package.json"), JSON.stringify({ private: true, type: "module", scripts: { "map:author": "node l2-stub.mjs", "map:generate": "node -e 0" } }));
+  writeFileSync(join(root, "l2-stub.mjs"), [
+    "const [, command] = process.argv.slice(2);",
+    'const out = { signals: [], "group-signals": [], check: [{ problems: [], stale: [] }], context: { placements: [{}], owner: { domain: "d" } } }[command];',
+    "if (out === undefined) process.exit(1);",
+    "process.stdout.write(JSON.stringify(out));",
+  ].join("\n"));
+  for (const test of ["src/lib/map/map.test.ts", "src/lib/map/authoring/context.test.ts", "src/components/map/explorer-model.test.ts"]) {
+    mkdirSync(join(root, test, ".."), { recursive: true });
+    writeFileSync(join(root, test), 'import test from "node:test";\ntest("ok", () => {});\n');
+  }
+  git("init", "-q");
+  git("add", ".");
+  git("commit", "-qm", "base");
+  mkdirSync(join(root, ".map-authoring/l2"), { recursive: true });
+  writeFileSync(join(root, ".map-authoring/l2/s.json"), JSON.stringify({ domainId: "s", branch: git("rev-parse", "--abbrev-ref", "HEAD").stdout.trim(), baseSha: git("rev-parse", "HEAD").stdout.trim(), stage: "author", l2: { slice: { groups: [{ group: "g", concepts: ["x", "y"] }] }, steps: {} } }));
+  return root;
+}
+
+test("CLI: park, resume, run: the parked record is rendered again and the batch completes; a missing accepted record is still refused", async () => {
+  const root = cliCheckout();
+  const parked = await runBatch(fakeEnv(root, misquote), input);
+  assert.equal(parked.conceptStates.x.state, "parked");
+  assert.doesNotMatch(readFileSync(join(root, DATA), "utf8"), /x-content/);
+  const resumed = cli(root, ["resume", "--slice", "s", "--group", "g", "--at", "drafted"]);
+  assert.equal(resumed.status, 0, resumed.stderr);
+  const ran = cli(root, ["run", "--slice", "s"], { L2V2_CLAUDE: stubClaude(`"concepts":{"x":${REVIEW_PASS},"y":${REVIEW_PASS}},"group":{"note":"n","findings":[],"resolutions":[]}`, false, "\\.map-authoring/l2v2/s/g/[^ ]*\\.json") });
+  assert.equal(ran.status, 0, ran.stderr);
+  assert.match(ran.stdout, /batch g: x, y\n {2}-> accepted\nevery requested batch is accepted/);
+  const state = loadBatch(root, "s", "g")!;
+  assert.deepEqual([state.status, state.conceptStates.x.state, state.attempt], ["accepted", "accepted", 2]);
+  assert.match(readFileSync(join(root, DATA), "utf8"), /x-content/);
+  // Usage the CLI did not report stays unknown.
+  const session = loadLedger(root).findLast((e) => e.kind === "session") as { usage: unknown; weighted: unknown };
+  assert.deepEqual([session.usage, session.weighted], [null, null]);
+  // An accepted record that goes missing is still refused before anything runs.
+  writeFileSync(join(root, DATA), withoutRecords(readFileSync(join(root, DATA), "utf8"), ["y"]));
+  writeFileSync(join(root, ".map-authoring/l2v2/s/sample.json"), JSON.stringify({ slice: "s", concepts: ["x"], audited: { x: { substantive: 0, repaired: false } } }));
+  const refused = cli(root, ["finalize", "--slice", "s"]);
+  assert.equal(refused.status, 1, refused.stderr);
+  assert.match(refused.stderr, /- g: y: data\.ts does not hold the driver's rendering/);
+});
+
+/** An accepted batch whose audit repair of y failed verification: y is parked, the batch stopped. */
+async function failedRepair(root: string) {
+  assert.equal((await runBatch(fakeEnv(root, happy), input)).status, "accepted");
+  const stillOpen = (r: string, p: string) => {
+    const id = Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!;
+    emit(r, p, { concepts: { y: { verdict: "defect", findings: [], defects: [{ id, status: "open", why: "still overclaims" }], note: "not fixed", resolutions: [] } } });
+  };
+  const after = await repairAfterAudit(fakeEnv(root, { "deep-audit:resume": stillOpen }), { ...input, concept: "y", findings: [{ rule: "overclaim", quote: "Fine text.", replacement: "Fine text, under its conditions.", why: "audit" }], auditSession: "audit-1", label: "pilot" });
+  assert.deepEqual([after.status, after.conceptStates.y.state, after.conceptStates.x.state], ["stopped", "parked", "accepted"]);
+  return after;
+}
+
+test("a failed audit repair, then a resume: the history keeps every record, accepted but unfinalized text included, and nothing historical counts as accepted", async () => {
+  const root = fixture();
+  const stopped = await failedRepair(root);
+  const accepted = stopped.records!.x;
+  const redraft = resumeBatch(stopped, "plan-reviewed", T);
+  assert.deepEqual(redraft.history![0].records!.x, accepted, "the accepted text is preserved");
+  assert.equal(redraft.history![0].evidence.conceptStates.x.state, "accepted");
+  assert.equal(redraft.records, undefined, "a redraft starts without current records");
+  assert.ok(Object.values(redraft.conceptStates).every((c) => c.state !== "accepted" && !c.accepted), "no current concept is accepted");
+  saveBatch(root, redraft);
+  const state = await runBatch(fakeEnv(root, { ...happy, draft: (r, p) => emit(r, p, { records: [staged("x", "Nodes always agree."), staged("y", "Redrafted text.")] }) }), input);
+  assert.equal(state.status, "accepted", state.stop?.reason);
+  assert.deepEqual(state.history![0].records!.x, accepted);
+  const data = readFileSync(join(root, DATA), "utf8");
+  assert.equal(data.split('id: "x-content",').length, 2, "the driver's own earlier rendering was replaced, not duplicated");
+  assert.match(data, /Redrafted text\./);
+  // Resuming without a redraft keeps the records, and the history holds them too.
+  const kept = resumeBatch(await failedRepair(fixture()), "escalated", T);
+  assert.ok(kept.records?.x && kept.history![0].records?.x);
+});
+
+test("draft cleanup removes only the driver's own renderings: a record or registry entry it did not write, or one edited since, stops the batch and stays", async () => {
+  for (const [name, plant] of [
+    ["a hand-written record", (r: string) => appendRecord(r, "x", "Written by hand.")],
+    ["a registry entry alone", (r: string) => writeFileSync(join(r, REGISTRY), readFileSync(join(r, REGISTRY), "utf8").replace("];", '  "x",\n];'))],
+  ] as const) {
+    const root = fixture();
+    plant(root);
+    const before = { data: readFileSync(join(root, DATA), "utf8"), registry: readFileSync(join(root, REGISTRY), "utf8") };
+    const env = fakeEnv(root, happy);
+    const state = await runBatch(env, input);
+    assert.match(state.stop!.reason, /records the driver did not write are in the tree \(nothing was removed\): x:/, name);
+    assert.deepEqual({ data: readFileSync(join(root, DATA), "utf8"), registry: readFileSync(join(root, REGISTRY), "utf8") }, before, name);
+    assert.equal(env.calls.length, 0, `${name}: no session ran`);
+  }
+  // The driver's own rendering, edited by hand after a stop: refused at the redraft, the edit kept.
+  const root = fixture();
+  saveBatch(root, resumeBatch(await failedRepair(root), "plan-reviewed", T));
+  writeFileSync(join(root, DATA), readFileSync(join(root, DATA), "utf8").replace("Correct nodes agree under synchrony.", "Edited by hand."));
+  const state = await runBatch(fakeEnv(root, happy), input);
+  assert.match(state.stop!.reason, /x: data\.ts holds a record this driver did not render, or one edited since/);
+  assert.match(readFileSync(join(root, DATA), "utf8"), /Edited by hand\./);
+});
+
+test("stop rules count failed and interrupted sessions of every role", () => {
+  const ok = (i: number): LedgerEntry => ({ kind: "session", at: T, slice: "s", group: "g", role: "review", sessionId: `s${i}`, durationMs: 1, turns: 1, usage: null, weighted: null });
+  const failed = (i: number): LedgerEntry => ({ kind: "session-failed", at: T, slice: "audit:pilot", group: `c${i}`, role: "deep-audit", reason: i ? "exit" : "interrupted: the CLI stopped" });
+  assert.equal(stopReason([failed(0), failed(1), ...Array.from({ length: 10 }, (_, i) => ok(i))]), undefined, "only the recent window counts");
+  assert.match(stopReason([ok(0), failed(0), failed(1), failed(2)])!, /3 of the last 4 sessions failed or were interrupted/);
+});
+
+test("CLI audits are bounded: a concept cap per command, the stop rules before every session, failed sessions counted, an interrupted one reported", async () => {
+  const root = await acceptedSlice();
+  const sessions = () => loadLedger(root).filter((e) => e.kind === "session" || e.kind === "session-failed").length;
+  const start = sessions();
+  const capped = cli(root, ["audit", "--label", "pilot", "--concepts", Array.from({ length: 13 }, (_, i) => `c${i}`).join(",")]);
+  assert.equal(capped.status, 2);
+  assert.match(capped.stderr, /at most 12 concepts \(budget\.json maxAuditConcepts\); 13 given/);
+  writeFileSync(join(root, ".map-authoring/l2v2/budget.json"), '{"maxAuditConcepts":1}');
+  assert.equal(cli(root, ["audit", "--label", "pilot", "--concepts", "x,y", "--slice", "s"]).status, 2);
+  rmSync(join(root, ".map-authoring/l2v2/budget.json"));
+  assert.equal(sessions(), start, "no session started");
+  // Failed sessions count: after three, the stop rule refuses the next audit before it starts.
+  const broken = stub("exit 1");
+  for (let i = 0; i < 3; i++) assert.equal(cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: broken }).status, 1);
+  assert.ok(!existsSync(join(root, ".map-authoring/l2v2/audits/in-flight.json")), "a failed session is not mistaken for an interrupted one");
+  const gated = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: broken });
+  assert.equal(gated.status, 3);
+  assert.match(gated.stderr, /stop rule: 3 of the last \d+ sessions failed or were interrupted/);
+  rmSync(join(root, ".map-authoring/l2v2/s/sample.json"));
+  const sampleGated = cli(root, ["audit", "--sample-slice", "s"], { L2V2_CLAUDE: broken });
+  assert.equal(sampleGated.status, 3);
+  assert.equal(sessions(), start + 3, "the gated commands started no session");
+});
+
+test("CLI: a sample audit runs one guarded session per sampled concept with unknown usage kept unknown; an interrupted audit session is reported once", async () => {
+  const root = await acceptedSlice();
+  rmSync(join(root, ".map-authoring/l2v2/s/sample.json"));
+  const pass = stubClaude(`"verdict":"pass","confidence":"high","substantive":[],"remarks":[],"coverage":[],"depth":"d"`);
+  const sampled = cli(root, ["audit", "--sample-slice", "s"], { L2V2_CLAUDE: pass });
+  assert.equal(sampled.status, 0, sampled.stderr);
+  const sample = JSON.parse(readFileSync(join(root, ".map-authoring/l2v2/s/sample.json"), "utf8")) as SliceSample;
+  assert.deepEqual(Object.keys(sample.audited).sort(), [...sample.concepts].sort());
+  const audits = loadLedger(root).filter((e): e is Extract<LedgerEntry, { kind: "session" }> => e.kind === "session" && e.role === "deep-audit");
+  assert.equal(audits.length, sample.concepts.length);
+  assert.ok(audits.every((e) => e.usage === null && e.weighted === null), "usage the CLI did not report stays unknown");
+  // A session the CLI never saw finish: recorded as interrupted, the command stops for a human; the next one runs.
+  mkdirSync(join(root, ".map-authoring/l2v2/audits"), { recursive: true });
+  writeFileSync(join(root, ".map-authoring/l2v2/audits/in-flight.json"), JSON.stringify({ label: "pilot", concept: "y", startedAt: T }));
+  const interrupted = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: pass });
+  assert.equal(interrupted.status, 3);
+  assert.match(interrupted.stderr, /the deep audit of y \(pilot\) was interrupted and its changes were never checked/);
+  assert.match((loadLedger(root).at(-1) as { reason: string }).reason, /^interrupted/);
+  assert.equal(cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: pass }).status, 0);
+});
+
+test("a session's whole process group dies with it: on a timeout and when it exits, no child it started can still write", async () => {
+  for (const [name, body, timeoutMs] of [
+    ["timeout", "sleep 5", 200],
+    ["normal exit", `echo '{"session_id":"s","result":"done"}'`, 5000],
+  ] as const) {
+    const mark = join(mkdtempSync(join(tmpdir(), "l2v2-late-")), "late");
+    const bin = stub(`( sleep 0.4; echo late > "${mark}" ) >/dev/null 2>&1 &\n${body}`);
+    const outcome = await runClaude(options(bin, timeoutMs), "p", []).then(() => "resolved", (e: unknown) => (e instanceof SessionError ? e.reason : "other"));
+    assert.equal(outcome, name === "timeout" ? "timeout" : "resolved", name);
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    assert.ok(!existsSync(mark), `${name}: the background child never wrote`);
+  }
 });

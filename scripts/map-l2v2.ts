@@ -169,7 +169,8 @@ function treeProblems(slice: string): string[] {
   const problems: string[] = [];
   for (const state of sliceBatches(slice)) {
     if (!state.records || ["pending", "planned", "plan-reviewed"].includes(state.status) || (state.status === "stopped" && ["pending", "planned", "plan-reviewed"].includes(state.stop!.status))) continue;
-    const live = state.concepts.filter((id) => state.records![id] && state.conceptStates[id].state !== "parked");
+    // A record a park took out of the tree is rendered again by the driver on a resume: missing is expected, unless the concept is accepted.
+    const live = state.concepts.filter((id) => state.records![id] && state.conceptStates[id].state !== "parked" && !(state.conceptStates[id].state !== "accepted" && recordPlacement(data, state.records![id]) === "missing"));
     problems.push(...recordsInPlaceProblems(data, registry, live.map((id) => state.records![id])).map((p) => `${state.group}: ${p}`));
     // An invalid record is reported above and never rendered or fingerprinted.
     for (const id of live.filter((concept) => recordPlacement(data, state.records![concept]) !== "invalid")) {
@@ -246,6 +247,8 @@ async function commandResume() {
   } catch (error) {
     fail((error as Error).message);
   }
+  // The human's decision on the batch's parked concepts: they stop counting toward the parking stop rule.
+  appendLedger(ROOT, { kind: "resume", at: now(), slice, group, status: at });
   console.log(`${slice}/${group} resumed at ${at}; run it again to continue`);
 }
 
@@ -257,8 +260,29 @@ function v2Concepts(slice: string): Map<string, string> {
 }
 
 type DeepAudit = { run: string; substantive: Omit<Finding, "concept" | "severity">[]; verdict: string };
+/** Marks a deep-audit session in flight: one the CLI never saw finish is found by the next audit command. */
+const AUDIT_IN_FLIGHT = join(V2_ROOT, "audits", "in-flight.json");
+/**
+ * Before any audit command: an audit session the CLI never saw finish (the
+ * process stopped) is recorded as interrupted, and the command stops so a
+ * human checks the tree first; the next one may run.
+ */
+function auditInterrupted() {
+  const marker = readJson<{ label: string; concept: string; startedAt: string } | undefined>(AUDIT_IN_FLIGHT, undefined);
+  if (!marker) return;
+  appendLedger(ROOT, { kind: "session-failed", at: now(), slice: `audit:${marker.label}`, group: marker.concept, role: "deep-audit", reason: `interrupted: the CLI stopped during the session started at ${marker.startedAt}` });
+  rmSync(join(ROOT, AUDIT_IN_FLIGHT), { force: true });
+  fail(`the deep audit of ${marker.concept} (${marker.label}) was interrupted and its changes were never checked: inspect \`git status\` and .map-authoring, then run the audit again`, 3);
+}
+/** Each audit session starts only while no stop rule is broken (failed and interrupted sessions count). */
+function auditGate() {
+  const reason = stopReason(loadLedger(ROOT), budget());
+  if (reason) fail(`stop rule: ${reason}`, 3);
+}
+
 /** One independent deep audit of a concept (its record from the tree or from `ref`); returns its findings and session. */
 async function deepAudit(concept: string, label: string, campaign: boolean, ref?: string): Promise<{ audit: DeepAudit; sessionId: string }> {
+  auditGate();
   const dir = join(V2_ROOT, "audits", label);
   mkdirSync(join(ROOT, dir), { recursive: true });
   const fileAt = (path: string) => (ref ? sh("git", ["show", `${ref}:${path}`]).stdout : readFileSync(join(ROOT, path), "utf8"));
@@ -281,11 +305,15 @@ async function deepAudit(concept: string, label: string, campaign: boolean, ref?
   for (const [key, value] of Object.entries(vars)) text = text.split(`{{${key}}}`).join(value);
   // Under the same guard as every batch session: only its output file may change; the session's usage is recorded either way.
   let result;
+  writeFileSync(join(ROOT, AUDIT_IN_FLIGHT), `${JSON.stringify({ label, concept, startedAt: now() })}\n`);
   try {
     result = await guardedSession(env, { role: "deep-audit", prompt: text, tools: allowedTools("deep-audit", "", { pack: packPath, out }), denied: deniedTools("deep-audit"), tree: [DATA, REGISTRY], allowed: new Set(), out, slice: `audit:${label}`, group: concept });
   } catch (error) {
+    // The session ended (failed or undone) and is in the ledger: it was not interrupted. fail() exits, so no finally would run.
+    rmSync(join(ROOT, AUDIT_IN_FLIGHT), { force: true });
     return fail(`${concept}: the deep audit ${error instanceof GuardError ? "changed what it may not and was rolled back" : "failed"}: ${(error as Error).message}`, 1);
   }
+  rmSync(join(ROOT, AUDIT_IN_FLIGHT), { force: true });
   let audit: DeepAudit | undefined;
   try {
     audit = parseJson(readFileSync(join(ROOT, out), "utf8")) as DeepAudit;
@@ -313,12 +341,15 @@ async function repairFromAudit(slice: string, concept: string, label: string, au
 }
 
 async function commandAudit() {
+  auditInterrupted();
   const sliceToSample = flag("--sample-slice");
   for (const slice of [sliceToSample, flag("--slice")]) if (slice) requireTree(slice);
+  const max = budget().maxAuditConcepts;
   if (sliceToSample) {
     const path = join(V2_ROOT, sliceToSample, "sample.json");
     const accepted = [...v2Concepts(sliceToSample).keys()].sort();
     const sampled = readJson<SliceSample>(path, { slice: sliceToSample, concepts: sample(accepted, budget().samplePerSlice, sliceToSample), audited: {} });
+    if (sampled.concepts.filter((id) => !sampled.audited[id]).length > max) fail(`the sample has more than ${max} concepts to audit (budget.json maxAuditConcepts)`);
     writeFileSync(join(ROOT, path), `${JSON.stringify(sampled, null, 2)}\n`);
     for (const concept of sampled.concepts.filter((id) => !sampled.audited[id])) {
       const { audit, sessionId } = await deepAudit(concept, `sample-${sliceToSample}`, true);
@@ -334,6 +365,7 @@ async function commandAudit() {
   }
   const label = flag("--label") ?? fail("audit needs --label, or --sample-slice");
   const concepts = (flag("--concepts") ?? fail("audit needs --concepts a,b")).split(",");
+  if (concepts.length > max) fail(`one audit command audits at most ${max} concepts (budget.json maxAuditConcepts); ${concepts.length} given`);
   const ref = flag("--ref");
   if (ref && args.includes("--fix")) fail("a baseline at a ref is measured, never fixed");
   const slice = flag("--slice");

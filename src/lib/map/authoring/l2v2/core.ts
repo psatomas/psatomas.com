@@ -77,6 +77,8 @@ export type BatchState = {
   defects: Record<string, Defect>;
   /** The batch's validated records, by concept: the only source of what the driver renders into data.ts. */
   records?: Record<string, StagedRecord>;
+  /** Fingerprints of the record text the driver itself rendered into data.ts, by concept: only these may it ever remove. */
+  rendered?: Record<string, string>;
   /** What the reviews concluded, per concept and for the group: becomes the v1 audit records. */
   audit: Record<string, { notes: string[]; resolutions: Resolution[] }>;
   groupAudit?: { note: string; resolutions: Resolution[] };
@@ -85,8 +87,12 @@ export type BatchState = {
   attempt?: number;
   /** The evidence as of each status reached in this attempt. */
   checkpoints?: Partial<Record<BatchStatus, Evidence>>;
-  /** Earlier attempts' evidence, kept for the record and never judged again. */
-  history?: { attempt: number; endedAt: string; stop?: BatchState["stop"]; evidence: Evidence; window?: SessionWindow }[];
+  /**
+   * Earlier attempts, kept for the record and never judged again: their
+   * evidence and their records (accepted but unfinalized text included), which
+   * nothing reads as current.
+   */
+  history?: { attempt: number; endedAt: string; stop?: BatchState["stop"]; evidence: Evidence; records?: Record<string, StagedRecord>; window?: SessionWindow }[];
   window?: SessionWindow;
   updatedAt: string;
 };
@@ -140,7 +146,9 @@ export function resumeBatch(state: BatchState, at: BatchStatus, now: string): Ba
   const attempt = state.attempt ?? 1;
   const next: BatchState = clone({ ...state, status: at, updatedAt: now });
   delete next.stop;
-  next.history = [...(state.history ?? []), clone({ attempt, endedAt: now, stop: state.stop, evidence: evidenceOf(state), window: state.window })];
+  next.history = [...(state.history ?? []), clone({ attempt, endedAt: now, stop: state.stop, evidence: evidenceOf(state), ...(state.records ? { records: state.records } : {}), window: state.window })];
+  // A redraft replaces the records: the current ones live on only in the history.
+  if (rank(at) <= rank("plan-reviewed")) delete next.records;
   next.attempt = attempt + 1;
   next.window = newWindow(now);
   const base = state.checkpoints?.[at];
@@ -457,7 +465,7 @@ const PROTECTED_WRITES = [
   "**/.npmrc", "**/.nvmrc", "**/.envrc", "**/.env*", "**/.dev.vars*", "**/node_modules/**",
   "**/.git", "**/.git/**", "**/.gitignore", "**/.gitattributes", "**/.gitmodules", "**/.husky/**", "**/.claude/**", "**/.mcp.json", "**/CLAUDE.md", "**/AGENTS.md",
   ".map-authoring/*.json", ".map-authoring/l2/**", ".map-authoring/campaign/**", ".map-authoring/representation/**", ".map-authoring/l2v2/*.json", ".map-authoring/l2v2/*.jsonl", ".map-authoring/l2v2/lock",
-  "**/state.json", "**/sample.json", "**/parked-records.json", "**/audit-*.json", "**/group-audit.json", "**/pack.md", "**/*.pack.md",
+  "**/state.json", "**/sample.json", "**/in-flight.json", "**/parked-records.json", "**/audit-*.json", "**/group-audit.json", "**/pack.md", "**/*.pack.md",
   "~/.claude/**", "~/.claude.json", "~/.gitconfig", "~/.npmrc", "~/.ssh/**", "~/.config/**", "~/.bashrc", "~/.zshrc", "~/.zshenv", "~/.profile", "//etc/**",
 ];
 /**
@@ -487,23 +495,40 @@ export type LedgerEntry =
   | { kind: "batch"; at: string; slice: string; group: string; accepted: number; parked: number; escalated: number; defects: number }
   /** campaign: false for baselines, which never count toward the campaign's stop rules; fingerprint: the record audited, when it is a v2 record. */
   | { kind: "deep-audit"; at: string; label: string; concept: string; substantive: number; campaign: boolean; fingerprint?: string }
-  | { kind: "meter"; at: string; percent: number; note?: string };
+  | { kind: "meter"; at: string; percent: number; note?: string }
+  /** A human resumed a stopped batch: its parked concepts are decided, and stop counting as parked. */
+  | { kind: "resume"; at: string; slice: string; group: string; status: BatchStatus };
 
 /**
  * Stop-rule thresholds and per-batch operational limits. Limits count
  * sessions and wall-clock time, never tokens: usage the CLI did not report
  * stays unknown, and --max-budget-usd does not bound a subscription's quota.
  */
-export type Budget = { perConcept: number; stopFactor: number; maxEscalationRate: number; meterPercentPerConcept: number; sampleWindow: number; sampleMaxDefective: number; samplePerSlice: number; maxSessionsPerBatch: number; maxBatchMinutes: number };
-export const DEFAULT_BUDGET: Budget = { perConcept: 122_000, stopFactor: 1.3, maxEscalationRate: 0.4, meterPercentPerConcept: 0.109, sampleWindow: 20, sampleMaxDefective: 8, samplePerSlice: 4, maxSessionsPerBatch: 20, maxBatchMinutes: 240 };
+export type Budget = {
+  perConcept: number; stopFactor: number; maxEscalationRate: number; meterPercentPerConcept: number; sampleWindow: number; sampleMaxDefective: number; samplePerSlice: number;
+  maxSessionsPerBatch: number; maxBatchMinutes: number;
+  /** Concepts one audit command may audit (one session each). */
+  maxAuditConcepts: number;
+  /** Failed or interrupted sessions (any role, audits included) among the last `failureWindow` sessions that stop the campaign. */
+  maxRecentFailures: number; failureWindow: number;
+};
+export const DEFAULT_BUDGET: Budget = {
+  perConcept: 122_000, stopFactor: 1.3, maxEscalationRate: 0.4, meterPercentPerConcept: 0.109, sampleWindow: 20, sampleMaxDefective: 8, samplePerSlice: 4,
+  maxSessionsPerBatch: 20, maxBatchMinutes: 240, maxAuditConcepts: 12, maxRecentFailures: 3, failureWindow: 10,
+};
 
 export type BatchMetrics = { slice: string; group: string; weighted: number; minutes: number; failed: number; unmeasured: number; accepted: number; parked: number; escalated: number; defects: number };
 
 export function batchMetrics(ledger: readonly LedgerEntry[]): BatchMetrics[] {
   const out = new Map<string, BatchMetrics>();
   for (const entry of ledger) {
-    if (entry.kind !== "session" && entry.kind !== "batch" && entry.kind !== "session-failed") continue;
+    if (entry.kind !== "session" && entry.kind !== "batch" && entry.kind !== "session-failed" && entry.kind !== "resume") continue;
     const k = `${entry.slice}/${entry.group}`;
+    if (entry.kind === "resume") {
+      const resumed = out.get(k);
+      if (resumed) resumed.parked = 0;
+      continue;
+    }
     const m = out.get(k) ?? { slice: entry.slice, group: entry.group, weighted: 0, minutes: 0, failed: 0, unmeasured: 0, accepted: 0, parked: 0, escalated: 0, defects: 0 };
     if (entry.kind === "session") {
       if (entry.weighted === null) m.unmeasured++;
@@ -530,6 +555,9 @@ export function stopReason(ledger: readonly LedgerEntry[], budget: Budget = DEFA
   if (concepts >= 10 && escalated / concepts > budget.maxEscalationRate) return `${escalated} of ${concepts} concepts escalated, over ${budget.maxEscalationRate * 100}%`;
   const parked = done.reduce((sum, m) => sum + m.parked, 0);
   if (parked) return `${parked} concept(s) parked with unresolved defects: a human decides`;
+  const sessions = ledger.filter((e) => e.kind === "session" || e.kind === "session-failed").slice(-budget.failureWindow);
+  const failed = sessions.filter((e) => e.kind === "session-failed").length;
+  if (failed >= budget.maxRecentFailures) return `${failed} of the last ${sessions.length} sessions failed or were interrupted: a human checks the CLI, the quota and the tree`;
   const audits = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.campaign).slice(-budget.sampleWindow);
   const defective = audits.filter((e) => e.substantive > 0).length;
   if (defective >= budget.sampleMaxDefective) return `${defective} of the last ${audits.length} sampled concepts had substantive defects`;

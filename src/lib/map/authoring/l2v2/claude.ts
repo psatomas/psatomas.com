@@ -2,7 +2,11 @@
  * Runs one headless Claude Code session (`claude -p --output-format json`) and
  * returns its result and exact usage. Failures (timeout, non-zero exit, no
  * JSON, an error result) reject with a SessionError; usage is never invented.
- * Development tooling only.
+ *
+ * The session runs in its own process group (POSIX), and the whole group is
+ * killed on a timeout, as soon as the session exits, and if the driver itself
+ * stops: no process it started can still change files after the integrity
+ * guard has looked. Development tooling only.
  */
 import { spawn } from "node:child_process";
 import { DENIED_TOOLS, type Usage } from "./core.ts";
@@ -34,25 +38,56 @@ export function claudeArgs(options: ClaudeOptions, tools: readonly string[], res
   ];
 }
 
+/** Whether process groups exist here: they do on Linux and macOS, the supported systems. */
+const GROUPS = process.platform !== "win32";
+
 export function runClaude(options: ClaudeOptions, prompt: string, tools: readonly string[], resume?: string, denied: readonly string[] = DENIED_TOOLS): Promise<SessionResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(options.bin, claudeArgs(options, tools, resume, denied), { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"] });
+    // detached: the session leads a new process group, so its descendants can be killed with it.
+    const child = spawn(options.bin, claudeArgs(options, tools, resume, denied), { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"], detached: GROUPS });
+    /** Signals the session's whole process group; a group that is already gone is no error. */
+    const killGroup = (signal: NodeJS.Signals) => {
+      try {
+        if (GROUPS && child.pid) process.kill(-child.pid, signal);
+        else child.kill(signal);
+      } catch {
+        // Already gone.
+      }
+    };
+    // If the driver stops (exit, Ctrl-C, SIGTERM), the session's group goes with it, then the signal takes its usual course.
+    const onExit = () => killGroup("SIGKILL");
+    const onSignal = (signal: NodeJS.Signals) => {
+      killGroup("SIGKILL");
+      process.kill(process.pid, signal);
+    };
+    process.once("exit", onExit);
+    process.once("SIGINT", onSignal);
+    process.once("SIGTERM", onSignal);
+    const release = () => {
+      process.removeListener("exit", onExit);
+      process.removeListener("SIGINT", onSignal);
+      process.removeListener("SIGTERM", onSignal);
+    };
     let out = "";
     let err = "";
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGTERM");
-      setTimeout(() => child.kill("SIGKILL"), 5000).unref();
+      killGroup("SIGTERM");
+      setTimeout(() => killGroup("SIGKILL"), 5000).unref();
     }, options.timeoutMs);
+    // Once the session itself has exited, nothing it started may outlive it.
+    child.on("exit", () => killGroup("SIGKILL"));
     child.stdout.on("data", (chunk) => (out += chunk));
     child.stderr.on("data", (chunk) => (err += chunk));
     child.on("error", (error) => {
       clearTimeout(timer);
+      release();
       reject(new SessionError("exit", `could not start ${options.bin}: ${error.message}`));
     });
     child.on("close", (code) => {
       clearTimeout(timer);
+      release();
       if (timedOut) return reject(new SessionError("timeout", `session exceeded ${options.timeoutMs} ms and was stopped`));
       let parsed: { session_id?: string; usage?: Partial<Usage>; duration_ms?: number; num_turns?: number; is_error?: boolean; result?: string; subtype?: string };
       try {

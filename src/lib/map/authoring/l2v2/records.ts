@@ -10,6 +10,7 @@
  * state, and the rendered source is checked as text before any tool imports
  * it. Repairs patch these values, never the source. Development tooling only.
  */
+import { createHash } from "node:crypto";
 import type { MapConceptContent, MapContentBlock } from "../../types.ts";
 import { contentBlockProblems, textProblems } from "../../validation.ts";
 import { recordSpans, withoutRecords } from "../l2/campaign.ts";
@@ -263,6 +264,14 @@ const spanText = (source: string, id: string) => {
   const span = recordSpans(source).get(id);
   return span && source.split("\n").slice(span.start, span.end + 1).join("\n");
 };
+const sha256 = (text: string) => createHash("sha256").update(text).digest("hex");
+/** The fingerprint of a record's text as the driver renders it into data.ts. */
+export const renderedFingerprint = (record: StagedRecord) => sha256(renderRecord(toContent(record)));
+/** The fingerprint of a concept's record text in data.ts, or undefined when there is none. */
+export function spanFingerprint(data: string, id: string): string | undefined {
+  const text = spanText(data, id);
+  return text === undefined ? undefined : sha256(text);
+}
 
 /** Where a validated record stands in data.ts: rendered exactly, absent, different, or not a valid record at all. */
 export function recordPlacement(data: string, record: unknown): "in-place" | "missing" | "changed" | "invalid" {

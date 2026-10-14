@@ -18,8 +18,8 @@ import {
 } from "./core.ts";
 import { entryOf, restoreEntry, sameEntry, signatureOf, walk, type Entry } from "./guard.ts";
 import {
-  recordFingerprint, recordPlacement, recordProblems, recordsInPlaceProblems, recordStrings, renderedProblems, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry,
-  type StagedRecord, type StagedRecords,
+  recordFingerprint, recordPlacement, recordProblems, recordsInPlaceProblems, recordStrings, renderedFingerprint, renderedProblems, secretProblems, spanFingerprint, stagedRecordsProblems, toContent,
+  withRecords, withRegistry, type StagedRecord, type StagedRecords,
 } from "./records.ts";
 import type { SessionResult } from "./claude.ts";
 
@@ -406,6 +406,32 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
       write(env, REGISTRY, registry.was);
       throw new GuardError(`the rendered records failed their source check (restored): ${problems.join("; ")}`);
     }
+    state.rendered = { ...state.rendered, ...Object.fromEntries(records.map((record) => [record.conceptId, renderedFingerprint(record)])) };
+    save(state);
+  }
+
+  /** Forgets the renderings of these concepts once their records left data.ts. */
+  function unrendered(ids: readonly string[]) {
+    if (!state.rendered) return;
+    for (const id of ids) delete state.rendered[id];
+    save(state);
+  }
+
+  /**
+   * Why the batch's concepts have records or registry entries in the tree the
+   * driver did not render (or that were edited since); [] when every one of
+   * them is the driver's own rendering. Nothing else is ever removed.
+   */
+  function foreignRecords(): string[] {
+    const data = read(env, DATA);
+    const registry = read(env, REGISTRY).split("\n");
+    const problems: string[] = [];
+    for (const id of concepts) {
+      const span = spanFingerprint(data, id);
+      if (span !== undefined && span !== state.rendered?.[id]) problems.push(`${id}: data.ts holds a record this driver did not render, or one edited since`);
+      if (registry.includes(`  "${id}",`) && !state.rendered?.[id]) problems.push(`${id}: the registry holds an entry this driver did not add`);
+    }
+    return problems;
   }
 
   /**
@@ -434,11 +460,12 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
       // Whatever failed (a guard, a limit, a session), nothing of this draft stays rendered.
       await rollback(stepStart);
       delete state.records;
-      save(state);
+      unrendered(concepts);
       throw error;
     }
     await rollback(stepStart);
     delete state.records;
+    unrendered(concepts);
     stop(`draft: ${problems.length ? `validation still fails (rolled back): ${problems.slice(0, 5).join("; ")}` : "no usable records (rolled back)"}`);
     return false;
   }
@@ -466,7 +493,7 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
       const unresolvedNow = reviewed.flatMap((id) => openDefects(state, id));
       if (!unresolvedNow.length) break;
       const toApply = unresolvedNow.filter((d) => d.status === "open");
-      const before = { records: state.records ?? {}, data: read(env, DATA), registry: read(env, REGISTRY) };
+      const before = { records: state.records ?? {}, rendered: { ...state.rendered }, data: read(env, DATA), registry: read(env, REGISTRY) };
       // Repairs change the records' values, never the source: the driver renders them again.
       const patched = applyPatches(before.records, toApply.map((d) => d.finding), protectedIds, await secrets());
       state.records = patched.records;
@@ -480,6 +507,7 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
       const broken = await env.check(group, true);
       if (broken.length) {
         state.records = before.records;
+        state.rendered = before.rendered;
         write(env, DATA, before.data);
         write(env, REGISTRY, before.registry);
         stop(`${role}: a repair broke validation (repairs rolled back): ${broken.slice(0, 3).join("; ")}`);
@@ -512,7 +540,7 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
     return true;
   }
 
-  return { get state() { return state; }, save, stop, session, interrupted, produce, checked, draft, integrate, snapshot, rollback, signalBlock, repairLoop, park, secrets, vars, dir, batch };
+  return { get state() { return state; }, save, stop, session, interrupted, produce, checked, draft, integrate, unrendered, foreignRecords, snapshot, rollback, signalBlock, repairLoop, park, secrets, vars, dir, batch };
 }
 
 // ---------------------------------------------------------------- the batch
@@ -528,6 +556,11 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
   try {
     if (ops.interrupted()) return ops.stop("a session was interrupted (the driver stopped during it) and its changes were never checked: inspect `git status` and .map-authoring, then resume");
     if (ops.state.status === "stopped" || ops.state.status === "accepted") return ops.state;
+    // Before the draft, any record of the batch's concepts must be the driver's own: anything else is never overwritten or deleted.
+    if (["pending", "planned", "plan-reviewed"].includes(ops.state.status)) {
+      const foreign = ops.foreignRecords();
+      if (foreign.length) return ops.stop(`records the driver did not write are in the tree (nothing was removed): ${foreign.join("; ")}; a human moves or registers them`);
+    }
     // Past the draft, data.ts must still hold exactly what the driver rendered from the validated records.
     if (["drafted", "reviewed", "escalated"].includes(ops.state.status)) {
       const data = read(env, DATA);
@@ -584,10 +617,13 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
     }
 
     if (ops.state.status === "plan-reviewed") {
-      // An earlier draft of this batch leaves its rendered records: start the draft clean (never touching protected content).
+      // An earlier draft of this batch leaves its rendered records: start the draft clean, removing only the driver's own renderings.
+      const foreign = ops.foreignRecords();
+      if (foreign.length) return ops.stop(`records the driver did not write are in the tree (nothing was removed): ${foreign.join("; ")}; a human moves or registers them`);
       const leftovers = concepts.filter((id) => recordSpans(read(env, DATA)).has(id));
       if (leftovers.length) write(env, DATA, withoutRecords(read(env, DATA), leftovers));
       write(env, REGISTRY, withoutRegistryEntries(read(env, REGISTRY), concepts));
+      ops.unrendered(concepts);
       delete ops.state.records;
       const start = await ops.snapshot();
       if (!(await ops.draft(start))) return ops.state;
@@ -667,6 +703,7 @@ async function accept(env: Env, ops: ReturnType<typeof batchOps>): Promise<Batch
     write(env, join(ops.dir, "parked-records.json"), `${JSON.stringify(Object.fromEntries(parked.filter((id) => records[id]).map((id) => [id, records[id]])), null, 2)}\n`);
     write(env, DATA, withoutRecords(read(env, DATA), parked.filter((id) => recordSpans(read(env, DATA)).has(id))));
     write(env, REGISTRY, withoutRegistryEntries(read(env, REGISTRY), parked));
+    ops.unrendered(parked);
   }
   const accepted = concepts.filter((c) => ops.state.conceptStates[c].state === "open");
   // What is accepted is exactly what data.ts holds: the driver's rendering of the reviewed records.

@@ -162,6 +162,10 @@ distilled from the Foundations audits.
       batch stops for manual recovery, as it does when any restore fails.
     - A draft that fails at any point, including its rewrite round, leaves
       nothing rendered.
+    - The driver removes only records it rendered itself: it keeps the
+      fingerprint of each rendering. Before a draft, a record of the batch's
+      concepts it did not write (or one edited since), or a registry entry it
+      did not add, stops the batch with nothing removed.
   - **Never touched:** directory entries (such as nested worktrees) are
     compared by presence and never read or restored. `.worktrees/` is never
     part of a batch, and nothing ever resets or cleans the repository.
@@ -189,8 +193,15 @@ distilled from the Foundations audits.
     triggers escalation) still count.
   - Open deep-audit defects stay unless the record is drafted again (resuming
     at `plan-reviewed` or earlier).
+  - The history also keeps the attempt's records, accepted but unfinalized
+    text included. A redraft starts without current records, and nothing in
+    the history ever counts as accepted.
   - Records a park removed from the tree are rendered again from their
-    validated data.
+    validated data: the CLI's checks before `run` accept a record that is
+    missing while its concept is not accepted, and still refuse a missing or
+    changed accepted one.
+  - A resume is recorded in the ledger as the human's decision: the batch's
+    parked concepts stop counting toward the parking stop rule.
 - **Independent reviews stay independent:**
   - Reviewers see only the sources, the prompts, their pack and their own
     output, never the batch state or another session's output.
@@ -202,6 +213,9 @@ distilled from the Foundations audits.
 - **One driver per checkout:** a lock in `.map-authoring/l2v2/lock`. A lock
   left by a dead process is reported, never stolen.
 - **Session execution:**
+  - Each session runs in its own process group, killed whole on a timeout,
+    as soon as the session exits, and if the driver itself stops: nothing it
+    started can still write after the guard has looked (Linux and macOS).
   - A timeout (default 30 minutes) kills the session.
   - Failures (timeout, non-zero exit, no JSON, an error result, a usage
     limit) are recorded as `session-failed` with no usage; usage the CLI did
@@ -219,6 +233,13 @@ distilled from the Foundations audits.
     interrupted, for its whole timeout. Its changes were never checked, so the
     batch stops for a human to inspect.
   - A resume, and a repair after a deep audit, start a new window.
+- **Audit limits:**
+  - One `audit` command audits at most `maxAuditConcepts` concepts (default
+    12, `budget.json`), one guarded session each.
+  - The stop rules are checked before every audit session.
+  - A failed audit session is recorded as such. One the CLI never saw finish
+    is recorded as interrupted when the next audit command starts, which then
+    stops for a human to inspect.
 
 ## Delivery
 
@@ -271,7 +292,9 @@ output 5. `report` prints it all.
 - the last 3 batches average more than 1.3 × 122 k weighted per accepted
   concept;
 - escalation runs above 40%, once there are at least 10 concepts;
-- any parked concept;
+- any parked concept, until a human resumes its batch;
+- 3 or more of the last 10 sessions (any role, audits included) failed or
+  were interrupted;
 - 8 or more of the last 20 **campaign** audits have substantive defects
   (baselines never count);
 - within one weekly window, the meter rises more than 0.109% per accepted
