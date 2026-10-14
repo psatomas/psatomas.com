@@ -8,7 +8,7 @@ Judge every claim and model statement before any prose exists:
 - depth: can each claim be explained with a mechanism, conditions and a failure or confusion? A claim that can only be named is too thin.
 
 Write {{OUT}}:
-{ "verdict": "pass" | "fix" | "stop",
+{ "run": "{{RUN}}", "verdict": "pass" | "fix" | "stop",
   "claimFixes": [ { "concept": "<id>", "quote": "<exact substring of one claim>", "replacement": "<its accurate wording>", "why": "<rule and reason>" } ],
   "stopReason": "<only for stop: a taxonomy or territory question the plan cannot settle>",
   "note": "<what you checked>" }

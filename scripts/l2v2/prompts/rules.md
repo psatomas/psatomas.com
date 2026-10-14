@@ -14,7 +14,7 @@ src/lib/map/authoring/l2/contracts.ts, src/lib/map/types.ts, src/lib/map/validat
   purpose, whyNotProse}`, plus `division`), and `relationship`, `level`, `territory`, `placements`.
 - A structure only where it shows what prose would obscure: comparison (alternatives on shared dimensions),
   distinction (a real conflation), flow (order matters), cycle, state (persistent states with returns), tensions.
-- Validate with `npm run -s map:author -- l2 check --group <group>`.
+- Validate with exactly `npm run -s map:author -- l2 check --group <group>`.
 
 ## Record (src/lib/map/data.ts, `mapKnowledge.content`)
 - `{ id: "<concept>-content", conceptId: "<concept>", definition: "...", body: [ ...blocks ] }`, 4-space record
@@ -25,8 +25,14 @@ src/lib/map/authoring/l2/contracts.ts, src/lib/map/types.ts, src/lib/map/validat
   `{ kind: "distinction", left, right, further? }`; others per types.ts).
 - The definition states the meaning; the body never repeats it. One canonical text true at every placement.
 - Plain text, American English, no markdown, no line breaks, words rather than symbols.
-- Check with `node --test src/lib/map/map.test.ts` and `npm run -s map:author -- l2 check --group <group>`.
+- Check with exactly `node --test src/lib/map/map.test.ts` and `npm run -s map:author -- l2 check --group <group>`.
+
+## Commands sessions may run (everything else is denied)
+`npm run -s map:author -- l2 context <concept>`, `npm run -s map:author -- l2 territory <group>`,
+`npm run -s map:author -- l2 signals <concept>`, `npm run -s map:author -- l2 group-signals <group>`,
+`npm run -s map:inspect -- <concept> [--context <placement>]`; the plan and draft sessions also
+`npm run -s map:author -- l2 check --group <group>` and `node --test src/lib/map/map.test.ts`.
 
 ## Never
 Edit other groups' files, other records, taxonomy, tests, tooling or docs. Read data.ts wholesale (use
-`npm run map:inspect -- <concept>`). Commit, push, switch branches.
+`npm run -s map:inspect -- <concept>`). Commit, push, switch branches.
