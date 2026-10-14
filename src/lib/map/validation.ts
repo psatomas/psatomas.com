@@ -41,7 +41,7 @@ const MARKUP = [
   { pattern: /[\r\n]/, problem: "contains a line break" },
 ];
 
-function textProblems(text: string): string[] {
+export function textProblems(text: string): string[] {
   return MARKUP.filter(({ pattern }) => pattern.test(text)).map(({ problem }) => problem);
 }
 
@@ -153,7 +153,7 @@ function stateGraphProblems(states: readonly string[], transitions: readonly Map
     : [];
 }
 
-function contentBlockProblems(block: MapContentBlock): string[] {
+export function contentBlockProblems(block: MapContentBlock): string[] {
   const shape = contentBlockShapeProblems(block);
   if (shape.length > 0) return shape;
   return [
