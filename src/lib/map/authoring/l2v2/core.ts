@@ -6,9 +6,10 @@
  * review, exact repairs with semantic verification, focused escalation,
  * acceptance. This module holds the batch state, the session contracts, the
  * defect ledger, patching, batch selection over a v1 run, tool permissions,
- * and the metrics; it reads and writes nothing. Development tooling only.
+ * and the metrics; it reads and writes nothing. Drafted records are data
+ * (records.ts). Development tooling only.
  */
-import { recordSpans, withoutRecords } from "../l2/campaign.ts";
+import { replaceOnce, type StagedRecord } from "./records.ts";
 
 // ---------------------------------------------------------------- batch state
 
@@ -57,6 +58,8 @@ export type ConceptState = {
   /** The latest full review of the concept (the escalation review once there is one). */
   lastReview?: { by: Role; verdict: ConceptReview["verdict"]; confidence: ConceptReview["confidence"]; coverageComplete: boolean };
   parkReason?: string;
+  /** When the concept was last accepted, and the fingerprint of the record accepted: finalize ships nothing else. */
+  accepted?: { at: string; fingerprint: string };
 };
 export type BatchState = {
   version: 2;
@@ -68,6 +71,8 @@ export type BatchState = {
   /** Session ids by role, for resuming the same session (its cache stays warm). */
   sessions: Partial<Record<Role, string>>;
   defects: Record<string, Defect>;
+  /** The batch's validated records, by concept: the only source of what the driver renders into data.ts. */
+  records?: Record<string, StagedRecord>;
   /** What the reviews concluded, per concept and for the group: becomes the v1 audit records. */
   audit: Record<string, { notes: string[]; resolutions: Resolution[] }>;
   groupAudit?: { note: string; resolutions: Resolution[] };
@@ -244,18 +249,16 @@ export function acceptanceProblems(state: BatchState, concept: string): string[]
 
 // ---------------------------------------------------------------- exact repairs
 
-/** How a text is written inside a double-quoted string literal in data.ts. */
-export const asLiteral = (text: string) => JSON.stringify(text).slice(1, -1);
-
 export type PatchResult = { finding: Finding; applied: boolean; problem?: string };
 
 /**
- * Applies defect findings to data.ts as exact replacements inside each
- * concept's own record. A quote must occur exactly once in that record;
- * anything else is refused, never guessed. Records of `protectedIds` are never touched.
+ * Applies defect findings to the batch's records as exact replacements in
+ * each concept's own content strings. A quote must occur exactly once in that
+ * record, and the repaired record must stay valid and free of secrets;
+ * anything else is refused, never guessed. Protected records are never touched.
  */
-export function applyPatches(source: string, findings: readonly Finding[], protectedIds: ReadonlySet<string>): { source: string; results: PatchResult[] } {
-  let text = source;
+export function applyPatches(records: Readonly<Record<string, StagedRecord>>, findings: readonly Finding[], protectedIds: ReadonlySet<string>, secrets: readonly string[] = []): { records: Record<string, StagedRecord>; results: PatchResult[] } {
+  const out = { ...records };
   const results: PatchResult[] = [];
   for (const finding of findings) {
     if (finding.severity !== "defect") continue;
@@ -263,24 +266,16 @@ export function applyPatches(source: string, findings: readonly Finding[], prote
       results.push({ finding, applied: false, problem: `${finding.concept} is protected content` });
       continue;
     }
-    const span = recordSpans(text).get(finding.concept);
-    if (!span) {
+    const record = Object.hasOwn(out, finding.concept) ? out[finding.concept] : undefined;
+    if (!record) {
       results.push({ finding, applied: false, problem: `no record for ${finding.concept}` });
       continue;
     }
-    const lines = text.split("\n");
-    const record = lines.slice(span.start, span.end + 1).join("\n");
-    const quote = asLiteral(finding.quote);
-    const count = record.split(quote).length - 1;
-    if (count !== 1) {
-      results.push({ finding, applied: false, problem: count === 0 ? "quote not found in the record" : `quote occurs ${count} times in the record` });
-      continue;
-    }
-    const patched = record.replace(quote, () => asLiteral(finding.replacement ?? ""));
-    text = [...lines.slice(0, span.start), patched, ...lines.slice(span.end + 1)].join("\n");
-    results.push({ finding, applied: true });
+    const patched = replaceOnce(record, finding.quote, finding.replacement ?? "", secrets);
+    if (patched.record) out[finding.concept] = patched.record;
+    results.push(patched.record ? { finding, applied: true } : { finding, applied: false, problem: patched.problem });
   }
-  return { source: text, results };
+  return { records: out, results };
 }
 
 /** A group file with exact claim fixes applied to a member's claims and its model's copy. */
@@ -301,12 +296,6 @@ export function applyClaimFixes(groupFile: string, fixes: readonly ClaimFix[]): 
   }
   return { text: `${JSON.stringify(file, null, 2)}\n`, problems };
 }
-
-/** data.ts with the given concepts' records removed: what must stay byte-identical around a batch. */
-export const outsideRecords = (source: string, conceptIds: readonly string[]) => {
-  const present = conceptIds.filter((id) => recordSpans(source).has(id));
-  return present.length ? withoutRecords(source, present) : source;
-};
 
 // ---------------------------------------------------------------- escalation
 
@@ -380,22 +369,39 @@ export function finalizeCommands(slice: string, groups: RunGroups, dirOf: (group
 const L2 = "npm run -s map:author -- l2";
 /**
  * The tools a session may use (defense in depth; the driver's integrity guard
- * is the boundary). Read-only inspection and validation only: no recording,
- * authorization, delivery, territory writing, git, or arbitrary code.
+ * is the boundary). Reading only the repository's sources, docs, prompts and
+ * the batch's own files; read-only inspection and validation; writing only the
+ * role's own JSON file. No session edits TypeScript, records anything,
+ * authorizes, delivers, writes territory, uses git or runs arbitrary code.
+ * `dir` is the batch's (or audit's) directory, `out` the session's output file.
  */
-export function allowedTools(role: Role, group: string, outDir: string): string[] {
+export function allowedTools(role: Role, group: string, dir: string, out?: string): string[] {
+  const reads = ["Read(src/**)", "Read(docs/**)", "Read(scripts/l2v2/prompts/**)", `Read(${dir}/**)`];
   const inspect = [`Bash(${L2} context:*)`, `Bash(${L2} territory ${group})`, `Bash(${L2} signals:*)`, `Bash(${L2} group-signals ${group})`, "Bash(npm run -s map:inspect --:*)"];
-  const check = [`Bash(${L2} check --group ${group})`, "Bash(node --test src/lib/map/map.test.ts)"];
-  const groupFile = `src/lib/map/authoring/l2/groups/${group}.json`;
+  const writes = out ? [`Write(${out})`, `Edit(${out})`] : [];
   switch (role) {
-    case "plan":
-      return ["Read", `Edit(${groupFile})`, `Write(${groupFile})`, ...inspect, ...check];
-    case "draft":
-      return ["Read", "Edit(src/lib/map/data.ts)", "Edit(src/lib/map/authoring/content-registry.ts)", ...inspect, ...check];
+    case "plan": {
+      // The group file is JSON: the plan is data, read with JSON.parse.
+      const groupFile = `src/lib/map/authoring/l2/groups/${group}.json`;
+      return [...reads, `Edit(${groupFile})`, `Write(${groupFile})`, ...inspect, `Bash(${L2} check --group ${group})`];
+    }
+    case "deep-audit":
+      return [...reads, ...writes, `Bash(${L2} context:*)`, "Bash(npm run -s map:inspect --:*)"];
     default:
-      return ["Read", `Write(${outDir}/**)`, ...inspect];
+      return [...reads, ...writes, ...inspect];
   }
 }
+/**
+ * Denied whatever the allow list says: local secrets and credentials, and
+ * editing anything executable. (The repository lives under the home
+ * directory, so the home directory itself is never denied wholesale.)
+ */
+export const DENIED_TOOLS: readonly string[] = [
+  "Read(**/.dev.vars*)", "Read(**/.env*)", "Read(**/*.pem)", "Read(**/*.key)", "Read(**/.npmrc)", "Read(**/.netrc)",
+  "Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(~/.config/**)", "Read(~/.claude/**)", "Read(~/.gnupg/**)", "Read(~/.git-credentials)", "Read(//etc/**)",
+  "Edit(**/*.ts)", "Edit(**/*.tsx)", "Edit(**/*.mts)", "Edit(**/*.cts)", "Edit(**/*.js)", "Edit(**/*.mjs)", "Edit(**/*.cjs)", "Edit(**/package.json)", "Edit(**/.npmrc)", "Edit(**/node_modules/**)",
+  "Write(**/*.ts)", "Write(**/*.tsx)", "Write(**/*.mts)", "Write(**/*.cts)", "Write(**/*.js)", "Write(**/*.mjs)", "Write(**/*.cjs)", "Write(**/package.json)", "Write(**/.npmrc)", "Write(**/node_modules/**)",
+];
 
 // ---------------------------------------------------------------- metrics and stop rules
 
@@ -488,6 +494,20 @@ export function sampleProblems(sampled: SliceSample | undefined, acceptedAgain: 
     const a = sampled.audited[id];
     if (!a) problems.push(`${id}: sampled but not audited`);
     else if (a.substantive && (!a.repaired || !acceptedAgain(id))) problems.push(`${id}: ${a.substantive} substantive defect(s) not repaired and verified`);
+  }
+  return problems;
+}
+
+/**
+ * Concepts a deep audit found substantive defects in at or after their last
+ * acceptance (sample, pilot or any other label, fixed or not): they may not
+ * ship until repaired, verified and accepted again. [] when none.
+ */
+export function knownDefectProblems(ledger: readonly LedgerEntry[], acceptedAt: ReadonlyMap<string, string>): string[] {
+  const problems: string[] = [];
+  for (const [concept, at] of acceptedAt) {
+    const found = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.concept === concept && e.substantive > 0 && e.at >= at);
+    if (found.length) problems.push(`${concept}: substantive defects found by deep audit ${found.map((e) => `"${e.label}" (${e.substantive}, ${e.at})`).join(", ")}, not repaired and accepted again since`);
   }
   return problems;
 }

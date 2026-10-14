@@ -45,7 +45,7 @@ distilled from the Foundations audits.
 |---|---|---|
 | pending → planned | **plan**: claims, excludes, splits, models, designs in the group file (the driver creates the skeleton) | `l2 check --group`; one fix round, else rolled back |
 | planned → plan-reviewed | **plan-review** (independent); claim fixes applied exactly, then verified in the resumed session | `l2 check`; an unconfirmed fix is rolled back |
-| plan-reviewed → drafted | **draft**: every record of the batch in `data.ts` plus registry | generate, `l2 check`, focused tests; each record and entry exactly once; else rolled back |
+| plan-reviewed → drafted | **draft**: every record of the batch as JSON in its staging file | the file validated as data; the driver renders it into `data.ts` and the registry and checks the source as text; then generate, `l2 check`, focused tests; one rewrite round, else rolled back |
 | drafted → reviewed | **review** (independent, side by side) | repairs applied exactly; the resumed reviewer answers every defect id; at most 2 rounds |
 | reviewed → escalated | **escalate**: a second independent review of escalated concepts | the same repair and verification loop |
 | escalated → accepted | — | the acceptance gates; v1 audit files written; parked concepts removed |
@@ -63,26 +63,62 @@ distilled from the Foundations audits.
 
 ## Safeguards
 
+- **Records are data, never code:**
+  - No session writes TypeScript. The draft writes its records as JSON to a
+    staging file in the batch directory.
+  - The driver validates that file against the record contract
+    ([`records.ts`](../../src/lib/map/authoring/l2v2/records.ts)):
+    - exact fields;
+    - plain strings only (no control characters, markup or line breaks);
+    - known block kinds;
+    - the block shapes of `validation.ts`;
+    - one record per concept, stamped with the session's token.
+
+    Anything else is refused.
+  - The driver alone renders the records into `data.ts` and the registry,
+    every value as a JSON string literal under a fixed key, so nothing a
+    session writes can become an expression.
+  - Before anything imports `data.ts` (generate, `l2 check`, the tests,
+    inspection), the driver checks the source as text: exactly the earlier
+    file plus its rendering of the validated records.
+  - Repairs patch the records' values (a quote must occur exactly once in a
+    content string, never in a key, kind or id; the result must stay valid) and
+    are rendered again.
+  - The CLI checks, as text, every v2 record of the slice before `run`,
+    `audit` or `finalize` import anything.
 - **Session permissions:** `--permission-mode dontAsk` with explicit allowed
-  tools (`allowedTools` in [`core.ts`](../../src/lib/map/authoring/l2v2/core.ts)).
-  - Every role may Read, and may run only `l2 context`, `l2 territory <group>`,
-    `l2 signals`, `l2 group-signals <group>` and `map:inspect`.
-  - Only plan and draft sessions may also run `l2 check --group <group>` and
-    the map tests.
-  - The plan session may edit only its group file; the draft session only
-    `data.ts` and the registry; reviewers may write only their output files.
+  tools (`allowedTools`) and denied tools (`DENIED_TOOLS`, which win), both in
+  [`core.ts`](../../src/lib/map/authoring/l2v2/core.ts).
+  - Reads are limited to `src/`, `docs/`, the prompts and the batch's own
+    directory. Local secrets (`.dev.vars`, `.env*`, keys) and credential
+    directories are denied.
+  - Every role may run only `l2 context`, `l2 territory <group>`,
+    `l2 signals`, `l2 group-signals <group>` and `map:inspect`; the plan
+    session also `l2 check --group <group>`.
+  - The plan session may edit only its group file (JSON); every other session
+    may write only its own JSON output file. Editing TypeScript, JavaScript,
+    `package.json` or `node_modules` is denied to all.
   - No session may record, authorize, reopen, run delivery, write territory,
     use git or run arbitrary code.
 
   These permissions are defense in depth; the integrity guard below is the
   boundary.
+- **Secrets never ship:** before acceptance, every record, audit note,
+  resolution and the group file are scanned. The scan looks for credential
+  patterns and for the values of the local secret files (matched, never
+  logged). A staged record with one is refused, an audit with one parks its
+  concept, and a group file with one stops the batch.
 - **Integrity guard and rollback:**
   - Before every session, the driver snapshots every changed or untracked file
     plus `data.ts`, the registry and the group file.
-  - Afterwards, any change outside the role's allowed files is a violation:
-    tests, tooling, other groups, created or deleted files, and in `data.ts`
-    anything outside the batch's own records (taxonomy, placements, other
-    records).
+  - The local run state (`.map-authoring/`, git-ignored: v1 runs, the campaign
+    authorization, batch state) is snapshotted file by file as well.
+  - Afterwards, any change outside the role's allowed file is a violation:
+    `data.ts` and the registry (which only the driver writes), tests, tooling,
+    other groups, created or deleted files, and any local run state other than
+    the session's own output.
+  - Directory entries (such as nested worktrees) are compared by presence and
+    never read or restored; `.worktrees/` is never part of a batch.
   - On a violation, a failed session or a failed validation, exactly the
     changes made since the snapshot are restored: pre-existing user changes
     come back as they were, and files the session created are removed.
@@ -124,6 +160,12 @@ v2 runs inside a v1 slice run and delivers through it:
    and re-accepted through the gates, or parked.
 4. `npm run map:l2v2 -- finalize --slice <id>`:
    - refuses unless every v2 batch is accepted and the sample is settled;
+   - refuses while any deep audit (sample, pilot or any other label) found
+     substantive defects in a concept at or after its last acceptance: known
+     defects are repaired (`--fix`) and accepted again first;
+   - refuses unless `data.ts` holds exactly the accepted records: each one's
+     fingerprint is kept at acceptance (the fingerprint v1 computes), so an
+     edit after acceptance is never recorded unreviewed;
    - records the v1 steps in v1's order, every command with `--domain <id>`,
      so it works while another run (such as the paused `foundations-1`)
      exists;

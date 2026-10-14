@@ -2,16 +2,19 @@
  * The v2 batch driver: takes one ownership group through bounded sessions with
  * deterministic checks between them (docs/map-authoring/l2-pipeline-v2.md).
  * Every effect outside the files it names goes through `Env`, so the flow is
- * testable without Claude or the real repository. Development tooling only.
+ * testable without Claude or the real repository. Sessions never write
+ * TypeScript: drafts are staged as JSON, and only this driver renders them
+ * into data.ts and the registry (records.ts). Development tooling only.
  */
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync, appendFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import { recordSpans, withoutRecords, withoutRegistryEntries } from "../l2/campaign.ts";
 import {
-  acceptanceProblems, advance, allowedTools, applyClaimFixes, applyPatches, coverageComplete, escalationReasons, newBatch, openDefects, outsideRecords, parseJson, planReviewProblems, recordDefects,
+  acceptanceProblems, advance, applyClaimFixes, applyPatches, allowedTools, coverageComplete, escalationReasons, newBatch, openDefects, parseJson, planReviewProblems, recordDefects,
   reviewProblems, stopBatch, unresolved, verifyProblems, weighted,
   type BatchState, type ConceptFacts, type Defect, type LedgerEntry, type PlanReviewOutput, type ReviewOutput, type Role, type VerifyOutput,
 } from "./core.ts";
+import { recordFingerprint, recordsInPlaceProblems, recordStrings, renderedProblems, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord, type StagedRecords } from "./records.ts";
 import type { SessionResult } from "./claude.ts";
 
 export type Signal = { id: string; detail: string };
@@ -35,11 +38,15 @@ export type Env = {
   changedPaths(): Promise<string[]>;
   /** A path's content at HEAD, or undefined when HEAD has none. */
   headContent(path: string): Promise<string | undefined>;
+  /** Values of local secrets (.dev.vars, .env): never logged, only matched against what would be committed. */
+  secrets(): Promise<string[]>;
 };
 
 export const DATA = "src/lib/map/data.ts";
 export const REGISTRY = "src/lib/map/authoring/content-registry.ts";
 export const groupPath = (group: string) => `src/lib/map/authoring/l2/groups/${group}.json`;
+/** Local run state (git-ignored): v1 runs, campaign authorizations and v2 batches. Guarded file by file around every session. */
+export const LOCAL = ".map-authoring";
 export const V2_ROOT = ".map-authoring/l2v2";
 export const batchDir = (slice: string, group: string) => join(V2_ROOT, slice, group);
 export const LEDGER = join(V2_ROOT, "ledger.jsonl");
@@ -50,7 +57,19 @@ export const MAX_ROUNDS = 2;
 // ---------------------------------------------------------------- files and lock
 
 const read = (env: Env, path: string) => readFileSync(join(env.root, path), "utf8");
-const readIf = (env: Env, path: string) => (existsSync(join(env.root, path)) ? read(env, path) : undefined);
+/** Stands for a directory (such as a nested worktree): compared by presence, never read or restored. */
+const DIRECTORY = "\0directory";
+const readIf = (env: Env, path: string) => {
+  const full = join(env.root, path);
+  if (!existsSync(full)) return undefined;
+  return statSync(full).isFile() ? readFileSync(full, "utf8") : DIRECTORY;
+};
+/** Every file under the local run state. */
+function localFiles(env: Env): string[] {
+  const walk = (dir: string): string[] =>
+    existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? walk(join(dir, entry.name)) : [relative(env.root, join(dir, entry.name))])) : [];
+  return walk(join(env.root, LOCAL));
+}
 function write(env: Env, path: string, text: string) {
   const full = join(env.root, path);
   mkdirSync(dirname(full), { recursive: true });
@@ -123,84 +142,91 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
   const batch = new Set(concepts);
   const vars = { GROUP: group, SLICE: slice, CONCEPTS: concepts.join(", "), DIR: dir, PACK: join(dir, "pack.md"), RUBRIC: join(PROMPTS, "rubric.md"), RULES: join(PROMPTS, "rules.md") };
 
+  let knownSecrets: string[] | undefined;
+  const secrets = async () => (knownSecrets ??= await env.secrets());
+
   // -------- integrity: every tracked or untracked change a session makes is accounted for, or rolled back
 
   async function snapshot(): Promise<Snapshot> {
     const paths = new Set([...(await env.changedPaths()), DATA, REGISTRY, groupPath(group)]);
     return new Map([...paths].map((path) => [path, readIf(env, path)]));
   }
+  /** The local run state is git-ignored, so it is guarded by its own snapshot: run states, authorizations, batch state. */
+  const localSnapshot = (): Snapshot => new Map(localFiles(env).map((path) => [path, readIf(env, path)]));
   async function expected(before: Snapshot, path: string) {
     return before.has(path) ? before.get(path) : env.headContent(path);
   }
-  /** Restores every path changed since `before` (and only those): pre-existing user changes come back as they were. */
-  async function rollback(before: Snapshot) {
+  async function restore(paths: Iterable<string>, want: (path: string) => Promise<string | undefined>) {
     const failures: string[] = [];
-    for (const path of new Set([...before.keys(), ...(await env.changedPaths())])) {
-      const want = await expected(before, path);
+    for (const path of paths) {
+      const wanted = await want(path);
       const now = readIf(env, path);
-      if (now === want) continue;
+      if (now === wanted) continue;
       try {
-        if (want === undefined) rmSync(join(env.root, path));
-        else write(env, path, want);
+        if (wanted === DIRECTORY || now === DIRECTORY) throw new Error("a directory is never restored automatically");
+        if (wanted === undefined) rmSync(join(env.root, path));
+        else write(env, path, wanted);
       } catch (error) {
         failures.push(`${path}: ${(error as Error).message}`);
       }
     }
     if (failures.length) throw new GuardError(`rollback incomplete, manual recovery required: ${failures.join("; ")}`);
   }
-  /** Changes a session may make: its allowed files, and in data.ts only its batch's records. */
-  async function violations(before: Snapshot, allowed: ReadonlySet<string>): Promise<string[]> {
+  /** Restores every path changed since `before` (and only those): pre-existing user changes come back as they were. */
+  async function rollback(before: Snapshot) {
+    await restore(new Set([...before.keys(), ...(await env.changedPaths())]), (path) => expected(before, path));
+  }
+  const rollbackLocal = (before: Snapshot) => restore(new Set([...before.keys(), ...localFiles(env)]), async (path) => before.get(path));
+  /** Changes a session made outside its allowed files: no session may change data.ts or the registry. */
+  async function violations(before: Snapshot, allowed: ReadonlySet<string>, local: Snapshot, out?: string): Promise<string[]> {
     const found: string[] = [];
-    for (const path of new Set([...before.keys(), ...(await env.changedPaths())])) {
-      if ((await expected(before, path)) !== readIf(env, path) && !allowed.has(path)) found.push(path);
-    }
-    if (allowed.has(DATA)) {
-      const was = (await expected(before, DATA)) ?? "";
-      const is = readIf(env, DATA) ?? "";
-      if (outsideRecords(was, concepts) !== outsideRecords(is, concepts)) found.push(`${DATA} outside this batch's records (taxonomy, placements or other records)`);
-    }
-    if (allowed.has(REGISTRY)) {
-      const was = ((await expected(before, REGISTRY)) ?? "").split("\n");
-      const is = (readIf(env, REGISTRY) ?? "").split("\n");
-      if (was.some((line) => !is.includes(line)) || is.some((line) => !was.includes(line) && !concepts.some((id) => line === `  "${id}",`))) found.push(`${REGISTRY} entries outside this batch`);
-    }
+    for (const path of new Set([...before.keys(), ...(await env.changedPaths())])) if ((await expected(before, path)) !== readIf(env, path) && !allowed.has(path)) found.push(path);
+    for (const path of new Set([...local.keys(), ...localFiles(env)])) if (local.get(path) !== readIf(env, path) && path !== out) found.push(path);
     return found;
   }
 
-  async function session(role: Role, text: string, allowed: ReadonlySet<string>, resume?: string): Promise<SessionResult> {
+  async function session(role: Role, text: string, allowed: ReadonlySet<string>, out?: string, resume?: string): Promise<SessionResult> {
     const before = await snapshot();
+    const local = localSnapshot();
     let result: SessionResult;
     try {
-      result = await env.session({ role, prompt: text, resume, tools: allowedTools(role, group, dir) });
+      result = await env.session({ role, prompt: text, resume, tools: allowedTools(role, group, dir, out) });
     } catch (error) {
-      appendLedger(env.root, { kind: "session-failed", at: env.now(), slice, group, role, reason: (error as Error).message.slice(0, 300) });
       // Whatever a failed session changed is undone, so a resume starts from the last completed step.
       await rollback(before);
+      await rollbackLocal(local);
+      appendLedger(env.root, { kind: "session-failed", at: env.now(), slice, group, role, reason: (error as Error).message.slice(0, 300) });
       throw error;
     }
-    appendLedger(env.root, { kind: "session", at: env.now(), slice, group, role, sessionId: result.sessionId, durationMs: result.durationMs, turns: result.turns, usage: result.usage, weighted: result.usage ? weighted(result.usage) : null });
-    state.sessions[role] = result.sessionId;
-    save(state);
-    const found = await violations(before, allowed);
+    const found = await violations(before, allowed, local, out);
     if (found.length) {
       await rollback(before);
-      throw new GuardError(`${role} changed what it may not (rolled back): ${found.join(", ")}`);
+      await rollbackLocal(local);
     }
+    // Recorded after any rollback, which restores the local state as it was before the session.
+    appendLedger(env.root, { kind: "session", at: env.now(), slice, group, role, sessionId: result.sessionId, durationMs: result.durationMs, turns: result.turns, usage: result.usage, weighted: result.usage ? weighted(result.usage) : null });
+    if (found.length) throw new GuardError(`${role} changed what it may not (rolled back): ${found.join(", ")}`);
+    state.sessions[role] = result.sessionId;
+    save(state);
     return result;
   }
 
-  /** A session that must write a JSON file stamped with its run token; a stale file is removed first and never consumed. */
-  async function produce<T>(role: Role, file: string, template: string, extra: Record<string, string>, problemsOf: (value: unknown, run: string) => string[], resume?: string): Promise<T | undefined> {
+  /**
+   * A session that must write a JSON file stamped with its run token; a stale
+   * file is removed first and never consumed. `message` replaces the role's
+   * prompt (a resumed session asked to rewrite its file).
+   */
+  async function produce<T>(role: Role, file: string, template: string, extra: Record<string, string>, problemsOf: (value: unknown, run: string) => string[], resume?: string, message?: (out: string, run: string) => string): Promise<T | undefined> {
     const out = join(dir, file);
     rmSync(join(env.root, out), { force: true });
     const run = env.token();
-    let result = await session(role, prompt(env, template, { ...vars, ...extra, OUT: out, RUN: run }), new Set(), resume);
+    let result = await session(role, message ? message(out, run) : prompt(env, template, { ...vars, ...extra, OUT: out, RUN: run }), new Set(), out, resume);
     for (let attempt = 0; ; attempt++) {
       const raw = readIf(env, out);
       let problems: string[];
       let value: unknown;
       try {
-        value = raw === undefined ? undefined : parseJson(raw);
+        value = raw === undefined || raw === DIRECTORY ? undefined : parseJson(raw);
         problems = value === undefined ? [`${file} was not written`] : problemsOf(value, run);
       } catch (error) {
         problems = [`${file} is not valid JSON: ${(error as Error).message}`];
@@ -210,22 +236,73 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
         stop(`${role}: ${file} unusable: ${problems.slice(0, 5).join("; ")}`);
         return undefined;
       }
-      result = await session(role, `Your output file ${out} is not usable:\n- ${problems.join("\n- ")}\nRewrite it exactly per the schema, with "run": "${run}", then stop.`, new Set(), result.sessionId);
+      result = await session(role, `Your output file ${out} is not usable:\n- ${problems.join("\n- ")}\nRewrite it exactly per the schema, with "run": "${run}", then stop.`, new Set(), out, result.sessionId);
     }
   }
 
-  /** Validation after an editing session; one fix round, then the step is rolled back and the batch stops. */
-  async function checked(role: Role, withRecords: boolean, sessionId: string, allowed: ReadonlySet<string>, stepStart: Snapshot): Promise<boolean> {
+  /** Plan validation after the plan session (the group file is data); one fix round, then the step is rolled back and the batch stops. */
+  async function checked(role: Role, sessionId: string, allowed: ReadonlySet<string>, stepStart: Snapshot): Promise<boolean> {
     for (let attempt = 0; attempt < 2; attempt++) {
-      const problems = await env.check(group, withRecords);
+      const problems = [...(await env.check(group, false)), ...secretProblems([read(env, groupPath(group))], await secrets()).map((problem) => `the group file ${problem}`)];
       if (!problems.length) return true;
       if (attempt === 1) {
         await rollback(stepStart);
         stop(`${role}: validation still fails (rolled back): ${problems.slice(0, 5).join("; ")}`);
         return false;
       }
-      await session(role, `Validation failed:\n- ${problems.join("\n- ")}\nFix exactly these problems within your files, re-run the check, then stop.`, allowed, sessionId);
+      await session(role, `Validation failed:\n- ${problems.join("\n- ")}\nFix exactly these problems within your file, re-run the check, then stop.`, allowed, undefined, sessionId);
     }
+    return false;
+  }
+
+  // -------- records: validated data in, the driver's rendering out
+
+  const batchRecords = (): StagedRecord[] => concepts.filter((id) => state.records?.[id]).map((id) => state.records![id]);
+  /**
+   * Renders the batch's validated records into data.ts and the registry, then
+   * checks the result as text, before anything imports it: exactly the earlier
+   * files plus the driver's rendering of these records.
+   */
+  function integrate() {
+    const records = batchRecords();
+    const data = { was: read(env, DATA), is: "" };
+    const registry = { was: read(env, REGISTRY), is: "" };
+    write(env, DATA, withRecords(data.was, records.map(toContent)));
+    write(env, REGISTRY, withRegistry(registry.was, records.map((record) => record.conceptId)));
+    data.is = read(env, DATA);
+    registry.is = read(env, REGISTRY);
+    const problems = renderedProblems(data, registry, records);
+    if (problems.length) {
+      write(env, DATA, data.was);
+      write(env, REGISTRY, registry.was);
+      throw new GuardError(`the rendered records failed their source check (restored): ${problems.join("; ")}`);
+    }
+  }
+
+  /**
+   * The draft: the session stages every record as JSON; the driver validates
+   * it, renders it and runs the checks. One rewrite round, else the step is
+   * rolled back and the batch stops.
+   */
+  async function draft(stepStart: Snapshot): Promise<boolean> {
+    const known = await secrets();
+    const valid = (value: unknown, run: string) => stagedRecordsProblems(value, concepts, run, known);
+    let staged = await produce<StagedRecords>("draft", "draft.json", "draft", {}, valid);
+    let problems: string[] = [];
+    for (let attempt = 0; staged && attempt < 2; attempt++) {
+      if (attempt) {
+        staged = await produce<StagedRecords>("draft", "draft.json", "draft", {}, valid, state.sessions.draft, (out, run) => `Validation of your records failed:\n- ${problems.join("\n- ")}\nRewrite ${out} with every record corrected (the same schema, "run": "${run}"), then stop.`);
+        if (!staged) break;
+      }
+      state.records = Object.fromEntries(staged.records.map((record) => [record.conceptId, record]));
+      save(state);
+      integrate();
+      problems = await env.check(group, true);
+      if (!problems.length) return true;
+    }
+    await rollback(stepStart);
+    delete state.records;
+    stop(`draft: ${problems.length ? `validation still fails (rolled back): ${problems.slice(0, 5).join("; ")}` : "no usable records (rolled back)"}`);
     return false;
   }
 
@@ -252,18 +329,22 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
       const unresolvedNow = reviewed.flatMap((id) => openDefects(state, id));
       if (!unresolvedNow.length) break;
       const toApply = unresolvedNow.filter((d) => d.status === "open");
-      const beforeData = read(env, DATA);
-      const patched = applyPatches(beforeData, toApply.map((d) => d.finding), protectedIds);
-      write(env, DATA, patched.source);
+      const before = { records: state.records ?? {}, data: read(env, DATA), registry: read(env, REGISTRY) };
+      // Repairs change the records' values, never the source: the driver renders them again.
+      const patched = applyPatches(before.records, toApply.map((d) => d.finding), protectedIds, await secrets());
+      state.records = patched.records;
       patched.results.forEach((r, index) => {
         const defect = state.defects[toApply[index].id];
         defect.status = r.applied ? "applied" : "refused";
         if (!r.applied) defect.why = r.problem;
       });
       save(state);
+      integrate();
       const broken = await env.check(group, true);
       if (broken.length) {
-        write(env, DATA, beforeData);
+        state.records = before.records;
+        write(env, DATA, before.data);
+        write(env, REGISTRY, before.registry);
         stop(`${role}: a repair broke validation (repairs rolled back): ${broken.slice(0, 3).join("; ")}`);
         return false;
       }
@@ -294,7 +375,7 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
     return true;
   }
 
-  return { get state() { return state; }, save, stop, session, produce, checked, snapshot, rollback, signalBlock, repairLoop, park, vars, dir, batch };
+  return { get state() { return state; }, save, stop, session, produce, checked, draft, snapshot, rollback, signalBlock, repairLoop, park, secrets, vars, dir, batch };
 }
 
 // ---------------------------------------------------------------- the batch
@@ -307,9 +388,13 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
   ops.save(ops.state);
   const { dir, vars } = ops;
   const groupFile = new Set([groupPath(group)]);
-  const records = new Set([DATA, REGISTRY]);
   try {
     if (ops.state.status === "stopped" || ops.state.status === "accepted") return ops.state;
+    // Past the draft, data.ts must still hold exactly what the driver rendered from the validated records.
+    if (["drafted", "reviewed", "escalated"].includes(ops.state.status)) {
+      const changed = recordsInPlaceProblems(read(env, DATA), read(env, REGISTRY), concepts.filter((id) => ops.state.conceptStates[id].state !== "parked" && ops.state.records?.[id]).map((id) => ops.state.records![id]));
+      if (changed.length || !ops.state.records) return ops.stop(`the batch's records changed outside the driver: ${changed.join("; ") || "no validated records"}; resume at plan-reviewed to draft again`);
+    }
 
     if (ops.state.status === "pending") {
       const start = await ops.snapshot();
@@ -324,7 +409,7 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
         await ops.rollback(start);
         return ops.stop(`plan: ${planStop[1].slice(0, 300)}`);
       }
-      if (!(await ops.checked("plan", false, result.sessionId, groupFile, start))) return ops.state;
+      if (!(await ops.checked("plan", result.sessionId, groupFile, start))) return ops.state;
       ops.save(advance(ops.state, "planned", env.now()));
     }
 
@@ -355,22 +440,13 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
     }
 
     if (ops.state.status === "plan-reviewed") {
-      // A draft interrupted earlier leaves partial records: start the draft clean (never touching protected content).
+      // An earlier draft of this batch leaves its rendered records: start the draft clean (never touching protected content).
       const leftovers = concepts.filter((id) => recordSpans(read(env, DATA)).has(id));
-      if (leftovers.length) {
-        write(env, DATA, withoutRecords(read(env, DATA), leftovers));
-        write(env, REGISTRY, withoutRegistryEntries(read(env, REGISTRY), leftovers));
-      }
+      if (leftovers.length) write(env, DATA, withoutRecords(read(env, DATA), leftovers));
+      write(env, REGISTRY, withoutRegistryEntries(read(env, REGISTRY), concepts));
+      delete ops.state.records;
       const start = await ops.snapshot();
-      const result = await ops.session("draft", prompt(env, "draft", vars), records);
-      if (!(await ops.checked("draft", true, result.sessionId, records, start))) return ops.state;
-      const data = read(env, DATA);
-      const registry = read(env, REGISTRY);
-      const wrong = concepts.filter((id) => data.split(`id: "${id}-content",`).length - 1 !== 1 || registry.split(`  "${id}",`).length - 1 !== 1);
-      if (wrong.length) {
-        await ops.rollback(start);
-        return ops.stop(`draft: records or registry entries not exactly once (rolled back): ${wrong.join(", ")}`);
-      }
+      if (!(await ops.draft(start))) return ops.state;
       ops.save(advance(ops.state, "drafted", env.now()));
     }
 
@@ -419,26 +495,41 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
   }
 }
 
-/** Acceptance: every concept's gates re-checked from the batch's evidence; failures park, parked drafts leave the tree. */
+/**
+ * Acceptance: every concept's gates re-checked from the batch's evidence, and
+ * everything that would be committed (records, audit notes, the group file)
+ * scanned for secrets; failures park, parked drafts leave the tree. Each
+ * accepted record's fingerprint is kept: finalize ships nothing else.
+ */
 async function accept(env: Env, ops: ReturnType<typeof batchOps>): Promise<BatchState> {
   const { slice, group, concepts } = ops.state;
+  const secrets = await ops.secrets();
+  const records = ops.state.records ?? {};
   for (const id of concepts.filter((c) => ops.state.conceptStates[c].state === "open")) {
     const missing = unresolved((await env.signals(id)).map((s) => s.id), ops.state.audit[id].resolutions);
-    const problems = [...acceptanceProblems(ops.state, id), ...(missing.length ? [`signals unresolved: ${missing.join(", ")}`] : [])];
+    const audit = ops.state.audit[id];
+    const leaks = secretProblems([...(records[id] ? recordStrings(records[id]) : []), ...audit.notes, ...audit.resolutions.map((r) => r.resolution)], secrets);
+    const problems = [...acceptanceProblems(ops.state, id), ...(missing.length ? [`signals unresolved: ${missing.join(", ")}`] : []), ...(records[id] ? [] : ["no validated record"]), ...leaks.map((leak) => `its record or audit ${leak}`)];
     if (problems.length) ops.park(id, problems.join("; "));
   }
   const groupMissing = unresolved((await env.groupSignals(group)).map((s) => s.id), ops.state.groupAudit?.resolutions ?? []);
   if (groupMissing.length) return ops.stop(`group signals left unresolved: ${groupMissing.join(", ")}`);
+  const groupLeaks = secretProblems([read(env, groupPath(group)), ops.state.groupAudit?.note ?? "", ...(ops.state.groupAudit?.resolutions ?? []).map((r) => r.resolution)], secrets);
+  if (groupLeaks.length) return ops.stop(`the group file or group audit ${groupLeaks.join("; ")}: a human removes it`);
   const parked = concepts.filter((id) => ops.state.conceptStates[id].state === "parked");
   if (parked.length) {
-    // Parked drafts leave the tree; their state, findings and a copy of the drafts stay for a human.
-    write(env, join(ops.dir, "parked-data.ts"), read(env, DATA));
+    // Parked drafts leave the tree; their state, findings and records stay in the batch for a human.
+    write(env, join(ops.dir, "parked-records.json"), `${JSON.stringify(Object.fromEntries(parked.filter((id) => records[id]).map((id) => [id, records[id]])), null, 2)}\n`);
     write(env, DATA, withoutRecords(read(env, DATA), parked.filter((id) => recordSpans(read(env, DATA)).has(id))));
     write(env, REGISTRY, withoutRegistryEntries(read(env, REGISTRY), parked));
   }
-  for (const id of concepts.filter((c) => ops.state.conceptStates[c].state === "open")) {
+  const accepted = concepts.filter((c) => ops.state.conceptStates[c].state === "open");
+  // What is accepted is exactly what data.ts holds: the driver's rendering of the reviewed records.
+  const changed = recordsInPlaceProblems(read(env, DATA), read(env, REGISTRY), accepted.map((id) => records[id]));
+  if (changed.length) return ops.stop(`data.ts no longer holds the reviewed records: ${changed.join("; ")}`);
+  for (const id of accepted) {
     write(env, join(ops.dir, `audit-${id}.json`), `${JSON.stringify({ note: ops.state.audit[id].notes.join(" | "), resolutions: ops.state.audit[id].resolutions }, null, 2)}\n`);
-    ops.state.conceptStates[id] = { ...ops.state.conceptStates[id], state: "accepted" };
+    ops.state.conceptStates[id] = { ...ops.state.conceptStates[id], state: "accepted", accepted: { at: env.now(), fingerprint: recordFingerprint(records[id]) } };
   }
   write(env, join(ops.dir, "group-audit.json"), `${JSON.stringify(ops.state.groupAudit, null, 2)}\n`);
   appendLedger(env.root, {
@@ -463,6 +554,8 @@ export async function repairAfterAudit(env: Env, input: BatchInput & { concept: 
   const state = loadBatch(env.root, input.slice, input.group);
   if (!state || state.status !== "accepted") throw new Error(`${input.concept} is not in an accepted v2 batch of ${input.slice}: a recorded or protected record needs a controlled v1 revision (\`l2 reopen\`)`);
   if (input.protectedIds.has(input.concept) || !state.concepts.includes(input.concept) || state.conceptStates[input.concept].state !== "accepted") throw new Error(`${input.concept} cannot be repaired here`);
+  const changed = recordsInPlaceProblems(read(env, DATA), read(env, REGISTRY), [state.records?.[input.concept]].filter((r): r is StagedRecord => !!r));
+  if (changed.length || !state.records?.[input.concept]) throw new Error(`${input.concept}: data.ts does not hold its accepted record (${changed.join("; ") || "no validated record"}); a human decides`);
   const ops = batchOps(env, input, { ...state, status: "escalated" });
   ops.state.sessions["deep-audit"] = input.auditSession;
   ops.state.conceptStates[input.concept].state = "open";

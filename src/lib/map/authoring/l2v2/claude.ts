@@ -5,7 +5,7 @@
  * Development tooling only.
  */
 import { spawn } from "node:child_process";
-import type { Usage } from "./core.ts";
+import { DENIED_TOOLS, type Usage } from "./core.ts";
 
 /** usage is null when the CLI reported none: it is never invented. */
 export type SessionResult = { sessionId: string; usage: Usage | null; durationMs: number; turns: number; isError: boolean; text: string };
@@ -26,6 +26,8 @@ export function claudeArgs(options: ClaudeOptions, tools: readonly string[], res
     // Anything not pre-approved below is denied; nothing can be approved interactively.
     "--permission-mode", "dontAsk",
     "--allowedTools", tools.join(","),
+    // Denials win over any allowance: secrets, credentials and executable files.
+    "--disallowedTools", DENIED_TOOLS.join(","),
     ...(resume ? ["--resume", resume] : []),
     ...(options.model ? ["--model", options.model] : []),
     ...(options.maxBudgetUsd ? ["--max-budget-usd", options.maxBudgetUsd] : []),

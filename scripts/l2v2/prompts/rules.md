@@ -16,23 +16,24 @@ src/lib/map/authoring/l2/contracts.ts, src/lib/map/types.ts, src/lib/map/validat
   distinction (a real conflation), flow (order matters), cycle, state (persistent states with returns), tensions.
 - Validate with exactly `npm run -s map:author -- l2 check --group <group>`.
 
-## Record (src/lib/map/data.ts, `mapKnowledge.content`)
-- `{ id: "<concept>-content", conceptId: "<concept>", definition: "...", body: [ ...blocks ] }`, 4-space record
-  indentation, double quotes, trailing commas, appended before the line `  ],` that precedes `  mechanisms: [`.
-  Register the id as the last entry of `AUTHORED_CONTENT_CONCEPTS` in src/lib/map/authoring/content-registry.ts.
-- Blocks: `{ kind: "paragraph", text }`; structured blocks exactly the designed kinds (an interaction structure is a
+## Record (drafted as JSON; the driver renders it into src/lib/map/data.ts and the registry)
+- `{ "conceptId": "<concept>", "definition": "...", "body": [ ...blocks ] }` in the draft's staging file, exactly
+  these fields; every value a plain JSON string. No session writes data.ts, the registry or any TypeScript.
+- Blocks: `{ "kind": "paragraph", "text" }`; structured blocks exactly the designed kinds (an interaction structure is a
   `flow`); shapes per validation.ts (comparison: label, 2–4 dimensions, 2–6 alternatives `{name, values}`; distinction:
-  `{ kind: "distinction", left, right, further? }`; others per types.ts).
+  `{ "kind": "distinction", left, right, further? }`; others per types.ts). Unknown kinds or fields are refused.
 - The definition states the meaning; the body never repeats it. One canonical text true at every placement.
 - Plain text, American English, no markdown, no line breaks, words rather than symbols.
-- Check with exactly `node --test src/lib/map/map.test.ts` and `npm run -s map:author -- l2 check --group <group>`.
+- The driver validates the staging file, renders the records and runs `l2 check` and the map tests; it reports any
+  problem back to the draft session.
 
 ## Commands sessions may run (everything else is denied)
 `npm run -s map:author -- l2 context <concept>`, `npm run -s map:author -- l2 territory <group>`,
 `npm run -s map:author -- l2 signals <concept>`, `npm run -s map:author -- l2 group-signals <group>`,
-`npm run -s map:inspect -- <concept> [--context <placement>]`; the plan and draft sessions also
-`npm run -s map:author -- l2 check --group <group>` and `node --test src/lib/map/map.test.ts`.
+`npm run -s map:inspect -- <concept> [--context <placement>]`; the plan session also
+`npm run -s map:author -- l2 check --group <group>`. Reads are limited to src/, docs/, these prompts and the batch's
+own directory; local secrets are never read.
 
 ## Never
-Edit other groups' files, other records, taxonomy, tests, tooling or docs. Read data.ts wholesale (use
+Edit other groups' files, other records, taxonomy, tests, tooling, docs, data.ts, the registry or any source file. Read data.ts wholesale (use
 `npm run -s map:inspect -- <concept>`). Commit, push, switch branches.

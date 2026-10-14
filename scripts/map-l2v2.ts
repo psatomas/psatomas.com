@@ -12,18 +12,19 @@
 //
 // Configuration: .map-authoring/l2v2/config.json {model, timeoutMs, maxBudgetUsd} and budget.json (stop-rule thresholds).
 // It never pushes, opens PRs, merges or deploys: delivery stays `map:author -- l2 run --domain <slice>`.
+// data.ts is imported only after the v2 records in it are checked, as text, against their validated drafts.
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { mapKnowledge } from "../src/lib/map/data.ts";
 import { recordSpans } from "../src/lib/map/authoring/l2/campaign.ts";
 import {
-  batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, finalizeCommands, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason, weighted,
-  type BatchStatus, type Budget, type Finding, type SliceSample,
+  allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason, weighted,
+  type BatchState, type BatchStatus, type Budget, type Finding, type SliceSample,
 } from "../src/lib/map/authoring/l2v2/core.ts";
 import { runClaude } from "../src/lib/map/authoring/l2v2/claude.ts";
-import { acquireLock, appendLedger, batchDir, DATA, loadBatch, loadLedger, PROMPTS, repairAfterAudit, runBatch, saveBatch, V2_ROOT, type Env } from "../src/lib/map/authoring/l2v2/driver.ts";
+import { acquireLock, appendLedger, batchDir, DATA, loadBatch, loadLedger, PROMPTS, REGISTRY, repairAfterAudit, runBatch, saveBatch, V2_ROOT, type Env } from "../src/lib/map/authoring/l2v2/driver.ts";
+import { recordFingerprint, recordsInPlaceProblems } from "../src/lib/map/authoring/l2v2/records.ts";
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -61,10 +62,19 @@ const baseRegistry = (base: string) => new Set([...sh("git", ["show", `${base}:s
 const budget = (): Budget => ({ ...DEFAULT_BUDGET, ...readJson<Partial<Budget>>(join(V2_ROOT, "budget.json"), {}) });
 type Config = { model: string; timeoutMs: number; maxBudgetUsd?: string };
 const config = (): Config => ({ model: "claude-opus-5-5", timeoutMs: 30 * 60 * 1000, ...readJson<Partial<Config>>(join(V2_ROOT, "config.json"), {}) });
-const domainOrder = (() => {
+/** A domain's position among the roots; data.ts is imported lazily, once its v2 records have been checked. */
+async function domainOrder(domain: string) {
+  const { mapKnowledge } = await import("../src/lib/map/data.ts");
   const roots = mapKnowledge.placements.filter((placement) => !placement.parentPlacementId).sort((a, b) => a.order - b.order);
-  return (domain: string) => roots.findIndex((placement) => placement.conceptId === domain);
-})();
+  return roots.findIndex((placement) => placement.conceptId === domain);
+}
+/** Values of the local secret files, matched (never logged) against what would be committed. */
+function localSecrets(): string[] {
+  const files = readdirSync(ROOT).filter((name) => name.startsWith(".env") || name.startsWith(".dev.vars"));
+  return files.flatMap((name) =>
+    readFileSync(join(ROOT, name), "utf8").split("\n").map((line) => line.match(/^\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*(.*?)\s*$/)?.[1]?.replace(/^(["'])(.*)\1$/, "$2") ?? "").filter((value) => value.length >= 8),
+  );
+}
 
 /** The real environment: headless Claude Code sessions, git, and the v1 validators. */
 const env: Env = {
@@ -100,7 +110,7 @@ const env: Env = {
   territory: async (group) => author("territory", group).out.trim(),
   async facts(conceptId) {
     const context = json<{ placements: unknown[]; owner: { domain: string } }>(["context", conceptId]);
-    return { placements: context.placements.length, domainOrder: domainOrder(context.owner.domain) };
+    return { placements: context.placements.length, domainOrder: await domainOrder(context.owner.domain) };
   },
   async changedPaths() {
     const entries = sh("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all"]).out.split("\0").filter(Boolean);
@@ -110,12 +120,45 @@ const env: Env = {
       paths.push(entry.slice(3));
       if (entry[0] === "R" || entry[0] === "C") paths.push(entries[++i]);
     }
-    return paths;
+    // Nested worktrees are separate checkouts, listed as directories: never part of a batch.
+    return paths.filter((path) => !path.startsWith(".worktrees/"));
   },
   async headContent(path) {
     return sh("git", ["cat-file", "-e", `HEAD:${path}`]).ok ? sh("git", ["show", `HEAD:${path}`]).out : undefined;
   },
+  secrets: async () => localSecrets(),
 };
+
+/** Every v2 batch of a slice. */
+function sliceBatches(slice: string): BatchState[] {
+  const dir = join(ROOT, V2_ROOT, slice);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => loadBatch(ROOT, slice, e.name)).filter((s): s is BatchState => !!s);
+}
+/**
+ * Why the v2 records of a slice in data.ts are not exactly the driver's
+ * rendering of their validated drafts (as text, before anything imports
+ * data.ts); accepted ones must also match their fingerprint at acceptance.
+ */
+function treeProblems(slice: string): string[] {
+  const data = readFileSync(join(ROOT, DATA), "utf8");
+  const registry = readFileSync(join(ROOT, REGISTRY), "utf8");
+  const problems: string[] = [];
+  for (const state of sliceBatches(slice)) {
+    if (!state.records || ["pending", "planned", "plan-reviewed"].includes(state.status) || (state.status === "stopped" && ["pending", "planned", "plan-reviewed"].includes(state.stop!.status))) continue;
+    const live = state.concepts.filter((id) => state.records![id] && state.conceptStates[id].state !== "parked");
+    problems.push(...recordsInPlaceProblems(data, registry, live.map((id) => state.records![id])).map((p) => `${state.group}: ${p}`));
+    for (const id of live) {
+      const accepted = state.conceptStates[id].accepted;
+      if (state.conceptStates[id].state === "accepted" && (!accepted || accepted.fingerprint !== recordFingerprint(state.records[id]))) problems.push(`${state.group}: ${id} is not the record that was accepted`);
+    }
+  }
+  return problems;
+}
+function requireTree(slice: string) {
+  const problems = treeProblems(slice);
+  if (problems.length) fail(`the v2 records of ${slice} changed outside the driver (nothing was imported or run):\n- ${problems.join("\n- ")}`, 1);
+}
 
 function locked<T>(fn: () => Promise<T>): Promise<T> {
   let release: () => void;
@@ -133,6 +176,7 @@ function locked<T>(fn: () => Promise<T>): Promise<T> {
 
 async function commandRun() {
   const slice = flag("--slice") ?? fail("run needs --slice <id>");
+  requireTree(slice);
   const run = runOf(slice);
   const branch = sh("git", ["rev-parse", "--abbrev-ref", "HEAD"]).out.trim();
   if (branch !== run.branch) fail(`the run is on ${run.branch}; this checkout is on ${branch}`);
@@ -184,12 +228,7 @@ async function commandResume() {
 /** Accepted concepts of the slice's accepted v2 batches, with their group. */
 function v2Concepts(slice: string): Map<string, string> {
   const map = new Map<string, string>();
-  const dir = join(ROOT, V2_ROOT, slice);
-  if (!existsSync(dir)) return map;
-  for (const group of readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)) {
-    const state = loadBatch(ROOT, slice, group);
-    if (state?.status === "accepted") for (const id of state.concepts) if (state.conceptStates[id].state === "accepted") map.set(id, group);
-  }
+  for (const state of sliceBatches(slice)) if (state.status === "accepted") for (const id of state.concepts) if (state.conceptStates[id].state === "accepted") map.set(id, state.group);
   return map;
 }
 
@@ -213,7 +252,7 @@ async function deepAudit(concept: string, label: string, campaign: boolean, ref?
   const vars = { CONCEPT: concept, PACK: join(dir, `${concept}.pack.md`), OUT: out, RUN: run, RUBRIC: join(PROMPTS, "rubric.md"), RULES: join(PROMPTS, "rules.md") };
   let text = readFileSync(join(ROOT, PROMPTS, "deep-audit.md"), "utf8");
   for (const [key, value] of Object.entries(vars)) text = text.split(`{{${key}}}`).join(value);
-  const tools = ["Read", `Write(${dir}/**)`, "Bash(npm run -s map:author -- l2 context:*)", "Bash(npm run -s map:inspect --:*)"];
+  const tools = allowedTools("deep-audit", "", dir, out);
   let result;
   try {
     result = await env.session({ role: "deep-audit", prompt: text, tools });
@@ -247,6 +286,7 @@ async function repairFromAudit(slice: string, concept: string, label: string, au
 
 async function commandAudit() {
   const sliceToSample = flag("--sample-slice");
+  for (const slice of [sliceToSample, flag("--slice")]) if (slice) requireTree(slice);
   if (sliceToSample) {
     const path = join(V2_ROOT, sliceToSample, "sample.json");
     const accepted = [...v2Concepts(sliceToSample).keys()].sort();
@@ -273,7 +313,7 @@ async function commandAudit() {
   for (const concept of concepts) {
     const { audit, sessionId } = await deepAudit(concept, label, !ref, ref);
     if (audit.substantive.length && args.includes("--fix") && !(await repairFromAudit(slice!, concept, label, audit, sessionId))) fail(`${concept}: not repaired; the batch is stopped for a human`, 3);
-    if (audit.substantive.length && !args.includes("--fix") && !ref) console.log(`  ${concept} has known defects: it must not ship until repaired (\`--slice <id> --fix\`)`);
+    if (audit.substantive.length && !args.includes("--fix") && !ref) console.log(`  ${concept} has known defects: finalize refuses its slice until they are repaired (\`--slice <id> --fix\`)`);
   }
 }
 
@@ -319,6 +359,12 @@ async function commandFinalize() {
   const accepted = v2Concepts(slice);
   const sampleIssues = sampleProblems(readJson<SliceSample | undefined>(join(V2_ROOT, slice, "sample.json"), undefined), (id) => accepted.has(id));
   if (sampleIssues.length) fail(`the slice's measurement sample is not settled: ${sampleIssues.join("; ")}`);
+  // No known defect ships: any deep audit (sample, pilot or other) since a concept's last acceptance must have found none.
+  const acceptedAt = new Map(sliceBatches(slice).flatMap((state) => state.concepts.filter((id) => accepted.has(id)).map((id) => [id, state.conceptStates[id].accepted?.at ?? ""] as const)));
+  const known = knownDefectProblems(loadLedger(ROOT), acceptedAt);
+  if (known.length) fail(`known defects must be repaired first (\`audit --label <l> --concepts <ids> --slice ${slice} --fix\`):\n- ${known.join("\n- ")}`, 3);
+  // Exactly the accepted records, as accepted: an edit after acceptance is never recorded unreviewed.
+  requireTree(slice);
   for (const { key, argv } of finalizeCommands(slice, plan.batches, (group) => batchDir(slice, group))) {
     if (key in runOf(slice).l2.steps) continue;
     const result = author(...argv);
