@@ -375,13 +375,14 @@ async function commandAudit() {
   auditInterrupted();
   const sliceToSample = flag("--sample-slice");
   for (const slice of [sliceToSample, flag("--slice")]) if (slice) requireTree(slice);
-  requireSandbox();
+  // Arguments are validated first (exit 2); the sandbox is checked just before the first session.
   const max = budget().maxAuditConcepts;
   if (sliceToSample) {
     const path = join(V2_ROOT, sliceToSample, "sample.json");
     const accepted = [...v2Concepts(sliceToSample).keys()].sort();
     const sampled = readJson<SliceSample>(path, { slice: sliceToSample, concepts: sample(accepted, budget().samplePerSlice, sliceToSample), audited: {} });
     if (sampled.concepts.filter((id) => !sampled.audited[id]).length > max) fail(`the sample has more than ${max} concepts to audit (budget.json maxAuditConcepts)`);
+    requireSandbox();
     writeFileSync(join(ROOT, path), `${JSON.stringify(sampled, null, 2)}\n`);
     for (const concept of sampled.concepts.filter((id) => !sampled.audited[id])) {
       const { audit, sessionId } = await deepAudit(concept, `sample-${sliceToSample}`, true);
@@ -402,6 +403,7 @@ async function commandAudit() {
   if (ref && args.includes("--fix")) fail("a baseline at a ref is measured, never fixed");
   const slice = flag("--slice");
   if (args.includes("--fix") && !slice) fail("--fix needs --slice: only accepted, unfinalized v2 concepts are repaired, through the verified loop");
+  requireSandbox();
   for (const concept of concepts) {
     const { audit, sessionId } = await deepAudit(concept, label, !ref, ref);
     if (audit.substantive.length && args.includes("--fix") && !(await repairFromAudit(slice!, concept, label, audit, sessionId))) fail(`${concept}: not repaired; the batch is stopped for a human`, 3);

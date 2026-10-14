@@ -1087,12 +1087,18 @@ test("CLI audits are bounded: a concept cap per command, the stop rules before e
   const root = await acceptedSlice();
   const sessions = () => loadLedger(root).filter((e) => e.kind === "session" || e.kind === "session-failed").length;
   const start = sessions();
-  const capped = cli(root, ["audit", "--label", "pilot", "--concepts", Array.from({ length: 13 }, (_, i) => `c${i}`).join(",")]);
+  // A stand-in CLI, so the result never depends on whether Claude Code is installed here; arguments are refused before any session.
+  const standIn = { L2V2_CLAUDE: stub("exit 1") };
+  const capped = cli(root, ["audit", "--label", "pilot", "--concepts", Array.from({ length: 13 }, (_, i) => `c${i}`).join(",")], standIn);
   assert.equal(capped.status, 2);
   assert.match(capped.stderr, /at most 12 concepts \(budget\.json maxAuditConcepts\); 13 given/);
   writeFileSync(join(root, ".map-authoring/l2v2/budget.json"), '{"maxAuditConcepts":1}');
-  assert.equal(cli(root, ["audit", "--label", "pilot", "--concepts", "x,y", "--slice", "s"]).status, 2);
+  assert.equal(cli(root, ["audit", "--label", "pilot", "--concepts", "x,y", "--slice", "s"], standIn).status, 2);
   rmSync(join(root, ".map-authoring/l2v2/budget.json"));
+  // Valid arguments still fail closed without the sandbox's prerequisites (here, no CLI).
+  const noCli = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: "/nonexistent/claude" });
+  assert.equal(noCli.status, 1);
+  assert.match(noCli.stderr, /the session sandbox cannot be set up, so no session was started:\n- the Claude CLI is missing/);
   assert.equal(sessions(), start, "no session started");
   // Failed sessions count: after three, the stop rule refuses the next audit before it starts.
   const broken = stub("exit 1");
