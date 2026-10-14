@@ -5,9 +5,10 @@
  * against the record contract: exact fields, plain strings, and the block
  * shapes of validation.ts. Only the driver serializes it into data.ts and the
  * registry, every value as a JSON string literal under a fixed key, so nothing
- * a session writes can become an expression. The rendered source is then
- * checked as text before any tool imports it. Repairs patch these values,
- * never the source. Development tooling only.
+ * a session writes can become an expression. Records are validated again
+ * whenever they are rendered or compared, including those read back from batch
+ * state, and the rendered source is checked as text before any tool imports
+ * it. Repairs patch these values, never the source. Development tooling only.
  */
 import type { MapConceptContent, MapContentBlock } from "../../types.ts";
 import { contentBlockProblems, textProblems } from "../../validation.ts";
@@ -32,6 +33,10 @@ const BLOCK_FIELDS: Record<MapContentBlock["kind"], Record<string, FieldType | `
   state: { label: "text", states: "texts", transitions: "transitions" },
 };
 const RECORD_FIELDS = ["conceptId", "definition", "body"];
+/** A concept id, as validation.ts requires it. */
+export const IDENTIFIER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** Every key a rendered record may contain: the record's own and its blocks' (types.ts). */
+const KEYS: ReadonlySet<string> = new Set(["id", "conceptId", "definition", "body", "kind", "name", "values", "from", "to", "when", ...Object.values(BLOCK_FIELDS).flatMap((fields) => Object.keys(fields))]);
 
 // ---------------------------------------------------------------- validation
 
@@ -80,7 +85,8 @@ function fieldProblems(type: FieldType, value: unknown, where: string): string[]
 
 function blockProblems(block: unknown, where: string): string[] {
   if (!isPlain(block)) return [`${where} must be an object`];
-  const fields = Object.hasOwn(BLOCK_FIELDS, block.kind as string) ? BLOCK_FIELDS[block.kind as MapContentBlock["kind"]] : undefined;
+  if (typeof block.kind !== "string") return [`${where}: kind must be a string`];
+  const fields = Object.hasOwn(BLOCK_FIELDS, block.kind) ? BLOCK_FIELDS[block.kind as MapContentBlock["kind"]] : undefined;
   if (!fields) return [`${where}: unknown block kind ${JSON.stringify(block.kind)}`];
   const entries = Object.entries(fields).map(([key, type]) => ({ key, type: type.replace("?", "") as FieldType, optional: type.endsWith("?") }));
   const problems = keyProblems(block, ["kind", ...entries.filter((e) => !e.optional).map((e) => e.key)], entries.filter((e) => e.optional).map((e) => e.key), where);
@@ -93,6 +99,7 @@ function blockProblems(block: unknown, where: string): string[] {
 export function recordProblems(record: unknown, where: string): string[] {
   if (!isPlain(record)) return [`${where} must be an object`];
   const problems = keyProblems(record, RECORD_FIELDS, [], where);
+  if (typeof record.conceptId !== "string" || !IDENTIFIER.test(record.conceptId)) problems.push(`${where}: conceptId must be a concept identifier`);
   problems.push(...textValueProblems(record.definition, `${where}.definition`));
   if (typeof record.definition === "string" && !record.definition.trim()) problems.push(`${where}.definition is empty`);
   if (!Array.isArray(record.body)) problems.push(`${where}.body must be an array of blocks`);
@@ -174,8 +181,10 @@ const canonicalField = (type: FieldType, value: unknown): unknown => {
       return JSON.parse(JSON.stringify(value));
   }
 };
-/** The content record a validated draft becomes, its keys in the order data.ts writes them. */
+/** The content record a validated draft becomes, its keys in the order data.ts writes them. Refuses an invalid record. */
 export function toContent(record: StagedRecord): MapConceptContent {
+  const problems = recordProblems(record, "the record");
+  if (problems.length) throw new Error(`refusing to render an invalid record: ${problems.slice(0, 3).join("; ")}`);
   const body = record.body.map((block) => {
     const out: Record<string, unknown> = { kind: block.kind };
     for (const [key, type] of Object.entries(BLOCK_FIELDS[block.kind])) {
@@ -191,19 +200,28 @@ export const recordFingerprint = (record: StagedRecord) => contentFingerprint(to
 
 const WIDTH = 160;
 /** A value as a literal on one line: strings as JSON string literals, keys as the fixed identifiers of the contract. */
-const inline = (value: unknown): string =>
-  typeof value === "string" ? JSON.stringify(value) : Array.isArray(value) ? `[${value.map(inline).join(", ")}]` : `{ ${Object.entries(value as object).map(([key, child]) => `${key}: ${inline(child)}`).join(", ")} }`;
+const key = (name: string) => {
+  if (!KEYS.has(name)) throw new Error(`refusing to render the key ${JSON.stringify(name)}`);
+  return name;
+};
+const inline = (value: unknown): string => {
+  if (typeof value === "string") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(inline).join(", ")}]`;
+  if (!isPlain(value)) throw new Error(`refusing to render a ${typeof value} value`);
+  return `{ ${Object.entries(value).map(([name, child]) => `${key(name)}: ${inline(child)}`).join(", ")} }`;
+};
 /** A value at `indent` after `head` (its key), on one line when it fits, else one item per line. */
 function layout(value: unknown, indent: number, head = ""): string[] {
   const pad = " ".repeat(indent);
   const line = `${pad}${head}${inline(value)},`;
   if (typeof value === "string" || line.length <= WIDTH) return [line];
   if (Array.isArray(value)) return [`${pad}${head}[`, ...value.flatMap((item) => layout(item, indent + 2)), `${pad}],`];
-  return [`${pad}${head}{`, ...Object.entries(value as object).flatMap(([key, child]) => layout(child, indent + 2, `${key}: `)), `${pad}},`];
+  return [`${pad}${head}{`, ...Object.entries(value as object).flatMap(([name, child]) => layout(child, indent + 2, `${key(name)}: `)), `${pad}},`];
 }
 /** A content record as data.ts writes it (4-space record indentation, double quotes, trailing commas). */
 export function renderRecord(content: MapConceptContent): string {
-  const block = (b: MapContentBlock) => (b.kind === "paragraph" ? ["        {", ...Object.entries(b).flatMap(([key, child]) => layout(child, 10, `${key}: `)), "        },"] : layout(b, 8));
+  if (!IDENTIFIER.test(content.conceptId) || content.id !== `${content.conceptId}-content`) throw new Error(`refusing to render the record id ${JSON.stringify(content.id)}`);
+  const block = (b: MapContentBlock) => (b.kind === "paragraph" ? ["        {", ...Object.entries(b).flatMap(([name, child]) => layout(child, 10, `${key(name)}: `)), "        },"] : layout(b, 8));
   return ["    {", `      id: ${JSON.stringify(content.id)},`, `      conceptId: ${JSON.stringify(content.conceptId)},`, "      definition:", `        ${JSON.stringify(content.definition)},`, "      body: [", ...(content.body ?? []).flatMap(block), "      ],", "    },"].join("\n");
 }
 
@@ -229,6 +247,8 @@ export function withRegistry(source: string, ids: readonly string[]): string {
   const start = lines.findIndex((line) => line.startsWith("export const AUTHORED_CONTENT_CONCEPTS"));
   const end = lines.findIndex((line, index) => index > start && line === "];");
   if (start < 0 || end < 0) throw new Error("the registry has no AUTHORED_CONTENT_CONCEPTS array");
+  const invalid = ids.filter((id) => !IDENTIFIER.test(id));
+  if (invalid.length) throw new Error(`refusing to register ${invalid.map((id) => JSON.stringify(id)).join(", ")}: not concept identifiers`);
   const missing = ids.filter((id) => !lines.slice(start, end).includes(`  "${id}",`));
   return [...lines.slice(0, end), ...missing.map((id) => `  "${id}",`), ...lines.slice(end)].join("\n");
 }
@@ -244,10 +264,27 @@ const spanText = (source: string, id: string) => {
   return span && source.split("\n").slice(span.start, span.end + 1).join("\n");
 };
 
-/** Why data.ts and the registry do not hold exactly the driver's rendering of these records; [] when they do. */
-export function recordsInPlaceProblems(data: string, registry: string, records: readonly StagedRecord[]): string[] {
+/** Where a validated record stands in data.ts: rendered exactly, absent, different, or not a valid record at all. */
+export function recordPlacement(data: string, record: unknown): "in-place" | "missing" | "changed" | "invalid" {
+  if (recordProblems(record, "the record").length) return "invalid";
+  const span = spanText(data, (record as StagedRecord).conceptId);
+  return span === undefined ? "missing" : span === renderRecord(toContent(record as StagedRecord)) ? "in-place" : "changed";
+}
+
+/**
+ * Why data.ts and the registry do not hold exactly the driver's rendering of
+ * these records; [] when they do. A record that is no longer valid (batch
+ * state edited by hand) is reported, never rendered.
+ */
+export function recordsInPlaceProblems(data: string, registry: string, records: readonly unknown[]): string[] {
   const problems: string[] = [];
-  for (const record of records) {
+  for (const [index, entry] of records.entries()) {
+    const invalid = recordProblems(entry, `persisted record ${index}`);
+    if (invalid.length) {
+      problems.push(`a persisted record is not valid (never rendered): ${invalid.slice(0, 3).join("; ")}`);
+      continue;
+    }
+    const record = entry as StagedRecord;
     const content = toContent(record);
     if (spanText(data, record.conceptId) !== renderRecord(content)) problems.push(`${record.conceptId}: data.ts does not hold the driver's rendering of its validated record`);
     if (data.split(`id: "${content.id}",`).length !== 2) problems.push(`${record.conceptId}: not exactly one record in data.ts`);

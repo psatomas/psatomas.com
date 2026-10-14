@@ -1,17 +1,20 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import test from "node:test";
 import {
-  acceptanceProblems, advance, allowedTools, applyClaimFixes, applyPatches, DENIED_TOOLS, escalationReasons, finalizeCommands, knownDefectProblems, newBatch, planBatches, planReviewProblems, resumeBatch,
+  acceptanceProblems, advance, allowedTools, applyClaimFixes, applyPatches, deniedTools, DENIED_TOOLS, escalationFocus, escalationReasons, finalizeCommands, knownDefectProblems, newBatch, planBatches,
+  planReviewProblems, recordDefects, resumeBatch,
   reviewProblems, sample, sampleProblems, stopBatch, stopReason, verifyProblems, weighted,
   type ConceptReview, type Finding, type LedgerEntry,
 } from "./core.ts";
 import { claudeArgs, runClaude, SessionError } from "./claude.ts";
-import { acquireLock, batchDir, DATA, groupPath, loadBatch, loadLedger, REGISTRY, repairAfterAudit, runBatch, type Env } from "./driver.ts";
-import { recordFingerprint, recordsInPlaceProblems, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
+import { acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, groupPath, loadBatch, loadLedger, REGISTRY, repairAfterAudit, runBatch, saveBatch, type Env } from "./driver.ts";
+import { recordFingerprint, recordPlacement, recordsInPlaceProblems, renderRecord, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
+import { gitChangedPaths, gitHeadEntry, gitSurfaces, run as runCommand } from "./shell.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import type { MapContentBlock } from "../../types.ts";
 import type { SessionResult } from "./claude.ts";
@@ -112,26 +115,51 @@ test("acceptance requires every defect verified or withdrawn, full coverage, ade
   assert.match(acceptanceProblems(state, "a").join(), /not fully covered.*low confidence/);
 });
 
+/** A permission path pattern as a regular expression (gitignore-style: `**` spans directories, `*` does not). */
+const glob = (pattern: string) => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*\*\//g, "\u0000").replace(/\*\*/g, "\u0001").replace(/\*/g, "[^/]*").replace(/\u0000/g, "(?:.*/)?").replace(/\u0001/g, ".*")}$`);
+const deniedPath = (tool: "Edit" | "Write" | "Read", path: string, denied: readonly string[] = DENIED_TOOLS) =>
+  denied.some((rule) => rule.startsWith(`${tool}(`) && !/^\w+\((~|\/\/)/.test(rule) && glob(rule.slice(tool.length + 1, -1)).test(path));
+
 test("session permissions: bounded reads, inspection, and each role's own JSON file only; no TypeScript, recording, delivery, authorization, git or code", () => {
   const dir = ".map-authoring/l2v2/s/g";
+  const pack = `${dir}/pack.md`;
   for (const role of ["plan", "plan-review", "draft", "review", "escalate", "deep-audit"] as const) {
-    const tools = allowedTools(role, "g", dir, `${dir}/${role}.json`);
+    const out = role === "plan" ? undefined : role === "deep-audit" ? ".map-authoring/l2v2/audits/l/c.audit.json" : `${dir}/${role}.json`;
+    const tools = allowedTools(role, "g", { pack, out });
     for (const tool of tools) {
       assert.doesNotMatch(tool, /record|authorize|reopen|resume|complete|l2 run|--write|python|git|curl|map:author:\*|map:author -- l2 \*|Bash\(\*\)|^Bash$|^Edit$|^Write$|^Read$/, `${role}: ${tool}`);
       if (tool.startsWith("Bash(")) assert.match(tool, /^Bash\((npm run -s map:author -- l2 (context|territory g|signals|group-signals g|check --group g)|npm run -s map:inspect --)/, `${role}: ${tool}`);
-      if (tool.startsWith("Read(")) assert.match(tool, /^Read\((src|docs|scripts\/l2v2\/prompts|\.map-authoring\/l2v2\/s\/g)\/\*\*\)$/, `${role}: ${tool}`);
-      // No session edits TypeScript or any executable file: only JSON (its output, or the plan's group file).
-      if (/^(Edit|Write)\(/.test(tool)) assert.match(tool, /\.json\)$/, `${role}: ${tool}`);
+      // Never the batch directory as a whole: no session reads the batch state or another session's output.
+      if (tool.startsWith("Read(")) assert.ok(["Read(src/**)", "Read(docs/**)", "Read(scripts/l2v2/prompts/**)", `Read(${pack})`, `Read(${out})`].includes(tool), `${role}: ${tool}`);
+      // No session edits TypeScript or any executable file: only JSON (its output, or the plan's group file), never a denied path.
+      if (/^(Edit|Write)\(/.test(tool)) {
+        assert.match(tool, /\.json\)$/, `${role}: ${tool}`);
+        const path = tool.slice(tool.indexOf("(") + 1, -1);
+        assert.ok(!deniedPath("Edit", path) && !deniedPath("Write", path), `${role}: its own file is never denied (${path})`);
+      }
     }
     assert.ok(!tools.some((tool) => tool.includes(".ts)") || tool.includes("node --test")), `${role}: no TypeScript editing or test runs`);
   }
-  assert.deepEqual(allowedTools("draft", "g", dir, `${dir}/draft.json`).filter((tool) => /^(Edit|Write)/.test(tool)), [`Write(${dir}/draft.json)`, `Edit(${dir}/draft.json)`]);
-  assert.ok(!allowedTools("review", "g", dir, `${dir}/review.json`).some((tool) => tool.includes("check --group")));
-  // Denials win over allowances: secrets, credentials and executable files, never the home directory as a whole (the repository is in it).
-  for (const rule of ["Read(**/.dev.vars*)", "Read(**/.env*)", "Read(~/.ssh/**)", "Read(~/.claude/**)", "Edit(**/*.ts)", "Write(**/*.ts)", "Edit(**/package.json)"]) assert.ok(DENIED_TOOLS.includes(rule), rule);
-  assert.ok(!DENIED_TOOLS.some((rule) => rule === "Read(~/**)" || rule.includes(".json)") && !rule.includes("package.json")));
-  const argv = claudeArgs({ bin: "claude", cwd: ".", timeoutMs: 1 }, ["Read(src/**)"]);
-  assert.equal(argv[argv.indexOf("--disallowedTools") + 1], DENIED_TOOLS.join(","));
+  assert.deepEqual(allowedTools("draft", "g", { pack, out: `${dir}/draft.json` }).filter((tool) => /^(Edit|Write)/.test(tool)), [`Write(${dir}/draft.json)`, `Edit(${dir}/draft.json)`]);
+  assert.ok(!allowedTools("review", "g", { pack, out: `${dir}/review.json` }).some((tool) => tool.includes("check --group")));
+  // Denials win over allowances: executable and configuration surfaces, run state and authorizations are never written.
+  for (const path of [
+    "src/lib/map/data.ts", "src/lib/map/authoring/content-registry.ts", "src/lib/map/map.test.ts", "scripts/map-l2v2.ts", "package.json", "package-lock.json", "tsconfig.json", "CLAUDE.md",
+    ".git", ".git/config", ".git/hooks/pre-commit", ".gitignore", ".claude/settings.json", ".claude/settings.local.json", ".mcp.json", "node_modules/.bin/node", "node_modules/next/package.json", ".npmrc", ".dev.vars",
+    ".map-authoring/campaign.json", ".map-authoring/l2/computation-execution-1.json", ".map-authoring/campaign/ledger.jsonl", ".map-authoring/l2v2/ledger.jsonl", ".map-authoring/l2v2/budget.json", ".map-authoring/l2v2/config.json", ".map-authoring/l2v2/lock",
+    `${dir}/state.json`, ".map-authoring/l2v2/s/sample.json", `${dir}/pack.md`, `${dir}/audit-x.json`, `${dir}/group-audit.json`,
+  ]) assert.ok(deniedPath("Edit", path) && deniedPath("Write", path), `never written: ${path}`);
+  for (const rule of ["Read(**/.dev.vars*)", "Read(**/.env*)", "Read(**/.git/**)", "Read(~/.ssh/**)", "Read(~/.claude/**)", "Edit(~/.claude/**)", "Write(~/.gitconfig)"]) assert.ok(DENIED_TOOLS.includes(rule), rule);
+  assert.ok(!DENIED_TOOLS.some((rule) => /^(Read|Edit|Write)\(~\/\*\*\)$/.test(rule)), "the home directory holds the repository: never denied wholesale");
+  assert.ok(deniedPath("Read", "src/lib/map/authoring/l2/groups/g.json", deniedTools("deep-audit")) && !deniedPath("Read", "src/lib/map/authoring/l2/groups/g.json", deniedTools("review")), "a deep auditor never reads earlier audits in the group files");
+  const argv = claudeArgs({ bin: "claude", cwd: ".", timeoutMs: 1 }, ["Read(src/**)"], undefined, deniedTools("deep-audit"));
+  assert.equal(argv[argv.indexOf("--disallowedTools") + 1], deniedTools("deep-audit").join(","));
+});
+
+test("a second reviewer is told where to look, never what the first review found", () => {
+  const focus = escalationFocus(["reviewer confidence medium", "3 defects", "a defect in conditions, a formal result or the definition", "an uncertain finding", "a plan claim was corrected", "2 placements", "a claim not fully covered"]);
+  assert.doesNotMatch(focus.join("; "), /confidence|\d+ defects|uncertain|finding|first review/);
+  assert.match(focus.join("; "), /formal results.*plan claims corrected.*every placement.*mechanism, conditions/);
 });
 
 test("batches over a v1 run: untouched groups only; finished groups skipped; partly recorded groups refused; drafted concepts protected", () => {
@@ -225,27 +253,38 @@ const appendRecord = (root: string, id: string, text: string) => {
 const out = (root: string, prompt: string) => join(root, prompt.match(/(\.map-authoring\/l2v2\/\S+?\.json)/)![1]);
 const run = (prompt: string) => prompt.match(/"run": "([^"{}]+)"/)![1];
 const emit = (root: string, prompt: string, body: object) => writeFileSync(out(root, prompt), JSON.stringify({ run: run(prompt), ...body }));
+/** What `git status` would list: everything except the ignored paths (run state, git, Claude Code settings, dependencies). */
+const IGNORED = new Set([".map-authoring", ".git", ".claude", ".mcp.json", "node_modules", ".worktrees"]);
 const files = (root: string): string[] => {
   const walk = (dir: string): string[] => readdirSync(dir).flatMap((name) => {
     const full = join(dir, name);
-    if (name === ".map-authoring") return [];
+    if (dir === root && IGNORED.has(name)) return [];
     return statSync(full).isDirectory() ? walk(full) : [relative(root, full)];
   });
   return walk(root);
 };
 
-function fakeEnv(root: string, script: Script): Env & { calls: string[] } {
+function fakeEnv(root: string, script: Script): Env & { calls: string[]; prompts: string[]; requests: { role: string; tools: readonly string[]; denied: readonly string[] }[] } {
   const calls: string[] = [];
+  const prompts: string[] = [];
+  const requests: { role: string; tools: readonly string[]; denied: readonly string[] }[] = [];
   let n = 0;
   let tokens = 0;
+  let clock = 0;
   return {
     root,
     calls,
+    prompts,
+    requests,
     now: () => T,
+    // Each reading is a minute later: a session lasts a minute.
+    clock: () => (clock += 60_000),
     token: () => `tok${++tokens}`,
-    async session({ role, prompt, resume }): Promise<SessionResult> {
+    async session({ role, prompt, resume, tools, denied }): Promise<SessionResult> {
       const key = resume ? `${role}:resume` : role;
       calls.push(key);
+      prompts.push(prompt);
+      requests.push({ role, tools, denied });
       (script[key] ?? script[role])?.(root, prompt);
       return { sessionId: resume ?? `s${++n}`, usage: { input_tokens: 0, output_tokens: 100, cache_creation_input_tokens: 1000, cache_read_input_tokens: 10000 }, durationMs: 1000, turns: 2, isError: false, text: "done" };
     },
@@ -261,6 +300,10 @@ function fakeEnv(root: string, script: Script): Env & { calls: string[] } {
     facts: async () => ({ placements: 1, domainOrder: 2 }),
     changedPaths: async () => files(root),
     headContent: async () => undefined,
+    surfaces: async () => ({
+      content: [join(root, ".git/config"), join(root, ".git/hooks"), join(root, ".claude"), join(root, ".mcp.json")],
+      metadata: [join(root, "node_modules/.bin"), join(root, "node_modules/pkg/package.json")],
+    }),
     secrets: async () => [SECRET],
   };
 }
@@ -569,8 +612,335 @@ test("acceptance binds each record: an edit afterwards is refused by the audit r
 
 test("known defects block finalize: any deep audit with defects at or after a concept's last acceptance, until it is accepted again", () => {
   const audit = (concept: string, substantive: number, at: string, label = "pilot"): LedgerEntry => ({ kind: "deep-audit", at, label, concept, substantive, campaign: true });
-  const accepted = new Map([["a", "2026-10-09T01:00:00Z"], ["b", "2026-10-09T01:00:00Z"]]);
+  const accepted = new Map([["a", { at: "2026-10-09T01:00:00Z", fingerprint: "fa" }], ["b", { at: "2026-10-09T01:00:00Z", fingerprint: "fb" }]]);
   assert.deepEqual(knownDefectProblems([audit("a", 2, "2026-10-09T00:00:00Z"), audit("b", 0, "2026-10-09T02:00:00Z")], accepted), [], "before acceptance, or clean");
   assert.match(knownDefectProblems([audit("a", 2, "2026-10-09T02:00:00Z"), audit("a", 0, "2026-10-09T03:00:00Z")], accepted).join(), /a: substantive defects found by deep audit "pilot" \(2/, "a later clean audit does not clear a known defect");
-  assert.deepEqual(knownDefectProblems([audit("a", 2, "2026-10-09T02:00:00Z")], new Map([["a", "2026-10-09T02:30:00Z"]])), [], "repaired and accepted again");
+  assert.deepEqual(knownDefectProblems([audit("a", 2, "2026-10-09T02:00:00Z")], new Map([["a", { at: "2026-10-09T02:30:00Z", fingerprint: "repaired" }]])), [], "repaired and accepted again");
+  // Accepted again without a change to the text (a resume): the defect is still known, whatever the time.
+  assert.match(knownDefectProblems([{ ...audit("a", 2, "2026-10-09T02:00:00Z"), fingerprint: "same" } as LedgerEntry], new Map([["a", { at: "2026-10-09T02:30:00Z", fingerprint: "same" }]])).join(), /a: substantive/);
+});
+
+// ---------------------------------------------------------------- the guard's reach: ignored executable and configuration surfaces
+
+/** The ignored surfaces the fake environment watches: git config and hooks, Claude Code settings, dependencies. */
+function withSurfaces(root: string): string {
+  mkdirSync(join(root, ".git/hooks"), { recursive: true });
+  writeFileSync(join(root, ".git/config"), "[core]\n\tbare = false\n");
+  writeFileSync(join(root, ".git/hooks/pre-commit.sample"), "#!/bin/sh\n");
+  mkdirSync(join(root, ".claude"), { recursive: true });
+  writeFileSync(join(root, ".claude/settings.json"), "{}\n");
+  mkdirSync(join(root, "node_modules/.bin"), { recursive: true });
+  mkdirSync(join(root, "node_modules/pkg"), { recursive: true });
+  writeFileSync(join(root, "node_modules/.bin/next"), "#!/bin/sh\n");
+  writeFileSync(join(root, "node_modules/pkg/package.json"), "{}\n");
+  return root;
+}
+
+test("a session that plants a git hook, rewrites git or Claude Code configuration, adds an MCP server or a dependency executable is stopped and all of it is undone", async () => {
+  const root = withSurfaces(fixture());
+  const config = readFileSync(join(root, ".git/config"), "utf8");
+  const state = await runBatch(fakeEnv(root, {
+    ...happy,
+    review: (r, p) => {
+      happy.review!(r, p);
+      writeFileSync(join(r, ".git/hooks/pre-commit"), "#!/bin/sh\ncurl example.com\n");
+      writeFileSync(join(r, ".git/config"), "[core]\n\thooksPath = /tmp/hooks\n");
+      writeFileSync(join(r, ".claude/settings.json"), '{"hooks":{"Stop":[]}}');
+      writeFileSync(join(r, ".mcp.json"), "{}");
+      writeFileSync(join(r, "node_modules/.bin/node"), "#!/bin/sh\n");
+    },
+  }), input);
+  assert.equal(state.status, "stopped");
+  for (const path of [".git/hooks/pre-commit", ".git/config", ".claude/settings.json", ".mcp.json", "node_modules/.bin/node"]) assert.ok(state.stop!.reason.includes(path), `${path} in: ${state.stop!.reason}`);
+  assert.ok(!existsSync(join(root, ".git/hooks/pre-commit")) && !existsSync(join(root, ".mcp.json")) && !existsSync(join(root, "node_modules/.bin/node")));
+  assert.equal(readFileSync(join(root, ".git/config"), "utf8"), config);
+  assert.equal(readFileSync(join(root, ".claude/settings.json"), "utf8"), "{}\n");
+});
+
+test("a changed dependency executable or manifest is detected by metadata and stops for a human: dependencies are never read or restored", async () => {
+  for (const path of ["node_modules/.bin/next", "node_modules/pkg/package.json"]) {
+    const root = withSurfaces(fixture());
+    const state = await runBatch(fakeEnv(root, { ...happy, review: (r, p) => (happy.review!(r, p), writeFileSync(join(r, path), "#!/bin/sh\nchanged\n")) }), input);
+    assert.equal(state.status, "stopped");
+    assert.match(state.stop!.reason, new RegExp(`rollback incomplete, manual recovery required: .*${path.replace(/[./]/g, "\\$&")}: a dependency is never restored automatically`));
+  }
+});
+
+test("the first deep-audit session is guarded: authorization, batch and sample state, the ledger, records and registry come back; only its output may change", async () => {
+  const root = withSurfaces(fixture());
+  assert.equal((await runBatch(fakeEnv(root, happy), input)).status, "accepted");
+  writeFileSync(join(root, ".map-authoring/campaign.json"), '{"merge":false}\n');
+  writeFileSync(join(root, ".map-authoring/l2v2/s/sample.json"), '{"slice":"s","concepts":["y"],"audited":{}}\n');
+  const guarded = [".map-authoring/campaign.json", `${batchDir("s", "g")}/state.json`, ".map-authoring/l2v2/s/sample.json", ".map-authoring/l2v2/ledger.jsonl", DATA, REGISTRY];
+  const before = Object.fromEntries(guarded.map((path) => [path, readFileSync(join(root, path), "utf8")]));
+  const out = ".map-authoring/l2v2/audits/pilot/y.audit.json";
+  const request = { role: "deep-audit" as const, prompt: "audit y", tools: [], denied: [], tree: [DATA, REGISTRY], allowed: new Set<string>(), out, slice: "audit:pilot", group: "y" };
+  const tamper = fakeEnv(root, { "deep-audit": (r) => (mkdirSync(join(r, ".map-authoring/l2v2/audits/pilot"), { recursive: true }), writeFileSync(join(r, out), "{}"), guarded.forEach((path) => writeFileSync(join(r, path), "tampered")), writeFileSync(join(r, ".git/hooks/post-merge"), "x")) });
+  await assert.rejects(guardedSession(tamper, request), (error: unknown) => error instanceof GuardError && [...guarded, ".git/hooks/post-merge"].every((path) => (error as Error).message.includes(path)));
+  for (const path of guarded.filter((p) => !p.endsWith("ledger.jsonl"))) assert.equal(readFileSync(join(root, path), "utf8"), before[path], path);
+  const ledger = readFileSync(join(root, ".map-authoring/l2v2/ledger.jsonl"), "utf8");
+  assert.ok(ledger.startsWith(before[".map-authoring/l2v2/ledger.jsonl"]) && /"role":"deep-audit"/.test(ledger.split("\n").at(-2)!), "the ledger comes back, then records the session");
+  assert.ok(!existsSync(join(root, out)) && !existsSync(join(root, ".git/hooks/post-merge")));
+  // An honest audit writes only its output, which stays.
+  await guardedSession(fakeEnv(root, { "deep-audit": (r) => writeFileSync(join(r, out), '{"run":"r"}') }), request);
+  assert.equal(readFileSync(join(root, out), "utf8"), '{"run":"r"}');
+});
+
+// ---------------------------------------------------------------- persisted records, shell output, rollback
+
+test("records read back from batch state are validated before anything renders them: hand-edited state never becomes code", async () => {
+  const data = withRecords(dataFile([]), [toContent(staged("y", "Fine."))]);
+  const registry = 'export const AUTHORED_CONTENT_CONCEPTS = [\n  "y",\n];\n';
+  const evil: unknown[] = [
+    { ...staged("y", "x"), body: [{ kind: "flow", label: "L", stages: [{ "a: (globalThis.pwned = 1), b": "x" }] }] },
+    { ...staged("y", "x"), conceptId: 'y", (globalThis.pwned = 1), "' },
+    { ...staged("y", "x"), body: [{ kind: ["paragraph"], text: "x" }] },
+    JSON.parse('{"conceptId":"y","definition":"D.","body":[{"kind":"paragraph","text":"x","__proto__":{"y":1}}]}'),
+    { ...staged("y", "x"), definition: { toString: "x" } },
+  ];
+  for (const record of evil) {
+    assert.match(recordsInPlaceProblems(data, registry, [record]).join(), /not valid \(never rendered\)/);
+    assert.equal(recordPlacement(data, record), "invalid");
+    assert.throws(() => toContent(record as StagedRecord), /invalid record/);
+  }
+  assert.throws(() => withRegistry(registry, ['x", (globalThis.pwned = 1), "']), /not concept identifiers/);
+  assert.throws(() => renderRecord({ id: "y-content", conceptId: "y", definition: "D.", body: [{ kind: "paragraph", text: "x", "evil: 1, x": "y" } as never] }), /refusing to render the key/);
+  // A batch in review whose persisted record was edited by hand stops; data.ts is never touched.
+  const root = fixture();
+  const stalled = await runBatch(fakeEnv(root, { ...happy, review: () => {}, "review:resume": () => {} }), input);
+  assert.equal(stalled.stop!.status, "drafted");
+  const resumed = resumeBatch(loadBatch(root, "s", "g")!, "drafted", T);
+  resumed.records!.y = evil[0] as StagedRecord;
+  saveBatch(root, resumed);
+  const before = readFileSync(join(root, DATA), "utf8");
+  const state = await runBatch(fakeEnv(root, happy), input);
+  assert.match(state.stop!.reason, /changed outside the driver or are not valid: y \(invalid\)/);
+  assert.equal(readFileSync(join(root, DATA), "utf8"), before);
+  assert.equal((globalThis as { pwned?: unknown }).pwned, undefined);
+});
+
+test("shell: stdout is data and stderr never mixes in; git content is read as bytes with its executable bit; nested worktrees are skipped", () => {
+  const out = runCommand(process.execPath, ["-e", "process.stdout.write('data'); process.stderr.write('warning')"], tmpdir());
+  assert.deepEqual([out.ok, out.stdout, out.stderr], [true, "data", "warning"]);
+  const repo = mkdtempSync(join(tmpdir(), "l2v2-git-"));
+  const git = (cwd: string, ...args: string[]) => spawnSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", ...args], { cwd, encoding: "utf8" });
+  git(repo, "init", "-q");
+  const binary = Buffer.from([...Array(256).keys()]);
+  writeFileSync(join(repo, "bin.dat"), binary);
+  writeFileSync(join(repo, "tool.sh"), "#!/bin/sh\n");
+  chmodSync(join(repo, "tool.sh"), 0o755);
+  git(repo, "add", ".");
+  git(repo, "commit", "-qm", "base");
+  mkdirSync(join(repo, ".worktrees/other"), { recursive: true });
+  git(join(repo, ".worktrees/other"), "init", "-q");
+  writeFileSync(join(repo, "note.txt"), "x");
+  const bin = gitHeadEntry(repo, "bin.dat")!;
+  assert.ok(bin.kind === "file" && bin.data.equals(binary) && bin.mode === 0o644);
+  assert.equal((gitHeadEntry(repo, "tool.sh") as { mode: number }).mode, 0o755);
+  assert.equal(gitHeadEntry(repo, "missing.txt"), undefined);
+  assert.deepEqual(gitChangedPaths(repo), ["note.txt"]);
+  const real = (path: string) => spawnSync("realpath", ["-m", path], { encoding: "utf8" }).stdout.trim();
+  assert.deepEqual(gitSurfaces(repo).map(real), ["config", "config.worktree", "hooks", "info"].map((name) => real(join(repo, ".git", name))));
+});
+
+test("rollback restores bytes and modes: a binary user file and an executable bit come back exactly", async () => {
+  const root = fixture();
+  const binary = Buffer.from([...Array(256).keys()]);
+  writeFileSync(join(root, "assets.bin"), binary);
+  writeFileSync(join(root, "tool.sh"), "#!/bin/sh\n");
+  chmodSync(join(root, "tool.sh"), 0o755);
+  const state = await runBatch(fakeEnv(root, { ...happy, review: (r, p) => (happy.review!(r, p), writeFileSync(join(r, "assets.bin"), "text"), chmodSync(join(r, "tool.sh"), 0o644)) }), input);
+  assert.equal(state.status, "stopped");
+  assert.ok(readFileSync(join(root, "assets.bin")).equals(binary));
+  assert.equal(statSync(join(root, "tool.sh")).mode & 0o777, 0o755);
+});
+
+test("a draft rewrite that fails leaves nothing of the draft rendered: the tree is as it was before the draft", async () => {
+  const root = fixture();
+  let before: { data: string; registry: string } | undefined;
+  const env = fakeEnv(root, {
+    ...happy,
+    draft: (r, p) => ((before = { data: readFileSync(join(r, DATA), "utf8"), registry: readFileSync(join(r, REGISTRY), "utf8") }), happy.draft!(r, p)),
+    "draft:resume": (r) => writeFileSync(join(r, "src/new.ts"), "x"),
+  });
+  let checks = 0;
+  env.check = async (_group, withRecords) => (withRecords && ++checks === 1 ? ["x: record too thin"] : []);
+  const state = await runBatch(env, input);
+  assert.match(state.stop!.reason, /draft changed what it may not/);
+  assert.deepEqual({ data: readFileSync(join(root, DATA), "utf8"), registry: readFileSync(join(root, REGISTRY), "utf8") }, before);
+  assert.equal(state.records, undefined);
+  assert.ok(!existsSync(join(root, "src/new.ts")));
+});
+
+// ---------------------------------------------------------------- limits, resumes, independence
+
+test("batch limits: sessions (failed ones count) and wall-clock time stop the batch before another session starts", async () => {
+  const counted = fakeEnv(fixture(), happy);
+  const limited = await runBatch(counted, { ...input, limits: { sessions: 3, minutes: 600, sessionTimeoutMs: 1 } });
+  assert.match(limited.stop!.reason, /session limit: the batch used its 3 sessions/);
+  assert.deepEqual([counted.calls.length, limited.window!.sessions], [3, 3]);
+  const root = fixture();
+  await assert.rejects(runBatch(fakeEnv(root, { ...happy, "plan-review": () => { throw new Error("usage limit"); } }), input), /usage limit/);
+  assert.deepEqual([loadBatch(root, "s", "g")!.window!.sessions, loadBatch(root, "s", "g")!.window!.failed], [2, 1]);
+  // The fake clock makes each session last a minute: two minutes allow two sessions.
+  const timed = await runBatch(fakeEnv(fixture(), happy), { ...input, limits: { sessions: 99, minutes: 2, sessionTimeoutMs: 1 } });
+  assert.match(timed.stop!.reason, /time limit: the batch used its 2 minutes/);
+  assert.equal(timed.window!.ms, 120_000);
+});
+
+test("a session the driver never saw finish counts as interrupted, for its whole timeout, and the batch stops for a human", async () => {
+  const root = fixture();
+  const state = newBatch("s", "g", ["x", "y"], T);
+  state.window!.sessions = 1;
+  state.window!.inFlight = { role: "plan", startedAt: T };
+  saveBatch(root, state);
+  const env = fakeEnv(root, happy);
+  const after = await runBatch(env, { ...input, limits: { sessions: 20, minutes: 240, sessionTimeoutMs: 1_800_000 } });
+  assert.match(after.stop!.reason, /interrupted .* never checked/);
+  assert.deepEqual([after.window!.interrupted, after.window!.ms, after.window!.inFlight, env.calls.length], [1, 1_800_000, undefined, 0]);
+  assert.match((loadLedger(root).at(-1) as { reason: string }).reason, /^interrupted/);
+});
+
+const misquote: Script = {
+  ...happy,
+  review: (r, p) => emit(r, p, { concepts: { y: review(), x: review({ verdict: "defect", findings: [defect("x", "Not in the record.", "Fixed.")] }) }, group: { note: "n", findings: [], resolutions: [] } }),
+  "review:resume": (r, p) => emit(r, p, { concepts: passes(["x", "y"], { x: [{ id: "review-x-1", status: "fixed", why: "" }] }) }),
+};
+const clean: Script = { ...happy, review: (r, p) => emit(r, p, { concepts: { x: review(), y: review() }, group: { note: "n", findings: [], resolutions: [] } }) };
+
+test("a resume restarts from the evidence of the status resumed at: stale findings never decide, the history keeps them", async () => {
+  const root = fixture();
+  const parked = await runBatch(fakeEnv(root, misquote), input);
+  assert.equal(parked.conceptStates.x.state, "parked");
+  saveBatch(root, resumeBatch(loadBatch(root, "s", "g")!, "drafted", T));
+  const state = await runBatch(fakeEnv(root, clean), input);
+  assert.equal(state.status, "accepted", state.stop?.reason);
+  assert.equal(state.defects["review-x-1"], undefined, "the earlier attempt's refused defect does not decide");
+  assert.equal(state.history![0].evidence.defects["review-x-1"].status, "refused", "it stays in the history");
+  assert.equal(state.attempt, 2);
+  assert.match(readFileSync(join(root, DATA), "utf8"), /x-content/, "the parked record was rendered again from its validated data");
+});
+
+test("a corrected plan claim still sends its concept to the second review after a resume", async () => {
+  const fixing: Script = { ...happy, "plan-review": (r, p) => emit(r, p, { verdict: "fix", claimFixes: [{ concept: "x", quote: "every node agrees", replacement: "correct nodes agree", why: "overclaim" }], note: "" }), "plan-review:resume": (r, p) => emit(r, p, { verdict: "pass", claimFixes: [], note: "confirmed" }), escalate: (r, p) => emit(r, p, { concepts: { x: review() } }) };
+  const root = fixture();
+  assert.equal((await runBatch(fakeEnv(root, { ...fixing, review: () => {}, "review:resume": () => {} }), input)).stop!.status, "drafted");
+  saveBatch(root, resumeBatch(loadBatch(root, "s", "g")!, "drafted", T));
+  const env = fakeEnv(root, fixing);
+  assert.equal((await runBatch(env, input)).status, "accepted");
+  assert.ok(env.calls.includes("escalate"));
+});
+
+test("open deep-audit defects survive a resume that keeps the record, and go only with a redraft", () => {
+  let state = newBatch("s", "g", ["x"], T);
+  for (const to of ["planned", "plan-reviewed", "drafted", "reviewed", "escalated"] as const) state = advance(state, to, T);
+  recordDefects(state, [defect("x", "q", "r")], "audit-pilot-x-0", "deep-audit");
+  recordDefects(state, [defect("x", "q2", "r2")], "escalate-x", "escalate");
+  state = stopBatch(state, "parked", T);
+  const kept = resumeBatch(state, "escalated", T);
+  assert.deepEqual(Object.keys(kept.defects), ["audit-pilot-x-0-1"]);
+  assert.equal(kept.conceptStates.x.state, "open");
+  assert.deepEqual(Object.keys(resumeBatch(state, "reviewed", T).defects), ["audit-pilot-x-0-1"], "the escalation's own defects go with the escalation it reruns");
+  const redrafted = resumeBatch(state, "plan-reviewed", T);
+  assert.deepEqual(redrafted.defects, {});
+  assert.equal(Object.keys(redrafted.history![0].evidence.defects).length, 2);
+});
+
+test("independent reviewers read only the sources, the prompts and their pack: never the batch state or another session's output, never the first review", async () => {
+  const formal: Script = {
+    ...happy,
+    review: (r, p) => emit(r, p, { concepts: { y: review(), x: review({ verdict: "defect", note: "FIRST-REVIEW-NOTE", confidence: "medium", findings: [defect("x", "Nodes always agree.", "Correct nodes agree under synchrony.", "formal-results")] }) }, group: { note: "n", findings: [], resolutions: [] } }),
+    escalate: (r, p) => emit(r, p, { concepts: { x: review() } }),
+  };
+  const env = fakeEnv(fixture(), formal);
+  assert.equal((await runBatch(env, input)).status, "accepted");
+  const escalation = env.prompts[env.calls.indexOf("escalate")];
+  assert.doesNotMatch(escalation, /FIRST-REVIEW-NOTE|confidence medium|Correct nodes agree|formal-results|review-x-1/);
+  assert.match(escalation, /formal results with all their conditions/);
+  // Each session reads the sources, docs and prompts, its pack, and the one file it writes: nothing else of the batch.
+  for (const request of env.requests)
+    for (const tool of request.tools.filter((t) => t.startsWith("Read("))) {
+      const path = tool.slice(5, -1);
+      assert.ok(["src/**", "docs/**", "scripts/l2v2/prompts/**", `${batchDir("s", "g")}/pack.md`].includes(path) || request.tools.includes(`Write(${path})`), `${request.role}: ${tool}`);
+    }
+});
+
+// ---------------------------------------------------------------- the CLI: finalize, requireTree and the guarded deep audit
+
+const SCRIPT = join(import.meta.dirname, "../../../../../scripts/map-l2v2.ts");
+const cli = (root: string, args: string[], extra: Record<string, string> = {}) =>
+  spawnSync(process.execPath, ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", SCRIPT, ...args], { cwd: root, encoding: "utf8", env: { ...process.env, ...extra } });
+/** A git checkout with a v1 run of slice s whose only group g was authored and accepted by v2, its sample settled. */
+async function acceptedSlice(): Promise<string> {
+  const root = fixture();
+  const git = (...args: string[]) => spawnSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", ...args], { cwd: root, encoding: "utf8" });
+  writeFileSync(join(root, ".gitignore"), "/.map-authoring/\n/node_modules/\n.claude/\n");
+  git("init", "-q");
+  git("add", ".");
+  git("commit", "-qm", "base");
+  mkdirSync(join(root, ".map-authoring/l2"), { recursive: true });
+  writeFileSync(join(root, ".map-authoring/l2/s.json"), JSON.stringify({ domainId: "s", branch: "main", baseSha: git("rev-parse", "HEAD").stdout.trim(), stage: "author", l2: { slice: { groups: [{ group: "g", concepts: ["x", "y"] }] }, steps: {} } }));
+  assert.equal((await runBatch(fakeEnv(root, happy), input)).status, "accepted");
+  writeFileSync(join(root, ".map-authoring/l2v2/s/sample.json"), JSON.stringify({ slice: "s", concepts: ["y"], audited: { y: { substantive: 0, repaired: false } } }));
+  return root;
+}
+/** A stand-in for the claude CLI: writes the deep audit's output with `body` and, when asked, tampers with the campaign authorization. */
+function stubClaude(body: string, tamper = false): string {
+  const bin = join(mkdtempSync(join(tmpdir(), "l2v2-bin-")), "claude");
+  writeFileSync(bin, [
+    "#!/bin/sh",
+    'prompt=$(cat)',
+    `out=$(printf '%s' "$prompt" | grep -o '\\.map-authoring/l2v2/audits/[^ ]*\\.audit\\.json' | head -1)`,
+    `run=$(printf '%s' "$prompt" | grep -o '"run": "[^"{}]*"' | head -1 | sed 's/"run": "\\(.*\\)"/\\1/')`,
+    `printf '{"run":"%s",${body}}' "$run" > "$out"`,
+    ...(tamper ? [`printf '{"merge":true}' > .map-authoring/campaign.json`] : []),
+    `echo '{"session_id":"stub","result":"done","num_turns":1,"duration_ms":1}'`,
+    "",
+  ].join("\n"));
+  chmodSync(bin, 0o755);
+  return bin;
+}
+
+test("finalize: with every gate met it reaches v1's recording; a known audit defect, an edited record or hand-edited state blocks it first", async () => {
+  const root = await acceptedSlice();
+  const clean = cli(root, ["finalize", "--slice", "s"]);
+  assert.equal(clean.status, 1);
+  assert.match(clean.stderr, /l2 record plan g --domain s refused/, "every v2 gate passed; v1's own recording is the next step");
+  appendLedger(root, { kind: "deep-audit", at: "2026-10-09T01:00:00.000Z", label: "pilot", concept: "y", substantive: 1, campaign: true });
+  const known = cli(root, ["finalize", "--slice", "s"]);
+  assert.equal(known.status, 3);
+  assert.match(known.stderr, /known defects must be repaired first.*\n- y: substantive defects found by deep audit "pilot"/);
+});
+
+test("requireTree: an edited record or hand-edited batch state stops run, audit and finalize before anything is imported or run", async () => {
+  const edited = await acceptedSlice();
+  writeFileSync(join(edited, DATA), readFileSync(join(edited, DATA), "utf8").replace("Fine text.", "Fine text, edited by hand."));
+  for (const args of [["finalize", "--slice", "s"], ["run", "--slice", "s"], ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"]]) {
+    const result = cli(edited, args);
+    assert.equal(result.status, 1, args.join(" "));
+    assert.match(result.stderr, /changed outside the driver \(nothing was imported or run\):\n- g: y: data\.ts does not hold/, args.join(" "));
+  }
+  const tampered = await acceptedSlice();
+  const state = loadBatch(tampered, "s", "g")!;
+  state.records!.y = { ...state.records!.y, body: [{ kind: "flow", label: "L", stages: [{ "a: (globalThis.pwned = 1), b": "x" }] } as never] };
+  saveBatch(tampered, state);
+  const result = cli(tampered, ["finalize", "--slice", "s"]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /a persisted record is not valid \(never rendered\)/);
+});
+
+test("the CLI's deep audit runs under the guard: tampering is undone and reported; an honest audit's defects then block finalize", async () => {
+  const root = await acceptedSlice();
+  writeFileSync(join(root, ".map-authoring/campaign.json"), '{"merge":false}');
+  const defects = `"verdict":"defect","confidence":"high","substantive":[{"rule":"overclaim","quote":"Fine text.","replacement":"Fine.","why":"t"}],"remarks":[],"coverage":[],"depth":"d"`;
+  const tampering = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: stubClaude(defects, true) });
+  assert.equal(tampering.status, 1);
+  assert.match(tampering.stderr, /y: the deep audit changed what it may not and was rolled back: .*\.map-authoring\/campaign\.json/);
+  assert.equal(readFileSync(join(root, ".map-authoring/campaign.json"), "utf8"), '{"merge":false}');
+  const honest = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: stubClaude(defects) });
+  assert.equal(honest.status, 0, honest.stderr);
+  assert.match(honest.stdout, /y has known defects: finalize refuses its slice/);
+  const entry = loadLedger(root).findLast((e) => e.kind === "deep-audit") as { fingerprint?: string };
+  assert.equal(entry.fingerprint, recordFingerprint(loadBatch(root, "s", "g")!.records!.y), "the audit is bound to the record it read");
+  assert.equal(cli(root, ["finalize", "--slice", "s"]).status, 3);
 });

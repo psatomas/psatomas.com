@@ -49,7 +49,7 @@ export type ClaimFix = { concept: string; quote: string; replacement: string; wh
 export type PlanReviewOutput = { run: string; verdict: "pass" | "fix" | "stop"; claimFixes: ClaimFix[]; stopReason?: string; note: string };
 
 /** A substantive defect from its finding to its outcome. Only "verified" and "withdrawn" (with a reason) close it. */
-export type Defect = { id: string; concept: string; finding: Finding; status: "open" | "applied" | "verified" | "withdrawn" | "refused"; why?: string };
+export type Defect = { id: string; concept: string; finding: Finding; status: "open" | "applied" | "verified" | "withdrawn" | "refused"; why?: string; source?: Role };
 
 export type ConceptState = {
   state: "open" | "accepted" | "parked";
@@ -61,6 +61,10 @@ export type ConceptState = {
   /** When the concept was last accepted, and the fingerprint of the record accepted: finalize ships nothing else. */
   accepted?: { at: string; fingerprint: string };
 };
+/** What a batch's acceptance is judged from: kept as of each status reached, so a resume restarts from it. */
+export type Evidence = { conceptStates: Record<string, ConceptState>; defects: Record<string, Defect>; audit: Record<string, { notes: string[]; resolutions: Resolution[] }>; groupAudit?: { note: string; resolutions: Resolution[] } };
+/** Sessions and wall-clock time spent since the batch (or its latest resume) started; failed and interrupted sessions count. */
+export type SessionWindow = { since: string; sessions: number; failed: number; interrupted: number; ms: number; inFlight?: { role: Role; startedAt: string } };
 export type BatchState = {
   version: 2;
   slice: string;
@@ -77,12 +81,23 @@ export type BatchState = {
   audit: Record<string, { notes: string[]; resolutions: Resolution[] }>;
   groupAudit?: { note: string; resolutions: Resolution[] };
   stop?: { reason: string; at: string; status: BatchStatus };
+  /** 1, then one more for each resume. */
+  attempt?: number;
+  /** The evidence as of each status reached in this attempt. */
+  checkpoints?: Partial<Record<BatchStatus, Evidence>>;
+  /** Earlier attempts' evidence, kept for the record and never judged again. */
+  history?: { attempt: number; endedAt: string; stop?: BatchState["stop"]; evidence: Evidence; window?: SessionWindow }[];
+  window?: SessionWindow;
   updatedAt: string;
 };
 
+const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const evidenceOf = (state: BatchState): Evidence => clone({ conceptStates: state.conceptStates, defects: state.defects, audit: state.audit, ...(state.groupAudit ? { groupAudit: state.groupAudit } : {}) });
+export const newWindow = (now: string): SessionWindow => ({ since: now, sessions: 0, failed: 0, interrupted: 0, ms: 0 });
+
 export function newBatch(slice: string, group: string, concepts: readonly string[], now: string): BatchState {
   if (!concepts.length) throw new Error(`group ${group} has no concepts to author`);
-  return {
+  const state: BatchState = {
     version: 2,
     slice,
     group,
@@ -92,8 +107,11 @@ export function newBatch(slice: string, group: string, concepts: readonly string
     sessions: {},
     defects: {},
     audit: Object.fromEntries(concepts.map((id) => [id, { notes: [], resolutions: [] }])),
+    attempt: 1,
+    window: newWindow(now),
     updatedAt: now,
   };
+  return { ...state, checkpoints: { pending: evidenceOf(state) } };
 }
 
 const rank = (status: BatchStatus) => BATCH_STATUSES.indexOf(status);
@@ -101,22 +119,44 @@ const rank = (status: BatchStatus) => BATCH_STATUSES.indexOf(status);
 export function advance(state: BatchState, to: BatchStatus, now: string): BatchState {
   if (state.status === "stopped") throw new Error(`batch ${state.group} is stopped: ${state.stop?.reason}`);
   if (rank(to) !== rank(state.status) + 1 || to === "stopped") throw new Error(`batch ${state.group} cannot move from ${state.status} to ${to}`);
-  return { ...state, status: to, updatedAt: now };
+  return { ...state, status: to, checkpoints: { ...state.checkpoints, [to]: evidenceOf(state) }, updatedAt: now };
 }
 export const stopBatch = (state: BatchState, reason: string, now: string): BatchState =>
   state.status === "stopped" ? state : { ...state, status: "stopped", stop: { reason, at: now, status: state.status }, updatedAt: now };
 /**
  * A human resumes a stopped batch at the status it had reached, or earlier:
  * every later stage then runs again. Skipping forward is refused.
+ *
+ * The attempt's evidence moves to the history, and the batch restarts from
+ * the evidence it had when it first reached `at`: later stages' defects,
+ * notes and verdicts can never decide the new acceptance. Open deep-audit
+ * defects are known defects of the record as it stands, so they stay unless
+ * the record is drafted again. The session window starts afresh.
  */
 export function resumeBatch(state: BatchState, at: BatchStatus, now: string): BatchState {
   if (state.status !== "stopped" || !state.stop) throw new Error(`batch ${state.group} is not stopped`);
   if (at === "stopped" || at === "accepted") throw new Error(`a batch cannot be resumed as ${at}: acceptance is earned by running the stages`);
   if (rank(at) > rank(state.stop.status)) throw new Error(`batch ${state.group} stopped at ${state.stop.status}; resuming at ${at} would skip stages`);
-  const next: BatchState = { ...state, status: at, updatedAt: now };
+  const attempt = state.attempt ?? 1;
+  const next: BatchState = clone({ ...state, status: at, updatedAt: now });
   delete next.stop;
-  // Concepts reopen with the earlier stages; parked ones get another chance only by running them again.
-  if (rank(at) <= rank("drafted")) for (const id of next.concepts) next.conceptStates[id] = { state: "open", escalate: false, reasons: [] };
+  next.history = [...(state.history ?? []), clone({ attempt, endedAt: now, stop: state.stop, evidence: evidenceOf(state), window: state.window })];
+  next.attempt = attempt + 1;
+  next.window = newWindow(now);
+  const base = state.checkpoints?.[at];
+  if (base) Object.assign(next, clone({ conceptStates: base.conceptStates, defects: base.defects, audit: base.audit }), base.groupAudit ? { groupAudit: clone(base.groupAudit) } : {});
+  else {
+    // A state without checkpoints: concepts reopen with the earlier stages and the later evidence goes.
+    if (rank(at) <= rank("drafted")) for (const id of next.concepts) next.conceptStates[id] = { state: "open", escalate: false, reasons: [] };
+    if (rank(at) <= rank("drafted")) next.defects = {};
+  }
+  if (!base?.groupAudit) delete next.groupAudit;
+  next.checkpoints = Object.fromEntries(Object.entries(state.checkpoints ?? {}).filter(([status]) => rank(status as BatchStatus) <= rank(at)));
+  if (rank(at) >= rank("drafted"))
+    for (const defect of Object.values(state.defects).filter((d) => d.source === "deep-audit" && d.status !== "verified" && d.status !== "withdrawn")) {
+      next.defects[defect.id] = clone(defect);
+      if (next.conceptStates[defect.concept].state !== "parked") next.conceptStates[defect.concept].state = "open";
+    }
   return next;
 }
 
@@ -219,11 +259,11 @@ export function parseJson(text: string): unknown {
 // ---------------------------------------------------------------- the defect ledger and acceptance
 
 /** Adds a session's defect findings to the ledger with stable ids. */
-export function recordDefects(state: BatchState, findings: readonly Finding[], prefix: string): Defect[] {
+export function recordDefects(state: BatchState, findings: readonly Finding[], prefix: string, source?: Role): Defect[] {
   const added: Defect[] = [];
   findings.filter((finding) => finding.severity === "defect").forEach((finding, index) => {
     const id = `${prefix}-${index + 1}`;
-    const defect: Defect = { id, concept: finding.concept, finding: { ...finding, id }, status: "open" };
+    const defect: Defect = { id, concept: finding.concept, finding: { ...finding, id }, status: "open", ...(source ? { source } : {}) };
     state.defects[id] = defect;
     added.push(defect);
   });
@@ -320,6 +360,24 @@ export function escalationReasons(review: ConceptReview, facts: ConceptFacts, cl
   return reasons;
 }
 
+/**
+ * What a second reviewer looks at hardest, from the escalation reasons, without
+ * the first review's verdict, confidence, findings or their count.
+ */
+export function escalationFocus(reasons: readonly string[]): string[] {
+  const focus = new Set<string>();
+  for (const reason of reasons) {
+    if (reason.includes("conditions, a formal result or the definition")) focus.add("conditions, formal results with all their conditions, and the definition against every paragraph");
+    else if (reason.includes("another domain")) focus.add("boundaries with other domains' concepts");
+    else if (reason === "a plan claim was corrected") focus.add("the plan claims corrected before drafting");
+    else if (/^\d+ placements$/.test(reason)) focus.add("one text true at every placement");
+    else if (reason === "emerging domain") focus.add("accuracy in an emerging domain");
+    else if (reason === "a claim not fully covered") focus.add("each claim's mechanism, conditions and failure or confusion");
+  }
+  focus.add("technical correctness of every sentence");
+  return [...focus];
+}
+
 /** Signals the resolutions do not answer. */
 export const unresolved = (signalIds: readonly string[], resolutions: readonly Resolution[]) => signalIds.filter((id) => !resolutions.some((r) => r.id === id && r.resolution.trim()));
 
@@ -368,17 +426,18 @@ export function finalizeCommands(slice: string, groups: RunGroups, dirOf: (group
 
 const L2 = "npm run -s map:author -- l2";
 /**
- * The tools a session may use (defense in depth; the driver's integrity guard
- * is the boundary). Reading only the repository's sources, docs, prompts and
- * the batch's own files; read-only inspection and validation; writing only the
- * role's own JSON file. No session edits TypeScript, records anything,
- * authorizes, delivers, writes territory, uses git or runs arbitrary code.
- * `dir` is the batch's (or audit's) directory, `out` the session's output file.
+ * The tools a session may use (prevention: the driver's guard only detects
+ * and undoes changes after a session). Reading only the repository's
+ * sources, docs and prompts, the session's own pack and its own output;
+ * read-only inspection and validation; writing only the role's own JSON file.
+ * No session sees another session's output or the batch state, edits
+ * TypeScript, records anything, authorizes, delivers, writes territory, uses
+ * git or runs arbitrary code.
  */
-export function allowedTools(role: Role, group: string, dir: string, out?: string): string[] {
-  const reads = ["Read(src/**)", "Read(docs/**)", "Read(scripts/l2v2/prompts/**)", `Read(${dir}/**)`];
+export function allowedTools(role: Role, group: string, files: { pack: string; out?: string }): string[] {
+  const reads = ["Read(src/**)", "Read(docs/**)", "Read(scripts/l2v2/prompts/**)", `Read(${files.pack})`, ...(files.out ? [`Read(${files.out})`] : [])];
   const inspect = [`Bash(${L2} context:*)`, `Bash(${L2} territory ${group})`, `Bash(${L2} signals:*)`, `Bash(${L2} group-signals ${group})`, "Bash(npm run -s map:inspect --:*)"];
-  const writes = out ? [`Write(${out})`, `Edit(${out})`] : [];
+  const writes = files.out ? [`Write(${files.out})`, `Edit(${files.out})`] : [];
   switch (role) {
     case "plan": {
       // The group file is JSON: the plan is data, read with JSON.parse.
@@ -391,17 +450,28 @@ export function allowedTools(role: Role, group: string, dir: string, out?: strin
       return [...reads, ...writes, ...inspect];
   }
 }
+
+/** Never written by a session: executable and configuration surfaces, git, Claude Code, dependencies, run state and authorizations. */
+const PROTECTED_WRITES = [
+  "**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts", "**/*.js", "**/*.mjs", "**/*.cjs", "**/*.sh", "**/package.json", "**/package-lock.json", "**/tsconfig*.json",
+  "**/.npmrc", "**/.nvmrc", "**/.envrc", "**/.env*", "**/.dev.vars*", "**/node_modules/**",
+  "**/.git", "**/.git/**", "**/.gitignore", "**/.gitattributes", "**/.gitmodules", "**/.husky/**", "**/.claude/**", "**/.mcp.json", "**/CLAUDE.md", "**/AGENTS.md",
+  ".map-authoring/*.json", ".map-authoring/l2/**", ".map-authoring/campaign/**", ".map-authoring/representation/**", ".map-authoring/l2v2/*.json", ".map-authoring/l2v2/*.jsonl", ".map-authoring/l2v2/lock",
+  "**/state.json", "**/sample.json", "**/parked-records.json", "**/audit-*.json", "**/group-audit.json", "**/pack.md", "**/*.pack.md",
+  "~/.claude/**", "~/.claude.json", "~/.gitconfig", "~/.npmrc", "~/.ssh/**", "~/.config/**", "~/.bashrc", "~/.zshrc", "~/.zshenv", "~/.profile", "//etc/**",
+];
 /**
- * Denied whatever the allow list says: local secrets and credentials, and
- * editing anything executable. (The repository lives under the home
- * directory, so the home directory itself is never denied wholesale.)
+ * Denied whatever the allow list says: local secrets, credentials, git
+ * internals, and writing any protected path. (The repository lives under the
+ * home directory, so the home directory itself is never denied wholesale.)
  */
 export const DENIED_TOOLS: readonly string[] = [
-  "Read(**/.dev.vars*)", "Read(**/.env*)", "Read(**/*.pem)", "Read(**/*.key)", "Read(**/.npmrc)", "Read(**/.netrc)",
-  "Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(~/.config/**)", "Read(~/.claude/**)", "Read(~/.gnupg/**)", "Read(~/.git-credentials)", "Read(//etc/**)",
-  "Edit(**/*.ts)", "Edit(**/*.tsx)", "Edit(**/*.mts)", "Edit(**/*.cts)", "Edit(**/*.js)", "Edit(**/*.mjs)", "Edit(**/*.cjs)", "Edit(**/package.json)", "Edit(**/.npmrc)", "Edit(**/node_modules/**)",
-  "Write(**/*.ts)", "Write(**/*.tsx)", "Write(**/*.mts)", "Write(**/*.cts)", "Write(**/*.js)", "Write(**/*.mjs)", "Write(**/*.cjs)", "Write(**/package.json)", "Write(**/.npmrc)", "Write(**/node_modules/**)",
+  "Read(**/.dev.vars*)", "Read(**/.env*)", "Read(**/*.pem)", "Read(**/*.key)", "Read(**/.npmrc)", "Read(**/.netrc)", "Read(**/.git/**)",
+  "Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(~/.config/**)", "Read(~/.claude/**)", "Read(~/.claude.json)", "Read(~/.gnupg/**)", "Read(~/.git-credentials)", "Read(//etc/**)",
+  ...PROTECTED_WRITES.flatMap((path) => [`Edit(${path})`, `Write(${path})`]),
 ];
+/** A role's denials: a deep auditor also never reads the group files, which carry earlier audits' verdicts. */
+export const deniedTools = (role: Role): readonly string[] => (role === "deep-audit" ? [...DENIED_TOOLS, "Read(src/lib/map/authoring/l2/groups/**)"] : DENIED_TOOLS);
 
 // ---------------------------------------------------------------- metrics and stop rules
 
@@ -415,12 +485,17 @@ export type LedgerEntry =
   /** A session that failed (timeout, usage limit, no JSON): its usage is unknown and never invented. */
   | { kind: "session-failed"; at: string; slice: string; group: string; role: Role; reason: string }
   | { kind: "batch"; at: string; slice: string; group: string; accepted: number; parked: number; escalated: number; defects: number }
-  /** campaign: false for baselines, which never count toward the campaign's stop rules. */
-  | { kind: "deep-audit"; at: string; label: string; concept: string; substantive: number; campaign: boolean }
+  /** campaign: false for baselines, which never count toward the campaign's stop rules; fingerprint: the record audited, when it is a v2 record. */
+  | { kind: "deep-audit"; at: string; label: string; concept: string; substantive: number; campaign: boolean; fingerprint?: string }
   | { kind: "meter"; at: string; percent: number; note?: string };
 
-export type Budget = { perConcept: number; stopFactor: number; maxEscalationRate: number; meterPercentPerConcept: number; sampleWindow: number; sampleMaxDefective: number; samplePerSlice: number };
-export const DEFAULT_BUDGET: Budget = { perConcept: 122_000, stopFactor: 1.3, maxEscalationRate: 0.4, meterPercentPerConcept: 0.109, sampleWindow: 20, sampleMaxDefective: 8, samplePerSlice: 4 };
+/**
+ * Stop-rule thresholds and per-batch operational limits. Limits count
+ * sessions and wall-clock time, never tokens: usage the CLI did not report
+ * stays unknown, and --max-budget-usd does not bound a subscription's quota.
+ */
+export type Budget = { perConcept: number; stopFactor: number; maxEscalationRate: number; meterPercentPerConcept: number; sampleWindow: number; sampleMaxDefective: number; samplePerSlice: number; maxSessionsPerBatch: number; maxBatchMinutes: number };
+export const DEFAULT_BUDGET: Budget = { perConcept: 122_000, stopFactor: 1.3, maxEscalationRate: 0.4, meterPercentPerConcept: 0.109, sampleWindow: 20, sampleMaxDefective: 8, samplePerSlice: 4, maxSessionsPerBatch: 20, maxBatchMinutes: 240 };
 
 export type BatchMetrics = { slice: string; group: string; weighted: number; minutes: number; failed: number; unmeasured: number; accepted: number; parked: number; escalated: number; defects: number };
 
@@ -499,14 +574,15 @@ export function sampleProblems(sampled: SliceSample | undefined, acceptedAgain: 
 }
 
 /**
- * Concepts a deep audit found substantive defects in at or after their last
- * acceptance (sample, pilot or any other label, fixed or not): they may not
- * ship until repaired, verified and accepted again. [] when none.
+ * Concepts with a known defect: a deep audit (sample, pilot or any other
+ * label, fixed or not) found substantive defects at or after their last
+ * acceptance, or in the very record that was accepted. They may not ship
+ * until repaired, verified and accepted again. [] when none.
  */
-export function knownDefectProblems(ledger: readonly LedgerEntry[], acceptedAt: ReadonlyMap<string, string>): string[] {
+export function knownDefectProblems(ledger: readonly LedgerEntry[], accepted: ReadonlyMap<string, { at: string; fingerprint?: string }>): string[] {
   const problems: string[] = [];
-  for (const [concept, at] of acceptedAt) {
-    const found = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.concept === concept && e.substantive > 0 && e.at >= at);
+  for (const [concept, { at, fingerprint }] of accepted) {
+    const found = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.concept === concept && e.substantive > 0 && (e.at >= at || (!!e.fingerprint && e.fingerprint === fingerprint)));
     if (found.length) problems.push(`${concept}: substantive defects found by deep audit ${found.map((e) => `"${e.label}" (${e.substantive}, ${e.at})`).join(", ")}, not repaired and accepted again since`);
   }
   return problems;

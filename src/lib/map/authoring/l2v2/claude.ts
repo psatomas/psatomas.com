@@ -19,7 +19,7 @@ export class SessionError extends Error {
 
 export type ClaudeOptions = { bin: string; cwd: string; timeoutMs: number; model?: string; maxBudgetUsd?: string };
 
-export function claudeArgs(options: ClaudeOptions, tools: readonly string[], resume?: string): string[] {
+export function claudeArgs(options: ClaudeOptions, tools: readonly string[], resume?: string, denied: readonly string[] = DENIED_TOOLS): string[] {
   return [
     "-p",
     "--output-format", "json",
@@ -27,16 +27,16 @@ export function claudeArgs(options: ClaudeOptions, tools: readonly string[], res
     "--permission-mode", "dontAsk",
     "--allowedTools", tools.join(","),
     // Denials win over any allowance: secrets, credentials and executable files.
-    "--disallowedTools", DENIED_TOOLS.join(","),
+    "--disallowedTools", denied.join(","),
     ...(resume ? ["--resume", resume] : []),
     ...(options.model ? ["--model", options.model] : []),
     ...(options.maxBudgetUsd ? ["--max-budget-usd", options.maxBudgetUsd] : []),
   ];
 }
 
-export function runClaude(options: ClaudeOptions, prompt: string, tools: readonly string[], resume?: string): Promise<SessionResult> {
+export function runClaude(options: ClaudeOptions, prompt: string, tools: readonly string[], resume?: string, denied: readonly string[] = DENIED_TOOLS): Promise<SessionResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(options.bin, claudeArgs(options, tools, resume), { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(options.bin, claudeArgs(options, tools, resume, denied), { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"] });
     let out = "";
     let err = "";
     let timedOut = false;

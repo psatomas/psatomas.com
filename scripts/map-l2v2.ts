@@ -10,21 +10,26 @@
 //   npm run map:l2v2 -- report                                tokens, time, defects and acceptance per batch
 //   npm run map:l2v2 -- finalize --slice <id>                 record the v1 steps (scoped to the slice), then `l2 run --until diff`
 //
-// Configuration: .map-authoring/l2v2/config.json {model, timeoutMs, maxBudgetUsd} and budget.json (stop-rule thresholds).
+// Configuration: .map-authoring/l2v2/config.json {model, timeoutMs, maxBudgetUsd} and budget.json (stop-rule thresholds and
+// per-batch limits: maxSessionsPerBatch, maxBatchMinutes). maxBudgetUsd does not bound a subscription's quota: the limits and the meter do.
 // It never pushes, opens PRs, merges or deploys: delivery stays `map:author -- l2 run --domain <slice>`.
 // data.ts is imported only after the v2 records in it are checked, as text, against their validated drafts.
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { recordSpans } from "../src/lib/map/authoring/l2/campaign.ts";
 import {
-  allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason, weighted,
+  allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason,
   type BatchState, type BatchStatus, type Budget, type Finding, type SliceSample,
 } from "../src/lib/map/authoring/l2v2/core.ts";
 import { runClaude } from "../src/lib/map/authoring/l2v2/claude.ts";
-import { acquireLock, appendLedger, batchDir, DATA, loadBatch, loadLedger, PROMPTS, REGISTRY, repairAfterAudit, runBatch, saveBatch, V2_ROOT, type Env } from "../src/lib/map/authoring/l2v2/driver.ts";
-import { recordFingerprint, recordsInPlaceProblems } from "../src/lib/map/authoring/l2v2/records.ts";
+import {
+  acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, loadBatch, loadLedger, PROMPTS, REGISTRY, repairAfterAudit, runBatch, saveBatch, V2_ROOT, type Env, type Limits,
+} from "../src/lib/map/authoring/l2v2/driver.ts";
+import { recordFingerprint, recordPlacement, recordsInPlaceProblems } from "../src/lib/map/authoring/l2v2/records.ts";
+import { gitChangedPaths, gitHeadEntry, gitSurfaces, run } from "../src/lib/map/authoring/l2v2/shell.ts";
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -39,15 +44,14 @@ const fail = (message: string, code = 2): never => {
 const now = () => new Date().toISOString();
 const FOCUSED_TESTS = ["src/lib/map/map.test.ts", "src/lib/map/authoring/context.test.ts", "src/components/map/explorer-model.test.ts"];
 
-function sh(command: string, argv: readonly string[]): { ok: boolean; out: string } {
-  const result = spawnSync(command, argv, { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  return { ok: result.status === 0, out: `${result.stdout ?? ""}${result.stderr ?? ""}` };
-}
+/** stdout is data; stderr only ever appears in messages. */
+const sh = (command: string, argv: readonly string[]) => run(command, argv, ROOT);
+const output = (result: { stdout: string; stderr: string }) => `${result.stderr}\n${result.stdout}`.trim();
 const author = (...argv: string[]) => sh("npm", ["run", "-s", "map:author", "--", "l2", ...argv]);
 const json = <T>(argv: string[]): T => {
   const result = author(...argv, "--json");
-  if (!result.ok) throw new Error(`l2 ${argv.join(" ")} failed: ${result.out.slice(-1000)}`);
-  return JSON.parse(result.out) as T;
+  if (!result.ok) throw new Error(`l2 ${argv.join(" ")} failed: ${output(result).slice(-1000)}`);
+  return JSON.parse(result.stdout) as T;
 };
 const readJson = <T>(path: string, fallback: T): T => (existsSync(join(ROOT, path)) ? (JSON.parse(readFileSync(join(ROOT, path), "utf8")) as T) : fallback);
 
@@ -58,10 +62,11 @@ function runOf(slice: string): RunFile {
   if (!existsSync(join(ROOT, path))) fail(`no v1 run for ${slice}: start it with \`npm run map:author -- l2 start --slice ${slice}\` (that keeps every v1 start safeguard)`);
   return readJson<RunFile>(path, undefined as never);
 }
-const baseRegistry = (base: string) => new Set([...sh("git", ["show", `${base}:src/lib/map/authoring/content-registry.ts`]).out.matchAll(/^ {2}"([a-z0-9-]+)",$/gm)].map((m) => m[1]));
+const baseRegistry = (base: string) => new Set([...sh("git", ["show", `${base}:src/lib/map/authoring/content-registry.ts`]).stdout.matchAll(/^ {2}"([a-z0-9-]+)",$/gm)].map((m) => m[1]));
 const budget = (): Budget => ({ ...DEFAULT_BUDGET, ...readJson<Partial<Budget>>(join(V2_ROOT, "budget.json"), {}) });
 type Config = { model: string; timeoutMs: number; maxBudgetUsd?: string };
 const config = (): Config => ({ model: "claude-opus-5-5", timeoutMs: 30 * 60 * 1000, ...readJson<Partial<Config>>(join(V2_ROOT, "config.json"), {}) });
+const limits = (): Limits => ({ sessions: budget().maxSessionsPerBatch, minutes: budget().maxBatchMinutes, sessionTimeoutMs: config().timeoutMs });
 /** A domain's position among the roots; data.ts is imported lazily, once its v2 records have been checked. */
 async function domainOrder(domain: string) {
   const { mapKnowledge } = await import("../src/lib/map/data.ts");
@@ -72,63 +77,81 @@ async function domainOrder(domain: string) {
 function localSecrets(): string[] {
   const files = readdirSync(ROOT).filter((name) => name.startsWith(".env") || name.startsWith(".dev.vars"));
   return files.flatMap((name) =>
-    readFileSync(join(ROOT, name), "utf8").split("\n").map((line) => line.match(/^\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*(.*?)\s*$/)?.[1]?.replace(/^(["'])(.*)\1$/, "$2") ?? "").filter((value) => value.length >= 8),
+    readFileSync(join(ROOT, name), "utf8").split("\n").map((line) => {
+      const value = line.match(/^\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*(.*?)\s*$/)?.[1] ?? "";
+      const quoted = value.match(/^(["'])(.*)\1$/);
+      return quoted ? quoted[2] : value.replace(/\s+#.*$/, "");
+    }).filter((value) => value.length >= 8),
   );
+}
+/**
+ * Dependencies' executables and manifests, watched by metadata only (never
+ * the whole tree): node_modules/.bin, which npm puts first on every script's
+ * PATH, the installed lockfile, and every top-level package's manifest.
+ */
+function dependencyMetadata(): string[] {
+  const modules = join(ROOT, "node_modules");
+  if (!existsSync(modules)) return [];
+  const list = (dir: string) => {
+    try {
+      return readdirSync(dir);
+    } catch {
+      return [];
+    }
+  };
+  const packages = list(modules).filter((name) => !name.startsWith(".")).flatMap((name) => (name.startsWith("@") ? list(join(modules, name)).map((scoped) => join(modules, name, scoped)) : [join(modules, name)]));
+  return [join(modules, ".bin"), join(modules, ".package-lock.json"), ...packages.map((dir) => join(dir, "package.json"))];
 }
 
 /** The real environment: headless Claude Code sessions, git, and the v1 validators. */
 const env: Env = {
   root: ROOT,
   now,
+  clock: () => performance.now(),
   token: () => randomUUID(),
-  session: ({ prompt, resume, tools }) => {
+  session: ({ prompt, resume, tools, denied }) => {
     const c = config();
-    return runClaude({ bin: process.env.L2V2_CLAUDE ?? "claude", cwd: ROOT, timeoutMs: c.timeoutMs, model: c.model, maxBudgetUsd: c.maxBudgetUsd }, prompt, tools, resume);
+    return runClaude({ bin: process.env.L2V2_CLAUDE ?? "claude", cwd: ROOT, timeoutMs: c.timeoutMs, model: c.model, maxBudgetUsd: c.maxBudgetUsd }, prompt, tools, resume, denied);
   },
   async check(group, withRecords) {
     const problems: string[] = [];
     if (withRecords) {
       const generated = sh("npm", ["run", "-s", "map:generate"]);
-      if (!generated.ok) problems.push(`map:generate failed: ${generated.out.slice(-500)}`);
+      if (!generated.ok) problems.push(`map:generate failed: ${output(generated).slice(-500)}`);
     }
     const [result] = json<{ problems: string[]; stale: string[] }[]>(["check", "--group", group]);
     problems.push(...(result?.problems ?? []), ...(result?.stale ?? []).map((entry) => `stale: ${entry}`));
     if (withRecords && !problems.length) {
       const tests = sh("node", ["--test", ...FOCUSED_TESTS]);
-      if (!tests.ok) problems.push(`focused tests fail: ${tests.out.split("\n").filter((line) => /not ok|Error|expected|actual/.test(line)).slice(0, 8).join(" | ")}`);
+      if (!tests.ok) problems.push(`focused tests fail: ${output(tests).split("\n").filter((line) => /not ok|Error|expected|actual/.test(line)).slice(0, 8).join(" | ")}`);
     }
     return problems;
   },
   async ensureSkeleton(group) {
     if (existsSync(join(ROOT, "src/lib/map/authoring/l2/groups", `${group}.json`))) return [];
     const result = author("territory", group, "--write");
-    return result.ok ? [] : [result.out.slice(-500)];
+    return result.ok ? [] : [output(result).slice(-500)];
   },
   signals: async (conceptId) => json<{ id: string; detail: string }[]>(["signals", conceptId]).map(({ id, detail }) => ({ id, detail })),
   groupSignals: async (group) => json<{ id: string; detail: string }[]>(["group-signals", group]).map(({ id, detail }) => ({ id, detail })),
-  context: async (conceptId) => author("context", conceptId, "--json").out.trim(),
-  territory: async (group) => author("territory", group).out.trim(),
+  context: async (conceptId) => author("context", conceptId, "--json").stdout.trim(),
+  territory: async (group) => author("territory", group).stdout.trim(),
   async facts(conceptId) {
     const context = json<{ placements: unknown[]; owner: { domain: string } }>(["context", conceptId]);
     return { placements: context.placements.length, domainOrder: await domainOrder(context.owner.domain) };
   },
-  async changedPaths() {
-    const entries = sh("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all"]).out.split("\0").filter(Boolean);
-    const paths: string[] = [];
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i];
-      paths.push(entry.slice(3));
-      if (entry[0] === "R" || entry[0] === "C") paths.push(entries[++i]);
-    }
-    // Nested worktrees are separate checkouts, listed as directories: never part of a batch.
-    return paths.filter((path) => !path.startsWith(".worktrees/"));
-  },
-  async headContent(path) {
-    return sh("git", ["cat-file", "-e", `HEAD:${path}`]).ok ? sh("git", ["show", `HEAD:${path}`]).out : undefined;
-  },
+  changedPaths: async () => gitChangedPaths(ROOT),
+  headContent: async (path) => gitHeadEntry(ROOT, path),
+  surfaces: async () => ({
+    content: [...gitSurfaces(ROOT), join(ROOT, ".claude"), join(ROOT, ".mcp.json"), join(ROOT, ".npmrc"), join(homedir(), ".gitconfig"), join(homedir(), ".npmrc"), join(homedir(), ".claude", "settings.json")],
+    metadata: dependencyMetadata(),
+  }),
   secrets: async () => localSecrets(),
 };
 
+/** Every v2 batch of every slice. */
+const allBatches = (): BatchState[] =>
+  existsSync(join(ROOT, V2_ROOT)) ? readdirSync(join(ROOT, V2_ROOT), { withFileTypes: true }).filter((e) => e.isDirectory() && e.name !== "audits").flatMap((e) => sliceBatches(e.name)) : [];
 /** Every v2 batch of a slice. */
 function sliceBatches(slice: string): BatchState[] {
   const dir = join(ROOT, V2_ROOT, slice);
@@ -148,7 +171,8 @@ function treeProblems(slice: string): string[] {
     if (!state.records || ["pending", "planned", "plan-reviewed"].includes(state.status) || (state.status === "stopped" && ["pending", "planned", "plan-reviewed"].includes(state.stop!.status))) continue;
     const live = state.concepts.filter((id) => state.records![id] && state.conceptStates[id].state !== "parked");
     problems.push(...recordsInPlaceProblems(data, registry, live.map((id) => state.records![id])).map((p) => `${state.group}: ${p}`));
-    for (const id of live) {
+    // An invalid record is reported above and never rendered or fingerprinted.
+    for (const id of live.filter((concept) => recordPlacement(data, state.records![concept]) !== "invalid")) {
       const accepted = state.conceptStates[id].accepted;
       if (state.conceptStates[id].state === "accepted" && (!accepted || accepted.fingerprint !== recordFingerprint(state.records[id]))) problems.push(`${state.group}: ${id} is not the record that was accepted`);
     }
@@ -178,7 +202,7 @@ async function commandRun() {
   const slice = flag("--slice") ?? fail("run needs --slice <id>");
   requireTree(slice);
   const run = runOf(slice);
-  const branch = sh("git", ["rev-parse", "--abbrev-ref", "HEAD"]).out.trim();
+  const branch = sh("git", ["rev-parse", "--abbrev-ref", "HEAD"]).stdout.trim();
   if (branch !== run.branch) fail(`the run is on ${run.branch}; this checkout is on ${branch}`);
   if (run.stage !== "author") fail(`the v1 run is at stage ${run.stage}; v2 authors only while it is at "author"`);
   const only = flag("--groups")?.split(",");
@@ -190,7 +214,7 @@ async function commandRun() {
     const reason = stopReason(loadLedger(ROOT), budget());
     if (reason) fail(`stop rule: ${reason}`, 3);
     console.log(`batch ${group}: ${concepts.join(", ")}`);
-    const state = await runBatch(env, { slice, group, concepts, protectedIds: plan.protectedIds });
+    const state = await runBatch(env, { slice, group, concepts, protectedIds: plan.protectedIds, limits: limits() });
     console.log(`  -> ${state.status}${state.stop ? `: ${state.stop.reason}` : ""}`);
     if (state.status !== "accepted") process.exit(3);
   }
@@ -237,30 +261,31 @@ type DeepAudit = { run: string; substantive: Omit<Finding, "concept" | "severity
 async function deepAudit(concept: string, label: string, campaign: boolean, ref?: string): Promise<{ audit: DeepAudit; sessionId: string }> {
   const dir = join(V2_ROOT, "audits", label);
   mkdirSync(join(ROOT, dir), { recursive: true });
-  const fileAt = (path: string) => (ref ? sh("git", ["show", `${ref}:${path}`]).out : readFileSync(join(ROOT, path), "utf8"));
-  const groupFiles = ref ? sh("git", ["ls-tree", "--name-only", ref, "src/lib/map/authoring/l2/groups/"]).out.split("\n").filter(Boolean) : readdirSync(join(ROOT, "src/lib/map/authoring/l2/groups")).map((f) => `src/lib/map/authoring/l2/groups/${f}`);
+  const fileAt = (path: string) => (ref ? sh("git", ["show", `${ref}:${path}`]).stdout : readFileSync(join(ROOT, path), "utf8"));
+  const groupFiles = ref ? sh("git", ["ls-tree", "--name-only", ref, "src/lib/map/authoring/l2/groups/"]).stdout.split("\n").filter(Boolean) : readdirSync(join(ROOT, "src/lib/map/authoring/l2/groups")).map((f) => `src/lib/map/authoring/l2/groups/${f}`);
   const data = fileAt(DATA);
   const span = recordSpans(data).get(concept) ?? fail(`no record for ${concept}${ref ? ` at ${ref}` : ""}`);
   const record = data.split("\n").slice(span.start, span.end + 1).join("\n");
-  const file = groupFiles.map((path) => JSON.parse(fileAt(path)) as { members: { conceptId: string; standing: string }[]; splits?: unknown; concepts?: Record<string, unknown> }).find((g) => g.members.some((m) => m.conceptId === concept && m.standing === "owned"));
+  const file = groupFiles.map((path) => JSON.parse(fileAt(path)) as { members: { conceptId: string; standing: string }[]; splits?: unknown; concepts?: Record<string, { model?: unknown; design?: unknown }> }).find((g) => g.members.some((m) => m.conceptId === concept && m.standing === "owned"));
   // The whole plan (siblings' claims, reservations, splits) as of the same commit, so a baseline is judged with the pilot's context.
-  const pack = [`# Deep audit: ${concept}${ref ? ` (as of ${ref})` : ""}`, "", "## Record (TypeScript literal as stored)", "```ts", record, "```", "", "## Group plan and this concept's accepted work", "```json", JSON.stringify({ members: file?.members, splits: file?.splits, work: file?.concepts?.[concept] }, null, 2), "```"].join("\n");
-  writeFileSync(join(ROOT, dir, `${concept}.pack.md`), `${pack}\n`);
-  const out = join(dir, `${concept}.json`);
-  writeFileSync(join(ROOT, out), "");
+  // The concept's model and design only: never an earlier audit's verdict.
+  const work = file?.concepts?.[concept];
+  const pack = [`# Deep audit: ${concept}${ref ? ` (as of ${ref})` : ""}`, "", "## Record (TypeScript literal as stored)", "```ts", record, "```", "", "## Group plan and this concept's accepted work", "```json", JSON.stringify({ members: file?.members, splits: file?.splits, work: work && { model: work.model, design: work.design } }, null, 2), "```"].join("\n");
+  const packPath = join(dir, `${concept}.pack.md`);
+  writeFileSync(join(ROOT, packPath), `${pack}\n`);
+  const out = join(dir, `${concept}.audit.json`);
+  rmSync(join(ROOT, out), { force: true });
   const run = randomUUID();
-  const vars = { CONCEPT: concept, PACK: join(dir, `${concept}.pack.md`), OUT: out, RUN: run, RUBRIC: join(PROMPTS, "rubric.md"), RULES: join(PROMPTS, "rules.md") };
+  const vars = { CONCEPT: concept, PACK: packPath, OUT: out, RUN: run, RUBRIC: join(PROMPTS, "rubric.md"), RULES: join(PROMPTS, "rules.md") };
   let text = readFileSync(join(ROOT, PROMPTS, "deep-audit.md"), "utf8");
   for (const [key, value] of Object.entries(vars)) text = text.split(`{{${key}}}`).join(value);
-  const tools = allowedTools("deep-audit", "", dir, out);
+  // Under the same guard as every batch session: only its output file may change; the session's usage is recorded either way.
   let result;
   try {
-    result = await env.session({ role: "deep-audit", prompt: text, tools });
+    result = await guardedSession(env, { role: "deep-audit", prompt: text, tools: allowedTools("deep-audit", "", { pack: packPath, out }), denied: deniedTools("deep-audit"), tree: [DATA, REGISTRY], allowed: new Set(), out, slice: `audit:${label}`, group: concept });
   } catch (error) {
-    appendLedger(ROOT, { kind: "session-failed", at: now(), slice: `audit:${label}`, group: concept, role: "deep-audit", reason: (error as Error).message.slice(0, 300) });
-    throw error;
+    return fail(`${concept}: the deep audit ${error instanceof GuardError ? "changed what it may not and was rolled back" : "failed"}: ${(error as Error).message}`, 1);
   }
-  appendLedger(ROOT, { kind: "session", at: now(), slice: `audit:${label}`, group: concept, role: "deep-audit", sessionId: result.sessionId, durationMs: result.durationMs, turns: result.turns, usage: result.usage, weighted: result.usage ? weighted(result.usage) : null });
   let audit: DeepAudit | undefined;
   try {
     audit = parseJson(readFileSync(join(ROOT, out), "utf8")) as DeepAudit;
@@ -268,7 +293,10 @@ async function deepAudit(concept: string, label: string, campaign: boolean, ref?
     audit = undefined;
   }
   if (!audit || audit.run !== run || !Array.isArray(audit.substantive)) fail(`${concept}: the audit wrote no usable ${out} for this run`, 1);
-  appendLedger(ROOT, { kind: "deep-audit", at: now(), label, concept, substantive: audit!.substantive.length, campaign });
+  // The audited record's fingerprint, when it is a v2 record in place: a known defect stays bound to that text.
+  const v2 = ref ? undefined : allBatches().find((state) => state.records?.[concept]);
+  const fingerprint = v2 && recordPlacement(data, v2.records![concept]) === "in-place" ? recordFingerprint(v2.records![concept]) : undefined;
+  appendLedger(ROOT, { kind: "deep-audit", at: now(), label, concept, substantive: audit!.substantive.length, campaign, ...(fingerprint ? { fingerprint } : {}) });
   console.log(`${concept} [${label}]: ${audit!.substantive.length} substantive defect(s)`);
   return { audit: audit!, sessionId: result.sessionId };
 }
@@ -279,7 +307,7 @@ async function repairFromAudit(slice: string, concept: string, label: string, au
   const run = runOf(slice);
   const plan = planBatches(run.l2.slice.groups, run.l2.steps, baseRegistry(run.baseSha));
   const state = loadBatch(ROOT, slice, group)!;
-  const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, concept, findings: audit.substantive, auditSession: sessionId, label });
+  const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, limits: limits(), concept, findings: audit.substantive, auditSession: sessionId, label });
   console.log(`  repair: ${after.status === "accepted" ? "applied, verified, accepted again" : `batch ${after.status}${after.stop ? `: ${after.stop.reason}` : ""}`}`);
   return after.status === "accepted";
 }
@@ -360,22 +388,22 @@ async function commandFinalize() {
   const sampleIssues = sampleProblems(readJson<SliceSample | undefined>(join(V2_ROOT, slice, "sample.json"), undefined), (id) => accepted.has(id));
   if (sampleIssues.length) fail(`the slice's measurement sample is not settled: ${sampleIssues.join("; ")}`);
   // No known defect ships: any deep audit (sample, pilot or other) since a concept's last acceptance must have found none.
-  const acceptedAt = new Map(sliceBatches(slice).flatMap((state) => state.concepts.filter((id) => accepted.has(id)).map((id) => [id, state.conceptStates[id].accepted?.at ?? ""] as const)));
-  const known = knownDefectProblems(loadLedger(ROOT), acceptedAt);
+  const acceptedRecords = new Map(sliceBatches(slice).flatMap((state) => state.concepts.filter((id) => accepted.has(id)).map((id) => [id, { at: state.conceptStates[id].accepted?.at ?? "", fingerprint: state.conceptStates[id].accepted?.fingerprint }] as const)));
+  const known = knownDefectProblems(loadLedger(ROOT), acceptedRecords);
   if (known.length) fail(`known defects must be repaired first (\`audit --label <l> --concepts <ids> --slice ${slice} --fix\`):\n- ${known.join("\n- ")}`, 3);
   // Exactly the accepted records, as accepted: an edit after acceptance is never recorded unreviewed.
   requireTree(slice);
   for (const { key, argv } of finalizeCommands(slice, plan.batches, (group) => batchDir(slice, group))) {
     if (key in runOf(slice).l2.steps) continue;
     const result = author(...argv);
-    if (!result.ok) fail(`l2 ${argv.join(" ")} refused:\n${result.out.slice(-1500)}`, 1);
+    if (!result.ok) fail(`l2 ${argv.join(" ")} refused:\n${output(result).slice(-1500)}`, 1);
     console.log(`recorded ${key}`);
   }
   if (runOf(slice).stage === "audit") {
     const summary = batchMetrics(loadLedger(ROOT)).filter((m) => m.slice === slice);
     const note = `v2 pipeline: ${summary.reduce((s, m) => s + m.accepted, 0)} concepts in ${summary.length} batches; ${summary.reduce((s, m) => s + m.defects, 0)} defects tracked to verified or withdrawn; ${summary.reduce((s, m) => s + m.escalated, 0)} escalated to a second review`;
     const completed = author("complete", "audit", "--note", note, "--domain", slice);
-    if (!completed.ok) fail(`l2 complete audit refused:\n${completed.out.slice(-1500)}`, 1);
+    if (!completed.ok) fail(`l2 complete audit refused:\n${output(completed).slice(-1500)}`, 1);
   }
   const gates = spawnSync("npm", ["run", "map:author", "--", "l2", "run", "--until", "diff", "--domain", slice], { cwd: ROOT, stdio: "inherit" });
   if (gates.status !== 0) process.exit(gates.status ?? 1);
