@@ -17,6 +17,7 @@ import { acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, 
 import { recordFingerprint, recordPlacement, recordsInPlaceProblems, renderRecord, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
 import { gitChangedPaths, gitHeadEntry, gitSurfaces, run as runCommand } from "./shell.ts";
 import { withoutRecords } from "../l2/campaign.ts";
+import { sandboxProblems } from "./sandbox.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import type { MapContentBlock } from "../../types.ts";
 import type { SessionResult } from "./claude.ts";
@@ -541,7 +542,7 @@ test("a draft session cannot inject code: TypeScript written directly is a viola
   env.check = async () => (seen.push(readFileSync(join(root, DATA), "utf8")), []);
   const state = await runBatch(env, input);
   assert.equal(state.status, "stopped");
-  assert.match(state.stop!.reason, /draft changed what it may not \(rolled back\): .*src\/lib\/map\/data\.ts/);
+  assert.match(state.stop!.reason, /draft changed what it may not \(rolled back; nothing of it was used\): .*src\/lib\/map\/data\.ts/);
   assert.equal(readFileSync(join(root, DATA), "utf8"), before);
   assert.ok(seen.every((text) => !text.includes("child_process")), "no check ever ran on the injected source");
 });
@@ -676,7 +677,7 @@ test("the first deep-audit session is guarded: authorization, batch and sample s
   const guarded = [".map-authoring/campaign.json", `${batchDir("s", "g")}/state.json`, ".map-authoring/l2v2/s/sample.json", ".map-authoring/l2v2/ledger.jsonl", DATA, REGISTRY];
   const before = Object.fromEntries(guarded.map((path) => [path, readFileSync(join(root, path), "utf8")]));
   const out = ".map-authoring/l2v2/audits/pilot/y.audit.json";
-  const request = { role: "deep-audit" as const, prompt: "audit y", tools: [], denied: [], tree: [DATA, REGISTRY], allowed: new Set<string>(), out, slice: "audit:pilot", group: "y" };
+  const request = { role: "deep-audit" as const, prompt: "audit y", tools: [], denied: [], files: { pack: ".map-authoring/l2v2/audits/pilot/y.pack.md", out }, tree: [DATA, REGISTRY], allowed: new Set<string>(), out, slice: "audit:pilot", group: "y" };
   const tamper = fakeEnv(root, { "deep-audit": (r) => (mkdirSync(join(r, ".map-authoring/l2v2/audits/pilot"), { recursive: true }), writeFileSync(join(r, out), "{}"), guarded.forEach((path) => writeFileSync(join(r, path), "tampered")), writeFileSync(join(r, ".git/hooks/post-merge"), "x")) });
   await assert.rejects(guardedSession(tamper, request), (error: unknown) => error instanceof GuardError && [...guarded, ".git/hooks/post-merge"].every((path) => (error as Error).message.includes(path)));
   for (const path of guarded.filter((p) => !p.endsWith("ledger.jsonl"))) assert.equal(readFileSync(join(root, path), "utf8"), before[path], path);
@@ -870,8 +871,23 @@ test("independent reviewers read only the sources, the prompts and their pack: n
 // ---------------------------------------------------------------- the CLI: finalize, requireTree and the guarded deep audit
 
 const SCRIPT = join(import.meta.dirname, "../../../../../scripts/map-l2v2.ts");
+/** A stand-in for the dedicated token: every CLI session needs one, in a file only its owner can read. */
+const TOKEN_FILE = (() => {
+  const file = join(mkdtempSync(join(tmpdir(), "l2v2-token-")), "token");
+  writeFileSync(file, "test-token-not-real\n", { mode: 0o600 });
+  return file;
+})();
+/**
+ * CLI tests that start sessions need the sandbox (bubblewrap, user namespaces). They never run unsandboxed: where the
+ * sandbox cannot exist they are skipped, unless L2V2_REQUIRE_SANDBOX=1 (Linux CI), where they run and fail.
+ */
+const SANDBOX_PROBLEMS = sandboxProblems({ root: tmpdir(), bwrap: process.env.L2V2_BWRAP ?? "bwrap", claude: process.execPath, tokenFile: TOKEN_FILE, egress: [], relay: { upstream: "http://127.0.0.1:9", paths: ["/v1/"] }, configRoot: tmpdir(), launcher: join(import.meta.dirname, "../../../../../scripts/l2v2/sandbox-launch.mjs") });
+const NO_SANDBOX = process.env.L2V2_REQUIRE_SANDBOX !== "1" && SANDBOX_PROBLEMS.length > 0 ? `the session sandbox is unavailable here: ${SANDBOX_PROBLEMS[0]}` : false;
+test("the session sandbox is available wherever L2V2_REQUIRE_SANDBOX=1 requires it", { skip: process.env.L2V2_REQUIRE_SANDBOX !== "1" && "not required here" }, () => {
+  assert.deepEqual(SANDBOX_PROBLEMS, []);
+});
 const cli = (root: string, args: string[], extra: Record<string, string> = {}) =>
-  spawnSync(process.execPath, ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", SCRIPT, ...args], { cwd: root, encoding: "utf8", env: { ...process.env, ...extra } });
+  spawnSync(process.execPath, ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", SCRIPT, ...args], { cwd: root, encoding: "utf8", env: { ...process.env, L2V2_TOKEN_FILE: TOKEN_FILE, ...extra } });
 /** A git checkout with a v1 run of slice s whose only group g was authored and accepted by v2, its sample settled. */
 async function acceptedSlice(): Promise<string> {
   const root = fixture();
@@ -896,7 +912,9 @@ function stubClaude(body: string, tamper = false, output = "\\.map-authoring/l2v
     `run=$(printf '%s' "$prompt" | grep -o '"run": "[^"{}]*"' | head -1 | sed 's/"run": "\\(.*\\)"/\\1/')`,
     `printf '{"run":"%s",${body}}' "$run" > "$out"`,
     ...(tamper ? [`printf '{"merge":true}' > .map-authoring/campaign.json`] : []),
-    `echo '{"session_id":"stub","result":"done","num_turns":1,"duration_ms":1}'`,
+    // A fresh session id per session, or the resumed one, as the CLI reports them.
+    'id=$(cat /proc/sys/kernel/random/uuid); prev=; for a; do [ "$prev" = --resume ] && id=$a; prev=$a; done',
+    `printf '{"session_id":"%s","result":"done","num_turns":1,"duration_ms":1}\\n' "$id"`,
     "",
   ].join("\n"));
   chmodSync(bin, 0o755);
@@ -931,13 +949,13 @@ test("requireTree: an edited record or hand-edited batch state stops run, audit 
   assert.match(result.stderr, /a persisted record is not valid \(never rendered\)/);
 });
 
-test("the CLI's deep audit runs under the guard: tampering is undone and reported; an honest audit's defects then block finalize", async () => {
+test("the CLI's deep audit runs in the sandbox: a write to the campaign authorization never reaches the host; an honest audit's defects then block finalize", { skip: NO_SANDBOX }, async () => {
   const root = await acceptedSlice();
   writeFileSync(join(root, ".map-authoring/campaign.json"), '{"merge":false}');
   const defects = `"verdict":"defect","confidence":"high","substantive":[{"rule":"overclaim","quote":"Fine text.","replacement":"Fine.","why":"t"}],"remarks":[],"coverage":[],"depth":"d"`;
+  // The stand-in CLI also tries to overwrite campaign.json: in the sandbox the run state does not exist and /work is read-only.
   const tampering = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: stubClaude(defects, true) });
-  assert.equal(tampering.status, 1);
-  assert.match(tampering.stderr, /y: the deep audit changed what it may not and was rolled back: .*\.map-authoring\/campaign\.json/);
+  assert.equal(tampering.status, 0, tampering.stderr);
   assert.equal(readFileSync(join(root, ".map-authoring/campaign.json"), "utf8"), '{"merge":false}');
   const honest = cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: stubClaude(defects) });
   assert.equal(honest.status, 0, honest.stderr);
@@ -978,7 +996,7 @@ function cliCheckout(): string {
   return root;
 }
 
-test("CLI: park, resume, run: the parked record is rendered again and the batch completes; a missing accepted record is still refused", async () => {
+test("CLI: park, resume, run: the parked record is rendered again and the batch completes; a missing accepted record is still refused", { skip: NO_SANDBOX }, async () => {
   const root = cliCheckout();
   const parked = await runBatch(fakeEnv(root, misquote), input);
   assert.equal(parked.conceptStates.x.state, "parked");
@@ -1065,7 +1083,7 @@ test("stop rules count failed and interrupted sessions of every role", () => {
   assert.match(stopReason([ok(0), failed(0), failed(1), failed(2)])!, /3 of the last 4 sessions failed or were interrupted/);
 });
 
-test("CLI audits are bounded: a concept cap per command, the stop rules before every session, failed sessions counted, an interrupted one reported", async () => {
+test("CLI audits are bounded: a concept cap per command, the stop rules before every session, failed sessions counted, an interrupted one reported", { skip: NO_SANDBOX }, async () => {
   const root = await acceptedSlice();
   const sessions = () => loadLedger(root).filter((e) => e.kind === "session" || e.kind === "session-failed").length;
   const start = sessions();
@@ -1089,7 +1107,7 @@ test("CLI audits are bounded: a concept cap per command, the stop rules before e
   assert.equal(sessions(), start + 3, "the gated commands started no session");
 });
 
-test("CLI: a sample audit runs one guarded session per sampled concept with unknown usage kept unknown; an interrupted audit session is reported once", async () => {
+test("CLI: a sample audit runs one guarded session per sampled concept with unknown usage kept unknown; an interrupted audit session is reported once", { skip: NO_SANDBOX }, async () => {
   const root = await acceptedSlice();
   rmSync(join(root, ".map-authoring/l2v2/s/sample.json"));
   const pass = stubClaude(`"verdict":"pass","confidence":"high","substantive":[],"remarks":[],"coverage":[],"depth":"d"`);
@@ -1144,7 +1162,7 @@ test("the failure stop rule: resume and meter entries never clear it; an acknowl
   assert.match(stopReason([...defective, ...three, ack()])!, /sampled concepts had substantive defects/);
 });
 
-test("CLI clear-failures: a note is required; it appends an acknowledgment, keeps every failure, lets sessions run again and bypasses no other gate", async () => {
+test("CLI clear-failures: a note is required; it appends an acknowledgment, keeps every failure, lets sessions run again and bypasses no other gate", { skip: NO_SANDBOX }, async () => {
   const root = await acceptedSlice();
   const ledgerPath = join(root, ".map-authoring/l2v2/ledger.jsonl");
   const audit = (bin: string) => cli(root, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_CLAUDE: bin });
@@ -1212,4 +1230,21 @@ test("the SIGKILL escalation is cancelled once the session has closed, and still
   const stubborn = await runClaude({ ...options(stub("trap '' TERM\nsleep 3"), 100), killGraceMs: 300 }, "p", []).catch((error: unknown) => error);
   assert.ok(stubborn instanceof SessionError && stubborn.reason === "timeout");
   assert.ok(Date.now() - started < 2000, "SIGKILL ended the group that ignored SIGTERM");
+});
+
+test("CLI: when the sandbox cannot be set up (no bubblewrap, no token), run and audit start no session at all", async () => {
+  const fresh = cliCheckout();
+  for (const extra of [{ L2V2_BWRAP: "/nonexistent/bwrap" }, { L2V2_TOKEN_FILE: join(fresh, "no-token") }] as Record<string, string>[]) {
+    const ran = cli(fresh, ["run", "--slice", "s"], { L2V2_CLAUDE: stub("exit 0"), ...extra });
+    assert.equal(ran.status, 1, JSON.stringify(extra));
+    assert.match(ran.stderr, /the session sandbox cannot be set up, so no session was started/);
+  }
+  assert.equal(loadBatch(fresh, "s", "g"), undefined, "no batch began");
+  assert.deepEqual(loadLedger(fresh), [], "no session, failed or not, was recorded");
+  const accepted = await acceptedSlice();
+  const before = loadLedger(accepted).length;
+  const audited = cli(accepted, ["audit", "--label", "pilot", "--concepts", "y", "--slice", "s"], { L2V2_BWRAP: "/nonexistent/bwrap" });
+  assert.equal(audited.status, 1);
+  assert.match(audited.stderr, /bubblewrap is not available at \/nonexistent\/bwrap/);
+  assert.equal(loadLedger(accepted).length, before);
 });

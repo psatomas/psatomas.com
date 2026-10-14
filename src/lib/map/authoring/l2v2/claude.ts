@@ -21,8 +21,15 @@ export class SessionError extends Error {
   }
 }
 
-/** killGraceMs: how long a timed-out session has after SIGTERM before its group is killed (default 5 s). */
-export type ClaudeOptions = { bin: string; cwd: string; timeoutMs: number; model?: string; maxBudgetUsd?: string; killGraceMs?: number };
+/**
+ * killGraceMs: how long a timed-out session has after SIGTERM before its group is killed (default 5 s).
+ * wrap: runs the CLI through another command (the sandbox, sandbox.ts) with exactly the given environment;
+ * the wrapper leads the process group, so killing the group kills everything inside it.
+ */
+export type ClaudeOptions = {
+  bin: string; cwd: string; timeoutMs: number; model?: string; maxBudgetUsd?: string; killGraceMs?: number;
+  wrap?: (claudeArgs: string[]) => { command: string; args: string[]; env: Record<string, string> };
+};
 
 export function claudeArgs(options: ClaudeOptions, tools: readonly string[], resume?: string, denied: readonly string[] = DENIED_TOOLS): string[] {
   return [
@@ -33,6 +40,8 @@ export function claudeArgs(options: ClaudeOptions, tools: readonly string[], res
     "--allowedTools", tools.join(","),
     // Denials win over any allowance: secrets, credentials and executable files.
     "--disallowedTools", denied.join(","),
+    // No MCP server is ever started: only the configuration given here, which is none.
+    "--strict-mcp-config",
     ...(resume ? ["--resume", resume] : []),
     ...(options.model ? ["--model", options.model] : []),
     ...(options.maxBudgetUsd ? ["--max-budget-usd", options.maxBudgetUsd] : []),
@@ -45,7 +54,11 @@ const GROUPS = process.platform !== "win32";
 export function runClaude(options: ClaudeOptions, prompt: string, tools: readonly string[], resume?: string, denied: readonly string[] = DENIED_TOOLS): Promise<SessionResult> {
   return new Promise((resolve, reject) => {
     // detached: the session leads a new process group, so its descendants can be killed with it.
-    const child = spawn(options.bin, claudeArgs(options, tools, resume, denied), { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"], detached: GROUPS });
+    const args = claudeArgs(options, tools, resume, denied);
+    const wrapped = options.wrap?.(args);
+    const child = wrapped
+      ? spawn(wrapped.command, wrapped.args, { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"], detached: GROUPS, env: wrapped.env as NodeJS.ProcessEnv })
+      : spawn(options.bin, args, { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"], detached: GROUPS });
     /** Signals the session's whole process group; a group that is already gone is no error. */
     const killGroup = (signal: NodeJS.Signals) => {
       try {

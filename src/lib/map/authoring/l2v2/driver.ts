@@ -22,6 +22,7 @@ import {
   withRecords, withRegistry, type StagedRecord, type StagedRecords,
 } from "./records.ts";
 import type { SessionResult } from "./claude.ts";
+import type { SessionFiles, SessionOutcome } from "./sandbox.ts";
 
 export type Signal = { id: string; detail: string };
 export type Env = {
@@ -31,8 +32,12 @@ export type Env = {
   clock(): number;
   /** A fresh token tying a session's output file to that session. */
   token(): string;
-  /** One bounded Claude session; `resume` continues an earlier one. Rejects on any failure. */
-  session(request: { role: Role; prompt: string; resume?: string; tools: readonly string[]; denied: readonly string[] }): Promise<SessionResult>;
+  /**
+   * One bounded Claude session; `resume` continues an earlier one. Rejects on
+   * any failure. The real one runs in the sandbox (sandbox.ts) and returns
+   * what the session wrote as `outputs`, which the guard writes to the tree.
+   */
+  session(request: { role: Role; prompt: string; resume?: string; tools: readonly string[]; denied: readonly string[]; files: SessionFiles }): Promise<SessionOutcome>;
   /** Plan and work problems for the group (`l2 check --group`); with records, also generate and the focused tests. */
   check(group: string, withRecords: boolean): Promise<string[]>;
   /** Creates the group's plan skeleton (`l2 territory <group> --write`) when it has none. */
@@ -63,6 +68,8 @@ export const groupPath = (group: string) => `src/lib/map/authoring/l2/groups/${g
 /** Local run state (git-ignored): v1 runs, campaign authorizations and v2 batches. Guarded file by file around every session. */
 export const LOCAL = ".map-authoring";
 export const V2_ROOT = ".map-authoring/l2v2";
+/** The CLI's own state, one dir per session chain (transcripts for --resume): written by the CLI, reset before each session, never read by the driver. */
+export const SANDBOX_CONFIG = ".map-authoring/l2v2/sandbox";
 export const batchDir = (slice: string, group: string) => join(V2_ROOT, slice, group);
 export const LEDGER = join(V2_ROOT, "ledger.jsonl");
 export const PROMPTS = "scripts/l2v2/prompts";
@@ -77,7 +84,7 @@ const readText = (env: Env, path: string) => {
   const entry = entryOf(join(env.root, path));
   return entry?.kind === "file" ? entry.data.toString("utf8") : undefined;
 };
-function write(env: Env, path: string, text: string) {
+function write(env: Env, path: string, text: string | Buffer) {
   const full = join(env.root, path);
   mkdirSync(dirname(full), { recursive: true });
   writeFileSync(`${full}.tmp`, text);
@@ -143,7 +150,7 @@ type Snapshot = Map<string, Entry | undefined>;
 export type Snapshots = { tree: Snapshot; local: Snapshot; surface: Snapshot };
 
 const full = (env: Env, path: string) => join(env.root, path);
-const localPaths = (env: Env) => walk(join(env.root, LOCAL)).map((path) => relative(env.root, path));
+const localPaths = (env: Env) => walk(join(env.root, LOCAL)).map((path) => relative(env.root, path)).filter((path) => !path.startsWith(`${SANDBOX_CONFIG}/`));
 async function treeSnapshot(env: Env, extra: readonly string[]): Promise<Snapshot> {
   const paths = new Set([...(await env.changedPaths()), ...extra]);
   return new Map([...paths].map((path) => [path, entryOf(full(env, path))]));
@@ -229,7 +236,7 @@ async function tryRestore(env: Env, before: Snapshots): Promise<string | undefin
 }
 
 export type GuardedRequest = {
-  role: Role; prompt: string; resume?: string; tools: readonly string[]; denied: readonly string[];
+  role: Role; prompt: string; resume?: string; tools: readonly string[]; denied: readonly string[]; files: SessionFiles;
   /** Tree paths always snapshotted, changed or not. */
   tree: readonly string[];
   /** Tree paths the session may change. */
@@ -247,9 +254,9 @@ export type GuardedRequest = {
 export async function guardedSession(env: Env, request: GuardedRequest): Promise<SessionResult> {
   const { role, slice, group } = request;
   const before = await takeSnapshots(env, request.tree);
-  let result: SessionResult;
+  let result: SessionOutcome;
   try {
-    result = await env.session({ role, prompt: request.prompt, resume: request.resume, tools: request.tools, denied: request.denied });
+    result = await env.session({ role, prompt: request.prompt, resume: request.resume, tools: request.tools, denied: request.denied, files: request.files });
   } catch (error) {
     // Whatever a failed session changed is undone, so a resume starts from the last completed step.
     const unrestored = await tryRestore(env, before);
@@ -257,11 +264,14 @@ export async function guardedSession(env: Env, request: GuardedRequest): Promise
     if (unrestored) throw new GuardError(`${role} failed (${(error as Error).message.slice(0, 200)}) and ${unrestored}`);
     throw error;
   }
-  const found = await changesSince(env, before, request.allowed, request.out);
+  // What the sandbox refused to hand back, any output that is not this session's, and any change to the tree.
+  const found = [...(result.violations ?? []), ...(result.outputs ?? []).filter((o) => o.path !== request.out && !request.allowed.has(o.path)).map((o) => `${o.path}: not this session's output`), ...(await changesSince(env, before, request.allowed, request.out))];
   const unrestored = found.length ? await tryRestore(env, before) : undefined;
   // Recorded after any rollback, which restores the local state as it was before the session.
-  appendLedger(env.root, { kind: "session", at: env.now(), slice, group, role, sessionId: result.sessionId, durationMs: result.durationMs, turns: result.turns, usage: result.usage, weighted: result.usage ? weighted(result.usage) : null });
-  if (found.length) throw new GuardError(`${role} changed what it may not (${unrestored ?? "rolled back"}): ${found.join(", ")}`);
+  appendLedger(env.root, { kind: "session", at: env.now(), slice, group, role, sessionId: result.sessionId, durationMs: result.durationMs, turns: result.turns, usage: result.usage, weighted: result.usage ? weighted(result.usage) : null, ...(result.egressDenied?.length ? { egressDenied: result.egressDenied } : {}) });
+  if (found.length) throw new GuardError(`${role} changed what it may not (${unrestored ?? "rolled back"}; nothing of it was used): ${found.join(", ")}`);
+  // Only now, the session having exited and every check passed, does its output reach the tree.
+  for (const output of result.outputs ?? []) write(env, output.path, output.data);
   return result;
 }
 
@@ -303,7 +313,8 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
     save(state);
     const started = env.clock();
     try {
-      const result = await guardedSession(env, { role, prompt: text, resume, tools: allowedTools(role, group, { pack: vars.PACK, out }), denied: deniedTools(role), tree, allowed, out, slice, group });
+      const files = { pack: vars.PACK, out, ...(role === "plan" ? { editable: groupPath(group) } : {}) };
+      const result = await guardedSession(env, { role, prompt: text, resume, tools: allowedTools(role, group, { pack: vars.PACK, out }), denied: deniedTools(role), files, tree, allowed, out, slice, group });
       state.sessions[role] = result.sessionId;
       return result;
     } catch (error) {

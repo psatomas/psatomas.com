@@ -489,7 +489,7 @@ export const weighted = (u: Usage) => Math.round(u.input_tokens + 0.1 * u.cache_
 
 export type LedgerEntry =
   /** usage and weighted are null when the CLI reported no usage. */
-  | { kind: "session"; at: string; slice: string; group: string; role: Role; sessionId: string; durationMs: number; turns: number; usage: Usage | null; weighted: number | null }
+  | { kind: "session"; at: string; slice: string; group: string; role: Role; sessionId: string; durationMs: number; turns: number; usage: Usage | null; weighted: number | null; egressDenied?: string[] }
   /** A session that failed (timeout, usage limit, no JSON): its usage is unknown and never invented. */
   | { kind: "session-failed"; at: string; slice: string; group: string; role: Role; reason: string }
   | { kind: "batch"; at: string; slice: string; group: string; accepted: number; parked: number; escalated: number; defects: number }

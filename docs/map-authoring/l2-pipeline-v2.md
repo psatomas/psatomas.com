@@ -90,17 +90,89 @@ distilled from the Foundations audits.
     so hand-edited state can never become code.
   - The CLI checks, as text, every v2 record of the slice before `run`,
     `audit` or `finalize` import anything.
-- **Prevention and detection are different layers.** Permissions are what
-  prevent; the integrity guard below is not a sandbox.
-  - **During a session**, only its permissions stop it. Anything a session
-    could execute (a command it may run loads `data.ts`, npm puts
-    `node_modules/.bin` first on the `PATH`) would run before the guard looks.
-  - **After the session**, the guard detects and undoes what it changed.
-  - **What only permissions or process isolation can cover:** the contents of
-    installed dependencies (the guard watches their executables and manifests
-    by metadata, never their code), anything outside the watched paths, and
-    anything a session executes while it runs.
-- **Session permissions:** `--permission-mode dontAsk` with explicit allowed
+- **The session sandbox is the security boundary** (Linux, bubblewrap;
+  [`sandbox.ts`](../../src/lib/map/authoring/l2v2/sandbox.ts)).
+  - **Why:** a live smoke test showed that the CLI's permission rules are
+    *not* a boundary. Under `--permission-mode dontAsk`, Claude Code 2.1.280
+    ran `git status` although no allowed tool granted it. Those rules stay as
+    defense in depth; the operating system enforces the rest.
+  - **Every session runs in the sandbox:** plan, review, draft, repair
+    verification, escalation and every deep audit. The driver has no
+    unsandboxed path. `run` and `audit` refuse before any session if:
+    - this isn't Linux;
+    - bubblewrap is missing or cannot create its namespaces;
+    - the CLI, node or npm is missing;
+    - the token file is missing, or readable by others.
+  - **What a session sees:** new user, mount, PID, IPC, UTS, cgroup and
+    network namespaces; killed with its parent; no controlling terminal.
+    - **Filesystem:**
+      - `/work`: an empty, read-only tree holding only `src/`, `docs/`,
+        `scripts/` and `package.json`, with secret-like files in them masked
+        (`.env*`, `.dev.vars*`, keys);
+      - the session's own pack, read-only;
+      - one empty writable directory at its batch dir, for its output;
+      - for the plan session, a writable copy of the group files;
+      - read-only `/usr` and a few files of `/etc` (certificates, users, time);
+      - a private `/tmp` and HOME;
+      - its session chain's own CLI config dir.
+    - **Not visible:** `.git`, `.dev.vars` and env files, the run state and
+      campaign authorization, batch state and other sessions' outputs, other
+      worktrees, the host HOME, the general credential store, SSH and cloud
+      credentials, `node_modules`.
+  - **Output after exit only:** the driver reads the session's output only
+    once the sandbox has exited.
+    - It takes its output file (a regular file, at most 4 MB), and for the
+      plan session its group file.
+    - Anything else written is a violation, and none of the session is used:
+      another name, a link, another group's file.
+    - The output reaches the tree only after the integrity guard passes.
+  - **Network:** the sandbox has none of its own: no DNS, no IPv4 or IPv6
+    route. A launcher inside forwards `127.0.0.1` to the driver's egress
+    server (a Unix socket), which offers two paths only, and records every
+    refusal in the ledger (`egressDenied`).
+    - **The API relay:** the CLI's `ANTHROPIC_BASE_URL` points at it.
+      - It forwards only allowed paths (`config.json` `relay.paths`, default
+        `/v1/`) to the upstream (default `https://api.anthropic.com`), over
+        TLS from the host.
+      - It drops any credential the sandbox sent and adds the real token.
+      - It passes a redirect back unfollowed, and refuses absolute-URL
+        (forward-proxy) requests.
+    - **CONNECT tunnels** (`HTTPS_PROXY`): only to allowed host names
+      (`config.json` `egress`, default `api.anthropic.com:443`). IP literals,
+      IPv6, other ports and malformed targets are refused.
+
+    Non-essential CLI traffic, telemetry, error reporting and auto-update are
+    disabled.
+  - **The CLI's own state:** every session chain (a session and its
+    `--resume` continuations) has its own config dir under
+    `.map-authoring/l2v2/sandbox/`, named by its validated session id.
+    - A new session starts from an empty one, and a resumption gets exactly
+      its chain's, so no session sees another's transcripts or settings,
+      across roles and batches alike.
+    - Before every session, everything but the transcripts is removed
+      (settings, hooks, MCP servers, plugins, shell snapshots), and
+      `--strict-mcp-config` starts no MCP server.
+  - **Authentication: the token never enters the sandbox.**
+    - A dedicated token from `claude setup-token` sits in
+      `~/.config/map-l2v2/oauth-token` (mode 0600; `L2V2_TOKEN_FILE`
+      overrides). Only the relay on the host reads it.
+    - Inside, the CLI holds a placeholder (`CLAUDE_CODE_OAUTH_TOKEN`, not a
+      credential), which the relay replaces.
+    - No process in the sandbox, shell commands included, can read the token:
+      it isn't in any environment, file or mount there, as the tests show.
+    - The general credential store (`~/.claude/.credentials.json`) is never
+      mounted, and the token joins the secret scan.
+  - **Residual risk:** any process in the sandbox can *use* the relay while
+    the session runs. A shell command could make API calls that the relay
+    authenticates, within the allowed paths, until the session ends. It
+    cannot take the token away.
+- **What the guard covers beside the sandbox:** the integrity guard below
+  still runs around every session as defense in depth, on the host. The CLI's
+  own config dirs are left out of it: the CLI writes there, and they are
+  reset before every session. It detects what a session changed once it has
+  run; preventing anything during the session is the sandbox's job.
+- **Session permissions** (defense in depth, not a boundary; see above):
+  `--permission-mode dontAsk` with explicit allowed
   tools (`allowedTools`) and denied tools (`deniedTools`, which win), both in
   [`core.ts`](../../src/lib/map/authoring/l2v2/core.ts).
   - **Reads** are limited to `src/`, `docs/`, the prompts, the session's own
@@ -318,6 +390,25 @@ way out of the failure stop rule.
 - **What it never clears:** a `resume` or a meter reading never clears the
   rule. The acknowledgment itself clears nothing else: parked concepts, known
   defects, changed records and every other stop rule stand.
+
+## Live verification still required
+
+Before the pilot, one sandboxed live session with no authoring must confirm:
+- the CLI accepts the placeholder and sends its API calls to the relay
+  (`ANTHROPIC_BASE_URL` with an OAuth token), and the relay's token
+  authenticates them;
+- `/v1/` covers every path the CLI calls, and no other host is needed
+  (`egressDenied` shows each refusal);
+- `--resume` works with a chain's config dir, and whether `--resume`
+  returns the same session id;
+- the CLI writes nothing outside its writable paths.
+
+**The sandbox tests are mandatory in CI.** Linux CI installs bubblewrap,
+allows unprivileged user namespaces, checks that a sandbox starts, and runs
+the tests with `L2V2_REQUIRE_SANDBOX=1`, so a missing sandbox fails the build
+instead of skipping tests. Elsewhere the tests skip where no sandbox can
+exist; they never run unsandboxed. The sandbox mirrors the host's root layout
+(`/bin`, `/lib64`…) and mounts node and npm from wherever they are installed.
 
 ## Calibration pilot (before scaling)
 
