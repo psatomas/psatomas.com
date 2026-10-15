@@ -14,7 +14,9 @@ import {
 import { claudeArgs, runClaude, SessionError } from "./claude.ts";
 import type { SliceSample } from "./core.ts";
 import { acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, groupPath, loadBatch, loadLedger, REGISTRY, repairAfterAudit, runBatch, saveBatch, type Env } from "./driver.ts";
-import { recordFingerprint, recordPlacement, recordsInPlaceProblems, renderRecord, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
+import { groupFileTexts, planBasisOf, recordFingerprint, recordPlacement, recordsInPlaceProblems, renderRecord, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
+import { planSkeleton } from "../l2/territory.ts";
+import { mapKnowledge } from "../../data.ts";
 import { gitChangedPaths, gitHeadEntry, gitSurfaces, run as runCommand } from "./shell.ts";
 import { withoutRecords } from "../l2/campaign.ts";
 import { sandboxProblems } from "./sandbox.ts";
@@ -1253,4 +1255,118 @@ test("CLI: when the sandbox cannot be set up (no bubblewrap, no token), run and 
   assert.equal(audited.status, 1);
   assert.match(audited.stderr, /bubblewrap is not available at \/nonexistent\/bwrap/);
   assert.equal(loadLedger(accepted).length, before);
+});
+
+// ---------------------------------------------------------------- the secret scan and the v1 tooling's fingerprints
+
+/** The real v1 skeleton of the group the first pilot batch stopped on: its basis holds 64-hex fingerprints by design. */
+const REAL_SKELETON = `${JSON.stringify(planSkeleton(mapKnowledge, "verifiable-computation"), null, 2)}\n`;
+const HEX_SECRET = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+const GROUPS_ON_MAIN = join(import.meta.dirname, "../l2/groups");
+
+test("a real v1 skeleton's tool-generated fingerprints pass the scan once trusted; untrusted they are what the first pilot batch tripped on", () => {
+  const basis = planBasisOf(REAL_SKELETON)!;
+  assert.ok(basis && /^[0-9a-f]{64}$/.test(basis.membership) && /^[0-9a-f]{64}$/.test(basis.hazards), "the skeleton carries membership and hazards fingerprints");
+  assert.match(secretProblems([REAL_SKELETON], []).join(), /long hexadecimal string/, "the whole file, scanned as text, is the false positive");
+  assert.match(secretProblems(groupFileTexts(REAL_SKELETON), []).join(), /long hexadecimal string/, "with no trusted basis, nothing is left out");
+  assert.deepEqual(secretProblems(groupFileTexts(REAL_SKELETON, basis), []), []);
+  // Every group file on main, with its own basis trusted: the basis passes; only v1's later audit fingerprints remain, and they stay scanned.
+  for (const name of readdirSync(GROUPS_ON_MAIN)) {
+    const text = readFileSync(join(GROUPS_ON_MAIN, name), "utf8");
+    const left = groupFileTexts(text, planBasisOf(text)).filter((t) => /\b[0-9a-f]{40,}\b/i.test(t));
+    const audits = JSON.parse(text) as { concepts?: Record<string, { audit?: { recordFingerprint?: string } }>; groupAudit?: { records?: Record<string, string> } };
+    const expected = [...Object.values(audits.concepts ?? {}).map((c) => c.audit?.recordFingerprint), ...Object.values(audits.groupAudit?.records ?? {})].filter(Boolean);
+    assert.deepEqual(left.sort(), (expected as string[]).sort(), name);
+  }
+});
+
+test("model-authored text stays scanned: hexadecimal secrets and known patterns anywhere outside the trusted basis are refused", () => {
+  const skeleton = JSON.parse(REAL_SKELETON);
+  const basis = planBasisOf(REAL_SKELETON)!;
+  const owned = skeleton.members.findIndex((m: { standing: string }) => m.standing === "owned");
+  const withText = (mutate: (file: typeof skeleton) => void) => {
+    const file = structuredClone(skeleton);
+    mutate(file);
+    return secretProblems(groupFileTexts(JSON.stringify(file), basis), [SECRET]).join();
+  };
+  assert.match(withText((f) => (f.members[owned].claims = [`a commitment such as ${HEX_SECRET} binds the trace`])), /long hexadecimal string/);
+  assert.match(withText((f) => (f.concepts = { x: { model: { meaning: "token ghp_abcdefghijklmnopqrstuvwxyz0123456789" } } })), /GitHub token/);
+  assert.match(withText((f) => (f.splits = [{ concepts: ["a", "b"], split: `uses ${SECRET}` }])), /local secret/);
+  assert.match(withText((f) => (f.concepts = { [HEX_SECRET]: {} })), /long hexadecimal string/, "keys are scanned too");
+  assert.match(secretProblems(groupFileTexts(`not json ${HEX_SECRET}`, basis), []).join(), /long hexadecimal string/, "a file that is not JSON is scanned whole");
+});
+
+test("a fingerprint modified, moved, added, or from a malformed basis is never trusted", () => {
+  const skeleton = JSON.parse(REAL_SKELETON);
+  const basis = planBasisOf(REAL_SKELETON)!;
+  const scan = (file: unknown) => secretProblems(groupFileTexts(JSON.stringify(file), basis), []).join();
+  const parent = Object.keys(basis.parents)[0];
+  for (const [name, mutate] of [
+    ["a modified hazards fingerprint", (f: typeof skeleton) => (f.basis.hazards = HEX_SECRET)],
+    ["a modified parent fingerprint", (f: typeof skeleton) => (f.basis.parents[parent] = HEX_SECRET)],
+    ["an added fixed entry", (f: typeof skeleton) => (f.basis.fixed = { ...f.basis.fixed, "some-concept": HEX_SECRET })],
+    ["an added basis field", (f: typeof skeleton) => (f.basis.extra = basis.membership)],
+    ["a trusted value moved into a claim", (f: typeof skeleton) => (f.members[0].claims = [basis.membership])],
+    ["a trusted value moved under another parent", (f: typeof skeleton) => (f.basis.parents = { ...f.basis.parents, "other-concept": basis.parents[parent] })],
+    ["the membership value at the hazards path", (f: typeof skeleton) => (f.basis.hazards = basis.membership)],
+  ] as const) {
+    const file = structuredClone(skeleton);
+    mutate(file);
+    assert.match(scan(file), /long hexadecimal string/, name);
+  }
+  for (const [name, broken] of [
+    ["uppercase", { ...skeleton.basis, hazards: basis.hazards.toUpperCase() }],
+    ["too short", { ...skeleton.basis, membership: basis.membership.slice(1) }],
+    ["a non-identifier key", { ...skeleton.basis, fixed: { "Not An Id": basis.hazards } }],
+    ["missing parents", { membership: basis.membership, hazards: basis.hazards, fixed: {} }],
+  ] as const) assert.equal(planBasisOf(JSON.stringify({ ...skeleton, basis: broken })), undefined, name);
+});
+
+/** The driver's skeleton is the real v1 one; the plan session keeps its basis and fills in the claims. */
+const realSkeletonEnv = (root: string, script: Script) => {
+  const env = fakeEnv(root, script);
+  env.ensureSkeleton = async (group) => (existsSync(join(root, groupPath(group))) ? [] : (writeFileSync(join(root, groupPath(group)), REAL_SKELETON), []));
+  return env;
+};
+const planKeepingBasis = (claim = "every node agrees") => (root: string) => {
+  const file = JSON.parse(readFileSync(join(root, groupPath("g")), "utf8"));
+  writeFileSync(join(root, groupPath("g")), `${JSON.stringify({ ...file, members: [{ conceptId: "x", claims: [claim] }, { conceptId: "y", claims: ["c"] }], concepts: { x: { model: { claims: [claim] } } } }, null, 2)}\n`);
+};
+
+test("the driver: a batch with the real v1 skeleton passes the plan and acceptance scans; a secret in the plan or in an applied claim fix is still refused", async () => {
+  const ok = await runBatch(realSkeletonEnv(fixture(), { ...happy, plan: planKeepingBasis() }), input);
+  assert.equal(ok.status, "accepted", ok.stop?.reason);
+  assert.deepEqual(ok.trustedBasis, planBasisOf(REAL_SKELETON), "the basis was recorded before any session");
+  const leaked = await runBatch(realSkeletonEnv(fixture(), { ...happy, plan: planKeepingBasis(`hidden ${HEX_SECRET}`), "plan:resume": planKeepingBasis(`hidden ${HEX_SECRET}`) }), input);
+  assert.match(leaked.stop!.reason, /plan: validation still fails \(rolled back\): the group file contains what looks like a long hexadecimal string/);
+  const tampered = await runBatch(realSkeletonEnv(fixture(), {
+    ...happy,
+    plan: (r) => (planKeepingBasis()(r), writeFileSync(join(r, groupPath("g")), JSON.stringify({ ...JSON.parse(readFileSync(join(r, groupPath("g")), "utf8")), basis: { ...JSON.parse(REAL_SKELETON).basis, hazards: HEX_SECRET } }))),
+  }), input);
+  assert.match(tampered.stop!.reason, /long hexadecimal string/, "a basis the session changed is not trusted");
+  // Acceptance scans the group file the same way: a claim fix carrying a secret reaches it and stops the batch there.
+  const fixing: Script = {
+    ...happy, plan: planKeepingBasis(),
+    "plan-review": (r, p) => emit(r, p, { verdict: "fix", claimFixes: [{ concept: "x", quote: "every node agrees", replacement: `correct nodes agree ${HEX_SECRET}`, why: "overclaim" }], note: "" }),
+    "plan-review:resume": (r, p) => emit(r, p, { verdict: "pass", claimFixes: [], note: "confirmed" }),
+    escalate: (r, p) => emit(r, p, { concepts: { x: review() } }),
+  };
+  const atAcceptance = await runBatch(realSkeletonEnv(fixture(), fixing), input);
+  assert.match(atAcceptance.stop!.reason, /the group file or group audit contains what looks like a long hexadecimal string/);
+});
+
+test("a group file that already exists is trusted only as committed: an uncommitted one carries no trusted basis", async () => {
+  const root = fixture();
+  writeFileSync(join(root, groupPath("g")), REAL_SKELETON);
+  // The fake HEAD has no such file: nothing is trusted, so the generated fingerprints are scanned and refused.
+  const untrusted = await runBatch(realSkeletonEnv(root, { ...happy, plan: planKeepingBasis() }), input);
+  assert.equal(untrusted.trustedBasis, undefined);
+  assert.match(untrusted.stop!.reason, /long hexadecimal string/);
+  // The committed version is trusted.
+  const committed = fixture();
+  writeFileSync(join(committed, groupPath("g")), REAL_SKELETON);
+  const env = realSkeletonEnv(committed, { ...happy, plan: planKeepingBasis() });
+  env.headContent = async (path) => (path === groupPath("g") ? { kind: "file", data: Buffer.from(REAL_SKELETON), mode: 0o644, head: true } : undefined);
+  const trusted = await runBatch(env, input);
+  assert.equal(trusted.status, "accepted", trusted.stop?.reason);
 });

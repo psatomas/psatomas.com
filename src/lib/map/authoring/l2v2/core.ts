@@ -9,7 +9,7 @@
  * and the metrics; it reads and writes nothing. Drafted records are data
  * (records.ts). Development tooling only.
  */
-import { replaceOnce, type StagedRecord } from "./records.ts";
+import { replaceOnce, type PlanBasis, type StagedRecord } from "./records.ts";
 
 // ---------------------------------------------------------------- batch state
 
@@ -79,6 +79,11 @@ export type BatchState = {
   records?: Record<string, StagedRecord>;
   /** Fingerprints of the record text the driver itself rendered into data.ts, by concept: only these may it ever remove. */
   rendered?: Record<string, string>;
+  /**
+   * The group plan's basis as the v1 tooling generated it, recorded before any
+   * session: the only fingerprints the secret scan leaves out (records.ts groupFileTexts).
+   */
+  trustedBasis?: PlanBasis;
   /** What the reviews concluded, per concept and for the group: becomes the v1 audit records. */
   audit: Record<string, { notes: string[]; resolutions: Resolution[] }>;
   groupAudit?: { note: string; resolutions: Resolution[] };
