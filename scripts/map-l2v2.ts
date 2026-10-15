@@ -11,7 +11,10 @@
 //   npm run map:l2v2 -- report                                tokens, time, defects and acceptance per batch
 //   npm run map:l2v2 -- finalize --slice <id>                 record the v1 steps (scoped to the slice), then `l2 run --until diff`
 //
-// Configuration: .map-authoring/l2v2/config.json {model, timeoutMs, maxBudgetUsd} and budget.json (stop-rule thresholds and
+// Every session runs in the bubblewrap sandbox (src/lib/map/authoring/l2v2/sandbox.ts); if it cannot be set up, no session starts.
+// Sessions get no credential: the driver's relay adds a dedicated `claude setup-token` token, kept in
+// ~/.config/map-l2v2/oauth-token (mode 0600; L2V2_TOKEN_FILE overrides), to their API calls outside the sandbox.
+// Configuration: .map-authoring/l2v2/config.json {model, timeoutMs, maxBudgetUsd, egress, relay} and budget.json (stop-rule thresholds and
 // per-batch limits: maxSessionsPerBatch, maxBatchMinutes). maxBudgetUsd does not bound a subscription's quota: the limits and the meter do.
 // It never pushes, opens PRs, merges or deploys: delivery stays `map:author -- l2 run --domain <slice>`.
 // data.ts is imported only after the v2 records in it are checked, as text, against their validated drafts.
@@ -25,9 +28,9 @@ import {
   activeFailures, allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason,
   type BatchState, type BatchStatus, type Budget, type Finding, type SliceSample,
 } from "../src/lib/map/authoring/l2v2/core.ts";
-import { runClaude } from "../src/lib/map/authoring/l2v2/claude.ts";
+import { runSandboxed, sandboxProblems, sandboxToken, type SandboxConfig } from "../src/lib/map/authoring/l2v2/sandbox.ts";
 import {
-  acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, loadBatch, loadLedger, PROMPTS, REGISTRY, repairAfterAudit, runBatch, saveBatch, V2_ROOT, type Env, type Limits,
+  acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, loadBatch, loadLedger, PROMPTS, REGISTRY, repairAfterAudit, runBatch, SANDBOX_CONFIG, saveBatch, V2_ROOT, type Env, type Limits,
 } from "../src/lib/map/authoring/l2v2/driver.ts";
 import { recordFingerprint, recordPlacement, recordsInPlaceProblems } from "../src/lib/map/authoring/l2v2/records.ts";
 import { gitChangedPaths, gitHeadEntry, gitSurfaces, run } from "../src/lib/map/authoring/l2v2/shell.ts";
@@ -65,8 +68,33 @@ function runOf(slice: string): RunFile {
 }
 const baseRegistry = (base: string) => new Set([...sh("git", ["show", `${base}:src/lib/map/authoring/content-registry.ts`]).stdout.matchAll(/^ {2}"([a-z0-9-]+)",$/gm)].map((m) => m[1]));
 const budget = (): Budget => ({ ...DEFAULT_BUDGET, ...readJson<Partial<Budget>>(join(V2_ROOT, "budget.json"), {}) });
-type Config = { model: string; timeoutMs: number; maxBudgetUsd?: string };
-const config = (): Config => ({ model: "claude-opus-5-5", timeoutMs: 30 * 60 * 1000, ...readJson<Partial<Config>>(join(V2_ROOT, "config.json"), {}) });
+/**
+ * egress: the `host:port` pairs a session's sandbox may tunnel to; relay: the API the sandbox reaches through the
+ * driver's relay, which adds the token (the sandbox never holds it), and the path prefixes it forwards.
+ */
+type Config = { model: string; timeoutMs: number; maxBudgetUsd?: string; egress: string[]; relay: { upstream: string; paths: string[] } };
+const config = (): Config => ({
+  model: "claude-opus-5-5", timeoutMs: 30 * 60 * 1000, egress: ["api.anthropic.com:443"], relay: { upstream: "https://api.anthropic.com", paths: ["/v1/"] },
+  ...readJson<Partial<Config>>(join(V2_ROOT, "config.json"), {}),
+});
+/** A command by path or on PATH; undefined when there is none. */
+const which = (name: string) => (name.includes("/") ? name : (process.env.PATH ?? "").split(":").map((dir) => join(dir, name)).find((path) => existsSync(path)));
+/** The sandbox every session runs in; L2V2_BWRAP, L2V2_CLAUDE and L2V2_TOKEN_FILE override its defaults. */
+const sandbox = (): SandboxConfig => ({
+  root: ROOT,
+  bwrap: which(process.env.L2V2_BWRAP ?? "bwrap") ?? "bwrap",
+  claude: which(process.env.L2V2_CLAUDE ?? "claude") ?? "claude",
+  tokenFile: process.env.L2V2_TOKEN_FILE ?? join(homedir(), ".config/map-l2v2/oauth-token"),
+  egress: config().egress,
+  relay: config().relay,
+  configRoot: join(ROOT, SANDBOX_CONFIG),
+  launcher: join(import.meta.dirname, "l2v2/sandbox-launch.mjs"),
+});
+/** Before any session: the sandbox must be ready, or nothing starts. */
+function requireSandbox() {
+  const problems = sandboxProblems(sandbox());
+  if (problems.length) fail(`the session sandbox cannot be set up, so no session was started:\n- ${problems.join("\n- ")}`, 1);
+}
 const limits = (): Limits => ({ sessions: budget().maxSessionsPerBatch, minutes: budget().maxBatchMinutes, sessionTimeoutMs: config().timeoutMs });
 /** A domain's position among the roots; data.ts is imported lazily, once its v2 records have been checked. */
 async function domainOrder(domain: string) {
@@ -110,9 +138,9 @@ const env: Env = {
   now,
   clock: () => performance.now(),
   token: () => randomUUID(),
-  session: ({ prompt, resume, tools, denied }) => {
+  session: (request) => {
     const c = config();
-    return runClaude({ bin: process.env.L2V2_CLAUDE ?? "claude", cwd: ROOT, timeoutMs: c.timeoutMs, model: c.model, maxBudgetUsd: c.maxBudgetUsd }, prompt, tools, resume, denied);
+    return runSandboxed(sandbox(), { ...request, timeoutMs: c.timeoutMs, model: c.model, maxBudgetUsd: c.maxBudgetUsd });
   },
   async check(group, withRecords) {
     const problems: string[] = [];
@@ -147,7 +175,8 @@ const env: Env = {
     content: [...gitSurfaces(ROOT), join(ROOT, ".claude"), join(ROOT, ".mcp.json"), join(ROOT, ".npmrc"), join(homedir(), ".gitconfig"), join(homedir(), ".npmrc"), join(homedir(), ".claude", "settings.json")],
     metadata: dependencyMetadata(),
   }),
-  secrets: async () => localSecrets(),
+  // The sandbox's token is a secret too: nothing that would be committed may hold it.
+  secrets: async () => [...localSecrets(), ...(sandboxProblems(sandbox()).length ? [] : [sandboxToken(sandbox())])],
 };
 
 /** Every v2 batch of every slice. */
@@ -203,6 +232,7 @@ function locked<T>(fn: () => Promise<T>): Promise<T> {
 async function commandRun() {
   const slice = flag("--slice") ?? fail("run needs --slice <id>");
   requireTree(slice);
+  requireSandbox();
   const run = runOf(slice);
   const branch = sh("git", ["rev-parse", "--abbrev-ref", "HEAD"]).stdout.trim();
   if (branch !== run.branch) fail(`the run is on ${run.branch}; this checkout is on ${branch}`);
@@ -308,7 +338,7 @@ async function deepAudit(concept: string, label: string, campaign: boolean, ref?
   let result;
   writeFileSync(join(ROOT, AUDIT_IN_FLIGHT), `${JSON.stringify({ label, concept, startedAt: now() })}\n`);
   try {
-    result = await guardedSession(env, { role: "deep-audit", prompt: text, tools: allowedTools("deep-audit", "", { pack: packPath, out }), denied: deniedTools("deep-audit"), tree: [DATA, REGISTRY], allowed: new Set(), out, slice: `audit:${label}`, group: concept });
+    result = await guardedSession(env, { role: "deep-audit", prompt: text, tools: allowedTools("deep-audit", "", { pack: packPath, out }), denied: deniedTools("deep-audit"), files: { pack: packPath, out }, tree: [DATA, REGISTRY], allowed: new Set(), out, slice: `audit:${label}`, group: concept });
   } catch (error) {
     // The session ended (failed or undone) and is in the ledger: it was not interrupted. fail() exits, so no finally would run.
     rmSync(join(ROOT, AUDIT_IN_FLIGHT), { force: true });
@@ -345,12 +375,14 @@ async function commandAudit() {
   auditInterrupted();
   const sliceToSample = flag("--sample-slice");
   for (const slice of [sliceToSample, flag("--slice")]) if (slice) requireTree(slice);
+  // Arguments are validated first (exit 2); the sandbox is checked just before the first session.
   const max = budget().maxAuditConcepts;
   if (sliceToSample) {
     const path = join(V2_ROOT, sliceToSample, "sample.json");
     const accepted = [...v2Concepts(sliceToSample).keys()].sort();
     const sampled = readJson<SliceSample>(path, { slice: sliceToSample, concepts: sample(accepted, budget().samplePerSlice, sliceToSample), audited: {} });
     if (sampled.concepts.filter((id) => !sampled.audited[id]).length > max) fail(`the sample has more than ${max} concepts to audit (budget.json maxAuditConcepts)`);
+    requireSandbox();
     writeFileSync(join(ROOT, path), `${JSON.stringify(sampled, null, 2)}\n`);
     for (const concept of sampled.concepts.filter((id) => !sampled.audited[id])) {
       const { audit, sessionId } = await deepAudit(concept, `sample-${sliceToSample}`, true);
@@ -371,6 +403,7 @@ async function commandAudit() {
   if (ref && args.includes("--fix")) fail("a baseline at a ref is measured, never fixed");
   const slice = flag("--slice");
   if (args.includes("--fix") && !slice) fail("--fix needs --slice: only accepted, unfinalized v2 concepts are repaired, through the verified loop");
+  requireSandbox();
   for (const concept of concepts) {
     const { audit, sessionId } = await deepAudit(concept, label, !ref, ref);
     if (audit.substantive.length && args.includes("--fix") && !(await repairFromAudit(slice!, concept, label, audit, sessionId))) fail(`${concept}: not repaired; the batch is stopped for a human`, 3);
