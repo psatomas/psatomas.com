@@ -18,8 +18,8 @@ import {
 } from "./core.ts";
 import { entryOf, restoreEntry, sameEntry, signatureOf, walk, type Entry } from "./guard.ts";
 import {
-  recordFingerprint, recordPlacement, recordProblems, recordsInPlaceProblems, recordStrings, renderedFingerprint, renderedProblems, secretProblems, spanFingerprint, stagedRecordsProblems, toContent,
-  withRecords, withRegistry, type StagedRecord, type StagedRecords,
+  groupFileTexts, planBasisOf, recordFingerprint, recordPlacement, recordProblems, recordsInPlaceProblems, recordStrings, renderedFingerprint, renderedProblems, secretProblems, spanFingerprint,
+  stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord, type StagedRecords,
 } from "./records.ts";
 import type { SessionResult } from "./claude.ts";
 import type { SessionFiles, SessionOutcome } from "./sandbox.ts";
@@ -376,7 +376,7 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
   /** Plan validation after the plan session (the group file is data); one fix round, then the step is rolled back and the batch stops. */
   async function checked(role: Role, sessionId: string, allowed: ReadonlySet<string>, stepStart: Snapshot): Promise<boolean> {
     for (let attempt = 0; attempt < 2; attempt++) {
-      const problems = [...(await env.check(group, false)), ...secretProblems([read(env, groupPath(group))], await secrets()).map((problem) => `the group file ${problem}`)];
+      const problems = [...(await env.check(group, false)), ...secretProblems(groupFileTexts(read(env, groupPath(group)), state.trustedBasis), await secrets()).map((problem) => `the group file ${problem}`)];
       if (!problems.length) return true;
       if (attempt === 1) {
         await rollback(stepStart);
@@ -586,8 +586,17 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
 
     if (ops.state.status === "pending") {
       const start = await ops.snapshot();
+      const existed = existsSync(join(env.root, groupPath(group)));
       const skeleton = await env.ensureSkeleton(group);
       if (skeleton.length) return ops.stop(`plan skeleton: ${skeleton.join("; ")}`);
+      // The basis the v1 tooling generated, recorded before any session can touch the file: the skeleton just created, or
+      // the committed plan. Kept from the first time, so a later attempt never trusts a basis a session wrote.
+      if (!ops.state.trustedBasis) {
+        const committed = existed ? await env.headContent(groupPath(group)) : undefined;
+        const source = existed ? (committed?.kind === "file" ? committed.data.toString("utf8") : undefined) : read(env, groupPath(group));
+        const basis = source === undefined ? undefined : planBasisOf(source);
+        if (basis) ops.save({ ...ops.state, trustedBasis: basis });
+      }
       const pack = [`# Batch ${group} (slice ${slice})`, "", "## Territory plan", "```json", await env.territory(group), "```"];
       for (const id of concepts) pack.push("", `## Context: ${id}`, "```json", await env.context(id), "```");
       write(env, join(dir, "pack.md"), `${pack.join("\n")}\n`);
@@ -706,7 +715,7 @@ async function accept(env: Env, ops: ReturnType<typeof batchOps>): Promise<Batch
   }
   const groupMissing = unresolved((await env.groupSignals(group)).map((s) => s.id), ops.state.groupAudit?.resolutions ?? []);
   if (groupMissing.length) return ops.stop(`group signals left unresolved: ${groupMissing.join(", ")}`);
-  const groupLeaks = secretProblems([read(env, groupPath(group)), ops.state.groupAudit?.note ?? "", ...(ops.state.groupAudit?.resolutions ?? []).map((r) => r.resolution)], secrets);
+  const groupLeaks = secretProblems([...groupFileTexts(read(env, groupPath(group)), ops.state.trustedBasis), ops.state.groupAudit?.note ?? "", ...(ops.state.groupAudit?.resolutions ?? []).map((r) => r.resolution)], secrets);
   if (groupLeaks.length) return ops.stop(`the group file or group audit ${groupLeaks.join("; ")}: a human removes it`);
   const parked = concepts.filter((id) => ops.state.conceptStates[id].state === "parked");
   if (parked.length) {

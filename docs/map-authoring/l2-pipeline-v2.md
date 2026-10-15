@@ -203,6 +203,16 @@ distilled from the Foundations audits.
   patterns and for the values of the local secret files (matched, never
   logged). A staged record with one is refused, an audit with one parks its
   concept, and a group file with one stops the batch.
+  - The group file is scanned key by key and value by value, after the plan
+    and again at acceptance. Its plan `basis` holds 64-hex fingerprints the
+    v1 tooling writes (membership, hazards, parents, fixed members); these
+    alone are left out.
+  - They're left out only when they equal, path for path, the basis recorded
+    before any session ran. That's the skeleton the driver created, or the
+    committed plan.
+  - A fingerprint changed, moved, added or never trusted is scanned like any
+    other text, and so is a file that isn't JSON. v1's later audit
+    fingerprints are never trusted.
 - **Integrity guard and rollback**, around every session, including the first
   deep-audit session (`guardedSession` in
   [`driver.ts`](../../src/lib/map/authoring/l2v2/driver.ts)):

@@ -154,6 +154,64 @@ export function secretProblems(texts: readonly string[], secrets: readonly strin
   return [...found];
 }
 
+// ---------------------------------------------------------------- group files: trusted fingerprints
+
+/**
+ * The fingerprints the v1 tooling writes into a group plan (`basis`,
+ * territory.ts L2PlanBasis): of the group's membership, its hazards, its
+ * parents' and its fixed members' records. Tool-generated, never authored.
+ */
+export type PlanBasis = { membership: string; hazards: string; parents: Record<string, string>; fixed: Record<string, string> };
+const FINGERPRINT = /^[0-9a-f]{64}$/;
+const fingerprints = (value: unknown): value is Record<string, string> => isPlain(value) && Object.entries(value).every(([key, entry]) => IDENTIFIER.test(key) && typeof entry === "string" && FINGERPRINT.test(entry));
+
+/** The plan basis of a group file, when it has a well-formed one; undefined otherwise. */
+export function planBasisOf(text: string): PlanBasis | undefined {
+  let basis: unknown;
+  try {
+    basis = (JSON.parse(text) as { basis?: unknown })?.basis;
+  } catch {
+    return undefined;
+  }
+  if (!isPlain(basis) || typeof basis.membership !== "string" || typeof basis.hazards !== "string" || !FINGERPRINT.test(basis.membership) || !FINGERPRINT.test(basis.hazards) || !fingerprints(basis.parents) || !fingerprints(basis.fixed)) return undefined;
+  return { membership: basis.membership, hazards: basis.hazards, parents: { ...basis.parents }, fixed: { ...basis.fixed } };
+}
+
+/**
+ * What the secret scan reads of a group file: every key and every string
+ * value, except the basis fingerprints equal, path for path, to the basis the
+ * v1 tooling generated before any session ran (`trusted`). A fingerprint
+ * changed, moved elsewhere, added, or with no trusted basis is scanned like
+ * any other text; a file that is not JSON is scanned whole.
+ */
+export function groupFileTexts(text: string, trusted?: PlanBasis): string[] {
+  let file: unknown;
+  try {
+    file = JSON.parse(text);
+  } catch {
+    return [text];
+  }
+  const trustedAt = (path: readonly string[], value: string) => {
+    if (!trusted || path[0] !== "basis") return false;
+    if (path.length === 2 && (path[1] === "membership" || path[1] === "hazards")) return trusted[path[1]] === value;
+    if (path.length === 3 && (path[1] === "parents" || path[1] === "fixed")) return Object.hasOwn(trusted[path[1]], path[2]) && trusted[path[1]][path[2]] === value;
+    return false;
+  };
+  const texts: string[] = [];
+  const visit = (node: unknown, path: string[]) => {
+    if (typeof node === "string") {
+      if (!trustedAt(path, node)) texts.push(node);
+    } else if (Array.isArray(node)) node.forEach((child, index) => visit(child, [...path, String(index)]));
+    else if (node && typeof node === "object")
+      for (const [key, child] of Object.entries(node)) {
+        texts.push(key);
+        visit(child, [...path, key]);
+      }
+  };
+  visit(file, []);
+  return texts;
+}
+
 // ---------------------------------------------------------------- canonical form and rendering
 
 /** Every content string of a record, in order (never its conceptId or block kinds). */
