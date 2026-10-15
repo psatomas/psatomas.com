@@ -25,7 +25,9 @@ state, gates and delivery, and replaces only how the content is produced:
 - **Reviews are independent.** The plan review and the batch review run in
   sessions that wrote nothing being reviewed. Escalated concepts get a second,
   independent review.
-- **Plan-review claim fixes are verified** before drafting.
+- **Plan-review fixes are verified** before drafting: claim fixes and model
+  fixes (a concept's meaning, parent and placement notes, fields; never its
+  kind, claims or excludes), each an exact quote occurring once.
 - **Acceptance re-checks the evidence:**
   - no open defect;
   - full claim coverage at the last review;
@@ -44,11 +46,40 @@ distilled from the Foundations audits.
 | Status | Session | Checks between sessions |
 |---|---|---|
 | pending → planned | **plan**: claims, excludes, splits, models, designs in the group file (the driver creates the skeleton) | `l2 check --group`; one fix round, else rolled back |
-| planned → plan-reviewed | **plan-review** (independent); claim fixes applied exactly, then verified in the resumed session | `l2 check`; an unconfirmed fix is rolled back |
-| plan-reviewed → drafted | **draft**: every record of the batch as JSON in its staging file | the file validated as data; the driver renders it into `data.ts` and the registry and checks the source as text; then generate, `l2 check`, focused tests; one rewrite round, else rolled back |
-| drafted → reviewed | **review** (independent, side by side) | repairs applied exactly; the resumed reviewer answers every defect id; at most 2 rounds |
+| planned → plan-reviewed | **plan-review** (independent); claim and model fixes applied exactly, then verified in the resumed session against the plan as it now stands | `l2 check` and the secret scan; a fix that does not apply, fails them or is not confirmed is rolled back |
+| plan-reviewed → drafted | **draft**: every record of the batch as JSON, its final message | the output validated as data; the driver renders it into `data.ts` and the registry and checks the source as text; then generate, `l2 check`, focused tests; one rewrite round, else rolled back |
+| drafted → reviewed | **review** (independent, side by side; separate passes for the definition, conditions and formal results, completeness words, summaries and consistency) | repairs applied exactly; the resumed reviewer answers every defect id of the concepts that changed, rereading the definition and every dependent sentence; at most 2 rounds |
 | reviewed → escalated | **escalate**: a second independent review of escalated concepts | the same repair and verification loop |
 | escalated → accepted | — | the acceptance gates; v1 audit files written; parked concepts removed |
+
+**Session outputs:** every session but the plan (which edits its group file)
+gives its output as its **final message**: the JSON object alone, or one
+fenced block holding it, with its run token. The driver checks it against
+the role's schema, asks once more in the resumed session if it is not
+usable, then stops the batch; only a valid output is kept as the role's file
+in the batch dir. These sessions have no write tool, their batch dir is
+read-only, and no closing turn follows the output. (A deep audit still
+writes the file its prompt names.)
+
+**References:** the driver gives each session what it would otherwise spend
+turns loading, in its prompt: the rubric and rules, each concept's bounded
+context, the plan as it stands, the parents' exposition, the kinds' model
+fields (plan), the records as rendered (review, escalation), and the records
+as they now stand (verification). All of it is what the session may read
+anyway; none of it is batch state or another review. A command that fails
+leaves a note in the reference; the session can still run it.
+
+**Verification covers what changed:** a verification round asks for an answer
+on every concept with an open defect (its record changed, or its repair was
+refused) and every concept with an unresolved signal. The other concepts of
+the review did not change since that reviewer judged them: each owes a
+short, required **cross-check** against the round's repairs, four true or
+false answers (`contradiction`, `relationship`, `terminology`, `claims`) and
+a one-sentence note of at most 300 characters. A missing or malformed
+cross-check gets one rewrite, then the batch stops. A problem found must be
+reported as a defect finding on that concept, and a defect reported on one
+must be named by its cross-check; it is repaired and verified like any other.
+Each cross-check is kept in the concept's audit notes.
 
 **Escalation triggers:**
 - confidence below high;
@@ -56,7 +87,8 @@ distilled from the Foundations audits.
 - a defect in conditions, a formal result or the definition;
 - an uncertain finding;
 - a claim touching another domain's concept;
-- a corrected plan claim;
+- a corrected plan claim (a corrected model statement is no trigger of its
+  own; it adds a focus area when the concept is escalated);
 - more than one placement;
 - an emerging domain;
 - a claim not fully covered.
@@ -110,10 +142,15 @@ distilled from the Foundations audits.
         `scripts/` and `package.json`, with secret-like files in them masked
         (`.env*`, `.dev.vars*`, keys);
       - the session's own pack, read-only;
-      - one empty writable directory at its batch dir, for its output;
+      - one empty directory at its batch dir: writable for a session that
+        writes an output file (a deep audit), read-only for one whose output
+        is its final message;
       - for the plan session, a writable copy of the group files;
       - read-only `/usr` and a few files of `/etc` (certificates, users, time);
       - a private `/tmp` and HOME;
+      - `SHELL=/usr/bin/bash` (under the read-only `/usr`; `run` and `audit`
+        refuse without it): without SHELL the CLI picks zsh, where words such
+        as `=====` are expansion errors that cost sessions turns;
       - its session chain's own CLI config dir.
     - **Not visible:** `.git`, `.dev.vars` and env files, the run state and
       campaign authorization, batch state and other sessions' outputs, other
@@ -121,8 +158,9 @@ distilled from the Foundations audits.
       credentials, `node_modules`.
   - **Output after exit only:** the driver reads the session's output only
     once the sandbox has exited.
-    - It takes its output file (a regular file, at most 4 MB), and for the
-      plan session its group file.
+    - It takes the final message (at most 4 MB), an output file where the
+      role has one (a regular file, at most 4 MB), and for the plan session
+      its group file.
     - Anything else written is a violation, and none of the session is used:
       another name, a link, another group's file.
     - The output reaches the tree only after the integrity guard passes.
@@ -176,7 +214,7 @@ distilled from the Foundations audits.
   tools (`allowedTools`) and denied tools (`deniedTools`, which win), both in
   [`core.ts`](../../src/lib/map/authoring/l2v2/core.ts).
   - **Reads** are limited to `src/`, `docs/`, the prompts, the session's own
-    pack and its own output.
+    pack and, for a deep audit, its own output.
     - No session reads the batch state or another session's output.
     - A deep auditor also never reads the group files, which carry earlier
       audits.
@@ -185,9 +223,9 @@ distilled from the Foundations audits.
   - **Commands:** every role may run only `l2 context`, `l2 territory <group>`,
     `l2 signals`, `l2 group-signals <group>` and `map:inspect`; the plan
     session also `l2 check --group <group>`.
-  - **Writes:** the plan session may edit only its group file (JSON); every
-    other session only its own JSON output file. Writing is denied to every
-    session for:
+  - **Writes:** the plan session may edit only its group file (JSON); a deep
+    audit only its own JSON output file; every other session nothing. Writing
+    is denied to every session for:
     - TypeScript and JavaScript, shell scripts, `package.json`, lockfiles and
       `tsconfig`;
     - `node_modules`, `.npmrc`, `.envrc` and the env files;
@@ -285,8 +323,9 @@ distilled from the Foundations audits.
   - A resume is recorded in the ledger as the human's decision: the batch's
     parked concepts stop counting toward the parking stop rule.
 - **Independent reviews stay independent:**
-  - Reviewers see only the sources, the prompts, their pack and their own
-    output, never the batch state or another session's output.
+  - Reviewers see only the sources, the prompts, their pack and the reference
+    the driver puts in their prompt (what they may read anyway), never the
+    batch state or another review's output.
   - The second review is told the focus areas (conditions and formal results,
     corrected claims, placements, coverage), never the first review's verdict,
     confidence, findings or their count.

@@ -17,22 +17,27 @@ src/lib/map/authoring/l2/contracts.ts, src/lib/map/types.ts, src/lib/map/validat
 - Validate with exactly `npm run -s map:author -- l2 check --group <group>`.
 
 ## Record (drafted as JSON; the driver renders it into src/lib/map/data.ts and the registry)
-- `{ "conceptId": "<concept>", "definition": "...", "body": [ ...blocks ] }` in the draft's staging file, exactly
+- `{ "conceptId": "<concept>", "definition": "...", "body": [ ...blocks ] }` in the draft's output, exactly
   these fields; every value a plain JSON string. No session writes data.ts, the registry or any TypeScript.
 - Blocks: `{ "kind": "paragraph", "text" }`; structured blocks exactly the designed kinds (an interaction structure is a
   `flow`); shapes per validation.ts (comparison: label, 2–4 dimensions, 2–6 alternatives `{name, values}`; distinction:
   `{ "kind": "distinction", left, right, further? }`; others per types.ts). Unknown kinds or fields are refused.
 - The definition states the meaning; the body never repeats it. One canonical text true at every placement.
 - Plain text, American English, no markdown, no line breaks, words rather than symbols.
-- The driver validates the staging file, renders the records and runs `l2 check` and the map tests; it reports any
+- The driver validates the draft's output, renders the records and runs `l2 check` and the map tests; it reports any
   problem back to the draft session.
+
+## Output
+Every session except the plan (which edits its group file) and a deep audit (which writes the file its prompt names)
+gives its output as its final message: the JSON object alone, with the run token it was given. It has no write access.
 
 ## Commands sessions may run (everything else is denied)
 `npm run -s map:author -- l2 context <concept>`, `npm run -s map:author -- l2 territory <group>`,
 `npm run -s map:author -- l2 signals <concept>`, `npm run -s map:author -- l2 group-signals <group>`,
 `npm run -s map:inspect -- <concept> [--context <placement>]`; the plan session also
-`npm run -s map:author -- l2 check --group <group>`. Reads are limited to src/, docs/, these prompts and the batch's
-own directory; local secrets are never read.
+`npm run -s map:author -- l2 check --group <group>`. Run each as one Bash call, exactly as written: anything chained,
+piped, looped or redirected, or any other program, is likely refused and costs a turn. Reads are limited to src/, docs/, these prompts and the
+batch's own directory; local secrets are never read.
 
 ## Never
 Edit other groups' files, other records, taxonomy, tests, tooling, docs, data.ts, the registry or any source file. Read data.ts wholesale (use
