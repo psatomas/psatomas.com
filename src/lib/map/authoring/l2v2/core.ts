@@ -44,9 +44,26 @@ export type ConceptReview = {
 /** Every output carries the run token the driver gave its session, so a stale file is never consumed. */
 export type ReviewOutput = { run: string; concepts: Record<string, ConceptReview>; group?: { note: string; findings: Finding[]; resolutions: Resolution[] } };
 export type DefectAnswer = { id: string; status: "fixed" | "withdrawn" | "open"; why: string };
-export type VerifyOutput = { run: string; concepts: Record<string, { verdict: "pass" | "defect"; findings: Finding[]; defects: DefectAnswer[]; note: string; resolutions: Resolution[] }> };
+/**
+ * What a repair round can break in a neighbouring record that did not change:
+ * a statement it now contradicts, a broken relationship or crossed split, a
+ * term now used in another sense, a claim or explanation it invalidated.
+ */
+export const CROSS_CHECK_ASPECTS = ["contradiction", "relationship", "terminology", "claims"] as const;
+/** The longest cross-check note: one sentence on what was compared, never a second verification. */
+export const MAX_CROSS_CHECK_NOTE = 300;
+/** A concise check of one unchanged concept against the round's repairs: true means that problem was found. */
+export type CrossCheck = Record<(typeof CROSS_CHECK_ASPECTS)[number], boolean> & { note: string };
+export type VerifyOutput = {
+  run: string;
+  concepts: Record<string, { verdict: "pass" | "defect"; findings: Finding[]; defects: DefectAnswer[]; note: string; resolutions: Resolution[] }>;
+  /** One per unchanged concept of the round (absent, or empty, when there is none). */
+  crossChecks?: Record<string, CrossCheck>;
+};
 export type ClaimFix = { concept: string; quote: string; replacement: string; why: string };
-export type PlanReviewOutput = { run: string; verdict: "pass" | "fix" | "stop"; claimFixes: ClaimFix[]; stopReason?: string; note: string };
+/** An exact fix to one of a concept's model statements (its meaning, parent and placement notes, fields): never its kind, claims or excludes. */
+export type ModelFix = ClaimFix;
+export type PlanReviewOutput = { run: string; verdict: "pass" | "fix" | "stop"; claimFixes: ClaimFix[]; modelFixes?: ModelFix[]; stopReason?: string; note: string };
 
 /** A substantive defect from its finding to its outcome. Only "verified" and "withdrawn" (with a reason) close it. */
 export type Defect = { id: string; concept: string; finding: Finding; status: "open" | "applied" | "verified" | "withdrawn" | "refused"; why?: string; source?: Role };
@@ -223,20 +240,28 @@ export function reviewProblems(output: unknown, concepts: readonly string[], opt
   return problems;
 }
 
-/** A verification must answer every defect it was given, by id; "withdrawn" needs its reason. */
-export function verifyProblems(output: unknown, reviewed: readonly string[], pending: Readonly<Record<string, readonly string[]>>, run: string): string[] {
+/**
+ * A verification must answer every defect it was given, by id; "withdrawn"
+ * needs its reason. `reviewed` must each have an entry. `others` (concepts of
+ * the same review that did not change) each need a cross-check against the
+ * round's repairs; one that finds a problem must report it as a defect
+ * finding on that concept (in an entry for it, held to the same shape), and a
+ * defect reported on one must be named by its cross-check.
+ */
+export function verifyProblems(output: unknown, reviewed: readonly string[], pending: Readonly<Record<string, readonly string[]>>, run: string, others: readonly string[] = []): string[] {
   const o = output as Partial<VerifyOutput>;
-  if (!o || typeof o.concepts !== "object") return ["the output needs a concepts object"];
+  if (!o || typeof o.concepts !== "object" || o.concepts === null) return ["the output needs a concepts object"];
   const problems = runProblems(o, run);
-  for (const id of reviewed) {
+  const known = [...reviewed, ...others];
+  for (const id of known) {
     const c = o.concepts[id];
     if (!c) {
-      problems.push(`no verification for ${id}`);
+      if (reviewed.includes(id)) problems.push(`no verification for ${id}`);
       continue;
     }
     if (c.verdict !== "pass" && c.verdict !== "defect") problems.push(`${id}: verdict must be "pass" or "defect"`);
     if (!Array.isArray(c.findings)) problems.push(`${id}: findings must be an array`);
-    else c.findings.forEach((finding, index) => problems.push(...findingProblems(finding, `${id} finding ${index}`, reviewed)));
+    else c.findings.forEach((finding, index) => problems.push(...findingProblems(finding, `${id} finding ${index}`, known)));
     problems.push(...resolutionsProblems(c.resolutions, id));
     const answers = Array.isArray(c.defects) ? c.defects : [];
     for (const defectId of pending[id] ?? []) {
@@ -245,6 +270,25 @@ export function verifyProblems(output: unknown, reviewed: readonly string[], pen
       else if (answer.status === "withdrawn" && !answer.why?.trim()) problems.push(`${id}: withdrawing ${defectId} needs its reason`);
     }
     if (c.verdict === "pass" && (c.findings ?? []).some((finding) => finding.severity === "defect")) problems.push(`${id}: a pass cannot carry a defect`);
+  }
+  if (others.length) {
+    const checks = (o as { crossChecks?: unknown }).crossChecks;
+    if (!checks || typeof checks !== "object" || Array.isArray(checks)) problems.push(`crossChecks must hold a check for each unchanged concept (${others.join(", ")})`);
+    else
+      for (const id of others) {
+        const check = Object.hasOwn(checks, id) ? (checks as Record<string, Partial<CrossCheck>>)[id] : undefined;
+        if (!check || typeof check !== "object") {
+          problems.push(`crossChecks: ${id} needs its check`);
+          continue;
+        }
+        for (const aspect of CROSS_CHECK_ASPECTS) if (typeof check[aspect] !== "boolean") problems.push(`crossChecks: ${id}.${aspect} must be true or false`);
+        if (!isStr(check.note) || !check.note.trim()) problems.push(`crossChecks: ${id} needs its note (what was compared)`);
+        else if (check.note.length > MAX_CROSS_CHECK_NOTE) problems.push(`crossChecks: ${id}'s note is longer than ${MAX_CROSS_CHECK_NOTE} characters: one sentence`);
+        const found = CROSS_CHECK_ASPECTS.some((aspect) => check[aspect] === true);
+        const reported = Object.values(o.concepts!).some((c) => Array.isArray(c?.findings) && c.findings.some((f) => f?.concept === id && f.severity === "defect"));
+        if (found && !reported) problems.push(`crossChecks: ${id} found a problem, which needs a defect finding on ${id} (exact quote and replacement)`);
+        if (!found && reported) problems.push(`crossChecks: a defect reported on ${id} must be named by its cross-check`);
+      }
   }
   return problems;
 }
@@ -256,10 +300,16 @@ export function planReviewProblems(output: unknown, concepts: readonly string[],
   if (!Array.isArray(o.claimFixes)) problems.push("claimFixes must be an array");
   else
     o.claimFixes.forEach((fix, index) => {
-      if (!concepts.includes(fix.concept) || !isStr(fix.quote) || !fix.quote || !isStr(fix.replacement)) problems.push(`claimFix ${index}: needs concept, quote and replacement`);
+      if (!fix || !concepts.includes(fix.concept) || !isStr(fix.quote) || !fix.quote || !isStr(fix.replacement)) problems.push(`claimFix ${index}: needs concept, quote and replacement`);
+    });
+  // Older outputs have no modelFixes: absent is none.
+  if (o.modelFixes !== undefined && !Array.isArray(o.modelFixes)) problems.push("modelFixes must be an array");
+  else
+    (o.modelFixes ?? []).forEach((fix, index) => {
+      if (!fix || !concepts.includes(fix.concept) || !isStr(fix.quote) || !fix.quote || !isStr(fix.replacement) || !fix.replacement.trim()) problems.push(`modelFix ${index}: needs concept, quote and a non-empty replacement`);
     });
   if (o.verdict === "stop" && !o.stopReason) problems.push("a stop needs stopReason");
-  if (o.verdict === "fix" && !o.claimFixes?.length) problems.push("a fix needs claimFixes");
+  if (o.verdict === "fix" && !o.claimFixes?.length && !o.modelFixes?.length) problems.push("a fix needs claimFixes or modelFixes");
   return problems;
 }
 
@@ -267,6 +317,23 @@ export function planReviewProblems(output: unknown, concepts: readonly string[],
 export function parseJson(text: string): unknown {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   return JSON.parse(fenced ? fenced[1] : text);
+}
+
+/** The largest final message the driver reads as a session's output (as large as an output file could be). */
+export const MAX_FINAL_MESSAGE = 4 * 1024 * 1024;
+/**
+ * A session's output given as its final message: the JSON object alone, or
+ * one fenced block holding it. Anything else is refused, never searched for
+ * something that parses; the run token and the role's schema are checked after.
+ */
+export function parseFinal(text: string): unknown {
+  if (Buffer.byteLength(text, "utf8") > MAX_FINAL_MESSAGE) throw new Error(`the final message is larger than ${MAX_FINAL_MESSAGE} bytes`);
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("the final message is empty");
+  if (trimmed.startsWith("{")) return JSON.parse(trimmed);
+  const fences = [...trimmed.matchAll(/```(?:json)?[^\S\n]*\n([\s\S]*?)\n?```/g)];
+  if (fences.length !== 1) throw new Error("the final message must be the JSON object alone (or exactly one fenced JSON block)");
+  return JSON.parse(fences[0][1]);
 }
 
 // ---------------------------------------------------------------- the defect ledger and acceptance
@@ -350,6 +417,67 @@ export function applyClaimFixes(groupFile: string, fixes: readonly ClaimFix[]): 
   return { text: `${JSON.stringify(file, null, 2)}\n`, problems };
 }
 
+type ModelStatements = { meaning?: unknown; parents?: Record<string, unknown>; placements?: Record<string, unknown>; fields?: Record<string, unknown> };
+/**
+ * A model's statements as locations: its meaning, what it adds beyond each
+ * parent, why it holds at each placement, and every field (each item of a
+ * list). Never its kind, claims or excludes: claims change only by claim fix.
+ */
+function modelStatements(model: ModelStatements): { where: string; get: () => string; set: (text: string) => void }[] {
+  const out: { where: string; get: () => string; set: (text: string) => void }[] = [];
+  if (typeof model.meaning === "string") out.push({ where: "meaning", get: () => model.meaning as string, set: (text) => (model.meaning = text) });
+  for (const key of ["parents", "placements", "fields"] as const) {
+    const entries = model[key];
+    if (!entries || typeof entries !== "object") continue;
+    for (const [name, value] of Object.entries(entries)) {
+      if (typeof value === "string") out.push({ where: `${key}.${name}`, get: () => entries[name] as string, set: (text) => (entries[name] = text) });
+      else if (Array.isArray(value))
+        value.forEach((item, index) => {
+          if (typeof item === "string") out.push({ where: `${key}.${name}[${index}]`, get: () => value[index] as string, set: (text) => (value[index] = text) });
+        });
+    }
+  }
+  return out;
+}
+
+/**
+ * A group file with exact fixes applied to model statements: each quote must
+ * occur exactly once among the concept's model statements, and the
+ * replacement must be non-empty plain text. Every location changed is
+ * reported, so the reviewer verifies exactly what was applied.
+ */
+export function applyModelFixes(groupFile: string, fixes: readonly ModelFix[]): { text: string; problems: string[]; applied: { concept: string; where: string; quote: string; replacement: string }[] } {
+  const file = JSON.parse(groupFile) as { concepts?: Record<string, { model?: ModelStatements & { claims?: string[]; excludes?: string[] } }> };
+  const problems: string[] = [];
+  const applied: { concept: string; where: string; quote: string; replacement: string }[] = [];
+  for (const fix of fixes) {
+    const model = Object.hasOwn(file.concepts ?? {}, fix.concept) ? file.concepts![fix.concept].model : undefined;
+    if (!model) {
+      problems.push(`${fix.concept}: no model to fix`);
+      continue;
+    }
+    if (!fix.quote) {
+      problems.push(`${fix.concept}: a model fix needs its exact quote`);
+      continue;
+    }
+    if (!fix.replacement.trim() || /[\n\r]/.test(fix.replacement)) {
+      problems.push(`${fix.concept}: a model fix needs a non-empty, single-line replacement`);
+      continue;
+    }
+    const statements = modelStatements(model);
+    const count = statements.reduce((sum, s) => sum + s.get().split(fix.quote).length - 1, 0);
+    if (count !== 1) {
+      const inClaims = [...(model.claims ?? []), ...(model.excludes ?? [])].some((text) => typeof text === "string" && text.includes(fix.quote));
+      problems.push(`${fix.concept}: the quote must occur exactly once in one model statement (it occurs ${count} times${inClaims ? "; claims change only by claim fix" : ""})`);
+      continue;
+    }
+    const target = statements.find((s) => s.get().includes(fix.quote))!;
+    target.set(target.get().replace(fix.quote, () => fix.replacement));
+    applied.push({ concept: fix.concept, where: target.where, quote: fix.quote, replacement: fix.replacement });
+  }
+  return { text: `${JSON.stringify(file, null, 2)}\n`, problems, applied };
+}
+
 // ---------------------------------------------------------------- escalation
 
 /** Rules whose defects mean the concept gets a second, independent focused review. */
@@ -383,6 +511,7 @@ export function escalationFocus(reasons: readonly string[]): string[] {
     if (reason.includes("conditions, a formal result or the definition")) focus.add("conditions, formal results with all their conditions, and the definition against every paragraph");
     else if (reason.includes("another domain")) focus.add("boundaries with other domains' concepts");
     else if (reason === "a plan claim was corrected") focus.add("the plan claims corrected before drafting");
+    else if (reason === "a plan model statement was corrected") focus.add("the plan model statements corrected before drafting");
     else if (/^\d+ placements$/.test(reason)) focus.add("one text true at every placement");
     else if (reason === "emerging domain") focus.add("accuracy in an emerging domain");
     else if (reason === "a claim not fully covered") focus.add("each claim's mechanism, conditions and failure or confusion");

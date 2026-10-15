@@ -8,8 +8,9 @@
  * - the project's sources, docs and scripts, read-only, with secret-like
  *   files masked;
  * - its own pack, read-only;
- * - one empty writable directory for its output (and, for the plan session,
- *   a writable copy of the group files);
+ * - one empty writable directory for its output file, read-only when its
+ *   output is its final message (and, for the plan session, a writable copy
+ *   of the group files);
  * - the runtime (`/usr`, a few files of `/etc`) and a private CLI config dir.
  *
  * It has no network: everything goes through the driver's egress server
@@ -49,7 +50,11 @@ export type SandboxConfig = {
   /** The launcher run inside the sandbox (scripts/l2v2/sandbox-launch.mjs). */
   launcher: string;
 };
-/** Repository-relative paths: the session's pack, its output file, and the one tree file it may edit (the plan's group file). */
+/**
+ * Repository-relative paths: the session's pack, its output file, and the one
+ * tree file it may edit (the plan's group file). A session without `out`
+ * gives its output as its final message and writes nothing in its batch dir.
+ */
 export type SessionFiles = { pack: string; out?: string; editable?: string };
 export type SessionOutcome = SessionResult & {
   /** Files the session wrote, read back after it exited: the driver writes them only once its checks pass. */
@@ -73,6 +78,12 @@ export const PLACEHOLDER_TOKEN = "sk-ant-oat01-l2v2-sandbox-placeholder-not-a-cr
 const SESSION_ID = /^[A-Za-z0-9][A-Za-z0-9-]{0,127}$/;
 const MAX_OUTPUT = 4 * 1024 * 1024;
 const SOCKET = "/run/l2v2-egress.sock";
+/**
+ * The shell the CLI's Bash tool uses inside the sandbox. Without SHELL the CLI
+ * prefers zsh, where a word like `=====` is an expansion error; bash runs the
+ * same commands under the same permissions. Under the read-only /usr.
+ */
+export const SANDBOX_SHELL = "/usr/bin/bash";
 
 /** Secret-like files inside the readable project paths, to mask with an empty file. */
 export function secretMasks(root: string): string[] {
@@ -134,6 +145,8 @@ export function sandboxArgs(plan: SandboxPlan): string[] {
     ...plan.masks.flatMap((path) => ["--ro-bind", "/dev/null", work(path)]),
     "--bind", plan.outDir, work(batchDir),
     "--ro-bind", join(plan.root, plan.files.pack), work(plan.files.pack),
+    // A session with no output file (its output is its final message) cannot write in its batch dir at all.
+    ...(plan.files.out ? [] : ["--remount-ro", work(batchDir)]),
     "--remount-ro", "/work",
     "--bind", plan.configDir, "/cfg",
     "--ro-bind", dirname(plan.claude), "/opt/claude",
@@ -153,7 +166,7 @@ export function sandboxArgs(plan: SandboxPlan): string[] {
  * anything else leaves only by CONNECT, through the same server.
  */
 export const sandboxEnv = (prefix = "/usr"): Record<string, string> => ({
-  PATH: prefix === "/usr" ? "/usr/bin" : "/opt/node/bin:/usr/bin", HOME: "/home/sandbox", USER: "sandbox", LANG: "C.UTF-8", CLAUDE_CONFIG_DIR: "/cfg",
+  PATH: prefix === "/usr" ? "/usr/bin" : "/opt/node/bin:/usr/bin", HOME: "/home/sandbox", USER: "sandbox", LANG: "C.UTF-8", CLAUDE_CONFIG_DIR: "/cfg", SHELL: SANDBOX_SHELL,
   ANTHROPIC_BASE_URL: `http://127.0.0.1:${PORT}`, CLAUDE_CODE_OAUTH_TOKEN: PLACEHOLDER_TOKEN,
   HTTPS_PROXY: `http://127.0.0.1:${PORT}`, HTTP_PROXY: `http://127.0.0.1:${PORT}`, https_proxy: `http://127.0.0.1:${PORT}`, http_proxy: `http://127.0.0.1:${PORT}`,
   // The relay is reached directly, never through the proxy settings.
@@ -181,7 +194,7 @@ export function sandboxProblems(config: SandboxConfig): string[] {
   const version = spawnSync(config.bwrap, ["--version"], { encoding: "utf8" });
   if (version.status !== 0) return [`bubblewrap is not available at ${config.bwrap}`];
   const prefix = nodePrefix();
-  for (const [path, what] of [[config.claude, "the Claude CLI"], [config.launcher, "the sandbox launcher"], [join(prefix, "bin/npm"), "npm beside node"], [join(prefix, "bin/node"), "node"]] as const)
+  for (const [path, what] of [[config.claude, "the Claude CLI"], [config.launcher, "the sandbox launcher"], [join(prefix, "bin/npm"), "npm beside node"], [join(prefix, "bin/node"), "node"], [SANDBOX_SHELL, "bash, the sessions' shell"]] as const)
     if (!existsSync(path)) problems.push(`${what} is missing (${path})`);
   const probe = spawnSync(config.bwrap, ["--unshare-all", "--die-with-parent", "--new-session", "--ro-bind", "/usr", "/usr", ...rootLayout(), "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/work", "--remount-ro", "/work", "/usr/bin/true"], { encoding: "utf8" });
   if (probe.status !== 0) problems.push(`bubblewrap cannot create the sandbox (unprivileged user namespaces?): ${(probe.stderr ?? "").trim().slice(0, 200)}`);

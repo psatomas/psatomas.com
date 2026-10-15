@@ -7,7 +7,7 @@ import { homedir, networkInterfaces, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { startEgressProxy } from "./egress.ts";
-import { PLACEHOLDER_TOKEN, runSandboxed, sandboxArgs, sandboxProblems, sanitizeConfigDir, secretMasks, type SandboxConfig } from "./sandbox.ts";
+import { PLACEHOLDER_TOKEN, runSandboxed, SANDBOX_SHELL, sandboxArgs, sandboxEnv, sandboxProblems, sanitizeConfigDir, secretMasks, type SandboxConfig } from "./sandbox.ts";
 
 const LAUNCHER = join(import.meta.dirname, "../../../../../scripts/l2v2/sandbox-launch.mjs");
 const TOKEN = "test-token-not-real";
@@ -335,4 +335,49 @@ test("a CLI config dir keeps only its transcripts: settings, hooks, MCP servers,
   sanitizeConfigDir(dir);
   assert.equal(readFileSync(join(dir, "settings.json"), "utf8"), "{}\n");
   assert.deepEqual([existsSync(join(dir, ".claude.json")), existsSync(join(dir, "plugins")), existsSync(join(dir, "shell-snapshots")), existsSync(join(dir, "projects/-work/session.jsonl"))], [false, false, false, true]);
+});
+
+test("a session whose output is its final message gets a read-only batch dir; the shell is bash, under the read-only /usr", () => {
+  const { root } = checkout();
+  const args = (files: { pack: string; out?: string; editable?: string }) => sandboxArgs({ root, masks: [], files, outDir: "/tmp/x/out", groupsCopy: files.editable ? "/tmp/x/groups" : undefined, claude: "/opt/bin/claude", launcher: LAUNCHER, node: process.execPath, configDir: "/tmp/x/cfg", socket: "/tmp/x/egress.sock", claudeArgs: ["-p"] });
+  const remounted = (a: string[]) => a.some((arg, i) => arg === "/work/.map-authoring/l2v2/s/g" && a[i - 1] === "--remount-ro");
+  assert.ok(!remounted(args({ pack: PACK, out: OUT })), "an output file needs its writable dir");
+  for (const files of [{ pack: PACK }, { pack: PACK, editable: `${GROUPS}/g.json` }]) {
+    const a = args(files);
+    assert.ok(remounted(a), JSON.stringify(files));
+    const at = a.findIndex((arg, i) => arg === "/work/.map-authoring/l2v2/s/g" && a[i - 1] === "--remount-ro");
+    assert.ok(at > a.indexOf(`/work/${PACK}`), "made read-only once the pack is mounted in it");
+  }
+  assert.equal(SANDBOX_SHELL, "/usr/bin/bash");
+  for (const prefix of ["/usr", "/opt/node-x"]) assert.equal(sandboxEnv(prefix).SHELL, SANDBOX_SHELL);
+});
+
+/** A stand-in CLI whose final message reports what the probes found (plain words, no quotes). */
+function reportingCli(probes: [string, string][]): string {
+  const file = join(mkdtempSync(join(tmpdir(), "l2v2-cli-")), "claude");
+  writeFileSync(file, [
+    "#!/bin/sh",
+    "cat > /dev/null",
+    "id=$(cat /proc/sys/kernel/random/uuid)",
+    'res=""',
+    ...probes.map(([name, command]) => `if sh -c '${command}' >/dev/null 2>&1; then res="$res ${name}=ok"; else res="$res ${name}=blocked"; fi`),
+    `printf '{"session_id":"%s","result":"%s","num_turns":1,"duration_ms":1}\\n' "$id" "$res"`,
+    "",
+  ].join("\n"));
+  chmodSync(file, 0o755);
+  return file;
+}
+
+test("in the sandbox, a final-message session writes nothing: its batch dir is read-only like the rest of /work; its shell is bash", { skip: NO_SANDBOX }, async () => {
+  const { root } = checkout();
+  const outcome = await runSandboxed(config(root, reportingCli([
+    ["write_batch_dir", "echo x > /work/.map-authoring/l2v2/s/g/review.json"],
+    ["write_pack", `echo x >> /work/${PACK}`],
+    ["write_tmp", "echo x > /tmp/scratch"],
+    ["shell_is_bash", `test "$SHELL" = ${SANDBOX_SHELL}`],
+    ["bash_runs", `${SANDBOX_SHELL} -c "echo =====; true"`],
+  ])), request({ pack: PACK }));
+  assert.equal(outcome.text.trim(), "write_batch_dir=blocked write_pack=blocked write_tmp=ok shell_is_bash=ok bash_runs=ok");
+  assert.deepEqual([outcome.outputs, outcome.violations], [[], []]);
+  assert.ok(!existsSync(join(root, ".map-authoring/l2v2/s/g/review.json")));
 });

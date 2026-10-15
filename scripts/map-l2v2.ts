@@ -165,6 +165,11 @@ const env: Env = {
   groupSignals: async (group) => json<{ id: string; detail: string }[]>(["group-signals", group]).map(({ id, detail }) => ({ id, detail })),
   context: async (conceptId) => author("context", conceptId, "--json").stdout.trim(),
   territory: async (group) => author("territory", group).stdout.trim(),
+  inspect: async (conceptId) => {
+    const result = sh("npm", ["run", "-s", "map:inspect", "--", conceptId]);
+    if (!result.ok) throw new Error(`map:inspect ${conceptId}: ${output(result).slice(-300)}`);
+    return result.stdout.trim();
+  },
   async facts(conceptId) {
     const context = json<{ placements: unknown[]; owner: { domain: string } }>(["context", conceptId]);
     return { placements: context.placements.length, domainOrder: await domainOrder(context.owner.domain) };
