@@ -31,6 +31,15 @@ state, gates and delivery, and replaces only how the content is produced:
   and the audit's findings stay unresolved, so finalize still refuses the
   concept. An interrupted repair is rolled back, and reported, by the next
   `run`, `audit` or `finalize` before anything else runs.
+- **Recorded findings can be repaired without a new audit:**
+  `audit --from-audit <label> --concepts <ids> --slice <id> --fix` repairs the
+  substantive findings an earlier audit recorded. Every concept is checked
+  first (exactly one result of that audit in the ledger, with the output's
+  number of findings, right after its audit session, whose transcript is still
+  there; every finding applying exactly once to the current accepted record),
+  then each gets one verification round by that audit's own session, under
+  every stop rule. No new audit is run or recorded; a finding kept open or a new
+  one reported restores the accepted record.
 - **Reviews are independent.** The plan review and the batch review run in
   sessions that wrote nothing being reviewed. Escalated concepts get a second,
   independent review.

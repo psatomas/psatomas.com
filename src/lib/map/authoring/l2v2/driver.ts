@@ -576,8 +576,8 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
    * passages. Only an applied repair confirmed fixed, or a defect withdrawn
    * with a reason, closes; what stays open after the rounds parks its concept.
    */
-  async function repairLoop(role: Role, reviewed: readonly string[], prefix: string): Promise<boolean> {
-    for (let round = 1; round <= MAX_ROUNDS; round++) {
+  async function repairLoop(role: Role, reviewed: readonly string[], prefix: string, maxRounds = MAX_ROUNDS): Promise<boolean> {
+    for (let round = 1; round <= maxRounds; round++) {
       const unresolvedNow = reviewed.flatMap((id) => openDefects(state, id));
       if (!unresolvedNow.length) break;
       const toApply = unresolvedNow.filter((d) => d.status === "open");
@@ -640,7 +640,7 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
       }
       save(state);
     }
-    for (const id of reviewed) if (state.conceptStates[id].state === "open" && openDefects(state, id).length) park(id, `${role}: defects remain after ${MAX_ROUNDS} verified repair rounds: ${openDefects(state, id).map((d) => d.id).join(", ")}`);
+    for (const id of reviewed) if (state.conceptStates[id].state === "open" && openDefects(state, id).length) park(id, `${role}: defects remain after ${maxRounds} verified repair round${maxRounds === 1 ? "" : "s"}: ${openDefects(state, id).map((d) => d.id).join(", ")}`);
     return true;
   }
 
@@ -911,7 +911,11 @@ export function recoverRepair(env: Env, slice: string, group: string): string | 
  * verification, a failed session, a stop) the accepted batch is restored as it
  * was, never parked: the findings stay unresolved for a human.
  */
-export async function repairAfterAudit(env: Env, input: BatchInput & { concept: string; findings: readonly Omit<Defect["finding"], "concept" | "severity">[]; auditSession: string; label: string }): Promise<BatchState> {
+/**
+ * maxRounds: verified repair rounds (default MAX_ROUNDS). With 1, only the given findings are ever applied: a
+ * verifier that keeps one open, or reports a new one, leaves the concept to be restored, not repaired again.
+ */
+export async function repairAfterAudit(env: Env, input: BatchInput & { concept: string; findings: readonly Omit<Defect["finding"], "concept" | "severity">[]; auditSession: string; label: string; maxRounds?: number }): Promise<BatchState> {
   const state = loadBatch(env.root, input.slice, input.group);
   if (state?.repairOrigin) throw new Error(`${input.slice}/${input.group}: an earlier repair of ${state.repairOrigin.concept} is still recorded as under way; recover it first`);
   if (!state || state.status !== "accepted") throw new Error(`${input.concept} is not in an accepted v2 batch of ${input.slice}: a recorded or protected record needs a controlled v1 revision (\`l2 reopen\`)`);
@@ -930,7 +934,7 @@ export async function repairAfterAudit(env: Env, input: BatchInput & { concept: 
   recordDefects(ops.state, input.findings.map((f) => ({ ...f, concept: input.concept, severity: "defect" as const })), prefix, "deep-audit");
   ops.save(ops.state);
   try {
-    const verified = await ops.repairLoop("deep-audit", [input.concept], prefix);
+    const verified = await ops.repairLoop("deep-audit", [input.concept], prefix, input.maxRounds);
     const after = ops.state.conceptStates[input.concept];
     if (!verified || ops.state.status === "stopped" || after.state !== "open") return restoreAcceptedAfterRepair(env, ops.state, `repair not verified: ${ops.state.stop?.reason ?? after.parkReason ?? "the verification did not pass"}`);
     // The gates accept() would park the concept on are checked first: a repair that fails them is undone, never parked.

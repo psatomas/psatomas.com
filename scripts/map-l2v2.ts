@@ -6,6 +6,8 @@
 //   npm run map:l2v2 -- audit --sample-slice <id>             draw and deep-audit the slice's measurement sample; repairs are verified
 //   npm run map:l2v2 -- audit --label <l> --concepts a,b [--slice <id> --fix]   deep audits (pilot); --fix repairs through the verified loop
 //   npm run map:l2v2 -- audit --label baseline --ref <git-ref> --concepts a,b   baseline audits of records at a commit (never counted, never fixed)
+//   npm run map:l2v2 -- audit --from-audit <label> --concepts a,b --slice <id> --fix   repair the recorded findings of an earlier audit
+//                                                             (no new audit; one verification round by that audit's own session)
 //   npm run map:l2v2 -- meter --percent <weekly> [--session <5-hour>] [--read-at <iso>] [--bracket before|after --batch <id> [--exclusive]] [--note ..]
 //                                                             record an account-wide usage reading (availability; never attributed to the campaign)
 //   npm run map:l2v2 -- policy --version <1|2> --note <why> [--acknowledge <every current stop, quoted>]   record the accounting policy
@@ -25,10 +27,10 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { recordSpans } from "../src/lib/map/authoring/l2/campaign.ts";
 import {
-  accountingPolicy, activeFailures, allowedTools, batchCosts, batchMetrics, BATCH_STATUSES, budgetHash, campaignCost, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, meterEvidence, parseJson, planBatches,
+  accountingPolicy, activeFailures, allowedTools, applyPatches, batchCosts, batchMetrics, BATCH_STATUSES, budgetHash, campaignCost, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, meterEvidence, parseJson, planBatches,
   policyActivation,
   policyChangeProblems, policyEntry, readingProblems, resumeBatch, sample, sampleProblems, sessionGate, stopReason,
   type BatchState, type BatchStatus, type Budget, type Finding, type SliceSample,
@@ -385,23 +387,60 @@ async function deepAudit(concept: string, label: string, campaign: boolean, ref?
 }
 
 /** Repairs a sampled or pilot concept's audit findings through the verified loop of its v2 batch. */
-async function repairFromAudit(slice: string, concept: string, label: string, audit: DeepAudit, sessionId: string): Promise<boolean> {
+async function repairFromAudit(slice: string, concept: string, label: string, audit: DeepAudit, sessionId: string, maxRounds?: number): Promise<boolean> {
   const group = v2Concepts(slice).get(concept) ?? fail(`${concept} is not an accepted concept of a v2 batch of ${slice}: recorded or protected content needs a controlled v1 revision (\`l2 reopen --domain ${slice}\`)`);
   const run = runOf(slice);
   const plan = planBatches(run.l2.slice.groups, run.l2.steps, baseRegistry(run.baseSha));
   const state = loadBatch(ROOT, slice, group)!;
   const before = state.conceptStates[concept].accepted?.at;
-  const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, limits: limits(), gate, concept, findings: audit.substantive, auditSession: sessionId, label });
+  const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, limits: limits(), gate, concept, findings: audit.substantive, auditSession: sessionId, label, maxRounds });
   // Repaired only if accepted again through the gates; otherwise the accepted record was restored, its findings still open.
   const repaired = after.status === "accepted" && after.conceptStates[concept].accepted?.at !== before;
   console.log(`  repair: ${repaired ? "applied, verified, accepted again" : `not repaired, the accepted record is restored and the findings stay open: ${after.history?.at(-1)?.stop?.reason ?? after.stop?.reason ?? after.status}`}`);
   return repaired;
 }
 
+/**
+ * The recorded findings of an earlier audit of a concept, to repair without auditing again: refused unless the
+ * ledger holds exactly one result of that audit for the concept, with the file's number of substantive findings,
+ * right after its audit session (whose transcript is still there to resume), and unless every finding still applies
+ * exactly once to the concept's current accepted record.
+ */
+function recordedAudit(label: string, concept: string, slice: string): { concept: string; audit: DeepAudit; sessionId: string } {
+  const where = `${concept} (audit ${label})`;
+  const group = v2Concepts(slice).get(concept) ?? fail(`${where}: not an accepted concept of a v2 batch of ${slice}`);
+  const path = join(ROOT, V2_ROOT, "audits", label, `${concept}.audit.json`);
+  if (!existsSync(path)) fail(`${where}: no recorded output at ${relative(ROOT, path)}`);
+  let audit: DeepAudit;
+  try {
+    audit = parseJson(readFileSync(path, "utf8")) as DeepAudit;
+  } catch {
+    return fail(`${where}: the recorded output is not JSON`);
+  }
+  if (!Array.isArray(audit.substantive) || !audit.substantive.length) fail(`${where}: no substantive findings to repair`);
+  const ledger = loadLedger(ROOT);
+  const results = ledger.flatMap((e, index) => (e.kind === "deep-audit" && e.label === label && e.concept === concept ? [index] : []));
+  if (results.length !== 1) fail(`${where}: the ledger holds ${results.length} results of this audit for the concept, not exactly one`);
+  const result = ledger[results[0]] as Extract<(typeof ledger)[number], { kind: "deep-audit" }>;
+  if (result.substantive !== audit.substantive.length) fail(`${where}: the ledger records ${result.substantive} substantive finding(s), the output holds ${audit.substantive.length}`);
+  const session = ledger[results[0] - 1];
+  if (session?.kind !== "session" || session.slice !== `audit:${label}` || session.group !== concept || session.role !== "deep-audit") fail(`${where}: no audit session recorded right before its result`);
+  const sessionId = (session as Extract<(typeof ledger)[number], { kind: "session" }>).sessionId;
+  if (!existsSync(join(ROOT, SANDBOX_CONFIG, sessionId))) fail(`${where}: the audit session's transcript is gone, so it cannot verify the repair`);
+  const state = loadBatch(ROOT, slice, group)!;
+  const findings = audit.substantive.map((f) => ({ ...f, concept, severity: "defect" as const }));
+  const refused = applyPatches(state.records ?? {}, findings, new Set(), []).results.filter((r) => !r.applied);
+  if (refused.length) fail(`${where}: a recorded finding no longer applies to the accepted record: ${refused.map((r) => `"${r.finding.quote.slice(0, 80)}": ${r.problem}`).join("; ")}`);
+  return { concept, audit, sessionId };
+}
+
 async function commandAudit() {
   auditInterrupted();
   recoverRepairs();
+  const fromAudit = flag("--from-audit");
   const sliceToSample = flag("--sample-slice");
+  if (fromAudit && (sliceToSample || flag("--ref") || !args.includes("--fix") || !flag("--slice") || (flag("--label") && flag("--label") !== fromAudit)))
+    fail("--from-audit repairs the recorded findings of an earlier audit: it needs --fix and --slice, and takes no --ref, --sample-slice or other --label");
   for (const slice of [sliceToSample, flag("--slice")]) if (slice) requireTree(slice);
   // Arguments are validated first (exit 2); the sandbox is checked just before the first session.
   const max = budget().maxAuditConcepts;
@@ -424,13 +463,24 @@ async function commandAudit() {
     console.log(`sample of ${sliceToSample}: ${sampled.concepts.join(", ")} audited`);
     return;
   }
-  const label = flag("--label") ?? fail("audit needs --label, or --sample-slice");
+  const label = flag("--label") ?? fromAudit ?? fail("audit needs --label, or --sample-slice");
   const concepts = (flag("--concepts") ?? fail("audit needs --concepts a,b")).split(",");
   if (concepts.length > max) fail(`one audit command audits at most ${max} concepts (budget.json maxAuditConcepts); ${concepts.length} given`);
   const ref = flag("--ref");
   if (ref && args.includes("--fix")) fail("a baseline at a ref is measured, never fixed");
   const slice = flag("--slice");
   if (args.includes("--fix") && !slice) fail("--fix needs --slice: only accepted, unfinalized v2 concepts are repaired, through the verified loop");
+  if (fromAudit) {
+    // Every concept's recorded findings are checked before any is repaired; then each gets one verification round, by the
+    // audit's own session, under every stop rule. No new audit is run or recorded.
+    const recorded = concepts.map((concept) => recordedAudit(fromAudit, concept, slice!));
+    requireSandbox();
+    for (const { concept, audit, sessionId } of recorded) {
+      auditGate();
+      if (!(await repairFromAudit(slice!, concept, fromAudit, audit, sessionId, 1))) fail(`${concept}: not repaired; its accepted record is restored and the recorded findings stay open for a human`, 3);
+    }
+    return;
+  }
   requireSandbox();
   for (const concept of concepts) {
     const { audit, sessionId } = await deepAudit(concept, label, !ref, ref);
