@@ -35,7 +35,7 @@ import {
 } from "../src/lib/map/authoring/l2v2/core.ts";
 import { runSandboxed, sandboxProblems, sandboxToken, type SandboxConfig } from "../src/lib/map/authoring/l2v2/sandbox.ts";
 import {
-  acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, loadBatch, loadLedger, PROMPTS, REGISTRY, repairAfterAudit, runBatch, SANDBOX_CONFIG, saveBatch, V2_ROOT, type Env, type Limits,
+  acquireLock, appendLedger, batchDir, DATA, GuardError, guardedSession, loadBatch, loadLedger, PROMPTS, recoverRepair, REGISTRY, repairAfterAudit, runBatch, SANDBOX_CONFIG, saveBatch, V2_ROOT, type Env, type Limits,
 } from "../src/lib/map/authoring/l2v2/driver.ts";
 import { recordFingerprint, recordPlacement, recordsInPlaceProblems } from "../src/lib/map/authoring/l2v2/records.ts";
 import { gitChangedPaths, gitHeadEntry, gitSurfaces, run } from "../src/lib/map/authoring/l2v2/shell.ts";
@@ -241,8 +241,18 @@ function locked<T>(fn: () => Promise<T>): Promise<T> {
 
 // ---------------------------------------------------------------- commands
 
+/**
+ * Before run, audit and finalize: an audit repair a stopped process left under way is rolled back (or, if its
+ * re-acceptance had completed, closed), reported, and the command stops so a human sees it before anything runs.
+ */
+function recoverRepairs() {
+  const recovered = allBatches().flatMap((state) => recoverRepair(env, state.slice, state.group) ?? []);
+  if (recovered.length) fail(`${recovered.join("\n")}\nnothing else was run; run the command again`, 3);
+}
+
 async function commandRun() {
   const slice = flag("--slice") ?? fail("run needs --slice <id>");
+  recoverRepairs();
   requireTree(slice);
   requireSandbox();
   const run = runOf(slice);
@@ -380,13 +390,17 @@ async function repairFromAudit(slice: string, concept: string, label: string, au
   const run = runOf(slice);
   const plan = planBatches(run.l2.slice.groups, run.l2.steps, baseRegistry(run.baseSha));
   const state = loadBatch(ROOT, slice, group)!;
+  const before = state.conceptStates[concept].accepted?.at;
   const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, limits: limits(), gate, concept, findings: audit.substantive, auditSession: sessionId, label });
-  console.log(`  repair: ${after.status === "accepted" ? "applied, verified, accepted again" : `batch ${after.status}${after.stop ? `: ${after.stop.reason}` : ""}`}`);
-  return after.status === "accepted";
+  // Repaired only if accepted again through the gates; otherwise the accepted record was restored, its findings still open.
+  const repaired = after.status === "accepted" && after.conceptStates[concept].accepted?.at !== before;
+  console.log(`  repair: ${repaired ? "applied, verified, accepted again" : `not repaired, the accepted record is restored and the findings stay open: ${after.history?.at(-1)?.stop?.reason ?? after.stop?.reason ?? after.status}`}`);
+  return repaired;
 }
 
 async function commandAudit() {
   auditInterrupted();
+  recoverRepairs();
   const sliceToSample = flag("--sample-slice");
   for (const slice of [sliceToSample, flag("--slice")]) if (slice) requireTree(slice);
   // Arguments are validated first (exit 2); the sandbox is checked just before the first session.
@@ -420,7 +434,7 @@ async function commandAudit() {
   requireSandbox();
   for (const concept of concepts) {
     const { audit, sessionId } = await deepAudit(concept, label, !ref, ref);
-    if (audit.substantive.length && args.includes("--fix") && !(await repairFromAudit(slice!, concept, label, audit, sessionId))) fail(`${concept}: not repaired; the batch is stopped for a human`, 3);
+    if (audit.substantive.length && args.includes("--fix") && !(await repairFromAudit(slice!, concept, label, audit, sessionId))) fail(`${concept}: not repaired; its accepted record is restored and the audit's findings stay open for a human`, 3);
     if (audit.substantive.length && !args.includes("--fix") && !ref) console.log(`  ${concept} has known defects: finalize refuses its slice until they are repaired (\`--slice <id> --fix\`)`);
   }
 }
@@ -550,6 +564,7 @@ function commandReport() {
 /** Records the v1 steps in v1's order, scoped to the slice's run, then runs the v1 gates through the diff. */
 async function commandFinalize() {
   const slice = flag("--slice") ?? fail("finalize needs --slice");
+  recoverRepairs();
   const run = runOf(slice);
   const plan = planBatches(run.l2.slice.groups, run.l2.steps, baseRegistry(run.baseSha));
   if (plan.refused.length) fail(`groups with partial v1 steps need a human decision: ${plan.refused.map((r) => r.group).join(", ")}`);

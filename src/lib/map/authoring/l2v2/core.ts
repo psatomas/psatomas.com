@@ -117,11 +117,18 @@ export type BatchState = {
    */
   history?: { attempt: number; endedAt: string; stop?: BatchState["stop"]; evidence: Evidence; records?: Record<string, StagedRecord>; window?: SessionWindow }[];
   window?: SessionWindow;
+  /**
+   * While an audit repair is under way: the batch exactly as it was accepted
+   * before it, saved before anything is applied. A repair that does not end in
+   * re-acceptance (failed verification, a failed session, an interruption)
+   * restores it; the failed attempt goes to `history`.
+   */
+  repairOrigin?: { concept: string; label: string; startedAt: string; state: BatchState };
   updatedAt: string;
 };
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-const evidenceOf = (state: BatchState): Evidence => clone({ conceptStates: state.conceptStates, defects: state.defects, audit: state.audit, ...(state.groupAudit ? { groupAudit: state.groupAudit } : {}) });
+export const evidenceOf = (state: BatchState): Evidence => clone({ conceptStates: state.conceptStates, defects: state.defects, audit: state.audit, ...(state.groupAudit ? { groupAudit: state.groupAudit } : {}) });
 export const newWindow = (now: string): SessionWindow => ({ since: now, sessions: 0, failed: 0, interrupted: 0, ms: 0 });
 
 export function newBatch(slice: string, group: string, concepts: readonly string[], now: string): BatchState {
