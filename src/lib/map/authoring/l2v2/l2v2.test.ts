@@ -2211,3 +2211,108 @@ test("CLI: run, audit and finalize roll back an interrupted repair first, report
     assert.equal(loadBatch(root, "s", "g")!.status, "accepted");
   }
 });
+
+// ---------------------------------------------------------------- repairing the recorded findings of an earlier audit
+
+test("one verification round: a recorded finding kept open, or a new one reported, is never repaired again; the accepted concept is restored", async () => {
+  const root = fixture();
+  await runBatch(fakeEnv(root, happy), input);
+  const before = acceptedSnapshot(root);
+  const corrected = (r: string, p: string) => {
+    const id = Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!;
+    return emit(r, p, { concepts: { y: { verdict: "defect", findings: [defect("y", "Fine text, under its conditions.", "Fine text, under other conditions.")], defects: [{ id, status: "open", why: "needs other wording" }], note: "open", resolutions: [] } } });
+  };
+  const env = fakeEnv(root, { "deep-audit:resume": corrected });
+  const after = await repairAfterAudit(env, { ...repairInput(), maxRounds: 1 });
+  assertRestored(root, before, after, /repair not verified: deep-audit: defects remain after 1 verified repair round: /);
+  assert.deepEqual(env.calls, ["deep-audit:resume"], "one verification, no second round");
+  assert.doesNotMatch(readFileSync(join(root, DATA), "utf8"), /under other conditions/, "the verifier's own replacement was never applied");
+  // The default keeps its two rounds.
+  const rootTwo = fixture();
+  await runBatch(fakeEnv(rootTwo, happy), input);
+  const two = fakeEnv(rootTwo, { "deep-audit:resume": corrected });
+  await repairAfterAudit(two, repairInput());
+  assert.ok(two.calls.filter((c) => c === "deep-audit:resume").length >= 2, "the default verifies a second round");
+});
+
+const RECORDED_SESSION = "0f0e0d0c-0000-4000-8000-000000000001";
+/** A CLI checkout with an accepted batch and a recorded audit "rec" of y: its output, its session and result in the ledger, the session's transcript dir. */
+async function recordedAuditCheckout(findings: object[] = [AUDIT_FINDING], extra: (root: string) => void = () => {}) {
+  const root = cliCheckout();
+  assert.equal((await runBatch(fakeEnv(root, happy), input)).status, "accepted");
+  mkdirSync(join(root, ".map-authoring/l2v2/audits/rec"), { recursive: true });
+  writeFileSync(join(root, ".map-authoring/l2v2/audits/rec/y.audit.json"), JSON.stringify({ run: "r", verdict: "defect", substantive: findings }));
+  mkdirSync(join(root, ".map-authoring/l2v2/sandbox", RECORDED_SESSION, "projects"), { recursive: true });
+  appendLedger(root, { kind: "session", at: T, slice: "audit:rec", group: "y", role: "deep-audit", sessionId: RECORDED_SESSION, durationMs: 1, turns: 1, usage: null, weighted: null });
+  appendLedger(root, { kind: "deep-audit", at: T, label: "rec", concept: "y", substantive: 1, campaign: true, fingerprint: loadBatch(root, "s", "g")!.conceptStates.y.accepted!.fingerprint });
+  extra(root);
+  return root;
+}
+/** A stand-in CLI that leaves a marker when it runs, answering as a verifier. */
+function markedClaude(body: string) {
+  const marker = join(mkdtempSync(join(tmpdir(), "l2v2-marker-")), "ran");
+  const bin = stubClaudeFinal(body);
+  writeFileSync(bin, readFileSync(bin, "utf8").replace("prompt=$(cat)", `touch ${marker}\nprompt=$(cat)`));
+  return { bin, marker };
+}
+const verifies = (status: "fixed" | "open", extra = "") => `"concepts":{"y":{"verdict":"${status === "fixed" ? "pass" : "defect"}","findings":[${extra}],"defects":[{"id":"audit-rec-y-1-1","status":"${status}","why":"checked"}],"note":"recorded finding checked","resolutions":[]}}`;
+
+test("CLI --from-audit: the recorded finding is applied exactly, verified by the audit's own session, and accepted again; no new audit, nothing else changed", { skip: NO_SANDBOX }, async () => {
+  const root = await recordedAuditCheckout();
+  const before = { data: readFileSync(join(root, DATA), "utf8"), state: loadBatch(root, "s", "g")!, entries: loadLedger(root).length };
+  const { bin } = markedClaude(verifies("fixed"));
+  const result = cli(root, ["audit", "--from-audit", "rec", "--concepts", "y", "--slice", "s", "--fix"], { L2V2_CLAUDE: bin });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /repair: applied, verified, accepted again/);
+  const after = loadBatch(root, "s", "g")!;
+  assert.notEqual(after.conceptStates.y.accepted!.fingerprint, before.state.conceptStates.y.accepted!.fingerprint);
+  assert.deepEqual(after.conceptStates.x.accepted, before.state.conceptStates.x.accepted, "the other concept untouched");
+  assert.equal(readFileSync(join(root, DATA), "utf8"), before.data.replace("Fine text.", "Fine text, under its conditions."), "exactly the recorded replacement, nothing else");
+  const added = loadLedger(root).slice(before.entries);
+  assert.deepEqual(added.map((e) => e.kind), ["session", "batch"], "one verification session and the re-acceptance: no new audit");
+  assert.equal((added[0] as { sessionId: string }).sessionId, RECORDED_SESSION, "verified by the recorded audit's own session, resumed");
+  assert.equal(after.defects["audit-rec-y-1-1"].status, "verified");
+});
+
+test("CLI --from-audit refuses, before any session or change, a recorded finding that no longer applies or an audit record that is missing or ambiguous", { skip: NO_SANDBOX }, async () => {
+  const cases: [string, () => Promise<string>, string[], RegExp][] = [
+    ["a quote no longer in the record", () => recordedAuditCheckout([{ ...AUDIT_FINDING, quote: "Not in the record." }]), ["--concepts", "y"], /no longer applies to the accepted record: "Not in the record\.": quote not found/],
+    ["no recorded output", () => recordedAuditCheckout([AUDIT_FINDING], (r) => rmSync(join(r, ".map-authoring/l2v2/audits/rec/y.audit.json"))), ["--concepts", "y"], /no recorded output/],
+    ["two results of the audit", () => recordedAuditCheckout([AUDIT_FINDING], (r) => appendLedger(r, { kind: "deep-audit", at: T, label: "rec", concept: "y", substantive: 1, campaign: true })), ["--concepts", "y"], /holds 2 results of this audit/],
+    ["a count that differs", () => recordedAuditCheckout([AUDIT_FINDING, { ...AUDIT_FINDING, quote: "Correct nodes agree under synchrony." }]), ["--concepts", "y"], /records 1 substantive finding\(s\), the output holds 2/],
+    ["no transcript to resume", () => recordedAuditCheckout([AUDIT_FINDING], (r) => rmSync(join(r, ".map-authoring/l2v2/sandbox", RECORDED_SESSION), { recursive: true })), ["--concepts", "y"], /transcript is gone/],
+    ["the other concept invalid: neither is touched", () => recordedAuditCheckout(), ["--concepts", "y,x"], /x \(audit rec\): no recorded output/],
+  ];
+  for (const [name, make, concepts, expected] of cases) {
+    const root = await make();
+    const before = { data: readFileSync(join(root, DATA), "utf8"), entries: loadLedger(root).length };
+    const { bin, marker } = markedClaude(verifies("fixed"));
+    const result = cli(root, ["audit", "--from-audit", "rec", ...concepts, "--slice", "s", "--fix"], { L2V2_CLAUDE: bin });
+    assert.notEqual(result.status, 0, name);
+    assert.match(result.stderr, expected, name);
+    assert.ok(!existsSync(marker), `${name}: no session ran`);
+    assert.equal(readFileSync(join(root, DATA), "utf8"), before.data, `${name}: nothing changed`);
+    assert.equal(loadLedger(root).length, before.entries, `${name}: nothing recorded`);
+  }
+  // Options it does not take.
+  const root = await recordedAuditCheckout();
+  for (const args of [["--concepts", "y", "--slice", "s"], ["--concepts", "y", "--fix"], ["--concepts", "y", "--slice", "s", "--fix", "--ref", "HEAD"], ["--concepts", "y", "--slice", "s", "--fix", "--label", "other"], ["--sample-slice", "s", "--fix", "--slice", "s"]])
+    assert.match(cli(root, ["audit", "--from-audit", "rec", ...args]).stderr, /--from-audit repairs the recorded findings of an earlier audit: it needs --fix and --slice/, args.join(" "));
+});
+
+test("CLI --from-audit: every stop rule applies before the session, and one verification round only: an open finding restores the accepted record", { skip: NO_SANDBOX }, async () => {
+  const stopped = await recordedAuditCheckout([AUDIT_FINDING], (r) => appendLedger(r, { kind: "batch", at: T, slice: "s", group: "other", accepted: 0, parked: 1, escalated: 0, defects: 1 }));
+  const gated = markedClaude(verifies("fixed"));
+  const refused = cli(stopped, ["audit", "--from-audit", "rec", "--concepts", "y", "--slice", "s", "--fix"], { L2V2_CLAUDE: gated.bin });
+  assert.equal(refused.status, 3);
+  assert.match(refused.stderr, /stop rule: 1 concept\(s\) parked/);
+  assert.ok(!existsSync(gated.marker), "no session under a broken stop rule");
+  const root = await recordedAuditCheckout();
+  const before = readFileSync(join(root, DATA), "utf8");
+  const open = markedClaude(verifies("open", `{"concept":"y","severity":"defect","rule":"overclaim","quote":"Fine text, under its conditions.","replacement":"Other wording.","why":"w"}`));
+  const result = cli(root, ["audit", "--from-audit", "rec", "--concepts", "y", "--slice", "s", "--fix"], { L2V2_CLAUDE: open.bin });
+  assert.equal(result.status, 3, result.stderr);
+  assert.match(result.stderr, /y: not repaired; its accepted record is restored and the recorded findings stay open/);
+  assert.equal(readFileSync(join(root, DATA), "utf8"), before, "restored, and the verifier's replacement never applied");
+  assert.equal(loadLedger(root).filter((e) => e.kind === "session" && e.slice === "s" && e.role === "deep-audit").length, 1, "one verification session");
+});
