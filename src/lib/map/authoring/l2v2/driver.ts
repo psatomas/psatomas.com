@@ -12,7 +12,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, 
 import { dirname, join, relative } from "node:path";
 import { recordSpans, withoutRecords, withoutRegistryEntries } from "../l2/campaign.ts";
 import {
-  acceptanceProblems, advance, allowedTools, applyClaimFixes, applyModelFixes, applyPatches, coverageComplete, CROSS_CHECK_ASPECTS, DEFAULT_BUDGET, deniedTools, escalationFocus, escalationReasons, newBatch, newWindow, openDefects,
+  acceptanceProblems, advance, allowedTools, applyClaimFixes, applyModelFixes, applyPatches, coverageComplete, CROSS_CHECK_ASPECTS, DEFAULT_BUDGET, deniedTools, escalationFocus, escalationReasons, evidenceOf, newBatch, newWindow, openDefects,
   parseFinal, planReviewProblems, recordDefects, reviewProblems, stopBatch, unresolved, verifyProblems, weighted,
   type BatchState, type ConceptFacts, type Defect, type LedgerEntry, type PlanReviewOutput, type ReviewOutput, type Role, type VerifyOutput,
 } from "./core.ts";
@@ -799,6 +799,15 @@ export async function runBatch(env: Env, input: BatchInput): Promise<BatchState>
   }
 }
 
+/** Why one open concept may not be accepted; [] when it may (the gates accept() applies to each). */
+async function conceptAcceptanceProblems(env: Env, ops: ReturnType<typeof batchOps>, id: string): Promise<string[]> {
+  const records = ops.state.records ?? {};
+  const missing = unresolved((await env.signals(id)).map((s) => s.id), ops.state.audit[id].resolutions);
+  const audit = ops.state.audit[id];
+  const leaks = secretProblems([...(records[id] ? recordStrings(records[id]) : []), ...audit.notes, ...audit.resolutions.map((r) => r.resolution)], await ops.secrets());
+  return [...acceptanceProblems(ops.state, id), ...(missing.length ? [`signals unresolved: ${missing.join(", ")}`] : []), ...(records[id] ? [] : ["no validated record"]), ...leaks.map((leak) => `its record or audit ${leak}`)];
+}
+
 /**
  * Acceptance: every concept's gates re-checked from the batch's evidence, and
  * everything that would be committed (records, audit notes, the group file)
@@ -810,10 +819,7 @@ async function accept(env: Env, ops: ReturnType<typeof batchOps>): Promise<Batch
   const secrets = await ops.secrets();
   const records = ops.state.records ?? {};
   for (const id of concepts.filter((c) => ops.state.conceptStates[c].state === "open")) {
-    const missing = unresolved((await env.signals(id)).map((s) => s.id), ops.state.audit[id].resolutions);
-    const audit = ops.state.audit[id];
-    const leaks = secretProblems([...(records[id] ? recordStrings(records[id]) : []), ...audit.notes, ...audit.resolutions.map((r) => r.resolution)], secrets);
-    const problems = [...acceptanceProblems(ops.state, id), ...(missing.length ? [`signals unresolved: ${missing.join(", ")}`] : []), ...(records[id] ? [] : ["no validated record"]), ...leaks.map((leak) => `its record or audit ${leak}`)];
+    const problems = await conceptAcceptanceProblems(env, ops, id);
     if (problems.length) ops.park(id, problems.join("; "));
   }
   const groupMissing = unresolved((await env.groupSignals(group)).map((s) => s.id), ops.state.groupAudit?.resolutions ?? []);
@@ -850,20 +856,73 @@ async function accept(env: Env, ops: ReturnType<typeof batchOps>): Promise<Batch
 }
 
 /**
+ * Undoes an audit repair that did not end in re-acceptance: the batch goes
+ * back to exactly its accepted state before the repair (records, fingerprints,
+ * acceptance times, evidence), only the repaired concept's record is rendered
+ * again in data.ts and the registry, and the failed attempt (its evidence,
+ * records and session window) goes to `history`. The ledger keeps everything
+ * the attempt recorded; the audit's findings stay unresolved, so finalize
+ * still refuses the concept.
+ */
+function restoreAcceptedAfterRepair(env: Env, working: BatchState, reason: string): BatchState {
+  const { concept, state: origin } = working.repairOrigin!;
+  const at = env.now();
+  write(env, DATA, withRecords(read(env, DATA), [toContent(origin.records![concept])]));
+  write(env, REGISTRY, withRegistry(read(env, REGISTRY), [concept]));
+  const restored: BatchState = {
+    ...structuredClone(origin),
+    attempt: (working.attempt ?? 1) + 1,
+    history: [...(origin.history ?? []), structuredClone({ attempt: working.attempt ?? 1, endedAt: at, stop: { reason, at, status: working.status }, evidence: evidenceOf(working), ...(working.records ? { records: working.records } : {}), ...(working.window ? { window: working.window } : {}) })],
+    updatedAt: at,
+  };
+  const live = restored.concepts.filter((id) => restored.conceptStates[id].state === "accepted").map((id) => restored.records![id]);
+  const problems = recordsInPlaceProblems(read(env, DATA), read(env, REGISTRY), live);
+  if (problems.length) throw new GuardError(`restoring the accepted records after a failed repair of ${concept} left data.ts inconsistent (${problems.join("; ")}): manual recovery required`);
+  saveBatch(env.root, restored);
+  return restored;
+}
+
+/**
+ * An audit repair a stopped process left under way: rolled back (its session,
+ * if one was running, recorded as interrupted), unless re-acceptance had
+ * already completed, which only clears the saved origin. Never claims a repair
+ * that did not pass the acceptance gates. Undefined when there is none.
+ */
+export function recoverRepair(env: Env, slice: string, group: string): string | undefined {
+  const state = loadBatch(env.root, slice, group);
+  const origin = state?.repairOrigin;
+  if (!state || !origin) return undefined;
+  const before = origin.state.conceptStates[origin.concept].accepted?.at;
+  if (state.status === "accepted" && state.conceptStates[origin.concept].state === "accepted" && state.conceptStates[origin.concept].accepted?.at !== before) {
+    delete state.repairOrigin;
+    saveBatch(env.root, state);
+    return `the repair of ${origin.concept} (${origin.label}) had been accepted through the gates before the process stopped; nothing was rolled back`;
+  }
+  if (state.window?.inFlight) appendLedger(env.root, { kind: "session-failed", at: env.now(), slice, group, role: state.window.inFlight.role, reason: `interrupted: the driver stopped during the repair session started at ${state.window.inFlight.startedAt}` });
+  restoreAcceptedAfterRepair(env, state, `interrupted repair of ${origin.concept} (${origin.label}): rolled back`);
+  return `the repair of ${origin.concept} (${origin.label}) was interrupted and rolled back: its accepted record is restored and the audit's findings stay unresolved`;
+}
+
+/**
  * A deep audit's substantive findings on a concept of an accepted, not yet
  * finalized v2 batch: the concept is reopened, the repairs are applied
  * exactly and verified by the auditor's resumed session, and the concept is
- * accepted again only through the same gates; otherwise it is parked.
+ * accepted again only through the same gates. Otherwise (a failed
+ * verification, a failed session, a stop) the accepted batch is restored as it
+ * was, never parked: the findings stay unresolved for a human.
  */
 export async function repairAfterAudit(env: Env, input: BatchInput & { concept: string; findings: readonly Omit<Defect["finding"], "concept" | "severity">[]; auditSession: string; label: string }): Promise<BatchState> {
   const state = loadBatch(env.root, input.slice, input.group);
+  if (state?.repairOrigin) throw new Error(`${input.slice}/${input.group}: an earlier repair of ${state.repairOrigin.concept} is still recorded as under way; recover it first`);
   if (!state || state.status !== "accepted") throw new Error(`${input.concept} is not in an accepted v2 batch of ${input.slice}: a recorded or protected record needs a controlled v1 revision (\`l2 reopen\`)`);
   if (input.protectedIds.has(input.concept) || !state.concepts.includes(input.concept) || state.conceptStates[input.concept].state !== "accepted") throw new Error(`${input.concept} cannot be repaired here`);
   const changed = recordsInPlaceProblems(read(env, DATA), read(env, REGISTRY), [state.records?.[input.concept]].filter((r): r is StagedRecord => !!r));
   if (changed.length || !state.records?.[input.concept]) throw new Error(`${input.concept}: data.ts does not hold its accepted record (${changed.join("; ") || "no validated record"}); a human decides`);
   if (state.window?.inFlight) throw new Error(`${input.slice}/${input.group}: a session was interrupted and its changes were never checked; a human decides`);
-  // A repair gets its own session window: the batch's earlier sessions do not use it up.
-  const ops = batchOps(env, input, { ...state, status: "escalated", window: newWindow(env.now()) });
+  // A repair gets its own session window: the batch's earlier sessions do not use it up. The accepted batch is saved
+  // first, so whatever happens next can be undone, even after the process stopped.
+  const origin = { concept: input.concept, label: input.label, startedAt: env.now(), state: structuredClone(state) };
+  const ops = batchOps(env, input, { ...structuredClone(state), status: "escalated", window: newWindow(env.now()), repairOrigin: origin });
   ops.state.sessions["deep-audit"] = input.auditSession;
   ops.state.conceptStates[input.concept].state = "open";
   // Ids stay unique across repeated audits, so the ledger keeps every earlier defect's history.
@@ -871,10 +930,21 @@ export async function repairAfterAudit(env: Env, input: BatchInput & { concept: 
   recordDefects(ops.state, input.findings.map((f) => ({ ...f, concept: input.concept, severity: "defect" as const })), prefix, "deep-audit");
   ops.save(ops.state);
   try {
-    if (!(await ops.repairLoop("deep-audit", [input.concept], prefix))) return ops.state;
-    return await accept(env, ops);
+    const verified = await ops.repairLoop("deep-audit", [input.concept], prefix);
+    const after = ops.state.conceptStates[input.concept];
+    if (!verified || ops.state.status === "stopped" || after.state !== "open") return restoreAcceptedAfterRepair(env, ops.state, `repair not verified: ${ops.state.stop?.reason ?? after.parkReason ?? "the verification did not pass"}`);
+    // The gates accept() would park the concept on are checked first: a repair that fails them is undone, never parked.
+    const blocked = await conceptAcceptanceProblems(env, ops, input.concept);
+    if (blocked.length) return restoreAcceptedAfterRepair(env, ops.state, `repaired record not acceptable: ${blocked.join("; ")}`);
+    const accepted = await accept(env, ops);
+    if (accepted.status !== "accepted") return restoreAcceptedAfterRepair(env, accepted, `re-acceptance refused: ${accepted.stop?.reason ?? accepted.status}`);
+    delete accepted.repairOrigin;
+    ops.save(accepted);
+    return accepted;
   } catch (error) {
-    if (error instanceof GuardError) return ops.stop(error.message);
+    // A failed session, a guard or limit stop, anything: the accepted batch comes back. A guard stop is reported in the state; anything else is rethrown once restored.
+    const restored = restoreAcceptedAfterRepair(env, ops.state, `repair stopped: ${(error as Error).message.slice(0, 300)}`);
+    if (error instanceof GuardError) return restored;
     throw error;
   }
 }

@@ -22,6 +22,15 @@ state, gates and delivery, and replaces only how the content is produced:
 - **Unresolved concepts are parked.** A concept with any open defect after the
   verified repair rounds is parked: its draft leaves the tree and the batch
   stops for a human.
+- **An audit repair never parks an accepted concept.** Before a `--fix`
+  repair applies anything, the accepted batch is saved. A repair that does not
+  end in re-acceptance (failed verification, a repaired record the gates
+  refuse, a broken check, a failed session, a stop, an interruption) restores
+  it: the accepted record, its fingerprint and acceptance time come back, the
+  failed attempt goes to the batch history, the ledger keeps its sessions,
+  and the audit's findings stay unresolved, so finalize still refuses the
+  concept. An interrupted repair is rolled back, and reported, by the next
+  `run`, `audit` or `finalize` before anything else runs.
 - **Reviews are independent.** The plan review and the batch review run in
   sessions that wrote nothing being reviewed. Escalated concepts get a second,
   independent review.
@@ -375,7 +384,8 @@ v2 runs inside a v1 slice run and delivers through it:
 3. `npm run map:l2v2 -- audit --sample-slice <id>`: the measurement sample
    (4 per slice by default), drawn deterministically from the slice id. A
    defect found is repaired exactly, verified by the auditor's resumed session
-   and re-accepted through the gates, or parked.
+   and re-accepted through the gates; otherwise the accepted record is
+   restored and the defect stays open.
 4. `npm run map:l2v2 -- finalize --slice <id>`:
    - refuses unless every v2 batch is accepted and the sample is settled;
    - refuses while any deep audit (sample, pilot or any other label) found

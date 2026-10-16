@@ -9,11 +9,11 @@ import {
   acceptanceProblems, advance, allowedTools, applyClaimFixes, applyModelFixes, applyPatches, deniedTools, DENIED_TOOLS, escalationFocus, escalationReasons, finalizeCommands, knownDefectProblems, MAX_CROSS_CHECK_NOTE, MAX_FINAL_MESSAGE, newBatch,
   accountingPolicy, batchCosts, batchMetrics, budgetHash, campaignCost, DEFAULT_BUDGET, LEDGER_ORDER_TOLERANCE_MS, meterEvidence, policyActivation, parseFinal, planBatches, planReviewProblems, policyChangeProblems, policyEntry, readingProblems, recordDefects, resumeBatch, sessionGate, stopReasons,
   reviewProblems, sample, sampleProblems, stopBatch, stopReason, verifyProblems, weighted,
-  type ConceptReview, type Finding, type LedgerEntry,
+  type BatchState, type ConceptReview, type Finding, type LedgerEntry,
 } from "./core.ts";
 import { claudeArgs, runClaude, SessionError } from "./claude.ts";
 import type { SliceSample } from "./core.ts";
-import { acquireLock, appendLedger, batchDir, DATA, DATA_NOTICE, GuardError, guardedSession, groupPath, loadBatch, loadLedger, prompt as fillPrompt, quoted, REGISTRY, repairAfterAudit, runBatch, saveBatch, type Env } from "./driver.ts";
+import { acquireLock, appendLedger, batchDir, DATA, DATA_NOTICE, GuardError, guardedSession, groupPath, loadBatch, loadLedger, prompt as fillPrompt, quoted, recoverRepair, REGISTRY, repairAfterAudit, runBatch, saveBatch, type Env } from "./driver.ts";
 import { groupFileTexts, planBasisOf, recordFingerprint, recordPlacement, recordsInPlaceProblems, renderRecord, secretProblems, stagedRecordsProblems, toContent, withRecords, withRegistry, type StagedRecord } from "./records.ts";
 import { planSkeleton } from "../l2/territory.ts";
 import { mapKnowledge } from "../../data.ts";
@@ -1056,21 +1056,23 @@ test("CLI: park, resume, run: the parked record is rendered again and the batch 
   assert.match(refused.stderr, /- g: y: data\.ts does not hold the driver's rendering/);
 });
 
-/** An accepted batch whose audit repair of y failed verification: y is parked, the batch stopped. */
-async function failedRepair(root: string) {
+const AUDIT_FINDING = { rule: "overclaim", quote: "Fine text.", replacement: "Fine text, under its conditions.", why: "audit" };
+const repairInput = (label = "pilot") => ({ ...input, concept: "y", findings: [AUDIT_FINDING], auditSession: "audit-1", label });
+const stillOpen = (r: string, p: string) => {
+  const id = Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!;
+  return emit(r, p, { concepts: { y: { verdict: "defect", findings: [], defects: [{ id, status: "open", why: "still overclaims" }], note: "not fixed", resolutions: [] } } });
+};
+/** An accepted batch stopped by hand at escalated, to resume from. */
+const stoppedAccepted = async (root: string) => {
   assert.equal((await runBatch(fakeEnv(root, happy), input)).status, "accepted");
-  const stillOpen = (r: string, p: string) => {
-    const id = Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!;
-    return emit(r, p, { concepts: { y: { verdict: "defect", findings: [], defects: [{ id, status: "open", why: "still overclaims" }], note: "not fixed", resolutions: [] } } });
-  };
-  const after = await repairAfterAudit(fakeEnv(root, { "deep-audit:resume": stillOpen }), { ...input, concept: "y", findings: [{ rule: "overclaim", quote: "Fine text.", replacement: "Fine text, under its conditions.", why: "audit" }], auditSession: "audit-1", label: "pilot" });
-  assert.deepEqual([after.status, after.conceptStates.y.state, after.conceptStates.x.state], ["stopped", "parked", "accepted"]);
-  return after;
-}
+  const state = stopBatch({ ...loadBatch(root, "s", "g")!, status: "escalated" }, "stopped for the test", T);
+  saveBatch(root, state);
+  return state;
+};
 
-test("a failed audit repair, then a resume: the history keeps every record, accepted but unfinalized text included, and nothing historical counts as accepted", async () => {
+test("an accepted batch stopped and resumed: the history keeps every record, accepted but unfinalized text included, and nothing historical counts as accepted", async () => {
   const root = fixture();
-  const stopped = await failedRepair(root);
+  const stopped = await stoppedAccepted(root);
   const accepted = stopped.records!.x;
   const redraft = resumeBatch(stopped, "plan-reviewed", T);
   assert.deepEqual(redraft.history![0].records!.x, accepted, "the accepted text is preserved");
@@ -1085,7 +1087,7 @@ test("a failed audit repair, then a resume: the history keeps every record, acce
   assert.equal(data.split('id: "x-content",').length, 2, "the driver's own earlier rendering was replaced, not duplicated");
   assert.match(data, /Redrafted text\./);
   // Resuming without a redraft keeps the records, and the history holds them too.
-  const kept = resumeBatch(await failedRepair(fixture()), "escalated", T);
+  const kept = resumeBatch(await stoppedAccepted(fixture()), "escalated", T);
   assert.ok(kept.records?.x && kept.history![0].records?.x);
 });
 
@@ -1105,7 +1107,7 @@ test("draft cleanup removes only the driver's own renderings: a record or regist
   }
   // The driver's own rendering, edited by hand after a stop: refused at the redraft, the edit kept.
   const root = fixture();
-  saveBatch(root, resumeBatch(await failedRepair(root), "plan-reviewed", T));
+  saveBatch(root, resumeBatch(await stoppedAccepted(root), "plan-reviewed", T));
   writeFileSync(join(root, DATA), readFileSync(join(root, DATA), "utf8").replace("Correct nodes agree under synchrony.", "Edited by hand."));
   const state = await runBatch(fakeEnv(root, happy), input);
   assert.match(state.stop!.reason, /x: data\.ts holds a record this driver did not render, or one edited since/);
@@ -2039,4 +2041,173 @@ test("CLI: under policy 2, run and audit start no session without a fresh readin
     assert.match(result.stderr, /stop rule: availability: no usage reading/, args[0]);
   }
   assert.ok(!existsSync(marker), "the CLI never ran");
+});
+
+// ---------------------------------------------------------------- audit repairs never park an accepted concept
+
+/** The batch and the checkout as they were accepted, to compare against after a repair attempt. */
+const acceptedSnapshot = (root: string) => ({ data: readFileSync(join(root, DATA), "utf8"), registry: readFileSync(join(root, REGISTRY), "utf8"), state: loadBatch(root, "s", "g")! });
+/** What must hold after a repair that did not end in re-acceptance. */
+function assertRestored(root: string, before: ReturnType<typeof acceptedSnapshot>, after: BatchState, reason: RegExp) {
+  assert.equal(readFileSync(join(root, DATA), "utf8"), before.data, "data.ts byte-identical: the accepted record is back, nothing else touched");
+  assert.equal(readFileSync(join(root, REGISTRY), "utf8"), before.registry);
+  assert.equal(after.status, "accepted");
+  for (const id of ["x", "y"]) {
+    assert.equal(after.conceptStates[id].state, "accepted", id);
+    assert.deepEqual(after.conceptStates[id].accepted, before.state.conceptStates[id].accepted, `${id}: original fingerprint and acceptance time`);
+    assert.deepEqual(after.records![id], before.state.records![id], id);
+  }
+  assert.deepEqual(after.defects, before.state.defects, "the failed attempt's defects are not current evidence");
+  assert.equal(after.repairOrigin, undefined);
+  assert.deepEqual(loadBatch(root, "s", "g"), after, "what is returned is what is saved");
+  const failed = after.history!.at(-1)!;
+  assert.match(failed.stop!.reason, reason);
+  assert.ok(Object.keys(failed.evidence.defects).some((id) => id.startsWith("audit-")), "the failed attempt's findings are kept in the history");
+  assert.ok(!existsSync(join(root, batchDir("s", "g"), "parked-records.json")), "nothing was parked");
+  assert.ok(!loadLedger(root).some((e) => e.kind === "batch" && e.parked > 0), "no parked batch entry: the parking stop rule is not tripped");
+  assert.doesNotMatch(stopReason(loadLedger(root)) ?? "", /parked/);
+}
+/** The audit result the CLI records before a repair: the findings it repairs, bound to the accepted record (the fake clock stands still at T). */
+const auditEntry = (root: string): LedgerEntry => ({ kind: "deep-audit", at: "2026-10-08T23:00:00.000Z", label: "pilot", concept: "y", substantive: 1, campaign: true, fingerprint: loadBatch(root, "s", "g")!.conceptStates.y.accepted!.fingerprint });
+const knownDefects = (root: string) => {
+  const state = loadBatch(root, "s", "g")!;
+  return knownDefectProblems(loadLedger(root), new Map(state.concepts.map((id) => [id, state.conceptStates[id].accepted!])));
+};
+
+test("a verified audit repair is accepted again exactly as before, and leaves no saved origin behind", async () => {
+  const root = fixture();
+  await runBatch(fakeEnv(root, happy), input);
+  appendLedger(root, auditEntry(root));
+  const before = loadBatch(root, "s", "g")!.conceptStates.y.accepted!;
+  const verified = fakeEnv(root, { "deep-audit:resume": (r, p) => emit(r, p, { concepts: { y: { verdict: "pass", findings: [], defects: [{ id: Object.keys(loadBatch(r, "s", "g")!.defects).find((id) => id.startsWith("audit-"))!, status: "fixed", why: "" }], note: "audit fix verified", resolutions: [] } } }) });
+  const after = await repairAfterAudit(verified, repairInput());
+  assert.equal(after.status, "accepted", after.stop?.reason);
+  assert.notEqual(after.conceptStates.y.accepted!.fingerprint, before.fingerprint);
+  assert.equal(after.repairOrigin, undefined);
+  assert.equal(loadBatch(root, "s", "g")!.repairOrigin, undefined);
+  assert.match(readFileSync(join(root, DATA), "utf8"), /Fine text, under its conditions\./);
+  assert.deepEqual(knownDefects(root), [], "accepted again after the audit: its findings no longer block");
+  assert.equal(recoverRepair(verified, "s", "g"), undefined, "nothing to recover");
+});
+
+test("a repair whose verification fails restores the accepted concept: never parked, never removed, its findings still blocking finalize", async () => {
+  for (const [name, script, reason] of [
+    ["a defect still open after both rounds", stillOpen, /repair not verified: deep-audit: defects remain after 2 verified repair rounds/],
+    ["a defect verdict naming no defect", (r: string, p: string) => emit(r, p, { concepts: { y: { verdict: "defect", findings: [], defects: [{ id: Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!, status: "fixed", why: "" }], note: "still wrong somewhere", resolutions: [] } } }), /repair not verified: deep-audit verification 1 reported a defect it did not name/],
+    ["an unusable verification, twice", () => "not json", /repair not verified: deep-audit: verify-audit-pilot-y-\d+-1\.json unusable/],
+  ] as const) {
+    const root = fixture();
+    await runBatch(fakeEnv(root, happy), input);
+    appendLedger(root, auditEntry(root));
+    const before = acceptedSnapshot(root);
+    const env = fakeEnv(root, { "deep-audit:resume": script });
+    const after = await repairAfterAudit(env, repairInput());
+    assertRestored(root, before, after, reason);
+    assert.ok(env.calls.length > 0, `${name}: the verification ran`);
+    assert.ok(loadLedger(root).filter((e) => e.kind === "session" && e.role === "deep-audit").length > 0, `${name}: its sessions stay in the ledger`);
+    assert.deepEqual(knownDefects(root).map((p) => p.split(":")[0]), ["y"], `${name}: the audit's findings still block finalize`);
+  }
+});
+
+test("a repair that would fail the acceptance gates, or break validation, is undone the same way", async () => {
+  // Verified, but a signal the verifier left unresolved: accept() would park it; the repair is undone instead.
+  const root = fixture();
+  await runBatch(fakeEnv(root, happy), input);
+  const before = acceptedSnapshot(root);
+  const env = fakeEnv(root, { "deep-audit:resume": (r, p) => emit(r, p, { concepts: { y: { verdict: "pass", findings: [], defects: [{ id: Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!, status: "fixed", why: "" }], note: "ok", resolutions: [] } } }) });
+  env.signals = async (id) => (id === "y" ? [{ id: "late-signal", detail: "raised by the repaired text" }] : []);
+  assertRestored(root, before, await repairAfterAudit(env, repairInput()), /repaired record not acceptable: signals unresolved: late-signal/);
+  // A repair that breaks validation: undone before any verification session.
+  const root2 = fixture();
+  await runBatch(fakeEnv(root2, happy), input);
+  const before2 = acceptedSnapshot(root2);
+  const broken = fakeEnv(root2, {});
+  broken.check = async () => ["the repaired record breaks a check"];
+  assertRestored(root2, before2, await repairAfterAudit(broken, repairInput()), /repair not verified: deep-audit: a repair broke validation/);
+  assert.deepEqual(broken.calls, [], "no session ran");
+});
+
+test("a session failure or a stop during the repair restores the accepted concept; the failure stays in the ledger", async () => {
+  const root = fixture();
+  await runBatch(fakeEnv(root, happy), input);
+  const before = acceptedSnapshot(root);
+  await assert.rejects(repairAfterAudit(fakeEnv(root, { "deep-audit:resume": () => { throw new Error("usage limit reached"); } }), repairInput()), /usage limit reached/);
+  assertRestored(root, before, loadBatch(root, "s", "g")!, /repair stopped: usage limit reached/);
+  assert.equal(loadLedger(root).filter((e) => e.kind === "session-failed").length, 1, "the failed session is recorded");
+  // A guard or limit stop (here the availability gate) before the verification session: restored and reported, not thrown.
+  const root2 = fixture();
+  await runBatch(fakeEnv(root2, happy), input);
+  const before2 = acceptedSnapshot(root2);
+  const gated = await repairAfterAudit(fakeEnv(root2, {}), { ...repairInput(), gate: () => "availability: the latest reading is 31 minutes old, over 30" });
+  assertRestored(root2, before2, gated, /repair stopped: before the next deep-audit session: availability/);
+});
+
+test("an interrupted repair is rolled back explicitly on recovery, never claimed; a completed one is only closed; a second repair waits for recovery", async () => {
+  const root = fixture();
+  await runBatch(fakeEnv(root, happy), input);
+  const before = acceptedSnapshot(root);
+  // The process dies during the verification session: what is on disk at that moment is all that remains.
+  let crash: { state: string; data: string; registry: string } | undefined;
+  const dying = fakeEnv(root, { "deep-audit:resume": (r) => {
+    crash = { state: readFileSync(join(r, batchDir("s", "g"), "state.json"), "utf8"), data: readFileSync(join(r, DATA), "utf8"), registry: readFileSync(join(r, REGISTRY), "utf8") };
+    throw new Error("killed");
+  } });
+  await assert.rejects(repairAfterAudit(dying, repairInput()));
+  writeFileSync(join(root, batchDir("s", "g"), "state.json"), crash!.state);
+  writeFileSync(join(root, DATA), crash!.data);
+  writeFileSync(join(root, REGISTRY), crash!.registry);
+  const crashed = loadBatch(root, "s", "g")!;
+  assert.ok(crashed.repairOrigin && crashed.window?.inFlight, "the saved origin and the session in flight are on disk");
+  assert.match(crash!.data, /Fine text, under its conditions\./, "the unverified text was rendered when the process died");
+  await assert.rejects(repairAfterAudit(fakeEnv(root, {}), repairInput()), /still recorded as under way; recover it first/);
+  const failures = loadLedger(root).filter((e) => e.kind === "session-failed").length;
+  assert.match(recoverRepair(fakeEnv(root, {}), "s", "g")!, /was interrupted and rolled back: its accepted record is restored and the audit's findings stay unresolved/);
+  assertRestored(root, before, loadBatch(root, "s", "g")!, /interrupted repair of y \(pilot\): rolled back/);
+  assert.equal(loadLedger(root).filter((e) => e.kind === "session-failed").length, failures + 1, "the interrupted session is recorded");
+  assert.match((loadLedger(root).at(-1) as { reason: string }).reason, /^interrupted/);
+  assert.equal(recoverRepair(fakeEnv(root, {}), "s", "g"), undefined, "recovery happens once");
+  // A process that died after re-acceptance completed: nothing is rolled back, the origin is only cleared.
+  const done = fixture();
+  await runBatch(fakeEnv(done, happy), input);
+  const verified = await repairAfterAudit(fakeEnv(done, { "deep-audit:resume": (r, p) => emit(r, p, { concepts: { y: { verdict: "pass", findings: [], defects: [{ id: Object.keys(loadBatch(r, "s", "g")!.defects).find((d) => d.startsWith("audit-"))!, status: "fixed", why: "" }], note: "ok", resolutions: [] } } }) }), repairInput());
+  const origin = { concept: "y", label: "pilot", startedAt: T, state: acceptedSnapshot(fixture()).state ?? verified };
+  saveBatch(done, { ...verified, repairOrigin: { ...origin, state: { ...verified, conceptStates: { ...verified.conceptStates, y: { ...verified.conceptStates.y, accepted: { at: "2026-01-01T00:00:00.000Z", fingerprint: "old" } } } } } });
+  assert.match(recoverRepair(fakeEnv(done, {}), "s", "g")!, /had been accepted through the gates before the process stopped; nothing was rolled back/);
+  assert.deepEqual(loadBatch(done, "s", "g")!.conceptStates.y.accepted, verified.conceptStates.y.accepted);
+  assert.equal(loadBatch(done, "s", "g")!.repairOrigin, undefined);
+});
+
+test("a crash during the restoration itself is recovered the same way, and recovery is idempotent", async () => {
+  const root = fixture();
+  await runBatch(fakeEnv(root, happy), input);
+  const before = acceptedSnapshot(root);
+  let crash: string | undefined;
+  await assert.rejects(repairAfterAudit(fakeEnv(root, { "deep-audit:resume": (r) => { crash = readFileSync(join(r, batchDir("s", "g"), "state.json"), "utf8"); throw new Error("killed"); } }), repairInput()));
+  // The process died after the restoration wrote data.ts back but before it saved the restored state: the batch state is
+  // still the repair's, with its saved origin, while data.ts already holds the accepted record again.
+  writeFileSync(join(root, batchDir("s", "g"), "state.json"), crash!);
+  assert.equal(readFileSync(join(root, DATA), "utf8"), before.data);
+  assert.ok(loadBatch(root, "s", "g")!.repairOrigin);
+  assert.match(recoverRepair(fakeEnv(root, {}), "s", "g")!, /was interrupted and rolled back/);
+  assertRestored(root, before, loadBatch(root, "s", "g")!, /interrupted repair of y \(pilot\): rolled back/);
+  const settled = readFileSync(join(root, batchDir("s", "g"), "state.json"), "utf8");
+  assert.equal(recoverRepair(fakeEnv(root, {}), "s", "g"), undefined);
+  assert.equal(readFileSync(join(root, batchDir("s", "g"), "state.json"), "utf8"), settled, "a second recovery changes nothing");
+  assert.equal(readFileSync(join(root, DATA), "utf8"), before.data);
+});
+
+test("CLI: run, audit and finalize roll back an interrupted repair first, report it and stop before anything else", async () => {
+  for (const args of [["run", "--slice", "s"], ["audit", "--label", "x", "--concepts", "y"], ["finalize", "--slice", "s"]]) {
+    const root = await acceptedSlice();
+    const accepted = loadBatch(root, "s", "g")!;
+    const before = readFileSync(join(root, DATA), "utf8");
+    // An interrupted repair on disk: the saved origin, the concept reopened, its unverified text rendered.
+    writeFileSync(join(root, DATA), before.replace("Fine text.", "Fine text, unverified."));
+    saveBatch(root, { ...accepted, status: "escalated", conceptStates: { ...accepted.conceptStates, y: { ...accepted.conceptStates.y, state: "open" } }, records: { ...accepted.records!, y: staged("y", "Fine text, unverified.") }, repairOrigin: { concept: "y", label: "pilot", startedAt: T, state: accepted } });
+    const result = cli(root, args);
+    assert.equal(result.status, 3, `${args[0]}: ${result.stderr}`);
+    assert.match(result.stderr, /the repair of y \(pilot\) was interrupted and rolled back[\s\S]*nothing else was run; run the command again/, args[0]);
+    assert.equal(readFileSync(join(root, DATA), "utf8"), before, `${args[0]}: the accepted record is back`);
+    assert.equal(loadBatch(root, "s", "g")!.status, "accepted");
+  }
 });
