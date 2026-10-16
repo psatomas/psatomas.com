@@ -407,10 +407,72 @@ v2 runs inside a v1 slice run and delivers through it:
 - failed sessions;
 - batch outcomes;
 - deep audits, with campaign and baseline audits kept apart;
-- readings of the usage meter (`meter --percent <n>`, **measured**).
+- account-wide readings of the usage meter (`meter`, **measured**, but of the
+  whole account, not of the campaign);
+- the accounting policy in force (`policy`).
 
 The weighting is **assumed**: input 1, cache read 0.1, cache write 1.25,
-output 5. `report` prints it all.
+output 5. `report` prints it all, authoring and audit sessions apart (audits
+per label and per audited concept).
+
+### Accounting policy
+
+The ledger names the policy; without a policy entry, **policy 1** applies
+exactly as before.
+
+- **Policy 1 (legacy):** the meter's rise within a weekly window is
+  attributed to the campaign per accepted concept (the meter rule below).
+- **Policy 2:** campaign cost comes only from the **recorded weighted
+  tokens** of its sessions. The weekly and 5-hour usage percentages are
+  **availability**, never a cost:
+  - before every batch, every audit and **every session** of a batch or an
+    audit repair, the latest reading must be valid, read at most
+    `maxReadingAgeMinutes` (30) ago, not in the future, and under both
+    ceilings: weekly below `maxWeeklyPercent` (85) and 5-hour below
+    `maxSessionPercent` (80). A batch the gate stops halts before that
+    session; a human records a fresh reading and resumes it. Readings are
+    never fabricated or fetched: a human records them
+    (`meter --percent <weekly> --session <5-hour>`, `--read-at` for when it
+    was read);
+  - **single-batch ceiling:** every batch accepted (or re-accepted) since
+    policy 2's **activation**, the first policy-2 entry in the ledger, stops
+    the campaign when what it spent since then exceeds `maxBatchFactor` (3) ×
+    `perConcept` per accepted concept. A batch started under policy 2 is
+    judged on its whole cost; one started before and repaired or re-accepted
+    under it, on its incremental cost only. Re-recording a policy, switching
+    away and back, a resume or a later batch never resets or hides what was
+    spent since the activation, and every breach stands until a reviewed
+    budget decision changes the ceiling. A session since the activation with
+    no recorded usage makes its batch's cost uncheckable, which stops too;
+    failed sessions are reported and judged by the failure rule. `report`
+    shows each batch's historical total (as recorded) beside the cost since
+    the activation;
+  - the budget is **pinned**: the policy entry records the effective budget's
+    hash, and any change to `budget.json` (or to the defaults) stops
+    everything until a new policy entry records it.
+- **Changing the policy:**
+  `policy --version <1|2> --note "<why>" --acknowledge "<…>"`. Every stop
+  condition the current policy reports must be quoted exactly in the
+  acknowledgment; the entry records the previous policy, those conditions and
+  the acknowledgment. Recording a policy clears none of them, and it takes
+  the driver lock. Re-recording the same version is how a reviewed budget
+  change is pinned. An unknown policy version in the ledger stops everything.
+- **Ambiguous history fails closed:** under a recorded policy, a ledger entry
+  of unknown kind, without a valid time, or missing the fields its kind is
+  judged by (a session's usage, a batch's counts, a policy's hash), or any
+  entry more than 5 seconds out of time order from policy 2's activation on
+  (two processes appending at once may cross within that), stops everything,
+  and nothing else is judged on that history until a human decides.
+- **Brackets:** `meter … --bracket before|after --batch <slice/group>`
+  (`--exclusive` when a human is confident nothing else used the account)
+  around one batch or audit. `report` shows the weekly change against the
+  weighted tokens recorded between the two readings, as supplementary
+  evidence and an upper bound (whole percents, overhead, any concurrent use),
+  and flags a pair far from the median of the exclusive ones. Brackets never
+  feed a stop rule.
+- No session can record a reading or a policy: the ledger and the budget are
+  outside the sandbox and protected from writes, and the integrity guard
+  undoes any change to them.
 
 **Stop rules** (defaults in `DEFAULT_BUDGET`, overridable in `budget.json`):
 - the last 3 batches average more than 1.3 × 122 k weighted per accepted
@@ -421,9 +483,11 @@ output 5. `report` prints it all.
   were interrupted, counted after the latest acknowledgment (below);
 - 8 or more of the last 20 **campaign** audits have substantive defects
   (baselines never count);
-- within one weekly window, the meter rises more than 0.109% per accepted
-  concept (use 0.163% for 3 weeks). A drop in the reading marks a weekly
-  reset.
+- policy 1 only: within one weekly window, the meter rises more than 0.109%
+  per accepted concept (use 0.163% for 3 weeks). A drop in the reading marks
+  a weekly reset;
+- policy 2 only: the availability gate, the single-batch ceiling and the
+  pinned budget (above).
 
 **Acknowledging failures:**
 `npm run map:l2v2 -- clear-failures --note "<what was checked>"` is the only
@@ -479,7 +543,8 @@ records as a baseline.
 - every pilot defect found is repaired and verified;
 - zero territory leaks;
 - every claim fully covered;
-- meter cost per accepted concept within the plan;
+- meter cost per accepted concept within the plan (under accounting policy 2
+  the meter is availability: the recorded weighted cost is what is compared);
 - nothing parked, or each parked concept explained.
 
 Scale only after a pass.

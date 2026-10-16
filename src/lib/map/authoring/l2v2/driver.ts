@@ -341,7 +341,12 @@ export async function recordsReference(env: Env, ids: readonly string[]): Promis
 /** Per-batch operational limits: sessions (failed and interrupted ones included) and wall-clock minutes. */
 export type Limits = { sessions: number; minutes: number; sessionTimeoutMs: number };
 export const DEFAULT_LIMITS: Limits = { sessions: DEFAULT_BUDGET.maxSessionsPerBatch, minutes: DEFAULT_BUDGET.maxBatchMinutes, sessionTimeoutMs: 30 * 60 * 1000 };
-export type BatchInput = { slice: string; group: string; concepts: readonly string[]; protectedIds: ReadonlySet<string>; limits?: Limits };
+/**
+ * gate: evaluated before every session of the batch (the accounting policy's availability, the pinned budget); a
+ * reason stops the batch before that session starts, for a human to record a fresh reading and resume. Readings
+ * are never fabricated or fetched here.
+ */
+export type BatchInput = { slice: string; group: string; concepts: readonly string[]; protectedIds: ReadonlySet<string>; limits?: Limits; gate?: () => string | undefined };
 
 /** The operations a batch is made of, sharing its state; used by runBatch and by repairs after a deep audit. */
 function batchOps(env: Env, input: BatchInput, initial: BatchState) {
@@ -369,6 +374,8 @@ function batchOps(env: Env, input: BatchInput, initial: BatchState) {
     const window = (state.window ??= newWindow(env.now()));
     if (window.sessions >= limits.sessions) throw new LimitError(`session limit: the batch used its ${limits.sessions} sessions (failed and interrupted ones count); a human decides whether to resume`);
     if (window.ms >= limits.minutes * 60_000) throw new LimitError(`time limit: the batch used its ${limits.minutes} minutes; a human decides whether to resume`);
+    const blocked = input.gate?.();
+    if (blocked) throw new LimitError(`before the next ${role} session: ${blocked}; then resume this batch`);
     window.sessions++;
     window.inFlight = { role, startedAt: env.now() };
     save(state);
