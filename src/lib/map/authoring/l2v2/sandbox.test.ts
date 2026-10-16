@@ -381,3 +381,21 @@ test("in the sandbox, a final-message session writes nothing: its batch dir is r
   assert.deepEqual([outcome.outputs, outcome.violations], [[], []]);
   assert.ok(!existsSync(join(root, ".map-authoring/l2v2/s/g/review.json")));
 });
+
+test("in the sandbox, the accounting state is out of reach: no session reads or appends to the ledger, the budget or the policy", { skip: NO_SANDBOX }, async () => {
+  const { root } = checkout();
+  put(root, ".map-authoring/l2v2/ledger.jsonl", '{"kind":"meter","at":"2026-10-15T00:00:00.000Z","percent":1}\n');
+  put(root, ".map-authoring/l2v2/budget.json", '{"perConcept":122000}\n');
+  const before = { ledger: readFileSync(join(root, ".map-authoring/l2v2/ledger.jsonl"), "utf8"), budget: readFileSync(join(root, ".map-authoring/l2v2/budget.json"), "utf8") };
+  const forged = '{"kind":"policy","version":2}';
+  const outcome = await runSandboxed(config(root, reportingCli([
+    ["read_ledger", "cat /work/.map-authoring/l2v2/ledger.jsonl"],
+    ["append_ledger", `echo '${forged}' >> /work/.map-authoring/l2v2/ledger.jsonl`],
+    ["read_budget", "cat /work/.map-authoring/l2v2/budget.json"],
+    ["write_budget", "echo {} > /work/.map-authoring/l2v2/budget.json"],
+    ["create_ledger_beside_batch", `echo '${forged}' > /work/.map-authoring/l2v2/s/ledger.jsonl`],
+  ])), request({ pack: PACK }));
+  assert.equal(outcome.text.trim(), "read_ledger=blocked append_ledger=blocked read_budget=blocked write_budget=blocked create_ledger_beside_batch=blocked");
+  assert.deepEqual([outcome.outputs, outcome.violations], [[], []]);
+  assert.deepEqual({ ledger: readFileSync(join(root, ".map-authoring/l2v2/ledger.jsonl"), "utf8"), budget: readFileSync(join(root, ".map-authoring/l2v2/budget.json"), "utf8") }, before);
+});

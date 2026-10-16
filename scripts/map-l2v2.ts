@@ -6,16 +6,19 @@
 //   npm run map:l2v2 -- audit --sample-slice <id>             draw and deep-audit the slice's measurement sample; repairs are verified
 //   npm run map:l2v2 -- audit --label <l> --concepts a,b [--slice <id> --fix]   deep audits (pilot); --fix repairs through the verified loop
 //   npm run map:l2v2 -- audit --label baseline --ref <git-ref> --concepts a,b   baseline audits of records at a commit (never counted, never fixed)
-//   npm run map:l2v2 -- meter --percent <n> [--note ..]       record a reading of the Claude usage meter
+//   npm run map:l2v2 -- meter --percent <weekly> [--session <5-hour>] [--read-at <iso>] [--bracket before|after --batch <id> [--exclusive]] [--note ..]
+//                                                             record an account-wide usage reading (availability; never attributed to the campaign)
+//   npm run map:l2v2 -- policy --version <1|2> --note <why> [--acknowledge <every current stop, quoted>]   record the accounting policy
 //   npm run map:l2v2 -- clear-failures --note <why>           acknowledge reviewed failed sessions: the failure stop rule counts only later ones
-//   npm run map:l2v2 -- report                                tokens, time, defects and acceptance per batch
+//   npm run map:l2v2 -- report                                tokens (authoring and audits apart), time, defects and acceptance per batch
 //   npm run map:l2v2 -- finalize --slice <id>                 record the v1 steps (scoped to the slice), then `l2 run --until diff`
 //
 // Every session runs in the bubblewrap sandbox (src/lib/map/authoring/l2v2/sandbox.ts); if it cannot be set up, no session starts.
 // Sessions get no credential: the driver's relay adds a dedicated `claude setup-token` token, kept in
 // ~/.config/map-l2v2/oauth-token (mode 0600; L2V2_TOKEN_FILE overrides), to their API calls outside the sandbox.
 // Configuration: .map-authoring/l2v2/config.json {model, timeoutMs, maxBudgetUsd, egress, relay} and budget.json (stop-rule thresholds and
-// per-batch limits: maxSessionsPerBatch, maxBatchMinutes). maxBudgetUsd does not bound a subscription's quota: the limits and the meter do.
+// per-batch limits: maxSessionsPerBatch, maxBatchMinutes). maxBudgetUsd does not bound a subscription's quota: the limits, the recorded
+// weighted tokens and, under accounting policy 2, a fresh availability reading before every session do (docs: "Accounting policy").
 // It never pushes, opens PRs, merges or deploys: delivery stays `map:author -- l2 run --domain <slice>`.
 // data.ts is imported only after the v2 records in it are checked, as text, against their validated drafts.
 import { spawnSync } from "node:child_process";
@@ -25,7 +28,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { recordSpans } from "../src/lib/map/authoring/l2/campaign.ts";
 import {
-  activeFailures, allowedTools, batchMetrics, BATCH_STATUSES, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, parseJson, planBatches, resumeBatch, sample, sampleProblems, stopReason,
+  accountingPolicy, activeFailures, allowedTools, batchCosts, batchMetrics, BATCH_STATUSES, budgetHash, campaignCost, DEFAULT_BUDGET, deniedTools, finalizeCommands, knownDefectProblems, meterEvidence, parseJson, planBatches,
+  policyActivation,
+  policyChangeProblems, policyEntry, readingProblems, resumeBatch, sample, sampleProblems, sessionGate, stopReason,
   type BatchState, type BatchStatus, type Budget, type Finding, type SliceSample,
 } from "../src/lib/map/authoring/l2v2/core.ts";
 import { runSandboxed, sandboxProblems, sandboxToken, type SandboxConfig } from "../src/lib/map/authoring/l2v2/sandbox.ts";
@@ -96,6 +101,8 @@ function requireSandbox() {
   if (problems.length) fail(`the session sandbox cannot be set up, so no session was started:\n- ${problems.join("\n- ")}`, 1);
 }
 const limits = (): Limits => ({ sessions: budget().maxSessionsPerBatch, minutes: budget().maxBatchMinutes, sessionTimeoutMs: config().timeoutMs });
+/** Before every session of a batch or an audit repair: the accounting policy's gate on the ledger as it stands then. */
+const gate = () => sessionGate(loadLedger(ROOT), budget(), now());
 /** A domain's position among the roots; data.ts is imported lazily, once its v2 records have been checked. */
 async function domainOrder(domain: string) {
   const { mapKnowledge } = await import("../src/lib/map/data.ts");
@@ -248,10 +255,10 @@ async function commandRun() {
   for (const r of refused) console.log(`refused ${r.group}: ${r.reason}`);
   for (const { group, concepts } of plan.batches.filter((b) => !only || only.includes(b.group))) {
     if (loadBatch(ROOT, slice, group)?.status === "accepted") continue;
-    const reason = stopReason(loadLedger(ROOT), budget());
+    const reason = stopReason(loadLedger(ROOT), budget(), now());
     if (reason) fail(`stop rule: ${reason}`, 3);
     console.log(`batch ${group}: ${concepts.join(", ")}`);
-    const state = await runBatch(env, { slice, group, concepts, protectedIds: plan.protectedIds, limits: limits() });
+    const state = await runBatch(env, { slice, group, concepts, protectedIds: plan.protectedIds, limits: limits(), gate });
     console.log(`  -> ${state.status}${state.stop ? `: ${state.stop.reason}` : ""}`);
     if (state.status !== "accepted") process.exit(3);
   }
@@ -269,7 +276,9 @@ function commandStatus() {
       const counts = Object.values(state.conceptStates).reduce<Record<string, number>>((acc, c) => ((acc[c.state] = (acc[c.state] ?? 0) + 1), acc), {});
       console.log(`${slice}/${group}: ${state.status} ${JSON.stringify(counts)}${state.stop ? ` STOP (at ${state.stop.status}) ${state.stop.reason}` : ""}`);
     }
-  console.log(`stop rule: ${stopReason(loadLedger(ROOT), budget()) ?? "none broken"}`);
+  const policy = accountingPolicy(loadLedger(ROOT));
+  console.log(`accounting policy ${policy.version}${policy.entry ? "" : " (legacy: no policy recorded)"}`);
+  console.log(`stop rule: ${stopReason(loadLedger(ROOT), budget(), now()) ?? "none broken"}`);
 }
 
 async function commandResume() {
@@ -312,7 +321,7 @@ function auditInterrupted() {
 }
 /** Each audit session starts only while no stop rule is broken (failed and interrupted sessions count). */
 function auditGate() {
-  const reason = stopReason(loadLedger(ROOT), budget());
+  const reason = stopReason(loadLedger(ROOT), budget(), now());
   if (reason) fail(`stop rule: ${reason}`, 3);
 }
 
@@ -371,7 +380,7 @@ async function repairFromAudit(slice: string, concept: string, label: string, au
   const run = runOf(slice);
   const plan = planBatches(run.l2.slice.groups, run.l2.steps, baseRegistry(run.baseSha));
   const state = loadBatch(ROOT, slice, group)!;
-  const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, limits: limits(), concept, findings: audit.substantive, auditSession: sessionId, label });
+  const after = await repairAfterAudit(env, { slice, group, concepts: state.concepts, protectedIds: plan.protectedIds, limits: limits(), gate, concept, findings: audit.substantive, auditSession: sessionId, label });
   console.log(`  repair: ${after.status === "accepted" ? "applied, verified, accepted again" : `batch ${after.status}${after.stop ? `: ${after.stop.reason}` : ""}`}`);
   return after.status === "accepted";
 }
@@ -396,7 +405,7 @@ async function commandAudit() {
       writeFileSync(join(ROOT, path), `${JSON.stringify(sampled, null, 2)}\n`);
       if (audit.substantive.length && !repaired) fail(`${concept}: substantive defects could not be repaired and verified; the slice cannot be finalized`, 3);
     }
-    const reason = stopReason(loadLedger(ROOT), budget());
+    const reason = stopReason(loadLedger(ROOT), budget(), now());
     if (reason) fail(`stop rule: ${reason}`, 3);
     console.log(`sample of ${sliceToSample}: ${sampled.concepts.join(", ")} audited`);
     return;
@@ -416,11 +425,69 @@ async function commandAudit() {
   }
 }
 
+/** A number given on the command line, or NaN: "", "12abc" and the like are never read as numbers. */
+const numberFlag = (name: string) => {
+  const raw = flag(name);
+  return raw === undefined ? undefined : /^\d+(\.\d+)?$/.test(raw) ? Number(raw) : Number.NaN;
+};
+/**
+ * An account-wide reading of the usage meter, as a human read it: weekly (--percent) and 5-hour (--session) usage,
+ * and when (--read-at, default now). It is availability, never a campaign cost; the ledger keeps every reading.
+ */
 function commandMeter() {
-  const percent = Number(flag("--percent") ?? fail("meter needs --percent <n>"));
-  if (!Number.isFinite(percent)) fail("--percent must be a number");
-  appendLedger(ROOT, { kind: "meter", at: now(), percent, note: flag("--note") });
-  console.log(`recorded meter ${percent}%`);
+  const percent = numberFlag("--percent") ?? fail("meter needs --percent <weekly usage>");
+  const session = numberFlag("--session");
+  const readAt = flag("--read-at");
+  const phase = flag("--bracket");
+  const batch = flag("--batch");
+  if ((phase === undefined) !== (batch === undefined)) fail("--bracket before|after and --batch <slice/group or audit:label> go together");
+  const at = now();
+  const entry = {
+    kind: "meter" as const, at, percent, ...(session === undefined ? {} : { session }), ...(readAt ? { readAt } : {}), note: flag("--note"),
+    ...(phase ? { bracket: { phase: phase as "before" | "after", batch: batch! } } : {}), ...(args.includes("--exclusive") ? { exclusive: true } : {}),
+  };
+  const ledger = loadLedger(ROOT);
+  const problems = readingProblems(entry, at, accountingPolicy(ledger).version === 2);
+  if (problems.length) fail(`the reading was not recorded:\n- ${problems.join("\n- ")}`);
+  // Stamped when it is appended (a reading's own time is readAt), so a batch appending meanwhile keeps the ledger in order.
+  appendLedger(ROOT, { ...entry, at: now() });
+  console.log(`recorded account-wide reading: weekly ${percent}%${session === undefined ? "" : `, 5-hour ${session}%`}${phase ? ` (${phase} ${batch})` : ""}: availability, not attributed to the campaign`);
+  console.log(`stop rule: ${stopReason(loadLedger(ROOT), budget(), now()) ?? "none broken"}`);
+}
+
+/**
+ * Records the accounting policy, pinning the effective budget. Every stop condition the current policy reports must be
+ * quoted exactly in --acknowledge; recording a policy clears none of them. It holds the driver lock: no batch or
+ * audit runs while the policy changes. Re-recording the same version is how a reviewed budget change is pinned.
+ */
+function commandPolicy() {
+  const version = numberFlag("--version") ?? fail("policy needs --version <1|2>");
+  const note = flag("--note");
+  const acknowledged = flag("--acknowledge");
+  const release = (() => {
+    try {
+      return acquireLock(ROOT);
+    } catch (error) {
+      return fail((error as Error).message, 4);
+    }
+  })();
+  // fail() exits the process, which skips finally: release on exit as well.
+  process.once("exit", release);
+  try {
+    const inFlight = allBatches().filter((state) => state.window?.inFlight).map((state) => `${state.slice}/${state.group} (${state.window!.inFlight!.role})`);
+    if (existsSync(join(ROOT, AUDIT_IN_FLIGHT))) inFlight.push("a deep audit");
+    if (inFlight.length) fail(`a session was interrupted and awaits recovery: ${inFlight.join(", ")}; recover it first`, 3);
+    const ledger = loadLedger(ROOT);
+    const at = now();
+    const problems = policyChangeProblems(ledger, budget(), at, version, note, acknowledged);
+    if (problems.length) fail(`the policy was not recorded:\n- ${problems.join("\n- ")}`, 3);
+    const entry = policyEntry(ledger, budget(), at, version, note!, acknowledged);
+    appendLedger(ROOT, entry);
+    console.log(`recorded accounting policy ${version} (budget ${entry.budgetHash.slice(0, 12)}); before it: policy ${entry.previous.version}, ${entry.previous.reasons.length ? `stops acknowledged: ${entry.previous.reasons.join("; ")}` : "no stop condition"}`);
+    console.log(`stop rule now: ${stopReason(loadLedger(ROOT), budget(), now()) ?? "none broken"}`);
+  } finally {
+    release();
+  }
 }
 
 /**
@@ -440,7 +507,7 @@ function commandClearFailures() {
   if (!failed) fail(`no failed or interrupted session in the active window (${sessions} sessions): nothing to acknowledge`);
   appendLedger(ROOT, { kind: "ack", at: now(), note: note!, failures: failed });
   console.log(`acknowledged ${failed} failed or interrupted session(s) of the last ${sessions}; they stay in the ledger`);
-  const reason = stopReason(loadLedger(ROOT), budget());
+  const reason = stopReason(loadLedger(ROOT), budget(), now());
   console.log(`stop rule: ${reason ?? "none broken"}`);
 }
 
@@ -452,7 +519,17 @@ function commandReport() {
   const authored = rows.filter((m) => !m.slice.startsWith("audit:"));
   const total = authored.reduce((sum, m) => sum + m.weighted, 0);
   const accepted = authored.reduce((sum, m) => sum + m.accepted, 0);
+  const policy = accountingPolicy(ledger);
+  console.log(`accounting policy ${policy.version}${policy.entry ? ` (recorded ${policy.entry.at}; budget ${policy.entry.budgetHash.slice(0, 12)}, now ${budgetHash(budget()).slice(0, 12)})` : " (legacy: no policy recorded)"}`);
   console.log(`authoring: ${total} weighted for ${accepted} accepted (${accepted ? Math.round(total / accepted) : "-"} each; plan ${budget().perConcept}; model ${config().model})`);
+  const cost = campaignCost(ledger);
+  if (policyActivation(ledger) >= 0) {
+    console.log(`since policy 2's activation (${ledger[policyActivation(ledger)].at}), what the single-batch ceiling judges; the totals above stay as recorded:`);
+    for (const b of batchCosts(ledger))
+      console.log(`  ${b.slice}/${b.group}: ${b.sincePolicy} of ${b.total} weighted (${b.startedUnderPolicy ? "started under policy 2" : "started before it"}${b.completedUnderPolicy ? ", accepted since" : ""}${b.unmeasuredSincePolicy ? `, ${b.unmeasuredSincePolicy} unmeasured` : ""}${b.failedSincePolicy ? `, ${b.failedSincePolicy} failed` : ""})`);
+  }
+  console.log(`audits: ${cost.audits} weighted, apart from authoring`);
+  for (const [label, row] of Object.entries(cost.byLabel)) console.log(`  ${label}: ${row.sessions} sessions${row.unmeasured ? ` (${row.unmeasured} unmeasured)` : ""}, ${row.weighted} weighted, ${row.concepts} concepts (${row.concepts ? Math.round(row.weighted / row.concepts) : "-"} each)`);
   const audits = ledger.filter((e) => e.kind === "deep-audit") as Extract<(typeof ledger)[number], { kind: "deep-audit" }>[];
   const byLabel = new Map<string, { n: number; defective: number; defects: number; campaign: boolean }>();
   for (const a of audits) {
@@ -463,9 +540,11 @@ function commandReport() {
     byLabel.set(a.label, s);
   }
   for (const [label, s] of byLabel) console.log(`deep audit ${label}${s.campaign ? "" : " (baseline, not counted)"}: ${s.n} concepts, ${s.defective} with substantive defects, ${(s.defects / s.n).toFixed(2)} per concept`);
-  const meters = ledger.filter((e) => e.kind === "meter");
-  if (meters.length) console.log(`meter readings (measured): ${meters.map((m) => `${m.at.slice(0, 16)} ${(m as { percent: number }).percent}%`).join(", ")}`);
-  console.log(`stop rule: ${stopReason(ledger, budget()) ?? "none broken"}`);
+  const meters = ledger.filter((e): e is Extract<(typeof ledger)[number], { kind: "meter" }> => e.kind === "meter");
+  if (meters.length) console.log(`account-wide readings (availability${policy.version === 2 ? "; not attributed to the campaign" : "; policy 1 attributes their rise"}): ${meters.map((m) => `${new Date(m.readAt ?? m.at).toISOString().slice(0, 16)}Z weekly ${m.percent}%${m.session === undefined ? "" : ` 5-hour ${m.session}%`}`).join(", ")}`);
+  const evidence = meterEvidence(ledger);
+  for (const e of evidence) console.log(`bracket ${e.batch}${e.exclusive ? " (exclusive, by a human's account)" : ""}: weekly +${e.percent}% around ${e.weighted} weighted (${e.weightedPerPercent ?? "-"} per percent; supplementary, an upper bound${e.outlier ? "; far from the median of the other brackets" : ""})`);
+  console.log(`stop rule: ${stopReason(ledger, budget(), now()) ?? "none broken"}`);
 }
 
 /** Records the v1 steps in v1's order, scoped to the slice's run, then runs the v1 gates through the diff. */
@@ -518,6 +597,9 @@ switch (args[0]) {
   case "meter":
     commandMeter();
     break;
+  case "policy":
+    commandPolicy();
+    break;
   case "report":
     commandReport();
     break;
@@ -528,5 +610,5 @@ switch (args[0]) {
     await locked(commandFinalize);
     break;
   default:
-    fail("usage: map:l2v2 -- run|status|resume|audit|meter|report|finalize|clear-failures (see the header of scripts/map-l2v2.ts)");
+    fail("usage: map:l2v2 -- run|status|resume|audit|meter|policy|report|finalize|clear-failures (see the header of scripts/map-l2v2.ts)");
 }

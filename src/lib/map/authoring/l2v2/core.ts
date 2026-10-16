@@ -9,6 +9,7 @@
  * and the metrics; it reads and writes nothing. Drafted records are data
  * (records.ts). Development tooling only.
  */
+import { createHash } from "node:crypto";
 import { replaceOnce, type PlanBasis, type StagedRecord } from "./records.ts";
 
 // ---------------------------------------------------------------- batch state
@@ -629,7 +630,20 @@ export type LedgerEntry =
   | { kind: "batch"; at: string; slice: string; group: string; accepted: number; parked: number; escalated: number; defects: number }
   /** campaign: false for baselines, which never count toward the campaign's stop rules; fingerprint: the record audited, when it is a v2 record. */
   | { kind: "deep-audit"; at: string; label: string; concept: string; substantive: number; campaign: boolean; fingerprint?: string }
-  | { kind: "meter"; at: string; percent: number; note?: string }
+  /**
+   * An account-wide reading of the Claude usage meter: `percent` is the weekly
+   * (7-day) usage, `session` the 5-hour usage, `readAt` when a human read it
+   * (`at` when absent). Under accounting policy 2 it is availability, never a
+   * cost: nothing attributes it to the campaign. A bracket marks a reading
+   * taken just before or after one batch or audit, as supplementary evidence.
+   */
+  | { kind: "meter"; at: string; percent: number; note?: string; session?: number; readAt?: string; exclusive?: boolean; bracket?: { phase: "before" | "after"; batch: string } }
+  /**
+   * A human changed (or re-recorded) the accounting policy. `budgetHash` pins
+   * the effective budget; `previous` is the policy in force before and the stop
+   * conditions it reported then, each quoted in `acknowledged`. Clears nothing.
+   */
+  | { kind: "policy"; at: string; version: number; note: string; budgetHash: string; previous: { version: number; reasons: string[] }; acknowledged?: string }
   /** A human resumed a stopped batch: its parked concepts are decided, and stop counting as parked. */
   | { kind: "resume"; at: string; slice: string; group: string; status: BatchStatus }
   /**
@@ -647,6 +661,11 @@ export type LedgerEntry =
 export type Budget = {
   perConcept: number; stopFactor: number; maxEscalationRate: number; meterPercentPerConcept: number; sampleWindow: number; sampleMaxDefective: number; samplePerSlice: number;
   maxSessionsPerBatch: number; maxBatchMinutes: number;
+  /**
+   * Accounting policy 2: availability ceilings on the account-wide meter (weekly and 5-hour usage, percent), the
+   * oldest reading a session may start on (minutes), and a single batch's cost ceiling as a multiple of perConcept.
+   */
+  maxWeeklyPercent: number; maxSessionPercent: number; maxReadingAgeMinutes: number; maxBatchFactor: number;
   /** Concepts one audit command may audit (one session each). */
   maxAuditConcepts: number;
   /** Failed or interrupted sessions (any role, audits included) among the last `failureWindow` sessions that stop the campaign. */
@@ -655,6 +674,7 @@ export type Budget = {
 export const DEFAULT_BUDGET: Budget = {
   perConcept: 122_000, stopFactor: 1.3, maxEscalationRate: 0.4, meterPercentPerConcept: 0.109, sampleWindow: 20, sampleMaxDefective: 8, samplePerSlice: 4,
   maxSessionsPerBatch: 20, maxBatchMinutes: 240, maxAuditConcepts: 12, maxRecentFailures: 3, failureWindow: 10,
+  maxWeeklyPercent: 85, maxSessionPercent: 80, maxReadingAgeMinutes: 30, maxBatchFactor: 3,
 };
 
 export type BatchMetrics = { slice: string; group: string; weighted: number; minutes: number; failed: number; unmeasured: number; accepted: number; parked: number; escalated: number; defects: number };
@@ -692,36 +712,278 @@ export function activeFailures(ledger: readonly LedgerEntry[], budget: Budget = 
   return { sessions: sessions.length, failed: sessions.filter((e) => e.kind === "session-failed").length };
 }
 
-/** The first stop rule a campaign's ledger breaks, or undefined. Thresholds stop the campaign; they never license a known defect. */
-export function stopReason(ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET): string | undefined {
+// ---------------------------------------------------------------- accounting policies
+
+/**
+ * The accounting policies the ledger can name. 1: the legacy rules, under
+ * which the account-wide meter's rise is attributed to the campaign per
+ * accepted concept. 2: campaign cost only from recorded weighted tokens; the
+ * meter is availability, required fresh before every session. Without any
+ * policy entry, policy 1 applies exactly as it always did.
+ */
+export const ACCOUNTING_POLICIES = [1, 2] as const;
+export type AccountingPolicy = { version: number; entry?: Extract<LedgerEntry, { kind: "policy" }> };
+export function accountingPolicy(ledger: readonly LedgerEntry[]): AccountingPolicy {
+  const entry = ledger.findLast((e): e is Extract<LedgerEntry, { kind: "policy" }> => e.kind === "policy");
+  return entry ? { version: entry.version, entry } : { version: 1 };
+}
+/** The effective budget's fingerprint: keys sorted, so only a value change changes it. */
+export const budgetHash = (budget: Budget) =>
+  createHash("sha256").update(JSON.stringify(Object.fromEntries(Object.entries(budget).sort(([a], [b]) => a.localeCompare(b))))).digest("hex");
+
+const PERCENT = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+/** When a reading was taken, or undefined when its time is not a valid timestamp. */
+const readTime = (reading: Extract<LedgerEntry, { kind: "meter" }>) => {
+  const at = reading.readAt ?? reading.at;
+  return typeof at === "string" && ISO.test(at) && Number.isFinite(Date.parse(at)) ? Date.parse(at) : undefined;
+};
+/** Why a reading cannot be recorded or used as availability; [] when it can. `needSession`: policy 2 needs the 5-hour usage. */
+export function readingProblems(reading: Partial<Extract<LedgerEntry, { kind: "meter" }>>, now: string, needSession: boolean): string[] {
+  const problems: string[] = [];
+  if (!PERCENT(reading.percent)) problems.push("the weekly usage must be a number from 0 to 100");
+  if (reading.session === undefined ? needSession : !PERCENT(reading.session)) problems.push("the 5-hour usage (session) must be a number from 0 to 100");
+  const time = readTime(reading as Extract<LedgerEntry, { kind: "meter" }>);
+  if (time === undefined) problems.push("the reading time must be an ISO timestamp with its zone");
+  else if (time > Date.parse(now)) problems.push(`the reading time ${reading.readAt ?? reading.at} is in the future`);
+  if (reading.bracket && (!["before", "after"].includes(reading.bracket.phase) || !/^[a-z0-9:/_-]+$/i.test(reading.bracket.batch ?? ""))) problems.push("a bracket needs phase before or after and the batch or audit it brackets");
+  if (reading.exclusive && !reading.bracket) problems.push("only a bracket reading can be marked exclusive");
+  return problems;
+}
+
+const KINDS = new Set(["session", "session-failed", "batch", "deep-audit", "meter", "resume", "ack", "policy"]);
+/**
+ * How far an entry may precede the one before it and still count as in order: two processes (the driver and a
+ * human recording a reading during a batch) can stamp and append in opposite orders within milliseconds. Anything
+ * further back is ambiguous.
+ */
+export const LEDGER_ORDER_TOLERANCE_MS = 5000;
+const COUNT = (value: unknown) => Number.isInteger(value) && (value as number) >= 0;
+const NAME = (value: unknown) => typeof value === "string" && value.length > 0;
+/**
+ * Why the ledger cannot be read as accounting history under a recorded
+ * policy; [] when it can. Every entry must have a known kind, a valid time
+ * and the fields its kind is judged by. From policy 2's activation on, the
+ * entries must be in time order (the activation itself not earlier than the
+ * entry before it), within LEDGER_ORDER_TOLERANCE_MS: out-of-order history is
+ * ambiguous, never guessed at.
+ */
+export function ledgerProblems(ledger: readonly LedgerEntry[]): string[] {
+  const problems: string[] = [];
+  const time = (e: LedgerEntry) => (typeof e?.at === "string" && ISO.test(e.at) && Number.isFinite(Date.parse(e.at)) ? Date.parse(e.at) : undefined);
+  ledger.forEach((e, index) => {
+    const where = `ledger entry ${index + 1}`;
+    if (!e || typeof e !== "object" || !KINDS.has((e as { kind?: string }).kind ?? "")) return void problems.push(`${where} has no known kind`);
+    if (time(e) === undefined) problems.push(`${where} (${e.kind}) has no valid time`);
+    if (e.kind === "session" && (!NAME(e.slice) || !NAME(e.group) || !(e.weighted === null || (typeof e.weighted === "number" && Number.isFinite(e.weighted) && e.weighted >= 0)) || (e.usage === null) !== (e.weighted === null))) problems.push(`${where} (session) has no valid slice, group or weighted usage`);
+    if (e.kind === "batch" && (!NAME(e.slice) || !NAME(e.group) || ![e.accepted, e.parked, e.escalated, e.defects].every(COUNT))) problems.push(`${where} (batch) has no valid slice, group or counts`);
+    if (e.kind === "session-failed" && (!NAME(e.slice) || !NAME(e.group))) problems.push(`${where} (session-failed) has no valid slice or group`);
+    if (e.kind === "policy" && (!Number.isInteger(e.version) || !/^[0-9a-f]{64}$/.test(e.budgetHash ?? "") || typeof e.note !== "string" || !e.previous || !Number.isInteger(e.previous.version) || !Array.isArray(e.previous.reasons))) problems.push(`${where} (policy) is malformed`);
+    if (e.kind === "meter" && typeof e.percent !== "number") problems.push(`${where} (meter) has no weekly usage`);
+  });
+  const activation = policyActivation(ledger);
+  if (activation >= 0)
+    for (let i = Math.max(activation, 1); i < ledger.length; i++) {
+      const [before, at] = [time(ledger[i - 1]), time(ledger[i])];
+      if (before !== undefined && at !== undefined && at < before - LEDGER_ORDER_TOLERANCE_MS) problems.push(`ledger entry ${i + 1} (${ledger[i].kind}, ${ledger[i].at}) is earlier than the entry before it (${ledger[i - 1].at}): from policy 2's activation on the history must be in order`);
+    }
+  return problems;
+}
+
+/**
+ * Where policy 2's accounting starts: the first policy-2 entry, whatever
+ * policies were recorded after it, so neither re-recording a policy nor
+ * switching away and back resets or hides what was spent since. -1 when
+ * policy 2 was never recorded.
+ */
+export const policyActivation = (ledger: readonly LedgerEntry[]) => ledger.findIndex((e) => e?.kind === "policy" && e.version === 2);
+
+/**
+ * Each batch's recorded cost: its whole history (`total`, kept as recorded)
+ * and what it spent after policy 2's activation (`sincePolicy`), with its
+ * sessions there that have no recorded usage and its failed ones. A batch
+ * started under policy 2 spent everything after the activation; one started
+ * before and repaired or re-accepted under it, only its incremental cost.
+ */
+export type BatchCost = { slice: string; group: string; total: number; sincePolicy: number; unmeasuredSincePolicy: number; failedSincePolicy: number; startedUnderPolicy: boolean; completedUnderPolicy: boolean; accepted: number; parked: number };
+export function batchCosts(ledger: readonly LedgerEntry[]): BatchCost[] {
+  const activation = policyActivation(ledger);
+  const after = (index: number) => activation >= 0 && index > activation;
+  const out = new Map<string, BatchCost>();
+  ledger.forEach((e, index) => {
+    if (e.kind !== "session" && e.kind !== "session-failed" && e.kind !== "batch" && e.kind !== "resume") return;
+    if (e.slice.startsWith("audit:")) return;
+    const key = `${e.slice}/${e.group}`;
+    const cost = out.get(key) ?? { slice: e.slice, group: e.group, total: 0, sincePolicy: 0, unmeasuredSincePolicy: 0, failedSincePolicy: 0, startedUnderPolicy: after(index), completedUnderPolicy: false, accepted: 0, parked: 0 };
+    if (e.kind === "session") {
+      cost.total += e.weighted ?? 0;
+      if (after(index)) {
+        cost.sincePolicy += e.weighted ?? 0;
+        if (e.weighted === null) cost.unmeasuredSincePolicy++;
+      }
+    } else if (e.kind === "session-failed" && after(index)) cost.failedSincePolicy++;
+    else if (e.kind === "batch") {
+      Object.assign(cost, { accepted: e.accepted, parked: e.parked });
+      if (after(index)) cost.completedUnderPolicy = true;
+    }
+    out.set(key, cost);
+  });
+  return [...out.values()];
+}
+
+/**
+ * Policy 2's gate before every session (a batch's or an audit's): a known
+ * policy, the budget still the one its entry pinned, and a fresh, valid,
+ * not-future availability reading under both ceilings. Readings are never
+ * fabricated or fetched: a human records them. Under policy 1 there is none.
+ */
+export function sessionGate(ledger: readonly LedgerEntry[], budget: Budget, now: string | undefined): string | undefined {
+  const policy = accountingPolicy(ledger);
+  if (!policy.entry) return undefined;
+  if (!(ACCOUNTING_POLICIES as readonly number[]).includes(policy.version)) return `unknown accounting policy ${policy.version} in the ledger: this tooling cannot apply it`;
+  const malformed = ledgerProblems(ledger);
+  if (malformed.length) return `the accounting history is ambiguous: ${malformed[0]}`;
+  if (budgetHash(budget) !== policy.entry.budgetHash) return `the budget changed since the accounting policy recorded at ${policy.entry.at}: review it and record it (\`policy --version ${policy.version} --note\`)`;
+  if (policy.version !== 2) return undefined;
+  if (!now || !Number.isFinite(Date.parse(now))) return "availability: no clock to judge the latest reading by";
+  const reading = ledger.findLast((e): e is Extract<LedgerEntry, { kind: "meter" }> => e.kind === "meter");
+  const record = "record a fresh reading (`meter --percent <weekly> --session <5-hour>`)";
+  if (!reading) return `availability: no usage reading: ${record}`;
+  const problems = readingProblems(reading, now, true);
+  if (problems.length) return `availability: the latest reading is not usable (${problems.join("; ")}): ${record}`;
+  const age = (Date.parse(now) - readTime(reading)!) / 60_000;
+  if (age > budget.maxReadingAgeMinutes) return `availability: the latest reading is ${Math.ceil(age)} minutes old, over ${budget.maxReadingAgeMinutes}: ${record}`;
+  if (reading.percent >= budget.maxWeeklyPercent) return `availability: weekly usage is ${reading.percent}%, at or over ${budget.maxWeeklyPercent}%`;
+  if (reading.session! >= budget.maxSessionPercent) return `availability: 5-hour usage is ${reading.session}%, at or over ${budget.maxSessionPercent}%`;
+  return undefined;
+}
+
+/**
+ * Every stop rule a campaign's ledger breaks, in order; [] when none. Thresholds stop the campaign; they never license
+ * a known defect. Policy 1 (no policy entry, or version 1) keeps the legacy meter rule; policy 2 replaces it with
+ * availability (sessionGate) and adds a single-batch cost ceiling for batches completed under it. Authoring cost is
+ * always the recorded weighted tokens of batch sessions; audit sessions are reported apart and never in these rules.
+ */
+export function stopReasons(ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET, now?: string): string[] {
+  const policy = accountingPolicy(ledger);
+  if (policy.entry && !(ACCOUNTING_POLICIES as readonly number[]).includes(policy.version)) return [`unknown accounting policy ${policy.version} in the ledger: this tooling cannot apply it`];
+  // Under a recorded policy, history that cannot be read unambiguously is judged by no rule: it is the only reason given.
+  if (policy.entry) {
+    const malformed = ledgerProblems(ledger);
+    if (malformed.length) return malformed.map((problem) => `the accounting history is ambiguous: ${problem}`);
+  }
+  const reasons: string[] = [];
   const done = batchMetrics(ledger).filter((m) => m.accepted + m.parked > 0);
   const recent = done.slice(-3);
   const accepted = recent.reduce((sum, m) => sum + m.accepted, 0);
   if (recent.length === 3) {
     const perConcept = accepted ? recent.reduce((sum, m) => sum + m.weighted, 0) / accepted : Infinity;
-    if (perConcept > budget.perConcept * budget.stopFactor) return `the last 3 batches cost ${Math.round(perConcept)} weighted per accepted concept, over ${budget.stopFactor} × the ${budget.perConcept} plan`;
+    if (perConcept > budget.perConcept * budget.stopFactor) reasons.push(`the last 3 batches cost ${Math.round(perConcept)} weighted per accepted concept, over ${budget.stopFactor} × the ${budget.perConcept} plan`);
   }
+  if (policy.version === 2)
+    // Every batch completed (or re-accepted) since policy 2's activation, judged on what it spent since then: all of it
+    // for a batch started under the policy, the increment for an earlier one. A later batch never hides an earlier one.
+    for (const cost of batchCosts(ledger).filter((c) => c.completedUnderPolicy)) {
+      const name = `batch ${cost.slice}/${cost.group}`;
+      if (cost.unmeasuredSincePolicy) reasons.push(`${name}: ${cost.unmeasuredSincePolicy} session(s) since policy 2's activation have no recorded usage, so its cost cannot be checked against the single-batch ceiling`);
+      else if (cost.accepted && cost.sincePolicy / cost.accepted > budget.perConcept * budget.maxBatchFactor)
+        reasons.push(`${name} cost ${Math.round(cost.sincePolicy / cost.accepted)} weighted per accepted concept since policy 2's activation (${cost.sincePolicy} of ${cost.total} recorded in all), over ${budget.maxBatchFactor} × the ${budget.perConcept} plan`);
+    }
   const concepts = done.reduce((sum, m) => sum + m.accepted + m.parked, 0);
   const escalated = done.reduce((sum, m) => sum + m.escalated, 0);
-  if (concepts >= 10 && escalated / concepts > budget.maxEscalationRate) return `${escalated} of ${concepts} concepts escalated, over ${budget.maxEscalationRate * 100}%`;
+  if (concepts >= 10 && escalated / concepts > budget.maxEscalationRate) reasons.push(`${escalated} of ${concepts} concepts escalated, over ${budget.maxEscalationRate * 100}%`);
   const parked = done.reduce((sum, m) => sum + m.parked, 0);
-  if (parked) return `${parked} concept(s) parked with unresolved defects: a human decides`;
+  if (parked) reasons.push(`${parked} concept(s) parked with unresolved defects: a human decides`);
   const { sessions, failed } = activeFailures(ledger, budget);
-  if (failed >= budget.maxRecentFailures) return `${failed} of the last ${sessions} sessions failed or were interrupted: a human checks the CLI, the quota and the tree, then acknowledges them (\`clear-failures --note\`)`;
+  if (failed >= budget.maxRecentFailures) reasons.push(`${failed} of the last ${sessions} sessions failed or were interrupted: a human checks the CLI, the quota and the tree, then acknowledges them (\`clear-failures --note\`)`);
   const audits = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.campaign).slice(-budget.sampleWindow);
   const defective = audits.filter((e) => e.substantive > 0).length;
-  if (defective >= budget.sampleMaxDefective) return `${defective} of the last ${audits.length} sampled concepts had substantive defects`;
-  const meters = ledger.filter((e): e is Extract<LedgerEntry, { kind: "meter" }> => e.kind === "meter");
-  // A drop means the weekly quota reset: measure only within the latest window.
-  let start = 0;
-  for (let i = 1; i < meters.length; i++) if (meters[i].percent < meters[i - 1].percent) start = i;
-  const window = meters.slice(start);
-  if (window.length >= 2) {
-    const [first, last] = [window[0], window[window.length - 1]];
-    const since = batchMetrics(ledger.filter((e) => e.at >= first.at && e.at <= last.at)).reduce((sum, m) => sum + m.accepted, 0);
-    if (since && (last.percent - first.percent) / since > budget.meterPercentPerConcept) return `the usage meter rose ${(last.percent - first.percent).toFixed(1)}% for ${since} accepted concepts, over ${budget.meterPercentPerConcept}% each`;
+  if (defective >= budget.sampleMaxDefective) reasons.push(`${defective} of the last ${audits.length} sampled concepts had substantive defects`);
+  if (policy.version === 1) {
+    const meters = ledger.filter((e): e is Extract<LedgerEntry, { kind: "meter" }> => e.kind === "meter");
+    // A drop means the weekly quota reset: measure only within the latest window.
+    let start = 0;
+    for (let i = 1; i < meters.length; i++) if (meters[i].percent < meters[i - 1].percent) start = i;
+    const window = meters.slice(start);
+    if (window.length >= 2) {
+      const [first, last] = [window[0], window[window.length - 1]];
+      const since = batchMetrics(ledger.filter((e) => e.at >= first.at && e.at <= last.at)).reduce((sum, m) => sum + m.accepted, 0);
+      if (since && (last.percent - first.percent) / since > budget.meterPercentPerConcept) reasons.push(`the usage meter rose ${(last.percent - first.percent).toFixed(1)}% for ${since} accepted concepts, over ${budget.meterPercentPerConcept}% each`);
+    }
   }
-  return undefined;
+  // Under a recorded policy: the pinned budget and, for policy 2, availability.
+  const gate = sessionGate(ledger, budget, now);
+  if (gate) reasons.push(gate);
+  return reasons;
+}
+/** The first stop rule a campaign's ledger breaks, or undefined. */
+export const stopReason = (ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET, now?: string): string | undefined => stopReasons(ledger, budget, now)[0];
+
+/** Why a policy may not be recorded now; [] when it may. Every stop the current policy reports must be quoted, exactly, in the acknowledgment. */
+export function policyChangeProblems(ledger: readonly LedgerEntry[], budget: Budget, now: string, version: number, note: string | undefined, acknowledged: string | undefined): string[] {
+  const problems: string[] = [];
+  if (!(ACCOUNTING_POLICIES as readonly number[]).includes(version)) problems.push(`policy version must be one of ${ACCOUNTING_POLICIES.join(", ")}`);
+  if (!note?.trim() || note.trim().startsWith("--")) problems.push('a policy needs --note "<what was decided and why>"');
+  const current = stopReasons(ledger, budget, now);
+  const missing = current.filter((reason) => !acknowledged?.includes(reason));
+  if (missing.length) problems.push(`the current policy reports stop conditions that must each be quoted exactly in --acknowledge (recording a policy clears none of them):\n- ${missing.join("\n- ")}`);
+  return problems;
+}
+/** The policy entry to append, once policyChangeProblems is empty. */
+export function policyEntry(ledger: readonly LedgerEntry[], budget: Budget, now: string, version: number, note: string, acknowledged?: string): Extract<LedgerEntry, { kind: "policy" }> {
+  return { kind: "policy", at: now, version, note: note.trim(), budgetHash: budgetHash(budget), previous: { version: accountingPolicy(ledger).version, reasons: stopReasons(ledger, budget, now) }, ...(acknowledged?.trim() ? { acknowledged: acknowledged.trim() } : {}) };
+}
+
+/** Recorded weighted tokens, authoring (batch sessions) and audits (deep-audit sessions) apart, and audits per label. */
+export function campaignCost(ledger: readonly LedgerEntry[]): { authoring: number; audits: number; byLabel: Record<string, { sessions: number; weighted: number; unmeasured: number; concepts: number }> } {
+  const byLabel: Record<string, { sessions: number; weighted: number; unmeasured: number; concepts: number }> = {};
+  let authoring = 0;
+  let audits = 0;
+  const audited = new Map<string, Set<string>>();
+  for (const e of ledger) {
+    if (e.kind !== "session") continue;
+    if (e.slice.startsWith("audit:")) {
+      const label = e.slice.slice("audit:".length);
+      const row = (byLabel[label] ??= { sessions: 0, weighted: 0, unmeasured: 0, concepts: 0 });
+      row.sessions++;
+      if (e.weighted === null) row.unmeasured++;
+      else row.weighted += e.weighted;
+      audits += e.weighted ?? 0;
+      audited.set(label, (audited.get(label) ?? new Set()).add(e.group));
+      row.concepts = audited.get(label)!.size;
+    } else authoring += e.weighted ?? 0;
+  }
+  return { authoring, audits, byLabel };
+}
+
+/**
+ * Supplementary evidence from bracketed readings: for each before/after pair
+ * around one batch or audit, the weekly meter's change and the weighted
+ * tokens the ledger recorded between the two. An upper bound at best (whole
+ * percents, the session's own overhead, any concurrent use, and "exclusive"
+ * is a human's assertion): reported, never a stop rule.
+ */
+export function meterEvidence(ledger: readonly LedgerEntry[]): { batch: string; exclusive: boolean; percent: number; weighted: number; weightedPerPercent: number | null; outlier: boolean }[] {
+  const pairs: { batch: string; exclusive: boolean; percent: number; weighted: number; weightedPerPercent: number | null; outlier: boolean }[] = [];
+  const open = new Map<string, number>();
+  ledger.forEach((e, index) => {
+    if (e.kind !== "meter" || !e.bracket) return;
+    if (e.bracket.phase === "before") return void open.set(e.bracket.batch, index);
+    const from = open.get(e.bracket.batch);
+    if (from === undefined) return;
+    open.delete(e.bracket.batch);
+    const before = ledger[from] as Extract<LedgerEntry, { kind: "meter" }>;
+    const weighted = ledger.slice(from + 1, index).reduce((sum, x) => sum + (x.kind === "session" ? (x.weighted ?? 0) : 0), 0);
+    const percent = e.percent - before.percent;
+    pairs.push({ batch: e.bracket.batch, exclusive: !!(before.exclusive && e.exclusive), percent, weighted, weightedPerPercent: percent > 0 ? Math.round(weighted / percent) : null, outlier: false });
+  });
+  // With three or more exclusive pairs, one far from their median (more than 2×, or under half) is flagged, never acted on.
+  const ratios = pairs.filter((p) => p.exclusive && p.weightedPerPercent !== null).map((p) => p.weightedPerPercent!).sort((a, b) => a - b);
+  if (ratios.length >= 3) {
+    const median = ratios[Math.floor(ratios.length / 2)];
+    for (const p of pairs) if (p.exclusive && p.weightedPerPercent !== null && (p.weightedPerPercent > 2 * median || p.weightedPerPercent < median / 2)) p.outlier = true;
+  }
+  return pairs;
 }
 
 /** A deterministic sample of `n` items (seeded), for measurement deep audits. */

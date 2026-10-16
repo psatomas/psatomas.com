@@ -7,7 +7,7 @@ import { join, relative } from "node:path";
 import test from "node:test";
 import {
   acceptanceProblems, advance, allowedTools, applyClaimFixes, applyModelFixes, applyPatches, deniedTools, DENIED_TOOLS, escalationFocus, escalationReasons, finalizeCommands, knownDefectProblems, MAX_CROSS_CHECK_NOTE, MAX_FINAL_MESSAGE, newBatch,
-  parseFinal, planBatches, planReviewProblems, recordDefects, resumeBatch,
+  accountingPolicy, batchCosts, batchMetrics, budgetHash, campaignCost, DEFAULT_BUDGET, LEDGER_ORDER_TOLERANCE_MS, meterEvidence, policyActivation, parseFinal, planBatches, planReviewProblems, policyChangeProblems, policyEntry, readingProblems, recordDefects, resumeBatch, sessionGate, stopReasons,
   reviewProblems, sample, sampleProblems, stopBatch, stopReason, verifyProblems, weighted,
   type ConceptReview, type Finding, type LedgerEntry,
 } from "./core.ts";
@@ -1710,4 +1710,333 @@ test("the driver: an unchanged concept's cross-check is required (one rewrite, t
   assert.ok(repaired.audit.y.notes.includes("review cross-check 1: found terminology; y uses agreement in the sense x's repair dropped."));
   // Round 2 verifies y (it changed) and cross-checks x (it did not).
   assert.match(finding.prompts.filter((_, i) => finding.calls[i] === "review:resume")[1], /Verify concepts y:[\s\S]*of your review \(x\) have not changed/);
+});
+
+// ---------------------------------------------------------------- accounting policy 2: cost from recorded tokens, the meter as availability
+
+const minutesAgo = (minutes: number, from = Date.now()) => new Date(from - minutes * 60_000).toISOString();
+const NOW = minutesAgo(0);
+const spend = (weighted: number, at: string, slice = "computation-execution-2", group = "verifiable-computation"): LedgerEntry => ({ kind: "session", at, slice, group, role: "review", sessionId: "s", durationMs: 60_000, turns: 3, usage: { input_tokens: weighted, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }, weighted });
+/** The pilot's ledger, in shape: two readings, the failed and the accepted attempt's sessions, one accepted batch of 3. */
+const pilotLedger = (): LedgerEntry[] => [
+  { kind: "meter", at: minutesAgo(12 * 60), percent: 23, note: "baseline" },
+  spend(159_820, minutesAgo(12 * 60 - 3)),
+  { kind: "meter", at: minutesAgo(5 * 60), percent: 25 },
+  { kind: "resume", at: minutesAgo(5 * 60), slice: "computation-execution-2", group: "verifiable-computation", status: "pending" },
+  spend(1_092_569, minutesAgo(4 * 60 + 45)),
+  { kind: "batch", at: minutesAgo(4 * 60 + 40), slice: "computation-execution-2", group: "verifiable-computation", accepted: 3, parked: 0, escalated: 3, defects: 33 },
+];
+const reading = (percent: number, session: number | undefined, at: string, extra: Partial<Extract<LedgerEntry, { kind: "meter" }>> = {}): LedgerEntry => ({ kind: "meter", at, percent, ...(session === undefined ? {} : { session }), ...extra });
+const METER_RULE = "the usage meter rose 12.0% for 3 accepted concepts, over 0.109% each";
+/** The pilot's ledger with the 35% reading, under a recorded policy 2 (acknowledging the meter rule), then a fresh reading. */
+const switched = (fresh: LedgerEntry | null = reading(35, 10, minutesAgo(5)), budget = DEFAULT_BUDGET) => {
+  const before = [...pilotLedger(), reading(35, undefined, minutesAgo(60))];
+  const policy = policyEntry(before, budget, minutesAgo(10), 2, "cost from recorded tokens; the meter is availability", `${METER_RULE}: the 12 points include unrelated usage`);
+  return [...before, policy, ...(fresh ? [fresh] : [])];
+};
+
+test("policy 1 is unchanged without a policy entry: the meter's rise is still attributed, and the pilot's 35% reading breaks it", () => {
+  assert.equal(accountingPolicy(pilotLedger()).version, 1);
+  assert.deepEqual(stopReasons(pilotLedger(), DEFAULT_BUDGET, NOW), []);
+  assert.deepEqual(stopReasons([...pilotLedger(), reading(35, undefined, NOW)], DEFAULT_BUDGET, NOW), [METER_RULE]);
+  assert.equal(sessionGate([...pilotLedger(), reading(35, undefined, NOW)], DEFAULT_BUDGET, NOW), undefined, "no availability gate under the legacy policy");
+});
+
+test("policy 2: the same reading is availability, never a cost; a fresh, valid reading under both ceilings lets sessions start", () => {
+  const ledger = switched();
+  assert.equal(accountingPolicy(ledger).version, 2);
+  assert.deepEqual(stopReasons(ledger, DEFAULT_BUDGET, NOW), []);
+  assert.equal(sessionGate(ledger, DEFAULT_BUDGET, NOW), undefined);
+  // The three-batch cost rule still uses recorded weighted tokens: three costly batches stop the campaign.
+  const costly = [...ledger, ...["a", "b"].flatMap((g) => [spend(1_000_000, NOW, "s2", g), { kind: "batch", at: NOW, slice: "s2", group: g, accepted: 3, parked: 0, escalated: 0, defects: 0 } as LedgerEntry]), reading(35, 10, NOW)];
+  assert.match(stopReasons(costly, DEFAULT_BUDGET, NOW).join(), /the last 3 batches cost \d+ weighted per accepted concept, over 1\.3 × the 122000 plan/);
+});
+
+test("policy 2 fails closed on availability: a missing, stale, future-dated, malformed or session-less reading, either ceiling, or no clock", () => {
+  const gate = (fresh: LedgerEntry | null, now: string | undefined = NOW) => sessionGate(switched(fresh), DEFAULT_BUDGET, now) ?? "";
+  assert.match(gate(null), /the latest reading is not usable \(the 5-hour usage/, "the last reading before the policy has no 5-hour usage");
+  assert.match(sessionGate([...pilotLedger(), policyEntry(pilotLedger(), DEFAULT_BUDGET, NOW, 2, "n")].filter((e) => e.kind !== "meter"), DEFAULT_BUDGET, NOW)!, /availability: no usage reading/);
+  // Readings are appended when recorded (at) and carry when a human read them (readAt): the read time is what ages.
+  const readAgo = (minutes: number) => reading(35, 10, minutesAgo(0), { readAt: minutesAgo(minutes) });
+  assert.match(gate(readAgo(31)), /31 minutes old, over 30/);
+  assert.equal(gate(readAgo(29)), "");
+  assert.match(gate(readAgo(-5)), /in the future/);
+  assert.match(gate(reading(35, 10, minutesAgo(0), { readAt: "yesterday" })), /ISO timestamp/);
+  assert.match(gate(readAgo(45)), /45 minutes old/);
+  assert.equal(gate(reading(35, 10, minutesAgo(1))), "", "without readAt, the time it was recorded");
+  assert.match(gate(reading(35, 10, "yesterday")), /the accounting history is ambiguous: ledger entry \d+ \(meter\) has no valid time/);
+  assert.match(gate(reading(120, 10, NOW)), /weekly usage must be a number from 0 to 100/);
+  assert.match(gate(reading(Number.NaN, 10, NOW)), /weekly usage/);
+  assert.match(gate(reading(35, -1, NOW)), /5-hour usage/);
+  assert.match(gate(reading(85, 10, NOW)), /weekly usage is 85%, at or over 85%/);
+  assert.equal(gate(reading(84.9, 79.9, NOW)), "");
+  assert.match(gate(reading(35, 80, NOW)), /5-hour usage is 80%, at or over 80%/);
+  assert.match(sessionGate(switched(reading(35, 10, NOW)), DEFAULT_BUDGET, undefined)!, /no clock/);
+  assert.match(sessionGate(switched(reading(35, 10, NOW)), DEFAULT_BUDGET, "not a time")!, /no clock/);
+  assert.match(stopReasons(switched(readAgo(31)), DEFAULT_BUDGET, NOW).join(), /availability/, "stop rules carry the gate");
+});
+
+test("policy 2 pins the budget: a changed threshold stops everything until a new policy entry records it; an unknown policy version fails closed", () => {
+  const raised = { ...DEFAULT_BUDGET, perConcept: 280_000 };
+  assert.match(sessionGate(switched(), raised, NOW)!, /the budget changed since the accounting policy recorded at/);
+  const repinned = [...switched(), policyEntry(switched(), raised, NOW, 2, "provisional per-concept budget", "the budget changed since")];
+  assert.deepEqual(policyChangeProblems(switched(), raised, NOW, 2, "n", undefined).length, 1, "re-pinning must quote the stop it reports");
+  assert.equal(sessionGate(repinned, raised, NOW), undefined);
+  assert.notEqual(budgetHash(raised), budgetHash(DEFAULT_BUDGET));
+  assert.equal(budgetHash({ ...DEFAULT_BUDGET }), budgetHash(Object.fromEntries(Object.entries(DEFAULT_BUDGET).reverse()) as typeof DEFAULT_BUDGET), "key order does not matter");
+  const unknown = [...switched(), { ...policyEntry(switched(), DEFAULT_BUDGET, NOW, 2, "n"), version: 3 } as LedgerEntry];
+  assert.deepEqual(stopReasons(unknown, DEFAULT_BUDGET, NOW), ["unknown accounting policy 3 in the ledger: this tooling cannot apply it"]);
+  assert.match(sessionGate(unknown, DEFAULT_BUDGET, NOW)!, /unknown accounting policy 3/);
+  // An unknown policy is judged by no rule of its own or another's: it is the only reason given, whatever else the ledger holds.
+  const parkedUnknown = [...unknown, { kind: "batch", at: NOW, slice: "s", group: "p", accepted: 1, parked: 1, escalated: 0, defects: 1 } as LedgerEntry];
+  assert.deepEqual(stopReasons(parkedUnknown, DEFAULT_BUDGET, NOW), ["unknown accounting policy 3 in the ledger: this tooling cannot apply it"]);
+  assert.match(policyChangeProblems(pilotLedger(), DEFAULT_BUDGET, NOW, 3, "n", undefined).join(), /must be one of 1, 2/);
+});
+
+test("changing the policy: a note, and every current stop quoted exactly; it clears none, records what it acknowledged, and switching back restores the meter rule", () => {
+  const broken = [...pilotLedger(), reading(35, undefined, minutesAgo(60))];
+  assert.match(policyChangeProblems(broken, DEFAULT_BUDGET, NOW, 2, " ", undefined).join(), /needs --note/);
+  assert.match(policyChangeProblems(broken, DEFAULT_BUDGET, NOW, 2, "n", undefined).join("\n"), new RegExp(`quoted exactly in --acknowledge[\\s\\S]*- ${METER_RULE.replace(/[.()]/g, "\\$&")}`));
+  assert.equal(policyChangeProblems(broken, DEFAULT_BUDGET, NOW, 2, "n", "the usage meter rose: unrelated usage").length, 1, "a paraphrase is not an acknowledgment");
+  assert.deepEqual(policyChangeProblems(broken, DEFAULT_BUDGET, NOW, 2, "n", `${METER_RULE}: unrelated usage`), []);
+  const entry = policyEntry(broken, DEFAULT_BUDGET, NOW, 2, " n ", `${METER_RULE}: unrelated usage`) as Extract<LedgerEntry, { kind: "policy" }>;
+  assert.deepEqual([entry.previous, entry.note, entry.budgetHash], [{ version: 1, reasons: [METER_RULE] }, "n", budgetHash(DEFAULT_BUDGET)]);
+  // Stops common to both policies stand: the policy entry clears nothing.
+  const parked = [...broken, { kind: "batch", at: NOW, slice: "s", group: "p", accepted: 1, parked: 1, escalated: 0, defects: 1 } as LedgerEntry];
+  const problems = policyChangeProblems(parked, DEFAULT_BUDGET, NOW, 2, "n", METER_RULE).join();
+  assert.match(problems, /1 concept\(s\) parked/);
+  const after = [...parked, policyEntry(parked, DEFAULT_BUDGET, NOW, 2, "n", `${METER_RULE}; 1 concept(s) parked with unresolved defects: a human decides`), reading(35, 10, NOW)];
+  assert.deepEqual(stopReasons(after, DEFAULT_BUDGET, NOW), ["1 concept(s) parked with unresolved defects: a human decides"]);
+  // Back to policy 1: the meter rule applies again, explicitly.
+  const back = [...switched(), policyEntry(switched(), DEFAULT_BUDGET, NOW, 1, "back to the legacy policy")];
+  assert.match(stopReasons(back, DEFAULT_BUDGET, NOW).join(), /the usage meter rose/);
+});
+
+test("policy 2's single-batch ceiling: a batch started under it is judged on its whole cost; the pilot's earlier batch is not judged until it is re-accepted", () => {
+  // The pilot's batch (417,463 per concept, its failed attempt included) predates the policy and was not re-accepted: no single-batch stop.
+  assert.deepEqual(stopReasons(switched(), DEFAULT_BUDGET, NOW), []);
+  const batch = (weighted: number, accepted: number): LedgerEntry[] => [spend(weighted, NOW, "s2", "next"), { kind: "batch", at: NOW, slice: "s2", group: "next", accepted, parked: 0, escalated: 0, defects: 0 }, reading(35, 10, NOW)];
+  assert.match(stopReasons([...switched(), ...batch(3 * 366_001, 3)], DEFAULT_BUDGET, NOW).join(), /batch s2\/next cost 366001 weighted per accepted concept since policy 2's activation \(1098003 of 1098003 recorded in all\), over 3 × the 122000 plan/);
+  assert.deepEqual(stopReasons([...switched(), ...batch(3 * 366_000, 3)], DEFAULT_BUDGET, NOW), []);
+  // A batch with nothing accepted is left to the parking rule.
+  assert.deepEqual(stopReasons([...switched(), spend(10, NOW, "s2", "next"), { kind: "batch", at: NOW, slice: "s2", group: "next", accepted: 0, parked: 2, escalated: 0, defects: 2 } as LedgerEntry, reading(35, 10, NOW)], DEFAULT_BUDGET, NOW), ["2 concept(s) parked with unresolved defects: a human decides"]);
+  assert.doesNotMatch(stopReasons([...pilotLedger(), ...batch(3 * 400_000, 3)], DEFAULT_BUDGET, NOW).join(), /over 3 × the/, "no single-batch rule under policy 1");
+});
+
+/** A repair of the pilot's batch under policy 2: its sessions, then its re-acceptance (accept() appends a batch entry). */
+const repair = (weighted: number, extra: Partial<Extract<LedgerEntry, { kind: "batch" }>> = {}): LedgerEntry[] => [spend(weighted, NOW), { kind: "batch", at: NOW, slice: "computation-execution-2", group: "verifiable-computation", accepted: 3, parked: 0, escalated: 3, defects: 34, ...extra }];
+const PILOT = "batch computation-execution-2/verifiable-computation";
+
+test("a pre-policy batch repaired and re-accepted under policy 2 is judged on its incremental cost, its history kept apart and intact", () => {
+  // 120,000 spent on a repair: 40,000 per accepted concept, well under the ceiling, though the batch's history is 1,372,389.
+  const repaired = [...switched(), ...repair(120_000), reading(35, 10, NOW)];
+  assert.deepEqual(stopReasons(repaired, DEFAULT_BUDGET, NOW), []);
+  const cost = batchCosts(repaired).find((c) => c.group === "verifiable-computation")!;
+  assert.deepEqual([cost.total, cost.sincePolicy, cost.startedUnderPolicy, cost.completedUnderPolicy], [1_372_389, 120_000, false, true]);
+  assert.equal(batchMetrics(repaired)[0].weighted, 1_372_389, "the historical total is reported as recorded");
+  assert.equal(campaignCost(repaired).authoring, 1_372_389);
+  // A repair that costs more than the ceiling on its own stops the campaign, quoting both figures.
+  const costly = [...switched(), ...repair(3 * 366_001), reading(35, 10, NOW)];
+  assert.match(stopReasons(costly, DEFAULT_BUDGET, NOW).join(), new RegExp(`${PILOT} cost 366001 weighted per accepted concept since policy 2's activation \\(1098003 of 2350392 recorded in all\\)`));
+});
+
+test("repeated repairs and re-acceptances accumulate; a later batch, a resume or a cheap re-acceptance never hides an earlier breach", () => {
+  // Two repairs of 600,000 each: under the ceiling after the first (200,000 each), over it after the second (400,000 each).
+  const first = [...switched(), ...repair(600_000), reading(35, 10, NOW)];
+  assert.deepEqual(stopReasons(first, DEFAULT_BUDGET, NOW), []);
+  const second = [...first, { kind: "resume", at: NOW, slice: "computation-execution-2", group: "verifiable-computation", status: "escalated" } as LedgerEntry, ...repair(600_000), reading(35, 10, NOW)];
+  assert.match(stopReasons(second, DEFAULT_BUDGET, NOW).join(), new RegExp(`${PILOT} cost 400000 weighted per accepted concept since policy 2's activation \\(1200000 of`));
+  // Another batch accepted later, under its own ceiling, and a re-acceptance without new spending, leave the breach in place.
+  const later = [...second, spend(100_000, NOW, "s2", "other"), { kind: "batch", at: NOW, slice: "s2", group: "other", accepted: 3, parked: 0, escalated: 0, defects: 0 } as LedgerEntry, ...repair(0), reading(35, 10, NOW)];
+  assert.match(stopReasons(later, DEFAULT_BUDGET, NOW).join(), new RegExp(`${PILOT} cost 400000`));
+});
+
+test("policy transitions never reset or hide post-policy cost: activation is the first policy-2 entry, through re-pinning and a switch back and forth", () => {
+  const spent = [...switched(), spend(600_000, NOW)];
+  // Re-recording policy 2 (a reviewed budget change, say) does not restart the count.
+  const repinned = [...spent, policyEntry(spent, DEFAULT_BUDGET, NOW, 2, "re-pinned"), ...repair(600_000), reading(35, 10, NOW)];
+  assert.match(stopReasons(repinned, DEFAULT_BUDGET, NOW).join(), new RegExp(`${PILOT} cost 400000 weighted per accepted concept since policy 2's activation \\(1200000 of`));
+  // Back to policy 1 for a while: the single-batch rule is not applied then, and what was spent during it still counts once policy 2 is back.
+  const toOne = [...spent, policyEntry(spent, DEFAULT_BUDGET, NOW, 1, "legacy for a while")];
+  const underOne = [...toOne, ...repair(600_000)];
+  assert.doesNotMatch(stopReasons(underOne, DEFAULT_BUDGET, NOW).join(), /single-batch|over 3 ×/);
+  const backToTwo = [...underOne, policyEntry(underOne, DEFAULT_BUDGET, NOW, 2, "policy 2 again", stopReasons(underOne, DEFAULT_BUDGET, NOW).join("; ")), reading(35, 10, NOW)];
+  assert.equal(policyActivation(backToTwo), switched().findIndex((e) => e.kind === "policy"));
+  assert.match(stopReasons(backToTwo, DEFAULT_BUDGET, NOW).join(), new RegExp(`${PILOT} cost 400000 weighted per accepted concept since policy 2's activation \\(1200000 of`));
+  // The budget stays pinned through all of it.
+  assert.match(sessionGate(backToTwo, { ...DEFAULT_BUDGET, maxBatchFactor: 4 }, NOW)!, /the budget changed since the accounting policy/);
+});
+
+test("a session with no recorded usage since activation makes a batch's cost uncheckable: it stops; failed sessions are reported, the failure rule judges them", () => {
+  const unmeasured = [...switched(), { ...(spend(0, NOW) as Extract<LedgerEntry, { kind: "session" }>), usage: null, weighted: null }, ...repair(1_000), reading(35, 10, NOW)];
+  assert.match(stopReasons(unmeasured, DEFAULT_BUDGET, NOW).join(), new RegExp(`${PILOT}: 1 session\\(s\\) since policy 2's activation have no recorded usage`));
+  const failed = [...switched(), { kind: "session-failed", at: NOW, slice: "computation-execution-2", group: "verifiable-computation", role: "review", reason: "usage limit" } as LedgerEntry, ...repair(1_000), reading(35, 10, NOW)];
+  assert.deepEqual(stopReasons(failed, DEFAULT_BUDGET, NOW), []);
+  assert.equal(batchCosts(failed).find((c) => c.group === "verifiable-computation")!.failedSincePolicy, 1);
+  // Unmeasured sessions before activation are history: they never block the rule.
+  const before = [{ ...(spend(0, minutesAgo(13 * 60)) as Extract<LedgerEntry, { kind: "session" }>), usage: null, weighted: null }, ...switched()];
+  assert.deepEqual(stopReasons(before, DEFAULT_BUDGET, NOW), []);
+});
+
+test("malformed or ambiguous accounting history fails closed under a recorded policy, and is only reported as such; the legacy policy is untouched", () => {
+  const ambiguous = (entries: LedgerEntry[]) => stopReasons([...switched(), ...entries], DEFAULT_BUDGET, NOW);
+  const only = (reasons: string[], pattern: RegExp) => {
+    assert.ok(reasons.length > 0 && reasons.every((r) => r.startsWith("the accounting history is ambiguous: ")), reasons.join(" | "));
+    assert.match(reasons.join(" | "), pattern);
+  };
+  only(ambiguous([{ kind: "mystery", at: NOW } as unknown as LedgerEntry]), /has no known kind/);
+  only(ambiguous([{ ...(spend(1, NOW) as object), at: "later" } as LedgerEntry]), /\(session\) has no valid time/);
+  only(ambiguous([{ ...(spend(1, NOW) as object), weighted: "1" } as unknown as LedgerEntry]), /\(session\) has no valid slice, group or weighted usage/);
+  only(ambiguous([{ ...(spend(1, NOW) as object), weighted: -5 } as unknown as LedgerEntry]), /weighted usage/);
+  only(ambiguous([{ ...(spend(1, NOW) as object), usage: null } as unknown as LedgerEntry]), /weighted usage/);
+  only(ambiguous([{ kind: "batch", at: NOW, slice: "s", group: "g", accepted: -1, parked: 0, escalated: 0, defects: 0 } as LedgerEntry]), /\(batch\) has no valid slice, group or counts/);
+  only(ambiguous([{ ...policyEntry([], DEFAULT_BUDGET, NOW, 2, "n"), budgetHash: "x" } as LedgerEntry]), /\(policy\) is malformed/);
+  // Out of order from the activation on, the activation itself included; within the tolerance two processes' appends may cross.
+  only(ambiguous([spend(1, minutesAgo(60))]), /is earlier than the entry before it/);
+  const last = Date.parse(switched().at(-1)!.at);
+  assert.equal(LEDGER_ORDER_TOLERANCE_MS, 5000);
+  assert.deepEqual(ambiguous([spend(1, new Date(last - 2000).toISOString())]), [], "a crossing of 2 seconds is within the tolerance");
+  only(ambiguous([spend(1, new Date(last - 6000).toISOString())]), /is earlier than the entry before it/);
+  const early = [...pilotLedger(), { ...policyEntry(pilotLedger(), DEFAULT_BUDGET, NOW, 2, "n"), at: minutesAgo(24 * 60) } as LedgerEntry, reading(35, 10, NOW)];
+  only(stopReasons(early, DEFAULT_BUDGET, NOW), /ledger entry 7 \(policy, .*\) is earlier than the entry before it/);
+  assert.match(sessionGate([...switched(), { kind: "mystery", at: NOW } as unknown as LedgerEntry], DEFAULT_BUDGET, NOW)!, /^the accounting history is ambiguous: ledger entry \d+ has no known kind/, "the per-session gate too");
+  // Every problem is reported, and nothing else is judged on such a history.
+  const two = ambiguous([{ kind: "mystery", at: NOW } as unknown as LedgerEntry, ...repair(3 * 400_000), { kind: "batch", at: NOW, slice: "s", group: "g", accepted: 1.5, parked: 0, escalated: 0, defects: 0 } as LedgerEntry]);
+  assert.equal(two.length, 2, two.join(" | "));
+  only(two, /has no known kind[\s\S]*\(batch\) has no valid slice, group or counts/);
+  // Before the activation, order is history as it was recorded; and without a policy entry nothing of this applies.
+  const shuffled = [pilotLedger()[1], pilotLedger()[0], ...pilotLedger().slice(2)];
+  assert.deepEqual(stopReasons([...shuffled, policyEntry(shuffled, DEFAULT_BUDGET, NOW, 2, "n"), reading(35, 10, NOW)], DEFAULT_BUDGET, NOW), []);
+  assert.deepEqual(stopReasons([...pilotLedger(), { kind: "mystery", at: "x" } as unknown as LedgerEntry], DEFAULT_BUDGET, NOW), [], "the legacy policy reads the ledger as it always did");
+});
+
+test("all historical costs are preserved: recording policies, readings and repairs changes no earlier entry or total", () => {
+  const history = pilotLedger();
+  const snapshot = JSON.stringify(history);
+  const later = [...history, reading(35, undefined, NOW), policyEntry(history, DEFAULT_BUDGET, NOW, 2, "n", METER_RULE), reading(35, 10, NOW), ...repair(50_000)];
+  assert.equal(JSON.stringify(later.slice(0, history.length)), snapshot);
+  assert.deepEqual(batchMetrics(later).map((m) => m.weighted), [1_302_389], "every recorded session still counts in the total");
+  assert.deepEqual(batchCosts(later).map((c) => [c.total, c.sincePolicy]), [[1_302_389, 50_000]]);
+  assert.deepEqual(campaignCost(later), { authoring: 1_302_389, audits: 0, byLabel: {} });
+});
+
+test("cost is recorded tokens: authoring and audits apart, audits by label; unmeasured sessions stay unknown", () => {
+  const ledger: LedgerEntry[] = [...pilotLedger(), spend(40_000, NOW, "audit:pilot-1", "a"), spend(30_000, NOW, "audit:pilot-1", "b"), { ...(spend(0, NOW, "audit:pilot-1", "b") as Extract<LedgerEntry, { kind: "session" }>), usage: null, weighted: null }];
+  const cost = campaignCost(ledger);
+  assert.deepEqual([cost.authoring, cost.audits], [1_252_389, 70_000]);
+  assert.deepEqual(cost.byLabel["pilot-1"], { sessions: 3, weighted: 70_000, unmeasured: 1, concepts: 2 });
+  assert.deepEqual(stopReasons(ledger, DEFAULT_BUDGET, NOW), [], "audit sessions are in no authoring cost rule");
+});
+
+test("bracket readings are supplementary evidence: paired per batch, exclusive only if both say so, outliers flagged, never a stop", () => {
+  const pair = (batch: string, from: number, to: number, weighted: number, exclusive: [boolean, boolean] = [true, true]): LedgerEntry[] => [reading(from, 10, NOW, { bracket: { phase: "before", batch }, exclusive: exclusive[0] }), spend(weighted, NOW, "s", batch), reading(to, 10, NOW, { bracket: { phase: "after", batch }, exclusive: exclusive[1] })];
+  const ledger = [...switched(), ...pair("s/a", 35, 37, 1_000_000), ...pair("s/b", 37, 38, 450_000), ...pair("s/c", 38, 39, 2_000_000), ...pair("s/d", 39, 40, 100_000, [false, false]), ...pair("s/e", 40, 41, 100_000, [true, false])];
+  const evidence = meterEvidence(ledger);
+  assert.deepEqual(evidence.map((e) => [e.batch, e.exclusive, e.percent, e.weighted, e.weightedPerPercent]), [["s/a", true, 2, 1_000_000, 500_000], ["s/b", true, 1, 450_000, 450_000], ["s/c", true, 1, 2_000_000, 2_000_000], ["s/d", false, 1, 100_000, 100_000], ["s/e", false, 1, 100_000, 100_000]]);
+  assert.deepEqual(evidence.map((e) => e.outlier), [false, false, true, false, false], "only an exclusive pair far from the exclusive median");
+  assert.deepEqual(stopReasons(ledger, DEFAULT_BUDGET, NOW), [], "evidence never stops anything");
+  assert.match(readingProblems({ percent: 1, session: 1, at: NOW, exclusive: true }, NOW, true).join(), /only a bracket reading can be marked exclusive/);
+  assert.match(readingProblems({ percent: 1, session: 1, at: NOW, bracket: { phase: "during" as "before", batch: "s/a" } }, NOW, true).join(), /phase before or after/);
+  assert.deepEqual(readingProblems({ percent: 1, at: NOW }, NOW, false), [], "policy 1 needs no 5-hour usage");
+});
+
+test("the driver re-checks the gate before every session: a stale reading stops the batch before that session starts, and a resume continues it", async () => {
+  const root = fixture();
+  let open = true;
+  const env = fakeEnv(root, { ...happy, plan: (r) => { plan(r); open = false; } });
+  const stopped = await runBatch(env, { ...input, gate: () => (open ? undefined : "availability: the latest reading is 31 minutes old, over 30") });
+  assert.equal(stopped.status, "stopped");
+  assert.match(stopped.stop!.reason, /^before the next plan-review session: availability: the latest reading is 31 minutes old, over 30; then resume this batch$/);
+  assert.equal(stopped.stop!.status, "planned");
+  assert.deepEqual(env.calls, ["plan"], "no session started after the gate closed");
+  assert.equal(stopped.window!.sessions, 1, "the refused session was never counted");
+  saveBatch(root, resumeBatch(loadBatch(root, "s", "g")!, "planned", T));
+  const resumed = await runBatch(fakeEnv(root, happy), { ...input, gate: () => undefined });
+  assert.equal(resumed.status, "accepted", resumed.stop?.reason);
+});
+
+test("a session cannot forge a reading or a policy: an entry it appends to the ledger is detected and undone", async () => {
+  for (const forged of [reading(1, 1, NOW), policyEntry([], DEFAULT_BUDGET, NOW, 2, "forged")]) {
+    const root = fixture();
+    const state = await runBatch(fakeEnv(root, { ...happy, draft: (r, p) => { const text = happy.draft!(r, p); appendLedger(r, forged); return text; } }), input);
+    assert.equal(state.status, "stopped");
+    assert.match(state.stop!.reason, /\.map-authoring\/l2v2\/ledger\.jsonl/);
+    assert.ok(!loadLedger(root).some((e) => e.kind === forged.kind), `${forged.kind}: rolled back`);
+  }
+});
+
+/** A run state with only a ledger: what the meter and policy commands need. */
+const ledgerRoot = (ledger: LedgerEntry[]) => {
+  const root = mkdtempSync(join(tmpdir(), "l2v2-acct-"));
+  mkdirSync(join(root, ".map-authoring/l2v2"), { recursive: true });
+  writeFileSync(join(root, ".map-authoring/l2v2/ledger.jsonl"), ledger.map((e) => `${JSON.stringify(e)}\n`).join(""));
+  return root;
+};
+const ledgerText = (root: string) => readFileSync(join(root, ".map-authoring/l2v2/ledger.jsonl"), "utf8");
+
+test("CLI meter: an account-wide reading is validated before it is appended; nothing malformed, future-dated or half a bracket is recorded", () => {
+  const root = ledgerRoot(pilotLedger());
+  const before = ledgerText(root);
+  for (const args of [["--percent", "120"], ["--percent", "12abc"], ["--percent", ""], ["--percent", "35", "--session", "x"], ["--percent", "35", "--read-at", minutesAgo(-10)], ["--percent", "35", "--read-at", "today"], ["--percent", "35", "--bracket", "before"], ["--percent", "35", "--exclusive"]]) {
+    const result = cli(root, ["meter", ...args]);
+    assert.notEqual(result.status, 0, args.join(" "));
+    assert.equal(ledgerText(root), before, `${args.join(" ")}: nothing appended`);
+  }
+  const ok = cli(root, ["meter", "--percent", "35", "--note", "account-wide"]);
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /availability, not attributed to the campaign\nstop rule: the usage meter rose 12\.0% for 3 accepted concepts/, "under policy 1 the legacy rule still reads it");
+  assert.ok(ledgerText(root).startsWith(before), "every earlier entry kept, byte for byte");
+  const bracket = cli(root, ["meter", "--percent", "35", "--session", "10", "--read-at", minutesAgo(2), "--bracket", "before", "--batch", "s/g", "--exclusive"]);
+  assert.equal(bracket.status, 0, bracket.stderr);
+  assert.deepEqual(Object.keys(loadLedger(root).at(-1)!).sort(), ["at", "bracket", "exclusive", "kind", "percent", "readAt", "session"]);
+});
+
+test("CLI policy: refused without a note or an exact acknowledgment of every current stop, or while a driver runs; then recorded, pinned, and the gate applies", () => {
+  const root = ledgerRoot([...pilotLedger(), reading(35, undefined, minutesAgo(60))]);
+  const before = ledgerText(root);
+  assert.equal(cli(root, ["policy", "--version", "2"]).status, 3);
+  const unacknowledged = cli(root, ["policy", "--version", "2", "--note", "cost from recorded tokens"]);
+  assert.equal(unacknowledged.status, 3);
+  assert.match(unacknowledged.stderr, /quoted exactly in --acknowledge[\s\S]*the usage meter rose 12\.0% for 3 accepted concepts/);
+  assert.equal(cli(root, ["policy", "--version", "4", "--note", "n", "--acknowledge", METER_RULE]).status, 3);
+  writeFileSync(join(root, ".map-authoring/l2v2/lock"), String(process.pid));
+  assert.equal(cli(root, ["policy", "--version", "2", "--note", "n", "--acknowledge", METER_RULE]).status, 4, "never while a driver holds the lock");
+  rmSync(join(root, ".map-authoring/l2v2/lock"));
+  assert.equal(ledgerText(root), before, "nothing appended by any refusal");
+  const recorded = cli(root, ["policy", "--version", "2", "--note", "cost from recorded tokens", "--acknowledge", `${METER_RULE}: the 12 points include unrelated usage`]);
+  assert.equal(recorded.status, 0, recorded.stderr);
+  assert.match(recorded.stdout, /recorded accounting policy 2 .*before it: policy 1, stops acknowledged: the usage meter rose[\s\S]*stop rule now: availability: the latest reading is not usable/);
+  assert.ok(ledgerText(root).startsWith(before));
+  assert.ok(!existsSync(join(root, ".map-authoring/l2v2/lock")), "the lock is released");
+  // Policy 2 requires the 5-hour usage; a fresh, complete reading clears the gate.
+  assert.notEqual(cli(root, ["meter", "--percent", "35"]).status, 0);
+  const fresh = cli(root, ["meter", "--percent", "35", "--session", "10"]);
+  assert.match(fresh.stdout, /stop rule: none broken/);
+  assert.match(cli(root, ["status"]).stdout, /accounting policy 2\nstop rule: none broken/);
+  const report = cli(root, ["report"]).stdout;
+  assert.match(report, /accounting policy 2 \(recorded .*; budget [0-9a-f]{12}, now [0-9a-f]{12}\)/);
+  assert.match(report, /audits: 0 weighted, apart from authoring/);
+  assert.match(report, /since policy 2's activation \(.*\), what the single-batch ceiling judges; the totals above stay as recorded:\n {2}computation-execution-2\/verifiable-computation: 0 of 1252389 weighted \(started before it\)/);
+  assert.match(report, /account-wide readings \(availability; not attributed to the campaign\)/);
+  // A budget change stops everything until a new entry, quoting that stop, pins it.
+  writeFileSync(join(root, ".map-authoring/l2v2/budget.json"), JSON.stringify({ perConcept: 280_000 }));
+  const changed = cli(root, ["status"]).stdout;
+  assert.match(changed, /stop rule: the budget changed since the accounting policy/);
+  const reason = changed.match(/stop rule: (.*)/)![1];
+  assert.equal(cli(root, ["policy", "--version", "2", "--note", "provisional budget"]).status, 3);
+  assert.equal(cli(root, ["policy", "--version", "2", "--note", "provisional budget", "--acknowledge", reason]).status, 0);
+  assert.match(cli(root, ["status"]).stdout, /stop rule: none broken/);
+});
+
+test("CLI: under policy 2, run and audit start no session without a fresh reading", { skip: NO_SANDBOX }, async () => {
+  const marker = join(mkdtempSync(join(tmpdir(), "l2v2-marker-")), "ran");
+  const claude = stubClaude(`"verdict":"pass"`);
+  writeFileSync(claude, readFileSync(claude, "utf8").replace("prompt=$(cat)", `touch ${marker}\nprompt=$(cat)`));
+  const underPolicy = (root: string) => (appendLedger(root, policyEntry(loadLedger(root), DEFAULT_BUDGET, minutesAgo(1), 2, "accounting policy 2")), root);
+  for (const [root, args] of [[underPolicy(cliCheckout()), ["run", "--slice", "s"]], [underPolicy(await acceptedSlice()), ["audit", "--label", "pilot", "--concepts", "y"]]] as const) {
+    const result = cli(root, [...args], { L2V2_CLAUDE: claude });
+    assert.equal(result.status, 3, `${args[0]}: ${result.stderr}`);
+    assert.match(result.stderr, /stop rule: availability: no usage reading/, args[0]);
+  }
+  assert.ok(!existsSync(marker), "the CLI never ran");
 });
