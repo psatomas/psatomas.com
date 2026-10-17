@@ -24,8 +24,19 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # The L2 v2 session sandbox (bubblewrap) must work here: its security tests run and fail, never skip.
+      - name: Session sandbox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bubblewrap
+          # Ubuntu restricts unprivileged user namespaces through AppArmor; the sandbox needs them.
+          if sysctl -n kernel.apparmor_restrict_unprivileged_userns >/dev/null 2>&1; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          bwrap --unshare-all --die-with-parent --new-session --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 --symlink usr/bin /bin --proc /proc --dev /dev /usr/bin/true
+
       - name: Test
         run: npm test
+        env:
+          L2V2_REQUIRE_SANDBOX: "1"
 
       - name: Build
         run: npm run build

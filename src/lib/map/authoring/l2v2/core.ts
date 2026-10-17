@@ -1,0 +1,1036 @@
+/**
+ * MAP L2 authoring pipeline v2: the pure core (docs/map-authoring/l2-pipeline-v2.md).
+ *
+ * A deterministic driver takes one ownership group (a batch) through bounded
+ * sessions: plan, independent plan review (verified), draft, independent
+ * review, exact repairs with semantic verification, focused escalation,
+ * acceptance. This module holds the batch state, the session contracts, the
+ * defect ledger, patching, batch selection over a v1 run, tool permissions,
+ * and the metrics; it reads and writes nothing. Drafted records are data
+ * (records.ts). Development tooling only.
+ */
+import { createHash } from "node:crypto";
+import { replaceOnce, type PlanBasis, type StagedRecord } from "./records.ts";
+
+// ---------------------------------------------------------------- batch state
+
+export const BATCH_STATUSES = ["pending", "planned", "plan-reviewed", "drafted", "reviewed", "escalated", "accepted", "stopped"] as const;
+export type BatchStatus = (typeof BATCH_STATUSES)[number];
+export type Role = "plan" | "plan-review" | "draft" | "review" | "escalate" | "deep-audit";
+
+export type Finding = {
+  /** Assigned by the driver when the finding enters the defect ledger. */
+  id?: string;
+  concept: string;
+  severity: "defect" | "remark";
+  rule: string;
+  /** The exact text to replace, as the record shows it (map:inspect). */
+  quote: string;
+  /** Its replacement; "" deletes the quote. Required for a defect. */
+  replacement?: string;
+  why: string;
+  uncertain?: boolean;
+};
+export type Resolution = { id: string; resolution: string };
+export type Coverage = { claim: number; mechanism: boolean; conditions: boolean; failureOrConfusion: boolean };
+export type ConceptReview = {
+  verdict: "pass" | "defect";
+  confidence: "high" | "medium" | "low";
+  findings: Finding[];
+  coverage: Coverage[];
+  crossDomain?: boolean;
+  note: string;
+  resolutions: Resolution[];
+};
+/** Every output carries the run token the driver gave its session, so a stale file is never consumed. */
+export type ReviewOutput = { run: string; concepts: Record<string, ConceptReview>; group?: { note: string; findings: Finding[]; resolutions: Resolution[] } };
+export type DefectAnswer = { id: string; status: "fixed" | "withdrawn" | "open"; why: string };
+/**
+ * What a repair round can break in a neighbouring record that did not change:
+ * a statement it now contradicts, a broken relationship or crossed split, a
+ * term now used in another sense, a claim or explanation it invalidated.
+ */
+export const CROSS_CHECK_ASPECTS = ["contradiction", "relationship", "terminology", "claims"] as const;
+/** The longest cross-check note: one sentence on what was compared, never a second verification. */
+export const MAX_CROSS_CHECK_NOTE = 300;
+/** A concise check of one unchanged concept against the round's repairs: true means that problem was found. */
+export type CrossCheck = Record<(typeof CROSS_CHECK_ASPECTS)[number], boolean> & { note: string };
+export type VerifyOutput = {
+  run: string;
+  concepts: Record<string, { verdict: "pass" | "defect"; findings: Finding[]; defects: DefectAnswer[]; note: string; resolutions: Resolution[] }>;
+  /** One per unchanged concept of the round (absent, or empty, when there is none). */
+  crossChecks?: Record<string, CrossCheck>;
+};
+export type ClaimFix = { concept: string; quote: string; replacement: string; why: string };
+/** An exact fix to one of a concept's model statements (its meaning, parent and placement notes, fields): never its kind, claims or excludes. */
+export type ModelFix = ClaimFix;
+export type PlanReviewOutput = { run: string; verdict: "pass" | "fix" | "stop"; claimFixes: ClaimFix[]; modelFixes?: ModelFix[]; stopReason?: string; note: string };
+
+/** A substantive defect from its finding to its outcome. Only "verified" and "withdrawn" (with a reason) close it. */
+export type Defect = { id: string; concept: string; finding: Finding; status: "open" | "applied" | "verified" | "withdrawn" | "refused"; why?: string; source?: Role };
+
+export type ConceptState = {
+  state: "open" | "accepted" | "parked";
+  escalate: boolean;
+  reasons: string[];
+  /** The latest full review of the concept (the escalation review once there is one). */
+  lastReview?: { by: Role; verdict: ConceptReview["verdict"]; confidence: ConceptReview["confidence"]; coverageComplete: boolean };
+  parkReason?: string;
+  /** When the concept was last accepted, and the fingerprint of the record accepted: finalize ships nothing else. */
+  accepted?: { at: string; fingerprint: string };
+};
+/** What a batch's acceptance is judged from: kept as of each status reached, so a resume restarts from it. */
+export type Evidence = { conceptStates: Record<string, ConceptState>; defects: Record<string, Defect>; audit: Record<string, { notes: string[]; resolutions: Resolution[] }>; groupAudit?: { note: string; resolutions: Resolution[] } };
+/** Sessions and wall-clock time spent since the batch (or its latest resume) started; failed and interrupted sessions count. */
+export type SessionWindow = { since: string; sessions: number; failed: number; interrupted: number; ms: number; inFlight?: { role: Role; startedAt: string } };
+export type BatchState = {
+  version: 2;
+  slice: string;
+  group: string;
+  concepts: string[];
+  status: BatchStatus;
+  conceptStates: Record<string, ConceptState>;
+  /** Session ids by role, for resuming the same session (its cache stays warm). */
+  sessions: Partial<Record<Role, string>>;
+  defects: Record<string, Defect>;
+  /** The batch's validated records, by concept: the only source of what the driver renders into data.ts. */
+  records?: Record<string, StagedRecord>;
+  /** Fingerprints of the record text the driver itself rendered into data.ts, by concept: only these may it ever remove. */
+  rendered?: Record<string, string>;
+  /**
+   * The group plan's basis as the v1 tooling generated it, recorded before any
+   * session: the only fingerprints the secret scan leaves out (records.ts groupFileTexts).
+   */
+  trustedBasis?: PlanBasis;
+  /** What the reviews concluded, per concept and for the group: becomes the v1 audit records. */
+  audit: Record<string, { notes: string[]; resolutions: Resolution[] }>;
+  groupAudit?: { note: string; resolutions: Resolution[] };
+  stop?: { reason: string; at: string; status: BatchStatus };
+  /** 1, then one more for each resume. */
+  attempt?: number;
+  /** The evidence as of each status reached in this attempt. */
+  checkpoints?: Partial<Record<BatchStatus, Evidence>>;
+  /**
+   * Earlier attempts, kept for the record and never judged again: their
+   * evidence and their records (accepted but unfinalized text included), which
+   * nothing reads as current.
+   */
+  history?: { attempt: number; endedAt: string; stop?: BatchState["stop"]; evidence: Evidence; records?: Record<string, StagedRecord>; window?: SessionWindow }[];
+  window?: SessionWindow;
+  /**
+   * While an audit repair is under way: the batch exactly as it was accepted
+   * before it, saved before anything is applied. A repair that does not end in
+   * re-acceptance (failed verification, a failed session, an interruption)
+   * restores it; the failed attempt goes to `history`.
+   */
+  repairOrigin?: { concept: string; label: string; startedAt: string; state: BatchState };
+  updatedAt: string;
+};
+
+const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+export const evidenceOf = (state: BatchState): Evidence => clone({ conceptStates: state.conceptStates, defects: state.defects, audit: state.audit, ...(state.groupAudit ? { groupAudit: state.groupAudit } : {}) });
+export const newWindow = (now: string): SessionWindow => ({ since: now, sessions: 0, failed: 0, interrupted: 0, ms: 0 });
+
+export function newBatch(slice: string, group: string, concepts: readonly string[], now: string): BatchState {
+  if (!concepts.length) throw new Error(`group ${group} has no concepts to author`);
+  const state: BatchState = {
+    version: 2,
+    slice,
+    group,
+    concepts: [...concepts],
+    status: "pending",
+    conceptStates: Object.fromEntries(concepts.map((id) => [id, { state: "open", escalate: false, reasons: [] }])),
+    sessions: {},
+    defects: {},
+    audit: Object.fromEntries(concepts.map((id) => [id, { notes: [], resolutions: [] }])),
+    attempt: 1,
+    window: newWindow(now),
+    updatedAt: now,
+  };
+  return { ...state, checkpoints: { pending: evidenceOf(state) } };
+}
+
+const rank = (status: BatchStatus) => BATCH_STATUSES.indexOf(status);
+/** Batches only move one step forward at a time; a stopped batch stays stopped until a human resumes it. */
+export function advance(state: BatchState, to: BatchStatus, now: string): BatchState {
+  if (state.status === "stopped") throw new Error(`batch ${state.group} is stopped: ${state.stop?.reason}`);
+  if (rank(to) !== rank(state.status) + 1 || to === "stopped") throw new Error(`batch ${state.group} cannot move from ${state.status} to ${to}`);
+  return { ...state, status: to, checkpoints: { ...state.checkpoints, [to]: evidenceOf(state) }, updatedAt: now };
+}
+export const stopBatch = (state: BatchState, reason: string, now: string): BatchState =>
+  state.status === "stopped" ? state : { ...state, status: "stopped", stop: { reason, at: now, status: state.status }, updatedAt: now };
+/**
+ * A human resumes a stopped batch at the status it had reached, or earlier:
+ * every later stage then runs again. Skipping forward is refused.
+ *
+ * The attempt's evidence moves to the history, and the batch restarts from
+ * the evidence it had when it first reached `at`: later stages' defects,
+ * notes and verdicts can never decide the new acceptance. Open deep-audit
+ * defects are known defects of the record as it stands, so they stay unless
+ * the record is drafted again. The session window starts afresh.
+ */
+export function resumeBatch(state: BatchState, at: BatchStatus, now: string): BatchState {
+  if (state.status !== "stopped" || !state.stop) throw new Error(`batch ${state.group} is not stopped`);
+  if (at === "stopped" || at === "accepted") throw new Error(`a batch cannot be resumed as ${at}: acceptance is earned by running the stages`);
+  if (rank(at) > rank(state.stop.status)) throw new Error(`batch ${state.group} stopped at ${state.stop.status}; resuming at ${at} would skip stages`);
+  const attempt = state.attempt ?? 1;
+  const next: BatchState = clone({ ...state, status: at, updatedAt: now });
+  delete next.stop;
+  next.history = [...(state.history ?? []), clone({ attempt, endedAt: now, stop: state.stop, evidence: evidenceOf(state), ...(state.records ? { records: state.records } : {}), window: state.window })];
+  // A redraft replaces the records: the current ones live on only in the history.
+  if (rank(at) <= rank("plan-reviewed")) delete next.records;
+  next.attempt = attempt + 1;
+  next.window = newWindow(now);
+  const base = state.checkpoints?.[at];
+  if (base) Object.assign(next, clone({ conceptStates: base.conceptStates, defects: base.defects, audit: base.audit }), base.groupAudit ? { groupAudit: clone(base.groupAudit) } : {});
+  else {
+    // A state without checkpoints: concepts reopen with the earlier stages and the later evidence goes.
+    if (rank(at) <= rank("drafted")) for (const id of next.concepts) next.conceptStates[id] = { state: "open", escalate: false, reasons: [] };
+    if (rank(at) <= rank("drafted")) next.defects = {};
+  }
+  if (!base?.groupAudit) delete next.groupAudit;
+  next.checkpoints = Object.fromEntries(Object.entries(state.checkpoints ?? {}).filter(([status]) => rank(status as BatchStatus) <= rank(at)));
+  if (rank(at) >= rank("drafted"))
+    for (const defect of Object.values(state.defects).filter((d) => d.source === "deep-audit" && d.status !== "verified" && d.status !== "withdrawn")) {
+      next.defects[defect.id] = clone(defect);
+      if (next.conceptStates[defect.concept].state !== "parked") next.conceptStates[defect.concept].state = "open";
+    }
+  return next;
+}
+
+// ---------------------------------------------------------------- session outputs
+
+const isStr = (value: unknown): value is string => typeof value === "string";
+function findingProblems(finding: unknown, where: string, concepts: readonly string[]): string[] {
+  const f = finding as Partial<Finding>;
+  if (!f || typeof f !== "object") return [`${where}: not an object`];
+  const problems: string[] = [];
+  if (!isStr(f.concept) || !concepts.includes(f.concept)) problems.push(`${where}: concept must be one of ${concepts.join(", ")}`);
+  if (f.severity !== "defect" && f.severity !== "remark") problems.push(`${where}: severity must be "defect" or "remark"`);
+  if (!isStr(f.rule) || !isStr(f.why)) problems.push(`${where}: rule and why are required`);
+  if (!isStr(f.quote) || !f.quote) problems.push(`${where}: quote is required`);
+  if (f.severity === "defect" && !isStr(f.replacement)) problems.push(`${where}: a defect needs its exact replacement ("" to delete)`);
+  return problems;
+}
+const resolutionsProblems = (resolutions: unknown, where: string) =>
+  Array.isArray(resolutions) && resolutions.every((r) => isStr((r as Resolution).id) && isStr((r as Resolution).resolution)) ? [] : [`${where}: resolutions must be [{id, resolution}]`];
+const runProblems = (output: { run?: unknown }, run: string) => (output.run === run ? [] : [`run must be "${run}" (this session's token); a stale or foreign file is never used`]);
+
+/** Problems with a review (or escalation) output for these concepts; [] when it is usable. */
+export function reviewProblems(output: unknown, concepts: readonly string[], options: { group: boolean; run: string }): string[] {
+  const o = output as Partial<ReviewOutput>;
+  if (!o || typeof o.concepts !== "object") return ["the output needs a concepts object"];
+  const problems = runProblems(o, options.run);
+  for (const id of concepts) {
+    const c = o.concepts[id] as Partial<ConceptReview> | undefined;
+    if (!c) {
+      problems.push(`no review for ${id}`);
+      continue;
+    }
+    if (c.verdict !== "pass" && c.verdict !== "defect") problems.push(`${id}: verdict must be "pass" or "defect"`);
+    if (!["high", "medium", "low"].includes(c.confidence as string)) problems.push(`${id}: confidence must be high, medium or low`);
+    if (!Array.isArray(c.findings)) problems.push(`${id}: findings must be an array`);
+    else c.findings.forEach((finding, index) => problems.push(...findingProblems(finding, `${id} finding ${index}`, concepts)));
+    if (!Array.isArray(c.coverage) || !c.coverage.length) problems.push(`${id}: coverage must list every plan claim`);
+    if (!isStr(c.note) || !c.note) problems.push(`${id}: note is required`);
+    problems.push(...resolutionsProblems(c.resolutions, id));
+    const defects = (c.findings ?? []).filter((finding) => finding.severity === "defect").length;
+    if (c.verdict === "pass" && defects) problems.push(`${id}: a pass cannot carry a defect`);
+    if (c.verdict === "defect" && !defects) problems.push(`${id}: a defect verdict must name each defect with its exact repair`);
+  }
+  if (options.group) {
+    if (!o.group || !isStr(o.group.note) || !Array.isArray(o.group.findings)) problems.push("the output needs group {note, findings, resolutions}");
+    else {
+      o.group.findings.forEach((finding, index) => problems.push(...findingProblems(finding, `group finding ${index}`, concepts)));
+      problems.push(...resolutionsProblems(o.group.resolutions, "group"));
+    }
+  }
+  return problems;
+}
+
+/**
+ * A verification must answer every defect it was given, by id; "withdrawn"
+ * needs its reason. `reviewed` must each have an entry. `others` (concepts of
+ * the same review that did not change) each need a cross-check against the
+ * round's repairs; one that finds a problem must report it as a defect
+ * finding on that concept (in an entry for it, held to the same shape), and a
+ * defect reported on one must be named by its cross-check.
+ */
+export function verifyProblems(output: unknown, reviewed: readonly string[], pending: Readonly<Record<string, readonly string[]>>, run: string, others: readonly string[] = []): string[] {
+  const o = output as Partial<VerifyOutput>;
+  if (!o || typeof o.concepts !== "object" || o.concepts === null) return ["the output needs a concepts object"];
+  const problems = runProblems(o, run);
+  const known = [...reviewed, ...others];
+  for (const id of known) {
+    const c = o.concepts[id];
+    if (!c) {
+      if (reviewed.includes(id)) problems.push(`no verification for ${id}`);
+      continue;
+    }
+    if (c.verdict !== "pass" && c.verdict !== "defect") problems.push(`${id}: verdict must be "pass" or "defect"`);
+    if (!Array.isArray(c.findings)) problems.push(`${id}: findings must be an array`);
+    else c.findings.forEach((finding, index) => problems.push(...findingProblems(finding, `${id} finding ${index}`, known)));
+    problems.push(...resolutionsProblems(c.resolutions, id));
+    const answers = Array.isArray(c.defects) ? c.defects : [];
+    for (const defectId of pending[id] ?? []) {
+      const answer = answers.find((a) => a.id === defectId);
+      if (!answer || !["fixed", "withdrawn", "open"].includes(answer.status)) problems.push(`${id}: defect ${defectId} needs status fixed, withdrawn or open`);
+      else if (answer.status === "withdrawn" && !answer.why?.trim()) problems.push(`${id}: withdrawing ${defectId} needs its reason`);
+    }
+    if (c.verdict === "pass" && (c.findings ?? []).some((finding) => finding.severity === "defect")) problems.push(`${id}: a pass cannot carry a defect`);
+  }
+  if (others.length) {
+    const checks = (o as { crossChecks?: unknown }).crossChecks;
+    if (!checks || typeof checks !== "object" || Array.isArray(checks)) problems.push(`crossChecks must hold a check for each unchanged concept (${others.join(", ")})`);
+    else
+      for (const id of others) {
+        const check = Object.hasOwn(checks, id) ? (checks as Record<string, Partial<CrossCheck>>)[id] : undefined;
+        if (!check || typeof check !== "object") {
+          problems.push(`crossChecks: ${id} needs its check`);
+          continue;
+        }
+        for (const aspect of CROSS_CHECK_ASPECTS) if (typeof check[aspect] !== "boolean") problems.push(`crossChecks: ${id}.${aspect} must be true or false`);
+        if (!isStr(check.note) || !check.note.trim()) problems.push(`crossChecks: ${id} needs its note (what was compared)`);
+        else if (check.note.length > MAX_CROSS_CHECK_NOTE) problems.push(`crossChecks: ${id}'s note is longer than ${MAX_CROSS_CHECK_NOTE} characters: one sentence`);
+        const found = CROSS_CHECK_ASPECTS.some((aspect) => check[aspect] === true);
+        const reported = Object.values(o.concepts!).some((c) => Array.isArray(c?.findings) && c.findings.some((f) => f?.concept === id && f.severity === "defect"));
+        if (found && !reported) problems.push(`crossChecks: ${id} found a problem, which needs a defect finding on ${id} (exact quote and replacement)`);
+        if (!found && reported) problems.push(`crossChecks: a defect reported on ${id} must be named by its cross-check`);
+      }
+  }
+  return problems;
+}
+
+export function planReviewProblems(output: unknown, concepts: readonly string[], run: string): string[] {
+  const o = output as Partial<PlanReviewOutput>;
+  if (!o || !["pass", "fix", "stop"].includes(o.verdict as string)) return ['verdict must be "pass", "fix" or "stop"'];
+  const problems = runProblems(o, run);
+  if (!Array.isArray(o.claimFixes)) problems.push("claimFixes must be an array");
+  else
+    o.claimFixes.forEach((fix, index) => {
+      if (!fix || !concepts.includes(fix.concept) || !isStr(fix.quote) || !fix.quote || !isStr(fix.replacement)) problems.push(`claimFix ${index}: needs concept, quote and replacement`);
+    });
+  // Older outputs have no modelFixes: absent is none.
+  if (o.modelFixes !== undefined && !Array.isArray(o.modelFixes)) problems.push("modelFixes must be an array");
+  else
+    (o.modelFixes ?? []).forEach((fix, index) => {
+      if (!fix || !concepts.includes(fix.concept) || !isStr(fix.quote) || !fix.quote || !isStr(fix.replacement) || !fix.replacement.trim()) problems.push(`modelFix ${index}: needs concept, quote and a non-empty replacement`);
+    });
+  if (o.verdict === "stop" && !o.stopReason) problems.push("a stop needs stopReason");
+  if (o.verdict === "fix" && !o.claimFixes?.length && !o.modelFixes?.length) problems.push("a fix needs claimFixes or modelFixes");
+  return problems;
+}
+
+/** A session's JSON artifact, tolerating a fenced block around it. */
+export function parseJson(text: string): unknown {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  return JSON.parse(fenced ? fenced[1] : text);
+}
+
+/** The largest final message the driver reads as a session's output (as large as an output file could be). */
+export const MAX_FINAL_MESSAGE = 4 * 1024 * 1024;
+/**
+ * A session's output given as its final message: the JSON object alone, or
+ * one fenced block holding it. Anything else is refused, never searched for
+ * something that parses; the run token and the role's schema are checked after.
+ */
+export function parseFinal(text: string): unknown {
+  if (Buffer.byteLength(text, "utf8") > MAX_FINAL_MESSAGE) throw new Error(`the final message is larger than ${MAX_FINAL_MESSAGE} bytes`);
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("the final message is empty");
+  if (trimmed.startsWith("{")) return JSON.parse(trimmed);
+  const fences = [...trimmed.matchAll(/```(?:json)?[^\S\n]*\n([\s\S]*?)\n?```/g)];
+  if (fences.length !== 1) throw new Error("the final message must be the JSON object alone (or exactly one fenced JSON block)");
+  return JSON.parse(fences[0][1]);
+}
+
+// ---------------------------------------------------------------- the defect ledger and acceptance
+
+/** Adds a session's defect findings to the ledger with stable ids. */
+export function recordDefects(state: BatchState, findings: readonly Finding[], prefix: string, source?: Role): Defect[] {
+  const added: Defect[] = [];
+  findings.filter((finding) => finding.severity === "defect").forEach((finding, index) => {
+    const id = `${prefix}-${index + 1}`;
+    const defect: Defect = { id, concept: finding.concept, finding: { ...finding, id }, status: "open", ...(source ? { source } : {}) };
+    state.defects[id] = defect;
+    added.push(defect);
+  });
+  return added;
+}
+export const openDefects = (state: BatchState, concept: string) => Object.values(state.defects).filter((d) => d.concept === concept && d.status !== "verified" && d.status !== "withdrawn");
+
+/** Why a concept may not be accepted; [] when it may. */
+export function acceptanceProblems(state: BatchState, concept: string): string[] {
+  const c = state.conceptStates[concept];
+  const problems: string[] = [];
+  const open = openDefects(state, concept);
+  if (open.length) problems.push(`unresolved defects: ${open.map((d) => `${d.id} (${d.status})`).join(", ")}`);
+  if (!c.lastReview) problems.push("never reviewed");
+  else {
+    if (c.lastReview.verdict !== "pass" && open.length) problems.push(`last review (${c.lastReview.by}) found defects`);
+    if (!c.lastReview.coverageComplete) problems.push(`claims not fully covered at the last review (${c.lastReview.by})`);
+    if (c.lastReview.confidence === "low") problems.push(`low confidence at the last review (${c.lastReview.by})`);
+    if (c.escalate && c.lastReview.by !== "escalate") problems.push("escalated but never given the second review");
+  }
+  return problems;
+}
+
+// ---------------------------------------------------------------- exact repairs
+
+export type PatchResult = { finding: Finding; applied: boolean; problem?: string };
+
+/**
+ * Applies defect findings to the batch's records as exact replacements in
+ * each concept's own content strings. A quote must occur exactly once in that
+ * record, and the repaired record must stay valid and free of secrets;
+ * anything else is refused, never guessed. Protected records are never touched.
+ */
+export function applyPatches(records: Readonly<Record<string, StagedRecord>>, findings: readonly Finding[], protectedIds: ReadonlySet<string>, secrets: readonly string[] = []): { records: Record<string, StagedRecord>; results: PatchResult[] } {
+  const out = { ...records };
+  const results: PatchResult[] = [];
+  for (const finding of findings) {
+    if (finding.severity !== "defect") continue;
+    if (protectedIds.has(finding.concept)) {
+      results.push({ finding, applied: false, problem: `${finding.concept} is protected content` });
+      continue;
+    }
+    const record = Object.hasOwn(out, finding.concept) ? out[finding.concept] : undefined;
+    if (!record) {
+      results.push({ finding, applied: false, problem: `no record for ${finding.concept}` });
+      continue;
+    }
+    const patched = replaceOnce(record, finding.quote, finding.replacement ?? "", secrets);
+    if (patched.record) out[finding.concept] = patched.record;
+    results.push(patched.record ? { finding, applied: true } : { finding, applied: false, problem: patched.problem });
+  }
+  return { records: out, results };
+}
+
+/** A group file with exact claim fixes applied to a member's claims and its model's copy. */
+export function applyClaimFixes(groupFile: string, fixes: readonly ClaimFix[]): { text: string; problems: string[] } {
+  const file = JSON.parse(groupFile) as { members: { conceptId: string; claims?: string[] }[]; concepts?: Record<string, { model?: { claims?: string[] } }> };
+  const problems: string[] = [];
+  for (const fix of fixes) {
+    const member = file.members.find((entry) => entry.conceptId === fix.concept);
+    const hits = (member?.claims ?? []).map((claim, index) => [claim, index] as const).filter(([claim]) => claim.split(fix.quote).length === 2);
+    if (hits.length !== 1) {
+      problems.push(`${fix.concept}: the quote must occur exactly once in one claim`);
+      continue;
+    }
+    const [claim, index] = hits[0];
+    member!.claims![index] = claim.replace(fix.quote, () => fix.replacement);
+    const model = file.concepts?.[fix.concept]?.model;
+    if (model?.claims) model.claims = [...member!.claims!];
+  }
+  return { text: `${JSON.stringify(file, null, 2)}\n`, problems };
+}
+
+type ModelStatements = { meaning?: unknown; parents?: Record<string, unknown>; placements?: Record<string, unknown>; fields?: Record<string, unknown> };
+/**
+ * A model's statements as locations: its meaning, what it adds beyond each
+ * parent, why it holds at each placement, and every field (each item of a
+ * list). Never its kind, claims or excludes: claims change only by claim fix.
+ */
+function modelStatements(model: ModelStatements): { where: string; get: () => string; set: (text: string) => void }[] {
+  const out: { where: string; get: () => string; set: (text: string) => void }[] = [];
+  if (typeof model.meaning === "string") out.push({ where: "meaning", get: () => model.meaning as string, set: (text) => (model.meaning = text) });
+  for (const key of ["parents", "placements", "fields"] as const) {
+    const entries = model[key];
+    if (!entries || typeof entries !== "object") continue;
+    for (const [name, value] of Object.entries(entries)) {
+      if (typeof value === "string") out.push({ where: `${key}.${name}`, get: () => entries[name] as string, set: (text) => (entries[name] = text) });
+      else if (Array.isArray(value))
+        value.forEach((item, index) => {
+          if (typeof item === "string") out.push({ where: `${key}.${name}[${index}]`, get: () => value[index] as string, set: (text) => (value[index] = text) });
+        });
+    }
+  }
+  return out;
+}
+
+/**
+ * A group file with exact fixes applied to model statements: each quote must
+ * occur exactly once among the concept's model statements, and the
+ * replacement must be non-empty plain text. Every location changed is
+ * reported, so the reviewer verifies exactly what was applied.
+ */
+export function applyModelFixes(groupFile: string, fixes: readonly ModelFix[]): { text: string; problems: string[]; applied: { concept: string; where: string; quote: string; replacement: string }[] } {
+  const file = JSON.parse(groupFile) as { concepts?: Record<string, { model?: ModelStatements & { claims?: string[]; excludes?: string[] } }> };
+  const problems: string[] = [];
+  const applied: { concept: string; where: string; quote: string; replacement: string }[] = [];
+  for (const fix of fixes) {
+    const model = Object.hasOwn(file.concepts ?? {}, fix.concept) ? file.concepts![fix.concept].model : undefined;
+    if (!model) {
+      problems.push(`${fix.concept}: no model to fix`);
+      continue;
+    }
+    if (!fix.quote) {
+      problems.push(`${fix.concept}: a model fix needs its exact quote`);
+      continue;
+    }
+    if (!fix.replacement.trim() || /[\n\r]/.test(fix.replacement)) {
+      problems.push(`${fix.concept}: a model fix needs a non-empty, single-line replacement`);
+      continue;
+    }
+    const statements = modelStatements(model);
+    const count = statements.reduce((sum, s) => sum + s.get().split(fix.quote).length - 1, 0);
+    if (count !== 1) {
+      const inClaims = [...(model.claims ?? []), ...(model.excludes ?? [])].some((text) => typeof text === "string" && text.includes(fix.quote));
+      problems.push(`${fix.concept}: the quote must occur exactly once in one model statement (it occurs ${count} times${inClaims ? "; claims change only by claim fix" : ""})`);
+      continue;
+    }
+    const target = statements.find((s) => s.get().includes(fix.quote))!;
+    target.set(target.get().replace(fix.quote, () => fix.replacement));
+    applied.push({ concept: fix.concept, where: target.where, quote: fix.quote, replacement: fix.replacement });
+  }
+  return { text: `${JSON.stringify(file, null, 2)}\n`, problems, applied };
+}
+
+// ---------------------------------------------------------------- escalation
+
+/** Rules whose defects mean the concept gets a second, independent focused review. */
+export const FORMAL_RULES: ReadonlySet<string> = new Set(["conditions", "formal-results", "definition"]);
+export type ConceptFacts = { placements: number; domainOrder: number };
+export const coverageComplete = (coverage: readonly Coverage[]) => coverage.length > 0 && coverage.every((c) => c.mechanism && c.conditions && c.failureOrConfusion);
+
+/** Why a reviewed concept needs a second independent review; [] when it does not. */
+export function escalationReasons(review: ConceptReview, facts: ConceptFacts, claimCorrected: boolean): string[] {
+  const reasons: string[] = [];
+  const defects = review.findings.filter((finding) => finding.severity === "defect");
+  if (review.confidence !== "high") reasons.push(`reviewer confidence ${review.confidence}`);
+  if (defects.length >= 3) reasons.push(`${defects.length} defects`);
+  if (defects.some((finding) => FORMAL_RULES.has(finding.rule))) reasons.push("a defect in conditions, a formal result or the definition");
+  if (review.findings.some((finding) => finding.uncertain)) reasons.push("an uncertain finding");
+  if (review.crossDomain) reasons.push("touches another domain's concept");
+  if (claimCorrected) reasons.push("a plan claim was corrected");
+  if (facts.placements > 1) reasons.push(`${facts.placements} placements`);
+  if (facts.domainOrder >= 19) reasons.push("emerging domain");
+  if (!coverageComplete(review.coverage)) reasons.push("a claim not fully covered");
+  return reasons;
+}
+
+/**
+ * What a second reviewer looks at hardest, from the escalation reasons, without
+ * the first review's verdict, confidence, findings or their count.
+ */
+export function escalationFocus(reasons: readonly string[]): string[] {
+  const focus = new Set<string>();
+  for (const reason of reasons) {
+    if (reason.includes("conditions, a formal result or the definition")) focus.add("conditions, formal results with all their conditions, and the definition against every paragraph");
+    else if (reason.includes("another domain")) focus.add("boundaries with other domains' concepts");
+    else if (reason === "a plan claim was corrected") focus.add("the plan claims corrected before drafting");
+    else if (reason === "a plan model statement was corrected") focus.add("the plan model statements corrected before drafting");
+    else if (/^\d+ placements$/.test(reason)) focus.add("one text true at every placement");
+    else if (reason === "emerging domain") focus.add("accuracy in an emerging domain");
+    else if (reason === "a claim not fully covered") focus.add("each claim's mechanism, conditions and failure or confusion");
+  }
+  focus.add("technical correctness of every sentence");
+  return [...focus];
+}
+
+/** Signals the resolutions do not answer. */
+export const unresolved = (signalIds: readonly string[], resolutions: readonly Resolution[]) => signalIds.filter((id) => !resolutions.some((r) => r.id === id && r.resolution.trim()));
+
+// ---------------------------------------------------------------- batches over a v1 run
+
+export type RunGroups = readonly { group: string; concepts: readonly string[] }[];
+export type BatchPlan = {
+  batches: { group: string; concepts: string[] }[];
+  /** Groups v1 already finished (every concept audited and the group audited). */
+  complete: string[];
+  /** Groups with some v1 steps recorded but not finished: never guessed at. */
+  refused: { group: string; reason: string }[];
+  /** Content v2 never edits: registered at the base, or drafted or audited in the v1 run. */
+  protectedIds: Set<string>;
+};
+
+/** Which groups of a v1 run v2 may author, from the run's recorded steps. */
+export function planBatches(groups: RunGroups, steps: Readonly<Record<string, unknown>>, baseRegistry: ReadonlySet<string>): BatchPlan {
+  const plan: BatchPlan = { batches: [], complete: [], refused: [], protectedIds: new Set(baseRegistry) };
+  for (const { group, concepts } of groups) {
+    for (const id of concepts) if (`author:${id}` in steps || `audit:${id}` in steps) plan.protectedIds.add(id);
+    const recorded = [`plan:${group}`, `group-audit:${group}`, ...concepts.flatMap((id) => [`design:${id}`, `author:${id}`, `audit:${id}`])].filter((key) => key in steps);
+    if (!recorded.length) plan.batches.push({ group, concepts: [...concepts] });
+    else if (concepts.every((id) => `audit:${id}` in steps) && `group-audit:${group}` in steps) plan.complete.push(group);
+    else plan.refused.push({ group, reason: `v1 steps already recorded (${recorded.slice(0, 4).join(", ")}${recorded.length > 4 ? ", …" : ""}): finish it with v1 or reset it explicitly` });
+  }
+  return plan;
+}
+
+/** The v1 commands that record an accepted slice, in v1's order, each scoped to the slice's run. */
+export function finalizeCommands(slice: string, groups: RunGroups, dirOf: (group: string) => string): { key: string; argv: string[] }[] {
+  const domain = ["--domain", slice];
+  const out: { key: string; argv: string[] }[] = [];
+  for (const { group } of groups) out.push({ key: `plan:${group}`, argv: ["record", "plan", group, ...domain] });
+  for (const { concepts } of groups) for (const id of concepts) out.push({ key: `design:${id}`, argv: ["record", "design", id, ...domain] });
+  for (const { group, concepts } of groups)
+    for (const id of concepts) {
+      out.push({ key: `author:${id}`, argv: ["record", "author", id, ...domain] });
+      out.push({ key: `audit:${id}`, argv: ["record", "audit", id, "--audit-file", `${dirOf(group)}/audit-${id}.json`, ...domain] });
+    }
+  for (const { group } of groups) out.push({ key: `group-audit:${group}`, argv: ["record", "group-audit", group, "--audit-file", `${dirOf(group)}/group-audit.json`, ...domain] });
+  return out;
+}
+
+// ---------------------------------------------------------------- session permissions
+
+const L2 = "npm run -s map:author -- l2";
+/**
+ * The tools a session may use (prevention: the driver's guard only detects
+ * and undoes changes after a session). Reading only the repository's
+ * sources, docs and prompts, the session's own pack and its own output;
+ * read-only inspection and validation; writing only the role's own JSON file.
+ * No session sees another session's output or the batch state, edits
+ * TypeScript, records anything, authorizes, delivers, writes territory, uses
+ * git or runs arbitrary code.
+ */
+export function allowedTools(role: Role, group: string, files: { pack: string; out?: string }): string[] {
+  const reads = ["Read(src/**)", "Read(docs/**)", "Read(scripts/l2v2/prompts/**)", `Read(${files.pack})`, ...(files.out ? [`Read(${files.out})`] : [])];
+  const inspect = [`Bash(${L2} context:*)`, `Bash(${L2} territory ${group})`, `Bash(${L2} signals:*)`, `Bash(${L2} group-signals ${group})`, "Bash(npm run -s map:inspect --:*)"];
+  const writes = files.out ? [`Write(${files.out})`, `Edit(${files.out})`] : [];
+  switch (role) {
+    case "plan": {
+      // The group file is JSON: the plan is data, read with JSON.parse.
+      const groupFile = `src/lib/map/authoring/l2/groups/${group}.json`;
+      return [...reads, `Edit(${groupFile})`, `Write(${groupFile})`, ...inspect, `Bash(${L2} check --group ${group})`];
+    }
+    case "deep-audit":
+      return [...reads, ...writes, `Bash(${L2} context:*)`, "Bash(npm run -s map:inspect --:*)"];
+    default:
+      return [...reads, ...writes, ...inspect];
+  }
+}
+
+/** Never written by a session: executable and configuration surfaces, git, Claude Code, dependencies, run state and authorizations. */
+const PROTECTED_WRITES = [
+  "**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts", "**/*.js", "**/*.mjs", "**/*.cjs", "**/*.sh", "**/package.json", "**/package-lock.json", "**/tsconfig*.json",
+  "**/.npmrc", "**/.nvmrc", "**/.envrc", "**/.env*", "**/.dev.vars*", "**/node_modules/**",
+  "**/.git", "**/.git/**", "**/.gitignore", "**/.gitattributes", "**/.gitmodules", "**/.husky/**", "**/.claude/**", "**/.mcp.json", "**/CLAUDE.md", "**/AGENTS.md",
+  ".map-authoring/*.json", ".map-authoring/l2/**", ".map-authoring/campaign/**", ".map-authoring/representation/**", ".map-authoring/l2v2/*.json", ".map-authoring/l2v2/*.jsonl", ".map-authoring/l2v2/lock",
+  "**/state.json", "**/sample.json", "**/in-flight.json", "**/parked-records.json", "**/audit-*.json", "**/group-audit.json", "**/pack.md", "**/*.pack.md",
+  "~/.claude/**", "~/.claude.json", "~/.gitconfig", "~/.npmrc", "~/.ssh/**", "~/.config/**", "~/.bashrc", "~/.zshrc", "~/.zshenv", "~/.profile", "//etc/**",
+];
+/**
+ * Denied whatever the allow list says: local secrets, credentials, git
+ * internals, and writing any protected path. (The repository lives under the
+ * home directory, so the home directory itself is never denied wholesale.)
+ */
+export const DENIED_TOOLS: readonly string[] = [
+  "Read(**/.dev.vars*)", "Read(**/.env*)", "Read(**/*.pem)", "Read(**/*.key)", "Read(**/.npmrc)", "Read(**/.netrc)", "Read(**/.git/**)",
+  "Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(~/.config/**)", "Read(~/.claude/**)", "Read(~/.claude.json)", "Read(~/.gnupg/**)", "Read(~/.git-credentials)", "Read(//etc/**)",
+  ...PROTECTED_WRITES.flatMap((path) => [`Edit(${path})`, `Write(${path})`]),
+];
+/** A role's denials: a deep auditor also never reads the group files, which carry earlier audits' verdicts. */
+export const deniedTools = (role: Role): readonly string[] => (role === "deep-audit" ? [...DENIED_TOOLS, "Read(src/lib/map/authoring/l2/groups/**)"] : DENIED_TOOLS);
+
+// ---------------------------------------------------------------- metrics and stop rules
+
+export type Usage = { input_tokens: number; output_tokens: number; cache_creation_input_tokens: number; cache_read_input_tokens: number };
+/** Provisional weighting (not an official quota unit): input 1, cache read 0.1, cache write 1.25, output 5. */
+export const weighted = (u: Usage) => Math.round(u.input_tokens + 0.1 * u.cache_read_input_tokens + 1.25 * u.cache_creation_input_tokens + 5 * u.output_tokens);
+
+export type LedgerEntry =
+  /** usage and weighted are null when the CLI reported no usage. */
+  | { kind: "session"; at: string; slice: string; group: string; role: Role; sessionId: string; durationMs: number; turns: number; usage: Usage | null; weighted: number | null; egressDenied?: string[] }
+  /** A session that failed (timeout, usage limit, no JSON): its usage is unknown and never invented. */
+  | { kind: "session-failed"; at: string; slice: string; group: string; role: Role; reason: string }
+  | { kind: "batch"; at: string; slice: string; group: string; accepted: number; parked: number; escalated: number; defects: number }
+  /** campaign: false for baselines, which never count toward the campaign's stop rules; fingerprint: the record audited, when it is a v2 record. */
+  | { kind: "deep-audit"; at: string; label: string; concept: string; substantive: number; campaign: boolean; fingerprint?: string }
+  /**
+   * An account-wide reading of the Claude usage meter: `percent` is the weekly
+   * (7-day) usage, `session` the 5-hour usage, `readAt` when a human read it
+   * (`at` when absent). Under accounting policy 2 it is availability, never a
+   * cost: nothing attributes it to the campaign. A bracket marks a reading
+   * taken just before or after one batch or audit, as supplementary evidence.
+   */
+  | { kind: "meter"; at: string; percent: number; note?: string; session?: number; readAt?: string; exclusive?: boolean; bracket?: { phase: "before" | "after"; batch: string } }
+  /**
+   * A human changed (or re-recorded) the accounting policy. `budgetHash` pins
+   * the effective budget; `previous` is the policy in force before and the stop
+   * conditions it reported then, each quoted in `acknowledged`. Clears nothing.
+   */
+  | { kind: "policy"; at: string; version: number; note: string; budgetHash: string; previous: { version: number; reasons: string[] }; acknowledged?: string }
+  /** A human resumed a stopped batch: its parked concepts are decided, and stop counting as parked. */
+  | { kind: "resume"; at: string; slice: string; group: string; status: BatchStatus }
+  /**
+   * A human reviewed the recent failed sessions (`clear-failures --note`): the
+   * failure stop rule counts only sessions after it. Nothing else is cleared,
+   * and the failures stay in the ledger.
+   */
+  | { kind: "ack"; at: string; note: string; failures: number };
+
+/**
+ * Stop-rule thresholds and per-batch operational limits. Limits count
+ * sessions and wall-clock time, never tokens: usage the CLI did not report
+ * stays unknown, and --max-budget-usd does not bound a subscription's quota.
+ */
+export type Budget = {
+  perConcept: number; stopFactor: number; maxEscalationRate: number; meterPercentPerConcept: number; sampleWindow: number; sampleMaxDefective: number; samplePerSlice: number;
+  maxSessionsPerBatch: number; maxBatchMinutes: number;
+  /**
+   * Accounting policy 2: availability ceilings on the account-wide meter (weekly and 5-hour usage, percent), the
+   * oldest reading a session may start on (minutes), and a single batch's cost ceiling as a multiple of perConcept.
+   */
+  maxWeeklyPercent: number; maxSessionPercent: number; maxReadingAgeMinutes: number; maxBatchFactor: number;
+  /** Concepts one audit command may audit (one session each). */
+  maxAuditConcepts: number;
+  /** Failed or interrupted sessions (any role, audits included) among the last `failureWindow` sessions that stop the campaign. */
+  maxRecentFailures: number; failureWindow: number;
+};
+export const DEFAULT_BUDGET: Budget = {
+  perConcept: 122_000, stopFactor: 1.3, maxEscalationRate: 0.4, meterPercentPerConcept: 0.109, sampleWindow: 20, sampleMaxDefective: 8, samplePerSlice: 4,
+  maxSessionsPerBatch: 20, maxBatchMinutes: 240, maxAuditConcepts: 12, maxRecentFailures: 3, failureWindow: 10,
+  maxWeeklyPercent: 85, maxSessionPercent: 80, maxReadingAgeMinutes: 30, maxBatchFactor: 3,
+};
+
+export type BatchMetrics = { slice: string; group: string; weighted: number; minutes: number; failed: number; unmeasured: number; accepted: number; parked: number; escalated: number; defects: number };
+
+export function batchMetrics(ledger: readonly LedgerEntry[]): BatchMetrics[] {
+  const out = new Map<string, BatchMetrics>();
+  for (const entry of ledger) {
+    if (entry.kind !== "session" && entry.kind !== "batch" && entry.kind !== "session-failed" && entry.kind !== "resume") continue;
+    const k = `${entry.slice}/${entry.group}`;
+    if (entry.kind === "resume") {
+      const resumed = out.get(k);
+      if (resumed) resumed.parked = 0;
+      continue;
+    }
+    const m = out.get(k) ?? { slice: entry.slice, group: entry.group, weighted: 0, minutes: 0, failed: 0, unmeasured: 0, accepted: 0, parked: 0, escalated: 0, defects: 0 };
+    if (entry.kind === "session") {
+      if (entry.weighted === null) m.unmeasured++;
+      else m.weighted += entry.weighted;
+      m.minutes += entry.durationMs / 60000;
+    } else if (entry.kind === "session-failed") m.failed++;
+    else Object.assign(m, { accepted: entry.accepted, parked: entry.parked, escalated: entry.escalated, defects: entry.defects });
+    out.set(k, m);
+  }
+  return [...out.values()];
+}
+
+/**
+ * The failure window: the last `failureWindow` sessions after the latest
+ * acknowledgment with a note (one without a note is no acknowledgment), and
+ * how many of them failed or were interrupted.
+ */
+export function activeFailures(ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET): { sessions: number; failed: number } {
+  const ack = ledger.findLastIndex((e) => e.kind === "ack" && e.note.trim().length > 0);
+  const sessions = ledger.slice(ack + 1).filter((e) => e.kind === "session" || e.kind === "session-failed").slice(-budget.failureWindow);
+  return { sessions: sessions.length, failed: sessions.filter((e) => e.kind === "session-failed").length };
+}
+
+// ---------------------------------------------------------------- accounting policies
+
+/**
+ * The accounting policies the ledger can name. 1: the legacy rules, under
+ * which the account-wide meter's rise is attributed to the campaign per
+ * accepted concept. 2: campaign cost only from recorded weighted tokens; the
+ * meter is availability, required fresh before every session. Without any
+ * policy entry, policy 1 applies exactly as it always did.
+ */
+export const ACCOUNTING_POLICIES = [1, 2] as const;
+export type AccountingPolicy = { version: number; entry?: Extract<LedgerEntry, { kind: "policy" }> };
+export function accountingPolicy(ledger: readonly LedgerEntry[]): AccountingPolicy {
+  const entry = ledger.findLast((e): e is Extract<LedgerEntry, { kind: "policy" }> => e.kind === "policy");
+  return entry ? { version: entry.version, entry } : { version: 1 };
+}
+/** The effective budget's fingerprint: keys sorted, so only a value change changes it. */
+export const budgetHash = (budget: Budget) =>
+  createHash("sha256").update(JSON.stringify(Object.fromEntries(Object.entries(budget).sort(([a], [b]) => a.localeCompare(b))))).digest("hex");
+
+const PERCENT = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+/** When a reading was taken, or undefined when its time is not a valid timestamp. */
+const readTime = (reading: Extract<LedgerEntry, { kind: "meter" }>) => {
+  const at = reading.readAt ?? reading.at;
+  return typeof at === "string" && ISO.test(at) && Number.isFinite(Date.parse(at)) ? Date.parse(at) : undefined;
+};
+/** Why a reading cannot be recorded or used as availability; [] when it can. `needSession`: policy 2 needs the 5-hour usage. */
+export function readingProblems(reading: Partial<Extract<LedgerEntry, { kind: "meter" }>>, now: string, needSession: boolean): string[] {
+  const problems: string[] = [];
+  if (!PERCENT(reading.percent)) problems.push("the weekly usage must be a number from 0 to 100");
+  if (reading.session === undefined ? needSession : !PERCENT(reading.session)) problems.push("the 5-hour usage (session) must be a number from 0 to 100");
+  const time = readTime(reading as Extract<LedgerEntry, { kind: "meter" }>);
+  if (time === undefined) problems.push("the reading time must be an ISO timestamp with its zone");
+  else if (time > Date.parse(now)) problems.push(`the reading time ${reading.readAt ?? reading.at} is in the future`);
+  if (reading.bracket && (!["before", "after"].includes(reading.bracket.phase) || !/^[a-z0-9:/_-]+$/i.test(reading.bracket.batch ?? ""))) problems.push("a bracket needs phase before or after and the batch or audit it brackets");
+  if (reading.exclusive && !reading.bracket) problems.push("only a bracket reading can be marked exclusive");
+  return problems;
+}
+
+const KINDS = new Set(["session", "session-failed", "batch", "deep-audit", "meter", "resume", "ack", "policy"]);
+/**
+ * How far an entry may precede the one before it and still count as in order: two processes (the driver and a
+ * human recording a reading during a batch) can stamp and append in opposite orders within milliseconds. Anything
+ * further back is ambiguous.
+ */
+export const LEDGER_ORDER_TOLERANCE_MS = 5000;
+const COUNT = (value: unknown) => Number.isInteger(value) && (value as number) >= 0;
+const NAME = (value: unknown) => typeof value === "string" && value.length > 0;
+/**
+ * Why the ledger cannot be read as accounting history under a recorded
+ * policy; [] when it can. Every entry must have a known kind, a valid time
+ * and the fields its kind is judged by. From policy 2's activation on, the
+ * entries must be in time order (the activation itself not earlier than the
+ * entry before it), within LEDGER_ORDER_TOLERANCE_MS: out-of-order history is
+ * ambiguous, never guessed at.
+ */
+export function ledgerProblems(ledger: readonly LedgerEntry[]): string[] {
+  const problems: string[] = [];
+  const time = (e: LedgerEntry) => (typeof e?.at === "string" && ISO.test(e.at) && Number.isFinite(Date.parse(e.at)) ? Date.parse(e.at) : undefined);
+  ledger.forEach((e, index) => {
+    const where = `ledger entry ${index + 1}`;
+    if (!e || typeof e !== "object" || !KINDS.has((e as { kind?: string }).kind ?? "")) return void problems.push(`${where} has no known kind`);
+    if (time(e) === undefined) problems.push(`${where} (${e.kind}) has no valid time`);
+    if (e.kind === "session" && (!NAME(e.slice) || !NAME(e.group) || !(e.weighted === null || (typeof e.weighted === "number" && Number.isFinite(e.weighted) && e.weighted >= 0)) || (e.usage === null) !== (e.weighted === null))) problems.push(`${where} (session) has no valid slice, group or weighted usage`);
+    if (e.kind === "batch" && (!NAME(e.slice) || !NAME(e.group) || ![e.accepted, e.parked, e.escalated, e.defects].every(COUNT))) problems.push(`${where} (batch) has no valid slice, group or counts`);
+    if (e.kind === "session-failed" && (!NAME(e.slice) || !NAME(e.group))) problems.push(`${where} (session-failed) has no valid slice or group`);
+    if (e.kind === "policy" && (!Number.isInteger(e.version) || !/^[0-9a-f]{64}$/.test(e.budgetHash ?? "") || typeof e.note !== "string" || !e.previous || !Number.isInteger(e.previous.version) || !Array.isArray(e.previous.reasons))) problems.push(`${where} (policy) is malformed`);
+    if (e.kind === "meter" && typeof e.percent !== "number") problems.push(`${where} (meter) has no weekly usage`);
+  });
+  const activation = policyActivation(ledger);
+  if (activation >= 0)
+    for (let i = Math.max(activation, 1); i < ledger.length; i++) {
+      const [before, at] = [time(ledger[i - 1]), time(ledger[i])];
+      if (before !== undefined && at !== undefined && at < before - LEDGER_ORDER_TOLERANCE_MS) problems.push(`ledger entry ${i + 1} (${ledger[i].kind}, ${ledger[i].at}) is earlier than the entry before it (${ledger[i - 1].at}): from policy 2's activation on the history must be in order`);
+    }
+  return problems;
+}
+
+/**
+ * Where policy 2's accounting starts: the first policy-2 entry, whatever
+ * policies were recorded after it, so neither re-recording a policy nor
+ * switching away and back resets or hides what was spent since. -1 when
+ * policy 2 was never recorded.
+ */
+export const policyActivation = (ledger: readonly LedgerEntry[]) => ledger.findIndex((e) => e?.kind === "policy" && e.version === 2);
+
+/**
+ * Each batch's recorded cost: its whole history (`total`, kept as recorded)
+ * and what it spent after policy 2's activation (`sincePolicy`), with its
+ * sessions there that have no recorded usage and its failed ones. A batch
+ * started under policy 2 spent everything after the activation; one started
+ * before and repaired or re-accepted under it, only its incremental cost.
+ */
+export type BatchCost = { slice: string; group: string; total: number; sincePolicy: number; unmeasuredSincePolicy: number; failedSincePolicy: number; startedUnderPolicy: boolean; completedUnderPolicy: boolean; accepted: number; parked: number };
+export function batchCosts(ledger: readonly LedgerEntry[]): BatchCost[] {
+  const activation = policyActivation(ledger);
+  const after = (index: number) => activation >= 0 && index > activation;
+  const out = new Map<string, BatchCost>();
+  ledger.forEach((e, index) => {
+    if (e.kind !== "session" && e.kind !== "session-failed" && e.kind !== "batch" && e.kind !== "resume") return;
+    if (e.slice.startsWith("audit:")) return;
+    const key = `${e.slice}/${e.group}`;
+    const cost = out.get(key) ?? { slice: e.slice, group: e.group, total: 0, sincePolicy: 0, unmeasuredSincePolicy: 0, failedSincePolicy: 0, startedUnderPolicy: after(index), completedUnderPolicy: false, accepted: 0, parked: 0 };
+    if (e.kind === "session") {
+      cost.total += e.weighted ?? 0;
+      if (after(index)) {
+        cost.sincePolicy += e.weighted ?? 0;
+        if (e.weighted === null) cost.unmeasuredSincePolicy++;
+      }
+    } else if (e.kind === "session-failed" && after(index)) cost.failedSincePolicy++;
+    else if (e.kind === "batch") {
+      Object.assign(cost, { accepted: e.accepted, parked: e.parked });
+      if (after(index)) cost.completedUnderPolicy = true;
+    }
+    out.set(key, cost);
+  });
+  return [...out.values()];
+}
+
+/**
+ * Policy 2's gate before every session (a batch's or an audit's): a known
+ * policy, the budget still the one its entry pinned, and a fresh, valid,
+ * not-future availability reading under both ceilings. Readings are never
+ * fabricated or fetched: a human records them. Under policy 1 there is none.
+ */
+export function sessionGate(ledger: readonly LedgerEntry[], budget: Budget, now: string | undefined): string | undefined {
+  const policy = accountingPolicy(ledger);
+  if (!policy.entry) return undefined;
+  if (!(ACCOUNTING_POLICIES as readonly number[]).includes(policy.version)) return `unknown accounting policy ${policy.version} in the ledger: this tooling cannot apply it`;
+  const malformed = ledgerProblems(ledger);
+  if (malformed.length) return `the accounting history is ambiguous: ${malformed[0]}`;
+  if (budgetHash(budget) !== policy.entry.budgetHash) return `the budget changed since the accounting policy recorded at ${policy.entry.at}: review it and record it (\`policy --version ${policy.version} --note\`)`;
+  if (policy.version !== 2) return undefined;
+  if (!now || !Number.isFinite(Date.parse(now))) return "availability: no clock to judge the latest reading by";
+  const reading = ledger.findLast((e): e is Extract<LedgerEntry, { kind: "meter" }> => e.kind === "meter");
+  const record = "record a fresh reading (`meter --percent <weekly> --session <5-hour>`)";
+  if (!reading) return `availability: no usage reading: ${record}`;
+  const problems = readingProblems(reading, now, true);
+  if (problems.length) return `availability: the latest reading is not usable (${problems.join("; ")}): ${record}`;
+  const age = (Date.parse(now) - readTime(reading)!) / 60_000;
+  if (age > budget.maxReadingAgeMinutes) return `availability: the latest reading is ${Math.ceil(age)} minutes old, over ${budget.maxReadingAgeMinutes}: ${record}`;
+  if (reading.percent >= budget.maxWeeklyPercent) return `availability: weekly usage is ${reading.percent}%, at or over ${budget.maxWeeklyPercent}%`;
+  if (reading.session! >= budget.maxSessionPercent) return `availability: 5-hour usage is ${reading.session}%, at or over ${budget.maxSessionPercent}%`;
+  return undefined;
+}
+
+/**
+ * Every stop rule a campaign's ledger breaks, in order; [] when none. Thresholds stop the campaign; they never license
+ * a known defect. Policy 1 (no policy entry, or version 1) keeps the legacy meter rule; policy 2 replaces it with
+ * availability (sessionGate) and adds a single-batch cost ceiling for batches completed under it. Authoring cost is
+ * always the recorded weighted tokens of batch sessions; audit sessions are reported apart and never in these rules.
+ */
+export function stopReasons(ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET, now?: string): string[] {
+  const policy = accountingPolicy(ledger);
+  if (policy.entry && !(ACCOUNTING_POLICIES as readonly number[]).includes(policy.version)) return [`unknown accounting policy ${policy.version} in the ledger: this tooling cannot apply it`];
+  // Under a recorded policy, history that cannot be read unambiguously is judged by no rule: it is the only reason given.
+  if (policy.entry) {
+    const malformed = ledgerProblems(ledger);
+    if (malformed.length) return malformed.map((problem) => `the accounting history is ambiguous: ${problem}`);
+  }
+  const reasons: string[] = [];
+  const done = batchMetrics(ledger).filter((m) => m.accepted + m.parked > 0);
+  const recent = done.slice(-3);
+  const accepted = recent.reduce((sum, m) => sum + m.accepted, 0);
+  if (recent.length === 3) {
+    const perConcept = accepted ? recent.reduce((sum, m) => sum + m.weighted, 0) / accepted : Infinity;
+    if (perConcept > budget.perConcept * budget.stopFactor) reasons.push(`the last 3 batches cost ${Math.round(perConcept)} weighted per accepted concept, over ${budget.stopFactor} × the ${budget.perConcept} plan`);
+  }
+  if (policy.version === 2)
+    // Every batch completed (or re-accepted) since policy 2's activation, judged on what it spent since then: all of it
+    // for a batch started under the policy, the increment for an earlier one. A later batch never hides an earlier one.
+    for (const cost of batchCosts(ledger).filter((c) => c.completedUnderPolicy)) {
+      const name = `batch ${cost.slice}/${cost.group}`;
+      if (cost.unmeasuredSincePolicy) reasons.push(`${name}: ${cost.unmeasuredSincePolicy} session(s) since policy 2's activation have no recorded usage, so its cost cannot be checked against the single-batch ceiling`);
+      else if (cost.accepted && cost.sincePolicy / cost.accepted > budget.perConcept * budget.maxBatchFactor)
+        reasons.push(`${name} cost ${Math.round(cost.sincePolicy / cost.accepted)} weighted per accepted concept since policy 2's activation (${cost.sincePolicy} of ${cost.total} recorded in all), over ${budget.maxBatchFactor} × the ${budget.perConcept} plan`);
+    }
+  const concepts = done.reduce((sum, m) => sum + m.accepted + m.parked, 0);
+  const escalated = done.reduce((sum, m) => sum + m.escalated, 0);
+  if (concepts >= 10 && escalated / concepts > budget.maxEscalationRate) reasons.push(`${escalated} of ${concepts} concepts escalated, over ${budget.maxEscalationRate * 100}%`);
+  const parked = done.reduce((sum, m) => sum + m.parked, 0);
+  if (parked) reasons.push(`${parked} concept(s) parked with unresolved defects: a human decides`);
+  const { sessions, failed } = activeFailures(ledger, budget);
+  if (failed >= budget.maxRecentFailures) reasons.push(`${failed} of the last ${sessions} sessions failed or were interrupted: a human checks the CLI, the quota and the tree, then acknowledges them (\`clear-failures --note\`)`);
+  const audits = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.campaign).slice(-budget.sampleWindow);
+  const defective = audits.filter((e) => e.substantive > 0).length;
+  if (defective >= budget.sampleMaxDefective) reasons.push(`${defective} of the last ${audits.length} sampled concepts had substantive defects`);
+  if (policy.version === 1) {
+    const meters = ledger.filter((e): e is Extract<LedgerEntry, { kind: "meter" }> => e.kind === "meter");
+    // A drop means the weekly quota reset: measure only within the latest window.
+    let start = 0;
+    for (let i = 1; i < meters.length; i++) if (meters[i].percent < meters[i - 1].percent) start = i;
+    const window = meters.slice(start);
+    if (window.length >= 2) {
+      const [first, last] = [window[0], window[window.length - 1]];
+      const since = batchMetrics(ledger.filter((e) => e.at >= first.at && e.at <= last.at)).reduce((sum, m) => sum + m.accepted, 0);
+      if (since && (last.percent - first.percent) / since > budget.meterPercentPerConcept) reasons.push(`the usage meter rose ${(last.percent - first.percent).toFixed(1)}% for ${since} accepted concepts, over ${budget.meterPercentPerConcept}% each`);
+    }
+  }
+  // Under a recorded policy: the pinned budget and, for policy 2, availability.
+  const gate = sessionGate(ledger, budget, now);
+  if (gate) reasons.push(gate);
+  return reasons;
+}
+/** The first stop rule a campaign's ledger breaks, or undefined. */
+export const stopReason = (ledger: readonly LedgerEntry[], budget: Budget = DEFAULT_BUDGET, now?: string): string | undefined => stopReasons(ledger, budget, now)[0];
+
+/** Why a policy may not be recorded now; [] when it may. Every stop the current policy reports must be quoted, exactly, in the acknowledgment. */
+export function policyChangeProblems(ledger: readonly LedgerEntry[], budget: Budget, now: string, version: number, note: string | undefined, acknowledged: string | undefined): string[] {
+  const problems: string[] = [];
+  if (!(ACCOUNTING_POLICIES as readonly number[]).includes(version)) problems.push(`policy version must be one of ${ACCOUNTING_POLICIES.join(", ")}`);
+  if (!note?.trim() || note.trim().startsWith("--")) problems.push('a policy needs --note "<what was decided and why>"');
+  const current = stopReasons(ledger, budget, now);
+  const missing = current.filter((reason) => !acknowledged?.includes(reason));
+  if (missing.length) problems.push(`the current policy reports stop conditions that must each be quoted exactly in --acknowledge (recording a policy clears none of them):\n- ${missing.join("\n- ")}`);
+  return problems;
+}
+/** The policy entry to append, once policyChangeProblems is empty. */
+export function policyEntry(ledger: readonly LedgerEntry[], budget: Budget, now: string, version: number, note: string, acknowledged?: string): Extract<LedgerEntry, { kind: "policy" }> {
+  return { kind: "policy", at: now, version, note: note.trim(), budgetHash: budgetHash(budget), previous: { version: accountingPolicy(ledger).version, reasons: stopReasons(ledger, budget, now) }, ...(acknowledged?.trim() ? { acknowledged: acknowledged.trim() } : {}) };
+}
+
+/** Recorded weighted tokens, authoring (batch sessions) and audits (deep-audit sessions) apart, and audits per label. */
+export function campaignCost(ledger: readonly LedgerEntry[]): { authoring: number; audits: number; byLabel: Record<string, { sessions: number; weighted: number; unmeasured: number; concepts: number }> } {
+  const byLabel: Record<string, { sessions: number; weighted: number; unmeasured: number; concepts: number }> = {};
+  let authoring = 0;
+  let audits = 0;
+  const audited = new Map<string, Set<string>>();
+  for (const e of ledger) {
+    if (e.kind !== "session") continue;
+    if (e.slice.startsWith("audit:")) {
+      const label = e.slice.slice("audit:".length);
+      const row = (byLabel[label] ??= { sessions: 0, weighted: 0, unmeasured: 0, concepts: 0 });
+      row.sessions++;
+      if (e.weighted === null) row.unmeasured++;
+      else row.weighted += e.weighted;
+      audits += e.weighted ?? 0;
+      audited.set(label, (audited.get(label) ?? new Set()).add(e.group));
+      row.concepts = audited.get(label)!.size;
+    } else authoring += e.weighted ?? 0;
+  }
+  return { authoring, audits, byLabel };
+}
+
+/**
+ * Supplementary evidence from bracketed readings: for each before/after pair
+ * around one batch or audit, the weekly meter's change and the weighted
+ * tokens the ledger recorded between the two. An upper bound at best (whole
+ * percents, the session's own overhead, any concurrent use, and "exclusive"
+ * is a human's assertion): reported, never a stop rule.
+ */
+export function meterEvidence(ledger: readonly LedgerEntry[]): { batch: string; exclusive: boolean; percent: number; weighted: number; weightedPerPercent: number | null; outlier: boolean }[] {
+  const pairs: { batch: string; exclusive: boolean; percent: number; weighted: number; weightedPerPercent: number | null; outlier: boolean }[] = [];
+  const open = new Map<string, number>();
+  ledger.forEach((e, index) => {
+    if (e.kind !== "meter" || !e.bracket) return;
+    if (e.bracket.phase === "before") return void open.set(e.bracket.batch, index);
+    const from = open.get(e.bracket.batch);
+    if (from === undefined) return;
+    open.delete(e.bracket.batch);
+    const before = ledger[from] as Extract<LedgerEntry, { kind: "meter" }>;
+    const weighted = ledger.slice(from + 1, index).reduce((sum, x) => sum + (x.kind === "session" ? (x.weighted ?? 0) : 0), 0);
+    const percent = e.percent - before.percent;
+    pairs.push({ batch: e.bracket.batch, exclusive: !!(before.exclusive && e.exclusive), percent, weighted, weightedPerPercent: percent > 0 ? Math.round(weighted / percent) : null, outlier: false });
+  });
+  // With three or more exclusive pairs, one far from their median (more than 2×, or under half) is flagged, never acted on.
+  const ratios = pairs.filter((p) => p.exclusive && p.weightedPerPercent !== null).map((p) => p.weightedPerPercent!).sort((a, b) => a - b);
+  if (ratios.length >= 3) {
+    const median = ratios[Math.floor(ratios.length / 2)];
+    for (const p of pairs) if (p.exclusive && p.weightedPerPercent !== null && (p.weightedPerPercent > 2 * median || p.weightedPerPercent < median / 2)) p.outlier = true;
+  }
+  return pairs;
+}
+
+/** A deterministic sample of `n` items (seeded), for measurement deep audits. */
+export function sample<T>(items: readonly T[], n: number, seed: string): T[] {
+  let h = 2166136261;
+  for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const rand = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0), (h >>> 0) / 2 ** 32);
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(n, copy.length));
+}
+
+/** A slice's measurement sample: which concepts, and how each audit ended. */
+export type SliceSample = { slice: string; concepts: string[]; audited: Record<string, { substantive: number; repaired: boolean }> };
+/** Why a slice may not be finalized on its sample; [] when it may. A repaired concept must also be accepted again. */
+export function sampleProblems(sampled: SliceSample | undefined, acceptedAgain: (concept: string) => boolean): string[] {
+  if (!sampled) return ["the slice's measurement sample has not been drawn (`audit --sample-slice`)"];
+  const problems: string[] = [];
+  for (const id of sampled.concepts) {
+    const a = sampled.audited[id];
+    if (!a) problems.push(`${id}: sampled but not audited`);
+    else if (a.substantive && (!a.repaired || !acceptedAgain(id))) problems.push(`${id}: ${a.substantive} substantive defect(s) not repaired and verified`);
+  }
+  return problems;
+}
+
+/**
+ * Concepts with a known defect: a deep audit (sample, pilot or any other
+ * label, fixed or not) found substantive defects at or after their last
+ * acceptance, or in the very record that was accepted. They may not ship
+ * until repaired, verified and accepted again. [] when none.
+ */
+export function knownDefectProblems(ledger: readonly LedgerEntry[], accepted: ReadonlyMap<string, { at: string; fingerprint?: string }>): string[] {
+  const problems: string[] = [];
+  for (const [concept, { at, fingerprint }] of accepted) {
+    const found = ledger.filter((e): e is Extract<LedgerEntry, { kind: "deep-audit" }> => e.kind === "deep-audit" && e.concept === concept && e.substantive > 0 && (e.at >= at || (!!e.fingerprint && e.fingerprint === fingerprint)));
+    if (found.length) problems.push(`${concept}: substantive defects found by deep audit ${found.map((e) => `"${e.label}" (${e.substantive}, ${e.at})`).join(", ")}, not repaired and accepted again since`);
+  }
+  return problems;
+}
