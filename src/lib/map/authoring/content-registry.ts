@@ -395,4 +395,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "latency",
   "failures",
   "fault-models",
+  "state",
+  "inputs",
+  "transition-rules",
+  "determinism",
+  "state-machine-replication",
 ];

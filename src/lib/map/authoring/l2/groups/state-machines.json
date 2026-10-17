@@ -1,0 +1,757 @@
+{
+  "version": 1,
+  "group": "state-machines",
+  "domain": "foundations",
+  "parentConceptId": "state-machines",
+  "basis": {
+    "membership": "57900e3ffde87cf374945fc1365b01362fc7eb7976c4ecd60c6900cc13baca0e",
+    "parents": {
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea",
+      "protocols": "b6ccf6974aae560740afd1b338a9391a900726384574229834e4b360d2f00d75",
+      "state-machines": "13d4e3f77b29005d1bfedf244058b3519a96b2203b8c1cf8d02d8f3e7817b562"
+    },
+    "fixed": {
+      "transitions": "ca9cd6517b6f68430778321c016c29e4acdda83188f329cb84d768b0441abbde"
+    },
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "state",
+      "placementId": "state-in-state-machines",
+      "standing": "owned",
+      "claims": [
+        "which distinctions between past histories a state keeps and which it erases: why histories that end in the same state are indistinguishable to every later transition, so a distinction no state records cannot be consulted by later rules",
+        "how the initial state and the rules together fix which states are reachable, why the same rules started from a different initial state can reach different states, and why a representation can usually express states that no sequence of inputs reaches",
+        "the difference between the shared state a protocol's participants must agree on and the private state each participant keeps for itself and others need not agree on, such as its keys, pending messages and view of the others"
+      ],
+      "excludes": [
+        "state-models",
+        "state-representation",
+        "global-state",
+        "local-state",
+        "genesis",
+        "safety",
+        "invariants",
+        "partial-knowledge",
+        "processes",
+        "transitions",
+        "inputs"
+      ]
+    },
+    {
+      "conceptId": "inputs",
+      "placementId": "inputs",
+      "standing": "owned",
+      "claims": [
+        "what decides whether something is an input the machine can receive at all, and why that check can be made without consulting the current state as long as the input set itself is fixed rather than activated by the state, while whether the input is accepted in a given state is decided by the transition rules",
+        "why a transition can depend on who submitted an input only through what the input itself carries, such as a sender field or a signature, and not through the channel it arrived by, which a later replay of the inputs does not see",
+        "when the order of inputs changes the resulting state: which inputs commute, and why inputs that do not commute make their order part of what has to be recorded with them"
+      ],
+      "excludes": [
+        "transition-rules",
+        "determinism",
+        "message-validation",
+        "transition-preconditions",
+        "invalid-transitions",
+        "communication",
+        "digital-signatures",
+        "parallel-execution",
+        "state-machine-replication",
+        "rules"
+      ]
+    },
+    {
+      "conceptId": "transitions",
+      "placementId": "transitions",
+      "standing": "dual-role"
+    },
+    {
+      "conceptId": "transition-rules",
+      "placementId": "transition-rules",
+      "standing": "owned",
+      "claims": [
+        "why a rule set meant to be deterministic has to define an outcome for every combination of state and well-formed input, including the combinations it refuses, and how a gap leaves implementations free to differ",
+        "how a rule set handles a state and input that the conditions of more than one rule match: conditions made mutually exclusive, a fixed precedence among rules, or an ambiguity that implementations may resolve differently",
+        "whether the transition rules stand wholly outside the state or are partly held in it, as when deployed code or parameters are stored in state and read by outer rules that stay fixed, and what changes when a transition can alter the rules that govern later ones, including which rules a replay of history has to apply"
+      ],
+      "excludes": [
+        "rules",
+        "transition-functions",
+        "transition-preconditions",
+        "valid-transitions",
+        "invalid-transitions",
+        "transition-effects",
+        "specification-ambiguity",
+        "determinism",
+        "rule-changes",
+        "protocol-upgrades",
+        "protocol-parameters",
+        "contract-state",
+        "hard-forks"
+      ]
+    },
+    {
+      "conceptId": "determinism",
+      "placementId": "determinism",
+      "standing": "owned",
+      "claims": [
+        "why whether a machine is deterministic depends on what the model counts as its inputs: a rule that reads a local clock, a random source or an outside system is nondeterministic as modeled, and becomes deterministic when that value is made part of the input or the dependence is removed",
+        "why, wherever independent executions of the same rules must agree, determinism has to hold across every implementation, platform and version that executes them, not only within one program, and how a difference among them, such as in arithmetic, iteration order or resource limits, shows up as executions that disagree once an input exercises it",
+        "why a deterministic machine cannot by itself produce a value its participants cannot predict, since anyone holding the state and the inputs can compute it, and what that means for rules that need an unpredictable choice",
+        "why a model can deliberately leave several next states possible, leaving a choice open to an implementation or the environment, and why replicas that must reach the same state need that choice fixed by the rules or carried in the input"
+      ],
+      "excludes": [
+        "deterministic-execution",
+        "non-deterministic-execution",
+        "oracle-problem",
+        "verification",
+        "commit-reveal",
+        "transition-rules",
+        "inputs",
+        "state-machine-replication"
+      ]
+    },
+    {
+      "conceptId": "state-machine-replication",
+      "placementId": "state-machine-replication",
+      "standing": "owned",
+      "claims": [
+        "how state machine replication separates ordering inputs from executing them, so that the ordering can sequence inputs it does not interpret, and why every correct replica must then reach the same verdict on ordered inputs that turn out to be invalid",
+        "how a client of a replicated machine decides which result to rely on: a reply from one replica can suffice when replicas are assumed only to crash, while under arbitrary faults it needs evidence from more replicas than may be faulty, such as matching replies",
+        "why replicas that apply the same sequence of inputs can answer the same query differently at the same moment, since each may have applied a different prefix of it, and how a read is placed in the sequence when it must reflect every write completed before the read began"
+      ],
+      "excludes": [
+        "consensus",
+        "agreement",
+        "sequencing",
+        "transaction-sequencing",
+        "fault-models",
+        "byzantine-behavior",
+        "quorums",
+        "consistency",
+        "data-replication",
+        "failures",
+        "determinism",
+        "transitions"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "state": {
+      "model": {
+        "meaning": "State is what a system retains of its past at a given moment, the record that its rules consult together with the next input to decide which transitions are valid and what they produce.",
+        "kind": "artifact",
+        "parents": {
+          "state-machines": "The parent says what state must capture (whatever can affect a later transition). State adds the converse and its consequences: what a state erases, why histories ending in the same state are interchangeable for every later transition, how the initial state and the rules fix which of the representable states can actually occur, and the line between the state a modeled protocol's participants share and what each keeps privately.",
+          "protocols": "The parent says state outlasts interactions and carries their consequences forward. State adds which consequences it carries (only the distinctions it records), what bounds the states a protocol can reach, and that the state its rules act on, which every participant must agree on, is not everything a participant holds: keys, pending messages and its view of the others are held privately and may differ without fault."
+        },
+        "claims": [
+          "which distinctions between past histories a state keeps and which it erases: why histories that end in the same state are indistinguishable to every later transition, so a distinction no state records cannot be consulted by later rules",
+          "how the initial state and the rules together fix which states are reachable, why the same rules started from a different initial state can reach different states, and why a representation can usually express states that no sequence of inputs reaches",
+          "the difference between the shared state a protocol's participants must agree on and the private state each participant keeps for itself and others need not agree on, such as its keys, pending messages and view of the others"
+        ],
+        "excludes": [
+          "state-models",
+          "state-representation",
+          "global-state",
+          "local-state",
+          "genesis",
+          "safety",
+          "invariants",
+          "partial-knowledge",
+          "processes",
+          "transitions",
+          "inputs"
+        ],
+        "placements": {
+          "state-in-state-machines": "Under State Machines the reader has the model (states, inputs, rules) and the criterion for what counts as state. The exposition explains what follows from that criterion (erasure of history, reachability from an initial state, the shared/private line) in terms of a state, a history of inputs and rules, so it extends the parent without restating it and needs nothing specific to this placement.",
+          "state-in-protocols": "Under Protocols the reader has state as what rules act on and what carries consequences between interactions. The same exposition holds because every claim is stated for any system with rules over a state; the shared/private claim is phrased in terms of a protocol's participants, which is native here, and the reachability and erasure claims need no state-machine vocabulary beyond states, inputs and rules, which the exposition can use on its own terms."
+        },
+        "fields": {
+          "contents": [
+            "Exactly the distinctions among past histories that some later rule may consult: a balance keeps the amount and erases which transfers produced it; a record of used nonces or processed identifiers keeps whether something was already applied, which is what lets a later rule refuse a repeat.",
+            "Two histories that end in the same state are interchangeable for every later input sequence, since rules see only state and input; a distinction the state does not record cannot be recovered by any later rule, and a rule that needs it requires the state to have kept it from the start, unless the distinction can still be derived from a record kept outside the state, as it can when the rules are deterministic and the initial state and past inputs are still available.",
+            "Not every kept distinction is useful: a state can keep distinctions no rule consults, so two different states may behave identically; such distinctions are redundant rather than wrong."
+          ],
+          "producedBy": "The initial state, then each valid transition applied to the state before it. Which states can occur is fixed by the initial state together with the rules over the inputs the machine can receive; the same rules from a different initial state (a different starting supply, a different set of initial key holders) can reach a different set of states.",
+          "checkedBy": "Shared state is checked by participants applying the same inputs to it and comparing the results (how they compare, e.g. through commitments, is not this concept's subject); where the rules are deterministic, any participant holding the initial state and those inputs can recompute it. Participant-held state is checked by no one else: others see it only through the messages and signatures it produces.",
+          "lifetime": "A state persists unchanged until a transition replaces it; it is the only thing that carries the past into later transitions, so whatever it erased at a transition is gone for every later one.",
+          "variants": [
+            "Shared state: the state the protocol's rules act on and that participants must agree on; disagreement about it means a fault, a fork or a broken assumption.",
+            "Participant-held (private) state: what each participant keeps for itself, such as its secret keys (public keys the rules verify against can be part of the shared state), its pending messages and its view of the others; it drives that participant's own decisions, legitimately differs between participants, and is not part of what the protocol requires them to agree on. It is still state in the parent's sense, for the participant's own behavior rather than for the shared machine.",
+            "Shared versus private is relative to a group: state two parties keep jointly can be shared between them and private with respect to a wider protocol.",
+            "Terminology hazard: elsewhere in MAP 'local state' names the part of the shared state that belongs to one account, contract or participant; the private sense here must not be written as 'local state'. Likewise MAP's Shared State names state several parties can change, as against owned state; the record's 'shared state' means agreed on, so it must say so in one sentence that names Shared State as a different sense without explaining it."
+          ],
+          "relation": [
+            "Histories h1 and h2 that end in the same state s are indistinguishable to every later transition: for every input sequence w, the state reached from h1 followed by w equals the state reached from h2 followed by w (under deterministic rules; under nondeterministic rules, the same sets of possible states).",
+            "Reachable states = the states obtained from the initial state by any finite sequence of valid transitions on receivable inputs; reachable states are a subset of representable states, and usually a strict one, since an encoding can express values no history produces (a total above a fixed supply, one unique item held by two owners).",
+            "A state loaded from outside a history (a snapshot, an imported or migrated state) is not guaranteed to be reachable; conditions argued only over reachable states need not hold for it."
+          ],
+          "tradeoffs": "Keeping a distinction lets later rules consult it but costs storage and enlarges what every participant must agree on; erasing it is cheaper and smaller but removes it from the state, so a later rule that needs it can record it only from then on, unless the distinction can still be derived from a record kept outside the state, as it can when the rules are deterministic and the initial state and past inputs are still available to recompute the state with it included."
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "State is defined by what it keeps and erases of history (an equivalence among histories), its reachable set is bounded by the initial state and rules (a closure inside a larger representable space), and it has a line, easily blurred, between the shared state participants must agree on and the private state each keeps. The first two are arguments with conditions; the third is a real conflation.",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Separate the shared state a protocol's participants must agree on from the private state each participant keeps (keys, pending messages, its view of the others), so the reader does not treat a node's whole store as protocol state or treat divergence of private state as a fault.",
+            "whyNotProse": "A participant's store holds both kinds side by side and both are called 'the state', so the conflation is likely and practical: readers judge disagreement in mempools or peer views as forks, or treat private keys as protocol state. Marking the two notions as distinct before the explanation makes the line visible at a glance; a paragraph alone would state the difference without flagging that it is the point most often blurred."
+          }
+        ],
+        "division": "The prose explains all three claims: why histories ending in the same state are interchangeable and what erasure means for later rules; how the initial state and rules bound the reachable states inside the representable ones and why an unreachable state can still be expressed or loaded; and, after the distinction, what makes state shared (rules act on it, participants validate against it, disagreement is a fault), why private state still drives a participant's own behavior and may differ freely, and that the line is relative to a group. The distinction only names the two notions as distinct (e.g. 'Shared state ≠ Participant-held state'); it must not repeat the explanation, and its labels must not use 'local state', which MAP uses elsewhere for a per-account part of shared state.",
+        "level": "The parent State Machines gives the criterion for what state must capture and the parent Protocols says state carries consequences forward; neither says what state erases, what bounds reachability, or where shared state ends. Those are questions about state itself, not about the model, the rules (Transition Rules), determinism (Determinism) or replication (State Machine Replication), so they belong here. The shared/private line was reserved for state by Protocols and claimed here.",
+        "territory": "Reachability is argued from the initial state and rules without explaining invariants or safety (named only: a condition over reachable states can fail in representable but unreachable ones). How a model chooses what counts as state (state-models), encodes it (state-representation), and what global-state and local-state mean in State & Data are named, never explained, and the private sense avoids the term 'local state'. The initial state is used without explaining genesis. Participants' private views are named, not explained (partial-knowledge, processes). Transitions are used as given by their record (atomic, rule-sanctioned changes), and what makes something an input or how input order matters stays with Inputs; determinism is used only as a condition on the equivalence of histories, not explained.",
+        "placements": "The exposition is written for any system with a state, inputs and rules, and the shared/private claim in terms of a protocol's participants, so it reads as complete at both State Machines and Protocols. It uses no positional reference, does not restate either parent, and the distinction holds at both: under State Machines it separates the modeled shared machine from each participant's own state; under Protocols it separates what the rules act on from what participants hold privately."
+      },
+      "audit": {
+        "at": "2026-10-08T15:57:42.927Z",
+        "note": "Re-audit after repair cycle 3 (findings state.md, state-b.md, state-2.md, state-3.md). I read every sentence at both placements, state-in-state-machines (parent State Machines) and state-in-protocols (parent Protocols). The record has a definition, 6 paragraphs and 1 distinction ('Shared state ≠ Private state'), as designed. Earlier findings are all resolved: the owner-list table example now expresses the duplicate; 'secret keys' is used in both places; the unconditioned recompute clause is gone from the distinction; Shared State is named as a different sense without being explained; the converse wording is fixed. state-2 D1 and state-3 D1 are also resolved. Paragraph 2 now reads 'can only begin recording it from then on, unless the distinction can still be derived from a record kept outside the state, as it can when the rules are deterministic and the initial state and past inputs are still available to recompute the state with the distinction included'. The general route (derivation from a record outside the state) is now the exception, and deterministic recomputation is given as one sufficient case ('as it can when'), not a necessary one. That is accurate: deterministic rules plus the initial state and the inputs fix every state the history passed through, so any distinction among histories can be derived. The clause ties back to the paragraph's own 'the inputs may survive in a log or an archive outside the state', and it is consistent with 'no rule reads them there', because the derived distinction re-enters the state rather than being read in place. It is also consistent with the last reachability sentence, since a state recomputed from the initial state under the extended rules is reachable under them. The repair introduced no new defect. It adds no absolute, it does not explain replay or Determinism (determinism stays a condition), and it touches Transition Rules' rule-change claim only through 'a rule introduced later', without saying which rules a replay applies. On parent overlap, the clause applies the State Machines replay fact to a different conclusion (recovering an erased distinction for a later rule) and does not restate it. At Protocols it stands alone. The rest is unchanged and sound. The definition is descriptive, which is acceptable for a lead that must stand at Protocols. Interchangeability is stated for deterministic and nondeterministic rules. Assertions are checkable only against the state. The conservation example gives disjoint reachable sets. A reachable starting point reaches a subset, by transitivity. The width and owner-list examples are representable but unreachable. 'Covered ... only if it is itself reachable' holds. Failure after the same inputs covers the rules themselves. Secret keys and their effects are stated correctly. The two-party balance fits 'relative to a group'. 'Behind rather than in disagreement' is legitimate contextual overlap with State Machine Replication, divided by angle. On representation, the distinction is the designed form; the conflation is real; the prose explains and the block only names the two notions. Canonical at both placements, with no positional words. American English, plain text. Depth follows the three claims, and no point is made twice. Remarks (not defects): (1) Model contents[1] still opens 'cannot be recovered by any later rule ... requires the state to have kept it from the start' before its new 'unless' clause. Read with that clause it is conditioned, and the record is correct. (2) Model variants[0] says disagreement about shared state 'means a fault, a fork or a broken assumption' without 'after the same inputs'. The record states the condition. (3) 'Not every kept distinction is useful ... no rule consults' should be read as the current rules, because the trade-off just before says a kept distinction can serve later rules. Acceptable. (4) The paragraph 2 sentence is long; a matter of taste. (5) Carried from state-3: an assertion attested by a trusted party and checked against a key the state holds is arguably covered by 'kept in some form'. Optional.",
+        "resolutions": [
+          {
+            "id": "positional:263f9c0c15",
+            "resolution": "'above' is quantitative ('a total above the token's fixed supply'), not a positional reference. It holds at both placements."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "Inputs is used only as a term ('the next input', 'sequence of inputs', 'inputs the machine can receive'). What makes something an input and how order matters are not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:04f783bd8b",
+            "resolution": "Invariants is named only, in 'arguments about safety and invariants', to say such arguments are confined to reachable states. The token's preserved total illustrates reachability, not what an invariant is or how one is proved. Named, not explained."
+          },
+          {
+            "id": "names-concept:d8819269c9",
+            "resolution": "Safety is named once alongside invariants as an argument confined to reachable states. What a safety property is or how it is violated is not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:7d0da2cb8b",
+            "resolution": "Shared State is named once to mark the homonym: 'which parts of it several parties can change is the separate question of Shared State'. The one-clause gloss matches that concept's title sense. Contention, ordering and ownership are not explained. Named to draw a boundary, as the model's variants[3] requires."
+          },
+          {
+            "id": "names-concept:e2e26982d7",
+            "resolution": "Transitions are used as given ('transitions the rules allow', 'transitions from the initial state'). Their atomicity and what makes one valid are not explained, and nothing overlaps the authored Transitions record. Named, not explained."
+          },
+          {
+            "id": "absolutes:a06cb05ec4",
+            "resolution": "Each holds. 'values the rules never produce' is the defining condition of the strict-subset case. 'never creating or destroying any' describes the example token's rules. 'the others need never see it' holds for a secret signing key, since others verify against the public key. 'Starting points are not always that far apart' is a hedge. The cycle-3 clause adds no absolute, and its 'only ... unless' now names the general exception (derivation from a record outside the state), with determinism as a sufficient case."
+          }
+        ],
+        "recordFingerprint": "9669d0b144e6deb05981522ed9332fa0e83b73d69647312f52196a74bc29fc58"
+      }
+    },
+    "inputs": {
+      "model": {
+        "meaning": "An input is a discrete item a state machine receives from its environment, such as a transaction or a message, to which the transition rules, applied in the current state, assign the transition it causes, if any.",
+        "kind": "artifact",
+        "parents": {
+          "state-machines": "The parent names inputs as one of the model's three parts, places their source, timing and order in the environment, and says that under deterministic rules the input sequence is the more fundamental record. Inputs adds what makes something an input at all (membership in a set the model fixes, decidable without the state) as distinct from being accepted in a given state; that a transition and any replay see only what the recorded input carries, so a submitter's identity can matter only as far as the input carries it; and which part of the order the record must keep: the relative order of inputs that do not commute."
+        },
+        "claims": [
+          "what decides whether something is an input the machine can receive at all, and why that check can be made without consulting the current state as long as the input set itself is fixed rather than activated by the state, while whether the input is accepted in a given state is decided by the transition rules",
+          "why a transition can depend on who submitted an input only through what the input itself carries, such as a sender field or a signature, and not through the channel it arrived by, which a later replay of the inputs does not see",
+          "when the order of inputs changes the resulting state: which inputs commute, and why inputs that do not commute make their order part of what has to be recorded with them"
+        ],
+        "excludes": [
+          "transition-rules",
+          "determinism",
+          "message-validation",
+          "transition-preconditions",
+          "invalid-transitions",
+          "communication",
+          "digital-signatures",
+          "parallel-execution",
+          "state-machine-replication",
+          "rules"
+        ],
+        "placements": {
+          "inputs": "The only placement is under State Machines, whose reader has states, inputs, rules, the environment as the source of inputs, and the input sequence as the record from which state is rebuilt. Every claim is stated in those terms (an input set, a state, rules, a recorded sequence and its replay), so the exposition extends the parent without restating it and depends on nothing specific to the placement."
+        },
+        "fields": {
+          "contents": [
+            "What selects the rules that apply (a kind or type of input) and the arguments those rules use (a payload: an amount, a recipient, a call).",
+            "Whatever the rules may consult about the input's origin or authorization: a sender field, a signature over the input, a sequence number. Because the rules consult only the state and the input, under deterministic rules a transition can depend on who submitted an input only through these fields.",
+            "Not part of the input unless the model puts it there: the connection, peer or network address it arrived from and the moment it arrived. These are facts about delivery, which the recorded input does not keep."
+          ],
+          "producedBy": "The environment: users, other participants or other systems submit inputs, and the machine has no control over what is submitted or when. The model controls only which submissions count as inputs, by fixing the input set as part of the machine's definition.",
+          "checkedBy": [
+            "Receivability: whether an item belongs to the input set is decided from the item alone (encoding, field types and sizes, a signature that verifies against the key the input itself names). The set is part of the machine's definition, fixed before any state exists, so the check needs no state and anyone can make it, in any state or before any is available; any condition that needs the state is, by construction, a rule.",
+            "Acceptance: whether a receivable input is accepted in a given state (enough balance, the expected sequence number, a key the state authorizes for that sender) is decided by the transition rules, which are named here and not explained.",
+            "Condition: receivability is stateless while the input set is fixed. Where the accepted formats are themselves activated by the state, as when an upgrade enables a new input type at some height, which set applies depends on the rule version in force; that dependence belongs to Transition Rules and is only named.",
+            "The boundary is a modeling choice: moving a state-dependent check into the definition of the input set would make receivability depend on the state, so that participants holding different states would disagree about what is an input at all."
+          ],
+          "proves": [
+            "About its origin, an input proves only what it carries in a form the rules can check. A sender field alone is a claim; a signature the rules verify ties the input to the holder of a key (digital signatures are named, not explained).",
+            "The channel it arrived by proves nothing to a later replay: replaying, auditing or reproducing state uses the recorded inputs, which do not contain the connection or peer. A rule that consulted the channel would give a different result when replayed, so authorization that rests on an authenticated connection or a trusted peer has to be converted into something the input carries before the input is recorded."
+          ],
+          "lifetime": "Submitted by the environment, checked for receivability, ordered and applied; once applied, the input outlives the moment it was processed as part of the recorded sequence from which state is rebuilt, while everything about its delivery that it did not carry is gone.",
+          "relation": [
+            "Inputs a and b commute in state s when applying a then b from s reaches the same state as applying b then a; they commute unconditionally when this holds in every reachable state. The relation is stated for deterministic rules (named, not explained).",
+            "Examples, each assuming the two inputs share nothing the rules check beyond what it names (a sequence number the rules expect from a common sender can make the order matter by itself): transfers between disjoint pairs of accounts commute; two credits to one account commute as long as no limit on the balance can refuse either of them; two withdrawals from one account to different recipients commute in a state whose balance covers both, while in a state whose balance covers each of them alone and not both, whichever comes first is accepted and the other refused; two writes of different values to one key, when both are accepted in either order, do not commute.",
+            "Consequence: if every pair of inputs commutes, the set of inputs determines the final state and its order need not be recorded; for each pair that does not commute, their relative order is part of what fixes the result and has to be recorded with them. Because commutation can depend on a state not known when inputs are recorded, a record often keeps a total order.",
+            "Commuting in the resulting state is not commuting in everything the machine produces: two orders can reach the same state while reporting different intermediate results, such as which of two operations saw the other's effect."
+          ],
+          "tradeoffs": [
+            "Recording a total order of all inputs settles every non-commuting pair without having to identify them, but it also orders inputs that commute without marking which ones do, so applying any of them independently needs that knowledge from elsewhere (parallel execution is named, not explained).",
+            "Recording only the order of pairs that do not commute needs every pair that might not commute to be identified when the record is made, for example from inputs that declare what part of the state they touch; where the rules do not confine an input to what it declared, a declaration that omits a part the input touches can leave a non-commuting pair unordered, so replays that order it differently can end in different states.",
+            "A narrow, stateless input set lets anyone discard items that are not inputs cheaply and early, but can establish only what the item shows by itself; everything that depends on the state falls to the rules."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Inputs has three claims: a boundary between two checks made at different places (membership in the input set, decided without state, and acceptance in a state, decided by the rules); a causal argument from what a transition and a replay can see to why provenance must be carried by the input; and a condition (commutation) with its consequence for what the record keeps. The first is a real conflation, because 'valid input' names both checks; the other two are arguments with conditions.",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Separate an input the machine can receive (a member of the input set, decided by form without the state) from an input accepted in a given state (decided by the transition rules), so the reader does not treat a malformed item and a well-formed item refused in this state as the same kind of 'invalid'.",
+            "whyNotProse": "Both are routinely called 'valid' or 'invalid', and the conflation has a practical cost: folding a state-dependent condition into what counts as an input makes receivability depend on the state, so participants holding different states disagree about what is an input. Marking the two as distinct before the argument shows that the boundary is the point; a paragraph alone states the difference without flagging that the shared word is what blurs it."
+          }
+        ],
+        "division": "The prose explains all three claims: why membership in the input set is decided by form and needs no state (the set is part of the machine's definition), the condition under which that holds (a fixed input set, not one activated by the state) and what goes wrong when a state-dependent check is moved into it; why provenance reaches a transition only through fields the input carries, why the channel is invisible to a replay and why channel-based authorization must be converted before recording; and what commutation is, which inputs commute (with examples, including state-dependent commutation), why non-commuting inputs make their relative order part of the record, and why records often keep a total order anyway. The distinction only names the two notions (for example 'Receivable input ≠ Input accepted in this state'); it must not explain either, and its labels must not use 'valid', the word that conflates them.",
+        "level": "The parent State Machines names inputs as a part of the model and places their order in the environment, but says nothing about what makes something an input, how provenance enters a transition, or which order matters. Those are questions about inputs themselves, not about the rules that accept them (Transition Rules), the fixedness of outcomes (Determinism) or how replicas order and apply them (State Machine Replication), so the representation belongs here.",
+        "territory": "Acceptance in a state is attributed to the transition rules and named, never explained; preconditions, what a refused input produces (invalid transitions) and how messages are validated in a protocol (message validation) are named only. Values such as clock readings or random draws that become inputs belong to Determinism and are not discussed; the provenance claim is limited to who submitted an input. Signatures are named as one field an input can carry, never explained; channels are named as what a replay does not see, not how communication works. Commutation is stated under deterministic rules without explaining determinism, and its use for applying inputs concurrently is named (parallel execution) without explanation. Replay is used as the parent gives it; how replicas order inputs they do not interpret and reach the same verdict on refused ones stays with State Machine Replication. The distinction separates two checks on inputs and draws no sibling's relationship; State's claims (what state keeps and erases, reachability, shared and private state) are not touched.",
+        "placements": "Inputs has one placement, under State Machines. The exposition is written in the parent's terms (input set, state, rules, recorded sequence, replay), uses no positional reference and does not restate the parent; the distinction holds there because it separates two checks on any machine with an input set and rules."
+      },
+      "audit": {
+        "at": "2026-10-08T16:12:40.985Z",
+        "note": "Re-audit after repair cycle 1, in fresh context, at the only placement (inputs, leaf under State Machines in Foundations). Findings answered (inputs.md D1-D3, inputs-b.md D1-D7) all resolved: a scoping sentence now states that the examples assume the two inputs share nothing the rules check beyond what each names, with a common sender's expected sequence number as the named exception (A-D1, B-D1); the withdrawals read 'covers each of them alone and not both' (B-D2); the total-order sentence now says it orders commuting inputs without marking which ones do, so applying them independently needs that knowledge from elsewhere, Parallel Execution named only (A-D2, B-D3); the declaration sentence now requires identifying pairs when the record is made and conditions divergence on rules that do not confine an input to the parts it declared and on a declaration that omits a part (A-D3, B-D4); the provenance sentence is conditioned on deterministic rules (B-D5); the channel is 'the one the input first arrived on' (B-D6); 'form' is replaced by 'an item that is not an input' and 'what the item shows by itself' (B-D7); 'conflict' is replaced by 'do not commute' throughout, consistent with the defined term. Model relation, tradeoffs, contents and checkedBy carry the same corrections. Commutation examples re-checked against concrete counter-cases: disjoint transfers with nothing else in common commute in every state (each input's checks and effects read and write only its own accounts; shared fee accounts, global counters or block limits are excluded by the clause and the scoping sentence); credits under a cap L with b+c1+c2<=L commute, with b+c1<=L, b+c2<=L, b+c1+c2>L do not, and a minimum-balance rule (an empty account refusing a small first credit) is also 'a limit on the balance', so 'no limit on the balance can refuse either' is the right sufficient condition; writes of different values both accepted leave the later value, so they never commute, and compare-and-set or max-register semantics are excluded by 'both accepted in either order'; withdrawals x,y to different recipients: b>=x+y both accepted either order (commute), x<=b, y<=b, b<x+y first accepted second refused and the recipients differ even when x=y (do not commute), and the sequence-number counter-case of the first audits is now excluded by the scoping sentence; counter increments by one reach the same count in either order even under a cap (identical effect on the counter) while the values they report differ. The swap argument (s.a.b = s.b.a, deterministic rules carry equality forward), the multiset statement under unconditional commutation (every intermediate state on a swap path is reachable), 'order matters only between inputs that do not commute' (if two orderings end differently, some inverted pair fails to commute in some reachable state), and the receivability, upgrade-condition, provenance and replay paragraphs hold. Parent overlap: none; the record extends the parent's three-part model, its environment-held order and its replay record without restating them. Siblings: State (reachability, erased histories), Transition Rules (rules held in state, named for upgrades), Determinism (named as the assumption only) and State Machine Replication (not explained; replay used in the parent's sense) are not crossed. Structure: the distinction separates two checks that 'valid' conflates; labels avoid 'valid'; prose explains, the block only names. One placement, no positional or time-sensitive words, American English ('the other way around'), plain text. Depth follows the three claims. Remarks: (1) 'participants holding different states ... would disagree about whether an item is an input at all' reads as the risk the design creates; 'could disagree' would be exact, since states that differ only where the moved condition does not look agree. (2) 'Transfers that touch disjoint sets of accounts, and nothing else in common' repeats what the scoping sentence already assumes; harmless. (3) 'Two increments to a counter' relies on increments being unit steps: with different amounts and an upper limit on the counter, the final counts can differ; 'increments by one' would close that reading. (4) Model relation[2] says 'if every pair of inputs commutes, the set of inputs determines the final state'; the record correctly says unconditionally and counting repeats, and the model should match.",
+        "resolutions": [
+          {
+            "id": "names-concept:ebd6d97915",
+            "resolution": "Invalid Transitions is named once as where what a refusal produces belongs; nothing about refusal outcomes is explained."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "Parallel Execution is named once as the concern of applying commuting inputs independently; how parallel execution detects or uses commutation is not explained."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "'rules' is used in the parent's generic sense of a state machine's transition rules; the Protocols concept Rules is not explained."
+          },
+          {
+            "id": "names-concept:f5176de8c1",
+            "resolution": "'state' is used as the parent's vocabulary (current state, reachable state, resulting state); none of State's claims (erased histories, reachability from the initial state, shared vs private state) is explained."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "'state machine' appears only in the definition as the parent's term; the parent's model is not restated."
+          },
+          {
+            "id": "names-concept:951d14d126",
+            "resolution": "Transition Preconditions is named once with Transition Rules as where acceptance in a state is explained; the record lists acceptance examples only to separate the two checks."
+          },
+          {
+            "id": "names-concept:eb8ecee77d",
+            "resolution": "Transition Rules is named for acceptance and for how rules held in the state govern later inputs (upgrades); neither completeness, overlap nor rules-in-state is explained."
+          },
+          {
+            "id": "names-concept:503718fdf3",
+            "resolution": "'transition' is used as the parent's vocabulary for what an input causes; the Transitions record's content is not explained or restated."
+          }
+        ],
+        "recordFingerprint": "d359c43a54ec3d25aec0115db6426815b5046906c4fb61ca1401047a43efb650"
+      }
+    },
+    "transition-rules": {
+      "model": {
+        "meaning": "In a state machine, transition rules say, for a state and an input, whether the input is accepted and, if it is, which next state it produces or, where the model leaves a choice open, which next states it allows.",
+        "kind": "artifact",
+        "parents": {
+          "state-machines": "The parent names rules as one of the model's three parts and says that, when they are deterministic, the state is a function of the initial state and the inputs. Transition rules add what a rule set must contain for that function to be fixed: an outcome, refusal included, for every combination of state and well-formed input, and a single outcome where more than one rule's conditions match. They also add that part of the rules can itself be held in the state and changed by transitions, so the rules in force are a product of history, and replaying the inputs reproduces the state only if each input is applied under the rules that governed it."
+        },
+        "claims": [
+          "why a rule set meant to be deterministic has to define an outcome for every combination of state and well-formed input, including the combinations it refuses, and how a gap leaves implementations free to differ",
+          "how a rule set handles a state and input that the conditions of more than one rule match: conditions made mutually exclusive, a fixed precedence among rules, or an ambiguity that implementations may resolve differently",
+          "whether the transition rules stand wholly outside the state or are partly held in it, as when deployed code or parameters are stored in state and read by outer rules that stay fixed, and what changes when a transition can alter the rules that govern later ones, including which rules a replay of history has to apply"
+        ],
+        "excludes": [
+          "rules",
+          "transition-functions",
+          "transition-preconditions",
+          "valid-transitions",
+          "invalid-transitions",
+          "transition-effects",
+          "specification-ambiguity",
+          "determinism",
+          "rule-changes",
+          "protocol-upgrades",
+          "protocol-parameters",
+          "contract-state",
+          "hard-forks"
+        ],
+        "placements": {
+          "transition-rules": "The one placement is under State Machines in Foundations, where the reader arrives knowing that a model has states, inputs and rules. The exposition treats the rule set in general terms (completeness, overlapping conditions, where the rules live), names protocol examples such as deployed code and stored parameters only as cases, and does not depend on the parent's wording, so it holds wherever the concept is reached."
+        },
+        "fields": {
+          "contents": "For each combination of a state and a well-formed input, a rule whose conditions match it and the outcome it fixes: a next state, or a refusal that leaves the state unchanged. A rule set can define many combinations at once through a default (anything not otherwise allowed is refused), which counts as a defined outcome; silence does not. Where conditions of several rules can match the same combination, the set also carries how one of them is chosen: conditions written to exclude each other, or a fixed precedence among the rules.",
+          "producedBy": "Written by the protocol's designers as a specification and then realized separately in each implementation, which is where a gap or an unresolved overlap turns into implementations that behave differently. Where part of the rules is held in the state (deployed code, stored parameters), that part is written by transitions themselves, under outer rules that stay outside the state and say how the stored part may be set and how it is interpreted.",
+          "checkedBy": "Applied by each validating participant for itself to every input it processes; independent implementations agree only on the combinations the rules fix to one outcome. A rule set can be checked for gaps and overlaps by case analysis over its conditions, exhaustiveness checks in its implementation language, model checking, or running several implementations on the same inputs and comparing the states they reach.",
+          "lifetime": "Rules held outside the state change only when the software every participant runs changes, typically at an agreed activation point, so a history can be governed by a sequence of rule versions, and replaying it means applying each version over the span where it was in force. Rules held in the state change through transitions, and the state at each point carries the version in force, so a replay from the initial state reproduces the right rules as it goes; the outer rules that interpret the stored part still change only in the first way.",
+          "invariants": "A sound rule set meant to be deterministic fixes exactly one outcome for every state and well-formed input: at least one (no gap) and no more than one distinct outcome (overlaps resolved). When part of the rules is stored in the state, this has to hold for every rule version a transition can install, so the outer rules constrain what can be stored, for example by bounding a parameter to values for which the rules that read it still define an outcome.",
+          "variants": [
+            "Overlap resolution: conditions written to be mutually exclusive, so at most one rule matches any combination.",
+            "Overlap resolution: a fixed precedence, so the first or most specific matching rule wins.",
+            "Overlap left unresolved: an ambiguity that implementations may resolve differently, a defect rather than a design.",
+            "Placement of the rules: wholly outside the state, changed only by changing the software; or partly held in the state, as deployed code or parameters are, and changed by transitions under fixed outer rules."
+          ],
+          "tradeoffs": [
+            "Mutually exclusive conditions make each rule readable on its own and independent of order, but each new rule may force the conditions of others to be narrowed; a precedence lets a specific rule override a general one without rewriting it, but a rule's effective meaning then depends on the rules ranked above it that can match with it, and reordering can change behavior.",
+            "Holding rules in the state lets them change through ordinary transitions without a coordinated software change, at the cost that the rule applied to an input depends on earlier inputs, and the outer rules that govern the stored part still need the coordinated change."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditions and consequences of a specification: the conditions under which a rule set fixes one outcome for every state and well-formed input (no gap, overlaps resolved) and what follows when either fails (implementations free to differ), and the causal chain from rules held in the state to rules that depend on history to a replay that must reproduce the rules in force as well as the inputs.",
+        "whyProse": "Each claim is an argument: why totality, refusals included, is what lets independent implementations agree; how two designs and one defect handle overlapping conditions, and what each costs; why storing rules in the state makes them history-dependent and what a replay must then apply. None is an order of stages, a loop or a set of persistent modes: rule versions move forward and a reversal is another change, so state and flow add nothing. The overlap resolutions are two designs and a defect, not alternatives read across shared dimensions, so a comparison would be a table for its own sake. The one conflation, a refused combination taken for an unspecified one, is real but is settled inside the totality argument in a sentence; a distinction block would restate that sentence rather than show something prose obscures.",
+        "level": "The parent introduces rules only as one part of the model and relies on them being deterministic; whether a rule set is complete, how it chooses among matching rules, and where the rules themselves live are questions about the rule set, so they belong here. They do not belong at Determinism, which owns what the model counts as input, agreement across platforms and versions, and deliberate choice among several next states, nor at Transitions, which owns a single transition's atomicity and composition.",
+        "territory": "The record names, without explaining, Determinism, Specification Ambiguity, Invalid Transitions, Transition Preconditions, Transition Effects, Rules, Transition Functions, Valid Transitions, Rule Changes, Protocol Upgrades, Hard Forks, Protocol Parameters and Contract State. It leaves to Inputs what makes something an input and when order matters, to State what a state retains and which states are reachable, to Determinism how unmodeled inputs and implementation differences cause disagreement and when a model leaves choices open on purpose (an unresolved overlap here is accidental, not deliberate), and to State Machine Replication how ordering is separated from execution. It explains how rules change only as a modeling consequence (rules become state, replay must apply the version in force), not how changes are proposed, activated or governed.",
+        "placements": "One placement, under State Machines in Foundations; the prose states its claims in general terms with protocol cases as examples and does not lean on the parent's sentences, so the single exposition holds there and wherever the concept is reached."
+      },
+      "audit": {
+        "at": "2026-10-08T18:32:49.792Z",
+        "note": "Re-audit after repair cycle 2, in fresh context, at the only placement (transition-rules, leaf under State Machines in Foundations); every sentence re-read, not only the repaired ones. Cycle-2 findings (transition-rules-2.md) resolved: E1 the definition now reads 'In a state machine, transition rules say, for a state and an input, whether the input is accepted and, if it is, which next state it produces or, where the model leaves a choice open, which next states it allows', which no longer places the rules in the specification and so fits the outer reading, the inner reading of paragraph 6 (stored code and values in force) and the nondeterministic case Determinism owns; model meaning matches. E2 paragraph 7 now runs position in the order -> which stored version applies -> so the rewriting input can fail to commute, the correct direction (non-commutation is stated within the inner-reading sentence but is not denied for the outer reading). E3 the domain's determinism sentence is no longer restated: 'the stored rules are part of the state, so deterministic outer rules stay deterministic' keeps only the record's own reason. Cycle-2 remarks taken: 'a choice the specification did not make' removes the clash with paragraph 2's implementer choice and paragraph 5's 'resolves the overlap in effect'; 'exercised' replaces 'tested'. Cycle-1 findings (transition-rules.md D1-D7, transition-rules-b.md 1-4) still hold resolved: 'Implementations that conform', 'a router's access control list' (first-match), 'reordering a ranked list can change behavior' (model tradeoffs[0] hedged), the two readings with values included and the inner reading as outer rules plus stored code and values, 'values for which the rules that read it still define an outcome' (model invariants matches), and the refused-versus-unspecified point made once ('unlike a refused combination it is not fixed at all'). No new error introduced by the repair. Accuracy: every universal checked ('every combination' is qualified by the reachable-states sentence; 'at most one rule matches' under exclusive conditions; 'never applies' for a rule wholly shadowed under first-match; 'no transition can change' the outer rules, which sit outside the state; 'has to keep the logic of earlier versions' for software that replays from the beginning); causal direction checked in paragraphs 2, 4, 7 and 8; examples fit (frozen-account and balance rules overlap with different outcomes; first-match ACL; refusal-overrides as outcome precedence; fee rate and size limit as stored parameters; resource-limit failure as a defined result of stored-code execution). One term, one sense: outer rules / stored part / version used consistently. Parent overlap: the State Machines parent mentions rules only as one part of the model and determinism/replay in general; the record adds totality, overlap resolution and layered rules, and its replay paragraph adds which rules a replay must apply, not the parent's replay argument. Domain sentences: the definition necessarily covers 'determine which next states are valid'; the determinism sentence is no longer paraphrased. Territory: Determinism, Specification Ambiguity, Contract State, Protocol Parameters, Rule Changes, Protocol Upgrades and Hard Forks named only; the deliberate-openness contrast in paragraph 5 draws the boundary the design records (accidental vs deliberate) without explaining Determinism's claim; commuting used, not explained, consistent with Inputs, which defers rules held in state to this concept; reachability used, not explained (State); a refusal leaving the state unchanged is the outcome model claim 1 needs, not Invalid Transitions' account; the resource-limit failure is a case, not Transitions' atomicity or Determinism's resource-limit divergence; claims 1-3 each explained (P1-2, P3-5, P6-8). Representation: prose, as designed; no structure buried (no persistent modes with returns, no ordered stages, no shared-dimension alternatives). Placement: single placement valid, no positional or time-sensitive words, identity is the state-machine sense, American English, plain text. Remarks (not defects): (1) 'deterministic outer rules stay deterministic' would read less tautologically as 'the machine stays as deterministic as its outer rules'. (2) Paragraph 2's 'running several implementations ... exposes a gap only when ... the implementations fill it differently' is right about what comparison reveals; 'comparing several implementations' results' would forestall reading it as excluding a gap seen through a crash common to all. (3) Paragraphs 6, 7 and 8 each say the outer rules change only with the software participants run; the paragraph 8 instance bridges to activation, so close to repetition but not a defect. (4) 'Replay separates the layers.' is a thesis sentence, lightly announcing. (5) 'changes what later inputs are accepted or produce' reads better as 'which later inputs are accepted or what they produce'; 'Reproducing it' has a loose antecedent (the original history). (6) 'when it was signed' assumes signed inputs; 'submitted' would be general. Model remarks: checkedBy 'independent implementations agree only on the combinations the rules fix to one outcome' overclaims (they can agree on a gap by coincidence), and lifetime 'the software every participant runs' overstates; the record carries neither.",
+        "resolutions": [
+          {
+            "id": "names-concept:b596011da9",
+            "resolution": "access-control: appears only as 'a router's access control list', a case of first-match precedence; nothing about access control itself is explained."
+          },
+          {
+            "id": "names-concept:b016aecd43",
+            "resolution": "contract-state (excluded): named once ('Contract State and Protocol Parameters cover those stores'); the record says only that deployed code at an address takes part in deciding what an input to it does, which claim 3 requires, and does not explain contract storage, accounts or execution."
+          },
+          {
+            "id": "names-concept:d60689c392",
+            "resolution": "determinism (excluded): named in paragraph 5 to draw the boundary (deliberate openness vs an overlap the specification did not resolve) and in paragraph 8 as the proviso on replay; its claims (modeled inputs, cross-platform agreement, unpredictability, deliberate choice) are not explained. The domain determinism sentence is no longer restated."
+          },
+          {
+            "id": "names-concept:251477d6ae",
+            "resolution": "hard-forks (excluded): named in the list 'Rule Changes, Protocol Upgrades and Hard Forks concern how it is made'; no fork mechanics explained."
+          },
+          {
+            "id": "names-concept:e49ed23cd5",
+            "resolution": "inputs: the ordinary word used throughout as the machine's inputs; commuting is used as a consequence in paragraph 7 without defining it or saying which inputs commute, which Inputs explains."
+          },
+          {
+            "id": "names-concept:9081a91dc0",
+            "resolution": "protocol-parameters (excluded): named once; the record uses fee rate and size limit only as cases of stored values read by outer rules and does not explain how parameters are set or governed."
+          },
+          {
+            "id": "names-concept:ca345d0f48",
+            "resolution": "protocol-upgrades (excluded): named in the same list as Rule Changes and Hard Forks; activation at an agreed point is stated only as when an outer-rule change takes effect, as the design allows, not how upgrades are proposed or coordinated."
+          },
+          {
+            "id": "names-concept:00777b5d84",
+            "resolution": "resource-limits: appears only as 'a failure that undoes the execution's own effects when a resource limit is exceeded', a case of the outer rules giving stored-code execution a defined result; limits themselves are not explained."
+          },
+          {
+            "id": "names-concept:186c653ebf",
+            "resolution": "rule-changes (excluded): named in the list; the record explains rule change only as the modeling consequence the design permits (rules held in state become history-dependent, replay must apply the version in force), not how changes are proposed, activated or governed."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "rules (excluded): 'rules' is this concept's own vocabulary (a rule set's conditions and outcomes); the record does not explain the general Rules concept beyond what transition rules require."
+          },
+          {
+            "id": "names-concept:9fa754258f",
+            "resolution": "specification-ambiguity (excluded): named once ('one form of Specification Ambiguity') to classify an unresolved overlap, which claim 2 lists; ambiguity in general (sources, detection, resolution processes) is not explained."
+          },
+          {
+            "id": "names-concept:f5176de8c1",
+            "resolution": "state: the ordinary word; reachability is used in one sentence of paragraph 1 without explanation, and what a state retains is left to State."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "state-machines: the parent, used as the setting ('In a state machine'); none of its sentences is restated (checked against the full parent exposition)."
+          },
+          {
+            "id": "names-concept:503718fdf3",
+            "resolution": "transitions: the ordinary word for applied changes; atomicity, composition and the inputs-vs-difference distinction from the Transitions record are not explained; the resource-limit failure is an outcome example, not an account of atomicity."
+          },
+          {
+            "id": "depth-long:a4d808aad2",
+            "resolution": "1376 words. Each paragraph ties to a claim: P1-2 claim 1 (totality with refusals; gaps and implementation divergence), P3-5 claim 2 (overlap; exclusive conditions; precedence; unresolved ambiguity), P6-8 claim 3 (two layers and readings; what changes when transitions alter rules; which rules replay applies). Repetitions flagged by earlier audits are condensed (refused-vs-unspecified made once; domain determinism sentence removed). Remaining near-repetition (outer rules change only with software, P6-P8) bridges to activation and is a remark; the gap-finding methods sentence serves claim 1's 'free to differ' (how a gap surfaces). No background or extra examples the claims do not need; length follows three mechanism-level claims."
+          }
+        ],
+        "recordFingerprint": "70442d041f8652d6d5f173478a4a26412e6ce38cf36dfe40458cbee2ec92b78b"
+      }
+    },
+    "determinism": {
+      "model": {
+        "meaning": "Determinism is the property of a state machine, as modeled, that the state and the input it receives fix the next state, so that every correct execution of the same rules from the same state on the same inputs reaches the same result.",
+        "kind": "property",
+        "parents": {
+          "state-machines": "The parent defines determinism in one sentence (given a state and an input, is the next state fixed?), separates unpredictable inputs from nondeterministic transitions, and states that deterministic rules make state a function of the initial state and the input sequence. Determinism adds what decides whether the property holds and where it ends: that it is relative to where the model draws its input boundary, that it must hold across every implementation that executes the rules and how divergence among them surfaces, that it rules out the machine generating its own unpredictable values, and that a model may leave choices open on purpose, which replicas must then have closed."
+        },
+        "claims": [
+          "why whether a machine is deterministic depends on what the model counts as its inputs: a rule that reads a local clock, a random source or an outside system is nondeterministic as modeled, and becomes deterministic when that value is made part of the input or the dependence is removed",
+          "why, wherever independent executions of the same rules must agree, determinism has to hold across every implementation, platform and version that executes them, not only within one program, and how a difference among them, such as in arithmetic, iteration order or resource limits, shows up as executions that disagree once an input exercises it",
+          "why a deterministic machine cannot by itself produce a value its participants cannot predict, since anyone holding the state and the inputs can compute it, and what that means for rules that need an unpredictable choice",
+          "why a model can deliberately leave several next states possible, leaving a choice open to an implementation or the environment, and why replicas that must reach the same state need that choice fixed by the rules or carried in the input"
+        ],
+        "excludes": [
+          "deterministic-execution",
+          "non-deterministic-execution",
+          "oracle-problem",
+          "verification",
+          "commit-reveal",
+          "transition-rules",
+          "inputs",
+          "state-machine-replication"
+        ],
+        "placements": {
+          "determinism": "The only placement, a leaf under State Machines in Foundations. The exposition explains the property on its own terms for any state machine, so it reads as complete with nothing beneath it and does not depend on the parent's synthesis beyond the vocabulary of state, input and rules; it names no sibling position and no domain-specific context."
+        },
+        "fields": {
+          "statement": "A machine is deterministic when its transition is a function of state and input: for each state and each input, the rules fix one outcome. The property belongs to the machine as modeled, with a stated input boundary, and it is only useful to independent executors when every implementation of the rules computes that same function.",
+          "establishedBy": [
+            "rules that read nothing but the state and the input: any value from a local clock, random source or outside system is either removed from the rules or recorded as part of the input, so every executor uses the same recorded value",
+            "every implementation, platform and version that executes the rules computing the same function, including where arithmetic, the order of iterating over collections, and resource limits could otherwise differ",
+            "each choice a model deliberately leaves open being closed, for replicated execution, either by the rules or by a value carried in the input"
+          ],
+          "violatedBy": [
+            "a rule that consults a value outside the modeled state and input, such as a local clock reading, a random draw or a query to another system, which different executors obtain differently",
+            "implementations that differ in rounding, in the order they visit an unordered collection, or in where they run out of a resource such as memory or stack depth, a difference that stays latent until some input exercises it and then appears as executions that disagree on the resulting state",
+            "a choice the model leaves open being resolved independently by each executor"
+          ],
+          "confusions": [
+            "Deterministic is not the same as predictable by everyone: a deterministic result is predictable by anyone holding the state and the inputs, and unpredictable only to someone missing an input, so a value derived from state alone (a hash of it, for instance) is not a source of unpredictability.",
+            "A deliberately nondeterministic model, which leaves a choice open as an abstraction, is not an accidental gap in a rule set; the gap and how overlapping rules are resolved belong to transition rules and are only named.",
+            "Determinism as a property of the specified rules is not the same as each program being repeatable on its own: one program can return the same answer every run while disagreeing with another implementation of the same rules."
+          ],
+          "variants": [
+            "dependence on the environment: the rule reads a value the model does not count as input",
+            "divergence among implementations: the rules are deterministic as written, but executions of them compute different functions",
+            "deliberate openness: the model itself permits several next states"
+          ],
+          "tradeoffs": [
+            "Recording an environmental value as input makes the transition deterministic but moves the question to whoever supplies that input: what it reports and, for a value meant to be unpredictable, whether that party can foresee or steer it.",
+            "Leaving a choice open keeps a specification abstract and lets implementations or the environment decide, but replicas that must agree can no longer use the model as written: the choice has to be fixed by the rules or carried in the input."
+          ],
+          "relation": "As a relation, transitions are a set of (state, input, next state) triples; the machine is deterministic when that set is single-valued in its first two components, so next = f(state, input). A nondeterministic model permits several next states for some (state, input) pair; determinizing it means adding the selecting value to the input or a fixed selection to the rules."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Four conditional arguments about one property: its dependence on the model's input boundary, its scope across implementations, its limit (no self-generated unpredictability, with the exposure that leaves), and deliberate nondeterminism in models and what replication requires of it. Each claim is reasoning about conditions and consequences, not an order, branch, loop, persistent states or alternatives read across shared dimensions.",
+        "whyProse": "Each claim turns on a condition (as modeled, across implementations, to someone holding the inputs, where replicas must agree) that a block would strip from its sentence. The sources of nondeterminism are three variants with one consequence each, which a sentence carries; a flow of them would add nothing. The only real conflation, unpredictable inputs versus nondeterministic transitions, is already drawn as a distinction by the parent and must not be redrawn; the confusions this concept adds (deterministic versus predictable by all; deliberate openness versus an accidental gap) are each a clause inside a claim's argument, and the second names a sibling's territory, so a distinction block would either restate the parent or draw a sibling's boundary as this concept's content. There is no process, cycle, state model, tension pair or comparison in the meaning.",
+        "level": "The parent only names the property and its main consequence. What makes it hold or fail, its scope across implementations, its limit on unpredictability and deliberate nondeterminism in models are questions about the property itself, so they belong at this concept rather than at State Machines, Transition Rules (which owns the rule set's completeness and conflicts) or State Machine Replication (which owns how replicas order and execute inputs).",
+        "territory": "Draws no sibling's or reserved relationship. Inputs owns what is receivable and when order matters; this concept says only that a value counts toward determinism when the model records it as input. Transition Rules owns gaps, overlapping conditions and rules held in state; this concept names a gap only to separate it from deliberate openness. State Machine Replication owns ordering versus execution and client trust; this concept says only that replicas need open choices fixed. Deterministic and Non-Deterministic Execution own how execution environments enforce or relax determinism; this concept names sources of divergence, not enforcement techniques. Oracle Problem, Commit-Reveal and Verification are named at most, never explained. The parent's distinction and its replay, audit and reproduction consequences are not restated.",
+        "placements": "One placement, a leaf. Prose that explains the property in general terms for any state machine holds there and reads as complete, with no positional or domain-specific reference."
+      },
+      "audit": {
+        "at": "2026-10-08T18:45:06.221Z",
+        "note": "Re-audit after repair cycle 1 (findings determinism.md and determinism-b.md, agreeing). Both findings are resolved. (1) Refinement statement: paragraph 4 now says what is shown for every run the model allows holds for an implementation whose runs are all model runs; resolving each open choice in an allowed way yields only allowed steps, which carries over a safety property (glossed as violated, if at all, at a particular step); a property resting on a fairness condition also needs the resolutions to meet it, with the newest-first scheduler starving an older request as the counterexample. Each clause is accurate, and the causal direction is right. (2) 'open' now has one sense: the input-carried case reads 'keeps any one resolution out of the rules', and the accidental case reads 'leaves a combination unsettled by accident', with no second sense of 'open'. The divergence sentences are merged and the 'first matching entry' example and 'their own reading' are gone. Repair-introduced errors: none found. The rewritten closing sentence on the accidental gap ('needs an outcome fixed for that combination as well, but what was shown of the model need not cover what an implementation does there') is hedged and true, since an implementation step at a gap is not a model step. It states Transition Rules' requirement only as a conclusion, in one clause, reusing the paragraph 2 wording that names the gap as Transition Rules' term, so it is a reference, not an explanation. Whole record re-read against every criterion. Parent overlap (one placement, parent State Machines): the definition necessarily matches the parent's one-line test and adds the outside-value clause. The parent's distinction between unpredictable inputs and nondeterministic transitions is not redrawn, and neither are its replay, audit and reproduction consequences. The domain sentence (independent processes from the same state and inputs reach the same result) is not restated: paragraph 4 makes the opposite, new point that open choices break it. Siblings: State, Inputs, Transitions and Transition Rules are not explained. Paragraph 2's latency of divergence is this concept's own claim 2 (implementations of rules that define one outcome), divided by angle from Transition Rules' gap latency. State Machine Replication's ordering and execution split, client trust and reads are untouched. Excludes (Oracle Problem, Deterministic Execution, Commit-Reveal, Transition Rules, Inputs) are each named only. Structure: prose as designed. The three divergence sources and the three openness examples are variants with one consequence each, so no buried flow, state model or comparison. Accuracy re-verified: FMA contraction, extended intermediates and libm rounding; hash-table order by library, version or seed; resource-limit abandon-versus-apply; producer-set block timestamp; derived randomness foreseeable and grindable; LIFO starvation. Placement: one leaf, no positional or time-sensitive words. Identity: the state-machine property. American English. Depth: 1,226 words, under the long threshold, with each paragraph tied to one claim in order. Remarks (not defects): 'after which they hold different states' (paragraph 2) restates 'part' and could be read as permanent, though reconvergence is possible in principle. The safety carry-over leaves machine closure of the fairness condition implicit, which is standard. The gloss on safety property touches the unauthored Safety concept in one clause only. 'An implementation ... resolves each open choice' sits slightly awkwardly beside the network example, whose choice belongs to the environment.",
+        "resolutions": [
+          {
+            "id": "names-concept:f766a1146b",
+            "resolution": "Commit-Reveal is named once as a scheme addressing who can see or influence a recorded unpredictable value. Its mechanism (commit then reveal) is not described."
+          },
+          {
+            "id": "names-concept:6bd1f3b071",
+            "resolution": "Deterministic Execution is named once as the subject that covers how execution environments make arithmetic, ordering and limits part of the rules. No technique is explained."
+          },
+          {
+            "id": "names-concept:97142102b8",
+            "resolution": "'execution environments' appears only as a generic phrase in the clause naming Deterministic Execution. It is not explained."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "'input' is used throughout as the parent's generic vocabulary. Inputs' territory (receivability, the channel versus carried identity, commutation) is not explained, and 'choose among orderings' concerns steering derived randomness, not commutation."
+          },
+          {
+            "id": "names-concept:f2abc57f89",
+            "resolution": "Oracle Problem is named once, as what the question of a recorded value's worth becomes for facts about the outside world. It is not explained."
+          },
+          {
+            "id": "names-concept:00777b5d84",
+            "resolution": "'Resource limits' is generic usage: one sentence on implementations exhausting memory or stack differently, which is claim 2's own example. The Resource Limits concept is not explained."
+          },
+          {
+            "id": "names-concept:f5176de8c1",
+            "resolution": "'state' is generic vocabulary. State's territory (erased histories, reachability, shared versus private state) is not explained."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "'state machine' appears only in the definition, as the parent's vocabulary. The parent's content is not restated."
+          },
+          {
+            "id": "names-concept:eb8ecee77d",
+            "resolution": "Transition Rules is named once to separate a gap from rules that define one outcome. The closing sentence on an accidental gap states only, in one hedged clause, that it needs an outcome fixed and that the model's results need not cover it. Why completeness is required and how gaps make implementations differ are not explained."
+          },
+          {
+            "id": "names-concept:503718fdf3",
+            "resolution": "'transition' is generic vocabulary (applying, abandoning, checking a transition). Transitions' atomicity and intermediate-state content is not touched."
+          },
+          {
+            "id": "absolutes:e4a9c4bd55",
+            "resolution": "Five absolutes, each checked. 'cannot by itself produce a value its participants cannot predict' (two uses) follows from the definition: anyone holding the state and inputs computes the same value, and 'by itself' excludes values received as input. 'the holders of the state cannot foresee' states a requirement, not a claim. 'Replicas that must reach the same state cannot rely on that freedom' holds, because independent resolutions can diverge, as the next sentence shows. 'always serves the newest request' describes the counterexample policy, not a claim. All hold."
+          }
+        ],
+        "recordFingerprint": "a320661f760ef9ba892c998a270e833d5ea05ad91ea40b351c2663103743fc0d"
+      }
+    },
+    "state-machine-replication": {
+      "model": {
+        "meaning": "State machine replication runs copies of one deterministic state machine on several replicas and gives every replica the same agreed sequence of inputs, so that replicas that apply the same prefix of the sequence hold the same state and the service keeps working while some replicas fail.",
+        "kind": "mechanism",
+        "parents": {
+          "state-machines": "The parent establishes only that, with deterministic rules, the state is a function of the initial state and the input sequence, and that state machine replication is built on this. This concept adds how the property is put to work across replicas: ordering is separated from execution, so validity is decided by every replica at execution rather than by the ordering; a client must decide which replica's reply to rely on, depending on what replicas are assumed to do when faulty; and replicas that agree on the sequence can still be at different points in it, so a read has to be placed in the sequence when it must reflect every earlier write."
+        },
+        "claims": [
+          "how state machine replication separates ordering inputs from executing them, so that the ordering can sequence inputs it does not interpret, and why every correct replica must then reach the same verdict on ordered inputs that turn out to be invalid",
+          "how a client of a replicated machine decides which result to rely on: a reply from one replica can suffice when replicas are assumed only to crash, while under arbitrary faults it needs evidence from more replicas than may be faulty, such as matching replies",
+          "why replicas that apply the same sequence of inputs can answer the same query differently at the same moment, since each may have applied a different prefix of it, and how a read is placed in the sequence when it must reflect every write completed before the read began"
+        ],
+        "excludes": [
+          "consensus",
+          "agreement",
+          "sequencing",
+          "transaction-sequencing",
+          "fault-models",
+          "byzantine-behavior",
+          "quorums",
+          "consistency",
+          "data-replication",
+          "failures",
+          "determinism",
+          "transitions"
+        ],
+        "placements": {
+          "state-machine-replication": "The only placement, under State Machines, whose last paragraph names state machine replication as built on replayable input sequences. The exposition explains the replication mechanism itself (ordering separated from execution, the client's choice of reply, the position of reads) without depending on that sentence, and holds for replicated services and blockchains alike because it names the ordering and fault assumptions only as conditions."
+        },
+        "fields": {
+          "sequence": [
+            "Clients submit inputs (requests or transactions) to the replicated service.",
+            "An ordering component, which may be a consensus protocol run among the replicas or a separate sequencer, fixes one sequence of inputs without needing to interpret them.",
+            "Each replica applies the inputs whose positions are fixed, in sequence order, to its own copy of the state, checking each against the rules in the state it has reached; an input the rules refuse is still a position in the sequence and is refused identically by every correct replica.",
+            "Replicas reply to clients with results once the ordering has fixed the input's position (a design whose replicas reply from a tentative order has the client require more); the client accepts a result according to the fault assumption: one reply from a replica that has applied the input under crash faults, where replicas that recover keep everything they had acted on, or matching authenticated replies from more replicas than may be faulty under arbitrary faults.",
+            "Reads are answered from a replica's current prefix, or are placed in the sequence (ordered like an input, or answered only once the replica has applied everything fixed when the read arrived, a position that under arbitrary faults it must learn in a way faulty replicas cannot falsify) when they must reflect every earlier write."
+          ],
+          "actors": [
+            "Clients, which submit inputs and decide which replies to rely on.",
+            "The ordering component, which fixes the sequence and need not interpret inputs.",
+            "Replicas, each executing the same rules over its own copy of the state, some of which may be faulty."
+          ],
+          "inputs": "Client inputs in arbitrary arrival order, the agreed sequence that the ordering produces, the shared initial state and the rules.",
+          "outputs": "Each replica's state after the prefix it has applied, the result of each input (including refusals of invalid ones), and replies to clients and to read queries.",
+          "assumptions": [
+            "The rules are deterministic across every replica's implementation (owned by determinism; named only).",
+            "All replicas start from the same initial state.",
+            "The ordering delivers the same sequence to every correct replica (owned by consensus and agreement; named only).",
+            "No more replicas are faulty than the design tolerates, and the client's acceptance rule matches the fault assumption (crash faults with recovered replicas keeping what they had acted on, or arbitrary faults with authenticated replies; the fault models are named only)."
+          ],
+          "failures": [
+            "Replicas that reach different verdicts on an ordered input, through a rule gap or an implementation difference, diverge from that position onward even though the sequence is shared.",
+            "A client that accepts a single reply under arbitrary faults can be given a result no correct replica produced.",
+            "A read answered from a lagging replica's prefix returns a state that omits writes that had already completed, which matters when the read must reflect every earlier write.",
+            "If the ordering lets through inputs that the rules will refuse, the sequence still carries them; filtering spam or malformed inputs is a separate, optional check before ordering."
+          ],
+          "invariants": [
+            "Any two correct replicas that have applied the same prefix of the sequence hold the same state.",
+            "Every correct replica reaches the same verdict, accept or refuse, on each ordered input."
+          ],
+          "tradeoffs": [
+            "Separating ordering from execution lets the ordering run without the state or the rules, but validity can then be known only after ordering, so invalid inputs occupy the sequence.",
+            "A single reply is cheap and fast but sufficient only under crash faults; matching authenticated replies from more replicas than may be faulty cost more messages and their authentication but tolerate arbitrary faults.",
+            "A read answered from a local prefix is fast but may be stale; a read placed in the sequence reflects every earlier write but costs ordering latency or a wait for the replica to catch up."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A mechanism whose three claims each turn on keeping apart notions a reader is likely to merge: an input being placed in the agreed sequence, every replica having applied it, and the rules having accepted it. The claims explain why each gap exists (validity decided at execution, replicas at different prefixes) and what the client and the reader do about it.",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Show as one chain that an input ordered in the sequence is not thereby applied by every replica, and is not thereby accepted by the rules: Ordered in the sequence ≠ Applied by every replica ≠ Accepted by the rules.",
+            "whyNotProse": "The three notions are commonly merged into one word, 'committed', and the reader carries that merger into every later paragraph: reading the invalid-input claim as a contradiction and the stale-read claim as a fault. Prose separates them one claim at a time, in different paragraphs; the chain fixes all three as distinct before the prose explains each gap, which prose spread across the record would obscure."
+          }
+        ],
+        "division": "The prose explains why ordering is separated from execution and why validity, which can depend on an input's position, must be decided identically by every replica at execution; how a client chooses whose reply to rely on under crash and arbitrary faults; and why replicas at different prefixes answer differently and how a read is placed in the sequence. The distinction shows only that ordered, applied by every replica and accepted are three different facts; the prose must not restate the chain as a list, and the chain carries no mechanism.",
+        "level": "The parent names state machine replication only as built on replayable input sequences and draws no line between ordering, application and acceptance; those lines exist only once the machine is replicated and ordering is split from execution, so the distinction belongs here, not at State Machines, and no sibling concerns replicas or clients.",
+        "territory": "The chain is about the replicated mechanism's positions and verdicts, not about how the order is agreed (consensus, agreement and sequencing are named only), not about how a single transition takes effect (transitions, named only), and not about consistency models (named only, as what a read must satisfy). It does not restate the parent's distinction between unpredictable inputs and nondeterministic transitions, and leaves why replicas' implementations must agree to determinism.",
+        "placements": "There is one placement, under State Machines. The distinction and the prose hold for any replicated machine, a replicated service or a blockchain, because they state the ordering and fault assumptions as conditions rather than assuming one protocol."
+      },
+      "audit": {
+        "at": "2026-10-08T19:03:22.404Z",
+        "note": "Re-audit after repair cycle 2, in fresh context, at the only placement (state-machine-replication, leaf under State Machines in Foundations). Every sentence was read against criteria 1-6, including those the repair did not touch. Cycle-2 findings resolved: D1, the divergence sentence no longer asserts sufficiency ('Such a split can arise when an input reaches a case that the Transition Rules leave open and implementations fill differently, or a case the rules define but implementations compute differently'), consistent with the Transition Rules and Determinism records; D2, the read requirement is now the umbrella ('answered at a point in the sequence that follows every such write'), so the ordered read's 'a place in the sequence' keeps its narrow sense and the read-index and belief-checking methods meet the requirement without contradiction. Remarks taken: the credit example is conditioned ('unless inputs placed between them credit the account enough to cover it'); the ordered-read inference now states 'had its position, and every position before it, fixed before it completed', which with in-order execution makes 'lands after all of them' valid even where an ordering fixes positions out of order; the repeated crash-rule clause is cut; 'Equal prefixes give correct replicas equal states' restores 'correct'. Model sequence[2] (applies inputs whose positions are fixed), failures[2] (writes that had already completed) and failures[3] (inputs the rules will refuse) are corrected. Cycle-1 findings still hold: the fixed-position assumption governs both reply rules with the tentative-reply caveat unquantified; replies are authenticated as coming from the replica they name; the transferable-signature sentence stays cut; the stale read says 'can return'; equal states rest on initial state and one function, one sequence on the ordering under its fault model and, in many designs, the threshold; crash rule covers recovery with durable state. No new error introduced by the repair: the fee outcome is now 'a transition that takes a fee in place of the requested effect', not a refusal; the cost sentence ('more messages, each authenticated, and a wait for the slowest of the replicas it counts') is accurate. Parent overlap: no sentence restates State Machines' replay paragraph or its distinction; the definition adds correct replicas, prefixes and the fault bound to the domain sentence. Territory: Consensus, Determinism, Transition Rules, Byzantine Behavior, Consistency and the fault model are named, not explained; the replicated outcome for invalid inputs (error result, fee) stays on this side of Transition Rules' completeness claim; authentication is named only. Structure: the Ordered / Applied by every correct replica / Accepted chain is a real conflation ('committed') and the prose explains each gap without listing it. Depth follows the three claims; one placement, no positional or dated words, American English, plain text. Remarks (not defects): (1) the credit example's exception names only inputs between the transfers; a credit placed before both also matters under a fixed-amount reading, so 'unless other inputs credit the account enough before it' would be exact if touched; (2) 'spare the sequence some invalid inputs' after 'malformed inputs or spam' is true of the malformed part, though spam need not be invalid; (3) 'The ordering only has to settle which input occupies which position' is relative to interpretation, the ordering also delivers the sequence as the next paragraph says; (4) model meaning says 'replicas that apply the same prefix' without 'correct', and model parents keeps the narrow 'a read has to be placed in the sequence'; the record is right in both places.",
+        "resolutions": [
+          {
+            "id": "names-concept:67931e7014",
+            "resolution": "Byzantine Behavior is named once ('as Byzantine Behavior allows') to identify the arbitrary-fault assumption; what such replicas do is not explained beyond the client consequence (a result no correct replica produced), which is this record's claim 2."
+          },
+          {
+            "id": "names-concept:87ef760148",
+            "resolution": "Consensus is named once as one form the ordering may take ('may be a Consensus protocol run among the replicas'); how agreement is reached is not explained."
+          },
+          {
+            "id": "names-concept:eb7ef7252d",
+            "resolution": "Consistency is named as what specifies what a read must satisfy ('which Consistency models specify'); no model is defined or explained. The read requirement is claim 3's own."
+          },
+          {
+            "id": "names-concept:d60689c392",
+            "resolution": "Determinism is named as the subject of implementations computing the rules as one function; the divergence sentence names implementation differences as a cause in one clause without Determinism's catalog of arithmetic, iteration order or resource limits."
+          },
+          {
+            "id": "names-concept:86dd2d4d79",
+            "resolution": "Matches the generic phrase 'survives the failure of as many replicas as the design tolerates'; Failures as a concept is not discussed or explained."
+          },
+          {
+            "id": "names-concept:b5d73aa502",
+            "resolution": "Matches 'the fault assumption allows to be faulty'; fault assumptions are used as the condition of the client rule, not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Matches 'under its own fault model'; fault models are named as the condition the ordering's guarantee rests on, with fault classes not explained (crash and arbitrary appear only as the two cases claim 2 names)."
+          },
+          {
+            "id": "names-concept:e49ed23cd5",
+            "resolution": "Generic use of 'inputs' throughout as what the machine applies; the Inputs sibling's claims (input-set check, sender dependence, commuting inputs) are not explained. 'well formed' and 'malformed' are used only to separate pre-ordering checks from the execution verdict."
+          },
+          {
+            "id": "names-concept:de98d97829",
+            "resolution": "False positive from 'which the ordering guarantees under its own fault model' (verb use); ordering guarantees as a concept are not explained, and total order is not described."
+          },
+          {
+            "id": "names-concept:f5176de8c1",
+            "resolution": "Generic use of 'state' as each replica's copy; the State sibling's claims (erased histories, reachability, shared versus private state) are not explained."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "Matches 'deterministic state machine' in the definition and the concept's own title; the parent's replay property is not restated, and its distinction is not repeated."
+          },
+          {
+            "id": "names-concept:f60e2f840b",
+            "resolution": "Transition Rules is named as the source of a case left open; the record says the rules must fix one outcome for invalid ordered inputs from the replicated angle (error result, fee) without explaining completeness, precedence or rules held in state."
+          },
+          {
+            "id": "names-concept:e2e26982d7",
+            "resolution": "Matches 'a transition that takes a fee in place of the requested effect', a generic use naming one outcome; how a transition takes effect is not explained."
+          },
+          {
+            "id": "absolutes:77ae75f933",
+            "resolution": "'which the ordering guarantees under its own fault model' is conditioned on that model and, in many designs, the threshold; 'cannot in general know' is hedged; 'cannot see the state the input will meet' holds for any check made before the position is known; 'cannot falsify' states a requirement on how the last fixed position is learned; 'The guarantee concerns equal prefixes, not equal moments' is scoped to the definition's guarantee. 'must fix one outcome' and 'has to reach the same verdict' are requirements of the replicated design, consistent with Transition Rules."
+          }
+        ],
+        "recordFingerprint": "1ce44c08d772aaaf0221698a2df7c2e2cf5368e18a33dc767b867c565687c29e"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-16T12:48:15.966Z",
+    "note": "Group audit of state-machines (owned: state, inputs, transition-rules, determinism, state-machine-replication; transitions dual-role, fixed), read side by side against the plan and the parent. Boundaries hold: gaps and overlapping rules are explained only in Transition Rules, which Determinism and State Machine Replication name to separate implementation divergence and invalid-input verdicts from them; open choices are explained only in Determinism, which Transition Rules names as a boundary; commuting is explained only in Inputs, and Transition Rules uses the term in the same sense for a rule-rewriting input; how stored rules govern later inputs is left by Inputs to Transition Rules; equal prefixes and stale reads are developed only in State Machine Replication, while State uses one sentence (behind rather than in disagreement) to define what agreement on shared state is owed about, which its claim needs. Two repetitions follow the claims rather than copying: (1) Inputs (channel and sender authorization) and Determinism (clock, random source, outside system) both conclude that a value outside state and input must be recorded in the input, each for the case the plan assigns it, with Inputs grounding its point in determinism rather than re-explaining it; (2) Inputs and State Machine Replication both use two spends that a balance covers singly but not together, Inputs to show state-dependent non-commutation and State Machine Replication to show that an ordering cannot know validity at the position it assigns; the points differ. No contradictions: valid/accepted/refused, gap, replay, deterministic, commute and shared state carry one sense across members and agree with Transitions (refusal leaves the state as it was; a charged failure is a transition). No template convergence: definitions open differently (State is, An input is, In a state machine transition rules say, Determinism is the property, State machine replication runs), forms differ (prose plus distinction in State, a leading distinction in Inputs, prose only in Transition Rules and Determinism, a three-term distinction chain in State Machine Replication), paragraph counts differ, and no shared enumeration pattern. Several members state a cost or trade-off for each design option; that follows claims that ask how designs choose, not a cloned arc. Zero group signals were printed, so there are no resolutions.",
+    "resolutions": [],
+    "records": {
+      "state": "9669d0b144e6deb05981522ed9332fa0e83b73d69647312f52196a74bc29fc58",
+      "inputs": "d359c43a54ec3d25aec0115db6426815b5046906c4fb61ca1401047a43efb650",
+      "transition-rules": "70442d041f8652d6d5f173478a4a26412e6ce38cf36dfe40458cbee2ec92b78b",
+      "determinism": "a320661f760ef9ba892c998a270e833d5ea05ad91ea40b351c2663103743fc0d",
+      "state-machine-replication": "1ce44c08d772aaaf0221698a2df7c2e2cf5368e18a33dc767b867c565687c29e"
+    }
+  }
+}
