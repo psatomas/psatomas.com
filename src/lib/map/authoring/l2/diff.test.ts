@@ -99,3 +99,18 @@ test("another group's plan, a missing audit, a changed parent or an unexpected r
   missingFile.changedFiles = missingFile.changedFiles.filter((file) => !file.endsWith("g1.json"));
   assert.match(validateL2Diff(missingFile).problems.join(), /the run's group file .*g1\.json is unchanged/);
 });
+
+test("a concept owned by one run group and placed in another is judged only by its owner's plan", () => {
+  const both = run();
+  const s = record("s");
+  both.head = { ...both.head, content: [...both.head.content, s] };
+  both.groups = ["g1", "g2"];
+  both.headPlans[1].concepts = { s: { ...work("s", ["what shared things share"]), audit: { at: "t", note: "judged", resolutions: [], recordFingerprint: contentFingerprint(s) } } };
+  const problems = validateL2Diff(both).problems.join("\n");
+  assert.doesNotMatch(problems, /s: no concept work in g1/);
+  assert.match(problems, /t: no concept work in g2/);
+
+  const blocked = run({ blockB: true });
+  blocked.head = model([record("a"), record("b")]);
+  assert.match(validateL2Diff(blocked).problems.join(), /b: its design blocks it, yet it has a record/);
+});
