@@ -385,4 +385,8 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "evm",
   "wasm",
   "zkvms",
+  "rules",
+  "participants",
+  "interactions",
+  "assumptions",
 ];

@@ -1,0 +1,574 @@
+{
+  "version": 1,
+  "group": "protocols",
+  "domain": "foundations",
+  "parentConceptId": "protocols",
+  "basis": {
+    "membership": "a2655574ffd8e08685106385c946a1edf01ee0993ce38d44221fefeb15d799e6",
+    "parents": {
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea",
+      "protocol-design-lifecycle": "5d9f5ed13feaeb943e640c41b07243a86c13837527d859e8c118e40fb8039b76",
+      "protocol-specification": "0eb9a29747a38636d872f106037b60ddd32ef1a074f382c7ad3017c3d705a9a1",
+      "protocols": "b6ccf6974aae560740afd1b338a9391a900726384574229834e4b360d2f00d75"
+    },
+    "fixed": {
+      "protocol-properties": "4aefaaedee3b4d80e442a5de13b38e0a82c16cb543f38478e113ee474d9224fc",
+      "state": "9669d0b144e6deb05981522ed9332fa0e83b73d69647312f52196a74bc29fc58"
+    },
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "rules",
+      "placementId": "rules",
+      "standing": "owned",
+      "claims": [
+        "the difference between validity rules, which a validating participant applies for itself to decide what to accept or reject, and rules that prescribe what a correct participant does among valid options (when to act, which candidate to choose, what to forward), and why a protocol needs both",
+        "which rules other participants can enforce: a violation visible in a message or a state change can be detected by a participant that sees it and holds what checking it requires, and refused or answered with evidence, while a rule whose violation others cannot observe, often one about timing, withholding or a private choice, has to be backed by incentives, by assumptions about participants, or by a mechanism that makes the violation observable",
+        "why rules that participants must apply identically tend to reject whatever they do not explicitly allow, while rules between loosely coupled systems often tolerate what they do not recognize, and what each stance costs in extensibility and agreement"
+      ],
+      "excludes": [
+        "transition-rules",
+        "consensus-rules",
+        "valid-transitions",
+        "determinism",
+        "specifications",
+        "specification-ambiguity",
+        "message-validation",
+        "incentives",
+        "roles",
+        "assumptions",
+        "participants"
+      ]
+    },
+    {
+      "conceptId": "participants",
+      "placementId": "participants",
+      "standing": "owned",
+      "claims": [
+        "what makes a party a participant: acting in a role through an identifier the protocol recognizes, such as a key or an account, for some roles qualified or weighted by stake, and why one real-world party can act as many participants or several parties as one",
+        "how protocols classify participants by assumed behavior, into classes such as correct, faulty and self-interested, and why a guarantee is stated for a class of participants rather than for all of them",
+        "where participation ends: parties a protocol affects or depends on without giving them a role, such as users served through intermediaries, operators of underlying infrastructure and external systems, and what a protocol can and cannot promise them"
+      ],
+      "excludes": [
+        "roles",
+        "byzantine-behavior",
+        "strategic-behavior",
+        "rational-behavior",
+        "fault-models",
+        "sybil-attacks",
+        "accounts",
+        "stake",
+        "partial-knowledge",
+        "adversaries",
+        "rules",
+        "processes",
+        "trusted-parties"
+      ]
+    },
+    {
+      "conceptId": "interactions",
+      "placementId": "interactions",
+      "standing": "owned",
+      "claims": [
+        "how an interaction is shaped by who must act, in what order and how many must respond, from a two-party exchange to a round that waits for a threshold of responses, and how that shape decides when the interaction is complete",
+        "what happens when an interaction stops partway: why a party that stops responding can leave the others unable to tell whether it completed, and how protocols bound the waiting and its consequences with deadlines, fallback paths and steps that are safe to repeat",
+        "why the order of moves within an interaction matters: a party that acts after seeing what others committed to can exploit it or walk away, and how deposits, deadlines and commitments made before information is revealed limit that advantage",
+        "how interactions affect one another when they run concurrently or one triggers another, and why properties shown for each interaction alone may not hold for their combination"
+      ],
+      "excludes": [
+        "request-response",
+        "quorums",
+        "commit-reveal",
+        "front-running",
+        "composability",
+        "partial-failures",
+        "failures",
+        "communication",
+        "state",
+        "rules",
+        "latency"
+      ]
+    },
+    {
+      "conceptId": "assumptions",
+      "placementId": "assumptions",
+      "standing": "owned",
+      "claims": [
+        "what makes a condition an assumption rather than a rule: something about participants, the environment or the primitives a protocol uses that the protocol relies on but does not enforce, and often cannot observe from inside",
+        "how assumptions are stronger or weaker and what the difference buys: stronger assumptions can allow simpler designs, better performance or stronger guarantees while widening the conditions under which those guarantees fail",
+        "what happens when an assumption is violated: why the violation is often silent to the protocol, and why it matters which guarantees each assumption supports, since a design can keep some guarantees through a violation that suspends others or breaks them for good"
+      ],
+      "excludes": [
+        "fault-models",
+        "trust-assumptions",
+        "threat-models",
+        "fault-assumptions",
+        "security-assumptions",
+        "cryptoeconomic-assumptions",
+        "protocol-properties",
+        "rules"
+      ]
+    },
+    {
+      "conceptId": "state",
+      "placementId": "state-in-protocols",
+      "standing": "owned-elsewhere"
+    },
+    {
+      "conceptId": "protocol-properties",
+      "placementId": "protocol-properties-in-protocols",
+      "standing": "dual-role"
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "rules": {
+      "model": {
+        "meaning": "A protocol's rules are the shared conditions and prescriptions its participants act under: some decide what any participant should accept, others say what a correct participant does among the options those allow, and they differ in whether a violation can be seen and so enforced by others.",
+        "kind": "institutional",
+        "parents": {
+          "protocols": "The parent treats the rules as one shared set that each party can check others' actions against. Rules adds that the set holds two different kinds (acceptance conditions and prescribed conduct), that only rules whose violation shows in a message or state change can be checked and rejected by others, that the rest must be backed by incentives, assumptions or a mechanism that exposes violations, and that a rule set takes a stance on input it does not recognize.",
+          "protocol-specification": "The parent makes the specification the authoritative description of the rules, precise enough for identical behavior. Rules adds which rules must be applied identically (the acceptance conditions every participant checks, and the prescriptive rules that agreement or progress depends on) and which leave implementations latitude without splitting them (choices among valid options whose divergence affects only efficiency or fairness), and that a rule set strict about unrecognized input trades extensibility for agreement while a tolerant one trades the reverse."
+        },
+        "claims": [
+          "the difference between validity rules, which a validating participant applies for itself to decide what to accept or reject, and rules that prescribe what a correct participant does among valid options (when to act, which candidate to choose, what to forward), and why a protocol needs both",
+          "which rules other participants can enforce: a violation visible in a message or a state change can be detected by a participant that sees it and holds what checking it requires, and refused or answered with evidence, while a rule whose violation others cannot observe, often one about timing, withholding or a private choice, has to be backed by incentives, by assumptions about participants, or by a mechanism that makes the violation observable",
+          "why rules that participants must apply identically tend to reject whatever they do not explicitly allow, while rules between loosely coupled systems often tolerate what they do not recognize, and what each stance costs in extensibility and agreement"
+        ],
+        "excludes": [
+          "transition-rules",
+          "consensus-rules",
+          "valid-transitions",
+          "determinism",
+          "specifications",
+          "specification-ambiguity",
+          "message-validation",
+          "incentives",
+          "roles",
+          "assumptions",
+          "participants"
+        ],
+        "placements": {
+          "rules": "Under Protocols the reader arrives knowing rules are shared and apply to roles; the exposition refines that into kinds of rule, their enforceability and their stance on the unrecognized, which holds for any protocol, executed automatically or followed voluntarily, and names participants, assumptions and incentives without explaining them.",
+          "rules-in-protocol-specification": "Under Protocol Specification the same distinctions say what a specification has to pin down (acceptance conditions applied identically, prescriptive rules that agreement or progress depends on, a stance on unrecognized input) and where implementations may differ (choices among valid options whose divergence affects only efficiency or fairness); nothing in the exposition depends on that context, and specifications and their ambiguity are only named."
+        },
+        "fields": {
+          "distinctions": [
+            "Validity rules (acceptance conditions: what a participant accepts or rejects, such as a well-formed message, a correctly signed transaction, a block that follows from the prior state) versus prescriptive rules (conduct among valid options: when to propose, which valid candidate to build on, what to relay, how long to wait). Validity alone admits many outcomes and drives no progress; prescription alone cannot be checked, so a correct participant could not tell valid from invalid input.",
+            "Enforceable versus unenforceable rules: a violation that shows in a message or state change can be detected and refused by a participant that sees it and holds what checking requires (the prior state, the keys, the rule's inputs); a violation of timing, withholding or a private choice (delaying, not relaying, choosing which valid candidate to include) leaves nothing others can check.",
+            "Strict versus tolerant stance on the unrecognized: rules every participant must apply identically tend to reject anything not explicitly allowed; rules between loosely coupled systems often ignore or pass through what they do not recognize."
+          ],
+          "consequences": [
+            "Many validity rules are enforced without trusting anyone: an invalid message is refused by every participant that checks it, so a violator gains nothing it could make others accept.",
+            "An unenforceable rule holds only as far as something backs it: incentives that make following it pay, an assumption that enough participants follow it (the protocol's guarantees then depend on that assumption), or a mechanism that turns the violation into something observable, such as a signed timestamp, a commitment or evidence of equivocation.",
+            "Prescriptive rules whose divergence affects only efficiency or fairness (how eagerly to relay, which valid transactions to include) can differ across implementations without splitting participants, as long as every outcome they produce is valid; prescriptive rules that agreement or progress depends on (such as which of several valid histories to extend) must be shared as well, though a departure from them can pass every validity check; validity rules that differ split participants on what they accept.",
+            "Strict rules make every extension a coordinated change that all participants must adopt, but keep their acceptance identical; tolerant rules let systems extend independently, but different implementations can treat the same unrecognized input differently, and an extension one ignores another may rely on."
+          ],
+          "conditions": [
+            "A visible violation is enforceable only by participants that see it and can check it; a participant that does not hold the state or information the check needs (a light client, a user relying on a server) cannot enforce it and relies on others who can.",
+            "Some visible violations are detected only by combining messages (two conflicting signed messages), so the response is evidence and penalty rather than rejection of a single message.",
+            "The tolerant stance is safe only where ignoring an unrecognized part cannot change what the recognized parts mean; where participants must agree on outcomes, tolerance is a source of divergence."
+          ],
+          "status": "Established: the distinctions are standard in distributed-systems and protocol engineering, from network protocol design (must-ignore extension fields, the robustness principle and its later critique) to blockchain clients (consensus validity versus fork choice and relay policy).",
+          "tradeoffs": "Strict versus tolerant handling of the unrecognized: strictness buys identical acceptance at the cost of extensibility (every change is coordinated); tolerance buys independent evolution at the cost of agreement (implementations may differ on the same input)."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Two classifications of a protocol's rules (by what a rule decides, and by whether others can observe its violation) and one trade-off between stances on unrecognized input; each is carried by reasons and conditions: why both kinds are needed, what makes a violation observable and what backs a rule when it is not, and what each stance costs.",
+        "whyProse": "Every claim is an argument with conditions rather than a shape. The validity/prescriptive difference matters through why each alone is insufficient, which a distinction block would reduce to a label pair. Enforceability turns on conditions (who sees the violation, who can check it, when only combined messages reveal it) and on three backings that each work under their own conditions; a variants flow would show the branch but drop the conditions that make it true. Strict versus tolerant is two stances whose costs are causal (coordinated change versus divergence on the same input); a two-row comparison of short values would restate the labels and lose the mechanism. No order, loop, persistent state or many-way comparison is present.",
+        "level": "The parent Protocols says the rules are shared and checkable and apply to roles; Protocol Specification says the specification describes them precisely. Neither says that rules split into acceptance conditions and prescribed conduct, that only some are enforceable by others, or that a rule set takes a stance on the unrecognized. Specific rule sets (consensus rules, transition rules, valid transitions) apply these distinctions to one kind of rule and are excluded, so the general classification belongs here.",
+        "territory": "Incentives and assumptions are named as what backs unenforceable rules, not explained (assumptions owns what makes a condition an assumption rather than a rule; this record works from the rule side). Message validation is named as where validity rules are applied; determinism and specification ambiguity are named, not explained, where identical application and unspecified input come up. Participants is used only as 'a correct participant'; their classification belongs to participants. Commitments and deadlines appear only as examples of making a violation observable, not as the ordering defense interactions owns. The reserved shared-versus-local state distinction is not drawn.",
+        "placements": "The exposition classifies rules of any protocol and refers to no position or parent; at Protocols it refines the parent's claim that each party can check the others, and at Protocol Specification it tells which rules a specification must make identical and which leave latitude, without explaining specifications."
+      },
+      "audit": {
+        "at": "2026-10-07T23:18:08.639Z",
+        "note": "Re-audit after repair cycle 1, in fresh context, at both placements (rules under Protocols; rules-in-protocol-specification under Protocol Specification). Prior findings: (1) resolved: paragraph 3 now limits latitude to prescriptive choices that affect only efficiency or fairness (relay eagerness, which valid transactions to include), adds that prescriptive rules agreement or progress depends on (which valid history to extend) must be shared and that a departure can pass every validity check, and drops the old 'acceptance conditions are therefore what must be identical' conclusion; the model consequence, parents.protocol-specification and placements.rules-in-protocol-specification carry the matching hedge, and paragraph 3 stays consistent with paragraph 2's prescriptive example and paragraph 6's unobservable private choice. (2) resolved: paragraph 5 now says neither message is invalid alone, a participant that saw only one has nothing to refuse, one that saw both can decline the second but others may have accepted one, so evidence is the response that matters. (3) resolved: the repeated 'tolerance is a source of divergence' sentence is gone, and the last paragraph still follows from 'Tolerance is safe only where...'. Repair-introduced errors: none found; fork choice is used only as an example, with no explanation of consensus rules; 'can fail to converge' and 'can pass' are hedged. Parent overlap: none at either placement. Paragraph 4 refines the Protocols sentence that each party can check the others (only visible violations, only by those holding what the check needs). Paragraph 3 is adjacent to the Protocol Specification sentence on ambiguity splitting the network, but its subject is different (differing validity rules versus prescriptive latitude), and it qualifies 'behave identically' without contradicting it. Territory: participants (used only as the correct/faulty labels), assumptions, incentives and state are named, not explained; interactions' commitments and deadlines appear only as examples (observability; how long to wait); no shared-versus-private state distinction; no overlap with determinism or transition-rules claims (rule content and stance, not execution determinism or gaps in outcomes); protocol-properties boundary clean. Representation: designed prose, written exactly (8 paragraphs, no blocks); the claims are arguments with conditions. Accuracy: equivocation, light clients and proofs, signed receipts and commitments as observability mechanisms, strict versus tolerant stance and critical-versus-ignorable extensions, and the robustness-principle critique (RFC 9413) are correct and stated under their conditions. Placements: no positional or dated words; holds at both. Depth: 1,126 words for three claims, each with mechanism, conditions and failure. American English, plain text. Remarks (not defects): 'accepts or rejects ... on its own judgment' would read more precisely as 'by its own check'; in paragraph 3, 'disagree about what to accept, and the same input divides them' and 'produce only valid output ... and a departure ... can pass every validity check' are slightly redundant pairs; 'tolerance' widens from the unrecognized to deviations in the robustness-principle sentence, but the record's strict stance ('reject whatever they do not explicitly allow') covers both, and the sentence names deviations explicitly.",
+        "resolutions": [
+          {
+            "id": "names-concept:27129c4d06",
+            "resolution": "assumptions: named once, as one backing for an unenforceable rule ('An assumption that enough participants follow it can carry it, and the protocol's guarantees then depend on that assumption holding'); it does not explain what makes a condition an assumption, strength, or silent violation, which the assumptions sibling owns."
+          },
+          {
+            "id": "names-concept:83e32b145b",
+            "resolution": "incentives: named once ('Incentives can make following it pay better than breaking it') as a backing; no incentive design or mechanism is explained."
+          },
+          {
+            "id": "names-concept:c5f218aa76",
+            "resolution": "participants: used only as 'validating participant', 'correct participant' and 'faulty party' to say who applies or follows a rule; how participants are defined or classified is not explained, which stays with the participants sibling."
+          },
+          {
+            "id": "names-concept:f5176de8c1",
+            "resolution": "state: used only as what a check reads ('the prior state', 'a block must follow from the state it builds on', 'the state or data a check needs'); the reserved shared-versus-private state distinction is not drawn and state itself is not explained."
+          },
+          {
+            "id": "absolutes:24f3831301",
+            "resolution": "Each checked. 'cannot check that rule itself' holds under its stated condition (lacks the state or data). 'often cannot tell a deliberate delay from a slow network' is hedged. 'ignoring an unrecognized part cannot change what the recognized parts mean' is the definitional safety condition. 'the protocol's guarantees then depend on that assumption' is conditional, not a guarantee claim. 'claims never to have seen' reports a party's claim. Other absolutes ('only valid output', 'every validity check', 'every validating participant') are conditions or hedged with 'can'."
+          }
+        ],
+        "recordFingerprint": "af00f692186f6ea8ad64795a28c8e1319626b664dcdbcc592d932ca6a0ae7dbb"
+      }
+    },
+    "participants": {
+      "model": {
+        "meaning": "A participant is whatever acts in one of a protocol's roles through an identifier the protocol recognizes, so that the rules evaluate its actions and the protocol's guarantees can be stated for it according to how it is assumed to behave.",
+        "kind": "actor",
+        "parents": {
+          "protocols": "Protocols says that rules apply to roles rather than to particular parties, that every participant shares the rules, and that a deployed protocol can itself act as a participant in other systems. This concept adds what the protocol actually recognizes when something takes part (an identifier such as a key or an account acting in a role, for some roles qualified or weighted by stake), that the mapping between real-world parties and participants is neither one-to-one nor visible to the protocol, how participants are classed by assumed behavior so that guarantees attach to classes rather than to everyone, and where participation ends among the parties a protocol affects or depends on."
+        },
+        "claims": [
+          "what makes a party a participant: acting in a role through an identifier the protocol recognizes, such as a key or an account, for some roles qualified or weighted by stake, and why one real-world party can act as many participants or several parties as one",
+          "how protocols classify participants by assumed behavior, into classes such as correct, faulty and self-interested, and why a guarantee is stated for a class of participants rather than for all of them",
+          "where participation ends: parties a protocol affects or depends on without giving them a role, such as users served through intermediaries, operators of underlying infrastructure and external systems, and what a protocol can and cannot promise them"
+        ],
+        "excludes": [
+          "roles",
+          "byzantine-behavior",
+          "strategic-behavior",
+          "rational-behavior",
+          "fault-models",
+          "sybil-attacks",
+          "accounts",
+          "stake",
+          "partial-knowledge",
+          "adversaries",
+          "rules",
+          "processes",
+          "trusted-parties"
+        ],
+        "placements": {
+          "participants": "Its only placement is a leaf under Protocols in Foundations. The exposition is general to any protocol (consensus, payment, contract or network protocols), needs nothing from its siblings, and so stands as a complete explanation of the concept there."
+        },
+        "fields": {
+          "role": "What the protocol sees is never a person or an organization but an identifier it can check acting in a role: a public key whose signatures it verifies, an account it tracks, a registered validator key with stake behind it, or a contract address. The identifier is the unit the rules evaluate and count. Which roles exist and the conditions for holding them belong to Roles, and how keys and accounts work belongs to their own concepts; this concept says only that participation is an identifier in a role.",
+          "powers": [
+            "Being a participant is what makes actions count inside the protocol: the rules evaluate its messages and state changes, accept or reject them, and in voting or threshold roles count them toward a quorum or a weight.",
+            "Parties without a role have no such standing. Users served through intermediaries (a custodial service, a wallet provider or a front end that submits on their behalf) act only through the intermediary's identifier; operators of underlying infrastructure (networks, hosting, the platform a contract runs on) are depended on but not evaluated by its rules, and external systems a protocol reads (data sources, other chains) are depended on without being given a role: the protocol may check what they report, but its rules do not govern how they behave.",
+            "What a protocol can promise them: what it guarantees to the participant acting for them, and whatever they can check for themselves against its outputs. What it cannot promise: anything that depends on the intermediary's conduct, or on infrastructure and external systems behaving well, since it neither constrains them nor addresses guarantees to them; it relies on them only through its assumptions (named, owned by Assumptions)."
+          ],
+          "trustPlaced": "A protocol states its guarantees for a class, usually the participants that follow its rules, and makes those that depend on other participants' conduct conditional on a bound on the other classes, by count or by weight; stated this way, a guarantee does not rest on any particular participant (protocols that do rest a guarantee on a particular party are Trusted Parties' territory, named only). The reasons: it cannot constrain what a participant that ignores its rules does or concludes, so it has nothing to promise that participant; and guarantees that depend on other participants' conduct, such as agreement or progress, generally need a bound on how many of the others deviate, since without one a correct participant can be outvoted or left without enough others to proceed, while what a correct participant establishes by checking for itself needs no such bound. Since a participant's class is assumed rather than observed, no one learns from the protocol which participants are correct; they rely on the bound. Protocol Properties already states that a guarantee names to whom it holds; this concept explains why that subject is a class of participants.",
+          "misbehaviour": "Protocols class participants by assumed behavior: correct (follows the rules), faulty (deviates, from crashing to acting arbitrarily) and self-interested (follows the rules while that pays). These are modeling categories, not labels a participant carries: the same participant can be counted correct in one analysis and faulty in another, and in some models a self-interested participant that never finds deviation profitable is indistinguishable from a correct one. How each class behaves belongs to Byzantine Behavior, Strategic Behavior, Rational Behavior and Fault Models, named only.",
+          "relation": "Parties and participants map many-to-many, and the protocol usually cannot see the mapping: one operator can run many validators or one user hold many addresses, while several parties can act as one participant through a multisig, a threshold key or a staking pool. Consequently a bound stated over participants is a bound over identifiers, or over the weight behind them, not over independent parties: whether 'at most a third faulty' says anything about independent failure or collusion depends on how parties map to participants. Weighting by stake makes the number of identifiers irrelevant to weighted rules but leaves open who controls the weight. Exploiting cheap identifiers is Sybil Attacks' territory, named only."
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Identity under the protocol: a participant is an identifier acting in a role, distinct from the real-world party behind it, and guarantees are addressed to classes of participants under bounds on the others; participation ends where a party has no recognized identifier in a role.",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Separate the real-world party from the participant the protocol recognizes (Party ≠ Participant), the conflation readers bring when they equate a participant with a person or organization.",
+            "whyNotProse": "The conflation is the premise every claim turns on: counts and bounds over participants read as counts over independent parties, and guarantees to participants read as promises to the people behind them. Naming the two notions as separate at the point the record introduces them anchors the many-to-many argument and the class-bound consequence; spread across sentences, the separation is easily read as a nuance rather than as the reason fault bounds and promises are about identifiers."
+          }
+        ],
+        "division": "The prose explains what the protocol recognizes, how one party becomes many participants or several parties one, why bounds over participants are bounds over identifiers or weight, how participants are classed by assumed behavior and why guarantees attach to classes, and where participation ends and what can be promised beyond it. The distinction shows only that party and participant are separate notions; the prose does not restate that separation as a bare sentence and the block carries no explanation.",
+        "level": "Protocols only says rules apply to roles rather than particular parties; the party-to-participant mapping, the behavior classes and the boundary of participation are about the participant itself and are not drawn by the parent or by any sibling. Roles owns what roles exist and their conditions, and Processes owns how a process differs from the participant it acts for, so the distinction here is between party and participant, not role and participant or process and participant.",
+        "territory": "The distinction is Party ≠ Participant, which no sibling or reservation claims: Rules owns validity versus prescriptive rules and enforceability, Interactions owns interaction shape and order, Assumptions owns what makes a condition an assumption, and the State reservation owns shared versus local state. It draws no Process ≠ Participant (Processes), no behavior-class comparison (Byzantine, Strategic and Rational Behavior, Fault Models), no account or stake mechanism, no Sybil attack and no basis of trust in trusted parties; these are named only.",
+        "placements": "One placement, a leaf under Protocols; the party/participant separation and the class-addressed guarantees hold for any protocol, so the same record is complete there."
+      },
+      "audit": {
+        "at": "2026-10-07T23:28:13.139Z",
+        "note": "Re-audit after repair cycle 1, in fresh context, at the only placement (participants, leaf under Protocols in Foundations). All four round-1 findings are resolved: (1) the several-parties-as-one examples are now threshold-key shareholders, pooled depositors behind one staking identifier and the signers of a multisignature account, each of which is genuinely several parties behind one identifier, and the model's relation field matches; (2) 'nothing in the rules does' is now 'the rules themselves usually do not establish it', which leaves room for proof-of-personhood and vetted permissioned admission; (3) external systems are now 'depended on without being given a role: the protocol may check what they report, but its rules do not govern how they behave', true of light-client bridges and oracle sanity checks alike, and the powers field matches; (4) 'Nor does running the protocol reveal every participant's class: some deviations leave evidence that marks their author as faulty, but a participant that has left none has not thereby been shown to be correct' is consistent with the evidence case. The trustPlaced field now carries the record's softened wording (class-addressed guarantees; bounds 'generally' needed; self-checked results need none; class assumed, not observed). Repair-introduced errors: none found; the new sentences hold in general and introduce no new term senses. Parent overlap: nothing restates the Protocols exposition (roles-not-parties, conditional, protocol-as-participant are built on). Protocol Properties' 'to whom' example is used as the premise for why guarantees attach to classes, not re-explained. Rules: 'checking for itself' and validity checks are referenced, not explained. Excludes (roles, accounts, stake, fault models, Byzantine/Strategic/Rational Behavior, Sybil Attacks, Trusted Parties, processes, partial knowledge, adversaries) are named or absent; the State reservation is untouched; Assumptions is named once as the channel of reliance on infrastructure. Structure: the Party/Participant distinction matches the design and the conflation is real; the later prose depends on 'party' as the real-world controller. Accuracy re-checked across the whole record, including the one-third bound example (more than a third under one operator does break 'fewer than a third'), proportional stake weighting (conditioned 'in proportion to its amount'), and the intermediary boundary. Canonical, no positional or dated words, American English, plain text, this concept and not governance participants. Depth: about 990 words over three claims; each claim explained with conditions and failure cases. Remarks (taste, not defects): the repair's new P6 clause 'its rules do not govern how they behave' and P7's 'the protocol neither constrains them' make the same point twice in one short span, and P7's clause could drop it; 'stand outside from the other side' is still cryptic; 'A user behind an intermediary gets what the protocol guarantees' would read more exactly as 'can rely on at most'; 'Stated this way, a guarantee does not rest on any particular participant' is true of the statement's form, though with weight bounds a participant holding more than a third of the weight is in effect required to be correct (P3 already makes that point); P1's closing restatement and 'each half of that form has a reason' could be cut; the distinction block mainly fixes the term 'party'.",
+        "resolutions": [
+          {
+            "id": "names-concept:bd6b6592bf",
+            "resolution": "Accounts appears only as an identifier kind ('an account it tracks', 'a multisignature account'); how accounts work is not explained. Named only."
+          },
+          {
+            "id": "names-concept:876909d829",
+            "resolution": "Assumptions appears once: the protocol 'relies on them only through its assumptions'. What makes a condition an assumption, strength and violation (Assumptions' claims) are not explained. Named only."
+          },
+          {
+            "id": "names-concept:67931e7014",
+            "resolution": "Byzantine Behavior is named in a list of concepts that describe the behaviors; the faulty class is glossed only as deviating 'from stopping to acting arbitrarily', the classing claim this concept owns. Named, not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault Models is named in the same list; no fault-model taxonomy or bound mechanics are explained. The 'fewer than a third' bound is an example of a bound over identifiers, this concept's claim. Named only."
+          },
+          {
+            "id": "names-concept:a8fc4eacbc",
+            "resolution": "Rational Behavior is named in the list; the self-interested class is glossed in one clause for the classing claim, and the indistinguishability remark concerns class assignment, not rational-actor modeling. Named only."
+          },
+          {
+            "id": "names-concept:e3b8e65aaa",
+            "resolution": "Roles is used as the parent's term ('acting in a role', 'voting or threshold roles'); which roles exist and the conditions to hold them are not explained. Named only."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "Rules is used as the protocol's rules that evaluate identifiers; validity vs prescriptive rules and enforceability (Rules' claims) are not explained. 'Checking for itself' / 'validity checks' are references used to show which guarantees need no bound. Named only."
+          },
+          {
+            "id": "names-concept:1e4fb6edfe",
+            "resolution": "Stake appears as what can qualify an identifier for a role or weight its votes, and in the weighting point about identifiers; staking mechanics are not explained. Named only."
+          },
+          {
+            "id": "names-concept:f5176de8c1",
+            "resolution": "State appears only in 'messages and state changes' the rules evaluate; the shared vs private state reservation is untouched. Named only."
+          },
+          {
+            "id": "names-concept:6ed4ba3081",
+            "resolution": "Strategic Behavior is named in the list of concepts describing behaviors; no strategic analysis is given. Named only."
+          },
+          {
+            "id": "names-concept:760a268a97",
+            "resolution": "Sybil Attacks is named in one sentence identifying what it targets (unweighted counts over cheap identifiers) as the consequence of the identifier/party gap; the attack's mechanism, impact and defenses are not explained. Named only."
+          },
+          {
+            "id": "names-concept:1fdc9c5827",
+            "resolution": "Trusted Parties is named once as the territory of protocols that rest a guarantee on a particular party; no basis of trust is explained. Named only."
+          },
+          {
+            "id": "absolutes:bc81a04dbf",
+            "resolution": "Each checked. 'guarantee(s)' are nouns in conditional statements (addressed to a class, under a bound). 'cannot be told apart' is scoped 'in some models'. 'cannot promise a participant that ignores its rules anything about what that participant will do' holds by definition. 'never accepting a message its own validity checks reject' holds by definition of self-checking. 'its rules never see the user' is scoped to users served only through an intermediary. 'neither constrains them nor addresses guarantees to them' and 'relies on them only through its assumptions' hold for infrastructure and external systems as defined (no role). The round-1 overclaims ('nothing in the rules', 'not evaluated', 'does not learn a participant's class') are now hedged or narrowed."
+          }
+        ],
+        "recordFingerprint": "b165f205f21b61cfb5b89b9832f1e8f77c967280af8b95202b240417acc5d966"
+      }
+    },
+    "interactions": {
+      "model": {
+        "meaning": "An interaction is one exchange among a protocol's participants: an initiating action and the responses the rules make it call for, from whom and in what order, ending when its completion condition holds or, where the rules provide an exit, when a deadline or another condition ends it some other way.",
+        "kind": "mechanism",
+        "parents": {
+          "protocols": "Protocols says an interaction is a sequence of actions the rules connect (a request and its response, a proposal and its votes, an offer and its acceptance), that the protocol fixes what each message means and commits its sender to, and that interactions end while state remains. Interactions adds how the shape of an interaction (who must act, in what order, how many must respond) sets the condition under which it is complete; what happens when it stops partway, why the others may be unable to tell whether a silent party's step took effect, and how deadlines, fallback paths and steps safe to repeat bound that; why acting later than others gives a party an option, and how deposits, deadlines and commitments made before information is revealed limit it; and why interactions that run concurrently or trigger one another can break properties shown for each alone."
+        },
+        "claims": [
+          "how an interaction is shaped by who must act, in what order and how many must respond, from a two-party exchange to a round that waits for a threshold of responses, and how that shape decides when the interaction is complete",
+          "what happens when an interaction stops partway: why a party that stops responding can leave the others unable to tell whether it completed, and how protocols bound the waiting and its consequences with deadlines, fallback paths and steps that are safe to repeat",
+          "why the order of moves within an interaction matters: a party that acts after seeing what others committed to can exploit it or walk away, and how deposits, deadlines and commitments made before information is revealed limit that advantage",
+          "how interactions affect one another when they run concurrently or one triggers another, and why properties shown for each interaction alone may not hold for their combination"
+        ],
+        "excludes": [
+          "request-response",
+          "quorums",
+          "commit-reveal",
+          "front-running",
+          "composability",
+          "partial-failures",
+          "failures",
+          "communication",
+          "state",
+          "rules",
+          "latency"
+        ],
+        "placements": {
+          "interactions": "Its only placement is a leaf under Protocols in Foundations. The reader arrives with the parent's examples of interactions and its point that interactions end while state remains; the exposition is general to any protocol (network, consensus, payment, contract or cross-system) and names the specific forms other domains own (request-response, quorums, commit-reveal, front-running, composability, partial failures) without explaining them, so one exposition is complete there."
+        },
+        "fields": {
+          "sequence": [
+            "An initiating action (a request, a proposal, an offer) opens the interaction and, under the rules, makes responses expected from particular parties: one named counterparty, every member of a set, any sufficient number of a set, or whoever chooses to accept.",
+            "Responses are made, in a fixed order where each step depends on the one before (offer, acceptance, settlement) or in any order where they are independent (votes collected in a round); each is checked and counted against the interaction's completion condition.",
+            "The interaction completes when its condition holds (the counterparty answered, every named party answered, a threshold of responses gathered, a first valid acceptance arrived, or, in an open interaction that gathers responses until a deadline, a choice among them made at that deadline); where the rules provide an exit, such as a fallback path (refund, abort, a default outcome), a deadline that passes before the condition holds ends it that way instead.",
+            "Its outcome is carried forward as a change to state; the interaction itself ends."
+          ],
+          "actors": [
+            "An initiator whose action opens the interaction and often commits it (funds locked, an offer binding until withdrawn or expired).",
+            "Responders whose actions the completion condition counts; the shape decides whether they are fixed in advance (a named counterparty, a validator set) or open (anyone may accept an offer).",
+            "In ordered interactions, a party that moves after the others and can see what they committed to.",
+            "Parties of other interactions that run at the same time over the same state, or that one interaction triggers."
+          ],
+          "inputs": [
+            "Actions and messages whose meaning and commitments the rules fix (named; owned by Rules and the parent).",
+            "The completion condition implied by the interaction's shape: whose responses count, how many, in what order.",
+            "Deadlines, deposits and commitments where the protocol uses them to bound waiting and late-mover advantage."
+          ],
+          "outputs": [
+            "An outcome: completed, or ended by a fallback (refunded, aborted, defaulted).",
+            "A change to state that carries the outcome into later interactions (state named, not explained).",
+            "Where responses are signed, evidence of what each party did, usable by the others afterwards."
+          ],
+          "assumptions": [
+            "Completion within a deadline depends on parties responding and messages arriving within some delay; a protocol assumes such bounds rather than controls them (communication, latency and assumptions are named, not explained).",
+            "A threshold round completes only while enough responders remain responsive; it tolerates silence from at most the remainder.",
+            "Reasoning about an interaction on its own often assumes that nothing else changes what it reads between its steps, and that it is not re-entered before it finishes; claim 4 is about when that does not hold."
+          ],
+          "failures": [
+            "Stopping partway: when a required party goes silent, the others cannot distinguish from the silence alone a party that has not acted from one that acted but whose response was lost or delayed, so they cannot tell whether its step took effect, and the interaction may have completed for one party but not for another. A deadline bounds how long the others wait, not the uncertainty: a step that timed out may still have taken effect, unless the deadline is enforced where the step takes effect (a contract that refuses an acceptance arriving after expiry), which settles the outcome there. A fallback path (a refund or release after the deadline) gives the waiting parties a way out, provided they can take it without the silent party's cooperation; where a late step and the fallback could both take effect, the rules must make them exclusive. While the doubt lasts, retrying is safe only for steps whose repetition has the same effect as performing them once, often achieved by tagging each step with an identifier so a duplicate is recognized and not applied again.",
+            "Order exploited: a party that moves after others have committed holds an option. It can complete only when the committed terms favor it (for example, after a price has moved), or walk away and leave the others' commitments locked until a deadline. Deposits forfeited on non-completion make walking away costly, deadlines shorten how long the option lasts, and commitments made before information is revealed stop any party's commitment from depending on it. How far each limits the advantage depends on its conditions: a deposit deters only when it exceeds what walking away gains, a deadline still leaves a window, and a party that can still decline to go through with its part keeps the option to walk away after the reveal, which is why such schemes are often paired with deposits. Front-running, an advantage drawn from seeing an action while it is still pending rather than from a later turn the interaction's rules give a party, and commit-reveal as a mechanism are named only.",
+            "Interference: interactions running at the same time over the same state can interleave so that one acts on a condition another has already changed, as when two withdrawals each check a balance before either deducts. One interaction can trigger another that, before the first finishes, acts on state the first assumed would hold between its steps. Each interaction can be correct alone while their combination violates a property, because the property was shown under the assumption that each ran alone. The property can carry over to the combination when that assumption is made to hold (conflicting interactions applied one at a time, a check and the action on it made one indivisible step, re-entry refused until an interaction finishes); otherwise it has to be established for the combination itself. Composability, the architectural question of building on other protocols, is named only."
+          ],
+          "variants": [
+            "Two-party exchange: a request and its response, an offer and its acceptance; complete when the counterparty acts, stalled if it does not.",
+            "All of a set: complete only when every named party has responded, so any one of them can stall it.",
+            "Threshold round: complete when a sufficient number of a set respond, tolerating silence from the rest at the cost of acting without their input (quorums named, not explained).",
+            "Open interaction: responders are not fixed in advance, as with an offer anyone may accept; complete on the first valid acceptance, or by choosing among the responses gathered until a deadline, as an auction does."
+          ],
+          "tradeoffs": [
+            "Requiring more responses makes the outcome rest on more parties but gives more parties the power to stall it; a threshold buys progress despite silence at the cost of acting without some parties.",
+            "Deadline length: a short deadline treats slow but correct parties as absent and abandons interactions that would have completed; a long one keeps the others' commitments locked and lengthens a later mover's option.",
+            "Steps safe to repeat make retrying harmless but require remembering which steps were already applied."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A mechanism read through four causal questions: how an interaction's shape determines its completion condition; how silence partway leaves the others uncertain and what bounds that; how moving later yields an option and what limits it; and how interactions combined can break properties each has alone. Each is carried by reasons and conditions rather than by an order, a loop, persistent states or alternatives read across shared dimensions.",
+        "whyProse": "The shapes (two-party, all of a set, threshold, open) differ along one dimension that matters here, what completes the interaction and who can stall it, which a sentence per shape carries; a variants flow or a comparison would set out labels with one short value each and lose the causal link from shape to completion that the claim is about, and a comparison row on threshold rounds would drift toward explaining quorums. Stopping partway is not a state model: a retry loop drawn from one party's view would hide the point that the others cannot tell which state the silent party is in, and deadlines, fallbacks and safe repetition each answer it under their own conditions. The late-mover option and its three limits are an argument with conditions (a deposit deters only if it exceeds the gain), not a tension between two forces or a distinction between notions readers conflate. Interference is an argument about why a property shown alone fails in combination, with an example; there is no order of stages to draw. No structure would show something the paragraphs obscure.",
+        "level": "Protocols names interactions with examples and says they end while state remains; it does not say how their shape sets completion, what silence partway does, why move order matters, or how interactions interfere. The specific forms (request-response, quorums, commit-reveal, front-running, composability, partial failures) are excluded concepts in other domains that apply one of these questions to one setting, so the general account belongs at this concept.",
+        "territory": "Rules owns what kinds of rule exist and which are enforceable; this record says only that the rules make certain responses expected and does not classify them (deadlines and commitments appear here as the ordering and stalling defenses this concept owns, not as ways of making a rule's violation observable). Participants owns what a participant is and how participants are classed; 'party' and 'responder' are used without classifying them. Assumptions owns what makes a condition an assumption; timing bounds are named as assumptions, not explained. The State reservation (shared versus private state) is not drawn; state is named as what an interaction leaves and what concurrent interactions share. Protocol Properties is referenced for 'a property shown for each interaction alone', not explained. Communication, latency, failures and partial failures are named as causes or neighbors of stopping partway; quorums, commit-reveal, front-running and composability are named only.",
+        "placements": "One placement, a leaf under Protocols; the four questions hold for interactions in any protocol, and nothing in the exposition depends on a context beyond the parent's examples."
+      },
+      "audit": {
+        "at": "2026-10-07T23:39:49.011Z",
+        "note": "Re-audit after repair cycle 1. Findings resolved: D1 (front-running restricted to outsiders) now reads 'Front-Running is a separate advantage, drawn from seeing an action while it is still pending rather than from a later turn that the interaction's rules give a party', a boundary by source of advantage that holds for parties inside and outside the interaction; D2 (umbrella 'each limits it rather than removing it') now reads 'Three devices limit that option, and how far each goes depends on its conditions', consistent with the three conditioned sentences after it (deposit deters only below the gain, deadline leaves a window, commit-before-reveal leaves a walk-away option only to a party that can still decline). The model's failures entry and order-exploited text were aligned with both. Repair-introduced errors: none found; the remark 'Order is the other half of the shape' was taken as 'Order completes the shape', accurate for the three-part shape. Parent overlap (only placement, under Protocols): no sentence restates the parent's interaction definition, 'Interactions end; state remains.' or the state sentence; the record's definition (initiating action, called-for responses, completion condition or exit) adds to the parent. Territory: Rules not classified or its enforceability explained (the enforced deadline settles an outcome, it is not a way of making a violation observable); Participants not classified; Assumptions named via 'can assume but does not control'; State reservation (shared vs private) not drawn; Protocol Properties referenced only; all eleven excludes named, not explained; Front-Running gloss is the minimal boundary the claim needs. All four claims explained with mechanism, conditions and failure. Representation: prose as designed; the design's case against comparison, state model and tensions holds. Accuracy re-checked across the record: completion per shape, threshold tolerance limit, silence indistinguishable from the silence alone, deadline caps waiting not knowledge with the enforced-deadline exception, fallback exclusivity, retry safety while the doubt lasts and identifier cost, free option in a fixed-price exchange, interleaved withdrawals and re-entry via recipient code, carry-over only when the isolation and no-re-entry assumptions are made to hold. Canonical validity: one placement, no positional or time-sensitive words, American English, plain text; 1,214 words for four mechanism claims. Remarks (not defects): 'for the interaction, the consequence is that whether it completed is in doubt' still repeats the paragraph's earlier conclusion; the order paragraph still carries the response-count trade-off and the signed-evidence sentence, which are not about order; 'seldom remove the doubt' is a frequency hedge that fits the devices described; 'commitments locked' (assets held) stretches the 'terms or choices they have bound themselves to' sense slightly, read as 'cannot be withdrawn'; the bidder example holds for a bidder who sees all other bids in a highest-bid-wins round. Tooling note: cross-domain neighbours Idempotency, Retries, Reentrancy and Concurrency Models sit next to claims 2 and 4 but are not in the excludes; the record stays general.",
+        "resolutions": [
+          {
+            "id": "names-concept:876909d829",
+            "resolution": "Assumptions is referenced only: 'which a protocol can assume but does not control' for response and delivery timing, and 'the reasoning ... assumed that nothing else changed what it read'. Nothing explains what makes a condition an assumption, strength trade-offs or silent violation, which Assumptions owns."
+          },
+          {
+            "id": "names-concept:f766a1146b",
+            "resolution": "Commit-Reveal is named once ('a mechanism built on that last device'); the record explains only the general device its claim owns (commitments made before information is revealed) and its limit, not the commit-reveal mechanism (hashing, reveal phase, salts)."
+          },
+          {
+            "id": "names-concept:4aa61ad949",
+            "resolution": "Communication is named in a list of what accounts for why silences occur; no message-passing model or channel property is explained."
+          },
+          {
+            "id": "names-concept:e1c38b21df",
+            "resolution": "Composability is named in the closing sentence as the related question at the scale of protocols built on one another; the record explains interference between interactions, which its claim 4 owns, not protocol composition."
+          },
+          {
+            "id": "names-concept:86dd2d4d79",
+            "resolution": "Failures is named in the list accounting for silences; no failure kinds or fault models are explained."
+          },
+          {
+            "id": "names-concept:66dd57666f",
+            "resolution": "Front-Running is named with a one-clause boundary (advantage from seeing a pending action rather than from a later turn the rules give); how it is done, ordering control and mitigations are not explained. This sentence was the D1 repair and is now accurate."
+          },
+          {
+            "id": "names-concept:fda11800c7",
+            "resolution": "Latency is named in the list accounting for silences; the deadline paragraph says only that correct parties' response and delivery times set the right deadline, which claim 2 owns, without explaining latency."
+          },
+          {
+            "id": "names-concept:ef1a513230",
+            "resolution": "Partial Failures is named in the list; the record does not describe partial-failure outcomes (legs succeeding while others fail, reverted or stalled steps) beyond the general 'finished from one party's view and not another's' that claim 2 owns."
+          },
+          {
+            "id": "names-concept:3a247f4315",
+            "resolution": "Quorums is named ('How such thresholds are chosen belongs to Quorums'); the record says only that a threshold round tolerates silence up to what the threshold leaves out, which claim 1 owns, not quorum sizing or intersection."
+          },
+          {
+            "id": "names-concept:a8efc41f69",
+            "resolution": "Request-Response is named as a common pattern of the two-party exchange; its mechanics are not explained."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "Rules appears as 'the rules' that set expected responses, completion conditions, exits and exclusivity; no kinds of rule (validity vs prescriptive), enforceability or strictness stance are explained. The enforced deadline settles an outcome where the step takes effect, not observability of a violation."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "State appears as what concurrent interactions share and what a triggered interaction acts on; the reserved distinction between shared and private state is not drawn and nothing explains what state is."
+          },
+          {
+            "id": "absolutes:0ffd713914",
+            "resolution": "Five hits checked: 'a question they often cannot answer' is hedged by 'often'; 'cannot tell from the silence alone' holds unconditionally, since the silence is identical in the cases listed; 'whose answer never arrived' is narrative within the example, not a claim; 'a late claim and a refund cannot both succeed' states what exclusivity achieves by construction; 'cannot be withdrawn freely' is a condition clause. Each holds."
+          }
+        ],
+        "recordFingerprint": "71076afe5fb50be362cd11182e37257166a3e608ea56adeee01b576cca5b686e"
+      }
+    },
+    "assumptions": {
+      "model": {
+        "meaning": "An assumption is a condition on a protocol's participants, its environment or the primitives it uses that the protocol's guarantees depend on but that its rules do not enforce and that it often cannot observe from inside.",
+        "kind": "property",
+        "parents": {
+          "protocols": "The parent reads every protocol as a conditional whose guarantees hold if participants and the environment stay within its assumptions, and says the same rules give different guarantees under different assumptions. This concept explains what makes a condition an assumption rather than a rule, what a stronger or weaker assumption buys and costs, and what happens to the guarantees when one is violated: why the violation is often invisible from inside and why its effect depends on which guarantees rest on it."
+        },
+        "claims": [
+          "what makes a condition an assumption rather than a rule: something about participants, the environment or the primitives a protocol uses that the protocol relies on but does not enforce, and often cannot observe from inside",
+          "how assumptions are stronger or weaker and what the difference buys: stronger assumptions can allow simpler designs, better performance or stronger guarantees while widening the conditions under which those guarantees fail",
+          "what happens when an assumption is violated: why the violation is often silent to the protocol, and why it matters which guarantees each assumption supports, since a design can keep some guarantees through a violation that suspends others or breaks them for good"
+        ],
+        "excludes": [
+          "fault-models",
+          "trust-assumptions",
+          "threat-models",
+          "fault-assumptions",
+          "security-assumptions",
+          "cryptoeconomic-assumptions",
+          "protocol-properties",
+          "rules"
+        ],
+        "placements": {
+          "assumptions": "The single placement is a leaf under Protocols, whose exposition already frames protocols as conditionals on their assumptions. The three claims hold for assumptions in any protocol, whatever its subject or setting, so one exposition serves it without depending on that parent's examples."
+        },
+        "fields": {
+          "statement": "An assumption states a condition the protocol takes as given: about participants (how many may fail, how a faulty one may act, what motivates them), about the environment (how long messages may take, whether clocks stay close, whether data stays reachable), or about primitives (that a signature cannot be forged without the key, that collisions cannot be found, that a randomness source is unpredictable). The protocol's guarantees are derived from it, but nothing in the rules makes it true: following the rules does not keep messages fast or primitives unbroken, and when the condition fails there is no message a participant could reject that would restore it.",
+          "establishedBy": [
+            "Not by the protocol's execution: where the specification states it, it states it as a premise of the argument or proof behind a guarantee, and an assumption left unstated is still relied on, only hidden.",
+            "Justified outside the protocol, by the engineering of the environment (provisioned networks, synchronized clocks), by public cryptanalysis of the primitives, by economic arguments about what participants gain, or by operational experience.",
+            "Accepted by whoever relies on the protocol's guarantees, whether or not they examined the assumptions; past executions in which it held do not show it will keep holding."
+          ],
+          "violatedBy": [
+            "The environment exceeding a bound: messages delayed beyond the assumed maximum during a partition or overload, clocks drifting apart.",
+            "More participants faulty than the assumed threshold, or faulty in a way the model excluded, such as colluding or acting differently toward different peers.",
+            "A primitive failing: a collision found, a signature scheme broken, a key leaked, a randomness source biased.",
+            "Incentives changing outside the protocol, such as a payoff from another system large enough to make deviation worthwhile.",
+            "The violation is often silent: from inside, a message delayed beyond the bound looks like a slow one, a forged signature verifies like a real one, and conflicting messages sent to different participants are each seen by one of them, so the protocol keeps running as if the assumption held."
+          ],
+          "confusions": [
+            "Assumption versus rule: a rule prescribes what a participant does or accepts and is followed or checked by participants; an assumption is relied on without being enforced. They meet where a rule cannot be enforced: that correct participants follow it is then itself an assumption about participants.",
+            "Assumption versus guarantee: a guarantee is derived from assumptions; reading an assumption as something the protocol provides, or a guarantee as something it may assume, makes the argument circular.",
+            "Assumption versus observed fact: a bound that has always held in operation remains an assumption, because nothing in the protocol stops the next execution from exceeding it.",
+            "Stated versus implicit: assumptions the specification omits (that clocks are roughly synchronized, that an external data source is honest) are still part of the conditional and fail the same way."
+          ],
+          "tradeoffs": "One assumption is stronger than another when it implies the other: every environment that satisfies it also satisfies the other, so it holds in no more environments than the other. A stronger assumption can let a design do more with less: where delays are bounded, a timeout can stand in for detecting a failed participant (a crashed one, where crashing is the only fault assumed); assuming faulty participants only crash often lets a design tolerate the same number of faults with fewer participants than tolerating arbitrary ones; and some guarantees cannot be had without some timing assumption at all, such as a deterministic protocol's guarantee that participants both agree on one of the values they proposed and finish, when even one participant may crash. The price is reach: the guarantees are no longer assured in any environment where the stronger condition does not hold. Assumptions are not totally ordered, so designs often trade one for another, weakening a timing assumption while keeping or strengthening a fault threshold.",
+          "relation": "Each guarantee rests on a subset of the protocol's assumptions: it holds in every permitted execution in which all assumptions in that subset hold. A violation therefore takes away the assurance of the guarantees whose subset includes the violated assumption, while the others stand as long as their own assumptions hold. A design that rests safety on a fault threshold alone and progress on a timing bound as well keeps its safety through a period of unbounded delay, provided the fault threshold holds, and loses only its assurance of progress; a design that rests safety on the timing bound can produce conflicting results in the same period. Which guarantees remain assured through a violation is decided by the design, not by the violation."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Definitional criterion and conditional dependence: a condition is an assumption because the protocol relies on it without enforcing it; strength is an ordering with a cost (what a stronger assumption buys against the environments it excludes); a violation propagates only to the guarantees that rest on the violated assumption, usually without the protocol noticing.",
+        "whyProse": "The three claims are arguments about conditions and causation, which paragraphs carry natively. The rule/assumption boundary is not a clean conflation for a distinction block: the two meet where an unenforceable rule becomes an assumption that participants follow it, and a ≠ would flatten exactly that condition. The strength trade-off is a single pull (more capability against narrower reach), stated in one sentence; a tensions block would hold one pair, and a comparison of stronger and weaker assumptions would need concrete alternatives that belong to fault models and timing assumptions, which are excluded. The violation claim is a dependence from each assumption to the guarantees it supports, not a branching process with stages; a flow would draw one generic branch (kept, suspended) that the prose states with its condition, and a dependency graph is a catalog gap that prose carries accurately here because the example needs only two guarantees and two assumptions.",
+        "level": "The parent only states the conditional (assumptions in, guarantees out) and that the same rules give different guarantees under different assumptions. What an assumption is, how strength trades capability for reach, and how violations act on guarantees are general to every protocol, so they belong at this concept; the specific families of assumption (fault models, fault, trust, threat, security and cryptoeconomic assumptions) are separate concepts that each apply this account to one subject and are named only.",
+        "territory": "Rules owns the kinds of rule and which rules others can enforce; this concept names a rule only to say an assumption is relied on rather than enforced, and states from its own side that an unenforceable rule's observance becomes an assumption, without classifying rules or explaining enforcement. Participants owns how participants are classed by assumed behavior and why guarantees are stated per class; assumptions about participants are named as one subject of assumptions without explaining the classes. Interactions names timing bounds as assumptions and owns waiting and deadlines; this concept does not explain them. Protocol Properties (authored) owns what a property is, that its conditions are part of it, and that a fault-tolerance claim names which properties survive which faults, with its example of halting when too many participants stop responding; this concept takes the assumption side by angle (which assumption supports which guarantee, and why its violation is often unseen) and uses a timing-bound violation rather than repeating that example. The State reservation is not drawn. Fault models and the trust, threat, fault, security and cryptoeconomic assumption concepts are named, never explained.",
+        "placements": "One placement, a leaf under Protocols; the account of what an assumption is, what strength buys and how violations reach guarantees holds for every protocol and does not rely on the parent's examples."
+      },
+      "audit": {
+        "at": "2026-10-08T08:35:48.053Z",
+        "note": "Re-audit after repair cycle 2, in fresh context, at the only placement (assumptions, leaf under Protocols in Foundations). Cycle-2 findings resolved: D1 now reads 'such a design can stop producing results, since nothing then assures its progress, but, provided the fault bound holds throughout, it accepts nothing conflicting; once delays fall back within the bound, its progress is assured again', which states lost assurance rather than certain stopping and agrees with the paragraph's 'takes away the assurance' and its closing 'suspends'; D2 now reads 'Where a specification states its assumptions, it states them as premises of the argument or proof behind a guarantee', consistent with the unstated-condition sentences that follow; model establishedBy[0] is conditioned the same way. The cycle-2 remark on strength was taken ('holds in no more settings than the other', exact under the implication definition) and the model tradeoffs field matches. Cycle-1 findings still hold: silence past a known delay and processing bound proves failure, a crash only where crashing is the only fault assumed; the impossibility result carries determinism, unbounded delay, one crash, agreement plus validity ('one of the values they proposed') plus termination, with timing assumptions or randomization (termination with probability one) as the escapes; 'not a step the rules give any participant to carry out or a check it can apply' separates the premise from the steps and stays consistent with behavior assumptions and paragraph 3; paragraph 3 opens 'The two meet where a rule cannot be enforced' with no repeated sentence. Repair-introduced errors: none found; the new clauses are hedged and consistent with the model relation field ('loses only its assurance of progress'). Parent overlap: nothing restates the Protocols conditional sentences or the domain's fault, timing and trust-assumption sentences; 'a delay bound that has held through long operation is still an assumption' argues establishment, not the domain's 'must state rather than observe'. Territory: Rules is named and the unenforceable-rule point is stated from this concept's side as the design records (consistent with the Rules record: incentives justify the participant premise, and an observability mechanism removes the 'cannot tell' condition, so 'any guarantee that needs the rule followed' holds); participant classes not explained; Interactions' waiting and deadlines not explained (the timeout appears only as what a timing assumption buys); Protocol Properties: the last paragraph keeps the recorded angle (assumption-to-guarantee dependence, timing violation rather than the halting example); State reservation untouched; all excludes named or absent, fault models appear only as the crash-versus-arbitrary example inside the strength trade. Representation: prose exactly as designed, no blocks; the design's case against distinction, tensions, comparison and flow holds. Accuracy re-checked across all eight paragraphs, including crash versus arbitrary fault tolerance ('often'), stronger-timing versus fault-threshold trade (partial synchrony with a tighter fault bound), silent violations and later evidence, and the per-guarantee dependence argument. Canonical: one placement, no positional or time-sensitive words, this concept, American English, plain text. Depth: about 1,130 words over three claims, each with mechanism, conditions and consequence. Remarks (not defects): the closing 'suspends a guarantee in one design and can break it for good in the other' uses 'it' for what are different guarantees (progress suspended, agreement broken); the preceding sentences make the referents clear, but 'suspends progress in one design and can break agreement for good in the other' would be exact. 'A signature forged with a leaked key' uses 'forged' in its everyday sense, not the cryptographic one (produced without the key); 'produced with a leaked key' would avoid the second sense. Failure detection by timeout also presumes local clocks that measure the bound, which 'known bound' leaves implicit. Model fields.statement still says 'that collisions cannot be found' where the record correctly says 'infeasible'.",
+        "resolutions": [
+          {
+            "id": "names-concept:ce128021fb",
+            "resolution": "Data sources appear only in 'an external data source reports honestly', an example of an unstated assumption; named, not explained."
+          },
+          {
+            "id": "names-concept:f74bda18a5",
+            "resolution": "External data appears only in the same 'external data source' example of an unstated assumption; named, not explained."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "Hash functions appear only as subjects of primitive assumptions ('finding two inputs with the same hash is infeasible', 'a hash function unbroken'); how hashing works is not explained."
+          },
+          {
+            "id": "names-concept:7489aa2917",
+            "resolution": "Participants are the subject of one family of assumptions (how many may fail, how a faulty one may behave, what motivates them); the classes of participant and why guarantees are stated per class are not explained, as the design records."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "Rules is excluded: the record names a rule to contrast it with an assumption (a rule prescribes what a participant does or accepts) and states from its own side that observance of an unenforceable rule is an assumption; it does not classify rules or explain enforcement, evidence or tolerance, which the Rules record owns."
+          },
+          {
+            "id": "absolutes:373f1b1296",
+            "resolution": "Checked every absolute. 'guarantee(s)' is the concept's subject matter (what assumptions support), never asserted unconditionally. 'cannot' is used in conditions ('a signature cannot be produced without its key' as an assumption's content; 'others cannot tell'; 'a rule cannot be enforced'; 'some guarantees cannot be had' and 'no deterministic protocol can guarantee', the impossibility result with all its conditions). 'any guarantee that needs the rule followed' holds under its condition (others cannot tell whether it was followed). 'no message a participant could reject that would restore it' and 'nothing in its execution makes the condition true' hold for every assumption subject. 'never states', 'nothing ... need look unusual', 'no longer assured in any setting where it fails', 'every permitted execution in which the assumptions the argument uses all hold' and 'every setting that satisfies it' (strength definition) are exact. 'proof that a peer has failed' is conditioned on a known delay and processing bound and narrowed to a crash under a crash-only fault model. 'nothing then assures its progress' and 'accepts nothing conflicting' are conditioned on the design and on the fault bound holding throughout."
+          }
+        ],
+        "recordFingerprint": "c224231fb6e62a50d45623ce95b12b1453e22e9372643b2cd70d9c2d129b1bd9"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-16T12:48:13.279Z",
+    "note": "Group audit of protocols (owned: rules, participants, interactions, assumptions; state owned by state-machines and protocol-properties dual-role read as boundaries). group-signals printed 0 signals. Read side by side, the members divide cleanly and do not contradict one another. Overlaps judged legitimate by angle: (1) rules and assumptions both state that a rule others cannot observe can rest on an assumption that enough participants follow it; rules names it as one of three backings for an unobservable rule, assumptions uses it to locate where rule and assumption meet and adds that the assumption is held alongside the rule rather than replacing it; each is one or two sentences and follows its own claim. (2) Equivocation appears in rules (owned: conflict visible only in combination, answered by evidence and penalty), assumptions (an example of a silent violation of a fault-kind assumption and of evidence that surfaces too late) and participants (a deviation that leaves evidence of its author's class); only rules explains the evidence mechanism, the others use it as a brief example for a different conclusion. (3) Silence: rules (a deliberate delay often indistinguishable from a slow network), interactions (from silence alone a party cannot tell whether a step took effect) and assumptions (a known delay bound lets silence show a crash only where crashing is the only fault assumed) are consistent, each hedged to its condition, and interactions' doubt about whether a step took effect survives even under assumptions' conditions. (4) Commit-before-reveal is used by rules to make a hidden choice observable and by interactions to limit a later mover's option; neither explains Commit-Reveal, and 'commit' means binding oneself in both. Terms checked across members: correct and faulty participant (participants' classes match rules' 'correct participant' and assumptions' fault bounds), validating participant, guarantee, violation (of a rule in rules, of an assumption in assumptions, each explicit). Rules' 'user who reads the system through a server' (a participant that cannot check) does not contradict participants' users behind an intermediary that transacts under its own identifier (not participants). Boundaries: no member explains state's reserved shared/private distinction; assumptions' last paragraph (which guarantees a violation suspends or breaks) takes the assumption's angle, not Protocol Properties' shapes. Convergence: three members open 'An X is', which is the definition-leads convention and continues differently in each; forms differ (participants has one distinction, the rest are prose); lengths 989 to 1210 words; paragraph counts 7, 7 (plus a distinction), 8, 7 follow 3, 3, 4, 3 claims at about two paragraphs per claim; the triads ('three kinds of subject' in assumptions, 'Three devices' in interactions, three participant classes) come from the three-item lists in each plan claim, so this repetition follows the claims and is not convergence. Claim-transition openers ('Protocols also class', 'Interactions also act', 'Rule sets also take a stance') share a connective but not a sentence form; not a defect.",
+    "resolutions": [],
+    "records": {
+      "rules": "af00f692186f6ea8ad64795a28c8e1319626b664dcdbcc592d932ca6a0ae7dbb",
+      "participants": "b165f205f21b61cfb5b89b9832f1e8f77c967280af8b95202b240417acc5d966",
+      "interactions": "71076afe5fb50be362cd11182e37257166a3e608ea56adeee01b576cca5b686e",
+      "assumptions": "c224231fb6e62a50d45623ce95b12b1453e22e9372643b2cd70d9c2d129b1bd9"
+    }
+  }
+}

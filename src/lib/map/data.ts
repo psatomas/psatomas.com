@@ -17937,6 +17937,155 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "rules-content",
+      conceptId: "rules",
+      definition:
+        "A protocol's rules are the shared conditions and prescriptions its participants act under: some decide what a participant accepts or rejects, others say what a correct participant does among the options those conditions allow.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Validity rules are acceptance conditions. A message must be well formed and correctly signed, a transfer must not exceed what its sender holds, a block must follow from the state it builds on. A validating participant applies them for itself and accepts or rejects what reaches it on its own judgment, without asking anyone else. Prescriptive rules govern conduct among options that are all valid: when to propose, which of several valid candidates to build on, what to relay, how long to wait before giving up. A protocol needs both because neither does the other's work. Validity alone marks out a space of acceptable outcomes, often a large one, but does not say which of them to produce or converge on, so on its own it drives no progress and settles no choice. Prescription alone gives a correct participant nothing to hold its input against, so it could not tell valid input from invalid, and a single faulty party could feed it anything.",
+        },
+        {
+          kind: "paragraph",
+          text: "The split also bears on where implementations may differ. Implementations whose validity rules differ disagree about what to accept, and the same input divides them, so acceptance conditions must be applied identically for participants to accept the same things. Some prescriptive choices affect only efficiency or fairness, such as how eagerly to relay or which valid transactions to include. Two implementations that make those choices differently can still work together, though not necessarily equally well, as long as everything each produces passes the other's acceptance conditions. Other prescriptive rules are ones that agreement or progress depends on, because correct participants have to choose alike among valid options, as in deciding which of several valid histories to extend. Those rules have to be shared as well: implementations that produce only valid output but follow different rules of that kind can fail to converge on one outcome, and a departure from such a rule can pass every validity check.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rules differ again in who can enforce them. A violation that shows in a message or a state change leaves something to check: a signature that does not verify, a transfer of more than the sender held, a block that does not follow from its predecessor. A participant that sees it and holds what the check requires, such as the prior state, the relevant public keys and the inputs the rule reads, can refuse it. Where every validating participant refuses it, the violator gains nothing it can make them accept, and that enforcement does not depend on trusting the violator or any third party. It reaches only as far as the ability to check. A participant without the state or data a check needs, such as a light client or a user who reads the system through a server, cannot check that rule itself and relies on others that can, or on proofs they supply.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some violations become visible only in combination. Two signed messages can each pass every check and still, taken together, show that their signer said conflicting things, such as voting for two different blocks in the same round. Neither message is invalid on its own, and a participant that has seen only one has nothing to refuse; one that has seen both can decline the second, but others may already have accepted one of them. So the response that matters is evidence rather than rejection: because the signatures bind the signer, anyone holding both messages can demonstrate the conflict to others, and a protocol can attach a penalty or an exclusion to that proof.",
+        },
+        {
+          kind: "paragraph",
+          text: "Other rules govern conduct that leaves nothing to check. A participant that delays a message, does not relay what it received, or chooses among valid candidates for its own reasons produces only valid output. Others see at most an absence, or a choice a correct participant could also have made, and often cannot tell a deliberate delay from a slow network. Such a rule holds only as far as something besides checking backs it. Incentives can make following it pay better than breaking it. An assumption that enough participants follow it can carry it, and the protocol's guarantees then depend on that assumption holding. Or a mechanism can turn the violation into something observable: a signed receipt can show that a party received a message it later claims never to have seen, and a commitment published before a choice is revealed fixes the choice, so a later change shows. A rule with none of these behind it binds only those who choose to follow it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Rule sets also take a stance on what they do not recognize, such as an unknown message type, an unexpected field or an option no rule mentions. Where participants must apply the rules identically, because what each accepts decides what they agree on, the rules tend to be strict and reject whatever they do not explicitly allow. Strictness keeps acceptance identical, since input no rule admits is refused by every participant that applies the rules, but it makes each extension a coordinated change: a new kind of field or message becomes acceptable only when the participants' rules change to admit it, and a participant that has not adopted the change rejects what the others accept. Between loosely coupled systems, such as network protocols and data formats exchanged by many independently developed programs, rules often tolerate the unrecognized instead, ignoring an unknown field or passing it along unchanged. Each system can then extend on its own schedule while older ones keep working, at the cost of agreement: different implementations can treat the same unrecognized input differently, and an extension one of them ignores, another may rely on.",
+        },
+        {
+          kind: "paragraph",
+          text: "Tolerance is safe only where ignoring an unrecognized part cannot change what the recognized parts mean. An extension that only adds information can meet that condition; one that changes how other fields must be read, or that a receiver has to act on to behave correctly, does not, and a receiver that ignores it does the wrong thing without noticing. The maxim of being liberal in what one accepts carries a further cost, which experience with it exposed: once deviations are tolerated, senders come to rely on that tolerance, each new implementation has to accept the same deviations, and the rules in practice drift from the written ones. Protocols that need both agreement and extensibility often mark extensions explicitly, with version numbers or flags that tell a receiver whether an unknown part may be ignored or must cause rejection, so the stance is decided for each extension rather than left to each implementation.",
+        },
+      ],
+    },
+    {
+      id: "participants-content",
+      conceptId: "participants",
+      definition:
+        "A participant is whatever acts in one of a protocol's roles through an identifier the protocol recognizes, so that the rules evaluate its actions and the protocol's guarantees can be stated for it according to how it is assumed to behave.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a protocol recognizes is not a person or an organization but an identifier it can check, acting in a role: a public key whose signatures it verifies, an account it tracks, a registered validator key, or the address of a deployed contract. The identifier is the unit the rules work on. They accept or reject its messages and state changes, and in voting or threshold roles they count what it sends toward a quorum or a total weight. Some roles also require stake behind the identifier, which can qualify it for the role, weight its votes, or both. Participation is that pairing of a recognized identifier with a role, whatever kind of identifier it is.",
+        },
+        { kind: "distinction", left: "Party", right: "Participant" },
+        {
+          kind: "paragraph",
+          text: "Because the rules see only identifiers, the correspondence between parties and participants need not be one to one in either direction. One operator can run many validators, and one user can hold many addresses. Several parties can also act as one participant: the holders of shares in a threshold key, depositors pooled behind one staking identifier, or the signers of a multisignature account. The protocol typically has no way to tell which identifiers share a controller or how many parties stand behind one. Outside observers can sometimes infer it from behavior, but the rules themselves usually do not establish it.",
+        },
+        {
+          kind: "paragraph",
+          text: "A bound stated over participants is therefore a bound over identifiers, or over the weight behind them, not over independent parties. A guarantee conditioned on fewer than a third of the validators being faulty protects against independent failures, or against collusion among separate parties, only to the extent that those validators are in fact controlled independently. If one operator runs more than a third of them, a single outage or a single decision by that operator breaks the condition. Weighting by stake in proportion to its amount makes the number of identifiers irrelevant to the weighted rules, since splitting the same stake across many identifiers adds no weight, but it leaves open who controls the weight. Unweighted counts over identifiers that are cheap to create are what Sybil Attacks target.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols also class participants by how they are assumed to behave. Common classes are correct participants, which follow the rules; faulty ones, which deviate from them in ways that range from stopping to acting arbitrarily; and self-interested ones, whose conduct depends on what it gains them. Fault Models, Byzantine Behavior, Strategic Behavior and Rational Behavior describe those behaviors. The classes themselves are modeling categories, not labels a participant carries. The same participant can be counted correct in one analysis and faulty in another, and in some models a self-interested participant that never finds deviation profitable cannot be told apart from a correct one. Nor does running the protocol reveal every participant's class: some deviations leave evidence that marks their author as faulty, but a participant that has left none has not thereby been shown to be correct.",
+        },
+        {
+          kind: "paragraph",
+          text: "Guarantees are addressed to such a class, usually the correct participants, under a bound on the others by count or by weight, and each half of that form has a reason. The protocol cannot promise a participant that ignores its rules anything about what that participant will do or conclude: a node that accepts an invalid block or runs a different rule set has left the group to which agreement was promised. And guarantees that depend on other participants' conduct, such as agreement or progress, generally need a bound on how many of the others deviate, since without one a correct participant can be outvoted or left without enough others to proceed. What a correct participant establishes by checking for itself, such as never accepting a message its own validity checks reject, needs no such bound. Stated this way, a guarantee does not rest on any particular participant: each correct participant relies on the bound holding across the whole set, without knowing which of the others are correct. Protocols that do rest a guarantee on a particular party are the territory of Trusted Parties.",
+        },
+        {
+          kind: "paragraph",
+          text: "Participation ends where the protocol recognizes no identifier in a role, though the protocol affects or depends on many parties past that point. Users served through an intermediary, such as a custodial service that holds keys for its customers or an application that transacts under its own identifier on its users' instructions, appear to the protocol only as the intermediary. Operators of the infrastructure it runs on, such as the networks that carry its messages and the machines that host its nodes, are depended on but not evaluated by its rules. The external systems it reads, such as price sources or other chains, are likewise depended on without being given a role: the protocol may check what they report, but its rules do not govern how they behave. The line is drawn separately for each protocol: the validators of the chain a contract runs on are participants in the chain's protocol and infrastructure to the contract's.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a protocol can promise such parties follows from that position. A user behind an intermediary gets what the protocol guarantees to the intermediary's identifier, together with whatever the user can verify against the protocol's observable outputs, such as whether a payment the intermediary reports was actually made. Anything that depends on the intermediary's conduct, whether it records the user's claim correctly, carries out the user's instructions or returns the user's funds, falls outside the protocol's guarantees, because its rules never see the user. Infrastructure and external systems stand outside from the other side: the protocol neither constrains them nor addresses guarantees to them, and where its guarantees need them to behave well, it relies on them only through its assumptions.",
+        },
+      ],
+    },
+    {
+      id: "interactions-content",
+      conceptId: "interactions",
+      definition:
+        "An interaction is one exchange within a protocol: an initiating action and the responses the rules make it call for, ending when a completion condition set by the rules holds or, where the rules provide an exit, when a deadline or another condition ends it some other way.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What completes an interaction follows from its shape: who must respond, how many and in what order. Each response that arrives is checked and, if it passes, counted against the condition. In a two-party exchange, of which Request-Response is a common pattern, the condition is that the one counterparty acts, so that party's silence is enough to stall it. Where every member of a named set must respond, completion needs all of them, and the silence of any one member stalls it. A round that waits for a threshold, a sufficient number or share of weight among a set's responses, completes despite silence from the rest, at the cost of proceeding without their input; it tolerates silence only from as many as the threshold leaves out, and beyond that it stalls too. How such thresholds are chosen belongs to Quorums. In an open interaction the responders are not fixed in advance, as with an offer anyone may take: it can complete on the first valid acceptance, or gather responses until a deadline and then choose among them, as an auction does.",
+        },
+        {
+          kind: "paragraph",
+          text: "Order completes the shape. Steps that depend on one another run in sequence, an acceptance only after the offer and a settlement only after the acceptance, while independent responses, such as votes in a round, can arrive in any order and are simply counted. Requiring more responses makes the outcome reflect more parties but gives more of them the power to stall it. Where responses are signed, the set that met the condition can also show others afterwards that the interaction completed and who answered.",
+        },
+        {
+          kind: "paragraph",
+          text: "An interaction that stops partway leaves the waiting parties with a question they often cannot answer. When a required party goes silent, they cannot tell from the silence alone whether it has not acted or acted and its response was lost or is still on its way, so they can neither observe that its step took effect nor rule it out. The interaction can then be finished from one party's point of view and not from another's: a server that applied a request and answered it is done, while the client whose answer never arrived is not. Failures, Partial Failures, Communication and Latency account for why such silences occur; for the interaction, the consequence is that whether it completed is in doubt.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols bound the waiting and its consequences, but they seldom remove the doubt itself. A deadline caps how long the others wait, not what they do not know: a step whose response missed the deadline may still have taken effect. The exception is a deadline enforced where the step takes effect, as when a contract refuses an acceptance that arrives after expiry; the outcome is then settled there, though a party still learns it only by reading what that place recorded. Choosing a deadline is itself a trade. A short one treats slow but correct parties as absent and abandons interactions that would have completed, while a long one keeps the others' commitments locked for longer. The right length depends on how quickly correct parties respond and their messages arrive, which a protocol can assume but does not control.",
+        },
+        {
+          kind: "paragraph",
+          text: "A fallback path, such as a refund or the release of locked funds once the deadline passes, gives the waiting parties a way out, provided they can take it without the silent party's cooperation. Where a late step and the fallback could both take effect, the rules have to make them exclusive, so that a late claim and a refund cannot both succeed. Retrying is another answer, and while the doubt lasts it is safe only for steps whose repetition has the same effect as performing them once. A step can be made safe to repeat by tagging it with an identifier, so that a duplicate is recognized and not applied again, at the cost of remembering which identifiers have already been applied.",
+        },
+        {
+          kind: "paragraph",
+          text: "Order within an interaction matters for a further reason: a party that moves later can see what the others have committed to, the terms or choices they have bound themselves to, before committing itself. That gives it an option. It can go through with the interaction when the committed terms favor it and walk away when they do not. The second party to an exchange whose price was fixed at the outset can settle if the market has since moved in its favor and let the exchange lapse if it has not, and a bidder who sees the other bids before placing its own needs only to top the highest to win. Where the others' commitments cannot be withdrawn freely, walking away also costs them, since what they committed stays locked until a deadline or another exit releases it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Three devices limit that option, and how far each goes depends on its conditions. A deposit forfeited by a party that does not go through with the interaction makes walking away costly, but does not deter a party that would gain more by walking away than it forfeits. A deadline shortens how long the option lasts, but still leaves a window in which to use it. Requiring every party to commit before the information that matters is revealed, including the others' choices, keeps any commitment from depending on that information; a party that can still decline to go through with its part, however, keeps the option to walk away after the reveal, which is why such schemes are often paired with deposits. Commit-Reveal is a mechanism built on that last device. Front-Running is a separate advantage, drawn from seeing an action while it is still pending rather than from a later turn that the interaction's rules give a party.",
+        },
+        {
+          kind: "paragraph",
+          text: "Interactions also act on one another. Several can run at once over the same state, and their steps can interleave so that one acts on a condition another has already changed: two withdrawals that each check a balance before either deducts can both pass the check and together take out more than the account held. One interaction can also trigger another, as when a payment calls code the recipient controls, and the triggered one can act, before the first has finished, on state the first assumed would stay fixed between its steps. In both cases each interaction can be correct on its own while their combination breaks a property, because the reasoning that established the property for each assumed that nothing else changed what it read between its steps and that it was not entered again before it finished. A property shown for each interaction alone can carry over to their combination when those assumptions are made to hold, for instance by applying conflicting interactions one at a time, by checking a condition and acting on it as one indivisible step, or by refusing re-entry until an interaction has finished; otherwise it has to be established for the combination itself. Composability is the related question at the scale of protocols built on one another.",
+        },
+      ],
+    },
+    {
+      id: "assumptions-content",
+      conceptId: "assumptions",
+      definition:
+        "An assumption is a condition on a protocol's participants, its environment or the primitives it uses that the protocol's guarantees depend on, but that its rules do not enforce and that the protocol often cannot observe from inside.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Assumptions concern three kinds of subject. About participants, they specify how many may fail, how a faulty one may behave, or what motivates them. About the environment, they specify how long messages may take, whether clocks stay close together, or whether data remains reachable. About primitives, they specify that a signature cannot be produced without its key, that finding two inputs with the same hash is infeasible, or that a source of randomness cannot be predicted. What separates such a condition from a rule is where its force comes from. A rule prescribes what a participant does or accepts, and participants are the ones who carry it out. An assumption is not a step the rules give any participant to carry out or a check it can apply: following the rules does not keep messages fast or a hash function unbroken, and when the condition fails there is no message a participant could reject that would restore it. The protocol's guarantees are argued from the condition, but nothing in its execution makes the condition true.",
+        },
+        {
+          kind: "paragraph",
+          text: "The two meet where a rule cannot be enforced. When others cannot tell whether a participant followed a rule, any guarantee that needs the rule followed rests on the premise that enough participants follow it, and that premise is an assumption about participants, held alongside the rule rather than replacing it. An assumption also has to be kept apart from a guarantee and from an observed fact. Guarantees are derived from assumptions; reading an assumption as something the protocol provides, or a guarantee as something it may take as given, makes the argument for it circular. A delay bound that has held through long operation is still an assumption, because nothing in the protocol stops the next execution from exceeding it: experience can support confidence in a condition without establishing it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where a specification states its assumptions, it states them as premises of the argument or proof behind a guarantee, and what justifies an assumption lies outside the protocol: in how the network and clocks are engineered, in public cryptanalysis of the primitives, in economic arguments about what participants stand to gain. Whoever relies on the guarantees has accepted the assumptions, whether or not they examined them. A condition the specification never states, such as that clocks are roughly synchronized or that an external data source reports honestly, is still part of the conditional if a guarantee depends on it. It is relied on and can fail like a stated one, but nobody has been told to watch it.",
+        },
+        {
+          kind: "paragraph",
+          text: "One assumption is stronger than another when every setting that satisfies it also satisfies the other, so it holds in no more settings than the other. Strength buys capability. Where message delays and processing times have a known bound, a participant can take a silence longer than that bound as proof that a peer has failed (that it has crashed, where crashing is the only fault assumed), and a simple timeout does the work of detecting failure; without such a bound, a slow peer and a crashed one can stay indistinguishable. Assuming that faulty participants only stop, rather than behave arbitrarily, often lets a protocol tolerate the same number of faults with fewer participants and less checking of what each one sends. Some guarantees cannot be had without a sufficiently strong assumption: no deterministic protocol can guarantee that participants both agree on one of the values they proposed and finish when messages may be delayed without bound and even one participant may crash, so designs that need termination add a timing assumption, or use randomization and accept finishing with probability one rather than within any fixed bound.",
+        },
+        {
+          kind: "paragraph",
+          text: "The price is reach. Guarantees bought with a stronger assumption are no longer assured in any setting where it fails, including settings where a weaker assumption would still have held, such as a partition or an overload that stretches delays past the assumed bound. Assumptions are not all comparable, since of two conditions neither need imply the other, so designs often trade one against another rather than simply choosing stronger or weaker ones: weakening a timing assumption, for instance, while keeping or strengthening the assumption about how many participants may be faulty.",
+        },
+        {
+          kind: "paragraph",
+          text: "Violations arrive from outside the rules: a partition or overload that delays messages past the bound; more faulty participants than the threshold allows, or faults of a kind the model excluded, such as colluding or telling different peers different things; a leaked key, a broken primitive or a biased randomness source; a payoff in another system large enough to make deviation worthwhile. They are often silent, because an assumption covers what the protocol does not check. From inside, a message delayed past the bound looks like a slow one, a signature forged with a leaked key verifies like a genuine one, and conflicting messages sent to different participants are each seen by a recipient that finds nothing wrong with the one it holds. The protocol goes on applying its rules as though the condition held, and nothing in its outputs need look unusual. Some violations leave evidence that surfaces later, such as two conflicting messages under one key brought together, or results that turn out to disagree, but by then a guarantee that rested on the assumption may already have been lost.",
+        },
+        {
+          kind: "paragraph",
+          text: "Which guarantees a violation reaches depends on what each was derived from. A correct argument for a guarantee shows that it holds in every permitted execution in which the assumptions the argument uses all hold, so a violation takes away the assurance of the guarantees whose arguments use the violated assumption, while the others stand as long as their own assumptions do. Designs decide that dependence in advance. A consensus design can make agreement on results depend on a bound on faulty participants alone, and progress on that bound together with a timing assumption. Through a period in which messages are delayed without bound, such a design can stop producing results, since nothing then assures its progress, but, provided the fault bound holds throughout, it accepts nothing conflicting; once delays fall back within the bound, its progress is assured again. A design whose agreement itself depends on the timing bound can, in the same period, let different participants accept conflicting results, and the bound returning does not undo that: participants have already acted on results the protocol had promised would stand. The same violation thus suspends a guarantee in one design and can break it for good in the other, and which of the two a guarantee is exposed to is settled when the design assigns each guarantee its assumptions, not when the violation occurs.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
