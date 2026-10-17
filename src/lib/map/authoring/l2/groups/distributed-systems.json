@@ -1,0 +1,868 @@
+{
+  "version": 1,
+  "group": "distributed-systems",
+  "domain": "foundations",
+  "parentConceptId": "distributed-systems",
+  "basis": {
+    "membership": "ba7c60a2a3c11dbd34e7ee6b1d842d320e481036240acfa838a28817ea2fbddb",
+    "parents": {
+      "distributed-systems": "47d6b7f43dd136f6e71e995a403779f5a2653edb9095b2d958616c98bd00fc02",
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea"
+    },
+    "fixed": {},
+    "hazards": "f51c16b66d85807c51f06bcad1cda24809c39e16c288f2506dcd5364b6c472c1"
+  },
+  "members": [
+    {
+      "conceptId": "processes",
+      "placementId": "processes",
+      "standing": "owned",
+      "claims": [
+        "the process abstraction: a sequential component with private local state that advances in discrete steps, each taking an input such as a received message or a timer event, updating its state and possibly sending messages",
+        "what counts as one process in a deployed system: a component that holds its own state and can fail independently, such as an operating-system process, a machine or a replica, and how a process differs from the participant on whose behalf it acts",
+        "a process's local sense of time: the clock and timers it can read and set, how its clock can drift from real time and from other processes' clocks, and which durations a process can still measure"
+      ],
+      "excludes": [
+        "participants",
+        "nodes",
+        "state",
+        "partial-knowledge",
+        "failures",
+        "fault-models",
+        "latency",
+        "timestamps"
+      ]
+    },
+    {
+      "conceptId": "communication",
+      "placementId": "communication",
+      "standing": "owned",
+      "claims": [
+        "the link abstractions a protocol can assume, from fair-loss links that may drop messages to reliable and FIFO links, and how stronger links are built from weaker ones with retransmission, acknowledgments, deduplication and sequence numbers",
+        "what authenticated and unauthenticated channels let a receiver conclude about who sent a message, and how a protocol rejects forged or replayed messages",
+        "point-to-point messages versus broadcast to a group of processes, and what a reliable broadcast can guarantee about which messages the correct processes deliver when the sender may fail partway"
+      ],
+      "excludes": [
+        "coordination-communication",
+        "message-delivery",
+        "message-authentication",
+        "message-forgery",
+        "gossip",
+        "message-propagation",
+        "agreement",
+        "partial-knowledge",
+        "latency"
+      ]
+    },
+    {
+      "conceptId": "partial-knowledge",
+      "placementId": "partial-knowledge",
+      "standing": "owned",
+      "claims": [
+        "how far a process's knowledge can reach: the events in its causal past under the happens-before relation, and why, apart from assumptions held in advance and what silence implies under a known delay bound, nothing outside that past can inform its decisions",
+        "why knowledge about another process is old when it arrives, and which facts stay true once learned (stable properties such as termination, or a crash under a crash-stop model) versus facts that may already have changed",
+        "how a process can obtain a meaningful picture of the global state without a common instant: consistent cuts, and snapshot protocols that record local states together with messages in transit",
+        "knowledge about other processes' knowledge, and why processes cannot attain common knowledge of a fact over channels that may lose messages, as the coordinated-attack problem shows"
+      ],
+      "excludes": [
+        "information",
+        "coordination-communication",
+        "state",
+        "quorums",
+        "agreement",
+        "processes",
+        "communication"
+      ]
+    },
+    {
+      "conceptId": "latency",
+      "placementId": "latency",
+      "standing": "owned",
+      "claims": [
+        "timing models as assumptions about message delay: synchronous systems with a known bound, asynchronous systems with none, and partially synchronous systems whose bound holds only eventually or is unknown",
+        "timeouts: how a protocol turns a delay bound into suspicion that a process has failed, why delay varies with load and path, why tail delays rather than averages matter when choosing one, and the trade between reacting quickly and suspecting correct processes",
+        "latency as a cost of protocol design: a decision that needs several rounds of message exchange takes several message delays, and the slowest of the replies a step must wait for sets the pace (with k of n replies, the k-th fastest)"
+      ],
+      "excludes": [
+        "propagation-latency",
+        "confirmation-latency",
+        "fault-detection",
+        "network-partitions",
+        "failures",
+        "fault-models",
+        "processes"
+      ]
+    },
+    {
+      "conceptId": "failures",
+      "placementId": "failures",
+      "standing": "owned",
+      "claims": [
+        "what can fail and how each failure appears to other processes: a process that stops, a link that loses, duplicates or corrupts messages, or delays them beyond a bound the system relies on, and a process that keeps running but departs from its protocol",
+        "fault, error and failure as distinct stages: the defect or event, the incorrect internal state it causes once activated, and the departure from specified behavior at the component's interface that others can observe",
+        "independent versus correlated failures: common causes such as shared software, hardware, power, operators or network paths, and how correlation makes it far more likely that many components fail at once than an assumption of independence predicts, so a bound on how many may fail can be exceeded",
+        "what a process that restarts after a crash keeps and loses: durable versus volatile state, and the risk of rejoining with state that others have moved past"
+      ],
+      "excludes": [
+        "fault-models",
+        "byzantine-behavior",
+        "partial-failures",
+        "network-partitions",
+        "fault-tolerance",
+        "fault-detection",
+        "recovery",
+        "operational-failures",
+        "latency"
+      ]
+    },
+    {
+      "conceptId": "fault-models",
+      "placementId": "fault-models",
+      "standing": "owned",
+      "claims": [
+        "the common fault classes, crash-stop, crash-recovery, omission and Byzantine, and how they relate by how much behavior each permits a faulty process",
+        "how a fault model bounds failures: which processes count as faulty, judged over a whole execution in static models (mobile models bound them per period), and the threshold on them, stated as a count, a fraction of processes or a share of some weight",
+        "why the same problem can be solvable when a fault model is paired with one timing model and unsolvable under another, and how a stronger fault class can raise the number of processes a protocol needs to tolerate a given number of faults"
+      ],
+      "excludes": [
+        "byzantine-behavior",
+        "fault-tolerance",
+        "fault-assumptions",
+        "threat-models",
+        "adversaries",
+        "failures",
+        "latency",
+        "agreement"
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "communication",
+        "coordination-communication"
+      ],
+      "split": "Communication owns message exchange between processes: the links and channels a protocol assumes, what delivery and authentication they provide, and broadcast to a group; Coordination Communication owns participants exchanging information and intent to align their actions, such as signalling and commitment, and names message exchange only as the medium."
+    }
+  ],
+  "concepts": {
+    "processes": {
+      "model": {
+        "meaning": "A process is the unit a distributed system is modeled from: a sequential component that holds private state, changes it only by its own discrete steps in response to inputs such as received messages and timer events, can fail without the others failing, and has only its own local clock to tell time by.",
+        "kind": "actor",
+        "parents": {
+          "distributed-systems": "The parent establishes that processes hold their own state, share no state or common clock, fail independently and affect one another only by messages. This concept adds what a process is as a model: the step that takes one input, updates private state and emits messages and timers; the criterion by which a deployed component counts as one process and why that is a modeling choice rather than a fact about hardware; how a process differs from the participant it acts for; and what its own clock and timers give it: drift from real time and from other clocks, and which durations it can still measure."
+        },
+        "claims": [
+          "the process abstraction: a sequential component with private local state that advances in discrete steps, each taking an input such as a received message or a timer event, updating its state and possibly sending messages",
+          "what counts as one process in a deployed system: a component that holds its own state and can fail independently, such as an operating-system process, a machine or a replica, and how a process differs from the participant on whose behalf it acts",
+          "a process's local sense of time: the clock and timers it can read and set, how its clock can drift from real time and from other processes' clocks, and which durations a process can still measure"
+        ],
+        "excludes": [
+          "participants",
+          "nodes",
+          "state",
+          "partial-knowledge",
+          "failures",
+          "fault-models",
+          "latency",
+          "timestamps"
+        ],
+        "placements": {
+          "processes": "The only placement, under Distributed Systems among Communication, Partial Knowledge, Latency, Failures and Fault Models. The exposition defines the unit those siblings reason about (what sends, knows, waits, fails) and names each of them only where a process's own properties meet them, so it stands alone as the leaf explanation of the concept."
+        },
+        "fields": {
+          "role": "The unit of computation, state and failure in a system model: protocols are specified as the code each process runs, executions as interleavings of process steps and message deliveries, and fault and timing assumptions as statements about processes and the messages between them.",
+          "powers": [
+            "Reads and writes its own state, and no other process can read or write it; another process's state reaches it only as the content of messages.",
+            "Takes one step at a time: on an input (a delivered message, a fired timer, a request from its local environment such as a client call or a start signal) it applies its code to its current state and the input, producing a new state and possibly messages to send and timers to set or cancel. The step is atomic with respect to the model: nothing else happens to that process in the middle of it.",
+            "Reads its local clock and sets timers measured by that clock; a timer firing is itself an input that triggers a step.",
+            "Cannot observe other processes directly, cannot read a global clock, and cannot choose when its next step runs: scheduling, message delivery and timer delivery decide that.",
+            "Local time, the limit of its clock power: Local time: a hardware clock advances at a rate that differs from real time by a drift rate, for ordinary quartz oscillators commonly on the order of tens of parts per million, varying with temperature and age, which can add up to seconds per day. Two clocks drifting at persistently different rates diverge without bound unless resynchronized, and synchronization over messages narrows the offset only to within the uncertainty of message delay. A time-of-day clock can be stepped forward or backward by synchronization, so it can run backward or jump; a monotonic clock never goes backward, though synchronization may adjust its rate; its readings have no meaning across processes or across restarts. What a process can still measure: elapsed time between two of its own events on a monotonic clock, with relative error bounded by its drift rate when that rate is bounded; the round trip from sending a message to receiving its reply, since both ends are read on one clock. What it cannot measure: the one-way delay of a message, the offset of another process's clock at an instant, or whether two events at different processes were simultaneous, without assumptions about delay and drift. Timers inherit the same error: a timer set for a duration fires after that duration as the process's clock measures it, possibly late if the process is not scheduled. Turning such a duration into suspicion that a peer has failed is a timeout, named under latency."
+          ],
+          "incentives": "None of its own: a process runs its code. Incentives, identity and accountability belong to the participant the process acts for, recognized by the protocol through an identifier such as a key; one participant can run several processes (replicas, a signer separate from the component that relays its messages), and processes acting for different participants can share one machine. Whether a process follows its protocol therefore depends on the code it was given and the faults that befall it, not on reasons of its own; the participant behind it is where incentives enter.",
+          "trustPlaced": "A protocol's guarantees are commonly stated in terms of correct processes, a notion the fault model defines along with how many processes may be faulty (named, not explained). A process trusts nothing it has not computed or received; its picture of others is what partial knowledge describes.",
+          "misbehaviour": "A process can stop taking steps or depart from its code; how such departures appear and are classified belongs to failures and fault models. What is specific to this concept: a process that stalls (paused by a garbage collector, a suspended virtual machine, a swapped-out page) takes no steps meanwhile, so a duration it measured before the pause says nothing about when its next action happens, and it may act on a reading of its clock or state that has gone stale.",
+          "relation": "A step takes the current state and one input and yields a new state, messages to send and timers to set or cancel: (state, input) -> (new state, messages to send, timers to set or cancel). An execution of a process is the single sequence of its steps.",
+          "variants": [
+            "Granularity is chosen so the abstraction holds: the unit must hold state no other unit reads or writes and must be able to fail while others keep running.",
+            "An operating-system process or container: private address space, crashes on its own, though it shares a machine's fate when the machine fails.",
+            "A machine or virtual machine: often the unit when failures of interest are machine failures; several cooperating programs on it may be modeled as one process.",
+            "A replica of a service: the unit in replication protocols, possibly itself many machines that present one sequential behavior.",
+            "A thread or actor counts when it shares no memory with the others and interacts by messages, as in actor runtimes, to the extent that the failures being reasoned about can strike it without the others; threads sharing an address space can each write memory the others read, and a fault in one can corrupt or stop the rest, so together they form one process.",
+            "The choice has consequences: modeling two components as one process assumes they share state and fail together; modeling them as two assumes they share no state and that either can fail without the other, so a common cause that brings both down counts as two failures against the fault model's bound, the correlated failure named under failures."
+          ],
+          "invariants": [
+            "A process's state changes only through its own steps.",
+            "Steps of one process are totally ordered by the process itself; without timing assumptions, steps of different processes are ordered only by what messages establish (named under partial knowledge)."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "An abstraction and its realization: a model unit defined by its step semantics, the criterion that maps deployed components onto it (with the process/participant boundary drawn by reference), and the local resources it acts with, its private state, clock and timers, each with the conditions under which it holds.",
+        "whyProse": "Each claim is an argument with conditions, not a shape. The step is one input producing a state update and outputs; drawn as a flow it would be a trivial three-stage line that a single sentence states exactly, and it is not a process whose ordering or branching carries meaning. What counts as one process is a criterion (private state, independent failure) applied to examples, with the consequence of the modeling choice; variants with one attribute each are sentences, not a comparison. The process/participant boundary is reference-only: a distinction block would have to explain participants, which this concept excludes, and would echo the parent's Distributed ≠ Decentralized distinction. Local time is a chain of causes and conditions (drift, divergence, stepping, monotonic versus time-of-day, what one clock can and cannot measure), where the conditions are the content; a comparison of measurable durations would reduce each to a yes or no and lose why. A process does not rest in persistent modes with conditioned returns, so no state model applies, and nothing recurs with its output feeding the next pass, so no cycle.",
+        "level": "The parent states only that processes hold state, share no state or clock and fail independently. The step model, the unit criterion and the local clock are properties of the process itself, not of the whole system, and no sibling owns them: communication owns links, partial knowledge what a process can know of others, latency timing models and timeouts, failures and fault models how processes fail and how failures are bounded. State owns what a state keeps and the shared/local distinction; this concept uses private state only as what a process holds.",
+        "territory": "Participants are named to draw the boundary (a process acts for a participant; incentives and identity belong there) and never explained. Timeouts are named as what latency builds from a process's timers, without explaining suspicion or choosing a timeout. Failures, fault models and correctness are named where independent failure and stalls touch the process, without classifying faults. Happens-before is named as the only cross-process order, without explaining it. Clock synchronization is mentioned only as the limit on narrowing offset; timestamps and time ordering in other domains are not drawn. Nodes are not drawn.",
+        "placements": "There is one placement, under Distributed Systems. The exposition contains no positional reference and no claim true only in a blockchain context; its examples (operating-system processes, machines, replicas, actor runtimes, quartz drift, garbage-collection pauses) hold for any message-passing system."
+      },
+      "audit": {
+        "at": "2026-10-08T08:47:20.626Z",
+        "note": "Re-audit after repair cycle 1 (findings/processes.md). Each finding is resolved. D1: paragraph 3 now says guarantees are 'commonly stated in terms of correct processes, a notion the fault model defines along with how many processes may be faulty'. The hedge removes the overclaim (uniform properties), the crash-stop definition is gone, and fault models is named, not explained. Model trustPlaced matches. D2: the determinism sentence is deleted from paragraph 2 and from model relation. D3: 'modeling them as two asserts that they share no state and that either can fail without the other' is correct, and the co-located replica example fits it. Variants matches. D4: paragraph 7 now separates the clocks by stepping: synchronization can step a time-of-day clock, while a monotonic clock does not go backward, though its rate may be adjusted. The bounded-rate error statement in paragraph 8 still holds under slewing. D5: paragraph 2 ends at 'a single sequence of steps', and paragraph 3 keeps the contrast as 'totally ordered by its own sequence'. I checked the repaired sentences for new errors and found none. Parent overlap (one placement, parent Distributed Systems, plus the domain sentences): the definition reuses private state and independent failure only inside a definition that adds the step model. No parent or domain sentence is restated, and the determinism paraphrase is gone. Territory: siblings and excludes are named only (see resolutions). Happens-before goes to partial knowledge, timeouts to latency, correlated failure and stall classification to failures and fault models. Nodes and timestamps are not drawn. Against the authored participants record, the process/participant boundary is drawn from the process side (incentives and keys belong to the participant, and the mapping is not one to one). It does not repeat the participants record's argument about identifiers, roles and bounds over parties. Representation: prose, as designed (9 paragraphs, no blocks). The reasons in whyProse hold: there are no persistent modes, no recurrence, and the step is a one-sentence relation. Accuracy: I rechecked every absolute. 'Nothing more' and 'means nothing' about a monotonic clock follow from its arbitrary starting point, and the comparison is made across machines or reboots. 'Ordered only where chains of messages connect them' carries its no-timing-assumptions condition. 'Not measurable from a local clock; at best they can be bounded, under assumptions' is correct. 'Resynchronizing over messages can narrow their offset only to within the uncertainty' is correct. The quartz drift figure is correctly hedged. American English, plain text, no positional or time-sensitive words. Depth: about 1,180 words for three claims, and each paragraph ties to a claim. Remarks (not defects): (a) paragraph 9, 'Unless it reads its clock again after resuming, nothing tells it that time has passed', is true of the resumed computation; 'nothing in its own execution tells it' would be tighter, since a later message could imply elapsed time. (b) Paragraph 5, 'modeling two components as one process asserts that they share state', reads best as 'treats their state as one'; the cooperating programs in paragraph 4 need not share state in the ordinary sense. (c) Model powers says monotonic readings 'have no meaning across processes', which overclaims for OS processes on one machine that share the clock; the record correctly says 'another machine's monotonic clock'. (d) Model trustPlaced, 'trusts nothing it has not computed or received', leaves out assumptions held in advance. (e) Taste: 'however' after 'though' in paragraph 7; 'therefore' in paragraph 3.",
+        "resolutions": [
+          {
+            "id": "names-concept:9b13bc799a",
+            "resolution": "Distributed systems is named once, in the definition ('the unit a distributed system is modeled from'), as what the process abstraction models. The parent's defining conditions are not re-explained beyond the private state and independent failure that the definition needs."
+          },
+          {
+            "id": "names-concept:86dd2d4d79",
+            "resolution": "Failures is named twice: co-located replicas are 'the kind of correlated failure that failures examines', and how stalls 'appear to other processes ... belongs to failures and fault models'. The record does not explain common causes, fault/error/failure stages or restart state."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault models is named in three places: fault assumptions are statements about processes; correct processes are 'a notion the fault model defines along with how many processes may be faulty'; and stall classification belongs to fault models. The record gives no fault classes, no definition of correctness and no thresholds (the earlier D1 leak is removed)."
+          },
+          {
+            "id": "names-concept:fda11800c7",
+            "resolution": "Latency is named once: turning a measured silence into suspicion 'is a timeout, which belongs to latency'. The record explains only the timer and clock errors that a timeout inherits, which are this concept's local-time claim. It says nothing about timing models, timeout choice or round costs."
+          },
+          {
+            "id": "names-concept:96f5ef670d",
+            "resolution": "Partial knowledge is named once, as the owner of the happens-before relation that orders steps across processes. The record does not explain causal pasts, cuts, snapshots or common knowledge."
+          },
+          {
+            "id": "names-concept:c5f218aa76",
+            "resolution": "Participants is named to draw the boundary that the claim requires: incentives, identity and accountability belong to the participant a process runs for, and the process-to-participant mapping need not be one to one. The record does not explain roles, classes of participant or bounds over identifiers, all of which the authored participants record owns."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "State is used only as what a process holds privately and advances by its steps. The record does not explain what a state keeps or the shared/local distinction, which the state concept owns."
+          }
+        ],
+        "recordFingerprint": "500c3495de51118540d2b0ec24279cb2444f46857b2316be1a1ffa37ae9be323"
+      }
+    },
+    "communication": {
+      "model": {
+        "meaning": "Communication is how processes exchange messages over links and channels whose assumed guarantees (whether a sent message is delivered, once, in order, and from the sender it names) a protocol either relies on or builds from weaker ones, including broadcast of one message to a group.",
+        "kind": "mechanism",
+        "parents": {
+          "distributed-systems": "The parent establishes that messages are the only way one process's state can affect another and that communication takes time and can fail. This concept adds what a protocol can assume about a link: the hierarchy from fair-loss to reliable and FIFO links and how each stronger guarantee is built from a weaker one; what a receiver can conclude about a message's sender over unauthenticated, pairwise-authenticated and signed channels, and how forged and replayed messages are rejected; and how a message reaches a group, from best-effort to reliable, uniform and Byzantine reliable broadcast, with what each guarantees when the sender fails partway."
+        },
+        "claims": [
+          "the link abstractions a protocol can assume, from fair-loss links that may drop messages to reliable and FIFO links, and how stronger links are built from weaker ones with retransmission, acknowledgments, deduplication and sequence numbers",
+          "what authenticated and unauthenticated channels let a receiver conclude about who sent a message, and how a protocol rejects forged or replayed messages",
+          "point-to-point messages versus broadcast to a group of processes, and what a reliable broadcast can guarantee about which messages the correct processes deliver when the sender may fail partway"
+        ],
+        "excludes": [
+          "coordination-communication",
+          "message-delivery",
+          "message-authentication",
+          "message-forgery",
+          "gossip",
+          "message-propagation",
+          "agreement",
+          "partial-knowledge",
+          "latency"
+        ],
+        "placements": {
+          "communication": "The only placement, under Distributed Systems, among Processes, Partial Knowledge, Latency, Failures and Fault Models. The parent names communication as the medium between processes; this exposition explains the link, channel and broadcast abstractions in general message-passing terms (no blockchain-specific setting is assumed), naming latency, failures, fault models and agreement only where a guarantee depends on them, so it stands as the leaf explanation of message exchange between processes."
+        },
+        "fields": {
+          "sequence": [
+            "A process sends a message on a link to one receiver (point to point), or broadcasts it to a group, which an implementation turns into point-to-point sends.",
+            "The network carries it and may lose, delay, duplicate or reorder it; over an unauthenticated network it may also carry messages no process sent.",
+            "The receiving process receives it, then checks it before acting: verifies its authenticator if the channel is authenticated, discards it if its identifier or sequence number was already seen or is outside the accepted window, and holds it back if an earlier message from the same sender is missing.",
+            "Only then does the receiver deliver it to the protocol; receipt and delivery differ, and every link guarantee is stated about delivery.",
+            "For a stronger link, the receiver acknowledges and the sender retransmits until acknowledged; for reliable broadcast, a process that delivers a message also relays it to the group, or delivery waits for acknowledgments from enough processes."
+          ],
+          "actors": [
+            "Sender: the process that sends or broadcasts; it may crash partway, and under a Byzantine fault model may send different messages to different receivers.",
+            "Receiver: the process that receives, checks and delivers; it keeps the state (seen identifiers, next expected sequence number, keys) that deduplication, ordering and replay rejection require.",
+            "Network: the medium between them, modeled by the weakest link it is assumed to provide; in an adversarial setting an attacker on the network can drop, reorder, replay and inject messages.",
+            "Group: the set of processes a broadcast addresses; the broadcast guarantees assume each member knows the membership and are stated mostly about what its correct members deliver, while the uniform variant also binds members that deliver and then crash."
+          ],
+          "inputs": [
+            "Messages, each with a claimed sender and, where the construction needs it, an identifier or per-sender sequence number.",
+            "Keys: a secret shared pairwise for message authentication codes, or a key pair per process for signatures, with each process knowing which public key belongs to whom.",
+            "Freshness context: sequence numbers, nonces, session, round or protocol-instance identifiers, and the receiver's record of what it has accepted.",
+            "Group membership, for broadcast."
+          ],
+          "outputs": [
+            "Deliveries with a link's guarantees: delivered at most once, eventually delivered if both ends stay correct, in the sender's order for FIFO links, and never a message attributed to a process that did not send it.",
+            "A sender identity the receiver can rely on to the extent the channel authenticates it: pairwise (convincing the receiver only) or transferable (verifiable by any process that later sees the message).",
+            "For broadcast, deliveries across the group with the variant's guarantee: every correct process delivers the same set of messages under reliable broadcast, and, under the uniform variant, including any message a process delivered before crashing."
+          ],
+          "assumptions": [
+            "The network is fair-loss: a message retransmitted infinitely often is delivered infinitely often. A link that can drop every copy forever cannot be made reliable.",
+            "The delivery guarantee holds only between correct processes, while no duplication, no creation and FIFO order hold whether or not an end crashes; a sender that crashes before its message gets through, or a receiver that crashes, voids the delivery promise for that message.",
+            "Deduplication and replay rejection need the receiver to remember what it accepted; in a model where processes recover from crashes, that memory and the sender's sequence counter must survive restarts or be fenced by a new session.",
+            "Authentication assumes keys are kept secret, bound correctly to processes, and that the adversary cannot break the cryptography in the time available.",
+            "Reliable broadcast as described assumes a known group; uniform reliable broadcast that waits for acknowledgments assumes a majority of processes are correct; the classic echo-and-ready construction of Byzantine reliable broadcast without signatures assumes pairwise-authenticated links and more than three times as many processes as faulty ones (the thresholds are fault models' subject, named not explained).",
+            "Reliable delivery is eventual: no link abstraction here bounds how long delivery takes; delay bounds are latency's subject."
+          ],
+          "failures": [
+            "A sender that crashes before its message gets through can lose the message even over a link built to be reliable; the delivery promise holds only between correct processes.",
+            "A receiver that loses its deduplication state on restart delivers duplicates, or accepts replays; a sender that reuses sequence numbers after a restart has new messages discarded as duplicates.",
+            "Over an unauthenticated channel, any process or network attacker can claim any sender identity, so a forged message is indistinguishable from a real one; authentication fails silently when a key is compromised.",
+            "A validly authenticated old message replayed into a new context (another round, session, recipient or protocol instance) is accepted unless the message binds that context and the receiver checks it.",
+            "Best-effort broadcast from a sender that crashes partway leaves some correct processes with the message and others without it, permanently.",
+            "Regular reliable broadcast lets a process deliver a message, act on it visibly, then crash, while no correct process ever delivers it; the uniform variant closes this.",
+            "FIFO delivery holds back every later message behind a missing one, so one lost message stalls the sender's whole stream until it is retransmitted."
+          ],
+          "variants": [
+            "Links, weakest to strongest: fair-loss (may lose any single message and duplicate finitely), stubborn (retransmits every message forever, so each is delivered, repeatedly), reliable or perfect (deduplicated, so each is delivered exactly once), FIFO reliable (sequence numbers and a hold-back buffer give the sender's order).",
+            "Channels by what they tell the receiver about the sender: unauthenticated (the claimed sender is just a field), authenticated pairwise with a message authentication code (convinces the receiver, but the receiver holds the same key and could have produced it, so it proves nothing to a third process), signed (transferable: any process can verify the sender, so a message can be relayed as evidence).",
+            "Broadcast: best-effort (correct sender reaches all correct processes; nothing promised if it fails), reliable (all correct processes deliver the same messages even if the sender fails partway, by relaying), uniform reliable (also binding for processes that delivered and then crashed, by delivering only after enough acknowledgments), Byzantine reliable (correct processes deliver the same message, if any, even when the sender equivocates, via echo and ready rounds).",
+            "Ordered broadcast (FIFO, causal, total order) adds ordering on top; total-order broadcast is equivalent to agreement and is named, not explained."
+          ],
+          "invariants": [
+            "No creation: a message is delivered as coming from a process only if the process it names as sender sent it; over an unauthenticated network with an active attacker this holds only with authentication.",
+            "No duplication: a reliable link delivers each sent message at most once.",
+            "FIFO: messages from one sender are delivered in the order it sent them.",
+            "Broadcast agreement: if any correct process delivers a message, every correct process eventually delivers it (uniform: if any process delivers it)."
+          ],
+          "tradeoffs": [
+            "Retransmission and deduplication buy reliability at the cost of acknowledgment traffic and receiver memory; bounding that memory with sequence-number windows rejects late but genuine messages.",
+            "MACs are cheap but convince only the pairwise receiver; signatures cost more to compute and verify but make a message checkable by everyone, which relaying evidence and some fault-tolerance results depend on.",
+            "Eager reliable broadcast sends on the order of the square of the group size in messages per broadcast; one cheaper scheme relays only when the sender is suspected of failing, and then depends on every crashed sender eventually being suspected.",
+            "In the majority-acknowledgment construction, uniformity forces delivery to wait for acknowledgments from a majority, adding a message delay and requiring a correct majority."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A layered mechanism: guarantees a protocol may assume about message exchange, each defined by the same few properties (delivery, duplication, order, sender identity), with stronger guarantees constructed from weaker ones by specific mechanisms, plus the conditions (correct endpoints, retained state, uncompromised keys, a known group) under which each guarantee holds and how it fails when they do not.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Set the four link abstractions (fair-loss, stubborn, reliable, FIFO reliable) side by side on the shared dimensions that define them: what is delivered between correct processes, whether duplicates occur, what order is kept, and the mechanism that builds each from the one before.",
+            "whyNotProse": "The link abstractions are defined differentially: each differs from the previous on one or two of the same properties, and the construction adds one mechanism per step (retransmission, deduplication, sequence numbers with a hold-back buffer). In prose the reader must carry four alternatives across three properties and reconstruct which property each mechanism changed; a table read down a column shows how duplication rises then is removed, and read across a row shows exactly what each step buys and by what means."
+          }
+        ],
+        "division": "The prose explains why each construction works and under which conditions: retransmission relies on the fair-loss assumption, acknowledgments only let the sender stop, deduplication and replay rejection need receiver memory that must survive restarts, and every link promise is void if an endpoint crashes. It also carries channel authentication (what pairwise and signed authentication let a receiver conclude, and how forgery and replay are rejected and when that fails) and broadcast (best-effort, reliable, uniform and Byzantine variants and what each guarantees when the sender fails partway, with the boundary to agreement named). The comparison shows only the link hierarchy's per-property values and the mechanism of each step; the prose must not restate its rows, and the table does not hold conditions or failure cases.",
+        "level": "The parent says only that communication is the sole channel between processes and that it takes time and can fail. The link, channel and broadcast abstractions and their constructions are properties of message exchange itself, below that synthesis, and no sibling owns them: processes owns the step that sends and receives, partial knowledge what a process can know from what it received, latency timing models and timeouts, failures how links and processes fail, fault models the fault classes and thresholds. The link hierarchy is a comparison of this concept's own variants, so it belongs here and nowhere above.",
+        "territory": "Latency is named as the subject of how long delivery takes (reliable delivery here is only eventual) and fault models as the source of the thresholds broadcast variants assume, without explaining either. Agreement is named to draw the boundary (reliable broadcast neither orders messages nor guarantees a faulty sender's message is delivered; total-order broadcast is equivalent to agreement), never explained. Partial knowledge is not drawn: the record says what is delivered, not what a process can infer. Gossip and message propagation are named at most as other dissemination settings. Message delivery, message authentication and message forgery (cross-chain concepts in other domains) are not explained; this record treats authentication only as a property of a channel between processes. Coordination communication is not drawn: this record is message exchange as the medium, not participants signalling intent.",
+        "placements": "There is one placement, under Distributed Systems. The exposition uses no positional reference and no claim specific to blockchains; its examples (acknowledgment and retransmission, sequence numbers, message authentication codes and signatures, nonces and session identifiers, relaying broadcast) hold for any message-passing system."
+      },
+      "audit": {
+        "at": "2026-10-08T09:08:28.606Z",
+        "note": "Re-audit after the second repair; every sentence read against criteria 1-6. Round-1 findings D1-D4 stay resolved (delivery promise alone needs correct ends; broadcast guarantees 'stated mostly' about correct members; Bracha construction complete with authenticated links, one sense of ready, f+1 amplification, larger delivery quorum, 'eventually'; duplicate checking clause gone). Round-2 findings resolved: E1 no creation is now sender-specific ('delivered as coming from a process unless that process sent it'), matching the definition and invariants[0]/outputs[0]; E2 'crashes before its message gets through can take the message with it ... is not bound to deliver it', matching failures[0]. The whole-record condition pass introduced no error: definition 'is delivered'; fair loss 'sending it again without end'; 'Every stronger delivery guarantee depends on that fairness' (delivery, not order/no-creation); 'only eventually, with no bound'; partial broadcast 'can have reached'; best-effort 'promises delivery only if the sender stays correct'; uniform cost scoped to 'This construction'; Byzantine validity reason correct (n-f > (n+f)/2 and n-f >= 2f+1 both follow from n > 3f). Parent overlap: one placement under Distributed Systems; no parent or domain sentence restated ('only eventually, with no bound' adds to 'takes time and can fail'). Territory: latency, timing models, fault models, crash-recovery, agreement and total-order equivalence are named for boundaries; partial knowledge, gossip, message propagation and coordination communication not drawn; restart discussion confined to link state (failures owns restart in general); Byzantine equivocation stated only as what the construction must withstand. Structure: the link comparison is genuine, general (CGR fair-loss/stubborn/perfect/FIFO) and not spelled out in prose beyond premises. Accuracy: MAC reflection and non-transferability, key conditions, replay context binding, fixed-window rejection, eager and lazy reliable broadcast (lazy depends on completeness), two limits of regular RB, majority-ack uniform construction, causal-order gloss and crash-model consensus equivalence all correct. Placement: no positional or time-sensitive words; American English; plain text. Depth: 1639 words for three mechanism claims each with variants; every paragraph maps to a claim, nothing said twice. Remarks (not defects): (a) comparison fair-loss 'Duplicates: Finitely many' is the finite-duplication property and holds per message sent finitely often; the same row's infinitely-often deliveries are repeated sends, not network duplicates, so a reader could pause; (b) the uniform paragraph's totality step leaves implicit that each correct member relays in turn and so collects a correct majority of relays; 'carry the message to every correct member' is the decisive step and the delivery rule is stated, so it holds; (c) 'from each sender's own order, through causal order, to total order' reads as a strength chain, though total order does not imply causal or FIFO order; it lists variants and claims no implication; (d) 'can deliver duplicates again' has a redundant 'again'; (e) model failures[1] 'delivers duplicates' would better read 'can deliver duplicates'.",
+        "resolutions": [
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "Agreement is named twice: as the boundary (total-order broadcast is as hard to provide as agreement, each buildable from the other in standard crash-fault models). Nothing about how agreement works or its properties is explained."
+          },
+          {
+            "id": "names-concept:587771cf62",
+            "resolution": "Matched by the shared title 'Communication' in the definition. The record is message exchange between processes over links, channels and broadcast; participants exchanging information to align action is not drawn. Identity holds."
+          },
+          {
+            "id": "names-concept:2cd4d471a3",
+            "resolution": "Digital signatures are characterized only by what they let a receiver conclude (transferable, verifiable by any public-key holder, costlier), which is claim 2; no signing or verification mechanism is explained."
+          },
+          {
+            "id": "names-concept:bcc63b045c",
+            "resolution": "Fault models are named twice as the home of the correct-majority and n > 3f thresholds' basis; the record uses the thresholds as construction assumptions without explaining fault classes or why thresholds hold."
+          },
+          {
+            "id": "names-concept:fda11800c7",
+            "resolution": "Latency is named once: how long delivery takes is a question for latency and timing models. Reliable delivery is stated as only eventual; no timing model or timeout is explained."
+          },
+          {
+            "id": "names-concept:12a3aec8e7",
+            "resolution": "Only the primitive 'message authentication code' appears, as a channel property between processes (pairwise conviction, reflection, non-transferability) under claim 2; the cross-chain message-authentication concept is not explained."
+          },
+          {
+            "id": "names-concept:ed38e0b08a",
+            "resolution": "'Processes' is used as the actors of message exchange; the process abstraction, its steps and local time (the sibling's claims) are not explained."
+          },
+          {
+            "id": "absolutes:c43be2eea8",
+            "resolution": "Each checked: 'guarantees are stated about delivery' (definitional); 'Every stronger delivery guarantee depends on that fairness' (holds for the layered constructions over a network that can drop every copy); 'cannot be passed on as evidence' (a third process cannot verify a pairwise MAC); 'A link's guarantees concern one sender and one receiver' and 'no collection of pairwise promises expresses' (true: best-effort with a crashing sender meets all pairwise properties yet violates agreement); 'extending the guarantee to every process that delivers' (uniform agreement); 'Byzantine reliable broadcast guarantees' (conditioned in the same paragraph on authenticated links and n > 3f); 'never announces a message no correct process was ready for' (induction on the f+1 rule, for correct processes following the protocol). All hold under their stated conditions."
+          },
+          {
+            "id": "depth-long:fa4081bea5",
+            "resolution": "1639 words for three mechanism claims, each with variants. Claim 1: paragraph 1, the comparison, the acknowledgment paragraph and the receiver-memory paragraph. Claim 2: the authentication, key-conditions and replay paragraphs. Claim 3: point-to-point versus broadcast and best-effort, reliable, uniform, Byzantine and the ordering boundary. No point is made twice, no background outside the claims, no surplus examples; growth since round 1 is the Byzantine construction's rules and conditions, which the claim needs."
+          }
+        ],
+        "recordFingerprint": "d703ea1d490775ed95b2b676b98da9a18ddf4153c127954f188286ef2c366361"
+      }
+    },
+    "partial-knowledge": {
+      "model": {
+        "meaning": "Partial knowledge is the limit on what a process in a distributed system can know: only events in its causal past can have informed it, what it learns about another process describes that process as it was when the information left, and some states of knowledge, such as common knowledge of a fact over channels that may lose messages, no exchange of messages can establish.",
+        "kind": "property",
+        "parents": {
+          "distributed-systems": "The parent states that a process knows other processes only through what it has received, so its knowledge is partial and possibly out of date, and that no instant exists at which the whole system can be inspected. This concept gives that limit its exact extent and its consequences: the causal past under happens-before as the reach of knowledge, why received knowledge is old and which facts survive its age (stable properties), how a consistent cut and a snapshot protocol give a usable picture of the global state without a common instant, and the hierarchy of knowledge about knowledge, with the coordinated-attack argument for why common knowledge cannot be attained over lossy channels."
+        },
+        "claims": [
+          "how far a process's knowledge can reach: the events in its causal past under the happens-before relation, and why, apart from assumptions held in advance and what silence implies under a known delay bound, nothing outside that past can inform its decisions",
+          "why knowledge about another process is old when it arrives, and which facts stay true once learned (stable properties such as termination, or a crash under a crash-stop model) versus facts that may already have changed",
+          "how a process can obtain a meaningful picture of the global state without a common instant: consistent cuts, and snapshot protocols that record local states together with messages in transit",
+          "knowledge about other processes' knowledge, and why processes cannot attain common knowledge of a fact over channels that may lose messages, as the coordinated-attack problem shows"
+        ],
+        "excludes": [
+          "information",
+          "coordination-communication",
+          "state",
+          "quorums",
+          "agreement",
+          "processes",
+          "communication"
+        ],
+        "placements": {
+          "partial-knowledge": "The only placement, under Distributed Systems, between Communication and Latency; the parent's flow ends Failures/Latency → Partial knowledge → Local decision, and this exposition explains what a process can know at the point it decides, which holds wherever processes coordinate by messages."
+        },
+        "fields": {
+          "statement": [
+            "What a process can know about other processes is bounded by its causal past: information about an event reaches it only along a chain of steps and messages from that event, so events concurrent with or later than its current step cannot have informed it, except by inference from assumptions held in advance, such as a known delay bound under which the absence of an expected message is itself informative.",
+            "Knowledge about another process is old on arrival: from a sender that follows its protocol, it describes the sender's state when the message left, and the sender may have moved on since. Facts that are stable, true forever once true, remain usable; others may already be false.",
+            "Exposure the limit leaves (no violation exists, since it is a limit): a decision rests on a picture that is incomplete and dated; a predicate over many processes evaluated on an inconsistent picture can report a condition that never held (a phantom deadlock, money counted twice or not at all); and an action that needs every process to know that all others know, at every depth, cannot be guaranteed over channels that may lose messages, so protocols change the problem: agreement assumes, among other things, that a message sent repeatedly eventually arrives and lets processes act at different times (where every message may be lost, even that is out of reach), and other designs accept coordination that fails with a probability a model of message loss bounds."
+          ],
+          "establishedBy": [
+            "Processes share no memory and no common clock; the only way an event at one process can affect what another knows is a message or a chain of messages (the parent's premise, used here, not restated).",
+            "Lamport's happens-before relation (1978) defines the causal past: within a process, earlier steps precede later ones; the sending of a message precedes its receipt; and the relation is transitive. Events neither of which happens before the other are concurrent.",
+            "Chandy and Misra (1986, How processes learn): in an asynchronous system, a process can gain or lose knowledge about another process's state only through a chain of messages (a process chain) linking the two.",
+            "Halpern and Moses (1990, Knowledge and common knowledge in a distributed environment): common knowledge of a fact not common knowledge at the outset cannot be attained by exchanging messages when message delivery is not guaranteed (and, more generally, when there is no bound on delivery time), formalizing the coordinated-attack problem (Gray 1978; Akkoyunlu, Ekanadham and Huber 1975)."
+          ],
+          "confusions": [
+            "A consistent cut is not the state at one real-time instant: a snapshot's recorded state may never have existed at any single moment, yet it is a state the computation could have passed through, which is what makes evaluating stable properties on it sound.",
+            "Old is not wrong: old knowledge of a stable fact (termination, deadlock, a message having been sent, a crash under crash-stop) is still true; old knowledge of an unstable fact (a load, a balance, whether a lock is free, whether a process is up when processes can recover) may already be false.",
+            "Everyone knowing a fact, even to any finite depth of knowing that others know, is not common knowledge; over a channel that may lose messages or has no delivery bound, a sender learns of receipt only from a reply, so each delivered message adds at most one level, and none closes the gap (where delivery within a known bound is guaranteed, receipt can be inferred without a reply).",
+            "Happens-before is not real-time order: two concurrent events may have occurred in either real-time order, and neither could have influenced the other.",
+            "Partial knowledge is not a symptom of failure: it holds in a failure-free system with prompt delivery, because knowledge still travels only along the causal past; latency and failures widen it."
+          ],
+          "invariants": [
+            "A consistent cut is closed under happens-before: if an event is in the cut, every event that happens before it is too; equivalently, no message is recorded as received whose sending is outside the cut.",
+            "A stable property that holds in a consistent snapshot holds in every later state of the computation, so detecting it on a snapshot never reports a condition that is not true now; the converse (that it was false at the snapshot implies false now) does not hold.",
+            "Under asynchrony, apart from what it infers from assumptions held in advance, nothing a process knows about another process's events comes from outside its causal past."
+          ],
+          "relation": [
+            "Happens-before (→): a → b if a precedes b in one process, if a sends a message that b receives, or if a → c and c → b for some c; a and b are concurrent if neither a → b nor b → a. The causal past of event e is every f with f → e.",
+            "Consistent cut C: for all events e, f, if e ∈ C and f → e then f ∈ C.",
+            "Knowledge levels for a fact φ: E¹φ means every process knows φ; Eᵏ⁺¹φ means every process knows Eᵏφ; common knowledge Cφ holds when Eᵏφ holds for every k."
+          ],
+          "variants": [
+            "Snapshot protocols: Chandy–Lamport (1985) assumes processes that do not fail and reliable FIFO channels and uses marker messages: a process records its state when it first sees a marker (or initiates), sends a marker on every outgoing channel before sending anything else on it, and records, for each incoming channel, the messages that arrive after it recorded its own state and before that channel's marker; the recorded states and in-transit messages form a consistent global state.",
+            "Lai–Yang (1987) and similar protocols drop the FIFO assumption by tagging messages as sent before or after the sender recorded its state."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Argument and conditions: the reach of knowledge follows from how influence travels (happens-before), its age and the survival of stable facts follow from that reach, consistent cuts are justified by a closure condition rather than by simultaneity, and the impossibility of common knowledge is an inductive argument over the last message of any run. Each claim is a chain of reasons with hedges (asynchrony, crash-stop, FIFO), not an order of stages, a set of alternatives on shared dimensions, persistent states, or a loop.",
+        "whyProse": "The claims are explanations whose force lies in their conditions and inferences, which paragraphs carry and structures would strip. The snapshot protocol has steps, but its correctness turns on per-channel recording relative to markers, which a flow without message lanes would misdraw; three or four sentences state it exactly. The knowledge hierarchy is not a conflation chain but an induction (each acknowledgment adds one level, the last message may be lost, so no finite exchange reaches common knowledge), and a distinction block would only label what the argument must explain. Stable versus unstable facts are two kinds with one attribute each, a sentence rather than a comparison. Consistent cut versus a real-time instant and mutual versus common knowledge are real confusions, but each is resolved inside the argument that explains it; a separate distinction would restate the paragraph.",
+        "level": "The parent states the premise (knowledge only through what was received, partial and possibly out of date, no instant to inspect the whole system) as one link in its chain toward the coordination problem. The precise reach of knowledge, its age, how to obtain a consistent global picture, and the limits of nested knowledge are what Partial Knowledge alone answers; no sibling owns what a process can know, and no parent sentence explains it.",
+        "territory": "Communication owns link abstractions (fair-loss, reliable, FIFO) and broadcast; the record names FIFO only as the assumption a snapshot protocol makes and names lossy channels as the condition of the impossibility result. Latency owns timing models, timeouts and delay; the record names a known delay bound only as the condition under which silence is informative and says why knowledge is old, not how long delay is. Processes owns the process abstraction, local state and clocks; the record uses them as given. Failures and fault models own what fails and crash-stop versus crash-recovery; the record names crash-stop only to say when a crash is a stable fact. Agreement and quorums are named only as what coordination settles for once common knowledge is out of reach; state and information are not explained. Cross-domain: State & Data's Global State is a system's state as represented data, not a recorded consistent cut of a running computation, and Oracles' Staleness concerns the age of external data feeds; neither is explained here.",
+        "placements": "One placement, Foundations / Distributed Systems / Partial Knowledge. The exposition concerns any system of processes that interact only by messages and depends on no particular parent framing, so it would hold unchanged under another parent."
+      },
+      "audit": {
+        "at": "2026-10-08T09:27:47.292Z",
+        "note": "Re-audit after repair cycle 1, in fresh context, at the only placement (partial-knowledge, leaf under Distributed Systems in Foundations); every sentence reread against criteria 1-6. Cycle-1 findings resolved: D1, the coordinated-attack paragraph now counts messages delivered before the generals act (so the argument holds under fair loss for simultaneous action) and states the escape with both changes: agreement assumes a message sent repeatedly eventually gets through and lets processes act at different times, and where every message may be lost even that is out of reach by the same argument (checked: dropping the last delivered message and all later ones, termination forces a decision in that run, so the induction carries); other designs accept bounded-probability failure. D2, the knowledge ladder now opens with its condition (a channel that may lose messages or has no delivery bound, where a sender learns of receipt only from a reply). D3, a process now holds the protocol and what about the initial configuration is fixed in advance, such as membership. D4, exactness of a report is conditioned on a sender that follows its protocol. D5, the marker rule (a marker on each outgoing channel before anything else on it) now binds every process that records, and channel recording is stated relative to recording and each channel's marker; the FIFO boundary argument is correct. D6, the non-sending is now 'a fact about steps outside its causal past'. Cycle-1 remarks taken: 'delay slows them', 'may take further steps', 'in general' on possibly/definitely detection, 'compatible with' in the knowledge definition, restart clause removed, definition's nested commas untangled. Repair-introduced errors looked for and none found: the recorded state lies between begin and end states in some ordering (valid for any consistent cut between two real-time cuts, so it covers Lai-Yang too), stable-in-snapshot implies true at end and ever after, the base case (no delivered messages, so the undeciding general would attack alone in the no-order run) and the induction step are both sound, Halpern-Moses is stated for a fact not common knowledge at the outset over lossy channels, and 'requires exactly that' matches their equivalence of simultaneous action and common knowledge. Parent overlap: none; the opening of the cut paragraph presupposes the parent's no-instant premise but adds the closure condition, and the asynchronous-silence clause frames Chandy and Misra rather than restating the parent's waiting sentence. Siblings: Communication's link abstractions only named (FIFO, reliable, lossy; fair loss appears once as the stated condition of the agreement escape, required for the impossibility result, not explained); Latency's timing models named as conditions (known bound, asynchronous); Processes' clocks named (bound on clock drift); Fault Models' crash-stop and recovery named only to say when a crash is stable; agreement named as what protocols change the problem to, quorums absent. Representation: prose as designed, no structured block; the claims are arguments with conditions. Canonical, plain text, American English, no positional or dated words. Depth: 1,562 words over a definition and eight paragraphs, each tied to a claim (reach: 1-2; age and stability: 3; cuts and snapshots: 4-6; nested and common knowledge: 7-8); two claims need mechanism (snapshot protocol, coordinated-attack induction), so length follows the claims. Remarks: the Chandy-Misra clause partly echoes paragraph 1's 'travels only along chains of messages' (it adds the asynchronous result that silence cannot inform), and 'Acting together at the same moment needs that missing completeness' is echoed by 'requires exactly that'; both acceptable. 'A sender learns of receipt only from a reply' is read for two processes, as the sentence frames it (a third process could relay). Common-knowledge sentence assumes no shared clock, which the parent's model excludes. Model remarks: establishedBy[3] calls unbounded delivery time 'more general' than unguaranteed delivery, which is a separate condition rather than a generalization; invariants[1] 'every later state of the computation' is looser than the record's 'when the protocol ends and ever after'. Neither reaches the record.",
+        "resolutions": [
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "Agreement (excluded) appears once, as what protocols change the problem to: its fair-loss assumption and acting at different times are stated as the conditions of the impossibility escape; how agreement works is not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:9b13bc799a",
+            "resolution": "'a distributed system' appears only in the definition as the setting; the parent's defining conditions are not restated. Named, not explained."
+          },
+          {
+            "id": "names-concept:928a938e50",
+            "resolution": "'failures' appears only in 'Nor does the limit come from failures', to say the limit holds without them; what fails and how is left to Failures and Fault Models. Named, not explained."
+          },
+          {
+            "id": "names-concept:c9820caf5c",
+            "resolution": "'global state' is used in the distributed-computing sense this concept claims (a consistent cut's local states plus channel contents, and the epistemic global state); State & Data's Global State as represented data is not explained. Named in its own sense, not explained."
+          },
+          {
+            "id": "names-concept:1a33b2951f",
+            "resolution": "'information' (excluded) appears only as an ordinary noun ('when the information left', 'carries no such information'); no account of information is given. Named, not explained."
+          },
+          {
+            "id": "names-concept:cb90d7d822",
+            "resolution": "'processes' (excluded) is used as the given abstraction (steps, local history, sends and receipts); what a process is and how it is bounded is left to Processes. Named, not explained."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "'state' (excluded) is used as an ordinary term (local state, recorded state); State is not explained. Named, not explained."
+          },
+          {
+            "id": "absolutes:e3d9bcf7dd",
+            "resolution": "Each checked: 'cannot have been observed' outside the causal past holds by definition; 'cannot be established' and 'no protocol brings ... common knowledge' are conditioned on channels that may lose messages and a fact not common knowledge at the outset; 'never return' defines crash-stop; 'no ordering reaches' and 'a cycle that never existed' are hedged by 'can'; 'every message sent before ... and no message sent after' is conditioned on Chandy-Lamport's FIFO, reliable, non-failing assumptions; 'cannot tell whether it arrived' and 'only from a reply' are conditioned on lossy or unbounded channels between two processes; 'guaranteed' is the hypothesis of the proof by contradiction; 'No protocol over lossy channels escapes this' is the conditioned result of the argument; 'out of reach' for agreement is conditioned on every message possibly being lost. All hold under their stated conditions."
+          },
+          {
+            "id": "depth-long:928706e125",
+            "resolution": "1,562 words. Definition plus eight paragraphs, each tied to a claim: reach (happens-before, assumptions and silence), age and stability, cuts and their failure examples, snapshot protocols with and without FIFO, what a snapshot shows of stable and unstable properties, knowledge levels, and the coordinated-attack induction with Halpern-Moses and the escapes. The snapshot and coordinated-attack claims need their mechanism and conditions; the repair condensed the restart and possibly/definitely sentences. No background, repeated point or surplus example to cut beyond two acceptable echoes noted in the remarks."
+          }
+        ],
+        "recordFingerprint": "22af7e26af1d741b3fad1dcbce640a21d21bfcb5bdf7ebc9eed1e6a0ea56b630"
+      }
+    },
+    "latency": {
+      "model": {
+        "meaning": "Latency is the delay between a process sending a message and the receiver delivering it: a quantity every protocol rests on an assumption about (its timing model, which may assume no bound at all), that many protocols act on through decisions they cannot verify (timeouts), and that a protocol pays once for every message delay its decisions must wait for in sequence.",
+        "kind": "parameter",
+        "parents": {
+          "distributed-systems": "The parent establishes that communication takes time, that a crashed process and a slow one look the same from outside, that without a known bound waiting never settles which it is, and that a timing model states in advance whether messages arrive within a known bound. This concept adds the timing models themselves, synchronous, asynchronous and the two forms of partial synchrony (a known bound that holds only after an unknown stabilization time, or a bound that always holds but is not known), and what each lets an expired timeout mean; the timeout as the rule that turns an assumed or estimated bound into suspicion, why delay varies with load and path, why the tail of the delay distribution rather than its average decides the timeout, and the trade between fast reaction and false suspicion; and latency as the cost of protocol design: sequential message delays per decision and the pace set by the slowest reply a step must wait for."
+        },
+        "claims": [
+          "timing models as assumptions about message delay: synchronous systems with a known bound, asynchronous systems with none, and partially synchronous systems whose bound holds only eventually or is unknown",
+          "timeouts: how a protocol turns a delay bound into suspicion that a process has failed, why delay varies with load and path, why tail delays rather than averages matter when choosing one, and the trade between reacting quickly and suspecting correct processes",
+          "latency as a cost of protocol design: a decision that needs several rounds of message exchange takes several message delays, and the slowest of the replies a step must wait for sets the pace (with k of n replies, the k-th fastest)"
+        ],
+        "excludes": [
+          "propagation-latency",
+          "confirmation-latency",
+          "fault-detection",
+          "network-partitions",
+          "failures",
+          "fault-models",
+          "processes"
+        ],
+        "placements": {
+          "latency": "The only placement, under Distributed Systems, among Processes, Communication, Partial Knowledge, Failures and Fault Models. The parent's flow puts Latency beside Failures between Communication and Partial knowledge, and its prose names the timing model; this exposition explains timing models, timeouts and the latency cost of rounds in general message-passing terms, so it holds as the leaf explanation of delay between processes without depending on that framing or on any blockchain setting."
+        },
+        "fields": {
+          "measures": "The time from a send event at one process to the delivery of that message at another, for one message (one-way delay, the unit in which protocol cost is counted) or for a request and its reply (round-trip time, the quantity a process can measure on its own clock, named under processes). Treated as a random variable, not a constant: what matters is its distribution, whether it has a bound, and whether that bound is known.",
+          "setBy": [
+            "Distance sets a floor: signals in fiber travel at roughly two-thirds of the speed of light, about 5 microseconds per kilometer one way, so intercontinental round trips cost tens to over a hundred milliseconds whatever the protocol does.",
+            "Path: the route a message takes (hops, links, middleboxes) sets its fixed delay, and a route change moves it.",
+            "Load: queuing in network buffers and at the receiving process grows with utilization, sharply as a link or server nears saturation; this is the main variable part and, with loss and pauses, the source of the tail.",
+            "Message size over bandwidth (transmission time), retransmission after a loss (which adds at least the time the sender takes to detect the loss: a retransmission timeout, or less where an earlier signal such as repeated acknowledgments reveals it), and scheduling and pauses at either end (a paused process delivers late; named under processes).",
+            "Beyond the size and number of messages it sends, the protocol sets none of these; it sets which timing model it assumes, the length of any timeouts it uses, and how many sequential message delays a decision needs."
+          ],
+          "tradeoff": [
+            "Timeout length: a short timeout reacts quickly to a real crash but suspects correct processes whose messages are merely in the tail; a long one suspects wrongly less often but can leave whatever waits on a crashed process stalled for the whole timeout.",
+            "False suspicion has costs of its own: a needless leader change or failover can interrupt progress, repeat work and add load, which lengthens delays and triggers more suspicion.",
+            "Rounds versus messages and assumptions: cutting the sequential delays of a decision often needs more messages per decision (all-to-all instead of through a leader) or larger quorums, as fast paths in some agreement protocols do."
+          ],
+          "extremes": [
+            "No bound at all (asynchrony): no timeout is ever conclusive, so any timeout-based suspicion can be wrong at any time, and a protocol that must stay correct cannot let its safety depend on one.",
+            "A known bound that always holds (synchrony): a timeout set from the bound on every message delay the awaited message depends on, plus processing makes an expired timeout evidence of failure, but the guarantee is only as good as the bound; one message that exceeds it turns a correct process into a suspected one and can break what the protocol assumed.",
+            "Timeout near zero: everything is suspected; timeout effectively infinite: nothing is ever suspected and a crash stalls whatever waits on that process."
+          ],
+          "variants": [
+            "Synchronous: a bound on message delay exists, is known, and holds at all times (the classical model also bounds processing time and clock drift, named under processes).",
+            "Asynchronous: no bound on message delay (or on relative processing speed); messages between correct processes are eventually delivered, but nothing says when.",
+            "Partially synchronous, unknown bound: a bound always holds but the protocol does not know it, so a protocol relying on timeouts for progress needs them to outgrow it, for example by growing them after each suspicion that proves premature or each time progress fails within the current timeout.",
+            "Partially synchronous, eventual bound: a known bound holds only after an unknown global stabilization time; before it, delays are unbounded, and no process can tell when the bound has started to hold, so protocols designed for it can keep safety independent of timing and rely on the bound only for progress (Dwork, Lynch and Stockmeyer 1988).",
+            "The model is an assumption the designer states, not a measurement: most deployed networks are timely most of the time with excursions no designer can bound with certainty, which is why many practical fault-tolerant protocols assume partial synchrony."
+          ],
+          "relation": [
+            "Decision latency: a decision that needs r sequential one-way message delays takes about r·δ plus processing, where δ is the per-step delay; a request-reply round is 2δ.",
+            "Waiting for replies: a step that waits for k of n replies completes at the k-th fastest reply; waiting for all n completes at the slowest.",
+            "Tail amplification: if each reply independently exceeds its 99th-percentile delay with probability 0.01, a step that waits for all n replies is delayed past that point with probability 1 − 0.99ⁿ, about 10% for n = 10 and 63% for n = 100 (Dean and Barroso, The Tail at Scale, 2013).",
+            "Timeout from estimates: adaptive timers such as TCP's retransmission timeout compute the timeout, subject to a lower limit, as the smoothed round-trip time plus four times its mean deviation (RFC 6298), so the margin above the estimated center follows the spread of delays rather than their mean."
+          ],
+          "invariants": [
+            "Under a bound that holds, with processing time and clock drift bounded and allowed for in the wait, a timeout on a message the peer, if correct, was obliged to send expires only if the peer or the link between them has failed; without a holding bound, any timeout can expire on a correct peer.",
+            "A decision cannot complete faster than its chain of sequential message delays, whatever the processing speed."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A quantity of the environment seen from three angles: what a protocol assumes about its bound (timing models, alternatives defined on the same few properties), how the protocol turns that assumption into action under uncertainty (the timeout, a parameter with a trade-off and conditions), and what the delay costs per decision (a relation between rounds, replies waited for and the delay distribution).",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Set the four timing models (synchronous; partially synchronous with an eventual known bound; partially synchronous with an unknown bound; asynchronous) side by side on the dimensions that define them: whether a delay bound exists and from when, whether the protocol knows it, and what an expired timeout shows under it.",
+            "whyNotProse": "The models are defined differentially on the same properties, and the two forms of partial synchrony are routinely conflated because each relaxes synchrony on a different property (when the bound holds versus whether it is known). In prose the reader must carry four alternatives across three properties; read down the last column, the table shows the gradient from an expired timeout being evidence of failure, through being trustworthy only eventually, to never being conclusive, which is what the timeout discussion builds on."
+          }
+        ],
+        "division": "The prose explains why a protocol must choose a timing model at all and why partial synchrony is the usual practical choice; that synchrony also bounds processing and drift (named); how protocols under partial synchrony keep safety independent of timing and grow timeouts to find an unknown bound; how a timeout turns a bound into suspicion, why delay varies with path and load, why the tail decides the timeout, and the cost of erring either way; and latency as a design cost: sequential message delays per decision, the k-th fastest reply setting a step's pace, and tail amplification as more replies are needed. The comparison shows only each model's bound, knowledge of the bound and the meaning of an expired timeout; the prose must not restate its rows, and the table carries no solvability results, examples or conditions.",
+        "level": "The parent names the timing model as an assumption stated in advance and the crash/slow ambiguity, as links in its argument toward the coordination problem; it does not define the models, the timeout or the cost of rounds. Those are properties of delay itself, below that synthesis, and no sibling owns them: processes owns clocks, timers and what a process can measure; communication owns link guarantees (delivery there is only eventual); partial knowledge owns what a process can know, citing a known delay bound only as a condition; failures and fault models own what fails and the fault classes, including which problems are solvable under which pairing of fault and timing model. The timing-model comparison compares this concept's own variants, so it belongs here.",
+        "territory": "Fault detection is named as what builds on timeouts (detector abstractions, their completeness and accuracy, and what a protocol does with suspicion), never explained: this record explains only how a timeout turns a delay bound into suspicion and the error that trade carries. Fault models are named as the other half of the system model and as where solvability under each timing model is decided; no impossibility result is explained, and the comparison has no solvability column. Failures is named for the crashed-or-slow ambiguity the timeout resolves, without classifying failures. Processes is named for local clocks, drift and pauses as causes of late action, without explaining them. Network partitions are named at most as unbounded delay between groups of processes. Propagation latency and confirmation latency (blockchain-specific delays in other domains) are not explained; agreement protocols appear only as examples of round counts, not explained.",
+        "placements": "One placement, Foundations / Distributed Systems / Latency. The exposition uses no positional reference and no blockchain-specific claim; its examples (fiber propagation delay, queuing under load, TCP's adaptive retransmission timer, leader failover, tail amplification over fan-out, round counts of leader-based protocols) hold for any system of processes that interact by messages."
+      },
+      "audit": {
+        "at": "2026-10-08T09:51:55.319Z",
+        "note": "Re-audit after the second repair. I read every sentence, including the ones the repair did not touch, against criteria 1-6. Round-2 findings are resolved. D1: the timeout wait now counts every delay the awaited message depends on. For a reply that is the request delay, the reply delay and the peer's response time. For a heartbeat it is the period plus one delay, counted from the last arrival. This is sufficient because the last heartbeat was sent no later than it arrived. Model extremes is fixed to match. D2: 'typically' is gone. Growth on premature suspicion and growth on failed progress are both given as examples, and model variants is fixed to match. D3: 'also' is gone, and the sentence now reads 'For quorums, independence is the flattering assumption'. Round-1 findings stay resolved. Accuracy: I rechecked the following and found no defect. The fiber floor (about 200 km/ms; intercontinental round trips of tens of ms or more). RFC 6298 (SRTT plus 4 RTTVAR, kept within limits; loss presumed only when no earlier signal has shown it). The fan-out figures 1-0.99^10 and 1-0.99^100. Four delays through a coordinator. The k-th fastest reply is slowed when more than n-k replies are slowed. The fast path is conditioned on no conflict or failure. Safety is independent of timing, progress is assured once delays stay within the timeouts long enough, and both are conditioned on the fault assumptions. The classical synchronous model bounds processing and drift. The asynchronous model is correct however slow the network becomes, at the price of problems unsolvable once processes may fail. The comparison is accurate in every cell. Its new unknown-bound cell ('accurate after, though no process can tell when') holds because the bound is unknown. Parent (Distributed Systems), the only placement: the record does not restate the crashed-or-slow sentence, 'waiting longer never settles the question', or 'a timing model states whether messages arrive within a known bound'. It extends them by separating whether a bound exists, from when, and whether it is known. Siblings: Partial Knowledge (silence under a known bound) overlaps by angle and the conditions match. Processes defers the timeout to latency, and drift and pauses appear here only as conditions and delay sources. Communication's retransmission appears here only as a delay source. Failures is not authored. The final paragraph's correlation is about delays, not correlated failures, but the Failures record should not repeat the argument. Excludes: propagation-latency is block or message dissemination in Networks and Infrastructure, and the record's fiber physics is generic point-to-point delay, so it is not leakage. Network-partitions and confirmation-latency are absent. Representation: the record writes the designed form, prose plus one 4x3 comparison. The comparison is genuine because the two partial-synchrony forms relax different properties. The prose adds the mechanisms (processing and drift bounds, safety kept independent of timing, timeout growth) and does not spell out the rows. Placement validity: no positional or time-sensitive words. American English and plain text. Remarks (not defects): (1) The table's unknown-bound cell 'Possibly wrong until timeouts allow for the bound; accurate after' and the prose's 'once they allow for the real bound, delay alone stops producing false suspicions' make the same consequence twice. The prose's own contribution is the growth mechanism, so the clause could be trimmed. (2) 'For quorums, independence is the flattering assumption' leads before its condition 'when k is well short of n'. For k near n, correlation can lower the tail probability. The condition follows in the same sentence, so the reading is conditioned. (3) 'Without such a bound the expiry yields suspicion, not knowledge' is close to the parent's crashed-or-slow point. It is kept as the necessary counterpart of the timeout rule, and it introduces 'suspicion'. (4) 'Many such protocols are built this way' would sit better before 'Both guarantees hold only while its fault assumptions do'. (5) TCP's exponential backoff after an expiry is not mentioned. The sentence describes the estimate-based computation, so this is an omission, not an error. (6) Model fields.extremes (synchrony) omits clock drift, which the record includes. Fields.relation's TCP entry gives only the lower limit, while the record says 'within limits'.",
+        "resolutions": [
+          {
+            "id": "names-concept:86dd2d4d79",
+            "resolution": "Failures appears only as the ordinary word: 'treat the sender as failed', 'has failed', 'Evidence of failure'. No failure classification is given. The final paragraph's common cause concerns correlated delays, not correlated failures, so the angle with Failures is divided. Named, not explained."
+          },
+          {
+            "id": "names-concept:b5d73aa502",
+            "resolution": "Fault assumptions (a Consensus-domain concept) appears only as a condition: 'Both guarantees hold only while its fault assumptions do.' Nothing about what fault assumptions are or how they are stated is explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:547a4d759d",
+            "resolution": "Fault detection is named once as the boundary: 'What is done with suspicion, and the accuracy properties a detector can offer, belong to fault detection.' The record explains only how a timeout turns a bound into suspicion, and how timeouts grow to allow for an unknown bound, which the design assigns here. Detector classes, completeness and accuracy are not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault models is named in 'problems that cannot be solved under it once processes may fail, which fault models examines'. No impossibility result, fault class or threshold is explained, and the comparison has no solvability column. Named, not explained."
+          },
+          {
+            "id": "names-concept:cb90d7d822",
+            "resolution": "Processes is the generic actor throughout. Its owned topics appear only as conditions and sources: descheduling and pauses as sources of delay, a timeout measured on the process's own clock, and processing speed and clock drift bounded in the classical synchronous model. How clocks, timers or drift work is not explained. Named, not explained."
+          },
+          {
+            "id": "absolutes:f65c669edb",
+            "resolution": "I checked each absolute. 'no protocol can remove' the distance floor: physics. 'cannot be read off a network': past compliance does not bound the next message. 'cannot be solved under it once processes may fail': existential, attributed to fault models. 'no designer can bound with certainty': hedged. 'no delay, however long, makes it violate them': under 'can keep' and the fault-assumption condition. 'Both guarantees hold only while its fault assumptions do': correct as a guarantee statement. 'no process can tell when' (two table cells): true by definition, since the time is unknown in one and the bound in the other. 'one that never expires never reacts': tautology. 'Never conclusive' (asynchronous row): no bound exists. 'cannot complete in less than the sum of their delays': each message is sent only after the previous arrives. All hold."
+          },
+          {
+            "id": "depth-long:7980c8660a",
+            "resolution": "1,537 words against 3 claims. Paragraph 2 (path, load, loss, pauses) and paragraphs 5-7 (timeout rule, tail and adaptive timers, the trade) serve claim 2. Paragraphs 3-4 and the comparison (timing models, safety independent of timing, timeout growth) serve claim 1. Paragraphs 8-9 (sequential delays, the k-th fastest reply, tail amplification and correlation) serve claim 3. The length comes from conditions the earlier audits required: processing and drift bounds, both reply and heartbeat waits, TCP limits, the fast-path condition, the k-well-short-of-n condition. Removing those would make the sentences wrong. No parent restatement, sibling explanation or repeated point needs cutting, beyond the optional trim in remark (1)."
+          }
+        ],
+        "recordFingerprint": "3c8672cfb1a14391f07b43b894d1e29ea0f7e530b5605a95acf1524d2303c020"
+      }
+    },
+    "failures": {
+      "model": {
+        "meaning": "A failure is a departure of a process or link from the behavior specified for it, as other processes experience it: a process that stops, a link that loses, duplicates or corrupts messages or delays them beyond a bound the system relies on, or a process that keeps running but does not follow its protocol, each the observable end of a chain that starts in a fault and passes through an incorrect internal state.",
+        "kind": "failure",
+        "parents": {
+          "distributed-systems": "The parent establishes that processes fail independently, that a crash and a slow reply look the same from outside, and that a fault model states which failures are possible and how many. This concept adds what the failing things are and what each failure looks like to the processes that depend on it, including which different failures produce the same observation; the fault, error and failure stages and the shift of level by which one component's failure is a fault of the system around it; why the parent's independence is an assumption that common causes break; and what a crashed process keeps and loses when it restarts. It does not classify failures into fault classes or bound their number (fault models), and does not reargue the crash-versus-slow ambiguity the parent already states."
+        },
+        "claims": [
+          "what can fail and how each failure appears to other processes: a process that stops, a link that loses, duplicates or corrupts messages, or delays them beyond a bound the system relies on, and a process that keeps running but departs from its protocol",
+          "fault, error and failure as distinct stages: the defect or event, the incorrect internal state it causes once activated, and the departure from specified behavior at the component's interface that others can observe",
+          "independent versus correlated failures: common causes such as shared software, hardware, power, operators or network paths, and how correlation makes it far more likely that many components fail at once than an assumption of independence predicts, so a bound on how many may fail can be exceeded",
+          "what a process that restarts after a crash keeps and loses: durable versus volatile state, and the risk of rejoining with state that others have moved past"
+        ],
+        "excludes": [
+          "fault-models",
+          "byzantine-behavior",
+          "partial-failures",
+          "network-partitions",
+          "fault-tolerance",
+          "fault-detection",
+          "recovery",
+          "operational-failures",
+          "latency"
+        ],
+        "placements": {
+          "failures": "The only placement, under Distributed Systems beside Processes, Communication, Partial Knowledge, Latency and Fault Models. The exposition explains what fails and how it appears, which is what the parent's flow puts between communication and partial knowledge, and names the siblings only where a failure meets them (a timing bound that makes delay a failure, fault classes that abstract these failures), so it stands as the leaf explanation of the concept without depending on the parent's text."
+        },
+        "fields": {
+          "causes": [
+            "Faults in hardware (a disk sector that goes bad, a memory bit flip, a failed power supply or network card), in software (a bug, resource exhaustion such as a full disk or memory), in the environment (power, cooling, a severed cable, a misrouted path), in operation (a mistaken configuration change or deployment), and deliberate action by an adversary.",
+            "A defect is dormant until activated: a bug causes nothing until an input or an interleaving reaches it, which is why the same code can run correctly for months and then fail on many machines at once.",
+            "Adversaries are one cause among others here; a deliberately departing process is named under byzantine-behavior and not explained."
+          ],
+          "manifestation": [
+            "A process that stops: no further messages from it, ever (or until it restarts). Others observe only silence.",
+            "A link that loses a message: the receiver sees nothing; the sender, if it expects a reply or acknowledgment, sees nothing either. Observed as silence, like a stopped process at either end.",
+            "A link that delays a message: the message arrives late, possibly after the receiver has given up on it, so it is first observed as a loss and then as a stale arrival. Delay is a failure only against a bound the system relies on; without one it is ordinary behavior (timing models are named under latency).",
+            "A link that duplicates a message: the receiver sees the same message twice, indistinguishable from a sender that sent it twice (a retransmission or a replay).",
+            "A link that corrupts a message: if a checksum catches it, the message is discarded and the corruption is observed as a loss; if not, the receiver sees content the sender never sent, indistinguishable from the sender having sent it.",
+            "A process that keeps running but departs from its protocol: messages keep arriving and are well formed, but carry wrong values, are sent out of turn, are omitted, or differ between recipients. Observed as content, not silence, and can be mistaken for undetected corruption or for a correct process acting on information the observer lacks.",
+            "The pattern: others observe symptoms, not causes. Three different failures collapse to silence; two collapse to wrong content. Which component failed is an inference, not an observation."
+          ],
+          "impact": [
+            "A failure of one component is a fault for the system that contains it: a crashed replica is a fault from the service's point of view, which becomes a failure of the service only if it propagates to the service's interface. Which stage one is looking at depends on the level of the system under view.",
+            "Correlated failures take out several components that were counted as independent, so a system provisioned to survive some number of failures can lose more at once than that number (thresholds are named under fault-models).",
+            "A process that restarts having lost volatile state can contradict what it said before the crash: a replica that acknowledged a write or cast a vote, held only in memory, may act after restart as if it never had, which to others is indistinguishable from a process departing from its protocol."
+          ],
+          "detection": "Named, not explained: silence is turned into suspicion by timeouts (latency) and fault-detection; wrong content is caught by checks such as checksums and message authentication (communication). This concept supplies what such mechanisms have to work with: the observation, and the set of failures consistent with it.",
+          "recovery": "Named, not explained: how a system restores service belongs to recovery and fault-tolerance. What is in scope here is the restarting process's own position: what it keeps (state written durably, provided the write actually reached stable storage before the crash), what it loses (everything in memory, including messages received but not yet persisted and promises not yet recorded), and the risk of rejoining with state that others have moved past, acting on an old view of membership, leadership or data until it learns otherwise.",
+          "variants": [
+            "Durable state: written to storage that survives a crash, such as a disk with the write flushed; survives a restart unless the storage itself fails or the write was acknowledged before it was flushed.",
+            "Volatile state: memory, caches, open connections, timers; lost on any crash.",
+            "Duration of a failure: permanent (a stopped process that never returns), transient (a dropped message, a process that restarts), intermittent (a fault that activates sporadically)."
+          ],
+          "tradeoffs": [
+            "Durability against speed: writing each piece of state durably before acting on it, or before acknowledging it to others, costs a storage write on the critical path; batching or deferring writes is faster but means a crash loses what was acknowledged.",
+            "Diversity against uniformity: running the same software, hardware and operations everywhere is simpler, but it creates common causes; diversity reduces correlation at the cost of more to build and run."
+          ],
+          "relation": "If each of k components fails within some window with probability p, independently, all k fail together with probability p^k, which shrinks quickly as k grows. A common cause that occurs with probability q and takes out all k makes the joint probability at least q, however large k is; past a point, adding replicas that share the cause stops reducing the risk.",
+          "invariants": [
+            "A failure is defined relative to a specification: without a statement of what a component should do, there is no departure to observe.",
+            "A fault causes a failure only by activating an error that reaches the component's interface; errors that stay internal, or are corrected, produce no failure."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Several distinct component failures set against the same questions: what the other processes observe, and what else produces that observation. The meaning is the many-to-few mapping from causes to symptoms, read across rows; around it, causation (fault to error to failure, and the level shift), conditions (when correlation defeats independence) and consequences (what a restart keeps and loses), which are argument.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Set the six failures of claim 1 (process stops; link loses, delays, duplicates, corrupts; process departs from its protocol) against two shared dimensions, what other processes observe and what the failure can be mistaken for, so the reader sees that three of them collapse to silence and two to wrong content, and that the observer sees symptoms, not causes.",
+            "whyNotProse": "The point is a pattern across six rows, not any one row: which observations coincide. Prose takes these one failure at a time, and the coincidences are spread across six sentences for the reader to cross-reference; the table puts each failure's observation and its look-alikes in the same column so the collapse is read directly."
+          }
+        ],
+        "division": "The table shows, per failure, the observation and its look-alikes, and nothing more; the prose must not restate those cells. The prose explains what a table cannot: that delay counts as a failure only against a bound the system relies on, that checksums turn detected corruption into loss, why the observer has to infer the failing component, the fault, error and failure stages and the level shift, correlated causes and the probability they defeat, and what a restarted process keeps, loses and risks. Fault-error-failure, correlation and restart are argument and causation, so they stay in prose.",
+        "level": "What each component failure looks like to the others, and which failures look alike, is specific to this concept: the parent states only that a crash and a slow reply look the same, and fault-models classifies failures by how much behavior each class permits, not by how they appear. The comparison is therefore drawn here, not at the parent and not at the fault-model concept.",
+        "territory": "The rows are concrete failures of processes and links as observed, not fault classes: they are not ordered by permissiveness and carry no thresholds, which are fault-models'. The departing-process row says only how departure appears, naming byzantine-behavior without explaining it. No column says how a failure is detected or handled (fault-detection, recovery, fault-tolerance), and delay is defined against a bound named under latency without explaining timing models. Link guarantees, deduplication and authentication remain communication's; the corruption and duplication rows state only what the receiver sees.",
+        "placements": "There is one placement. Nothing in the comparison or the prose depends on the parent's flow or wording; the table's dimensions are defined within the record, so it reads the same to a reader who arrives from anywhere."
+      },
+      "audit": {
+        "at": "2026-10-08T10:13:43.418Z",
+        "note": "Re-audit after repair cycle 2 (findings/failures.md, failures-2.md). I read every sentence again, including those neither repair touched (definition, 11 paragraphs, the 6x2 comparison), against criteria 1-6 at the only placement. Resolved: D6, the correlation clause now reads 'machines in one rack, building or region can share power, cooling or network paths'. With 'can' and the disjunction it holds for each scope (a region can share a grid or wide-area paths) and no longer contradicts the later 'separate failure domains'. The cycle-2 remark is taken up: paragraph 3 now says 'how protocols tolerate them', which is accurate (fault models bound departures, protocols tolerate them up to the bound). D1-D5 from cycle 1 stay resolved (dormancy confined to defects; the level-shift paragraph ends on the service example; 'holds at most what it had made durable'; 'accept a conflicting write or cast a different vote'; delay conditioned on a relied-on bound in the definition and model meaning). Neither change introduced an error, and agreement ('why ... and how ... belong') is correct. Parent (Distributed Systems): the record does not restate the crash-versus-slow sentence, the fault-model sentence or independent failure; it adds what the failing things are, how each appears, the stages and level shift, why independence is an assumption, and restart state. Domain sentences are not restated. Siblings and excludes: Latency (timing models named; its correlated-delay paragraph is a different angle from correlated failures here); Communication (retransmission, replay and checks named only as what the receiver sees; deduplication and link construction not explained); Partial Knowledge (no restatement of stable facts or silence under a bound); Processes (the stall sentence takes the angle Processes hands over, how stalls appear to others, and does not re-explain clocks or step atomicity); Fault Models, Byzantine behavior, recovery and fault detection are named only. No hazard split is crossed, and every claim is explained. Representation: the record writes exactly the designed comparison; its many-to-few mapping is genuine, and the prose interprets it ('fewer observations than failures') without spelling out the cells. Accuracy: rechecked the fault/error/failure chain (Avizienis et al.), ECC as an error corrected inside the component, deterministic bugs reached at the same request under same-order replication, the arithmetic (1e-9, at least 1e-4, ratio 1e5), Knight and Leveson, checksum coverage and fixed-length false matches, devices reporting a flush early, and amnesia after restart. All hold as conditioned. American English, plain text, no positional or time-sensitive words. Depth: 1,611 words for four claims, each paragraph tied to a claim (see the depth signal). Remarks (not defects): (a) paragraph 11's 'holds at most what it had made durable before the crash' recalls paragraph 9's opening; it carries the condition for the new point, so it stays. (b) 'how protocols tolerate them' could also name fault tolerance, which is excluded. (c) 'one operator, deployment tool or configuration change can make the same mistake' treats a change as an agent; this is taste. (d) Concept-name styling is inconsistent ('a threshold Fault Models states' against 'Byzantine behavior and fault models'). (e) The corruption row's observation assumes a check exists; with none, the receiver also sees content the sender never sent. (f) 'the replica's crash' in the level-shift paragraph could be 'the replica's failure'. The cycle-1 remarks on the 1e5 ratio and the departing-process row still apply.",
+        "resolutions": [
+          {
+            "id": "names-concept:67931e7014",
+            "resolution": "Byzantine behavior appears only in 'why such departures occur, and how protocols tolerate them, belong to Byzantine behavior and fault models'. The departing-process row and paragraph 3 say only how a departure appears. Named, not explained."
+          },
+          {
+            "id": "names-concept:547a4d759d",
+            "resolution": "Fault detection appears only in 'How a system notices such a process and brings it up to date belongs to recovery and fault detection'. Timeouts and suspicion are not explained; 'make it suspect a correct process' states a consequence of silence. Named, not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault models appears as 'belong to Byzantine behavior and fault models', 'a threshold Fault Models states' and 'as crash-recovery models allow'. No fault class is defined or ordered, and no threshold is given; the record says only that a common cause can exceed whatever bound is assumed, which is claim 3. Named, not explained."
+          },
+          {
+            "id": "names-concept:fda11800c7",
+            "resolution": "Latency appears only in '(timing models belong to Latency)'. Paragraph 2 uses a relied-on bound to show that failure is relative to a specification and does not explain synchronous, asynchronous or partially synchronous models or timeouts. Named, not explained."
+          },
+          {
+            "id": "names-concept:ed38e0b08a",
+            "resolution": "Processes is the word 'process' throughout, the thing that fails. The stall sentence (garbage collector, hypervisor) takes the angle Processes hands to failures ('how such stalls appear to other processes'): others declared it failed and moved on, with no restart to warn it. It does not re-explain clocks, timers or step atomicity. Divided by angle; not explained here."
+          },
+          {
+            "id": "names-concept:d6db1e7266",
+            "resolution": "Recovery appears only in 'belongs to recovery and fault detection'. Paragraphs 9-11 cover only the restarting process's own position (durable versus volatile state, revealed state lost, stale state after others moved on), which is claim 4. How the system restores it is not explained. Named, not explained."
+          },
+          {
+            "id": "absolutes:8ffccf502f",
+            "resolution": "Checked each absolute. 'Content the sender never sent' (corruption that escapes the check) holds by definition. 'A lock never released' is an example of a wrong state and holds. 'A defect may never be activated' is modal and true. 'Updates it never saw' holds because it lost them or was absent. 'Break guarantees that assume a crashed process stays down or returns consistent' claims no guarantee and is hedged with 'can'. 'Does not remove it' (correlation under diversity) is supported by Knight and Leveson and by shared spans. 'Nothing in its own state suggests' holds because a stalled process's state is unchanged. All hold as stated."
+          },
+          {
+            "id": "depth-long:a32ea6487e",
+            "resolution": "1,611 words, four claims. Claim 1: the definition, paragraph 2 (relative to the specification), the comparison, paragraph 3 (fewer observations than failures; the failing component is inferred) and paragraph 4 (checks convert symptoms, partially). Claim 2: paragraphs 5 and 6 (stages, chain breaks, level shift). Claim 3: paragraphs 7 and 8 (common causes, arithmetic, threshold exceeded, mitigation limits). Claim 4: paragraphs 9-11 (durable versus volatile, revealed state lost, stale after others moved on, stall without restart). No background outside the claims and no repeated conclusion. The one callback in paragraph 11 carries the condition its point needs (remark a). Depth follows the claims."
+          }
+        ],
+        "recordFingerprint": "2fce6f482ed5748e20a017c82ef099cbaf25d766859c1ee7284bc617e843cba7"
+      }
+    },
+    "fault-models": {
+      "model": {
+        "meaning": "A fault model is the assumption, stated before any execution, of which departures from its protocol a faulty process may make and how many processes, or how much of some weight, may be faulty, and a protocol's guarantees are proven only for executions that stay within it.",
+        "kind": "property",
+        "parents": {
+          "distributed-systems": "The parent says a fault model states which failures are possible, from processes that stop to processes that behave arbitrarily, and how many may fail, and that guarantees hold only while the environment stays within the assumptions. This concept adds the named classes (crash-stop, omission, crash-recovery, Byzantine) and how they are ordered by the behavior each permits, with crash-recovery placed beside the chain rather than on it; what makes a process count as faulty (any departure at any point of the execution, not being down at an instant) and therefore what a threshold actually bounds; the common forms a threshold takes (a count, a fraction, a share of weight such as stake); and why the same problem is solvable or not depending on the timing model a fault class is paired with, and why a broader class can raise the number of processes needed for the same number of faults."
+        },
+        "claims": [
+          "the common fault classes, crash-stop, crash-recovery, omission and Byzantine, and how they relate by how much behavior each permits a faulty process",
+          "how a fault model bounds failures: which processes count as faulty, judged over a whole execution in static models (mobile models bound them per period), and the threshold on them, stated as a count, a fraction of processes or a share of some weight",
+          "why the same problem can be solvable when a fault model is paired with one timing model and unsolvable under another, and how a stronger fault class can raise the number of processes a protocol needs to tolerate a given number of faults"
+        ],
+        "excludes": [
+          "byzantine-behavior",
+          "fault-tolerance",
+          "fault-assumptions",
+          "threat-models",
+          "adversaries",
+          "failures",
+          "latency",
+          "agreement"
+        ],
+        "placements": {
+          "fault-models": "The only placement, under Distributed Systems beside Processes, Communication, Partial Knowledge, Latency and Failures. The exposition explains the assumption a protocol's correctness is stated against, naming timing models (latency), what goes wrong (failures), authenticated channels (communication) and consensus results (agreement, fault assumptions) only where the classes, thresholds and pairings meet them, so it stands alone as the leaf explanation of the concept and does not depend on the parent's sentences."
+        },
+        "fields": {
+          "statement": "In every execution the model admits, every departure a faulty process makes is one its fault class permits, and the faulty processes stay within the threshold. A protocol is proven correct for those executions; many of its properties are stated for correct processes (every correct process eventually decides, no two correct processes decide differently).",
+          "establishedBy": "Not by the protocol, which cannot observe which processes are faulty and can only assume the model. The model is justified outside the protocol: crash-stop by fail-fast design (a component that detects an internal error halts instead of continuing) and by never letting a restarted process rejoin under its old identity with lost state; crash-recovery by keeping on durable storage everything the protocol needs a process to remember across a restart; a threshold by making failures independent, through diverse software, hardware, operators and locations (correlation is named under failures), and for a weight threshold by how weight is distributed and what acquiring it costs. The Byzantine class is chosen when no narrower class can be justified: processes run by parties who may act against the protocol, or bugs and corrupted state that can make a process send wrong values. Why a process might misbehave on purpose, and with what resources, is stated by a threat model (named, not explained).",
+          "violatedBy": [
+            "More faulty processes, or more faulty weight, than the threshold: correlated failures (named under failures) are the common route, and in a long-lived system faults accumulate, since in a static model a count bounds every process that is ever faulty in the execution.",
+            "A faulty process acting outside its class: a process assumed crash-stop that restarts and rejoins having lost state it had acted on; a corrupted message sent under a crash or omission model; a process that answers late under a synchronous model (a timing assumption, named under latency).",
+            "Consequence: the proof covers that execution no longer, so no guarantee holds for it, safety and liveness included, though a given execution may still happen to behave. A protocol built for f faults need not degrade gracefully at f+1; which property fails first depends on the protocol."
+          ],
+          "confusions": [
+            "Fault model versus failures: failures (named) are what can go wrong and how it appears to others; a fault model selects which of those behaviors a proof allows and bounds how many processes exhibit them.",
+            "Fault model versus threat model and adversaries (named): a fault model restricts behavior and number whatever the cause; a threat model states an attacker's goals, capabilities and resources. A Byzantine class with a threshold is often how a threat model's assumption enters a protocol proof, but the fault model says nothing about why processes misbehave.",
+            "Byzantine versus malicious: the Byzantine class permits arbitrary behavior from any cause, bugs, flipped bits and misconfiguration included, and proofs assume the worst case, all faulty processes coordinated; what Byzantine behavior looks like is named under byzantine-behavior, not explained.",
+            "Faulty versus down: faulty is a property of a process over a whole execution (per period in mobile models), not a state at an instant. A process that departs once is faulty for the whole execution even if it behaves before and after, and under crash-recovery a process that is down now may still count as correct. No process can tell at runtime which processes are faulty (partial knowledge, named).",
+            "The threshold versus the faults that occur: f is the bound a design tolerates, not a prediction; an execution with fewer faults is covered, one with more is not covered at all.",
+            "Fault model versus fault tolerance (named): fault tolerance is the property of continuing to deliver despite faults; the fault model states which faults, and how many, that property covers."
+          ],
+          "variants": [
+            "Crash-stop: a faulty process follows its protocol up to some step and then takes no further steps; messages it sent before stopping may still arrive, so a crash midway through sending to several processes can leave some with the message and others without. Fail-stop is sometimes used for the stricter variant in which other processes can learn of the crash.",
+            "Omission: a faulty process follows its protocol but may fail to send some messages (send omission), fail to receive some (receive omission), or both (general omission). It never sends a wrong message. Crash-stop is the special case of omitting everything from some step on.",
+            "Crash-recovery: a process may stop and later resume from what it kept on durable storage, possibly many times, losing volatile state each time. Conventions differ on which processes count as correct: commonly those that eventually stay up (crash finitely often), in stricter models only those that never crash. While down it misses messages; if everything the protocol needs it to remember is durable, it behaves like an omission-faulty process. If it loses something it already acted on, such as a vote or a promise, it can contradict its own earlier messages, which crash-stop and omission do not permit and only Byzantine otherwise covers. Its place in the ordering is therefore conditional on durability; what a restart keeps and loses is named under failures.",
+            "Byzantine (arbitrary): a faulty process may do anything, send conflicting messages to different processes, report false state, stay silent or coordinate with other faulty processes, limited only by what channels and cryptography prevent. With authenticated channels or signatures (named under communication) it cannot forge messages from correct processes; this authenticated variant is a narrower class than unauthenticated Byzantine faults, and in synchronous systems it lowers the process count needed.",
+            "Ordering: crash-stop permits less than omission, which permits less than Byzantine; each class permits every behavior of the narrower ones, so a protocol correct under a class is correct under any narrower class with the same threshold and timing model, and tolerating a broader class costs more. In synchronous models a timing (performance) class, correct values sent too late, sits between omission and Byzantine. Crash-recovery sits beside the chain: within omission when durable state covers what the protocol needs, outside it when not.",
+            "Static versus mobile: the standard classes fix the faulty set over the whole execution; mobile or proactive fault models let faults move between processes over time and bound the faulty set per period, which assumes processes are restored between periods."
+          ],
+          "relation": [
+            "Thresholds commonly take one of three forms: a count (at most f of n processes faulty), a fraction (fewer than n/3 faulty) and a share of weight (faulty processes hold less than one third of total stake, or less than half of computational power). A count or fraction treats processes as equal and assumes the set of processes is controlled; a weight threshold bounds what faulty processes hold, not how many there are, so it can apply where anyone can create processes.",
+            "Pairing with timing (named under latency), illustrated by consensus (agreement, named, not explained): with crash faults it is solvable in a synchronous system for any f < n, and no deterministic protocol solves it in an asynchronous system if even one process may crash (Fischer, Lynch and Paterson), because silence never settles whether a process has crashed; under partial synchrony it is solvable with n >= 2f + 1. Randomized protocols can solve it asynchronously, with n >= 2f + 1 for crash and n >= 3f + 1 for Byzantine faults.",
+            "Fault class and process count, same problem and timing: under partial synchrony consensus needs n >= 2f + 1 with crash faults and n >= 3f + 1 with Byzantine faults, with or without signatures. A step can wait for at most n - f replies, since f processes may never answer; with Byzantine faults up to f of the replies it gets may be false, so more processes are needed for the correct replies to settle the outcome. In a synchronous system, Byzantine consensus needs n >= 3f + 1 without signatures; with them, consensus that must decide a value whenever every correct process proposes it needs n >= 2f + 1. How consensus sizes its quorums from these bounds belongs to fault-assumptions and quorums (named)."
+          ],
+          "tradeoffs": [
+            "Coverage against cost: a broader class covers more causes, bugs and compromised processes among them, but needs more processes, more message rounds and often signatures; a narrower class is cheaper, and a single fault outside it voids the proof's coverage.",
+            "Threshold against size and speed: tolerating more faults needs more processes, and a step that waits for n - f replies waits on more of them, so the k-th fastest reply (named under latency) moves later.",
+            "Count against weight: a count is simple to reason about when the process set is fixed and known; a weight threshold admits open membership but rests on how weight is distributed and on the cost of acquiring it."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "An ordering by permissiveness among fault classes (crash-stop within omission within Byzantine, with crash-recovery placed beside the chain on a durability condition), the definitional conditions that make a process faulty and what a threshold in each of its three forms bounds, and a dependency of solvability and process count on the pairing of fault class with timing model, carried by reasons (silence cannot settle a crash without a delay bound; false replies must be outvoted).",
+        "whyProse": "Each claim is an argument or a set of conditions. The classes vary along one dimension, how much behavior a faulty process may show, and their relation is containment stated in a sentence each; crash-recovery's place depends on whether the state the protocol needs is durable, a condition a nesting figure or table would misstate by fixing it in one position. The meaning of faulty over a whole execution and the three threshold forms are definitions with consequences, not a shape. The pairing claim is a why: a comparison table of fault class by timing model with process counts was considered and rejected, because it would tabulate the consensus resilience bounds that belong to fault-assumptions and agreement (both excluded) while dropping the reasons this concept owns, which two contrasting cases in prose carry. No distinction block is warranted: the likely conflations (fault model and threat model, Byzantine and malicious) set this concept against excluded concepts and are boundary sentences, not a pair this concept owns.",
+        "level": "The parent only names that a fault model states possible failures and how many; the classes and their ordering, what counts as faulty and what a threshold bounds, and how the pairing with timing decides solvability and process counts are this concept's. They are not Failures' (how faults appear and propagate), Latency's (the timing models themselves) or Fault Assumptions' under Consensus (how consensus quorums are sized from the bounds).",
+        "territory": "Timing models are named and paired, never explained (latency); fault, error and failure and correlated causes are named (failures); authenticated channels are named as what narrows the Byzantine class (communication); that a process cannot tell which peers are faulty is named (partial-knowledge); consensus results are quoted as illustrations of the pairing, never explained as protocols, and quorum sizing is left to fault-assumptions and quorums; threat models, adversaries, byzantine-behavior and fault-tolerance appear only in boundary sentences. No structure draws a sibling's or excluded concept's relationship.",
+        "placements": "There is one placement, under Distributed Systems; the prose form explains the concept on its own terms without positional reference, so it holds there and would hold at any later placement."
+      },
+      "audit": {
+        "at": "2026-10-08T13:42:38.958Z",
+        "note": "Re-audit after repair 2 (findings fault-models.md, fault-models-b.md, fault-models-2.md). Read all ten paragraphs (1,510 words, prose as designed) at the single placement (Foundations / Distributed Systems / Fault Models) against criteria 1 to 6, the parent's whole exposition, the domain sentence, the claims and excludes, and the accepted model and design. Earlier findings: all cycle-1 defects stay resolved (crash-recovery introduced as 'a process may stop', the full durability condition for the omission reading, no 'in one execution' in the definition, 'commonly takes one of three forms', 'Solvability depends on ... together', the strong-unanimity condition on the signed synchronous n > 2f bound). fault-models-2 D1 is resolved: paragraph 8 now says 'a protocol's properties are guaranteed in executions with more faults only where a separate argument shows it', which concerns assurance, not whether a property happens to hold in an execution, and is consistent with violatedBy[2]. The paragraph 7 qualifier 'Outside mobile models' makes the accumulation sentence true as stated and agrees with the paragraph's own mobile-model sentence. Model violatedBy[2] ('need not degrade gracefully') and tradeoffs[0] ('voids the proof's coverage') are now hedged correctly. No error introduced by the repair. Accuracy: class definitions, omission charging, performance class position, nesting and opposite-direction transfer (same threshold and timing model), crash-recovery conventions and durability condition, 'of the classes on the chain, only Byzantine', uniform variants as a necessary condition, correctness unconfirmable but faultiness sometimes establishable, static accumulation (1 of 4 example), mobile restoration, threshold forms and sybil reasoning, FLP (deterministic, one crash, transferred up the chain), crash f < n in synchrony, n > 2f and n > 3f under partial synchrony, signed synchronous n > 2f under strong unanimity, the n - f reply argument and its synchronous crash-only exception: all sound as conditioned. Parent overlap: only the definition's last clause is near the parent's 'a guarantee holds only while the environment stays within them' and the domain's 'every guarantee ... is relative to them'; a stand-alone definition needs it and it adds 'fixed before any execution', weight and 'proven'. Nothing else restates the parent. Territory: latency, failures, communication, partial-knowledge, agreement, fault-assumptions, quorums, threat-models, adversaries and byzantine-behavior named only; fault-tolerance not mentioned; crash-recovery overlap with failures divided by angle (classification here, what a restart keeps there). Representation: prose as designed; no structure needed. Canonical at the single placement; no positional or time-sensitive words; American English; plain text. Depth: every paragraph ties to a claim (definition and paragraphs 2 to 5 claim 1, 6 to 8 claim 2, 9 and 10 claim 3). Remarks (not defects): paragraphs 6 and 7 now both open 'Outside mobile models,' a slight echo; 'In static models' in paragraph 7 would vary it. Paragraph 8's last clause still partly echoes the definition's 'proven only for the executions that stay within it', though 'not a forecast' and 'separate argument' add to it. 'A count ... presumes a known set of n' fits the common formulation; models with unknown participants and a known f exist but are outside the usual sense. The performance class sentence ('sends the values its protocol prescribes, but later than the bound allows') reads as if every message is late; 'may send ... later' would be more exact. 'A replica that crashes and returns does not count against the bound' holds for one that eventually stays up, as the convention just given says. Model violatedBy[2] 'no guarantee holds for it' could say 'no guarantee from that proof', to match the record's 'separate argument'.",
+        "resolutions": [
+          {
+            "id": "names-concept:672ca4ca77",
+            "resolution": "adversaries is named once, in 'is stated by a threat model about adversaries', as the boundary of why processes misbehave. It is not explained."
+          },
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "agreement is named once ('as consensus, a form of agreement, shows') to label the illustration. Consensus results are quoted as bounds, and no protocol or problem definition is explained."
+          },
+          {
+            "id": "names-concept:67931e7014",
+            "resolution": "byzantine-behavior is named in 'what such behavior looks like belongs to Byzantine behavior'. The record defines only the Byzantine class's permissiveness, which is claim 1, not what the behavior looks like."
+          },
+          {
+            "id": "names-concept:86dd2d4d79",
+            "resolution": "failures is named in 'what a restart keeps and loses is a matter for failures'. The crash-recovery vote and promise case places the class relative to the chain, a division by angle, not an explanation of what a restart loses."
+          },
+          {
+            "id": "names-concept:af0e265dc0",
+            "resolution": "fault-assumptions is named in the closing sentence ('belongs to fault assumptions and quorums'). Quorum sizing is not explained. The n - f argument explains why the count rises with the class, which is claim 3."
+          },
+          {
+            "id": "names-concept:8d3f03de43",
+            "resolution": "partial-knowledge is named in 'The general limit belongs to partial knowledge'. Only this concept's point is made: correctness depends on future steps, and a signed equivocation can expose a faulty peer. The silence clause in paragraph 10 is a conditioned reference (synchronous, crash-only) used for this concept's reason."
+          },
+          {
+            "id": "names-concept:ed38e0b08a",
+            "resolution": "processes is used as the generic term throughout. The process abstraction itself (state, steps, local time) is not explained."
+          },
+          {
+            "id": "names-concept:9317a04eaa",
+            "resolution": "threat-models is named once ('is stated by a threat model about adversaries ... is often how such a statement enters a protocol's proof') as a boundary sentence. A threat model's content is not explained."
+          },
+          {
+            "id": "absolutes:413801f961",
+            "resolution": "There are 7 absolutes, and each holds as stated. 'guarantees are proven only for the executions that stay within it' is a scope statement, true by definition of a proof under assumptions. 'Many guarantees are stated for correct processes' is hedged by 'Many'. 'cannot forge' is conditioned on 'where messages are signed'. 'never rejoin under their old identity with lost state' is the design condition crash-stop rests on. 'properties are guaranteed in executions with more faults only where a separate argument shows it' concerns assurance, which does need an argument. 'cannot wait for more than n minus f' is conditioned on 'where no bound lets silence be resolved', with the synchronous crash-only exception stated. 'may never answer' states the possibility that the bound allows."
+          },
+          {
+            "id": "depth-long:1e4dfe942a",
+            "resolution": "At 1,510 words, every paragraph serves a claim. The definition and paragraphs 2 to 5 cover claim 1: the classes, their nesting and transfer of results, crash-recovery's conditional place, and what each class assumes about how processes are built. Paragraphs 6 to 8 cover claim 2: faulty over an execution, static accumulation against mobile models, and the three threshold forms. Paragraphs 9 and 10 cover claim 3: pairing with timing, and why the class raises the count. No paragraph restates another. The remaining echoes (the paragraph 8 clause against the definition, the repeated 'Outside mobile models' opener) are phrase-level, not repeated points. Nothing large is padding."
+          }
+        ],
+        "recordFingerprint": "fce7e4be1022df8df54b4cf2a3d0dffc05c89d93cd664a21bec8e303a91b8e81"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-16T12:48:14.119Z",
+    "note": "Group audit of distributed-systems (owned: processes, communication, partial-knowledge, latency, failures, fault-models), read side by side with the plan and the parent Distributed Systems. group-signals printed 0 signals, so there are no resolutions. No contradictions and no crossed split or reservation (coordination-communication is not drawn by Communication). Terms keep one sense across members: deliver vs receive (Communication defines it; Latency's definition and Processes' step use deliver in that sense, Partial Knowledge's happens-before uses receipt as the event, which is standard and does not conflict), correct (defined by the fault model in Fault Models; Processes and Communication defer to it, with uniform variants and the correct-ends-only delivery promise conditioned the same way in Communication and Fault Models), fault/failure (Failures defines the stages relative to an interface, which reconciles Fault Models' 'faulty process' and 'causes'), omission (link silence in Failures, a process fault class charging lost messages to processes in Fault Models; consistent), and agreement/consensus ('consensus, a form of agreement'). Overlaps judged legitimate by angle: (1) silence under a known delay bound is in Partial Knowledge (a fact outside the causal past, inferred not observed; its plan claim names it) and Latency (the timeout rule); their conditions match: Partial Knowledge assumes delivery within the bound and concludes the message was not sent, Latency assumes only a bound on the awaited message and concludes peer or link failed, and Fault Models' 'where silence past a known bound does reveal a crash' agrees with both. (2) A lost vote or promise after restart appears in Failures (mechanism and cost: volatile loss, durable-before-reveal on the critical path, how the contradiction looks to others) and Fault Models (classification: crash-recovery reads as omissions only under the durability condition, otherwise only Byzantine permits it); each states the other's half in one clause and defers explicitly, as the Fault Models concept audit recorded. (3) Stalls without crashing (garbage collection, hypervisor suspension) appear in Processes (a stale clock reading acted on after a deadline, its local-time claim) and Failures (rejoining after others moved on, its restart claim); Processes hands how stalls appear to others to Failures, and Latency names pauses only as a delay source. The example pair repeats in one clause; the arguments do not. (4) Independence versus correlation is argued in Latency (correlated delay erases the k-of-n margin) and Failures (common causes exceed the failure bound), each with its own arithmetic and subject; Latency's own audit asked Failures not to repeat the delay argument and it does not. (5) 'Guarantees stated for correct processes' is named in Processes and Communication and explained only in Fault Models. Checked side by side: Latency's 'problems that cannot be solved under it once processes may fail' is existential (some problems are unsolvable even with randomization) and defers to Fault Models, which gives FLP with its deterministic condition; no contradiction. Communication's n > 3f for Byzantine reliable broadcast defers its basis to Fault Models, whose last paragraph gives the n - f reply argument; Latency's k-th-fastest pacing and Fault Models' n - f wait are different points (pace vs count). Convergence: every definition opens 'X is ...' as the definition-leads rule requires, with different heads (unit, how, limit, delay, departure, assumption); paragraph counts differ (8, 11, 8, 8, 10, 9); forms differ (prose for Processes, Partial Knowledge and Fault Models; one comparison each in Communication, Latency and Failures, each showing a distinct many-alternative relation: link construction chain, what an expired timeout means per timing model, failure versus observation); arcs differ and no shared enumeration pattern. One wording observation, not a defect: boundary sentences use 'belongs to'/'belong to' about ten times across the six members and three records (Processes, Failures, Fault Models) end on a 'How ... belongs to ...' deferral; each names a different owner where its last claim meets an excluded concept, so the repetition follows the territory, but later slices could vary the idiom. Drift (window 30) reports drift-depth (median 1,187 words); in this group Communication, Failures and Fault Models exceed 1,300 words, each with every paragraph tied to a claim per its concept audit, and no point is made twice across the group beyond the angle-divided overlaps above.",
+    "resolutions": [],
+    "records": {
+      "processes": "500c3495de51118540d2b0ec24279cb2444f46857b2316be1a1ffa37ae9be323",
+      "communication": "d703ea1d490775ed95b2b676b98da9a18ddf4153c127954f188286ef2c366361",
+      "partial-knowledge": "22af7e26af1d741b3fad1dcbce640a21d21bfcb5bdf7ebc9eed1e6a0ea56b630",
+      "latency": "3c8672cfb1a14391f07b43b894d1e29ea0f7e530b5605a95acf1524d2303c020",
+      "failures": "2fce6f482ed5748e20a017c82ef099cbaf25d766859c1ee7284bc617e843cba7",
+      "fault-models": "fce7e4be1022df8df54b4cf2a3d0dffc05c89d93cd664a21bec8e303a91b8e81"
+    }
+  }
+}

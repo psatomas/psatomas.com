@@ -18086,6 +18086,305 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "processes-content",
+      conceptId: "processes",
+      definition:
+        "A process is the unit a distributed system is modeled from: a sequential component that holds private state, advances it by discrete steps in response to inputs such as received messages and timer events, and can fail without the others failing.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Everything a process does happens in steps. A step begins with one input: a message delivered to it, a timer it set firing, or a request from its local environment such as a client call or a start signal. The process applies its code to its current state and that input, and the result is a new state, possibly with messages to send and timers to set or cancel. Within the model a step is atomic, so nothing else happens to that process midway through it, and the history of a process is a single sequence of steps.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a process does not control is as much a part of the model. It cannot choose when its next step runs: that depends on when messages are delivered, when timers fire and when it is scheduled. A protocol is therefore specified as the code each process runs, and an execution as an interleaving of all the processes' steps with the deliveries of messages between them. Steps of one process are totally ordered by its own sequence; without assumptions about timing, steps at different processes are ordered only where chains of messages connect them, through the happens-before relation that partial knowledge describes. Fault and timing assumptions are statements about processes and the messages between them, and a protocol's guarantees are commonly stated in terms of correct processes, a notion the fault model defines along with how many processes may be faulty.",
+        },
+        {
+          kind: "paragraph",
+          text: "Mapping a deployed system onto the model means choosing what counts as one process, and the criterion comes from the abstraction itself: a unit whose state no other unit reads or writes, and which can fail while the others keep running. An operating-system process or a container meets it at one granularity, with a private address space and crashes of its own, though it goes down with its machine. Where the failures of interest are machine failures, a whole physical or virtualized machine is often the unit, and several cooperating programs on it are modeled as one process. A protocol layered over a replicated service can treat each replica as a process, or even a whole replicated group, provided the group behaves as one sequential component. Threads that share an address space do not qualify one by one: any of them can write memory the others read, and a fault in one can corrupt or stop the rest, so together they form one process. Actors in a runtime that gives them no shared memory and lets them interact by messages alone can be modeled as processes, to the extent that the failures being reasoned about can strike one actor without the others.",
+        },
+        {
+          kind: "paragraph",
+          text: "The choice is an assumption, not a description of hardware. Modeling two components as one process asserts that they share state and fail together; modeling them as two asserts that they share no state and that either can fail without the other. Three replicas meant to tolerate one failure, two of which run on the same machine, are three processes in the model and can be two failures at once in the deployment, the kind of correlated failure that failures examines.",
+        },
+        {
+          kind: "paragraph",
+          text: "A process is also not the party it acts for. Incentives, identity and accountability belong to the participant on whose behalf a process runs, which a protocol typically recognizes through an identifier such as a key. The mapping need not be one to one: one participant can run several processes, such as replicas, or a signer kept apart from the component that relays its messages, and processes acting for different participants can share a machine. A process has no reasons of its own. Whether it follows its protocol depends on the code it was given and the faults that befall it; where deviation is chosen, a participant chooses it, through the code it runs or the key it controls.",
+        },
+        {
+          kind: "paragraph",
+          text: "The clock a process reads, and sets its timers against, is a counter driven by an oscillator whose rate departs from real time by a drift rate. For ordinary quartz oscillators that rate is commonly on the order of tens of parts per million, varying with temperature and age, which can add up to seconds over a day. Two clocks drifting at persistently different rates diverge without bound unless they are resynchronized, and resynchronizing over messages can narrow their offset only to within the uncertainty in how long those messages took. Many systems expose two kinds of clock. Synchronization sets a time-of-day clock to agree with other clocks and can step it forward or backward, so successive readings may jump or go back. A monotonic clock does not go backward, though synchronization may adjust its rate. It counts from an arbitrary starting point, however, such as when the machine booted, so it supports differences between its own readings and nothing more: compared with another machine's monotonic clock, or across a reboot, a reading means nothing.",
+        },
+        {
+          kind: "paragraph",
+          text: "What one clock can measure is the interval between two of its own readings. Elapsed time between two events at the same process, read on a monotonic clock, carries an error that grows with the duration and, where the clock's rate error is bounded, stays within that rate multiplied by the duration. A round trip, from sending a message to receiving its reply, is such an interval, since both ends are read on one clock. The one-way delay of a message, the offset of another process's clock at a given instant, and whether events at two processes were simultaneous are not measurable from a local clock; at best they can be bounded, under assumptions about message delay and drift. Timers inherit the clock's errors: a timer fires when the local clock says its duration has passed, which in real time can be somewhat early or late by the drift, and later still when the process is not scheduled promptly. Turning a silence measured this way into suspicion that a peer has failed is a timeout, which belongs to latency.",
+        },
+        {
+          kind: "paragraph",
+          text: "A process can also stop taking steps for a while without crashing: paused by a garbage collector, suspended along with the virtualized machine it runs on, or waiting on memory paged out to disk. Unless it reads its clock again after resuming, nothing tells it that time has passed, and a fresh reading can itself be followed by another pause. A duration measured before the pause therefore says nothing about when the next action happens. A process that read its clock, found a deadline comfortably far off and then stalled can resume and act on that reading after the deadline has gone. Atomicity of a step holds in the model, not in real time, where an arbitrary gap can separate a decision based on a clock reading from the action it leads to. How such stalls appear to other processes, and how they are classified, belongs to failures and fault models.",
+        },
+      ],
+    },
+    {
+      id: "communication-content",
+      conceptId: "communication",
+      definition:
+        "Communication is how processes exchange messages over links and channels, described by the guarantees a protocol may assume about them: whether a sent message is delivered, once, in the sender's order and from the sender it names, and, when one message goes to a group, which members deliver it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Link and broadcast guarantees are stated about delivery, not receipt. A process receives whatever the network hands it and delivers a message to its protocol only after its own checks pass, holding back what is early and discarding what fails them. That separation lets links be built in layers, each receiving from a weaker one and deciding what to pass up. The weakest layer is an assumption about the network, not a construction: fair loss, under which a message sent once may vanish but sending it again without end eventually gets copies through. Every stronger delivery guarantee depends on that fairness, because a network that can drop every copy forever defeats any amount of retransmission.",
+        },
+        {
+          kind: "comparison",
+          label: "How each link abstraction is built from the one before",
+          dimensions: ["What correct processes deliver", "Duplicates", "Order", "Built by"],
+          alternatives: [
+            { name: "Fair-loss", values: ["A message sent infinitely often, infinitely often; one sent once may be lost", "Finitely many", "None", "Assumed of the network"] },
+            { name: "Stubborn", values: ["Every message sent, infinitely often", "Without bound", "None", "Retransmitting every message forever"] },
+            { name: "Reliable", values: ["Every message sent, exactly once", "None", "None", "Discarding copies whose identifier was already delivered"] },
+            { name: "FIFO reliable", values: ["Every message sent, exactly once", "None", "Each sender's order", "Per-sender sequence numbers and a hold-back buffer"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Retransmitting forever works but is unbounded in cost. Acknowledgments make it practical by telling the sender when to stop, and they add no delivery guarantee of their own: a lost acknowledgment only causes another retransmission, which deduplication absorbs. The delivery promise also holds only while both ends stay correct. A sender that crashes before its message gets through can take the message with it, and a link built to be reliable is not bound to deliver it. Delivery is promised only eventually, with no bound; how long it takes is a question for latency and timing models.",
+        },
+        {
+          kind: "paragraph",
+          text: "Deduplication and ordering are only as good as the receiver's memory. To discard a duplicate the receiver must recognize it, so each message carries an identifier and the receiver remembers those it has delivered. Kept in full, that record grows without bound. For a stream delivered in order, a per-sender next expected sequence number replaces it; a receiver that accepts messages out of order and keeps only a fixed window must reject anything older than the window, including a genuine message that was merely late. Where processes crash and recover, the guarantees rest on this state. A receiver that restarts without its record can deliver duplicates again, and a sender that restarts and reuses sequence numbers can have its new messages discarded as old, unless counters and records survive in durable storage or each restart opens a new session whose identifier sets its messages apart. Ordering has its own cost: a FIFO receiver holds every later message behind a missing one, so one loss stalls the rest of that sender's stream until the retransmission arrives.",
+        },
+        {
+          kind: "paragraph",
+          text: "Fair loss also promises that no message is delivered as coming from a process unless that process sent it, which assumes a network that loses and duplicates but does not lie. Where an attacker can inject traffic, or a process can put any name in a message, the claimed sender is just a field and a forged message looks like a real one. Authentication restores the promise by attaching something only a holder of the right key could have produced, and what the receiver may conclude depends on what that is. A message authentication code, computed with a key only the two ends share, convinces the receiver that one of the two key holders produced the message; once the receiver rules out its own messages reflected back, for example by having each message name its recipient, that leaves the other end. It convinces no third process, because the receiver could have computed the same code, so the message cannot be passed on as evidence. A digital signature is transferable: any process holding the sender's public key can verify it, so a message can be relayed and checked by processes that never exchanged anything with its sender, at a higher cost to compute and verify.",
+        },
+        {
+          kind: "paragraph",
+          text: "Both conclusions hold only while the keys stay secret, each public key is correctly bound to the process it names, and the cryptography resists the adversary for as long as the messages matter. A compromised key fails silently, since messages made with it verify like genuine ones. Nor does authentication stop an attacker on the network from dropping, delaying or reordering messages, so reliable delivery over an authenticated channel still rests on fair loss.",
+        },
+        {
+          kind: "paragraph",
+          text: "A valid authenticator shows who produced a message, not when or for what. A captured message can be replayed to the same receiver, to another receiver if the authenticator verifies there too, as a signature does, or into a later round, session or protocol instance that would read the same content differently. The defense is to bind the context into what is authenticated and to check it on receipt. A per-sender sequence number or nonce, with the receiver's record of what it accepted, rejects a repeat within one stream; a session, round or instance identifier and the intended recipient's name reject a message carried into a context it was not made for. The record of accepted messages carries the restart risk deduplication has.",
+        },
+        {
+          kind: "paragraph",
+          text: "A link's guarantees concern one sender and one receiver. Broadcast addresses a group, and its guarantees relate what different members deliver, which no collection of pairwise promises expresses. They assume a group whose membership each member knows, and are stated mostly about what its correct members deliver. A broadcast is commonly carried out as a series of point-to-point sends, so a sender that crashes partway through can have reached some members and not others. Best-effort broadcast promises delivery only if the sender stays correct, and then every correct member delivers its message; when the sender fails partway, the members it missed stay without the message.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reliable broadcast makes the correct members deliver the same set of messages: if any correct process delivers a message, every correct process eventually delivers it, whether or not the sender survives. The classic construction is relaying. A process that receives a broadcast message for the first time sends it on to the whole group as it delivers it, so a message that one correct process delivers reaches the rest through that process's relays. This needs reliable links among correct processes and no timing assumption, but costs on the order of the square of the group's size in messages per broadcast; one cheaper scheme relays only when the sender is suspected of having failed, and then depends on every crashed sender eventually being suspected. Two limits remain. A faulty sender's message need not be delivered at all, only by every correct process or by none. And a process can deliver a message, act on it visibly, for instance by answering a client, and crash before its relays get through, leaving no correct process ever delivering it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Uniform reliable broadcast closes that second gap by extending the guarantee to every process that delivers, crashed ones included. A process delivers a message only once it knows enough others hold it; in the majority-acknowledgment construction, once more than half the group has relayed it back. When a majority is correct, any majority includes a correct process, whose relays carry the message to every correct member. This construction's cost is the extra wait and the assumption of a correct majority, a threshold that belongs to fault models.",
+        },
+        {
+          kind: "paragraph",
+          text: "A Byzantine sender can equivocate, sending one message to some members and a different one to others, and relaying alone would have correct processes faithfully pass on both. Byzantine reliable broadcast guarantees that correct processes deliver the same message from a broadcast if they deliver any, that if one of them delivers it all of them eventually do, and that a correct sender's message is delivered. A classic construction without signatures, over pairwise-authenticated links, adds two rounds. In an echo round each process tells the group which message it received from the sender, and a process becomes ready for a message only after enough echoes for it that no two correct processes can become ready for different ones. In a ready round processes announce the message they are ready for. A process also announces a message once enough others have announced it that at least one of them must be correct, so it never announces a message no correct process was ready for. A process delivers a message once announcements of it reach a larger quorum, whose correct members alone are enough to bring every correct process to announce the message; so once one correct process delivers, all eventually will. The construction assumes more than three times as many processes as may be faulty, another threshold whose basis is the subject of fault models; under it the correct processes alone, all echoing a correct sender's message, supply enough echoes and then announcements for every correct process to deliver it.",
+        },
+        {
+          kind: "paragraph",
+          text: "None of these broadcasts orders messages: they fix what is delivered, not in what sequence, so two correct processes may deliver the same two messages in opposite orders. Ordered variants add an order on top, from each sender's own order, through causal order, where a message waits for every message its sender had delivered or sent before it, to total order, where every correct process delivers all messages in the same sequence. Total order is where broadcast meets agreement: in the standard crash-fault models each can be built from the other, so total-order broadcast is as hard to provide as agreement.",
+        },
+      ],
+    },
+    {
+      id: "partial-knowledge-content",
+      conceptId: "partial-knowledge",
+      definition:
+        "Partial knowledge is the limit on what a process in a distributed system can know about the others: beyond what it assumed in advance, only events in its causal past can have informed it, what it learns about another process describes that process as it was when the information left, and over channels that may lose messages some states of knowledge cannot be established by exchanging messages at all, such as common knowledge of a fact not already common knowledge.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The reach of that knowledge is set by the happens-before relation. One event happens before another if both occur at the same process and the first comes earlier in its sequence of steps, if the first is the sending of a message and the second its receipt, or if a chain of such links leads from the first to the second. The events that happen before a given event form its causal past, and whatever lies outside the causal past of a process's current step cannot have been observed by it. Events neither of which happens before the other are concurrent. That says nothing about real time: they may have occurred in either order, and since no chain connects them, neither could have informed the other. Nor does the limit come from failures: even where every message arrives promptly, what a process observes of the others still travels only along chains of messages; delay slows them and loss breaks them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Knowledge beyond observation comes from assumptions. A process holds the protocol and whatever about the initial configuration is fixed in advance, such as which processes exist, and can infer from them facts it never saw, such as what a peer that follows the protocol will do on receiving a given message, though only as reliably as the assumption holds. Where delivery within a known bound is assumed, together with a bound on clock drift, silence is informative too: if a peer was required to send by a certain time and nothing has arrived once the bound has passed, the process learns that the message was not sent, a fact about steps outside its causal past, inferred rather than observed. Without such bounds, as in an asynchronous system, silence carries no such information, and Chandy and Misra showed that a process then gains or loses knowledge of another's state only through a chain of messages linking the two.",
+        },
+        {
+          kind: "paragraph",
+          text: "Knowledge that arrives along a chain is old on arrival. A message reports on its sender at the step that sent it, and the sender may take further steps while it travels; each relaying hop adds its own delay, and under asynchrony none of these ages has a bound. From a sender that follows its protocol, the fact it reports stays exact: the sender did hold what it reported when it sent the message. What can fail is the step from that fact to a claim about the sender now, and its safety depends on whether the fact is stable: once true, true in every later state of the computation. A computation having terminated, a group of processes being deadlocked, a message having been sent, and a process having crashed where crashed processes never return, as a crash-stop model assumes, are stable, so a report of any of them that was accurate when sent is still accurate when read. A load, an account balance, whether a lock is free, whether a process is running, and, where crashed processes can recover, whether a process is down are not, and a report of any of them may be false by the time it is read. Old knowledge is therefore not wrong knowledge; instability, not age alone, makes it unsafe.",
+        },
+        {
+          kind: "paragraph",
+          text: "A picture of the whole system has to be assembled from local states recorded at different moments, and a closure condition, not simultaneity, makes it usable. A cut takes a prefix of each process's history. It is consistent if, whenever it includes an event, it includes every event that happens before that event, which amounts to never including the receipt of a message without its sending. A consistent cut need not match the system at any real instant, yet it is a state the computation could have passed through: some ordering of the same events that respects happens-before reaches it, and no process could tell that ordering from the actual one, since its own history is the same in both. An inconsistent cut can show what no ordering reaches. Wait-for relations gathered from different processes at different times can form a cycle that never existed, a phantom deadlock, and recording a transfer's recipient after the money arrived but its sender before it left counts the money twice. The reverse, sender recorded after sending and recipient before receiving, is consistent, with the money in a message in transit, so a global state needs channel contents as well as local states, or that money is not counted at all.",
+        },
+        {
+          kind: "paragraph",
+          text: "Snapshot protocols record such a state while the computation keeps running. The protocol of Chandy and Lamport assumes processes that do not fail and reliable FIFO channels over which markers can reach every process. The initiator records its own state, and any other process records its state on receiving its first marker, recording the channel that marker came on as empty. Every process that records sends a marker on each outgoing channel before sending anything else on it, then records, on each incoming channel whose marker it has not yet received, the messages that arrive before that marker. FIFO order makes a marker a boundary: every message sent before its sender recorded is reflected either in the receiver's recorded state or in the recorded channel, and no message sent after is reflected in either, so the recorded states and channel contents form a consistent global state. Without FIFO order a marker can overtake earlier messages, so protocols such as Lai and Yang's tag each message with whether its sender had already recorded; a process receiving a message sent after its sender recorded records its own state before processing it, and channel contents are computed from logs of what each side sent and received before recording.",
+        },
+        {
+          kind: "paragraph",
+          text: "The recorded state lies, in some ordering of the events, between the state when the protocol began and the state when it ended. A stable property true in the snapshot is therefore true when the protocol ends and ever after, and one already true when it began appears in the snapshot; snapshot-based termination and deadlock detection rely on this. A stable property found false may have become true since, so detection repeats. An unstable condition that holds in the recorded state need not have held in the actual execution, and deciding whether it possibly or definitely held means, in general, examining many consistent cuts.",
+        },
+        {
+          kind: "paragraph",
+          text: "A process knows a fact when the fact holds in every global state compatible with its own local history, every situation it cannot tell apart from the actual one, and what others know is a fact like any other, so knowledge stacks into levels. Over a channel that may lose messages or has no delivery bound, a sender learns of receipt only from a reply, so knowledge between two processes climbs at most one level per delivered message: delivering a fact lets the receiver know it, a delivered acknowledgment lets the sender know that the receiver knows, a delivered reply to that adds the next level, and whoever sent the last message cannot tell whether it arrived. Every process knowing a fact, and knowing that every process knows it, to any finite depth, still falls short of common knowledge, in which every level holds at once.",
+        },
+        {
+          kind: "paragraph",
+          text: "Acting together at the same moment needs that missing completeness, as the coordinated-attack problem shows. Two generals must attack together or not at all, one of them decides whether to order an attack, neither may attack unless it was ordered, and they communicate by messengers who may be captured. Suppose a protocol guaranteed that they never act apart and that they attack in some run, and take an attacking run with the fewest messages delivered before the generals act. The last of them could have been lost; its sender, whose view is the same either way since nothing is delivered after it before the attack, still attacks, so the receiver must attack too, which gives an attacking run with one fewer such message. The fewest must therefore be none, and then the general who did not decide attacks on a view it would also have had if no attack had been ordered, and in that run it would attack alone. No protocol over lossy channels escapes this, however many messengers it sends; the argument binds even runs in which none is lost, since neither general can rule loss out. Halpern and Moses generalized it: over channels that may lose messages, no protocol brings processes to common knowledge of a fact that was not common knowledge at the outset, and simultaneous coordinated action requires exactly that. Protocols therefore change the problem rather than solve it. Agreement assumes, among other things, that a message sent repeatedly eventually gets through, and lets processes act at different times; where every message may be lost, even that is out of reach by the same argument. Other designs accept coordination that fails with a probability that a model of message loss bounds.",
+        },
+      ],
+    },
+    {
+      id: "latency-content",
+      conceptId: "latency",
+      definition:
+        "Latency is the delay between a process sending a message and the receiver delivering it. A protocol is designed under an assumption about how large that delay can be, even if it assumes no bound at all; many protocols act on that assumption through timeouts whose verdicts they cannot verify, and every protocol pays the delay again for each message its decisions must wait for in sequence.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Part of the delay is fixed by the path, and the rest can vary from one message to the next. Distance sets a floor no protocol can remove: light in optical fiber covers roughly 200 kilometers per millisecond, about five microseconds per kilometer one way, so a round trip between continents costs tens of milliseconds or more. The routers, links and devices along the route add fixed delays of their own, and a change of route moves the floor. On top of it, a message can wait in queues at each router and at the receiving process, and those queues grow with utilization and climb steeply as a link or server nears saturation. Transmission takes longer for larger messages, a message lost and sent again arrives later by at least the time the sender takes to notice the loss, and either end can be descheduled or paused. Delay is therefore a distribution rather than a number, with a tail, driven by queuing, loss and pauses, that can reach many times the floor. Beyond the size and number of messages it sends, little of this is under the protocol's control. What it does choose is the timing model it assumes, the length of any timeouts it sets, and how many message delays a decision needs.",
+        },
+        {
+          kind: "paragraph",
+          text: "A timing model is a statement about that tail: whether some bound caps every delay, from the start or only after some point, and whether the protocol may rely on knowing it. Whether such a bound exists cannot be read off a network, since a bound that every message so far has respected says nothing certain about the next one. The synchronous model asks the most. In its classical form it bounds not only message delay but also processing speed and clock drift, because a timeout is measured on the waiting process's own clock and acted on when that process gets to run, so the inference from an expired timeout needs those bounded too. The asynchronous model assumes no bound on message delay or processing speed, so a protocol correct under it stays correct however slow the network becomes, at the price of problems that cannot be solved under it once processes may fail, which fault models examines. Most deployed networks sit between the two, timely for most messages most of the time, with excursions whose length no designer can bound with certainty in advance. Partial synchrony, defined in two forms by Dwork, Lynch and Stockmeyer, describes that middle ground, and many practical fault-tolerant protocols assume it.",
+        },
+        {
+          kind: "comparison",
+          label: "What each timing model lets an expired timeout mean",
+          dimensions: ["Delay bound", "Known to the protocol", "An expired timeout"],
+          alternatives: [
+            { name: "Synchronous", values: ["Exists and holds throughout", "Yes", "Evidence of failure"] },
+            { name: "Partially synchronous, eventual bound", values: ["Holds only from an unknown time onward", "Its value, not when it starts to hold", "Possibly wrong until then; accurate after, though no process can tell when"] },
+            { name: "Partially synchronous, unknown bound", values: ["Exists and holds throughout", "No", "Possibly wrong until timeouts allow for the bound; accurate after, though no process can tell when"] },
+            { name: "Asynchronous", values: ["None", "Nothing to know", "Never conclusive"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A protocol designed for partial synchrony can keep its safety properties independent of timing, so that no delay, however long, makes it violate them, and use timing only for progress: it may stall while delays outrun its timeouts and is assured of progress again once they stay within them long enough. Both guarantees hold only while its fault assumptions do. Many such protocols are built this way. Where the bound exists but is unknown, a protocol that relies on timeouts for progress needs them to grow until they allow for it, for example by lengthening its timeout each time a suspicion proves premature, as when a message arrives from a process it had suspected, or each time it fails to make progress within the current timeout; once they allow for the real bound, delay alone stops producing false suspicions.",
+        },
+        {
+          kind: "paragraph",
+          text: "A timeout is the rule that turns an assumed or estimated bound into action. A process that expects a message, such as a reply to its request or a periodic heartbeat, waits, measured on its own clock, for as long as that message can take under the bound it assumes or estimates (for a reply, the delays of its request and of the reply plus the time the peer needs to respond; for a heartbeat, the period plus one delay, counted from the last heartbeat's arrival), and when that time passes without the message it begins to treat the sender as failed. Under a bound that holds, with processing time and clock drift bounded and allowed for in the wait, an expired timeout on a message the peer, if correct, was obliged to send shows that the peer, or the link between them, has failed. Without such a bound the expiry yields suspicion, not knowledge. What is done with suspicion, and the accuracy properties a detector can offer, belong to fault detection.",
+        },
+        {
+          kind: "paragraph",
+          text: "Choosing the wait is a question about the tail of the delay distribution, not its average. A timeout set near the mean round trip expires on the exchanges slower than that, which under ordinary load can be a large share of them; one set at a high percentile still expires on the exchanges beyond that percentile, and the share grows when load pushes the whole distribution outward. Many adaptive timers add to an estimate of the center a margin that grows with the spread. TCP's retransmission timer, which presumes a segment lost when no earlier signal, such as repeated acknowledgments, has shown the loss, is computed as a smoothed estimate of the round-trip time plus four times its mean deviation, kept within limits, so that, where the limits do not bind, a path whose delays become more variable gets a longer timeout even if its average delay is unchanged. A sudden shift in route or load can still outrun estimates drawn from past delays.",
+        },
+        {
+          kind: "paragraph",
+          text: "A short timeout reacts quickly when a process has really crashed but suspects correct processes whose messages fell in the tail; a long one suspects wrongly less often, but after a real crash, whatever waits on that process can stall for the whole timeout. A false suspicion is not free either: where it triggers a needless failover or change of leader, the switch can interrupt progress, repeat work and add messages, and the added load, by lengthening queues, can push more delays past the timeout and provoke further suspicion. At the extremes, a timeout near zero suspects nearly every process it waits on, and one that never expires never reacts to a crash.",
+        },
+        {
+          kind: "paragraph",
+          text: "Delay also prices a protocol's structure, however fast its processes compute. A decision that needs messages to travel in sequence, each sent only after the one before it arrives, cannot complete in less than the sum of their delays. A request and its reply cost two one-way delays; a client that sends to a coordinator, which asks the other processes, collects their replies and then answers, waits four, before any processing is counted. Faster machines shorten the processing between messages but not the time messages spend in transit between machines, so where each message delay is tens of milliseconds, as between continents, and processing takes far less, the number of sequential delays dominates the time to decide. Cutting that number can cost something else: sending to every process directly instead of through a coordinator saves a delay at the price of more messages, and some agreement protocols offer a fast path that, when no conflict or failure forces the slower path, saves a message delay by waiting for larger quorums.",
+        },
+        {
+          kind: "paragraph",
+          text: "Within one round of a protocol, the pace is set by the replies the round waits for. A round that needs replies from all n processes it asked finishes with the slowest of them; one that needs only k of them finishes with the k-th fastest, so the slowest n minus k can be arbitrarily late, or crashed, without delaying it. Waiting for every one of many replies amplifies the tail. If each reply independently has a one-in-a-hundred chance of exceeding its 99th-percentile delay, a round that waits for all of 10 replies is held up that long nearly one time in ten, and one that waits for all of 100 about 63 times in a hundred, as Dean and Barroso observed of services that fan requests out widely. For quorums, independence is the flattering assumption: when k is well short of n, the k-th fastest of n independently delayed replies is unlikely to exceed that percentile, but a common cause that slows more than n minus k replies at once, such as a congested link they share, slows the k-th as well, so the margin that waiting for k of n appears to buy can vanish when delays are correlated.",
+        },
+      ],
+    },
+    {
+      id: "failures-content",
+      conceptId: "failures",
+      definition:
+        "A failure is a departure of a process or a link from the behavior specified for it, as the processes that depend on it experience it: a process that stops, or keeps running but stops following its protocol, or a link that loses, duplicates or corrupts messages or delays them beyond a bound it is relied on to meet. It is the observable end of a chain that begins with a fault and passes through an incorrect internal state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Behavior alone does not settle whether something failed; the specification it is judged against does. A message that takes a minute is no failure of a link from which the protocol expects only eventual delivery, but it is one of a link relied on to deliver within a known bound shorter than that, because the protocol draws conclusions from silence once that bound has passed (timing models belong to Latency). Likewise, a drop is a failure of a link specified to deliver every message, but not of one assumed to lose some.",
+        },
+        {
+          kind: "comparison",
+          label: "Each failure as the other processes see it",
+          dimensions: ["What the others observe", "What it can be mistaken for"],
+          alternatives: [
+            { name: "A process stops", values: ["No further messages from it, at least until it restarts", "A paused process; a link that loses or delays its messages"] },
+            { name: "A link loses a message", values: ["Nothing arrives; a sender awaiting a reply or acknowledgment sees nothing either", "A stopped sender, or, from the sender's end, a stopped receiver; a message still in transit"] },
+            { name: "A link delays a message beyond the bound", values: ["Nothing within the bound, then a late arrival", "A loss or a stopped sender until it arrives; on arrival, a current message, unless something in it shows its age"] },
+            { name: "A link duplicates a message", values: ["The same message twice", "A sender that retransmitted it; a third party replaying it"] },
+            { name: "A link corrupts a message", values: ["A message discarded by a failed check or, if the corruption escapes the check, content the sender never sent", "A loss, when discarded; a sender that sent that content, when not"] },
+            { name: "A process departs from its protocol while running", values: ["Messages with wrong values, sent out of turn or differing between recipients, or expected messages withheld", "Undetected corruption; a correct process acting on information the observer lacks; a lossy link, where it only withholds"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Read across the rows, there are fewer observations than failures. Most reduce to silence or to content that should not be there, and the observer sees only what reached its own end: which component failed, process or link, sender or receiver, is an inference drawn from further messages or from assumptions. A process that departs from its protocol can produce either symptom, since a departure need not take any one form; why such departures occur, and how protocols tolerate them, belong to Byzantine behavior and fault models.",
+        },
+        {
+          kind: "paragraph",
+          text: "Checks move a failure from one symptom to another rather than removing it. A checksum that rejects a corrupted message turns wrong content into an omission, the silence of a loss, which retransmission can repair. The conversion is partial. A check of fixed length matches some corrupted messages by chance, rarely for a strong check but with a probability that is not zero, and those arrive as content the receiver has no reason to doubt. A check also covers only what happens between where it is computed and where it is verified, so corruption at the sender before it was computed, or inside a device that recomputes it along the way, passes. Where the conversion works it is worth having: silence can stall a protocol, or make it suspect a correct process, but supplies no false value to act on, which is why many designs try to make components fail by stopping rather than by sending wrong output.",
+        },
+        {
+          kind: "paragraph",
+          text: "Dependability engineering separates three stages that everyday use calls failure. A fault is the cause: a defect, such as a bug or a weak memory cell, or an event, such as a power loss, a severed cable, a mistaken configuration change or an adversary's action. A defect can lie dormant until activated, as a bug does nothing until an input or an interleaving reaches the faulty code. Once active, a fault produces an error, a part of the component's internal state that is wrong, such as a corrupted record or a lock never released. A failure occurs when an error reaches the component's interface and its behavior there departs from its specification. The chain can stop at each link: a defect may never be activated, and an error may be overwritten before anything reads it, or detected and corrected inside the component, as error-correcting memory repairs a flipped bit. An error can also lie latent long after its fault, so a failure can surface far, in time and place, from its cause.",
+        },
+        {
+          kind: "paragraph",
+          text: "The stages are positions relative to an interface, not kinds of event. A disk that stops responding has failed at its own interface; for the replica storing its data there, that failure is a fault, which becomes the replica's failure only if the errors it causes reach what the replica sends. For a replicated service, the replica's crash is in turn a fault, and the service fails only if the loss reaches the service's own interface, for example when too few replicas remain to answer.",
+        },
+        {
+          kind: "paragraph",
+          text: "Independence is an assumption about causes, and common causes break it. Failures are independent when one component's failing says nothing about whether another will; components that share a cause can fail together when it strikes. A bug that depends only on its inputs lies dormant on every replica running the same code, and replicas that process the same requests in the same order, as many replication schemes arrange, reach it at the same request, while a bug that depends on timing may strike one replica and spare the next. Hardware of one model or production batch can share a defect; machines in one rack, building or region can share power, cooling or network paths; and one operator, deployment tool or configuration change can make the same mistake on every machine it reaches.",
+        },
+        {
+          kind: "paragraph",
+          text: "Correlation matters most where failures are rare. If each of three replicas is down in a given hour with probability one in a thousand, independently, all three are down in the same hour with probability one in a billion. If they also share a power feed that fails in a given hour with probability one in ten thousand, taking all three down, losing all three in that hour has probability at least one in ten thousand, a hundred thousand times what independence predicts, and more replicas on the same feed do not lower it. A protocol built to survive some number of faulty processes, a threshold Fault Models states, assumes that no more than that many fail, and one common cause spanning more processes can exceed the bound in a single event. Spreading replicas across separate failure domains, and varying implementations, hardware or operators among them, can reduce correlation at the cost of more to build and run, but does not remove it: in Knight and Leveson's experiment, programs written independently to one specification failed on the same inputs more often than independence predicts, and separate domains still share whatever spans them, such as a provider or an operator's tooling.",
+        },
+        {
+          kind: "paragraph",
+          text: "A process that crashes and restarts, as crash-recovery models allow, comes back with what it made durable and without the rest. Durable state is what reached storage that survives the crash, such as a disk; a write still in an operating-system or device cache was volatile, some devices report a flush complete before the data reaches the medium, and a crash during a write can leave a record half written. Volatile state is everything else: memory, including messages received and not yet persisted, connections, timers and decisions not yet written. Restart sorts errors the same way. One held only in memory is cleared, which is why restarting cures many failures whose faults were transient, while one written to durable state survives and can bring the process down again.",
+        },
+        {
+          kind: "paragraph",
+          text: "Lost volatile state misleads others where the process had already revealed it. A replica that acknowledged a write, or cast a vote, while the fact lived only in memory can restart without it and accept a conflicting write or cast a different vote. To the others the contradiction can look exactly like a process departing from its protocol, though nothing beyond a crash occurred, and it can break guarantees that assume a crashed process stays down or returns consistent with what it said. Writing such state durably before revealing it closes the gap, where the storage keeps what it reports written, and puts a storage write on the critical path of every acknowledgment. Acknowledging first and writing afterwards is faster, and a crash in between loses what was acknowledged.",
+        },
+        {
+          kind: "paragraph",
+          text: "What survives can mislead too, when the others have moved on. The restarted process holds at most what it had made durable before the crash, while the rest of the system may have changed its membership, chosen another leader or applied updates it never saw, and until messages from others show it what changed, it may answer reads from outdated data or treat a superseded leader or configuration as current. A process that stalls without crashing, paused by a garbage collector or suspended by its hypervisor long enough for others to declare it failed, meets the same hazard without the warning a restart gives: it lost nothing, so nothing in its own state suggests that the others went on without it. How a system notices such a process and brings it up to date belongs to recovery and fault detection.",
+        },
+      ],
+    },
+    {
+      id: "fault-models-content",
+      conceptId: "fault-models",
+      definition:
+        "A fault model is the assumption, fixed before any execution, of which departures from its protocol a faulty process may make and how many processes, or how much of some weight, may be faulty; a protocol's guarantees are proven only for the executions that stay within it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The common classes differ in what a faulty process is still bound to do. Under crash-stop it follows its protocol exactly up to some step and then takes no further steps. Under omission it follows its protocol but may fail to send some of the messages the protocol calls for, fail to receive some sent to it, or both; every message it does send is one the protocol prescribes, given what it actually received. Omission classes let a model charge lost messages to a bounded set of faulty processes instead of to the links, so that messages between correct processes can be assumed to arrive. Under the Byzantine, or arbitrary, class a faulty process may do anything, from sending different processes conflicting messages to acting in concert with other faulty processes. Only what the channels and cryptography prevent limits it, so where messages are signed it cannot forge those of correct processes, and that authenticated Byzantine class is narrower than the unauthenticated one. Where a timing model fixes a bound on delay, a performance class can sit between omission and Byzantine: a faulty process sends the values its protocol prescribes, but later than the bound allows.",
+        },
+        {
+          kind: "paragraph",
+          text: "The classes nest by permissiveness. A crash looks to every other process like omitting every message from some step on, so each crash-stop behavior is also an omission behavior, and every omission behavior is also a Byzantine one. Results therefore travel along the chain in opposite directions. A protocol proven correct under a broader class stays correct, for the same properties, under any narrower class with the same threshold and timing model, because the narrower class admits only a subset of the executions its proof covered. An impossibility shown under a narrower class holds under every broader one, since a protocol that worked under the broader class would also work under the narrower. Tolerating a broader class buys coverage of more causes and can cost more processes, more rounds of messages and the checking of signatures.",
+        },
+        {
+          kind: "paragraph",
+          text: "Crash-recovery sits beside that chain rather than on it. Under it a process may stop and later resume, possibly many times, from what it kept in durable storage. Which processes count as correct is a convention of the particular model: commonly those that crash at most finitely often and eventually stay up, while stricter models count any process that ever crashes as faulty. Where everything the protocol needs a process to remember, including whatever it has revealed to others, was durable before the process acted on it, a restart shows the others only a stretch of messages it did not receive or send, and its behavior can be read as omissions. Where it loses a vote or a promise it had already sent, it can contradict its own earlier messages, which neither crash-stop nor omission permits and, of the classes on the chain, only Byzantine does. Its place is therefore a condition on durability rather than a fixed rank; what a restart keeps and loses is a matter for failures.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each class is a claim about how processes are built and run. Crash-stop fits components that halt on detecting an internal error and never rejoin under their old identity with lost state. The Byzantine class is chosen when no narrower one can be justified, whether because processes are run by parties who may act against the protocol or because bugs, corrupted memory or misconfiguration can make a process send wrong values. Its proofs assume the worst case from any cause, faulty processes coordinating included, so Byzantine does not mean malicious; what such behavior looks like belongs to Byzantine behavior. Why processes might misbehave, and with what resources, is stated by a threat model about adversaries, and a Byzantine class with a threshold is often how such a statement enters a protocol's proof.",
+        },
+        {
+          kind: "paragraph",
+          text: "Outside mobile models, which judge it per period, being faulty is a property of a process over a whole execution, not a condition at an instant. Under crash-stop, omission and Byzantine classes a correct process follows its protocol from start to end, and one that departs at any point is faulty for the entire execution, including the steps before its first departure. Many guarantees are stated for correct processes, such as that no two correct processes decide differently. Uniform variants also bind faulty processes, which a protocol can offer only where everything a faulty process sends or outputs is what its protocol prescribes, as under crash and omission classes; under the Byzantine class nothing can be promised about what faulty processes output. Because correctness depends on steps not yet taken, no process can confirm during an execution that a peer is correct. It can sometimes establish that one is faulty, for example from two conflicting messages signed with a key only that peer holds. The general limit belongs to partial knowledge.",
+        },
+        {
+          kind: "paragraph",
+          text: "Outside mobile models, a threshold therefore bounds every process that is faulty in the execution, not how many misbehave at once, and in a long-lived system faults accumulate against it. A protocol built to tolerate one Byzantine replica among four is outside its model once two replicas have each been compromised at some point, even if the second was compromised long after the first was repaired. Under crash-recovery's common convention, by contrast, a replica that crashes and returns does not count against the bound. Mobile, or proactive, fault models let faults move between processes over time and apply the bound to each period instead of the whole execution, which holds only if a faulty process is restored between periods, for example by reinstalling its software and refreshing its secrets so that what was learned while it was faulty is of no use afterward.",
+        },
+        {
+          kind: "paragraph",
+          text: "The bound commonly takes one of three forms. A count, at most f of n processes, presumes a known set of n; a fraction, such as fewer than a third of the processes, states the same bound relative to n. Both treat processes as equal and mean something only where the set of processes is controlled, since a party able to create processes at will can exceed any fraction of them. A share of weight, such as less than a third of the total stake, bounds what the faulty processes hold rather than how many they are. It can apply where anyone can create processes, because creating one creates no weight, and rests instead on how weight is distributed and what acquiring more of it costs. Whatever its form, the threshold is the bound a design tolerates, not a forecast, and a protocol's properties are guaranteed in executions with more faults only where a separate argument shows it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Solvability depends on the fault model and the timing model together, not on either alone, as consensus, a form of agreement, shows. With crash faults, consensus is solvable in a synchronous system with any number of crashes short of all the processes. No deterministic protocol solves it in an asynchronous system if even one process may crash, by the result of Fischer, Lynch and Paterson, which by the ordering of the classes holds for every broader class too. Under partial synchrony it is solvable with more than twice as many processes as may crash. The same timing model gives different answers for different classes: under partial synchrony, Byzantine faults raise the requirement to more than three times as many processes as may be faulty. Narrowing a class need not pay under every timing model either. Signatures, by confining faulty processes to the authenticated class, lower the requirement in a synchronous system for Byzantine consensus that must decide a value whenever every correct process proposes it, from more than three times the number of faulty processes to more than twice, but not under partial synchrony, where the messages that would expose a faulty process's conflicting signed statements can be delayed until correct processes have decided.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where no bound lets silence be resolved, the reason the count rises with the class lies in a step's replies. A step cannot wait for more than n minus f of them, since up to f processes may never answer. Under crash or omission faults every reply that arrives is one the protocol prescribes for its sender, so the replies gathered can be used as they are. Under Byzantine faults up to f of them may be false, so the correct replies within any set a step can collect must still be enough to settle the outcome, which takes more processes for the same f. Where silence past a known bound does reveal a crash, as in a synchronous system whose only faults are crashes, a step is not held to that limit. How these bounds become the sizes of the sets a consensus protocol waits for belongs to fault assumptions and quorums.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

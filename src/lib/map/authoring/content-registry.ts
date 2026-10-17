@@ -389,4 +389,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "participants",
   "interactions",
   "assumptions",
+  "processes",
+  "communication",
+  "partial-knowledge",
+  "latency",
+  "failures",
+  "fault-models",
 ];
