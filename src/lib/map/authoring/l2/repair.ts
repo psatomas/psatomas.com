@@ -10,6 +10,7 @@
 import { createHash } from "node:crypto";
 import type { L2ConceptWork } from "./contracts.ts";
 import type { L2GroupFile } from "./territory.ts";
+import { repairLimitSubject, type RunState } from "../orchestrator/run-state.ts";
 
 /** Fingerprints of each reopened concept's model and design, and of the territory of each group it belongs to. */
 export type L2RepairBaseline = {
@@ -70,4 +71,17 @@ export function repairScopeProblems(input: { baseline: L2RepairBaseline; reopene
     if (now.splits[group] !== before && !input.replanned.has(group)) problems.push(`${group}: its splits changed without its plan being recorded again in the repair`);
   }
   return problems;
+}
+
+/**
+ * A campaign's standing repair exception (a human's recorded authorization) may resolve a repair-limit stop
+ * itself, once per concept: at most one cycle past MAX_REPAIRS, for a narrow wording or qualification defect.
+ * Every other stop, and any further cycle, still needs a human decision.
+ */
+export const REPAIR_EXCEPTION = "standing repair exception";
+export function repairExceptionProblem(state: RunState): string | undefined {
+  const subject = state.stop?.subject;
+  if (!subject?.startsWith(repairLimitSubject(""))) return "the standing repair exception resolves only a repair-limit stop";
+  if ((state.resolvedStops ?? []).some((resolved) => resolved.subject === subject)) return `${subject.slice(repairLimitSubject("").length)} already had its extra repair cycle: a human decides`;
+  return undefined;
 }

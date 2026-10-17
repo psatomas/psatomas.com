@@ -345,6 +345,7 @@ npm run map:author -- l2 complete audit --note ".."
 npm run map:author -- l2 run [--until <stage>]            # gates → browser → render+expansion → diff → commit → push → pr → ci (→ merge)
 npm run map:author -- l2 fix | stop | resume              # as for domain runs
 npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
+npm run map:author -- l2 authorize --repair-exception ".."  # a human's standing repair exception (Repairs)
 ```
 
 **Slices.** Each domain's ownership groups, in L1 order, are split into the
@@ -408,6 +409,15 @@ editing the record and recording again.
 - **Limit.** A third repair of one concept stops the run
   (`repair limit: <id>`). A human decision (`l2 resume --decision ..`)
   allows one more.
+- **Standing exception.** A human may authorize, for the whole campaign
+  (`l2 authorize --repair-exception ..`), that the agent resolve that stop
+  itself with `l2 resume --exception "<justification>"`, once per concept
+  (three repairs at most), and only when the remaining defect is a narrow
+  wording or factual-qualification fix within the accepted territory,
+  claims, model and design. The repair is re-audited in fresh context like
+  any other, and the justification is kept with the run's resolved stops.
+  A failed third repair, a finding that needs territory, claims or design
+  changed, and unresolved factual uncertainty still stop for a human.
 - **Commits.** Before the run's first commits, a repair is simply part of
   the validated tree. After them, the commit stage adds one commit per
   repaired group on top (`fix(map): repair <group> L2 topics`), carrying only
@@ -464,7 +474,7 @@ decision needed; `resume --decision ..` continues after a human decides.
 | A representation gap prose cannot carry (design `block`) | `record design` stops; resuming leaves the concept unauthored |
 | A territory conflict | `record plan` refuses: claim owned twice, or a reservation not honoured |
 | A stale plan or design | `record design` and `record author` refuse; the `l2-check` gate and the diff stop |
-| A concept still failing after two repairs | `reopen` counts repairs; the third stops until a human allows one more |
+| A concept still failing after two repairs | `reopen` counts repairs; the third stops until a human allows one more, or, under a standing exception, the agent allows one narrow repair |
 | A record, audit or group audit changed outside a repair | `l2 status` marks it stale; `record`, the `l2-check` gate and the diff refuse it |
 | Unexpected existing content, or other diff scope | The diff stage |
 | Inventory problems | `start` refuses |
