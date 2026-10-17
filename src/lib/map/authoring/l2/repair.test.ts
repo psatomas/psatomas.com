@@ -147,12 +147,13 @@ test("repair cycles are counted per concept, once per cycle, and a repeated repa
   let state = reopenL2(finishedRun(), { concepts: ["a"], reason: "first finding", baseline, now: T1 });
   // Reopening again, or adding b, joins the open cycle: a still counts one.
   state = reopenL2(state, { concepts: ["a", "b"], reason: "group audit", baseline: { ...baseline, work: { b: "w-b" } }, now: T1 });
-  assert.deepEqual([state.l2!.repairs, state.l2!.repair!.cycle, state.l2!.repair!.concepts, state.l2!.repair!.reason], [{ a: 1, b: 1 }, 1, ["a", "b"], "first finding"]);
+  assert.deepEqual([state.l2!.repairs, state.l2!.repair!.cycle, state.l2!.repair!.concepts, state.l2!.repair!.reason], [{ a: 1, b: 1 }, 1, ["a", "b"], "first finding; then a, b: group audit"]);
   assert.deepEqual(state.l2!.repair!.baseline.work, { a: "w-a", b: "w-b" });
   // a is re-drafted in the cycle, then its audit finds the repair defective: reopening it again is another attempt.
   const redrafted = recordL2Step(state, { kind: "author", subject: "a" }, T1, { fingerprint: "a-v2" });
   const failedAudit = reopenL2(redrafted, { concepts: ["a"], reason: "audit: the repair overclaims", baseline, now: T1 });
   assert.deepEqual([failedAudit.l2!.repairs, failedAudit.l2!.repair!.cycle, pendingL2Steps(failedAudit).map(stepKey)[0]], [{ a: 2, b: 1 }, 1, "author:a"]);
+  assert.match(failedAudit.l2!.repair!.reason, /then a: audit: the repair overclaims$/);
   const closed = { ...state, stage: "commit" as const, l2: { ...state.l2!, steps: { ...finishedRun().l2!.steps } } };
   const after = completeStage(closed, "commit", T2);
   const again = reopenL2({ ...after, stage: "done" }, { concepts: ["a"], reason: "second review", baseline, now: T2 });

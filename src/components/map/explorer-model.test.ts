@@ -92,6 +92,20 @@ const emptyDomainModel: MapKnowledgeModel = {
 const emptyDomainResolver = createMapResolver(emptyDomainModel);
 const emptyDomainView = buildMapExplorerView(emptyDomainResolver, rootPlacementIds(emptyDomainResolver));
 
+// A topic with no exposition and no children, added under Protocols, for leaf
+// behaviour that must hold however many of the real leaves are authored.
+const EMPTY_LEAF = "unauthored-leaf";
+const emptyLeafModel: MapKnowledgeModel = {
+  ...mapKnowledge,
+  concepts: [...mapKnowledge.concepts, { id: EMPTY_LEAF, slug: EMPTY_LEAF, title: "Unauthored Leaf" }],
+  placements: [
+    ...mapKnowledge.placements,
+    { id: EMPTY_LEAF, conceptId: EMPTY_LEAF, parentPlacementId: "protocols", order: Math.max(...mapKnowledge.placements.filter((placement) => placement.parentPlacementId === "protocols").map((placement) => placement.order)) + 1 },
+  ],
+};
+const emptyLeafResolver = createMapResolver(emptyLeafModel);
+const emptyLeafView = buildMapExplorerView(emptyLeafResolver, rootPlacementIds(emptyLeafResolver));
+
 // L0 domains that currently hold re-homed proof-fixture placements.
 const POPULATED_L0 = {
   foundations: [
@@ -674,10 +688,10 @@ test("row activation: an open non-active row collapses without taking the contex
 
 test("row activation: a leaf becomes the context without fabricated disclosure", () => {
   const open = new Set(["foundations", "protocols"]);
-  const rules = getVisibleMapExplorerRows(view, open).find((row) => row.placementId === "rules")!;
-  assert.equal(rules.isExpandable, false);
-  const result = activateMapExplorerRow(rules, "protocols", open);
-  assert.equal(result.contextPlacementId, "rules");
+  const leaf = getVisibleMapExplorerRows(emptyLeafView, open).find((row) => row.placementId === EMPTY_LEAF)!;
+  assert.equal(leaf.isExpandable, false);
+  const result = activateMapExplorerRow(leaf, "protocols", open);
+  assert.equal(result.contextPlacementId, EMPTY_LEAF);
   assert.equal(result.expandedPlacementIds, open);
   assert.equal(result.reveal, true);
   // An empty domain is a leaf too.

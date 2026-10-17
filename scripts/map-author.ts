@@ -56,7 +56,7 @@ import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
 import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
-import { repairBaseline, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
+import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
@@ -542,7 +542,7 @@ async function commandRefactorRecord() {
 
 /** Local campaign state: the human's merge authorization, if any. Never committed. */
 const L2_CAMPAIGN_FILE = "campaign.json";
-type L2Campaign = { mergeAuthorization?: { at: string; authorization: string } };
+type L2Campaign = { mergeAuthorization?: { at: string; authorization: string }; repairException?: { at: string; authorization: string } };
 const campaignPath = () => join(STATE_ROOT, "l2", L2_CAMPAIGN_FILE);
 const readCampaign = (): L2Campaign => (existsSync(campaignPath()) ? (JSON.parse(readFileSync(campaignPath(), "utf8")) as L2Campaign) : {});
 const PILOT_FILE = "src/lib/map/authoring/l2/pilot.json";
@@ -579,8 +579,14 @@ function commandL2Campaign() {
 }
 
 function commandL2Authorize() {
-  const authorization = flag("--authorization") ?? fail('authorize needs --authorization "<the human\'s explicit campaign authorization, quoted>"');
+  const exception = flag("--repair-exception");
   mkdirSync(dirname(campaignPath()), { recursive: true });
+  if (exception !== undefined) {
+    if (!exception.trim()) fail('--repair-exception needs the human\'s standing authorization, quoted');
+    writeFileSync(campaignPath(), `${JSON.stringify({ ...readCampaign(), repairException: { at: now(), authorization: exception } }, null, 2)}\n`);
+    return console.log("recorded the campaign's standing repair exception: `resume --exception ..` may resolve a repair-limit stop once per concept");
+  }
+  const authorization = flag("--authorization") ?? fail('authorize needs --authorization "<the human\'s explicit campaign authorization, quoted>"');
   writeFileSync(campaignPath(), `${JSON.stringify({ ...readCampaign(), mergeAuthorization: { at: now(), authorization } }, null, 2)}\n`);
   console.log("recorded the campaign's merge authorization; runs started from now merge their own validated PRs (never the pilot)");
 }
@@ -1012,6 +1018,16 @@ function commandStop() {
 function commandResume() {
   const state = activeState();
   if (!state.stop) return console.log("the run is not stopped"), commandNext(state);
+  const exception = flag("--exception");
+  if (exception !== undefined) {
+    const standing = readCampaign().repairException ?? fail("no standing repair exception is recorded (`l2 authorize --repair-exception ..`)");
+    const problem = repairExceptionProblem(state);
+    if (problem || !exception.trim()) fail(problem ?? "--exception needs the justification: why the remaining defect is a narrow wording or qualification fix");
+    const resumed = resumeRun(state, `${REPAIR_EXCEPTION} (${standing.at}: ${standing.authorization}): ${exception}`, now());
+    saveState(resumed);
+    console.log(`resumed at ${resumed.stage} under the standing repair exception`);
+    return commandNext(resumed);
+  }
   const resumed = resumeRun(state, flag("--decision") ?? fail("resume needs --decision \"<the human decision that resolved the stop>\""), now());
   saveState(resumed);
   console.log(`resumed at ${resumed.stage}`);

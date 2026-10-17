@@ -322,6 +322,8 @@ export function reopenL2(state: RunState, input: { concepts: readonly string[]; 
   const repair: L2Repair = open
     ? {
         ...open,
+        // Every reopening's finding stays on the cycle's record, not only the first.
+        reason: `${open.reason}; then ${input.concepts.join(", ")}: ${input.reason}`,
         concepts: [...new Set([...open.concepts, ...input.concepts])],
         groups: [...new Set([...open.groups, ...groups])],
         // The baseline is what the cycle started from: entries already fixed stay.

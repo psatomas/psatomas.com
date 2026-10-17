@@ -1,0 +1,858 @@
+{
+  "version": 1,
+  "group": "trust-models",
+  "domain": "foundations",
+  "parentConceptId": "trust-models",
+  "basis": {
+    "membership": "659178ee0a67b4535a9681ce7021b299f26ebd0998f6cd721e593e4995588013",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "correctness": "c15214d5932a0066d561e3b1a703f69244486bc043866a96f964d3d56732d211",
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea",
+      "interoperability-abstraction": "e639acb562e14b68b89e07a5afd8518103c9ede303078c3d5756130ae192f281",
+      "oracle-problem": "6c86b4260b570bac8b97e2725f7e981067d6ee808d9bd9c52d65652ac989a094",
+      "oracles-external-reality": "bf3d8f2ca5a93aea4e85ac8a7146b03333305857b104ece6ca334fb5c2e8283a",
+      "protocol-architecture": "22ebec078f082ad01c65dc2798803aea2aea48afcd9435d3407477ee38fd3cde",
+      "rollup-security": "c85770e5525df6dbf89ce5199fb14dab1f963257352eb5d0d157030a581ace2a",
+      "scaling-modular-systems": "4355f4bee20c95e9c14e2836f99e980b9bf0ea5f80a2f6d52f30772d159b5783",
+      "security-correctness-resilience": "ce9d0a9865bf71ddae0e4d92f467dea6522f9ce6faf0193fd710921ce8de06be",
+      "security-models": "b957c10ec0dc2723023841f645a6c3dccbac5904cbc546dee5b9f9c59ddfe6cb",
+      "trust-architecture": "d90470b56fef40e4df44dd6b28ce5d46d40dbf9d3526693fbf88200bebac9a4d",
+      "trust-failure-modes": "3240787a0d389dda8d00b8047e01c65da9334cf1c6afe9732b29f4a38bec863c",
+      "trust-models": "23aead44eceb757c99bdcbf5738ae3e6cc205dcbe2385039143b8239f6b31ba8",
+      "verifiable-computation": "0ae9c8f772c818ace9e6bc2a040a2cbdc0f458870469ddd2d45061e0380ad066"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "trust-assumptions",
+      "placementId": "trust-assumptions",
+      "standing": "owned",
+      "claims": [
+        "what a single trust assumption states: the party or component relied on, the behavior assumed of it, the claim that depends on it, and any bound on how many may fail",
+        "the kinds of behavior a trust assumption can require: honesty, correct operation, availability and timely action, non-collusion, and safe custody of keys",
+        "implicit trust assumptions: reliance on software, infrastructure, operators and upgrade authority that a system's description leaves unstated, and how they are found",
+        "how trust assumptions combine behind a guarantee: assumptions that must all hold, alternatives of which any one suffices, and one assumption shared by several guarantees"
+      ],
+      "excludes": [
+        "assumptions",
+        "security-assumptions",
+        "trusted-parties",
+        "threat-models",
+        "trusted-computing-base",
+        "collusion",
+        "liveness-failures",
+        "safety-failures"
+      ],
+      "revisions": [
+        {
+          "claim": "what a system relies on without checking, and for which claims",
+          "reason": "as worded it is the definition of a trust model, which the parent Trust Models states as a premise; Trust Assumptions owns the anatomy of a single assumption (who or what is relied on, for which behavior, for which claim, under which bound), which is the territory the Oracle Problem context needs held"
+        }
+      ]
+    },
+    {
+      "conceptId": "trusted-parties",
+      "placementId": "trusted-parties",
+      "standing": "owned",
+      "claims": [
+        "the roles in which systems rely on trusted parties, such as operators, custodians, holders of keys carrying authority (upgrade, pause, treasury), signers who attest, and data reporters, and what each role is trusted to do",
+        "how a party comes to hold a trusted role, by appointment or by selection under protocol rules, and the grounds for expecting it to behave, legal identity and reputation or stake at risk, and what each secures and leaves exposed",
+        "a trusted party's discretion: choices its role permits, such as ordering, timing, inclusion and selection, which checks on its outputs cannot reject because the rules allow them, as distinct from misbehavior that breaks the rules"
+      ],
+      "excludes": [
+        "trust-assumptions",
+        "trusted-components",
+        "trust-distribution",
+        "guardians",
+        "collusion",
+        "censorship",
+        "adversaries"
+      ]
+    },
+    {
+      "conceptId": "trust-boundaries",
+      "placementId": "trust-boundaries",
+      "standing": "owned",
+      "claims": [
+        "where a trust boundary lies depends on who is relying: the same system's trust boundary lies in a different place for a full node, a light client and a user of a hosted interface",
+        "what can cross a trust boundary, data, calls, control and value, in either direction, and what the trusted side has to establish about each before acting on what it receives or handing control or value across",
+        "trust boundaries as distinct from abstraction, component and organizational boundaries: where they coincide and where they diverge",
+        "how trust boundaries move or multiply as a system changes: integrations, upgrade paths and delegated permissions can add crossings that existing checks were not written for"
+      ],
+      "excludes": [
+        "abstraction-boundaries",
+        "organizational-boundaries",
+        "authority-boundaries",
+        "threat-models",
+        "trusted-computing-base",
+        "verification",
+        "trust-minimization",
+        "light-client-verification"
+      ]
+    },
+    {
+      "conceptId": "verification",
+      "placementId": "verification",
+      "standing": "owned",
+      "claims": [
+        "what a verification consists of: a stated claim, evidence offered for it, and a procedure that accepts or rejects the evidence against the claim, and what acceptance establishes",
+        "how much of the work behind a claim a verifier repeats: full re-execution, sampling, checking a proof, or checking only when a claim is challenged, and what each costs and leaves assumed",
+        "the two errors of a verification procedure, accepting a false claim and rejecting a true one, and what limits each, from exact checks to error bounds that hold only under stated conditions"
+      ],
+      "excludes": [
+        "validation",
+        "formal-verification",
+        "computation-proofs",
+        "computation-integrity",
+        "correctness-proofs",
+        "verification-limits",
+        "fraud-proofs",
+        "validity-proofs",
+        "succinct-verification",
+        "trust-minimization"
+      ]
+    },
+    {
+      "conceptId": "trust-minimization",
+      "placementId": "trust-minimization",
+      "standing": "owned",
+      "claims": [
+        "means of minimizing trust and what each leaves trusted, such as making results checkable, letting users exit or act without a party's cooperation, bounding what a party may do, and removing a party's role altogether",
+        "the assumption trust minimization often aims for: that any one honest participant able to check and act suffices, and what that participant needs, such as data, time and the means to act",
+        "the costs of trust minimization: proving and checking work, delays such as challenge windows, added complexity in code that must then be trusted, and lost ability to intervene",
+        "trust minimization as distinct from decentralization: many operators can still be trusted collectively, and a single operator can be trusted for little"
+      ],
+      "excludes": [
+        "verification",
+        "trust-distribution",
+        "decentralization",
+        "escape-hatches",
+        "trusted-computing-base",
+        "fraud-proofs",
+        "trusted-parties"
+      ]
+    },
+    {
+      "conceptId": "trust-distribution",
+      "placementId": "trust-distribution",
+      "standing": "owned",
+      "claims": [
+        "the threshold in a distributed trust arrangement: how many parties, or what share of weight, must act together for an outcome, and how that choice sets how many must collude to force a wrong outcome the arrangement accepts on its word and how many must be absent to halt it",
+        "measuring how far trust is actually distributed: the smallest number of independent entities able to reach a threshold, counted by control of keys, stake and infrastructure rather than by nominal participants",
+        "how distributed trust concentrates over time: stake and delegation gathering in a few operators, signers sharing custody or hosting, and membership that is never renewed"
+      ],
+      "excludes": [
+        "collusion",
+        "fault-tolerance",
+        "quorums",
+        "multisignatures",
+        "threshold-signatures",
+        "decentralization",
+        "trust-minimization",
+        "byzantine-behavior"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "trust-assumptions": {
+      "model": {
+        "meaning": "A trust assumption is a stated or unstated condition that a guarantee depends on: that a particular party or component behaves in a particular way, which the system accepts rather than checks.",
+        "kind": "property",
+        "parents": {
+          "trust-models": "Trust Models defines the system-level account of what is relied on without checking and that trust attaches to particular claims; Trust Assumptions takes one entry of that account apart (who or what, which behavior, which claim, under which bound), names the kinds of behavior an entry can require, shows how unstated entries are found, and shows how entries combine behind one guarantee.",
+          "oracle-problem": "Oracle Problem says the trust assumptions scale with what a report controls; Trust Assumptions supplies what such an assumption states and requires (reporters' honesty, timely reporting, non-collusion, key custody, and the unstated reliance on sources and infrastructure), without explaining oracle economics or verification limits.",
+          "rollup-security": "Rollup Security names a security council as a trust assumption and frames security as conditions users rely on; Trust Assumptions gives the anatomy for stating any such condition (the party, the behavior, the dependent claim, the bound) and how a rollup's guarantees combine required, alternative and shared assumptions, without explaining upgrade keys, escape hatches or inheritance.",
+          "trust-failure-modes": "Trust & Failure Modes treats what happens when a trust assumption breaks and how failures spread; Trust Assumptions explains what the assumption that breaks consists of and how one assumption can sit behind several guarantees, leaving the failure kinds, isolation and contagion to their concepts."
+        },
+        "claims": [
+          "what a single trust assumption states: the party or component relied on, the behavior assumed of it, the claim that depends on it, and any bound on how many may fail",
+          "the kinds of behavior a trust assumption can require: honesty, correct operation, availability and timely action, non-collusion, and safe custody of keys",
+          "implicit trust assumptions: reliance on software, infrastructure, operators and upgrade authority that a system's description leaves unstated, and how they are found",
+          "how trust assumptions combine behind a guarantee: assumptions that must all hold, alternatives of which any one suffices, and one assumption shared by several guarantees"
+        ],
+        "excludes": [
+          "assumptions",
+          "security-assumptions",
+          "trusted-parties",
+          "threat-models",
+          "trusted-computing-base",
+          "collusion",
+          "liveness-failures",
+          "safety-failures"
+        ],
+        "placements": {
+          "trust-assumptions": "Under Trust Models the reader has the system-level account; the exposition is the general anatomy of one assumption and of how assumptions combine, stated for any system.",
+          "trust-assumptions-in-oracle-problem": "Reporters, data sources and their infrastructure are relied-on parties and components like any other; the same anatomy, behavior kinds, implicit-reliance search and combination rules apply to a report, so no oracle-specific claim is needed and none is made.",
+          "trust-assumptions-in-rollup-security": "Sequencers, provers, challengers, upgrade-key holders and councils are relied on for particular behaviors and claims; the general anatomy and the combination of required and alternative assumptions hold there without rollup-specific statements.",
+          "trust-assumptions-in-trust-failure-modes": "An interoperating system's failure modes start from a broken assumption; the exposition explains what the assumption is and how one can be shared by several guarantees, which holds for bridges and messaging as for any system, while failure kinds and their spread stay with sibling concepts."
+        },
+        "fields": {
+          "statement": "A complete trust assumption names four things: the party or component relied on; the behavior assumed of it; the claim or claims that depend on that behavior; and, where several parties or components carry it together, a bound on how many of them, or how much of their weight, may fail (and, where relevant, the time over which the behavior is needed). An assumption missing any of these cannot be evaluated: 'the operator is trusted' says nothing until it says for what behavior and for which claim.",
+          "establishedBy": "The system does not establish a trust assumption; accepting it instead of checking it is what makes it trust. What can be established is the assumption's statement: explicit assumptions come from a system's description; implicit ones are found by tracing each guarantee to everything that executes, hosts, delivers or can change what it depends on (software and its dependencies, infrastructure such as hosting, networks and data sources, operators running it, and whoever holds authority to upgrade it) and asking, for each, what the guarantee would need of it. The grounds for believing a party (stake, reputation, appointment) belong to Trusted Parties and are only named.",
+          "violatedBy": "The relied-on party or component behaving otherwise than assumed: deviating deliberately, operating incorrectly through faults or bugs, being unavailable or late, coordinating with others the assumption required to act independently, or losing control of keys; or more parties failing than the stated bound allows. Which failure results is named (liveness or safety) but explained by those concepts.",
+          "confusions": [
+            "a trust assumption versus a trusted party: one party can carry several assumptions about different behaviors for different claims, and an assumption can rest on a component rather than a party (Trusted Parties is named, not explained)",
+            "a trust assumption versus a security assumption such as cryptographic hardness: named as the excluded neighbor, not explained",
+            "the stated assumptions versus the full set: a description that lists explicit assumptions can leave software, infrastructure, operators and upgrade authority unstated",
+            "trusting a party versus trusting it for everything: an assumption is scoped to a behavior and to the claims that depend on it"
+          ],
+          "variants": [
+            "honesty: the party does not deliberately deviate (forge, lie, equivocate)",
+            "correct operation: the party or component works as specified, free of faults and bugs, whatever its intent",
+            "availability and timely action: the party or component is present and acts within the time a guarantee needs, such as responding, publishing or challenging within a window",
+            "non-collusion: parties that are each assumed to act independently do not coordinate (collusion itself is named, not explained)",
+            "safe custody of keys: the holder keeps signing keys from loss and theft, so that signatures attributed to it are its own"
+          ],
+          "relation": "A guarantee holds when every assumption it requires holds (a conjunction, so each added required assumption is one more way for it to fail); a guarantee can also rest on alternatives, satisfied when any one of them holds (a disjunction, so adding alternatives adds ways for it to hold); and one assumption may be required outright by several guarantees, so its failure removes all of them at once. These forms combine separate assumptions; where the same behavior is asked of several parties or components for the same claims, they carry one assumption whose bound states how many, or how much weight, may fail (all must hold, any one suffices, or k of n in between), and how such a threshold is chosen is named and left to Trust Distribution."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Anatomy of one assumption (its parts relate in one sentence), a set of behavior kinds each with one distinguishing gloss, a search for implicit reliance by tracing dependencies, and a logical relation of combination (all, any one, shared).",
+        "whyProse": "The anatomy is four parts that read as one relation (this party is assumed to do this so that this claim holds, with at most this many failing), which a sentence states and a composition flow would only list. The behavior kinds are variants with one attribute each, which the catalog says are a sentence or prose rather than a block, and a comparison would invent dimensions the claims do not have. Finding implicit assumptions is a search whose order does not carry meaning, so a flow would imply a sequence that is not there. The combination claim is a dependency relation (guarantees relying on required, alternative and shared assumptions); its three forms are each stated accurately in a sentence or two with an example, so prose carries it without loss. No conflation here is this concept's to draw as a distinction: the likely ones are with excluded concepts (security assumptions, trusted parties), which are named, not explained.",
+        "gap": {
+          "structure": "dependency",
+          "reason": "How assumptions combine behind guarantees, with one assumption shared by several guarantees, is a dependency graph, which no primitive draws; a flow would show a sequence, not shared dependencies. Prose states the three forms accurately, so the concept is written in prose and not blocked."
+        },
+        "level": "The anatomy, behavior kinds, implicit-reliance search and combination of single assumptions belong here: Trust Models states the system-level account and the parents at the other placements only name assumptions in their contexts, while siblings own who is trusted and why (Trusted Parties), where reliance crosses (Trust Boundaries), checking (Verification), reducing reliance (Trust Minimization) and thresholds and their concentration (Trust Distribution).",
+        "territory": "It names but does not explain trusted parties, security assumptions, threat models, the trusted computing base, collusion, and liveness and safety failures. The bound on how many may fail is stated as part of an assumption; how a threshold choice sets collusion and halting numbers is Trust Distribution's. Alternatives of which any one suffices are treated as a logical form; the one-honest-participant aim and what that participant needs are Trust Minimization's. A shared assumption is treated as one condition behind several guarantees of a system, not as failure spreading between connected systems (Contagion Risk) or its containment (Failure Isolation).",
+        "placements": "Nothing in the exposition depends on a domain: the anatomy, behavior kinds, search for implicit reliance and combination rules hold for reporters, sequencers, councils, bridge verifiers and any other relied-on party or component, and examples, where used, must be general or drawn from more than one setting without implying the reader's placement."
+      },
+      "audit": {
+        "at": "2026-10-08T19:23:47.366Z",
+        "note": "Re-audit after repair cycle 2, in fresh context. I read every sentence at all four placements (trust-models primary; oracle-problem; rollup-security; trust-failure-modes) against each parent's exposition and the domain prose. Cycle-2 finding resolved: the last paragraph now reads 'one assumption can be required outright by several at once, and then its failure leaves none of them assured', which holds because a required-outright assumption is a conjunct of each guarantee; the model relation reads 'required outright by several guarantees'. Sweep checked for one sense: 'behind' now occurs once ('Behind a single guarantee, separate assumptions combine in two forms'), covering both forms; 'rests on' (paragraph 1, 'rests only on such alternatives') and 'depends on' mean dependence in either form; 'required' (required together, each further required assumption, requiring some outright, required outright) always means a conjunct. Repair-introduced text checked: the bound by weight ('how many of them, or how much of their weight') fits stake-weighted carriers and agrees with the untouched 'enough of them, which can be as few as one', the storers' 'all but one' and Trust Distribution's 'what share of weight' without explaining it; the reordered conjunct list (contract operates correctly; where replaceable, whoever can replace it does not use that power against the guarantee; no more signers fail than their bound allows) has three independent conjuncts, so 'no longer assured if any one of these fails' holds; the added clause 'a bound counts every way one of those carrying an assumption can fail its claims' is true relative to the claims (absence does not count against a safety bound, theft does), and the untouched 'Where several parties or components are asked for the same behavior for the same claims' reads consistently with it. Earlier findings (key custody conjunct, one-claim scope, k-of-n at two levels, party-only bound, repeated signer point) remain resolved. Parent overlap: Trust Models (definition, claim scoping, flow, verifiable/verified, independence, threat-model reading) not restated; Oracle Problem ('scale with what a report controls', corruption economics) not restated and the revised reservation (anatomy of one assumption) held; Rollup Security (council sentence, upgrade-versus-exit comparison) not restated, the upgrade examples hedged ('may', 'can be', 'where the contract can be replaced') so they hold where upgrades wait longer than an exit; Trust & Failure Modes (liveness/safety contrast, shared point of failure, isolation) not restated, the within-one-system sentence keeps the shared-assumption point on this side. Territory: Trusted Parties, Security Assumptions, Assumptions, Collusion, Trust Distribution, Trust Minimization, Contagion Risk, Failure Isolation, liveness and safety failures named, not explained; the separate withdrawal route is only an example of an alternative. Representation: prose as designed; the dependency-graph gap is recorded. Canonical validity: no positional or time-sensitive words; examples span bridges, rollups, data and oracles; American English; plain text. Depth: each paragraph serves one of the four claims; no point made twice. Remarks (not defects): (R1) paragraph 2 lists 'to keep their keys' as a behavior beside 'to sign nothing invalid', while paragraph 7 counts key theft within the signers' bound; this is coherent when the behavior is read relative to the claim (no signature attributed to a signer approves an invalid request), but the model statement does not carry the 'a bound counts every way' rule; (R2) the shared-assumption example says the guarantees 'may each depend on it' where the sentence it illustrates says 'required outright'; hedged and true for upgrade-key custody, 'may each require it' would be tighter; (R3) 'which single assumptions carry the most' uses 'carry' in a second sense (assumptions bear guarantees; elsewhere parties carry assumptions); (R4) the model meaning still says 'a particular party or component' where the record says 'particular parties or components'; (R5) carried over: 'four parts' followed by 'can also carry a period'; 'deliver it unaltered' is reliance only for unauthenticated data, conditioned by 'accepts without checking'.",
+        "resolutions": [
+          {
+            "id": "names-concept:27129c4d06",
+            "resolution": "Assumptions appears only in 'what makes any condition an assumption rather than a rule, and how one assumption can be stronger than another, to Assumptions': routed by name, neither explained."
+          },
+          {
+            "id": "names-concept:eb239f3ec0",
+            "resolution": "Collusion appears in 'Collusion is the concept for how such coordination happens'; the non-collusion gloss and the share-combining example state what the assumption forbids, not how collusion happens."
+          },
+          {
+            "id": "names-concept:b039836c14",
+            "resolution": "Contagion Risk appears only in 'failure that spreads between connected systems is Contagion Risk', a boundary naming; spread mechanisms are not described."
+          },
+          {
+            "id": "names-concept:69c2acb553",
+            "resolution": "Failure Isolation appears only in 'limiting how far it reaches is Failure Isolation'; no isolation means are described."
+          },
+          {
+            "id": "names-concept:b3723b1c92",
+            "resolution": "Liveness failure is named only in 'a safety failure rather than a liveness failure' in the challenger example; what a liveness failure is or does is not explained."
+          },
+          {
+            "id": "names-concept:45dba2e00c",
+            "resolution": "Safety failure is named only in the same challenger sentence; the example shows the kind of behavior does not fix the consequence, without explaining safety failures."
+          },
+          {
+            "id": "names-concept:d4e0f05534",
+            "resolution": "Security Assumptions appears only in 'they are left to Security Assumptions' after cryptographic hardness is placed outside trust assumptions by this record's own definition; not explained and not narrowed into a definition of it."
+          },
+          {
+            "id": "names-concept:2f485a28fc",
+            "resolution": "Trust Distribution appears only in 'how a threshold is chosen and what the choice sets belong to Trust Distribution'; the bound is stated as a part of an assumption (including by weight) without the threshold choice, collusion or halting numbers, or measurement of distribution."
+          },
+          {
+            "id": "names-concept:94a45e3796",
+            "resolution": "Trust Minimization appears only in 'making one honest participant enough is an aim of Trust Minimization'; the storers example is the logical form, and what that participant needs is not explained."
+          },
+          {
+            "id": "names-concept:1fdc9c5827",
+            "resolution": "Trusted Parties appears only in 'the roles that Trusted Parties describes and the assumptions those parties carry are counted separately'; roles, appointment and grounds for trust are not explained."
+          },
+          {
+            "id": "absolutes:0cf14451de",
+            "resolution": "Checked each: 'guarantee'/'guarantees' are the noun for what an assumption supports, not claims of assurance; 'Stated completely' introduces the anatomy; 'cannot be weighed' holds for an assumption missing a part. Other absolutes checked: 'its failure leaves none of them assured' holds for required-outright assumptions; 'stops being assured only when every alternative fails' is limited to guarantees resting only on alternatives; 'every guarantee that replaceable code provides also depends on how the power to replace it is used' holds (an exit window changes the dependence, not its existence); 'a bound counts every way ... can fail its claims' is relative to the claims; 'adds nothing' is limited to a fallback needing the same absent operator."
+          }
+        ],
+        "recordFingerprint": "53660bb4097ec9a6b5e16a3fba02ca440002c0d315a480bd84107e16742feaca"
+      }
+    },
+    "trusted-parties": {
+      "model": {
+        "meaning": "A trusted party is a person or organization a system relies on to perform a role whose correct performance it accepts rather than fully checks; it holds that role by appointment or by selection under protocol rules, is expected to behave on grounds such as legal identity, reputation or stake at risk, and exercises whatever discretion the rules its role is held to leave it.",
+        "kind": "actor",
+        "parents": {
+          "trust-models": "Trust Models defines the system-level account of what is relied on without checking, says trust attaches to particular claims, and asks what each trusted party could do by failing; Trusted Parties supplies who those parties are by role and what each role is trusted to do, why a party is trusted at all and what each basis of that trust secures and leaves exposed, and the discretion a role leaves, which checks on outputs cannot reject because the rules permit it, as distinct from rule-breaking misbehavior."
+        },
+        "claims": [
+          "the roles in which systems rely on trusted parties, such as operators, custodians, holders of keys carrying authority (upgrade, pause, treasury), signers who attest, and data reporters, and what each role is trusted to do",
+          "how a party comes to hold a trusted role, by appointment or by selection under protocol rules, and the grounds for expecting it to behave, legal identity and reputation or stake at risk, and what each secures and leaves exposed",
+          "a trusted party's discretion: choices its role permits, such as ordering, timing, inclusion and selection, which checks on its outputs cannot reject because the rules allow them, as distinct from misbehavior that breaks the rules"
+        ],
+        "excludes": [
+          "trust-assumptions",
+          "trusted-components",
+          "trust-distribution",
+          "guardians",
+          "collusion",
+          "censorship",
+          "adversaries"
+        ],
+        "placements": {
+          "trusted-parties": "The only placement is under Trust Models, where the reader has the account of reliance without checking and the premise that trust attaches to claims; the exposition explains the parties themselves (roles, bases of trust, discretion) in terms general to any system that relies on operators, custodians, key holders, signers or reporters, so it does not depend on a particular domain."
+        },
+        "fields": {
+          "role": "A trusted party is a party, not a component: a person or organization that takes actions the system relies on. Its role is the function it performs for the system, and the role, not the party's identity, fixes what it is trusted to do. One party can hold several roles (an operator that also holds an upgrade key), each trusted for different things. Trusted components such as software or hardware are named only.",
+          "trustPlaced": [
+            "operators: run a service the system depends on and process inputs by its rules, available and on time (sequencers, relayers, hosted endpoints)",
+            "custodians: hold assets or keys on others' behalf, return them on a valid request, and neither release them nor take them for themselves except on a valid request or as the owners' terms allow",
+            "key holders: hold keys that carry authority over a system, such as upgrading, pausing or moving treasury funds, and use that authority only as intended while keeping the keys from loss and theft",
+            "signers: attest to statements or approve actions, often as members of a set, signing only what is true or valid (that an event occurred elsewhere, that a message or transaction should execute)",
+            "data reporters: report values the system cannot observe itself, accurately and promptly, from the sources they are expected to use",
+            "key holders and signers both hold keys; they differ by function: a key holder exercises authority, a signer attests"
+          ],
+          "incentives": [
+            "appointment: a party is placed in the role by someone with authority to choose it (a founding team, a governance vote, a contract owner); where the appointer can remove it and it cannot obstruct its removal, secures accountability to the appointer, who can review and replace it; leaves exposed the appointer's judgment and, while the appointing authority can still appoint, the appointer's capture, so reliance extends to whoever appoints rather than leaving the party",
+            "legal identity and reputation: a party is known, so misbehavior can be attributed to it and answered in court or by lost business; secures recourse and, through reputation, makes future business depend on present conduct; leaves exposed acts the law does not reach or a jurisdiction will not or cannot enforce against the party, a final defection when the gain exceeds the value of the reputation, and makes the party coercible by those who can reach it",
+            "stake at risk: a party posts value that the system holding it can destroy or confiscate on misbehavior proven to it; secures against misbehavior that is attributable, proven to that system while the stake is still posted, and worth less than the stake; leaves exposed misbehavior that cannot be proven or attributed, misbehavior proven only after the stake has been withdrawn, gains larger than the stake, and choices the role's rules permit, which no slashing condition can name",
+            "selection by protocol rules: the party is chosen by a rule, such as rotation, lottery or weighting by stake, rather than by anyone's choice; secures that no one hand-picks who holds the role and, where the outcome cannot be predicted or steered before it is drawn, that an attacker cannot know in advance which party to corrupt; leaves exposed whatever the rule weights (stake, identities that can be multiplied) and, unless the rule drops parties from selection for faults the system detects, does not by itself constrain how the selected party behaves, so it is commonly combined with another basis",
+            "two senses must stay apart: appointment and selection decide who holds a role; identity, reputation and stake are reasons to expect the holder to behave. Real parties often combine bases (an appointed, identified and bonded signer)"
+          ],
+          "powers": [
+            "discretion: choices that the rules the role is held to leave open, such as which inputs to include, in what order, when to act within the time allowed, and which source, member or value to select among valid ones",
+            "checks on a trusted party's outputs test them against some of the rules the role is held to, so an output reached by permitted choices passes every check however the choice was made and whomever it favors; discretion remains even where outputs are fully checked",
+            "the capacity to break a rule the role is held to, which checks can reject only where they test the rule broken: a custodian taking for itself assets the owners' terms do not give it, a signer attesting to a false statement, a key holder using authority outside its purpose",
+            "the capacity to withhold: not acting, or acting late, which is a permitted choice while it stays within the time the role allows and breaks a rule the role is held to once it goes beyond it"
+          ],
+          "misbehaviour": "Misbehavior breaks a rule the role is held to (forging, stealing, attesting falsely, using authority outside its purpose, withholding beyond the time the role allows); checks can reject it only where they test the rule it breaks, and law or reputation can answer it if it is attributable, stake only if it is also proven to the system while the stake is still posted. Discretion used against users (where the role's rules leave the choice open: ordering for its own gain, delaying within the time allowed, leaving inputs out, selecting a favorable source) breaks no rule, so checks accept its outputs and slashing has no condition to apply; reputation can answer it where its use is seen and costs the party business, and it can also be answered by narrowing the discretion in the rules, by competition or rotation among parties, or by users' ability to act without the party. Persistently excluding particular valid inputs, whether as a permitted choice or as misbehavior, is censorship, and a trusted party that turns against the system is an adversary; both are named, not explained here.",
+          "tradeoffs": [
+            "identity provides recourse but makes the party reachable by coercion",
+            "stake binds behavior only up to its value and only for violations proven while the stake is still posted; raising the stake narrows who can hold the role",
+            "narrowing discretion in the rules reduces what a party can choose against users but also what it can do to respond to circumstances"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A set of roles, each with what it is trusted to do; four bases of trust that a party usually holds in combination, each securing some behavior under conditions and leaving other behavior exposed; and a distinction between permitted discretion and misbehavior that rests on a cause (checks test conformance to rules) and has consequences for which remedies apply.",
+        "whyProse": "The roles are variants with one attribute each (what the role is trusted to do), which the catalog says are sentences, not a block. The bases look like alternatives on two dimensions (secures, leaves exposed), but they are not options a system chooses among: they answer two different questions (who holds the role, and why it should behave), and real parties combine several, so a comparison would teach them as exclusive choices; their exposures also hold only under conditions (attributable, provable, gain below the stake, within a jurisdiction's reach) that short comparison cells would strip, and the connection that matters most, that stake reaches only provable rule violations while discretion stays outside it, runs across bases and into the discretion claim, which only paragraphs can carry. The discretion claim is causal (checks test outputs against rules, so they accept anything the rules allow) with consequences for remedies; a distinction block would show only that the two differ, which the claim's own sentence says, and the explanation of why and what follows is argument.",
+        "level": "Who the trusted parties are by role, why they are trusted, and the discretion their roles leave belong to this concept: Trust Models states the system-level account and that trust attaches to claims, while siblings own the anatomy and behavior kinds of a single assumption (Trust Assumptions), where reliance crosses (Trust Boundaries), checking (Verification), reducing reliance (Trust Minimization) and thresholds across many parties (Trust Distribution).",
+        "territory": "What each role is trusted to do is stated concretely per role; the general kinds of behavior an assumption can require and how assumptions are stated and combined stay with Trust Assumptions, named only. Parties are distinguished from trusted components, which are named. A party that is a member of a set is treated as one party; how many members must act and how far a set is really distributed is Trust Distribution's. Guardians, collusion, censorship and adversaries are named where the roles, discretion and misbehavior touch them, not explained. Remedies for discretion (narrowing rules, rotation, users acting without the party) are named as answers; how trust is minimized is Trust Minimization's.",
+        "placements": "There is one placement, under Trust Models; the exposition is stated for any system that relies on parties, uses examples from more than one setting (sequencers, bridges, custody, oracles) without implying a domain, and makes no positional reference."
+      },
+      "audit": {
+        "at": "2026-10-09T00:55:05.101Z",
+        "note": "Re-audit after repair cycle 3 (findings trusted-parties.md, -b.md, -2.md, -3.md). Prior findings: -3 D1 resolved: P4 now says a route gives the holder a reason to behave where conduct can cost it the role, as where an appointer can replace it or a selection rule drops parties for faults the system detects; the appointment condition (removal possible and unobstructed) stated earlier in P4 still governs 'can replace it', and the pairing with grounds is no longer stated as caused by the route's lack of a reason. Model incentives[3] now carries 'unless the rule drops parties from selection for faults the system detects'. -3 remarks taken: P6 opener now 'A role can also leave its holder choices. Where the rules the role is held to leave them open' (no longer circular); P7 custodian example now 'takes for itself assets the owners' terms do not give it', consistent with P2's 'only as the owners' terms allow'; model powers[2] no longer says the purpose is something no check tests. All earlier findings (-1/-b D1 appointment, D2 recourse, D3 stake while posted, D4 rules and checks, D5 Participants, D6 repeated close, -b D3 custodians, -2 D1 ordering condition, D2 failure-of-the-role, D3 reputation answering discretion, D4 repetition) remain resolved in the untouched text. Because the repair widened 'reason to behave' to include route-borne removal, every untouched sentence on grounds and remedies was re-read: the definition ('grounds such as'), P5 ('Both answer misbehavior after it has happened'), P7 ('law or reputation can answer it only if attributed, stake only if also proven') and P8 ('neither checks nor stake can reach it, though reputation can ... It can also be answered by') make no exclusive claim that the new route-borne reason contradicts; a fault-dropping selection rule likewise cannot reach discretion, consistent with P8. Every use of rules, discretion, misbehavior, withholding and censorship was re-read and keeps the one sense 'a rule the role is held to'. Parent overlap (Trust Models, the only placement; leaf): no sentence restates the parent; the parent says nothing about routes, grounds or discretion beyond its per-claim and 'delay but not forge' points, which are not paraphrased. Siblings and excludes: Trust Assumptions (authored) named for how expected behavior is written and combined, per-role trust stated concretely, behavior kinds and anatomy not explained; Participants matches its party/identifier distinction; Trusted Components, Trust Distribution, Collusion, Censorship, Adversaries named with one-clause boundary glosses; Trust Minimization and the upgrade key named; Guardians not mentioned. The new P4 example (dropping parties for detected faults) explains no excluded or sibling concept. Accuracy elsewhere: appointment conditioned, selection unpredictability conditioned, recourse bounded by law and jurisdiction, reputation by future business, stake by attribution, proof while posted and gain below the stake, discretion by rules leaving choices open, withholding by the time the role allows. Representation: prose as designed; the whyProse argument holds (routes and grounds combine and their exposures are conditional). Canonical validity: one placement, no positional or time-sensitive words, American English, plain text. Remarks (not defects): route-borne removal, like reputation, deters only as far as the holder values the role (a final defection is not deterred by losing it), left implicit by 'a reason'; P8 does not list an appointer's replacement among the answers to discretion, an omission rather than an error since P8 makes no exclusive claim; stake's 'secures against' still assumes someone submits the proof (noted by every earlier audit); the new P4 sentence is long and its 'it' refers alternately to the route and the holder, readable in context.",
+        "resolutions": [
+          {
+            "id": "names-concept:672ca4ca77",
+            "resolution": "Adversaries is named once in P7 ('a trusted party that works against the system is among its Adversaries'); what adversaries can do or how they are modeled is not explained."
+          },
+          {
+            "id": "names-concept:dd848d6a62",
+            "resolution": "Censorship is named once in P7 as the term for persistently excluding particular valid inputs, whether as a permitted choice or as misbehavior; its mechanisms, detection and remedies are not explained."
+          },
+          {
+            "id": "names-concept:eb239f3ec0",
+            "resolution": "Collusion is named in P3 as the subject of signers 'coordinating against the system'; how collusion works or is bounded is not explained."
+          },
+          {
+            "id": "names-concept:3392012f2a",
+            "resolution": "Trust Assumptions is named in P3 for how expected behavior is written as an assumption and how assumptions combine; P2's per-role statements are concrete role trust, not the general behavior kinds, anatomy or combination forms Trust Assumptions claims."
+          },
+          {
+            "id": "names-concept:7b7967c476",
+            "resolution": "Trust Distribution is named in P3 as the subject of how many set members must act together; thresholds and measurement of distribution are not explained."
+          },
+          {
+            "id": "names-concept:94a45e3796",
+            "resolution": "Trust Minimization is named in P8 as covering means such as letting users act without the party; the remedies are named as answers to discretion, and its means, assumption and costs are not explained (P8's last sentence states what discretion is for, inside claim 3, not Trust Minimization's cost analysis)."
+          },
+          {
+            "id": "names-concept:69504d9c10",
+            "resolution": "Trusted Components is named in P3 to draw the party/component boundary ('not to the code and hardware a system also relies on'); nothing about components is explained."
+          },
+          {
+            "id": "names-concept:acf021c4a4",
+            "resolution": "Upgrade keys appear only as an example of a role one party can hold alongside another ('an operator that also holds an upgrade key') and as one kind of authority a key holder carries; how upgrade keys work or are governed is not explained."
+          },
+          {
+            "id": "absolutes:14865f9ddc",
+            "resolution": "Seven absolutes checked: 'cannot observe' defines the data-reporter role; 'cannot obstruct its removal' and 'cannot be predicted or steered' are conditions; 'an attacker cannot know in advance' holds under that condition; 'guarantee' is a noun in 'behind a guarantee', not a claim; 'costly rather than impossible' holds for grounds that act after the fact; 'cannot set that source aside' holds for a reporter bound to one fixed source. Each holds."
+          },
+          {
+            "id": "depth-long:3e4a86b61f",
+            "resolution": "1340 words. Each paragraph serves a claim: P1 definition; P2 claim 1 (roles and what each is trusted for); P3 the boundaries the territory requires; P4 and P5 claim 2 (routes, grounds, what each secures and leaves exposed, every exposure conditioned as earlier audits required); P6 to P8 claim 3 (discretion, the contrast with misbehavior, and remedies). The growth over earlier drafts is conditions audits demanded. Remaining near-repeats (P8's opening echoing P5/P6; P7 re-applying P5's attribution and proof conditions) serve as contrast and consequence and were judged remarks in the prior audit; no point is made twice without function and no example is surplus."
+          }
+        ],
+        "recordFingerprint": "1fd2199c2b91bfd08d49a15ceecf11f214ce25eb76172faa41745a74e56f8590"
+      }
+    },
+    "trust-boundaries": {
+      "model": {
+        "meaning": "A trust boundary is a line through a system, drawn for a particular relying party or component, between the parts whose behavior it accepts without checking and the parts whose outputs it must establish before acting on them; whatever passes between the two sides is a crossing.",
+        "kind": "property",
+        "parents": {
+          "trust-models": "Trust Models defines a system's account of what it relies on without checking and says trust attaches to particular claims; Trust Boundaries locates where in a system that account changes sides for a given relier, what passes across that line and what must be established about each kind of crossing, how the line differs from abstraction, component and organizational lines, and how system changes move it or add crossings.",
+          "security-models": "Security Models says boundaries between trusted and untrusted parts are where most failures enter and that the receiving side must check data or control passing inward; Trust Boundaries adds that the line's location depends on who is relying, separates data, calls, control and value as kinds of crossing with what each requires (including control and value handed outward), distinguishes the line from other boundaries, and shows how integrations, upgrades and delegated permissions add crossings, without restating that failures enter there or explaining threat models.",
+          "trust-architecture": "Trust Architecture maps trust by component and guarantee; Trust Boundaries shows that the line between trusted and untrusted parts need not follow component lines, is drawn per relier, and moves as components are integrated, upgraded or granted permissions, without explaining trusted components, the trusted computing base or transitive trust dependencies."
+        },
+        "claims": [
+          "where a trust boundary lies depends on who is relying: the same system's trust boundary lies in a different place for a full node, a light client and a user of a hosted interface",
+          "what can cross a trust boundary, data, calls, control and value, in either direction, and what the trusted side has to establish about each before acting on what it receives or handing control or value across",
+          "trust boundaries as distinct from abstraction, component and organizational boundaries: where they coincide and where they diverge",
+          "how trust boundaries move or multiply as a system changes: integrations, upgrade paths and delegated permissions can add crossings that existing checks were not written for"
+        ],
+        "excludes": [
+          "abstraction-boundaries",
+          "organizational-boundaries",
+          "authority-boundaries",
+          "threat-models",
+          "trusted-computing-base",
+          "verification",
+          "trust-minimization",
+          "light-client-verification"
+        ],
+        "placements": {
+          "trust-boundaries": "Under Trust Models the concept is where the account of unchecked reliance meets a system's structure: the same relier-relative line, its crossings, its distinctions and its drift, with checking mechanisms, assumption anatomy and minimization left to their siblings.",
+          "trust-boundaries-in-security-models": "Under Security Models the trusted and untrusted parts a security model separates are the two sides of this same line; the exposition explains its location, crossings, distinctions and drift, which hold unchanged, and names threat models, adversaries and defense in depth only to say what lies on the untrusted side or behind the checks.",
+          "trust-boundaries-in-trust-architecture": "Under Trust Architecture the map of trusted components is read per relier through this same line; that trust boundaries need not follow component lines and move as components are integrated, upgraded or granted permissions holds there unchanged, with trusted components, the trusted computing base and trust dependencies left to their own concepts."
+        },
+        "fields": {
+          "statement": "For a given relying party or component, and for a given claim, a trust boundary separates what it accepts without checking from what it does not; anything arriving across it is acted on safely only once the receiving side has established what that kind of crossing requires, and anything handed outward is handed to parts that may behave arbitrarily within what the platform allows.",
+          "establishedBy": [
+            "The relier's position sets the location: what it runs or checks for itself lies inside or is checked at the line, what it accepts on another's word lies inside by trust. For a full node that re-executes the blocks it accepts, the boundary for validity encloses little beyond its own software and hardware, while it still depends on block producers for ordering and inclusion and on reaching honest peers to see the current chain.",
+            "A light client accepts headers on the strength of the consensus majority's signatures and checks served state against them (light-client verification, named only), so its boundary encloses the consensus majority but not the node serving it data, on which it still depends for answering at all.",
+            "A user of a hosted interface accepts what the operator's code and its data provider show, so the operator and provider lie inside that user's boundary unless the user checks independently.",
+            "The line is upheld by checks at each crossing; how a check works is Verification's subject, and moving the line inward is Trust Minimization's."
+          ],
+          "violatedBy": [
+            "acting on a crossing without establishing what it requires: an unchecked input, an unauthenticated or unauthorized caller, state assumed unchanged across an external call, a deposit credited before it is final, a lookalike token accepted as the genuine asset",
+            "a line drawn in the wrong place: an input treated as internal because it arrives through a familiar interface, from within the same contract or from a component the same organization runs, so it is never checked",
+            "crossings added by integrations, upgrade paths or delegated permissions that existing checks were not written for"
+          ],
+          "confusions": [
+            "Abstraction boundary (named only): an interface that hides implementation. A module interface between two parts in the same trust domain changes no trust, while a trust boundary can run inside a single function where it reads state that untrusted parties can change (a contract's own ether balance, which anyone can raise by forcing ether onto it); the two coincide where an interface leads to code, or accepts inputs from parties, that the relier does not trust.",
+            "Component boundary: separate contracts or processes. Components under the same keys, code and review can sit inside one trust boundary (a proxy and its implementation), and one component can contain a trust boundary (a node whose virtual machine runs code anyone can submit inside the node's own process).",
+            "Organizational boundary (named only): who operates a part. Another organization's service accepted unchecked lies inside the relier's trust boundary, and a component the relier's own organization runs lies outside it wherever the relier checks what it returns; the two coincide only where the relier checks the outputs of every part other organizations run and of none its own organization runs."
+          ],
+          "variants": [
+            "data (inputs, messages, reports, return values, state read from elsewhere): whichever of its origin, integrity and freshness the receiving code relies on, and that it lies within the bounds the receiving code assumes",
+            "calls (invocations arriving from outside): where only some callers may make a call or it acts on its caller's behalf, who is calling and whether that caller may invoke this; its arguments treated as data, and no assumption that calls arrive once or in the expected order",
+            "control (execution handed to code the trusted side does not trust, through an external call, callback or hook): state made consistent before handing it over, and assumptions made before the call not relied on once control returns, since the other side may call back in",
+            "value (assets received or sent): that the asset is the one it claims to be, that the amount actually received matches what was expected, that the transfer is final enough to act on, and, before value goes out, that the recipient and amount are permitted"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional and relative relations: the line's location as a function of who relies and for which claim; each kind of crossing paired with what must be established about it; the conditions under which trust boundaries coincide with or diverge from abstraction, component and organizational boundaries; and the causes (integrations, upgrade paths, delegated permissions) that move the line or add crossings.",
+        "whyProse": "No claim has an order, a branch, a loop, persistent states or forces in tension. The three reliers are three variants whose point is the condition behind each location (what each checks, and what it still depends on), which a paragraph states with its hedges and a comparison grid would flatten into cells. The four kinds of crossing are variants with one attribute each (what must be established), which the catalog treats as variants rather than a comparison. The conflation with abstraction boundaries is already stated at domain level; what this concept adds is where the boundaries coincide and where they diverge, which is conditional and needs sentences, so a distinction block would only restate the domain's line. Drift is causation (a change adds a crossing an existing check does not cover), which prose carries directly.",
+        "level": "Each parent only names trust boundaries (Trust Models as the account of unchecked reliance, Security Models as where failures enter, Trust Architecture as the per-component map); only this concept explains where the line lies for a given relier, what crosses it and what each crossing requires, how it differs from other boundaries, and how it moves. Those relations are about the line itself, not about how checks work (Verification), what a relied-on condition states (Trust Assumptions), what the enclosed set is (Trusted Computing Base) or how to shrink it (Trust Minimization).",
+        "territory": "It names verification and light-client verification only as what upholds checks at a crossing, trust minimization only as moving the line inward, the trusted computing base, trusted components and trust dependencies only as what the line encloses, threat models and adversaries only as what lies on the untrusted side, and abstraction, organizational and authority boundaries only to say where trust boundaries coincide with or diverge from them. Upgrade paths and delegated permissions are treated as crossings that move the line, not as implicit trust assumptions (Trust Assumptions) or trusted roles (Trusted Parties).",
+        "placements": "The exposition states the line per relier and per claim, its crossings, its distinctions and its drift, which mean the same under Trust Models, Security Models and Trust Architecture; it does not restate Security Models' sentence that failures enter at boundaries, and it uses no structure or wording that fits only one placement."
+      },
+      "audit": {
+        "at": "2026-10-09T01:21:50.082Z",
+        "note": "Re-audit after repair cycle 3 (fresh context). Read every sentence of the record, not only the repaired ones, at all three placements: Trust Models (primary; the per-claim light-client and full-node cases apply the parent's 'trust attaches to particular claims' to where the line runs and do not restate it); Security Models (the data and call sentences add what each crossing needs beyond 'the receiving side must check what it accepts', control and value outward are new, and the wrong-place sentence adds the cause, following another line, to the parent's consequence); Trust Architecture (the proxy and approval examples locate the line and do not explain transitive dependencies or the trusted computing base). Earlier findings: trust-boundaries.md D1-D4, -b.md 1-5, -2.md D1-D3 stay resolved; -3.md D1 is resolved: 'the borrowers and depositors who call it lie outside it' names the callers whose positions the contract checks, so privileged parameter-setting accounts are no longer placed outside, and the sentence asserts nothing about liquidators or admins. Repair-introduced changes checked: P7 'whenever unchecked reliance changes' matches the definition and P6's 'drawn by unchecked reliance', and the paragraph's cases (unchecked price source, upgrade authority, approval) are all unchecked reliance or added crossings; P6's organizational clauses now say 'operates' throughout (gloss, both examples, the coincidence sentence and the wrong-place sentence), so 'runs' remains only in the execute sense (proxy, node, relier running untrusted code) and the line-path idiom, and no clause changes truth under the new word; 'coincide only where' states a necessary condition, so parts no organization operates do not falsify it. Untouched uses of bare 'rely on' (P2 hosted interface, P4 data sentence, P6 proxy) read in the dependence sense and are true; boundary-sense uses are qualified. Model confusions[0] now says the ether balance is raised 'by forcing ether onto it', which is accurate, and the record's 'which anyone can raise' holds via forced sends. Territory: claims 1-4 each explained (three reliers; data, calls, control, value with what each needs, both directions; abstraction, component and organizational divergence and coincidence; integrations, upgrade paths and delegated permissions); excluded concepts named only; no sibling role or assumption anatomy explained (upgrade authority is located, not analyzed as an implicit assumption). Representation is prose, as designed. American English; no positional or time-sensitive words. Depth about 1,290 words, every paragraph tied to a claim. Remarks (not defects): the light client's 'relies on some server responding' sits close to Trust Models' operator-trusted-for-liveness example but serves claim 1's relier-specific location; 'The relier therefore makes its own state consistent' is normative in a descriptive voice and reentrancy guards are an alternative; P5's outward frame is followed by inbound value; 'needing to be established again, the return value included' (first time for the return value). Stale model fields not in the record: design.territory still calls upgrade paths and delegated permissions 'crossings that move the line'; statement's 'acted on safely only once' reads stronger than 'needs established'. l2 check --group trust-models is ok.",
+        "resolutions": [
+          {
+            "id": "names-concept:931f313a18",
+            "resolution": "'consensus participants' appears once as the parties the light client's boundary encloses for header validity; vocabulary only, nothing about how consensus works."
+          },
+          {
+            "id": "names-concept:351b344810",
+            "resolution": "'consensus rules' is named only as what sets the evidence a light client requires for headers; not explained."
+          },
+          {
+            "id": "names-concept:3192eb62f1",
+            "resolution": "'entry points' is named only as something an upgrade can add that old checks do not cover; not explained."
+          },
+          {
+            "id": "names-concept:97d08c7182",
+            "resolution": "'full node' is one of the three reliers claim 1 requires; the record says only what it re-executes and what it still relies on, which is the boundary's location, not how full nodes work."
+          },
+          {
+            "id": "names-concept:5830b01a84",
+            "resolution": "Excluded Light-Client Verification is named in one clause as the means by which the client checks served state against headers; how it works is not explained."
+          },
+          {
+            "id": "names-concept:00777b5d84",
+            "resolution": "'resource limits' is named only as what the node relies on its own code to stay within; not explained."
+          },
+          {
+            "id": "names-concept:1615a2c7a6",
+            "resolution": "Excluded Trust Minimization is named once, as the subject of reducing what lies inside the line; nothing about its means."
+          },
+          {
+            "id": "names-concept:2a0747a2f7",
+            "resolution": "'validator set' is named only in 'signatures from a large enough share of a validator set' as an example of header evidence; not explained."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "Excluded Verification is named once, as the subject of how a check establishes what a crossing needs; no verification procedure is described."
+          },
+          {
+            "id": "absolutes:7634c11755",
+            "resolution": "All four hold as conditioned: 'checking validity cannot settle' which valid transactions are included or their order (validity rules do not fix inclusion or order); 'the receiver cannot assume' a call arrives once, in order, or only from expected callers (absent a check, since any outside caller can send any sequence the interface accepts); 'where completed transfers cannot be reversed by their sender' is an explicit condition; 'and so is never checked' follows from the input being treated as internal."
+          }
+        ],
+        "recordFingerprint": "5aac981cbb208f4a43c5396551497c46550054635dd7f6061fd48987082a12c8"
+      }
+    },
+    "verification": {
+      "model": {
+        "meaning": "Verification is the procedure by which a verifier accepts or rejects a stated claim on its evidence, so that the claim is relied on because it met a procedure fixed in advance rather than because of who asserted it.",
+        "kind": "mechanism",
+        "parents": {
+          "trust-models": "Trust Models sets checking against accepting a claim from its source and says checking exchanges assumptions rather than removing them. Verification adds what a check is made of (claim, evidence, procedure, verdict), how much of the work behind a claim the verifier repeats and what each depth leaves assumed, and the two errors a procedure can make.",
+          "verifiable-computation": "Verifiable Computation says that checking a proof can cost far less than the computation. Verification places proof checking among the other depths of checking (re-execution, sampling, checking on challenge), says what each costs the verifier and leaves assumed, and what bounds a verifier's errors, without explaining how proofs are built or checked.",
+          "correctness": "Correctness names verification as asking whether code meets its specification and sets it beside validation. Verification adds the general anatomy of that check: the stated claim it is measured against, the evidence, the accepting procedure, what an acceptance establishes, and that a procedure can wrongly accept and wrongly reject."
+        },
+        "claims": [
+          "what a verification consists of: a stated claim, evidence offered for it, and a procedure that accepts or rejects the evidence against the claim, and what acceptance establishes",
+          "how much of the work behind a claim a verifier repeats: full re-execution, sampling, checking a proof, or checking only when a claim is challenged, and what each costs and leaves assumed",
+          "the two errors of a verification procedure, accepting a false claim and rejecting a true one, and what limits each, from exact checks to error bounds that hold only under stated conditions"
+        ],
+        "excludes": [
+          "validation",
+          "formal-verification",
+          "computation-proofs",
+          "computation-integrity",
+          "correctness-proofs",
+          "verification-limits",
+          "fraud-proofs",
+          "validity-proofs",
+          "succinct-verification",
+          "trust-minimization"
+        ],
+        "placements": {
+          "verification": "Under Trust Models, verification is the checking route by which a claim is relied on instead of being accepted from its source; the exposition gives that route's parts, depths and errors at the level of any stated claim, which is what the trust-models reader needs.",
+          "verification-in-verifiable-computation": "Under Verifiable Computation, the claim is that an output follows from given inputs and program; the same anatomy holds, and proof checking appears as one depth among re-execution, sampling and challenge, with its cost and residual assumptions. Nothing in the exposition depends on the claim being a computation.",
+          "verification-in-correctness": "Under Correctness, the claim is that code or a design meets a stated specification; the anatomy (claim, evidence, procedure, verdict), the depths (redoing an analysis, testing samples, checking a machine-checkable proof) and the two errors hold there too, and acceptance establishes conformance to the stated specification only, leaving whether it is the right one to validation."
+        },
+        "fields": {
+          "sequence": [
+            "a claim is stated precisely enough to be checked: what is asserted, about which inputs, data or artifact, against which rule or specification",
+            "evidence is offered or obtained: the inputs and data to redo the work, a proof, a signature, test results, or nothing beyond the claim until a challenge",
+            "the verifier runs a fixed procedure over claim and evidence",
+            "the procedure returns accept or reject; acceptance is relied on as establishing the stated claim, under the procedure's assumptions and no further"
+          ],
+          "actors": [
+            "claimant or prover: states the claim and supplies whatever evidence the design asks of it, and may be adversarial",
+            "verifier: runs the procedure; may be the relying party itself, a contract, a client, or a challenger acting for others",
+            "relying party: acts on the verdict, and inherits whatever the verifier's procedure leaves assumed"
+          ],
+          "inputs": [
+            "the claim, in a checkable statement",
+            "the evidence offered for it",
+            "data the procedure needs (inputs, state, published data), which may be withheld",
+            "for sampling or interactive checks, randomness the claimant cannot predict"
+          ],
+          "outputs": [
+            "a verdict, accept or reject",
+            "what acceptance establishes: that the stated claim holds, to the procedure's error bound and under its assumptions (correct verifier code, data access, cryptographic hardness where used, an honest challenger where relied on); not that the claim was the right one to ask, and not facts outside the claim"
+          ],
+          "assumptions": [
+            "the verifier's own procedure and software are correct",
+            "the data the check needs is available to the verifier",
+            "for proofs, the proof system's soundness, which for many systems holds only against computationally bounded provers and may rest on a setup",
+            "for sampling, that a false claim must be wrong in enough places to be found, and that the claimant fixes its content before samples it cannot predict or influence are drawn",
+            "for challenge-based checking, that someone able to check does so within the window and can act"
+          ],
+          "failures": [
+            "accepting a false claim (a soundness failure): from a bug in the procedure, a broken assumption, a sample that misses, or an unchallenged window",
+            "rejecting a true claim (a completeness failure): from a too-strict or buggy procedure, missing data, or an honest prover unable to produce acceptable evidence; it denies or delays a correct result rather than admitting a wrong one",
+            "no verdict: the check cannot be run because evidence or data is withheld"
+          ],
+          "variants": [
+            "full re-execution: the verifier redoes all the work; cost equals the original work; error limited by the verifier's own correctness and data; leaves assumed only its own software and data access",
+            "sampling: the verifier checks randomly chosen parts; cost is a fraction of the work; error is a probability that falls with the number of samples only if a false claim must be wrong in many places; leaves assumed that structure, and that the claimant fixes its content before samples it cannot predict are drawn",
+            "checking a proof: the verifier checks evidence that the work was done correctly; cost is small for many proof systems, in some independent of the work; leaves assumed the proof system's soundness, any setup, and the verifier's code",
+            "checking only when challenged: the claim is accepted unless challenged within a window, and a challenge triggers checking, often of only the disputed step; cost to most parties is near nothing until a dispute; leaves assumed that a capable checker with the data watches and acts in time, and acceptance waits for the window"
+          ],
+          "tradeoffs": [
+            "work repeated by the verifier against what remains assumed: less work moves reliance onto proof-system soundness, sampling structure or a watching challenger",
+            "delay against cost: checking on challenge costs those who do not watch almost nothing but is final only after a window; proof checking is immediate but someone pays to prove",
+            "false acceptance against false rejection: tightening a procedure to reject more can reject true claims, and loosening it to accept honest edge cases can admit false ones"
+          ],
+          "relation": "If a false claim must be wrong in at least a fraction f of independently checkable places, k independent, uniformly random samples all miss with probability at most (1 - f)^k; k independent repetitions of a check with soundness error e, accepting only if every run accepts, leave soundness error at most e^k, while a true claim is rejected more often unless each run accepts it with certainty. Neither bound applies when the places where a false claim is wrong can be concentrated where samples are unlikely to fall, or when the claimant can predict or influence the samples or change its content after they are drawn."
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A three-part anatomy (claim, evidence, procedure) with a verdict whose meaning is conditional; four depths of checking that differ along the same dimensions (work the verifier repeats, its cost and delay, what stays assumed); and two errors with different causes and limits.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Set full re-execution, sampling, checking a proof and checking only when challenged side by side on the same dimensions (what the verifier repeats, what it costs the verifier and when acceptance is available, what is left assumed), so the reader reads down the columns and sees the trade: each step down in repeated work moves reliance onto something else.",
+            "whyNotProse": "Four alternatives on three shared dimensions are twelve values; in paragraphs the reader must hold the earlier modes' cost and residual assumption in memory to compare them with the later ones, and the trade the claim is about (less work, different assumptions) lives in reading across rows and down columns, which prose spreads over sentences."
+          }
+        ],
+        "division": "The prose explains the anatomy of a verification and what acceptance establishes, why each depth leaves what it leaves (why sampling needs a false claim to be wrong in many places, why a challenge window needs a capable watcher with data), how depths combine, and the two errors with what limits each. The comparison shows only each depth's short values on the shared dimensions; the prose must not walk through the rows again, and the comparison carries no explanation of how proofs or challenge games work.",
+        "level": "The depths of checking and the two errors belong to verification as such: they hold for any stated claim checked by a procedure, whether the claim concerns a computation, a signature or code against a specification. The parents only name verification (the checking route, cheap proof checking, conformance to a specification); proof systems, fraud and validity proofs and succinctness are excluded concepts that each own one mechanism the comparison only names as a row or an assumption.",
+        "territory": "The comparison names checking a proof and checking on challenge without explaining computation proofs, validity proofs, fraud proofs or succinct verification, which are excluded. The challenge row states that a capable watcher must act in time as what the depth leaves assumed, a reference to the honest-participant assumption Trust Minimization owns, not an account of what that participant needs. What acceptance establishes is stated as the claim under the procedure's assumptions; what checks cannot establish belongs to Verification Limits and whether the specification is right to Validation, both named only. Formal verification and correctness proofs are named as instances of checking code against a specification, not explained.",
+        "placements": "Every row and value is stated for a claim backed by work, not for a computation in particular: under Correctness the same depths read as redoing an analysis, testing samples and checking a machine-checkable proof, and under Trust Models and Verifiable Computation as checking a result or attestation. The comparison holds verbatim at all three placements, and no value refers to a domain, a parent or a position."
+      },
+      "audit": {
+        "at": "2026-10-09T01:42:12.049Z",
+        "note": "Re-audit after repair cycle 2, against quality-contract B, content-architecture, representation-design, l2-authoring (Concept work, Signals, Depth, Territory precedents), the accepted model and design, and the record at all three placements. Prior findings (verification.md, verification-b.md, verification-2.md) are all resolved: the definition now reads 'accepts or rejects a stated claim on its evidence ... relied on because it met a procedure fixed in advance', which fits all four depths including acceptance on silence (evidence is defined to include 'nothing until the claim is disputed'); the Rice clause keeps 'on every program' and only names Static Analysis for the analyzer trade; repetition names the chance of accepting a false claim, with independence, and the completeness cost unless each run accepts with certainty; 'whoever supplies the evidence' and 'whatever evidence the design asks of it' fit re-execution and challenge depths; Verification Limits is named for a protocol's checks on reports of facts outside it; disputes are settled by another depth only where 'itself checked'; the Correctness sentence is general with Validation named; the cost clause before the comparison is gone, leaving 'repeating less of it moves reliance onto a different assumption', which holds at each step (own code and data, sampling structure, proof-system soundness, a watching challenger) and matches the design purpose and tradeoffs; the sampling paragraph now uses 'a place where the claim is wrong' and 'can put its falsehoods', so 'error' keeps the procedure's sense everywhere (error bound, err in two directions, each error, both errors, passing tests give no error bound); the exact check now errs 'through wrong or missing data', consistent with missing data as a completeness cause and with the no-verdict sentence; 'The two errors can pull against each other'. Repair-introduced errors: none found; every untouched sentence using 'error', 'evidence', 'verifier' and 'missing data' was re-read. Parent overlap per placement: Trust Models (exchange of assumptions is developed per depth, not restated; 'verifier's own code stays assumed' applies the parent's checking-software point to every depth without repeating its sentence); Verifiable Computation (the definition's 'rather than because of who asserted it' is the general contrast, not the parent's computation sentence; the proof row's 'Small for many proof systems' does not restate the parent's asymmetry argument); Correctness (no paraphrase of the conformance-versus-intent sentence). Territory: every excluded or signal-named concept is named only; Trust Minimization is named for the watcher assumption, Trust Assumptions/Trusted Parties/Trust Boundaries are not crossed; the facet hazard is respected (one exposition at the level of a stated claim checked by evidence). Structure: the comparison is genuine (four alternatives on three shared dimensions), values hold at all three placements, the prose explains why each depth leaves what it leaves without walking the rows. Accuracy checked: sampling bound with its conditions (fixed share, independent uniform samples, content fixed before unpredictable randomness), computational soundness and trapdoor setups hedged with 'many'/'some'/'could', perfect completeness hedged with 'many', Rice clause with its conditions, signature establishes key-holder signing only. Canonical validity: no positional or dated words; American English; plain text. Depth: three claims each explained (anatomy and what acceptance establishes; depths with cost and residual assumptions; two errors with causes and limits); no depth signal. Remarks (not defects): the error paragraph's 'admits a wrong result' and 'denies or delays a correct result' lean on computation wording but read as outcomes at the signature and Correctness readings; in the challenge row the column header's 'the verifier' is the accepting procedure while the watcher is a verifier at another depth, coherent with 'Depths also combine' but could be read either way; 'A machine-checked proof ... rests instead on the logic and the checker' is a one-clause residual statement whose model-versus-running-code gap is covered by 'the claim as stated and nothing beyond it'. Model remarks: design territory still says 'what checks cannot establish belongs to Verification Limits' (the record is correct); relation still says 'errors can be concentrated' in the content sense.",
+        "resolutions": [
+          {
+            "id": "names-concept:dd7a5850a0",
+            "resolution": "Computation proofs is named once, with validity proofs and succinct verification, as the subject of how proofs of computations are produced and checked; the record says only what checking a proof leaves assumed (soundness, hardness, setup), never how proofs are built or checked. Named, not explained."
+          },
+          {
+            "id": "names-concept:f6d19b19bc",
+            "resolution": "Correctness proofs is named in one clause as a way of checking code against its specification; nothing about how such proofs are constructed or what they cover. Named, not explained."
+          },
+          {
+            "id": "names-concept:ede9c58456",
+            "resolution": "Formal verification is named in the same clause as a way of checking code against its specification; its methods and trusted base are not explained (the machine-checked-proof sentence states only the residual assumption, logic and checker, as one depth's leave-assumed). Named, not explained."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "Fraud proofs appear only as 'one form a dispute takes'; the challenge game, bisection and its rules are not described. Named, not explained."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "Proof systems are referenced as what a proof-checking verifier relies on (soundness against bounded provers, setup, perfect completeness of many systems); these are the residual assumptions this concept's depth claim requires, and no construction is explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:5308e83e2e",
+            "resolution": "Proving costs appear only as an example cause of a completeness failure ('because proving costs too much or takes too long'); no account of what drives them. Named, not explained."
+          },
+          {
+            "id": "names-concept:62f2066d46",
+            "resolution": "Signature schemes appear only in the signature example ('under the signature scheme's assumptions') to show what an acceptance establishes; no scheme mechanism is explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:e6e0d1421c",
+            "resolution": "Static Analysis is named as the subject of how program analyzers trade false alarms against missed violations; the record keeps only its own claim-3 limit (no always-terminating check avoids both errors on every program) and no longer describes the analyzer sides. Named, not explained."
+          },
+          {
+            "id": "names-concept:6b8c3a5a7f",
+            "resolution": "Succinct verification is named once with computation proofs and validity proofs as a subject; the proof row's 'Small for many proof systems' is a cost value for the depth, not an account of succinctness. Named, not explained."
+          },
+          {
+            "id": "names-concept:1615a2c7a6",
+            "resolution": "Trust Minimization is named as examining whether someone can be counted on to check in time; the record states the watcher only as the challenge depth's residual assumption, not what that participant needs or how trust is minimized. Named, not explained."
+          },
+          {
+            "id": "names-concept:28ca8eddc2",
+            "resolution": "Validation is named as the question whether the claim was the right one to check, for a specification; the record does not explain validation or restate the Correctness parent's conformance-versus-intent sentence. Named, not explained."
+          },
+          {
+            "id": "names-concept:b9b8490445",
+            "resolution": "Validity proofs are named once with computation proofs and succinct verification as a subject; not explained."
+          },
+          {
+            "id": "names-concept:869e8037e6",
+            "resolution": "Verification Limits is named for the gap it examines in a protocol's checks on reports of facts outside it, attached to the signature example (establishes key-holder signing, not truth); this matches the authored Verification Limits record and its attestation precedent, without saying what each attestation form establishes. Named, not explained."
+          }
+        ],
+        "recordFingerprint": "541a0f405ecfb6d3d4647e3a5807b535d5acfb74042de0e9624a7bea30eb4187"
+      }
+    },
+    "trust-minimization": {
+      "model": {
+        "meaning": "Trust minimization is reducing how much a system's guarantees depend on particular parties or components behaving as expected, by moving reliance from their behavior onto checks, options users hold and fixed rules, each of which is itself relied on.",
+        "kind": "property",
+        "parents": {
+          "trust-models": "Trust Models defines what a system relies on without checking and argues that checkability helps only when checking is cheap and accessible enough to happen; this concept adds the means by which reliance is reduced and what each leaves trusted, the one-honest-participant assumption many designs aim for and what that participant needs, the costs of minimizing trust, and why it is not the same as decentralization.",
+          "trust-architecture": "Trust Architecture maps trust by component and notes that accountability is the next best design where removing trust is impractical; this concept adds the means a design uses to shrink a party's or component's trusted role (checkable results, exit without cooperation, bounds, removal), what remains trusted after each, and the costs that return as code that must itself be trusted."
+        },
+        "claims": [
+          "means of minimizing trust and what each leaves trusted, such as making results checkable, letting users exit or act without a party's cooperation, bounding what a party may do, and removing a party's role altogether",
+          "the assumption trust minimization often aims for: that any one honest participant able to check and act suffices, and what that participant needs, such as data, time and the means to act",
+          "the costs of trust minimization: proving and checking work, delays such as challenge windows, added complexity in code that must then be trusted, and lost ability to intervene",
+          "trust minimization as distinct from decentralization: many operators can still be trusted collectively, and a single operator can be trusted for little"
+        ],
+        "excludes": [
+          "verification",
+          "trust-distribution",
+          "decentralization",
+          "escape-hatches",
+          "trusted-computing-base",
+          "fraud-proofs",
+          "trusted-parties"
+        ],
+        "placements": {
+          "trust-minimization": "Under Trust Models, beside Verification, Trust Distribution and Trusted Parties: the exposition gives the means, their residual trust, the target assumption and the costs that the parent's premise (checking must actually happen) leaves open, and names Verification (how a check works), Trust Distribution (spreading what remains) and Trusted Parties (roles and discretion) without explaining them.",
+          "trust-minimization-in-trust-architecture": "Under Trust Architecture, beside Trusted Components and Trusted Computing Base: the same means apply to a component's trusted role (a prover whose output is checked, a bridge whose withdrawals are capped, an admin key removed), and the complexity cost lands in what the Trusted Computing Base names; nothing in the exposition depends on which parent the reader arrived from."
+        },
+        "fields": {
+          "statement": [
+            "A system is trust-minimized to the degree that its guarantees hold without depending on particular parties or components behaving as expected. Minimization moves reliance from a party's behavior onto checks, options users hold and fixed rules, and each of these is relied on in turn, so trust is reduced and relocated rather than removed.",
+            "Many designs aim for a guarantee that holds if any one honest participant able to check and act does so, in place of an honest majority or a single honest operator. That participant needs the data (available to it, published where anyone may act, and retrievable), time (a window longer than it takes to notice a fault and respond, including under congestion or censorship) and the means to act (the ability to submit a challenge or an exit transaction, and the funds or bond that requires). Not every means relies on such a participant: a proof checked on chain, a limit enforced by rule or a removed role can protect without any user acting."
+          ],
+          "establishedBy": [
+            "Making results checkable: a party's or component's output is accepted only after a check (Verification owns how), so it can no longer have a wrong result accepted by those who check; what remains trusted is the party or component itself for producing results at all and on time and for choices the check cannot reject, the check and its assumptions, the availability of the data it needs, and that someone performs it.",
+            "Letting users exit or act without the party's cooperation: forced inclusion, withdrawal paths and escape hatches (named, not explained) let a user leave or transact when the party refuses service; what remains trusted is the party's service while users stay, the exit path itself, and the system that processes the exit.",
+            "Bounding what a party may do: caps on amounts and rates, narrow permissions, and delays before changes take effect; the party remains trusted within the bound, and the bound is only as firm as whoever can change it, so an upgrade key able to lift a limit leaves the limit trusted to its holder.",
+            "Removing a party's role altogether: a discretionary role is replaced by fixed rules or code, such as a contract with its admin key removed; the party is gone, and what remains trusted is the code that replaced it and anyone still able to change that code."
+          ],
+          "violatedBy": [
+            "A design's minimization fails in practice when no participant it relies on has all that acting takes (the data, the time and the means set out in the statement), so honest participants can exist and still protect no one.",
+            "It also fails when an authority left outside the means, often an upgrade key or emergency role, can change the checks, bounds or exit path, so every guarantee rests again on that authority."
+          ],
+          "confusions": [
+            "Decentralization (named, not explained): counting operators measures how many parties share a role, not how much any of them is trusted for. Many operators can still be trusted collectively, as Trust Distribution explains, and a single operator can be trusted for little, such as a sole sequencer whose results are checked and whose users can force inclusion, which is trusted mainly for timely service.",
+            "Absence of trust: every means leaves something trusted, so trust minimization is judged by what remains and by who can still change it."
+          ],
+          "tradeoffs": [
+            "Proving and checking work: producing proofs or re-executing to check costs computation, and publishing the data a check needs costs space; the cost decides whether anyone actually checks.",
+            "Delay: a challenge window (Fraud Proofs, named) or an exit delay must outlast the time whoever would respond needs to notice and act, and every result, exit or change the window covers waits it out, whether or not anything is wrong.",
+            "Complexity: verifiers, exit paths and limit enforcement are code that must itself be correct, added to what the guarantees they protect rely on (Trusted Computing Base, named); a prover whose output is checked by a correct verifier is, while the check's assumptions hold, relied on for results to keep arriving but not for the correctness of those accepted; a minimization mechanism with a flaw can expose more than the trust it replaced.",
+            "Lost ability to intervene: once no party can override, no party can stop an exploit, reverse an error or patch a flaw quickly; a design that keeps an override keeps trust in whoever holds it."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Four means of reducing trust read across shared dimensions (what each takes from the party, what each leaves trusted, who must act for it to protect); a real conflation with decentralization; the target assumption and the costs as conditional argument.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Set the four means (checkable results, exit without cooperation, bounds, removal of the role) against three dimensions: what the party can no longer do, what remains trusted, and who must act for the means to protect. Reading down the columns shows that no means reaches zero trust and that two depend on a participant acting while two are enforced by rule.",
+            "whyNotProse": "The claim is alternatives judged on the same questions. In prose each residual sits in its own paragraph, and the pattern the reader needs (trust relocated in every case, action required in some) must be assembled across four places; the columns show it directly."
+          },
+          {
+            "structure": "distinction",
+            "purpose": "Mark Trust Minimization ≠ Decentralization as the conflation the fourth claim answers.",
+            "whyNotProse": "The number of operators is widely read as the measure of how trust-minimized a system is; stated only as one sentence among the costs and conditions, the conflation reads as a minor aside rather than the misreading it is. The block names it; the prose gives the two directions in which the notions diverge."
+          }
+        ],
+        "division": "Prose explains the conditions under which each means holds and how it fails (data withheld, a window too short, an exit that can be blocked, a bound an upgrade key can lift), the one-honest-participant assumption and what that participant needs, each cost and why it arises, and the two reasons trust minimization and decentralization diverge. The comparison shows, per means, what is taken from the party, what remains trusted and who must act; the prose must not restate those cells one by one. The distinction names the conflation only.",
+        "level": "Neither parent compares the means: Trust Models states that checking must be cheap and accessible enough to happen, and Trust Architecture names accountability as the next best design. How reliance is reduced, what each means leaves and what it costs is this concept's own territory, so the comparison and the distinction belong here.",
+        "territory": "The comparison's cells state what each means leaves trusted, never how a check, a challenge or an exit works: Verification owns what a check is and how much work it repeats, Fraud Proofs the challenge mechanism, Escape Hatches the exit mechanism, Trust Distribution thresholds and spreading what remains, Trusted Computing Base the trusted code, Trusted Parties roles and discretion, and Decentralization its own meaning; each is named only. The one-honest-participant assumption overlaps Trust Assumptions' claim on alternatives of which any one suffices: by angle, Trust Assumptions owns how assumptions combine, and this concept owns why the any-one form is a target and what that participant needs.",
+        "placements": "The means, residuals, assumption and costs are stated for parties and components alike, with examples (a sequencer, a bridge, an admin key, a prover) that read the same under Trust Models and under Trust Architecture; neither structure depends on the parent the reader arrived from."
+      },
+      "audit": {
+        "at": "2026-10-16T12:27:43.987Z",
+        "note": "Re-audit after repair cycle 3 (standing repair exception), fresh context, every sentence read. Finding trust-minimization-3.md D1 is resolved: the first need now says whatever the check or the exit needs 'must be available to whoever would act, which means published where anyone may take the role, and stay retrievable for as long as anyone may need it'; this holds for channels and self-held exit records (data held by the acting participant) and for open roles (data must be public), and the 'because' clause agrees with it. Model statement[1] matches ('available to it, published where anyone may act, and retrievable'). No error introduced by the repair: the untouched cost sentence 'publishing the data that checks and exits need takes space, a cost often passed to users in fees' names the cost where data is published and does not say all such data is; row 1's 'availability of the data the check needs' agrees. The rest of the record matches the text the cycle-2 re-audit passed (delay cell with cancel option, 'whoever would respond', prover sentence conditioned on the check's assumptions without 'only', 'Two further costs follow from relying on code', P1 clause on forms enforced by the system or depending on someone acting). Earlier findings (trust-minimization.md, -b.md, -2.md) remain resolved. Parent overlap: Trust Models (checking exchanges assumptions; verifiable vs verified; who performs each check) is developed, not restated, by row 1's residual, the who-must-act column and the three needs; Trust Architecture (per-guarantee base, accountability, transitivity) is not restated, the code-cost sentence adds that minimization mechanisms join each protected guarantee's base. Territory: the four claims are each explained (comparison and P1-P2 for means and residuals; P3-P4 for the any-one assumption and data/time/means; P5-P6 for proving/checking work, delay, code complexity and lost intervention; the distinction and last paragraph for decentralization); excluded concepts named only; the any-one angle stays clear of Trust Assumptions' combination forms. Representation: comparison rows/columns carry the residual and who-must-act pattern the prose does not walk; the distinction marks a real conflation; designed form written exactly. Placements: 'party or component' throughout the structure; no positional or dated wording; reads identically under Trust Models and Trust Architecture. Accuracy: absolutes checked (see resolutions); 'asks least' holds against the two named alternatives; 'only as far as' on change powers holds. American English, plain text. Depth follows the claims. Remarks: the repaired sentence's interjected 'which means published where anyone may take the role' makes the parallel 'and stay retrievable' slightly hard to parse; 'Minimization has costs.' is a short announcing opener (taste); 'such code' in P6 reaches back past the prover sentence (the verifier example disambiguates); P3's attacker example is phrased for checks ('a wrong result to stand'), which is where the any-one form applies.",
+        "resolutions": [
+          {
+            "id": "names-concept:471bb15268",
+            "resolution": "Decentralization is named in the distinction block and the last paragraph only to draw the boundary (operator count versus what each is trusted for); its own meaning is not explained."
+          },
+          {
+            "id": "names-concept:5cf26f920e",
+            "resolution": "Forced inclusion appears as a named example of exit or action without cooperation (sequencer case, 'users can force their transactions in', 'forced inclusion works within the delay it promises'); its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "Fraud Proofs is named once ('as in designs built on Fraud Proofs') to illustrate the challenge-window cost; the challenge mechanism is not explained."
+          },
+          {
+            "id": "names-concept:7b7967c476",
+            "resolution": "Trust Distribution is named once as the home of the committee threshold point ('a matter for Trust Distribution'); thresholds and independence are not explained."
+          },
+          {
+            "id": "names-concept:dde1ff2d43",
+            "resolution": "Trusted Computing Base is named only as 'the set that Trusted Computing Base names' that minimization code joins; per-guarantee bases are not explained."
+          },
+          {
+            "id": "names-concept:1fdc9c5827",
+            "resolution": "Trusted Parties is named once as the home of the sequencer's ordering discretion ('which Trusted Parties covers'); roles and discretion are not explained."
+          },
+          {
+            "id": "names-concept:acf021c4a4",
+            "resolution": "Upgrade keys appear as a named example of an authority left outside the means ('often an upgrade key or an emergency role'); how upgrade keys work is not explained."
+          },
+          {
+            "id": "absolutes:8cd8edb67f",
+            "resolution": "'guarantee'/'guarantees' (definition, P3, P6) are nouns, not overclaims. 'choices the check cannot reject' (row 1) is definitional of the residual. 'cannot have a false one accepted' (P6) is conditioned on a correct verifier and 'while the check's assumptions hold', consistent with row 1."
+          }
+        ],
+        "recordFingerprint": "3770d2cb5a90715bfe8fa1b6098a2d502c73375a63f53c4c6ecd0f773f08017a"
+      }
+    },
+    "trust-distribution": {
+      "model": {
+        "meaning": "Trust distribution spreads reliance for an outcome across several parties by requiring a threshold of them to act together, so that no single party is decisive, and its real strength is measured by two counts of independent entities, not nominal participants: those needed to reach that threshold and those needed to deny it.",
+        "kind": "property",
+        "parents": {
+          "trust-models": "Trust Models states that spreading trust reduces reliance on any one party only as far as the parties' failures are independent, and that a large-looking threshold may rest on fewer independent points; Trust Distribution adds how the threshold choice fixes both the coalition that can force an outcome and the absences that can halt it, how the independent count is actually measured (grouping participants by control of keys, stake and infrastructure, counted separately against the forcing and the halting threshold, with the limits of what control is observable), and how that count erodes over time while the nominal count stays the same. It does not restate the parent's independence premise."
+        },
+        "claims": [
+          "the threshold in a distributed trust arrangement: how many parties, or what share of weight, must act together for an outcome, and how that choice sets how many must collude to force a wrong outcome the arrangement accepts on its word and how many must be absent to halt it",
+          "measuring how far trust is actually distributed: the smallest number of independent entities able to reach a threshold, counted by control of keys, stake and infrastructure rather than by nominal participants",
+          "how distributed trust concentrates over time: stake and delegation gathering in a few operators, signers sharing custody or hosting, and membership that is never renewed"
+        ],
+        "excludes": [
+          "collusion",
+          "fault-tolerance",
+          "quorums",
+          "multisignatures",
+          "threshold-signatures",
+          "decentralization",
+          "trust-minimization",
+          "byzantine-behavior"
+        ],
+        "placements": {
+          "trust-distribution": "Under Trust Models the reader has the general account of reliance and the premise that spreading trust helps only with independent failures; the exposition explains thresholds, their measurement and their erosion for any arrangement of signers, validators, committees or reporters, so nothing in it depends on a domain or on a particular protocol."
+        },
+        "fields": {
+          "statement": "Trust is distributed for an outcome when the arrangement accepts that outcome only once at least k of n parties, or a share k of total weight such as stake, act for it. The threshold fixes two numbers: the coalition that can force an outcome the arrangement accepts on its word (k), and the parties whose absence or refusal halts it (n - k + 1). How far trust is actually distributed is the smallest number of independent entities whose combined control reaches each of those numbers, which can be far below n.",
+          "establishedBy": "Choosing the threshold against both failure directions, by what a forced wrong outcome would cost and what a halt would cost and whether a halt has a recovery path; admitting parties whose control of keys, stake and infrastructure is in fact separate; measuring the arrangement by grouping participants under whoever controls their signing keys, their stake (delegated or custodied stake counts under the operator or custodian where that entity, not the owners, decides how the weight is used for the outcome), and their hosting or custody, then counting, over each direction's own grouping and with each member's weight counted once, the fewest groups whose combined control reaches the forcing threshold and, separately, the fewest whose combined control exceeds the total minus the threshold; and repeating the measurement, because the grouping changes over time. Control is often only partly observable (common ownership, off-chain agreements, one owner registered as several participants), so a count from observable groupings is an upper bound on the true number.",
+          "violatedBy": "Concentration that makes the smallest coalition able to reach a threshold small, whatever the nominal count: stake and delegation gathering in a few operators, through economies of scale, delegators choosing the largest or most familiar operators, and pooled or custodial staking services; signers moving to the same custody provider, signing service or hosting provider for convenience, so that one provider's control or outage reaches many keys at once; and membership that is never renewed, in which members who leave, go inactive, lose keys, merge or hand operations to a common operator are still counted, so the active independent set shrinks while the nominal count does not. Inactive members who are still counted can lower the number of further absences that halt the arrangement without making forcing easier; consolidation can lower both the number that can force it and the number that can halt it.",
+          "confusions": [
+            "nominal participants versus independent entities: n signers or validators under fewer controllers are distributed only across those controllers, and the measure counts controllers",
+            "a higher threshold versus a safer arrangement: raising k makes forcing harder and halting easier, so it moves risk from one failure direction to the other rather than removing it",
+            "distributing trust versus minimizing it: spreading reliance over many parties leaves the parties collectively trusted; reducing what must be trusted is Trust Minimization, named only",
+            "trust distribution versus decentralization: the measure here is taken against a specific trust threshold for a specific outcome, while decentralization is the broader architectural property, named only",
+            "a snapshot count versus a lasting one: an arrangement measured as well distributed at launch can concentrate later without any rule changing"
+          ],
+          "tradeoffs": "With n parties and threshold k, forcing takes k and halting takes n - k + 1, and the two sum to n + 1: raising k buys resistance to collusion with exposure to halting, and lowering it does the reverse. Adding parties raises both numbers only if the added parties are independent of those already present. Where a halt has a recovery path (a fallback, an exit, re-forming the set), a design can afford a high threshold; where a halt itself causes loss, the halting number weighs as heavily as the forcing one.",
+          "relation": "Unweighted: force = k, halt = n - k + 1. Weighted with total weight W: forcing needs combined weight of at least k, halting needs absent weight of more than W - k. Measured extent: for each direction, over that direction's grouping of members by controlling entity and with each member's weight counted once, the fewest entities whose combined control reaches k (forcing) or exceeds W - k (halting); where no member falls under two entities, these are the largest entities taken in order of weight. The forcing number counts who can impose a wrong outcome where the outcome is accepted on the threshold's word; where relying parties check the outcome themselves, reaching the forcing number lets a coalition choose only among valid outcomes, and withholding or delaying the outcome takes the halting number. Two conflicting outcomes each reaching threshold need an overlap of 2k - n parties backing both, which belongs to Quorums and is only named."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "An arithmetic relation between one threshold choice and two failure numbers, a counting rule with conditions on what counts as independent control and how much of it is observable, and parallel causes by which the count erodes over time.",
+        "whyProse": "The threshold's effect is one relation (k to force, n - k + 1 to halt, summing to n + 1) whose meaning lies in its conditions (outcome accepted on the threshold's word, weighted shares, recovery after a halt), which sentences carry and a comparison of sample thresholds would only tabulate as a formula the paragraph states in a clause. The trade-off is a single pair of forces, which a tensions block with one row would show no better than the sentence that states it. The measurement is a counting rule whose substance is argument: what groups participants (keys, stake, infrastructure), why forcing and halting are counted separately, and why an observed count is an upper bound; the grouping dimensions are variants with one attribute each. The concentration paths are three parallel causes with no order and no return, so neither flow, cycle nor state fits. The nominal-versus-independent conflation is real, but the parent already introduces it, so a distinction block would restate the parent's premise; this concept's addition is how to count, which is explanation.",
+        "level": "Thresholds and their two failure numbers, the independent-entity measure, and erosion over time belong here: Trust Models gives only the premise that spreading trust depends on independence; Trust Assumptions states that an assumption may carry a bound on how many may fail but leaves the threshold choice here; Trusted Parties owns roles and the grounds for trusting each party, not how reliance is split among many; Trust Minimization owns reducing what is trusted.",
+        "territory": "It names collusion, quorums (including the overlap that conflicting outcomes need), fault tolerance, multisignatures, threshold signatures, Byzantine behavior, decentralization and trust minimization without explaining them: the threshold is treated as a reliance arrangement, not as a signature scheme or consensus rule; collusion is the act the forcing number counts, not explained; the measure is framed against a trust threshold, not as decentralization in general. It does not restate the parent's paragraph on independent failures, nor Trust Assumptions' anatomy of a bound or Trusted Parties' grounds for trust such as stake at risk.",
+        "placements": "The concept has one placement, under Trust Models; the exposition is general to any arrangement that requires several parties to act, uses no positional references, and its examples, where used, should be drawn from more than one setting (validators, signer sets, committees, reporters) so that it does not imply a single protocol."
+      },
+      "audit": {
+        "at": "2026-10-16T12:44:30.929Z",
+        "note": "Re-audit after repair 2, fresh context; every sentence of the 6-paragraph prose record (about 1,130 words) read against criteria 1-6. Prior findings resolved: trust-distribution.md D1-D6 and trust-distribution-b.md D1-D4 stay resolved (conditional delegated-stake grouping; host with only take-offline power groups for halting, steering host for both; per-direction grouping, each member counted once, fewest groups, largest-first conditioned on disjoint groups; forcing coalition chooses only among passing outcomes, withholding/delaying takes the halting number; pooled staking 'can bring ... one operator's keys or a few'; definition names two counts; consolidation 'can lower'). trust-distribution-2.md E1 resolved: 'Where every member other than the colluders approves no wrong outcome and alone controls its keys, k is how many must collude to force a wrong one; stolen keys or members misled into approving lower that number' - the condition now excludes misled approvers and stolen keys (so the listed exceptions break it rather than contradict it), it is sufficient (every approval of a wrong outcome must come from a colluder), and the count is restricted to a wrong outcome, matching claim 1. Repair remarks applied: paragraph 5 'each count is taken against one threshold for one outcome'; paragraph 6 'A member that no longer takes part but is still counted among the n is already absent, so it can reduce the further absences needed to halt the outcome without making forcing easier'; model violatedBy aligned ('can lower'). Narrowed terms re-read in untouched sentences: 'wrong' (P2 'wrong or not', P3 'counts who can impose a wrong outcome only where ... accepted on the threshold's word', 'cost of a forced wrong outcome') is one sense, an outcome that should not be accepted; 'collude' (P3 'a threshold chosen only against collusion') named only; 'count' is used as noun for the two measured counts and generically ('a count built from observed links ... never raise it' holds since merging or overlapping groups cannot raise a minimum, given real observed links) and as the verb 'count alike'/'counted among the n', no conflicting sense; 'n' is the nominal total throughout (P2 arithmetic, P4 'far smaller than n', P6 'still counted among the n'); 'absent' covers outage, lost key, refusal and inactivity, consistent between P2 and P6. Arithmetic: k and n - k + 1 sum to n + 1; ends of range; weighted forcing reaches the threshold, halting needs absent weight above total minus threshold; halting count 'exceeds the total minus the threshold' matches n - k + 1 unweighted. Parent overlap: none; the Trust Models independence paragraph is built on (how to count, by direction, over time), not restated; the domain sentence on bounds of faulty or colluding parties is not restated. Territory: Collusion, Quorums, Decentralization and Trust Minimization named only; fault tolerance, multisignatures, threshold signatures and Byzantine behavior not explained; Trusted Parties' discretion appears only as a clause bounding the forcing number; Trust Minimization boundary is a mirrored naming sentence, acceptable. All three claims explained. Representation: prose as designed; design reasoning holds. One placement (Foundations / Trust Models); no positional or time-sensitive words; American English; plain text. Depth follows the three claims; no point made twice. Remarks: (R1) the custodian/signing-service clause groups members for halting only where members depend on that party to sign (true of the roles as Trusted Parties defines them, not of an escrow holding a copy); (R2) definition's 'a threshold amount of their combined weight ... act for it' has weight as the subject of act; (R3) 'without making forcing easier' assumes the threshold is fixed over total membership, which the record's model is; (R4) 'can only overstate' would read more exactly as 'can only overstate or match'; (R5) model claim 1 and fields.statement still say 'share k of total weight' while the record says an amount often set as a share, and fields.statement's 'the smallest number ... that reaches each of those numbers' is singular-ish; the record is right.",
+        "resolutions": [
+          {
+            "id": "names-concept:eb239f3ec0",
+            "resolution": "Collusion is named only: 'k is how many must collude to force a wrong one' (the act the forcing number counts, per the design's territory) and 'a threshold chosen only against collusion'. How collusion works or is prevented is not explained."
+          },
+          {
+            "id": "names-concept:471bb15268",
+            "resolution": "Decentralization is named only, to say the per-outcome, per-threshold measure is narrower ('which keeps the measure narrower than Decentralization'); the reason given is this concept's own (each count against one threshold for one outcome), and decentralization is not described."
+          },
+          {
+            "id": "names-concept:3a247f4315",
+            "resolution": "Quorums is named to assign whether two conflicting outcomes could each gather the threshold, which 'turns on how far the sets backing them must overlap'; no overlap arithmetic (2k - n) or intersection argument is given. Reference, not explanation."
+          },
+          {
+            "id": "names-concept:1615a2c7a6",
+            "resolution": "Trust Minimization is named only: 'reducing what has to be trusted at all is Trust Minimization', drawing the boundary that a high count leaves the parties trusted collectively; its means, assumption and costs are not explained. The mirrored sentence in the Trust Minimization record names Trust Distribution back."
+          },
+          {
+            "id": "absolutes:2d9df739a3",
+            "resolution": "Each holds: 'cannot or will not' describes members that do not act; 'not always in both directions' is a hedge; 'never raise it' holds because hidden links can only merge groups or add overlap, which cannot raise a minimum, under the stated proviso that observed links are real; 'never renewed' is the condition of claim 3, with 'can decay'. Other absolutes read: 'every member other than the colluders approves no wrong outcome' is the stated condition; 'any member can force/halt' holds at thresholds of one and n; 'only' uses (choose only among outcomes that pass, only where accepted on the threshold's word, only power is to take offline, only partly observable, only at the time taken, chosen only against collusion) are each accurate as conditioned."
+          }
+        ],
+        "recordFingerprint": "097c139085ea8ac8bb039f7beb688f64fd1eba170a6eb322cf2c6abaf96e4c5b"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-16T12:48:16.986Z",
+    "note": "Group audit of trust-models (six owned members read side by side with the parent Trust Models). group-signals prints 0 signals, so there are no resolutions; drift reports nothing for the group. Flagged sentence judged: Trust Distribution's 'A high count also still leaves the parties trusted collectively for whatever the threshold accepts on their word; reducing what has to be trusted at all is Trust Minimization.' and Trust Minimization's 'Many operators can still be trusted collectively: a committee whose attestations are accepted on its word ... a matter for Trust Distribution, and adding members does not make its outputs checked.' are reciprocal boundary sentences, not one argument made twice: each names the other concept to mark its edge and neither explains the other's mechanism (TD does not describe any means of minimization; TM leaves how many must fail together to TD). They serve different claims (TD: what its measured count does not establish; TM: the Trust Minimization / Decentralization distinction), agree with each other and with the parent, and the shared phrasing ('trusted collectively', 'on its/their word') is a one-clause echo, acceptable but worth varying if TD is ever reopened. Cross-member checks: references between members (thresholds to TD, one-honest-participant to TM, discretion to Trusted Parties, checks to Verification, collusion and quorums out of group) are boundary references only and consistent; no contradictions found (signers attesting to unchecked statements in TP/TD, the one-honest-peer reliance in TB/TM, challenge-window failure in TA/Verification/TM each taken from a different angle). Upgrade authority recurs in TA, TP, TB and TM, each under its own claim (an implicit assumption that can change other assumptions; a key-holder role; a moved boundary with new crossings; an authority that can undo minimization means), not one argument repeated. Narrowing discretion (TP, cost of responsiveness) and removing overrides (TM, cost of intervention) are distinct costs. 'Bound' carries three qualified senses across members (TA's bound on failures, TM's bounding a party's powers, Verification's error bound), each clear in context and none within one record. Convergence: definitional openings are the contract's lead; the enumerations (TA four parts, Verification three parts and three roles, TM four means and three needs) are the counts the plan's claims name, so repetition follows the claims; forms differ (TA, TP, TB, TD prose only at different lengths; Verification and TM each one comparison where alternatives vary along dimensions; TM's one distinction answers a real conflation), with no shared arc or paragraph template.",
+    "resolutions": [],
+    "records": {
+      "trust-assumptions": "53660bb4097ec9a6b5e16a3fba02ca440002c0d315a480bd84107e16742feaca",
+      "trusted-parties": "1fd2199c2b91bfd08d49a15ceecf11f214ce25eb76172faa41745a74e56f8590",
+      "trust-boundaries": "5aac981cbb208f4a43c5396551497c46550054635dd7f6061fd48987082a12c8",
+      "verification": "541a0f405ecfb6d3d4647e3a5807b535d5acfb74042de0e9624a7bea30eb4187",
+      "trust-minimization": "3770d2cb5a90715bfe8fa1b6098a2d502c73375a63f53c4c6ecd0f773f08017a",
+      "trust-distribution": "097c139085ea8ac8bb039f7beb688f64fd1eba170a6eb322cf2c6abaf96e4c5b"
+    }
+  }
+}

@@ -58,10 +58,10 @@ export function validateL2Diff(input: L2DiffInput): L2DiffReport {
   for (const plan of runPlans) {
     problems.push(...planProblems(plan, input.head, options).map((problem) => `${plan.group}: ${problem}`));
     problems.push(...staleProblems(plan, input.head, options).map((problem) => `${plan.group} is stale: ${problem}`));
-    for (const conceptId of expected.filter((id) => plan.members.some((member) => member.conceptId === id))) {
+    for (const conceptId of expected.filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {
       problems.push(...workProblems(plan, conceptId, input.head, "audited", input.signals[conceptId] ?? []));
     }
-    for (const conceptId of blocked.filter((id) => plan.members.some((member) => member.conceptId === id))) {
+    for (const conceptId of blocked.filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {
       if (input.head.content.some((record) => record.conceptId === conceptId)) problems.push(`${conceptId}: its design blocks it, yet it has a record`);
     }
     problems.push(...groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, input.head, input.groupSignals[plan.group] ?? []).map((problem) => `${plan.group}: ${problem}`));
