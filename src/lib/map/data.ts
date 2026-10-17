@@ -18549,6 +18549,249 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "trust-assumptions-content",
+      conceptId: "trust-assumptions",
+      definition:
+        "A trust assumption is a condition that a guarantee depends on and that the system accepts rather than checks: that particular parties or components will behave in a particular way. The guarantee rests on it whether or not the system's description states it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Stated completely, a trust assumption has four parts: what is relied on, which may be a party such as a signer or an operator, or a component such as deployed code, a hardware enclave or a data feed; the behavior assumed of it; the claim or claims that depend on that behavior; and, when several parties or components carry the behavior together, a bound on how many of them, or how much of their weight, may fail while those claims still hold. The behavior can also carry a period, because it is needed only within a window, such as the time allowed to dispute a submitted result. An assumption missing a part cannot be weighed. Saying only that the signers are trusted leaves open whether they are trusted to sign nothing invalid, to sign at all when signatures are needed, or to keep their keys; it also leaves open whether one faulty signer is already enough to undo the claim or a third of them must fail. The bound turns a demand on every one of them into a demand on enough of them, which can be as few as one; how a threshold is chosen and what the choice sets belong to Trust Distribution.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because an assumption is scoped to a behavior and to the claims that depend on it, it is a different unit from a party. One party can carry several assumptions, about different behaviors for different claims, one assumption can span several parties under a bound, and an assumption can concern a component rather than any party, so the roles that Trusted Parties describes and the assumptions those parties carry are counted separately. Conditions that concern no party's or component's behavior, such as the hardness of a cryptographic problem, also underlie guarantees but are not trust assumptions; they are left to Security Assumptions, and what makes any condition an assumption rather than a rule, and how one assumption can be stronger than another, to Assumptions.",
+        },
+        {
+          kind: "paragraph",
+          text: "The behavior assumed falls into a few kinds, which matter because different events break them. Honesty is the assumption that a party does not deliberately deviate: it does not forge, misreport or sign two conflicting statements. Correct operation asks that a party or component work as specified whatever its intent, so an honest operator running faulty software breaks it. Availability and timely action ask that a party or component be present and act within the time a guarantee needs, publishing data, responding or submitting a challenge before a window closes. Non-collusion is stated over a set rather than one party: parties that an arrangement counts as independent do not coordinate, for instance by combining shares of a secret that was split so that no one of them could use it alone, and Collusion is the concept for how such coordination happens. Safe custody of keys asks that a holder keep its signing keys from theft and loss, so that signatures attributed to it are its own and it can still sign when it must. The kind does not settle which failure follows: where nobody else challenges in time, an absent challenger can let an invalid result stand, so a lapse of availability can end in a safety failure rather than a liveness failure.",
+        },
+        {
+          kind: "paragraph",
+          text: "The assumptions a system's description lists need not be all it relies on. A description tends to name the parties its protocol gives a role, such as signers, validators or a committee, and to leave out reliance that surrounds the protocol: on software, that clients, contracts and the libraries they use behave as specified; on infrastructure, that hosting, networks and the endpoints and sources that deliver data stay up and deliver it unaltered; on operators, that the people running nodes and services configure and update them correctly; and on upgrade authority, that whoever can replace code or parameters does not use that power against what the other assumptions protect. Upgrade authority can reach the furthest of these, because replacing code can change which assumptions a guarantee has, so every guarantee that replaceable code provides also depends on how the power to replace it is used.",
+        },
+        {
+          kind: "paragraph",
+          text: "Unstated assumptions can be found by tracing rather than by reading the list. For each guarantee, the trace follows what the guarantee depends on to everything that executes it, hosts it, delivers its inputs or can change it, and asks of each what the guarantee needs it to do. Any answer the system accepts without checking is a trust assumption, to be written in the same four parts as a stated one. The trace exposes reliance that a description omits: a guarantee attributed to audited contract code, for instance, also depends on the deployed code being the code that was audited, and on nobody having replaced it since.",
+        },
+        {
+          kind: "paragraph",
+          text: "Behind a single guarantee, separate assumptions combine in two forms. Some are required together: a guarantee that funds are released only against a valid withdrawal request may need the contract to operate correctly; where the contract can be replaced, whoever can replace it not to use that power against the guarantee; and no more signers to fail than their bound allows, whether by signing an invalid request or by having their keys stolen, because a bound counts every way one of those carrying an assumption can fail its claims. That guarantee is no longer assured if any one of these fails, so each further required assumption is one more way to lose it. Others are alternatives, any one of which suffices: a guarantee that a user can withdraw may be met by an operator that processes the request or by a separate route that lets the user withdraw without that operator, and a guarantee that rests only on such alternatives stops being assured only when every alternative fails, so each added alternative is one more way for it to hold. An alternative counts only if using it does not itself depend on an assumption that has already failed; a fallback that needs the cooperation of the same operator whose absence it is meant to cover adds nothing. Many guarantees mix the forms, requiring some assumptions outright and accepting any one of others. Where several parties or components are asked for the same behavior for the same claims, they carry not a combination of separate assumptions but one assumption with a bound: data that can be checked against a published commitment can be retrieved if any one of the parties storing it serves it, which is one assumption about the storers whose bound lets all but one of them fail, and making one honest participant enough is an aim of Trust Minimization.",
+        },
+        {
+          kind: "paragraph",
+          text: "Across guarantees, one assumption can be required outright by several at once, and then its failure leaves none of them assured. The custody of an upgrade authority's keys can be such an assumption: correct execution, the safety of deposits and the ability to withdraw may each depend on it, so the theft of those keys can remove guarantees that look independent when each is examined on its own. Listing a system's assumptions with the guarantees each supports, rather than its guarantees with their assumptions, shows which single assumptions carry the most. This sharing lies within one system's guarantees; failure that spreads between connected systems is Contagion Risk, and limiting how far it reaches is Failure Isolation.",
+        },
+      ],
+    },
+    {
+      id: "trusted-parties-content",
+      conceptId: "trusted-parties",
+      definition:
+        "A trusted party is a person or organization that a system relies on to perform a role whose correct performance the system accepts rather than fully checks. It comes to hold the role by appointment or by selection under protocol rules, is expected to behave on grounds such as its known identity, its reputation or stake it could lose, and keeps whatever discretion the role leaves it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What a party is trusted to do is fixed by its role rather than by who it is, and one party can hold several roles at once, such as an operator that also holds an upgrade key, each trusted for different things. Operators run a service the system depends on, such as a sequencer ordering transactions, a relayer carrying messages between systems or a hosted endpoint answering queries, and are trusted to process what they receive by the service's rules and to keep it available and on time. Custodians hold assets or keys on others' behalf and are trusted to return them on a valid request and otherwise to release them, or take them for themselves, only as the owners' terms allow. Key holders hold keys that carry authority over the system itself, such as upgrading its code, pausing it or moving treasury funds, and are trusted to use that authority only for its purpose and to keep the keys from loss and theft. Signers attest to statements the system does not check for itself, such as that an event occurred on another chain or that a message was sent there and may be executed, and are trusted to sign only what is true. Data reporters supply values the system cannot observe, such as prices or the outcomes of events, and are trusted to report them accurately, promptly and from the sources they are expected to use. Key holders and signers both hold keys but differ in what a signature does: a key holder's exercises authority the system grants it, while a signer's vouches for something outside the system's view.",
+        },
+        {
+          kind: "paragraph",
+          text: "These roles belong to parties that take actions, not to the code and hardware a system also relies on, which are Trusted Components. A signer is often one member of a set; it is trusted for its own signatures, while how many members must act together is the subject of Trust Distribution and their coordinating against the system that of Collusion. How the behavior expected of a party is written as an assumption, and how such assumptions combine behind a guarantee, belongs to Trust Assumptions, and whether the party acts in a role through an identifier a protocol's rules recognize is a question for Participants.",
+        },
+        {
+          kind: "paragraph",
+          text: "A party reaches a role by one of two routes. Appointment gives the choice to someone with authority to make it, such as a founding team, a governance vote or a contract's owner. Where the appointer can remove the party and the party cannot obstruct its removal, the party is answerable to its appointer, which can review its conduct and replace it. Either way the system relies on the appointer's judgment as well as on the party, and while the appointing authority can still appoint, whoever captures it can install parties of its own choosing. Selection under protocol rules picks the holder by a rule, such as rotation, a lottery or weighting by stake, so no one hand-picks it, and where the outcome cannot be predicted or steered before it is drawn, an attacker cannot know in advance which party to corrupt. A rule leaves exposed whatever it weights or counts: weighting by stake hands the role most often to whoever holds the most stake, and a rule that counts identities favors whoever can create the most of them. A route decides who holds the role; it gives the holder a reason to behave where conduct can cost it the role, as where an appointer can replace it or a selection rule drops parties for faults the system detects, and each route is commonly paired with grounds for expecting the holder to behave, often more than one, as with an appointed signer whose identity is public and who has also posted a bond.",
+        },
+        {
+          kind: "paragraph",
+          text: "Legal identity and reputation work through attribution. A party whose identity is known can be held to account for misbehavior in court, and its reputation makes its future business depend on its present conduct. Legal recourse reaches only acts the law covers, in a jurisdiction willing and able to enforce it against the party, and reputation does not hold against a final defection whose gain exceeds what the party's future business is worth to it. Being identifiable also makes the party reachable by anyone able to coerce it. Stake at risk is enforced by the system holding it instead: the party posts value that this system can destroy or confiscate when its misbehavior is proven to it. It secures against misbehavior that the system can attribute to the party from evidence it can evaluate, that is proven to it while the stake is still posted, and whose gain to the party is less than the stake it would lose. It leaves exposed every choice the role's rules permit, since no condition for destroying stake can name a permitted act, and misbehavior outside those conditions, such as a reporter's wrong but plausible value where the system has no independent source to compare it with. Raising the stake widens the margin against profitable misbehavior but narrows who can afford to hold the role. Both answer misbehavior after it has happened, making it costly rather than impossible.",
+        },
+        {
+          kind: "paragraph",
+          text: "A role can also leave its holder choices. Where the rules the role is held to leave them open, an operator decides which inputs to include and in what order, a relayer or a reporter decides when to act within the time allowed, and a party picking among valid options decides which source, member or value to use. Checks on a trusted party's outputs test them against some of those rules, and an output reached through choices the rules permit breaks none of them, so it passes every check however the choice was made and whomever it favors, as when a sequencer whose rules set no ordering policy orders transactions to profit from its own trades, a relayer waits until the last permitted moment, or a reporter picks, among acceptable sources, the one whose value suits it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Misbehavior is different in kind: it breaks a rule the role is held to, as when a custodian takes for itself assets the owners' terms do not give it, a signer attests to an event that did not occur, or a key holder uses its authority for something other than its purpose. Where the rule it breaks is one the checks test, they can reject it. Where no check tests that rule, it takes effect, and law or reputation can answer it only if it is attributed to the party, stake only if it is also proven to the system while the stake is still posted. Withholding can be either discretion or misbehavior: not acting, or acting late, is a permitted choice while it stays within the time the role allows and breaks a rule the role is held to once it goes beyond it. Persistently excluding particular valid inputs, whether as a permitted choice or as misbehavior, is Censorship, and a trusted party that works against the system is among its Adversaries.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because discretion used against users breaks no rule, neither checks nor stake can reach it, though reputation can where its use is seen and costs the party business. It can also be answered by narrowing the choices the rules leave open, rotating the role or setting parties in competition for it, or letting users act without the party, which is among the means Trust Minimization covers. Narrowing discretion has its own cost, because the choices removed include those the party would use to respond to circumstances: a reporter bound to one fixed source cannot set that source aside when it fails.",
+        },
+      ],
+    },
+    {
+      id: "trust-boundaries-content",
+      conceptId: "trust-boundaries",
+      definition:
+        "A trust boundary is a line through a system, drawn for a particular relying party or component and a particular claim, between the parts it relies on without checking and the parts it does not trust to behave as that claim needs. Whatever passes between the two sides, in either direction, crosses the boundary.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A system therefore has no single trust boundary. Where the line runs depends on what the relier checks for itself and what it takes on another's word. For a full node that re-executes every block it accepts against the protocol's rules, the boundary for the claim that the chain it follows is valid encloses little beyond the software and hardware it runs on. It still relies on block producers for which valid transactions are included and in what order, which checking validity cannot settle, and on reaching at least one honest peer to learn of the chain the rest of the network follows. A light client that accepts block headers on the evidence its consensus rules require, such as signatures from a large enough share of a validator set, and checks the state a server returns against them through Light-Client Verification, draws its line claim by claim. For the claim that the headers describe valid blocks, its boundary encloses the consensus participants, of whom it assumes enough are honest; for the claim that the state it is shown is correct, the server lies outside; yet for the claim that it gets an answer at all, it relies on some server responding, which no check of an answer supplies. A user who reads balances and prepares transactions through a hosted interface relies on the operator's code and on whatever data provider stands behind it, so both lie inside that user's boundary for what the interface shows and prepares, unless the user checks them independently.",
+        },
+        {
+          kind: "paragraph",
+          text: "The relier need not be a person or a node. A lending contract that acts on collateral prices from an oracle without checking them places the oracle inside its boundary for the claim that its loans are backed by enough collateral, while the borrowers and depositors who call it lie outside it. Being inside records reliance, not reliability: for that claim, a failure of a part inside reaches the relier with no check in the way.",
+        },
+        {
+          kind: "paragraph",
+          text: "Direction is relative to the relier as well. Between two components neither of which relies on the other without checking, a message leaves the sender's boundary and enters the recipient's, and a check the sender performs establishes nothing for the recipient. Arriving across the line, data, such as inputs, messages, reports, return values and state read from elsewhere, needs established whichever of its origin, integrity and freshness the receiving code relies on, and that its values fall within the bounds that code assumes; a correctly signed report from the expected source can still be stale, or a replay of an earlier one. A call arriving from outside needs, where only some callers may make it or it acts on its caller's behalf, its caller identified and that caller's right to make it established. Its arguments are data, and the receiver cannot assume that a call arrives only once, in the order it expects, or only from the callers it was written for, since any caller outside its boundary can send whatever sequence of calls the interface accepts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Control and value can also leave the relier's side, and then what it needs has to be established before the crossing, because afterwards the other side acts. Control crosses outward when the relier runs code it does not trust, through an external call, a callback or a hook that a token runs during a transfer. That code can do whatever its platform allows, which, where the platform permits reentry, includes calling back into the relier before the first call has returned. The relier therefore makes its own state consistent before handing control over, and when control returns treats whatever the other side could have changed in the meantime as needing to be established again, the return value included, since that is data arriving. Value crosses both ways. Value received needs its asset established as the one it claims to be, since a token can copy a genuine asset's name and symbol; the amount actually received established, since some tokens deliver less than the amount a transfer names; and, where the relier acts outside the transaction that moved the value, as an exchange or a bridge crediting a deposit does, the transfer established as final enough to act on, since a deposit credited before then can be reversed at its source while the credit stands. Before value goes out, the relier establishes that the recipient and the amount are permitted, since where completed transfers cannot be reversed by their sender, a check after the crossing comes too late. How a check establishes any of these is the subject of Verification, and reducing what lies inside the line is that of Trust Minimization.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because a trust boundary is drawn by unchecked reliance, it need not follow the other lines that divide a system. It differs from an abstraction boundary: an interface between two modules the relier trusts alike leaves trust where it was, while a trust boundary runs inside a single function wherever it reads state that parties the relier does not trust can change, such as a contract's own ether balance, which anyone can raise; the two coincide where an interface calls into code, or accepts inputs from parties, that the relier does not trust. It differs from a component boundary: a proxy contract runs the implementation it delegates to in its own storage, so whoever relies on the proxy relies on that implementation, while a node that runs contracts anyone can submit inside its own process relies on its own code, not the submitted code, to stay within its resource limits, so a trust boundary runs through a single component. And it differs from an organizational boundary, which follows who operates a part: a service another organization operates lies inside the relier's boundary wherever the relier accepts its outputs unchecked, and a component the relier's own organization operates lies outside it wherever the relier checks what that component returns. The two coincide only where a relier checks the outputs of every part other organizations operate and of none its own organization operates. A line drawn in the wrong place can follow one of these other lines: an input is treated as internal because it arrives through a familiar interface, from within the same contract or from a component the same organization operates, and so is never checked.",
+        },
+        {
+          kind: "paragraph",
+          text: "The line moves whenever unchecked reliance changes, and a change can add crossings that the existing checks were not written for while those checks keep passing. An integration adds a counterparty and its crossings: a pool that accepts a token whose transfers call hooks gains a control crossing in operations its checks treated as plain transfers of value, and a price source the system accepts unchecked comes inside its boundary for every claim the price feeds. Where code supplied through an upgrade path takes effect without the relier checking it first, whoever holds the upgrade authority comes inside the relier's boundary along with that code, and an upgrade can add entry points, callbacks or dependencies that the checks around the old code do not cover. Delegated permissions move parts inside without any code changing: an approval that lets a contract move a holder's tokens places that contract inside the holder's boundary for the claim that the balance moves only as the holder intends, up to the approved amount and for as long as the approval stands, and where the approved contract's code can be replaced, whoever can replace it comes inside as well.",
+        },
+      ],
+    },
+    {
+      id: "verification-content",
+      conceptId: "verification",
+      definition:
+        "Verification is the procedure by which a verifier accepts or rejects a stated claim on its evidence, so that the claim is relied on because it met a procedure fixed in advance rather than because of who asserted it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every verification has three parts. The claim is stated precisely enough to check: what is asserted, about which inputs, data or artifact, against which rule or specification, as in a claim that an output follows from given inputs under a given program, or that code meets a written specification. The evidence is whatever the verifier examines besides the claim: the inputs and data needed to redo the work, a signature, a proof, test results, or, in some designs, nothing until the claim is disputed. The procedure maps claim and evidence to accept or reject, and is fixed before the evidence arrives, because whoever supplies the evidence may be adversarial, and a procedure set in advance keeps them from deciding what counts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Three roles meet in a verification, and one party can hold several. The claimant, or prover, states the claim and supplies whatever evidence the design asks of it. The verifier runs the procedure, and may be the relying party itself, a contract that checks before it acts, a client, or a challenger checking on behalf of others. The relying party acts on the verdict and inherits whatever the procedure leaves assumed; when it is not the verifier, it also relies on the verifier having run the procedure correctly.",
+        },
+        {
+          kind: "paragraph",
+          text: "An acceptance establishes the claim as stated and nothing beyond it. A valid signature establishes, under the signature scheme's assumptions, that someone holding the key signed the message, not that the message is true, the gap Verification Limits examines for a protocol's checks on reports of facts outside it. Nor does an acceptance establish that the claim was the right one to check, which for a specification is Validation's question; formal verification and correctness proofs are ways of checking code against its specification. Even for the stated claim, an acceptance holds only to the procedure's error bound and under its assumptions. A procedure can also reach no verdict, when the evidence it needs is withheld; whether the relying party then waits, refuses or accepts by default is part of the design.",
+        },
+        {
+          kind: "paragraph",
+          text: "Verifiers differ in how much of the work behind a claim they repeat, and repeating less of it moves reliance onto a different assumption.",
+        },
+        {
+          kind: "comparison",
+          label: "How much of the work a verifier repeats",
+          dimensions: ["What the verifier checks", "Its cost, and when acceptance comes", "What is left assumed"],
+          alternatives: [
+            { name: "Full re-execution", values: ["All of the work, from the inputs and data", "As much as the original work; acceptance once it is redone", "Its own code, and access to all the inputs and data"] },
+            { name: "Sampling", values: ["Randomly chosen parts of the work or data", "A small share of the work; acceptance once the samples pass", "A false claim is wrong in many places, and the claimant fixes its content before samples it cannot predict are drawn"] },
+            { name: "Checking a proof", values: ["Evidence that the work was done correctly, not the work itself", "Small for many proof systems; acceptance once a proof is produced and checked", "The proof system's soundness, which may rest on hardness assumptions and a setup"] },
+            { name: "Checking only when challenged", values: ["Nothing unless the claim is disputed, then often only the disputed part", "Nothing for those who do not watch, while a watcher pays to check; acceptance only after the challenge window closes", "Someone with the data checks and disputes a false claim within the window"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "At every depth the verifier's own code stays assumed: a bug in it can accept evidence that the procedure as designed, or the proof system it implements, would reject. Many proof systems are sound only against provers with bounded computation, so a prover able to break the hardness assumption a system rests on could produce accepting evidence for a false claim, and some also rest on a setup whose secret values, if kept or reconstructed, allow such evidence to be forged. A machine-checked proof that code meets a specification rests instead on the logic and the checker that accept it. How proofs of computations are produced and checked is the subject of computation proofs, validity proofs and succinct verification.",
+        },
+        {
+          kind: "paragraph",
+          text: "Sampling bounds the chance of accepting a false claim only when that claim has nowhere to hide. If any false claim must be wrong in at least some fixed share of the places a verifier can independently check, each independent, uniformly random sample has at least that chance of landing on a place where the claim is wrong, so each further sample multiplies the chance that all of them miss by at most one minus that share. The claimant's content must be fixed before the samples are drawn, from randomness it cannot foresee or influence, or it can put its falsehoods where no sample lands; and a claim whose falsehood can sit in one place out of millions leaves samples almost nothing to find. Testing code against a claim about every input meets the same limit, since a fault can sit on a single input: a failing test reveals a fault in the code or the test, but passing tests give no error bound for such a claim. Some encodings and proof systems are built to make any false claim wrong in many places, so that a few samples suffice.",
+        },
+        {
+          kind: "paragraph",
+          text: "Checking only when challenged reverses the default. At the other depths acceptance waits on a check that passed; here it follows from the absence of a dispute, so a false claim that nobody disputes before the window closes is accepted. Whether someone can be counted on to check in time is the assumption Trust Minimization examines, and fraud proofs are one form a dispute takes. Depths also combine, each check relied on only for what it covers: a dispute that is itself checked is settled by a check at another depth, and a system that accepts results on proofs can also re-execute them where affordable, so that a flaw in the proof system or its verifier surfaces as a disagreement.",
+        },
+        {
+          kind: "paragraph",
+          text: "A procedure can err in two directions, with different causes and costs. Accepting a false claim, a soundness failure, admits a wrong result that the relying party acts on, through a bug in the procedure, a broken assumption, a sample that misses, or a window that closes unchallenged. Rejecting a true claim, a completeness failure, denies or delays a correct result instead, through a procedure stricter than the claim, a bug, missing data, or an honest claimant unable to produce acceptable evidence, for example because proving costs too much or takes too long.",
+        },
+        {
+          kind: "paragraph",
+          text: "What limits each error depends on the check. An exact check, such as re-executing a deterministic computation from the same inputs, can err only through faults in the verifier itself or through wrong or missing data. A probabilistic check has an error bound that holds only under its conditions: repeating a check with fresh randomness and accepting only if every run accepts multiplies together the runs' chances of accepting a false claim, provided the runs are independent, but gives a true claim more chances to be rejected unless each run accepts it with certainty. Many proof systems accept every correctly produced proof of a true claim, so their false rejections come from implementation, cost or missing data rather than from the mathematics.",
+        },
+        {
+          kind: "paragraph",
+          text: "The two errors can pull against each other. Tightening a procedure can reject true claims, and loosening it to accept honest edge cases can admit false ones. For nontrivial properties of what programs in a general-purpose language do, no automatic check that always finishes avoids both errors on every program; how program analyzers trade false alarms against missed violations is the subject of Static Analysis.",
+        },
+      ],
+    },
+    {
+      id: "trust-minimization-content",
+      conceptId: "trust-minimization",
+      definition:
+        "Trust minimization is reducing how much a system's guarantees depend on particular parties or components behaving as expected, by moving reliance from their behavior onto checks, options that users hold, and fixed rules.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A design reduces reliance on a party or component by taking away part of what its failure could do. Four means recur. Each leaves something trusted, so a design is judged by what remains and by who can still change it, and some forms of these means are enforced by the system while others depend on someone acting in time.",
+        },
+        {
+          kind: "comparison",
+          label: "Means of reducing what a party or component is trusted for",
+          dimensions: ["What it can no longer do", "What remains trusted", "Who must act for it to protect"],
+          alternatives: [
+            { name: "Making results checkable", values: ["Have a wrong result accepted by those who check it", "It, for producing results at all and on time and for choices the check cannot reject; the check and its assumptions; and the availability of the data the check needs", "A checker, or no one where the system itself accepts a result only with valid evidence"] },
+            { name: "Exit or action without its cooperation", values: ["Keep users from leaving or transacting by refusing them service", "Its service while users stay, the exit path, and whatever processes exits", "Each affected user, or someone acting for them"] },
+            { name: "Bounding what it may do", values: ["Exceed its caps or permissions, or make changes take effect without a delay", "It, within the bound, and whoever can change the bound", "No one for caps and permissions enforced by rule; for a delay, someone who notices and responds within it: each user who would leave, or whoever can cancel the change"] },
+            { name: "Removing the role", values: ["Anything in that role, which fixed rules or code now perform", "The code that replaced it, and anyone still able to change that code", "No one; the system running the code enforces it"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Several means can be undone together by an authority left outside them, often an upgrade key or an emergency role, able to change the checks, lift the bounds, close the exit or restore a removed role. Whatever it can change rests again on how it behaves, so minimization reaches only as far as the powers to change the system are themselves constrained.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where a means does depend on participants acting, many designs aim for the weakest form of that dependence: the guarantee holds if any one honest participant able to check and act does so. Compared with an honest majority or a single honest operator, this asks least of the participants: an attacker who wants a wrong result to stand has to keep every capable participant from acting, rather than win over most of them or the only one. When anyone may take the role, the attacker has no fixed list of whom it would have to corrupt, and a user able to check and act can be that participant, needing no other participant to check or act for it. When the role is confined to an appointed set, such as a permissioned list of challengers, the assumption is about that set's members, and a user outside it is back to trusting them.",
+        },
+        {
+          kind: "paragraph",
+          text: "The assumption counts only participants who can actually act, and acting takes three things. The first is data: whatever the check or the exit needs must be available to whoever would act, which means published where anyone may take the role, and stay retrievable for as long as anyone may need it, because a participant without it has nothing to test a claim against or to build an exit from. The second is time: the window to respond must outlast the time needed to notice a fault, prepare a response and get it included, including when the system is congested or when whoever orders transactions delays the response, so a window sized for ordinary conditions can close during an attack that also delays responses. The third is the means to act: the ability to submit a challenge or an exit, the computation needed to prepare it, and any funds or bond it requires, which can exceed what a small user holds or what acting would gain the one who acts. If honest participants exist but none of them has all three, the assumption fails without any of them misbehaving.",
+        },
+        {
+          kind: "paragraph",
+          text: "Minimization has costs. Producing proofs takes computation, re-executing to check takes it again for every checker, and publishing the data that checks and exits need takes space, a cost often passed to users in fees. Relying on a response costs time: a challenge window, as in designs built on Fraud Proofs, or a delay before an exit or a change takes effect must give whoever would respond time to do so, and the wait applies to every result, exit or change it covers, including when nothing is wrong.",
+        },
+        {
+          kind: "paragraph",
+          text: "Two further costs follow from relying on code. Verifiers, exit paths and the code that enforces limits are components that must themselves be correct, and each joins what the guarantees it protects rely on, the set that Trusted Computing Base names. A prover whose output is checked by a correct verifier can stop results from arriving but, while the check's assumptions hold, cannot have a false one accepted, so it is relied on for results to arrive but not for the correctness of those accepted. A flaw in such code can expose more than the trust the code replaced: where anyone may submit proofs, a verifier that accepts an invalid proof lets anyone who finds the flaw, not only the party it was meant to constrain, have a false result accepted. Removing every override also removes the ability to intervene: once no party can step in, none can pause an exploit in progress, reverse a mistaken action or patch a flaw quickly. Designs that keep such a power trust whoever holds it, and many bound it with a delay, giving up speed of response, or with a narrow scope, giving up range of response, in exchange for less discretion.",
+        },
+        {
+          kind: "distinction",
+          left: "Trust Minimization",
+          right: "Decentralization",
+        },
+        {
+          kind: "paragraph",
+          text: "Counting operators measures how many parties share a role, not what any of them is trusted for, so the two notions part in both directions. Many operators can still be trusted collectively: a committee whose attestations are accepted on its word protects users only while not enough of its members fail together, a matter for Trust Distribution, and adding members does not make its outputs checked. A single operator can be trusted for little: a sole sequencer whose results are checked and whose users can force their transactions in is trusted mainly for timely service and for the ordering choices its role leaves it, which Trusted Parties covers, provided the checks run and forced inclusion works within the delay it promises. The two can be combined, and neither stands in for the other.",
+        },
+      ],
+    },
+    {
+      id: "trust-distribution-content",
+      conceptId: "trust-distribution",
+      definition:
+        "Trust distribution is spreading reliance for an outcome over several parties by accepting the outcome only once a threshold of them, or a threshold amount of their combined weight such as stake, act for it. How far trust is actually distributed is measured by two counts of independent entities, rather than nominal participants: how many it takes to reach that threshold and how many it takes to deny it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A threshold of k out of n parties fixes two numbers at once. A coalition of k can produce the outcome without anyone else, so k approvals force an outcome that the arrangement accepts on their word, wrong or not. Where every member other than the colluders approves no wrong outcome and alone controls its keys, k is how many must collude to force a wrong one; stolen keys or members misled into approving lower that number. The outcome also needs k to act, so it fails once more than n minus k cannot or will not: n minus k plus one absences halt it, and an outage, a lost key and a deliberate refusal count alike. The two numbers sum to n plus one, so for a fixed set, raising k by one makes forcing take one more party and halting take one fewer. A higher threshold is therefore not in itself a safer arrangement; it moves risk from one direction of failure to the other. At the ends of the range a single party is enough: with a threshold of one any member can force the outcome, and with a threshold of n any member can halt it. Where parties carry weight, the threshold is an amount of weight, often set as a share of the total: forcing takes combined weight that reaches it, halting takes absent weight that exceeds the total minus the threshold, and one holder of enough weight can do either alone however many parties there are.",
+        },
+        {
+          kind: "paragraph",
+          text: "The forcing number counts who can impose a wrong outcome only where the outcome is accepted on the threshold's word, as when signers attest to an event that those relying on the attestation do not check. Where they check the outcome themselves, reaching the threshold lets a coalition choose only among outcomes that pass, and withholding or delaying the outcome takes the halting number. Whether two conflicting outcomes could each gather the threshold turns on how far the sets backing them must overlap, which belongs to Quorums. Setting k weighs the cost of a forced wrong outcome against the cost of a halt. A halt matters less where it has a recovery path that does not need the halted parties, such as an exit users can take on their own or a procedure for re-forming the set, and there a high threshold costs less. Where a halt itself causes loss, as when assets stay locked until the parties sign or a response must be made before a deadline, the halting number guards against harm as directly as the forcing number, and a threshold chosen only against collusion can leave the arrangement easy to stop.",
+        },
+        {
+          kind: "paragraph",
+          text: "The nominal numbers count parties; the measured counts count the entities in control of them. A measurement groups participants by who controls what the threshold counts. Signing keys held or operated by one entity form one group however many identities they are registered under, and stake delegated to one operator, or held for many owners by one custodian, belongs to that operator's or custodian's group wherever that entity, not the owners, decides how the weight is used for the outcome counted. Shared infrastructure groups participants too, but not always in both directions. A custodian or signing service able to use many members' keys groups them for forcing and for halting; a hosting provider whose only power over many members' nodes is to take them offline together groups them for halting but not for forcing, while one that can also steer what those nodes sign, through their software or their inputs, groups them for both. Each count is therefore taken over its own direction's grouping, with each member's weight counted once: the forcing count is the fewest groups whose combined control reaches the threshold, and the halting count is the fewest whose combined control exceeds the total minus the threshold. Where no member falls in more than one group, ranking the groups by weight and taking the largest first finds each count. Each can be far smaller than n, and the two need not be equal, so the same arrangement can take many entities to force and only a handful to halt, or the reverse.",
+        },
+        {
+          kind: "paragraph",
+          text: "Control is only partly observable. Common ownership, private agreements between operators and one owner registered under several identities may leave no trace a measurement can see. A count built from observed links, provided each of those links is real, can therefore only overstate the true count: hidden links can merge groups and lower it, never raise it. Because each count is taken against one threshold for one outcome, the same system can be well distributed for one of its outcomes and concentrated for another, which keeps the measure narrower than Decentralization. A high count also still leaves the parties trusted collectively for whatever the threshold accepts on their word; reducing what has to be trusted at all is Trust Minimization.",
+        },
+        {
+          kind: "paragraph",
+          text: "Measured counts can fall while the rules and the nominal membership stay the same, so a measurement describes an arrangement only at the time it was taken. Stake and delegation can gather in a few operators: larger operators can run at lower cost for each unit of stake, delegators may favor the largest or most familiar operators, and pooled or custodial staking services can bring many holders' stake under one operator's keys or a few operators' keys, so the share the largest few control can grow until together they reach the threshold. Signers can move, for convenience, onto the same custody provider, signing service or hosting provider, so that one provider's compromise or outage reaches many members that are still listed as separate. Membership that is never renewed can decay: members leave, go inactive, lose their keys, merge or hand their operations to a common operator, and are still counted among the n. These paths can lower different counts. A member that no longer takes part but is still counted among the n is already absent, so it can reduce the further absences needed to halt the outcome without making forcing easier; a member whose keys are stolen rather than lost adds to whatever coalition holds them; and consolidation under one controller, whether through delegation, a merger or a shared provider able to use the keys, can lower the forcing count and the halting count together.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

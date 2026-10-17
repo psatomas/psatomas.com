@@ -400,4 +400,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "transition-rules",
   "determinism",
   "state-machine-replication",
+  "trust-assumptions",
+  "trusted-parties",
+  "trust-boundaries",
+  "verification",
+  "trust-minimization",
+  "trust-distribution",
 ];
