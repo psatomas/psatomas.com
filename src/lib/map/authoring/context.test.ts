@@ -44,8 +44,10 @@ test("a single-placement L1 topic resolves its placement, parent section, siblin
   // The parent's section for this topic is the one whose strip names its children.
   assert.equal(placement.parent?.section?.heading, "No participant can assume it sees the whole system");
   assert.equal(placement.parent?.section?.lines.at(-1), "[terms] Processes · Communication · Partial knowledge · Latency · Failures · Fault models");
-  // A single placement at one level raises nothing about placement roles.
-  assert.deepEqual(context.attention.filter((note) => !note.startsWith("Canonical content")), []);
+  // A single placement at one level raises nothing about placement roles; the children note follows what is authored.
+  const authoredChildren = placement.children.filter((child) => child.hasContent).map((child) => child.conceptId);
+  const childrenNote = authoredChildren.length ? [`Children with their own exposition: ${authoredChildren.join(", ")}. Relate to them; do not restate them.`] : [];
+  assert.deepEqual(context.attention.filter((note) => !note.startsWith("Canonical content")), childrenNote);
 });
 
 /** A root with three topics, whose exposition follows the L0 section convention. */
