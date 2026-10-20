@@ -5,7 +5,7 @@ import { contentFingerprint } from "../representation/design.ts";
 import { assembleL2Context } from "./context.ts";
 import { designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
 import { filledG1, model, options } from "./fixtures.ts";
-import { conceptSignals, containment, DEPTH, driftReport, groupSignals, mentionedConcepts, recordWords } from "./signals.ts";
+import { conceptSignals, containment, DEPTH, driftReport, groupSignals, mentionedConcepts, recordWords, sliceStopSignals } from "./signals.ts";
 
 const work = (): L2ConceptWork => ({
   model: {
@@ -170,6 +170,10 @@ test("depth diagnostics ask the audit to look again at a long or thin record, an
   assert.deepEqual(report.topParagraphCount, { count: 5, share: 1 });
   assert.ok(report.signals.some((entry) => entry.check === "drift-paragraph-count"));
   assert.equal(report.signals.some((entry) => entry.check === "drift-depth"), report.medianWords > DEPTH.sliceMedian);
+  // A long median is reported but pauses no slice; convergence still does.
+  const flag = (check: string) => ({ id: `${check}:0`, kind: "heuristic" as const, check, detail: check });
+  assert.deepEqual(sliceStopSignals([flag("drift-depth")]), []);
+  assert.deepEqual(sliceStopSignals([flag("drift-depth"), flag("drift-opening"), flag("drift-paragraph-count")]).map((entry) => entry.check), ["drift-opening", "drift-paragraph-count"]);
 });
 
 test("group signals: siblings overlapping, a shared opening, and one form for every member", () => {

@@ -270,4 +270,12 @@ export function driftReport(records: readonly { title: string; record: MapConcep
   };
 }
 
+/**
+ * The drift signals that pause a slice for calibration: convergence of form,
+ * opening, opener or paragraph shape. A long median (drift-depth) is reported
+ * but never stops a slice on its own: each record's depth is judged against its
+ * claims by its own audit (depth-long).
+ */
+export const sliceStopSignals = (signals: readonly L2Signal[]) => signals.filter((entry) => entry.check !== "drift-depth");
+
 const dedupe = (signals: L2Signal[]) => [...new Map(signals.map((entry) => [entry.id, entry])).values()];

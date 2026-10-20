@@ -61,7 +61,7 @@ import { contentFingerprint as recordFingerprint } from "../src/lib/map/authorin
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
-import { driftReport } from "../src/lib/map/authoring/l2/signals.ts";
+import { driftReport, sliceStopSignals } from "../src/lib/map/authoring/l2/signals.ts";
 import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, staleProblems, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
 import { createMapAuthoringInspector, MapAuthoringContextError } from "../src/lib/map/authoring/context.ts";
@@ -975,10 +975,11 @@ async function commandComplete() {
     writeFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), `${JSON.stringify(resolveSpec(readSpec(state.baseSha), notes, mapKnowledge), null, 2)}\n`);
   }
   if (l2Mode && stage === "audit") {
-    // A convergence signal across the whole slice pauses the campaign for calibration, once.
+    // A convergence signal across the whole slice pauses the campaign for calibration, once; a long median is only reported.
     const drift = sliceDrift(state);
-    if (drift.signals.length && !(state.resolvedStops ?? []).some((resolved) => resolved.subject === "slice drift")) {
-      stop(state, { subject: "slice drift", evidence: drift.signals.map((signal) => signal.detail).join("\n"), why: "the slice's records converge on one opening, opener, length or form: precedent may be standing in for decisions", decision: "review the flagged records against their designs, correct any that copied precedent, then resume with the calibration decision" });
+    for (const signal of drift.signals.filter((entry) => !sliceStopSignals(drift.signals).includes(entry))) console.log(`attention: ${signal.detail}`);
+    if (sliceStopSignals(drift.signals).length && !(state.resolvedStops ?? []).some((resolved) => resolved.subject === "slice drift")) {
+      stop(state, { subject: "slice drift", evidence: sliceStopSignals(drift.signals).map((signal) => signal.detail).join("\n"), why: "the slice's records converge on one opening, opener, paragraph shape or form: precedent may be standing in for decisions", decision: "review the flagged records against their designs, correct any that copied precedent, then resume with the calibration decision" });
     }
   }
   try {
