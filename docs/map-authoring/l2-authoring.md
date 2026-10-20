@@ -116,6 +116,12 @@ validates it at the stage it has reached.
   where the concept has them (states, transitions, invariants, trade-offs,
   internal variants, a relation). Leave out what the concept does not have.
 
+The model is an authoring brief, not a draft of the record. Its fields hold
+short, accurate notes: scope, the conditions each claim depends on, the
+distinctions to draw and the known pitfalls. They do not hold sentences meant
+for the record. Authors copied model wording into records, so an inaccurate
+model statement becomes a record defect.
+
 **Design:**
 
 - `decision`: one of
@@ -138,6 +144,46 @@ record after the audit reopens it.
 **Group audit:** `groupAudit` in the group file, with a note and a resolution
 for every group signal (sibling overlap, a shared opening, one form for
 every member). It is bound to every owned member's record.
+
+**Finding severity.** Every audit finding is blocking or advisory. Only a
+blocking finding fails an audit and opens a repair.
+
+- **Blocking:**
+  - a technically false or materially misleading claim;
+  - a missing condition that makes a technical statement wrong;
+  - a contradiction;
+  - an unsupported claim the explanation depends on;
+  - a violation of ownership, parent context or territory;
+  - an example that misrepresents the mechanism.
+- **Advisory:**
+  - a wording improvement that changes no claim;
+  - a stylistic preference;
+  - minor redundancy;
+  - an optional clarification.
+
+Doubt about a material technical claim is blocking: an auditor who cannot
+confirm the claim treats it as unsupported. A passing audit lists its advisory
+findings in its `note`. A repair opened for blocking findings may also take
+in advisory ones, but advisory findings never open a cycle by themselves.
+
+Severity is applied by the audit instructions, not by the tooling. The tools
+record whether an audit passed (`l2 record audit`), bind it to the record and
+require a resolution for every signal. They do not read or check severity.
+Blocking findings stay traceable through the findings, the reopen reasons and
+the PR's repair history; advisory findings through the committed audit notes.
+
+**Scrutiny.** Each newly drafted concept gets one complete, independent first
+audit. A second independent first audit, in second-opinion mode, is added
+for any concept that:
+- states formal correctness, impossibility or threshold results;
+- turns on security or adversarial assumptions;
+- has placements in more than one domain;
+- has ambiguous terminology or ownership (a hazard pair or facet watch).
+
+If a slice gives some concepts a single first audit, it must first run a
+comparison sample. A shadow second-opinion audit of at least one of those
+concepts, before merge, checks whether the single audit missed a blocking
+finding. If it did, every concept in the slice gets a second audit.
 
 ## Signals
 
@@ -173,8 +219,11 @@ It flags, as audit attention, a window of at least ten records where:
 - more than 60% of records have the same number of paragraphs.
 
 A prose majority is never flagged: prose is the expected default, not a
-target to diversify away from. A flag persisting across a whole slice pauses
-the campaign for calibration (see the campaign stop conditions).
+target to diversify away from. A convergence flag persisting across a whole
+slice pauses the campaign for calibration (see the campaign stop conditions).
+A long median (`drift-depth`) is reported when the slice's audit completes but
+pauses nothing. Each record's depth is judged against its own claims by its
+audit ([Depth](#depth)).
 
 ## Depth
 
@@ -184,8 +233,22 @@ and no cap.
 
 **What sets depth:**
 
-- **Claims set breadth.** The territory plan gives each concept two to four
-  claims. Each claim is a question only this concept answers.
+- **Claims set breadth.** The territory plan gives each concept the claims it
+  needs, usually two to four. Each claim is a bounded question only this
+  concept answers. Each one names:
+  - its purpose;
+  - the conditions it holds under;
+  - its central mechanism or principle;
+  - its main limitation;
+  - its distinction from neighbouring concepts.
+
+  A claim is not a chapter. A construction, a family of variants or a
+  threshold result that another concept owns is named with its key property,
+  not built. Prefer a precise mechanism to an exhaustive list of variants.
+- **General statements carry their scope.** A sentence about "protocols" or
+  "systems" in general states which systems, fault model or timing
+  assumption it holds for, or is narrowed until it holds everywhere it
+  claims to.
 - **The claim's mechanism sets depth.** Each claim gets what the reader needs
   to understand it on its own terms:
   - how it works;
@@ -223,7 +286,7 @@ set from the refined pilot: 22 records, median 984 words, range 504 to 1,201
 |---|---|---|
 | A record above 1,300 words | `depth-long` signal | to tie each paragraph to a claim and condense the rest |
 | A record below 400 words with three or more claims | `depth-short` signal | whether each claim is explained, not only named |
-| A slice median above 1,150 words | `drift-depth` | whether depth follows the claims or padding |
+| A slice median above 1,150 words | `drift-depth`, reported at slice completion; never a stop | nothing directly: each record's own `depth-long` resolution is the judgment |
 | More than 60% of a window with one paragraph count | `drift-paragraph-count` | whether each record's shape was decided for its concept |
 
 **Against template convergence.** The L1 corpus converged when neighbouring
@@ -403,6 +466,14 @@ editing the record and recording again.
 - **Re-audit.** The repaired concept is drafted and audited again, and its
   group audited again, each in a fresh context, with audits bound to the
   repaired records.
+  - **Scope:** a re-audit is a scoped re-review. It covers the blocking
+    findings, the changed statements, their paragraphs and the claims that
+    depend on them, every other use of a changed term, and anything the
+    repair introduced.
+  - **Expansion:** it expands into a complete audit when the repair changed
+    the argument, its assumptions, the record's structure or its scope.
+  - **New defects:** a material defect found anywhere is still blocking.
+    Non-material defects in text the repair did not touch are advisory.
 - **Staleness.** `l2 status` lists any recorded drafting, concept audit or
   group audit whose record has changed since (`STALE`). The `l2-check` gate
   and the diff refuse them. The remedy is always to reopen.
@@ -478,7 +549,7 @@ decision needed; `resume --decision ..` continues after a human decides.
 | A record, audit or group audit changed outside a repair | `l2 status` marks it stale; `record`, the `l2-check` gate and the diff refuse it |
 | Unexpected existing content, or other diff scope | The diff stage |
 | Inventory problems | `start` refuses |
-| Slice-wide drift | `complete audit` stops once; resume with the calibration decision |
+| Slice-wide convergence of form, opening, opener or paragraph shape (a long median alone is reported, not a stop) | `complete audit` stops once; resume with the calibration decision |
 | Verification failure; git, remote or PR mismatch; a PR that cannot merge | As for domain runs; the merge stage refuses anything but the validated PR |
 
 ## Pilot
