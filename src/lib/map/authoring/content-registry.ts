@@ -410,4 +410,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "information",
   "coordination-communication",
   "collective-action",
+  "adversaries",
+  "threat-models",
+  "byzantine-behavior",
+  "censorship",
+  "collusion",
 ];
