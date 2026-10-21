@@ -1,0 +1,821 @@
+{
+  "version": 1,
+  "group": "adversarial-environments",
+  "domain": "foundations",
+  "parentConceptId": "adversarial-environments",
+  "basis": {
+    "membership": "0a637202d2f51ed94871e3c5e886554d3644e4e4a7743ba6a41d17aa8d90e5b2",
+    "parents": {
+      "adversarial-environments": "ac761dbf983c705d1182d5575439ffa00beb25dadb4ee4ef551f4bc7d5a7dad2",
+      "attack-classes": "8529ae434fcdb54c8e29605fcba21d3b740d27aeb62dfd25cacebbd9687addfb",
+      "autonomous-economy": "efb90123efb513bdef8dfb84d18620db659feb9e814d93adb8eadb217d7997b0",
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea",
+      "market-power": "e643d506961ecaec0ffbbf8eff0ad220c589ab5ea0bbddee6925fa36820081de",
+      "oracle-security": "7b669ac9eb32bf80776ed8f3392f8fd90512950f0440f5b2b836440fed0ca97b",
+      "oracles-external-reality": "bf3d8f2ca5a93aea4e85ac8a7146b03333305857b104ece6ca334fb5c2e8283a",
+      "security-correctness-resilience": "ce9d0a9865bf71ddae0e4d92f467dea6522f9ce6faf0193fd710921ce8de06be",
+      "security-models": "b957c10ec0dc2723023841f645a6c3dccbac5904cbc546dee5b9f9c59ddfe6cb"
+    },
+    "fixed": {
+      "strategic-behavior": "20d2471213ad8c6c69a5e76ffa8fee3d7d520cad103086f513888a3579f04be4"
+    },
+    "hazards": "e4031378619b1e14cae40f51bddf2fa1b2a5ca27722a02ef04092a2df489ae9d"
+  },
+  "members": [
+    {
+      "conceptId": "adversaries",
+      "placementId": "adversaries",
+      "standing": "owned",
+      "claims": [
+        "the powers an adversary is assumed to have over a system, such as observing messages or state, delaying and reordering messages within what the timing model allows, injecting or altering messages on channels that do not authenticate them, and corrupting participants by taking over their keys and state; why analyses commonly treat the corrupted participants and the scheduling of messages as one coordinating adversary, which covers coordination among them without assuming that it occurs; and why a power the model leaves out becomes an assumption the guarantee rests on. Byzantine Behavior owns what corrupted participants then do, and Threat Models owns the statement that scopes the analysis",
+        "when and whom an adversary may corrupt: a static adversary fixes the participants it corrupts before the execution, while an adaptive one chooses them during it from what it has observed; why a design whose security rests on a small set of participants known in advance, such as a leader or a committee, can hold against a static adversary and fail against an adaptive one that corrupts that set once it is known, unless members are revealed only as they act and corrupting a member afterwards can no longer change what it contributed or corruption is assumed to take longer than the set serves; mobile corruption is named and left to Fault Models",
+        "the computational bound on an adversary: a computationally bounded adversary is assumed unable to carry out computations that are infeasible within the period a guarantee must last, which is what computationally secure cryptography, such as signatures, hash functions and public-key encryption, relies on, while an unbounded one is limited by the information it lacks, and against it only information-theoretic guarantees hold; why a guarantee built on the bounded model weakens if the adversary's computing capability grows within that period, as with records kept now to be broken later. The economic cost of acquiring control is named and left to Cost of Corruption, and the hardness of primitives to Cryptographic Security"
+      ],
+      "excludes": [
+        "threat-models",
+        "byzantine-behavior",
+        "collusion",
+        "strategic-behavior",
+        "fault-models",
+        "threat-modeling",
+        "security-assumptions",
+        "trust-assumptions",
+        "trust-distribution",
+        "sybil-attacks",
+        "cost-of-corruption",
+        "attack-cost",
+        "economic-security",
+        "cryptographic-security"
+      ]
+    },
+    {
+      "conceptId": "threat-models",
+      "placementId": "threat-models",
+      "standing": "owned",
+      "claims": [
+        "what a threat model states and why each part is needed: the assets and the properties wanted of them, the adversary assumed (whose powers belong to Adversaries), the adversary's goals, such as theft, halting the system, excluding others or disruption at its own loss, the assumptions the analysis relies on, and what it declares out of scope; a security guarantee stated without such a statement leaves open against whom and for what it holds, and the goal decides which properties are at stake. Threat Modeling owns the activity of deriving and maintaining it, and Security Assumptions and Trust Assumptions own the assumptions themselves",
+        "how a threat model bounds what a guarantee claims and how guarantees under different models compare: a guarantee holds for the adversaries and goals the model admits and says nothing beyond them; one model is at least as strong as another, for the same property of the same system, when it admits every adversary the other admits, so a guarantee proven under the stronger carries to the weaker while one proven under the weaker need not carry to the stronger, and models that each admit an adversary the other excludes are not ordered by this relation, so comparing two designs' security needs their threat models as well as their claims",
+        "what a threat model leaves out and what follows from it: exclusions such as side channels, compromise of users' own devices, coercion of key holders, misuse of upgrade or governance powers, and agreements made outside the protocol; why losses can come from threats outside the model rather than from breaking a guarantee within it, and why an exclusion stated explicitly can be assigned to another control or accepted as a risk, while one left unstated is assigned to no one. Threat Modeling owns finding such threats and keeping the model current"
+      ],
+      "excludes": [
+        "adversaries",
+        "threat-modeling",
+        "security-assumptions",
+        "trust-assumptions",
+        "assumptions",
+        "security-requirements",
+        "attack-trees",
+        "risk-assessment",
+        "trust-boundaries",
+        "fault-models",
+        "governance-attacks",
+        "strategic-behavior"
+      ]
+    },
+    {
+      "conceptId": "byzantine-behavior",
+      "placementId": "byzantine-behavior",
+      "standing": "owned",
+      "claims": [
+        "what a Byzantine participant can do beyond stopping or omitting messages, such as equivocating by sending conflicting messages to different participants, sending well-formed messages with false contents, misreporting what it received from others, and timing or targeting its deviations using what it has observed; and why protocols that tolerate it do not let an outcome rest on one participant's unchecked report, cross-checking reports, relaying what they received or relying on signatures, which make forging correct participants' messages infeasible but do not stop a faulty participant from signing conflicting statements of its own. Fault Models owns the fault classes and their thresholds",
+        "which Byzantine behavior can be detected and attributed, and by whom: where messages are signed, conflicting statements, or statements invalid by rules anyone can check from public data, under one participant's key are evidence any third party can verify, while with only pairwise authentication such as message authentication codes a recipient may know a peer is faulty but has nothing to show others, and omission, delay and false reports about inputs no one else can check commonly leave no evidence a third party can verify; and why evidence attributes misbehavior to a key, not to the intent or operator behind it, since a bug, a stolen key and malice can produce the same statements. Slashing is named as one use of such evidence",
+        "how the harm a Byzantine participant can do depends on the role it holds: one that proposes, orders, aggregates or relays for others can mislead or stall those who depend on its output, while one that votes acts mainly through the weight it contributes to thresholds, where equivocating votes can count toward conflicting outcomes; and why designs therefore validate what such roles produce and provide for replacing whoever holds them rather than trusting the role, leaving the replacement constructions to the protocols that define them"
+      ],
+      "excludes": [
+        "fault-models",
+        "failures",
+        "fault-assumptions",
+        "fault-tolerance",
+        "quorums",
+        "partial-knowledge",
+        "consensus",
+        "digital-signatures",
+        "slashing",
+        "accountability",
+        "key-compromise",
+        "adversaries",
+        "collusion",
+        "censorship",
+        "strategic-behavior"
+      ]
+    },
+    {
+      "conceptId": "censorship",
+      "placementId": "censorship",
+      "standing": "owned",
+      "claims": [
+        "where the power to censor sits and how it is used: whoever controls a step that an action or participant must pass, such as proposers, builders, sequencers, relays, interfaces, RPC providers or network operators, can exclude through omission, delay, filtering by sender or content, or by raising the cost of inclusion; the power extends as far as alternative paths around that step are missing or costly, and omission can pass for congestion or a low fee. Censorship Resistance owns the defenses and their measurement, and reordering for profit belongs to Transaction Ordering and MEV",
+        "censorship of time-bound actions: where a guarantee depends on an action being included within a window, such as a challenge, an exit, a liquidation or a renewal before expiry, delaying it past the window has the effect of excluding it, so the censor needs control of inclusion only for what remains of the window when the action is submitted, at most its length, rather than indefinitely, and a delay can cause a loss that later inclusion does not undo; Challenge Periods and Forced Inclusion are named, not explained",
+        "why parties censor and how that shapes the exclusion: it can be compelled by law or regulation, paid for by a party that benefits, or chosen by the includer for its own gain or to protect an attack under way; targeted exclusion of particular accounts differs from broad exclusion of a class of actions; and includers that follow a common rule, such as one jurisdiction's sanctions, can remove alternative paths together without any agreement among them, which is correlated exclusion rather than Collusion. Bribery is named only"
+      ],
+      "excludes": [
+        "censorship-resistance",
+        "transaction-ordering",
+        "mev",
+        "front-running",
+        "sequencers",
+        "proposer-builder-separation",
+        "inclusion-lists",
+        "forced-inclusion",
+        "challenge-periods",
+        "escape-hatches",
+        "data-withholding",
+        "eclipse-attacks",
+        "denial-of-service-attacks",
+        "liveness",
+        "bribery",
+        "collusion",
+        "adversaries"
+      ]
+    },
+    {
+      "conceptId": "collusion",
+      "placementId": "collusion",
+      "standing": "owned",
+      "claims": [
+        "what makes coordination collusion: distinct parties pursuing an aligned outcome through an explicit or covert agreement; when it undermines protocol rules, market integrity or other participants, as when reporters agree on a false value, validators agree to exclude or reorder transactions, sellers fix prices or bidders rig an auction; and why such coordination is not illegal or prohibited in every case: some agreements, such as price fixing, are prohibited by law, while protocols often have no rule against agreements they cannot see, its harm depending on the rule, assumption or interest it defeats. Distinguished by name from Sybil Attacks (one party behind many identities), Coalition Formation, Bribery and Algorithmic Collusion (convergence without agreement)",
+        "how a collusive agreement holds together when each member could gain by quietly departing from it: members need to verify one another's conduct and a way to enforce the terms, such as repeated dealings with the threat of retaliation, side payments, deposits, or contracts that bind the terms without trust between members; and why designs that keep members from proving how they acted, for example receipt-free voting, or that reward a member for exposing the agreement make collusion harder to sustain without preventing it. Coalition Formation owns when a group is stable against members leaving openly, and Bribery owns paying another party to act",
+        "how collusion is told apart from behavior that merely looks coordinated: correlated actions can arise from a common cause, such as shared software, shared information, a common operator or a common rule, and parallel pricing that algorithms reach without agreement is the territory of Algorithmic Collusion, while an agreement can leave no observable trace; so observed correlation is consistent with common dependence, concentration or agreement and does not by itself prove agreement, and establishing collusion needs evidence of the agreement or of conduct that independent choices do not explain. Trust Distribution owns counting possible colluders against a threshold"
+      ],
+      "excludes": [
+        "sybil-attacks",
+        "coalition-formation",
+        "bribery",
+        "algorithmic-collusion",
+        "trust-distribution",
+        "trust-assumptions",
+        "strategic-behavior",
+        "cooperation",
+        "competition",
+        "coordination-communication",
+        "collective-action",
+        "market-concentration",
+        "oracle-manipulation",
+        "vote-buying",
+        "commit-reveal",
+        "censorship",
+        "adversaries",
+        "byzantine-behavior"
+      ]
+    },
+    {
+      "conceptId": "strategic-behavior",
+      "placementId": "strategic-behavior",
+      "standing": "dual-role"
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "threat-models",
+        "adversaries"
+      ],
+      "split": "Threat Models owns the statement that scopes a security analysis: the protected assets and the properties wanted of them, the adversary's goals, the assumptions relied on and the exclusions, and how the statement bounds and lets one compare what guarantees claim; it names the adversary it assumes without describing its powers. Adversaries owns the assumed attacker itself: what it can observe, delay, inject or corrupt, its computational bound, and when and whom it may corrupt (static or adaptive corruption)."
+    },
+    {
+      "concepts": [
+        "collusion",
+        "algorithmic-collusion"
+      ],
+      "split": "Collusion owns coordination among distinct parties through explicit or covert agreement: what makes coordination collusion, how an agreement is held together and enforced, and how agreement is told apart from merely correlated behavior. Algorithmic Collusion owns the supra-competitive outcomes that pricing agents reach and sustain without communication or agreement, how they arise and how they can be judged; Collusion names it as the case without agreement and does not explain its mechanism."
+    }
+  ],
+  "concepts": {
+    "adversaries": {
+      "model": {
+        "meaning": "Note: the adversary as an analysis assumes it: the party that makes the choices a protocol leaves open in the way most damaging to it, defined by the powers it is granted, when and whom it may corrupt, and the computation it is assumed able to do. A modeled attacker, not a description of real attackers; its goals are Threat Models'.",
+        "kind": "actor",
+        "parents": {
+          "adversarial-environments": "Parent says adversaries choose open choices to make protocols fail, are bounded by scarce resources rather than identities, and differ by type (arbitrary, profit-seeking, chokepoint), with collusion changing the arithmetic. Adds: the adversary's specified powers over messages, state and participants; static vs adaptive corruption; the computational bound. Do not restate the resource/identity point, the defense-by-type paragraph or the collusion arithmetic.",
+          "security-models": "Parent says a security model states the adversaries it assumes, and that conditions age as computation gets cheaper or stake concentrates. Adds: what 'the adversary assumed' consists of, why each omitted power becomes a condition, and the bounded/unbounded split with the period a guarantee must last. Do not restate 'conditions age as computation gets cheaper'; add the period and the record-kept-now mechanism instead."
+        },
+        "claims": [
+          "the powers an adversary is assumed to have over a system, such as observing messages or state, delaying and reordering messages within what the timing model allows, injecting or altering messages on channels that do not authenticate them, and corrupting participants by taking over their keys and state; why analyses commonly treat the corrupted participants and the scheduling of messages as one coordinating adversary, which covers coordination among them without assuming that it occurs; and why a power the model leaves out becomes an assumption the guarantee rests on. Byzantine Behavior owns what corrupted participants then do, and Threat Models owns the statement that scopes the analysis",
+          "when and whom an adversary may corrupt: a static adversary fixes the participants it corrupts before the execution, while an adaptive one chooses them during it from what it has observed; why a design whose security rests on a small set of participants known in advance, such as a leader or a committee, can hold against a static adversary and fail against an adaptive one that corrupts that set once it is known, unless members are revealed only as they act and corrupting a member afterwards can no longer change what it contributed or corruption is assumed to take longer than the set serves; mobile corruption is named and left to Fault Models",
+          "the computational bound on an adversary: a computationally bounded adversary is assumed unable to carry out computations that are infeasible within the period a guarantee must last, which is what computationally secure cryptography, such as signatures, hash functions and public-key encryption, relies on, while an unbounded one is limited by the information it lacks, and against it only information-theoretic guarantees hold; why a guarantee built on the bounded model weakens if the adversary's computing capability grows within that period, as with records kept now to be broken later. The economic cost of acquiring control is named and left to Cost of Corruption, and the hardness of primitives to Cryptographic Security"
+        ],
+        "excludes": [
+          "threat-models",
+          "byzantine-behavior",
+          "collusion",
+          "strategic-behavior",
+          "fault-models",
+          "threat-modeling",
+          "security-assumptions",
+          "trust-assumptions",
+          "trust-distribution",
+          "sybil-attacks",
+          "cost-of-corruption",
+          "attack-cost",
+          "economic-security",
+          "cryptographic-security"
+        ],
+        "placements": {
+          "adversaries": "Leaf under Adversarial Environments (Foundations). Model of the attacker is domain-neutral; holds as long as no sentence assumes a blockchain, a cryptographic setting or a security-model framing as the only setting. No 'in this domain' / 'below'.",
+          "adversaries-in-security-models": "Leaf under Security Models. Same text holds: powers, corruption timing and computational bound are what 'the adversaries it assumes' unpacks into. Must not lean on Threat Models' parts (assets, goals, exclusions) or on Trust Boundaries, both siblings here."
+        },
+        "fields": {
+          "role": [
+            "The worst-case chooser: the analysis quantifies over every strategy the adversary has within its granted powers; a guarantee established in the model holds against all of them, and against nothing outside the model.",
+            "One coordinating adversary (claim 1): corrupted participants plus control of message scheduling treated as one entity with pooled knowledge. Covers uncoordinated corrupted parties too, because acting independently is one strategy open to it; says nothing about whether coordination occurs. Hedge with 'commonly': convention in fault-tolerant and cryptographic protocol analysis; some analyses assume a benign or random scheduler, and game-theoretic analyses treat parties as separate rational agents (Strategic Behavior, name only).",
+            "Pitfall: do not explain agreement, enforcement or coalitions (Collusion), or counting colluders against a threshold (Trust Distribution). Name only.",
+            "Pitfall: the adversary has no motive in this model. Goals (theft, halting, exclusion, disruption at a loss) are Threat Models' (hazard split); profit-seeking is Strategic Behavior's."
+          ],
+          "powers": [
+            "Each power is granted or withheld by the model; none is a fact about every attacker. Write 'a model may grant', not 'the adversary can'.",
+            "Observe messages or state: some models assume private channels or hidden local state, so observation is itself a modeling choice.",
+            "Delay and reorder: only within the timing model. Synchrony bounds delay by a known limit; partial synchrony, in one common formulation, allows unbounded delay only before an unknown stabilization time; asynchrony allows arbitrary finite delay. Common models with reliable channels do not let it drop messages between correct participants for good; do not say 'drop' unless the model grants loss or omission.",
+            "Inject or alter: only on channels that do not authenticate messages. Authentication stops forging a correct participant's messages (with computationally secure signatures or MACs this rests on the computational bound, claim 3); it does not by itself stop delay or replay.",
+            "Corrupt: full (active) corruption takes over keys and state; models also define weaker corruption, such as reading a participant's state while it follows the protocol, or only stopping it. Name that corruption has degrees; fault classes and thresholds are Fault Models'. What the corrupted participant then does (equivocation, false contents, misreports) is Byzantine Behavior's: do not list it.",
+            "Facet watch, 'operational limits': the bounds the model sets on these powers (timing bound, corruption budget, computation). The scarce-resource bound and identities are the parent's; the share threshold is Fault Models' and Trust Distribution's; Sybil Attacks named only."
+          ],
+          "trustPlaced": [
+            "The analysis relies on the real attacker staying within the modeled powers. A power the model leaves out (for example, delaying past the timing bound, corrupting more than the budget, observing a participant's local randomness, corrupting keys after their use) is an assumption the guarantee rests on: if a real attacker has it, the guarantee is not established, not necessarily broken.",
+            "Pitfall: say what the omitted power turns into; how assumptions are stated, classified and examined is Security Assumptions' and Trust Assumptions'. Name only.",
+            "Pitfall: avoid 'proves' and 'guarantees fail'; the analysis simply does not cover the excess power."
+          ],
+          "variants": [
+            "Static vs adaptive (claim 2). Static: corrupted set fixed before the execution. Adaptive: chooses during it from what it has observed. In common models both share the same corruption budget; adaptive changes which participants, not how many.",
+            "Known small set (leader, committee): if selected unpredictably, a static adversary's set is independent of it, so the set's corrupted share tracks the overall share (with high probability for a large enough random sample). Condition: the selection is not predictable when the static adversary fixes its set, and the adversary cannot bias it afterwards (for example by choosing or withholding its corrupted participants' contributions to the selection). An adaptive adversary with a budget at least the set's size corrupts the whole set once it is known, though it controls a small share overall.",
+            "Escapes in the claim: members revealed only as they act (secret self-selection, secret leader election) — holds only if corrupting a member after it acts cannot change what it contributed (it acts once, its one-time keys are erased, and the adversary cannot withdraw a message already sent; a 'strongly adaptive' adversary that can remove messages in transit defeats it). A leader exposed by its first act stays exposed for later steps. Corruption delay: an assumption that corruption takes longer than the set's term; it is itself a power left out (claim 1, third part).",
+            "Pitfall: denial of service against a known leader is a separate exposure, not corruption; do not mix it in. Mobile corruption (corrupted set moves over time, participants recover) named only, left to Fault Models.",
+            "Bounded vs unbounded (claim 3). Bounded: assumed unable to complete computations infeasible within the period a guarantee must last; 'unable' means succeeds only with negligible probability, not impossible. Unbounded: any computation; limited by the information it lacks and still by every other limit the model sets (corruption budget, channel assumptions). Against it only information-theoretic guarantees hold (for example, secret sharing below its threshold, one-time pads, unconditionally secure MACs).",
+            "Pitfall: not all cryptography is computational. Signatures, hashes and public-key encryption rely on the bounded model; information-theoretic constructions are cryptographic too. Do not write 'cryptographic guarantees rely on the bounded model' without that qualifier (claim wording reported).",
+            "Period: the length a guarantee must last differs by property. Confidentiality lasts as long as the secret matters, so ciphertexts recorded now can be decrypted later if capability grows (records kept now to be broken later). Authenticity matters as long as a signature or key is still relied upon; a later forgery matters where old keys or signatures are still accepted, not retroactively for every past use.",
+            "Growth: more or cheaper computation, or a new computing model such as quantum computers, which threaten some primitives (factoring and discrete-log based) far more than others (hash functions, symmetric ciphers). Do not write 'quantum breaks cryptography'. New algorithms against a primitive concern its hardness: Cryptographic Security, name only.",
+            "Pitfall: 'computationally bounded' (what computations are feasible) is not 'controls less than a share of computing power' (resource share, the parent's and Cost of Corruption's). Economic cost of acquiring control: Cost of Corruption, Attack Cost, Economic Security, name only."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A modeled attacker specified along independent dimensions (granted powers, corruption timing, computational bound), each tied by a condition to which guarantees survive: conditional argument, not order, branching, states or alternatives read across shared dimensions.",
+        "whyProse": "Each claim is an argument with conditions: a power counts only within the timing model or channel; the known-set failure needs the selection condition and the escapes need theirs; the bounded model needs the period and the property. A comparison of static/adaptive or bounded/unbounded would be two-row variants on one dimension each, and the two axes are independent, so crossing them in one table invents combinations the record does not discuss. The threat-models ~ adversaries confusion is a sibling split, not a conflation this record should draw as a distinction block (that would explain the sibling's parts). No process, loop or persistent state.",
+        "level": "The parents name adversaries and say they are bounded by resources and assumed by security models; what an adversary model consists of (powers, corruption timing, computation) is this concept's own, and no other member or placed concept owns those dimensions.",
+        "territory": "Draws no sibling relationship: goals, assets and exclusions stay with Threat Models; what corrupted participants do with Byzantine Behavior; agreement among them with Collusion; motives with Strategic Behavior; fault classes, thresholds and mobile corruption with Fault Models; resource cost with Cost of Corruption; primitive hardness with Cryptographic Security. Each is named where a boundary needs it.",
+        "placements": "Prose with no positional reference and no domain-specific framing reads the same under Adversarial Environments and Security Models; both placements are leaves, so the text must stand complete at each."
+      },
+      "audit": {
+        "at": "2026-10-20T11:32:53.775Z",
+        "note": "Re-audit after repair 1, scoped. The whole record was re-read at both placements. No complete audit was needed: the repair widened one gloss, completed one condition and changed one adverb, and it did not change the argument, its assumptions, the structure (prose, as designed) or the scope. Blocking findings resolved. (1) Static-adversary selection: the condition is now 'could not predict when it fixed its corruptions and cannot bias afterwards, for instance through its corrupted participants' contributions to it'. That makes the selection independent of the fixed corrupted set over the whole execution, so both conclusions follow under their hedges ('only about as often as its share of the selection weight', 'large enough', 'with high probability'). The adaptive contrast and the escapes paragraph still hold. Model variants[1] now carries the same 'cannot bias it afterwards' condition. (2) Information-theoretic gloss: it is now 'those that need no limit on computation', with two sources. One is lack of information (one-time pad, threshold secret sharing below the threshold). The other is the model's other limits alone (an agreement protocol that uses no cryptography, whose argument rests on limits such as a corruption bound and channels the model assumes authenticated). 'Only ... hold' is now true for every case, and the gloss agrees with the preceding sentence ('limited by the information it lacks, along with the model's other limits'). The new example is accurate. Byzantine agreement over model-assumed authenticated point-to-point channels without signatures holds against an unbounded adversary below its corruption bound, and the literature calls this setting information-theoretic, or unconditional. 'Such as' keeps the list of limits open (a timing model may also be needed). The example names no threshold and does not explain agreement, so the Fault Models and Byzantine Behavior boundaries hold. It is consistent with the powers paragraph, where authentication rests on the computational bound only 'when it rests on computationally secure signatures or codes'. 'The one-time pad and threshold secret sharing are cryptographic too' now has an explicit referent, and the conclusion that dependence on the bound belongs to computationally secure cryptography still follows. Advisory A2 of the first audit ('matters most') is answered by 'is sharp'. Every use of the following terms was re-read and each is in one sense. 'Information-theoretic' appears once, in the widened sense. 'Unbounded' appears twice, consistent. 'Cryptographic' and 'cryptography' cover protocols, Cryptographic Security named, 'uses no cryptography', 'cryptographic too' and computationally secure cryptography versus cryptography as a whole. 'Bias' appears once, as a condition. 'Selection' covers the selection weight and private self-selection. Overlap per placement: no sentence restates the Adversarial Environments parent; the definition's worst-case clause and the coordination clause are claim-mandated and add the reasons. Against Security Models, the period and record-kept-now mechanism are added, and 'conditions age' is not restated. Territory: Threat Models is pointed to only (goals, assets), and the hazard split holds. Byzantine Behavior, Fault Models (degrees, budget, mobile corruption), Collusion, Strategic Behavior, Security Assumptions, Trust Assumptions, Cost of Corruption and Cryptographic Security are named only. Depth: 1,428 words, and each paragraph ties to a claim. Paragraphs 2 to 4 cover claim 1's powers, the coordinating adversary and omitted powers. Paragraphs 5 to 7 cover claim 2's static versus adaptive, the known set and the two escapes with their conditions. Paragraphs 8 and 9 cover claim 3's bound, the unbounded case and the period by property. The repair's added words carry the second source of information-theoretic guarantees and the bias condition, both needed for accuracy. Canonical validity: no positional or time-sensitive words, American English, plain text. Advisory: (a) 'cannot bias afterwards, for instance through its corrupted participants' contributions to it': 'it' reads more naturally as 'the selection' than as 'the set'; 'contributions to the selection' would be clearer. (b) 'whoever corrupts it later cannot sign a different contribution in its place' rests implicitly on signature unforgeability under the computational bound; the context makes this clear. (c) Model variants[4] lists only secrecy-type examples for information-theoretic guarantees; the record is right, and the model could add the agreement case. (d) First-audit advisories A1 (full versus passive corruption wording), A5 (dense timing sentence) and A6 ('codes' versus 'message authentication codes') remain in untouched text, along with auditor B's A3 and A4 (whose state is observed; concrete-security wording). (e) 'threshold secret sharing are cryptographic too' refers to the information-theoretic schemes just described; computational secret-sharing variants exist, but the referent is clear.",
+        "resolutions": [
+          {
+            "id": "names-concept:67931e7014",
+            "resolution": "Byzantine Behavior is named once as the owner of what a corrupted participant then does; no corrupted behaviors are listed."
+          },
+          {
+            "id": "names-concept:eb239f3ec0",
+            "resolution": "Collusion is named once ('Agreements among real parties are the subject of Collusion'); agreement, enforcement and coalition arithmetic are not explained."
+          },
+          {
+            "id": "names-concept:bf032692b6",
+            "resolution": "Cost of Corruption is named once to draw the line between the computational bound and the resource share the adversary controls; acquisition cost is not explained."
+          },
+          {
+            "id": "names-concept:7c0eed80d2",
+            "resolution": "Cryptographic Security is named once as the owner of how hard the underlying problems are. The quantum sentence states only the effect of growing capability, hedged ('sufficiently large', 'attacks known'), and does not explain primitive hardness."
+          },
+          {
+            "id": "names-concept:2cd4d471a3",
+            "resolution": "Digital signatures are named as an example of computationally secure primitives that rely on the bound, and in the erasure condition; signature schemes are not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault Models is named twice, as the owner of corruption degrees, corruption bounds and mobile corruption; no fault class or threshold is explained, and the new agreement example names a corruption bound without a value."
+          },
+          {
+            "id": "names-concept:1363a07cf7",
+            "resolution": "'fault-tolerance' appears only in the definition's scope ('a security or fault-tolerance analysis') and in 'fault-tolerant ... protocols'; it is not explained."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "Hash functions are named as computationally secure primitives (collisions findable by unlimited computation) and in the quantum comparison; their construction is not explained."
+          },
+          {
+            "id": "names-concept:d09b7e8456",
+            "resolution": "'local state' appears only in 'private channels or local state it cannot read' and 'a participant's local randomness'; it is a modeling choice for observation, not an explanation of local state."
+          },
+          {
+            "id": "names-concept:10a341931b",
+            "resolution": "Secret sharing appears as an example of an information-theoretic guarantee ('fewer shares than a threshold reveal nothing'), as claim 3 and model variants[4] allow; how shares are built or reconstructed is not explained."
+          },
+          {
+            "id": "names-concept:d4e0f05534",
+            "resolution": "Security Assumptions is named once, with Trust Assumptions, as the owner of how omitted-power conditions are stated and examined; the record says only what an omitted power turns into, as the claim requires."
+          },
+          {
+            "id": "names-concept:17ad7d6626",
+            "resolution": "False positive: 'state models' matches wording about models and participant state, not the State Models concept. That concept is neither discussed nor explained."
+          },
+          {
+            "id": "names-concept:6ed4ba3081",
+            "resolution": "Strategic Behavior is named once, as the setting of game-theoretic analyses that treat participants as separate agents; motives and incentives are not explained."
+          },
+          {
+            "id": "names-concept:9317a04eaa",
+            "resolution": "Threat Models is named once as the owner of what the analysis protects and what an attacker wants. The hazard split holds: the record keeps to capabilities, corruption and computation, and states no goals, assets or exclusions."
+          },
+          {
+            "id": "names-concept:3392012f2a",
+            "resolution": "Trust Assumptions is named once, with Security Assumptions; it is not explained."
+          },
+          {
+            "id": "absolutes:53b027d4cb",
+            "resolution": "Every absolute was checked. 'cannot' marks model assumptions or conditions (local state it cannot read; keys cannot be taken after use; cannot bias afterwards; cannot withdraw a message already sent) or a consequence stated under its condition (erasure, so whoever corrupts it later cannot sign a different contribution). 'impossible' appears only in 'not that success is impossible'. 'guarantee'/'guarantees' are nouns, scoped by the model ('holds against every strategy available to the modeled adversary and says nothing about any others'). The new 'only information-theoretic guarantees hold, those that need no limit on computation' holds in every case, since a guarantee that needs such a limit is void against an unbounded adversary."
+          },
+          {
+            "id": "depth-long:91101e9e33",
+            "resolution": "1,428 words, justified. Each of the nine paragraphs ties to one of the three claims: paragraphs 1 to 4 to claim 1, paragraphs 5 to 7 to claim 2, paragraphs 8 and 9 to claim 3. Their length comes from conditions the claims need: the timing model, channel authentication, the selection condition with bias, erasure and non-withdrawal for the escapes, and the period by property. The repair's additional words are the second source of information-theoretic guarantees and the bias condition, both required for accuracy. No point is made twice and no background goes unused."
+          }
+        ],
+        "recordFingerprint": "83a267ff2d2353b5a87302412aa8fb0ee798091d0a4aa3749caa684ccc368043"
+      }
+    },
+    "threat-models": {
+      "model": {
+        "meaning": "A threat model is the stated scope of a security analysis: the assets and the properties wanted of them, the adversary and goals it assumes, the assumptions it relies on, and what it declares out of scope.",
+        "kind": "artifact",
+        "parents": {
+          "adversarial-environments": "Parent says a protocol must hold against the most damaging behavior its threat model permits, and contrasts defenses by adversary type. Adds: what the statement contains, why each part is needed, how it bounds and orders guarantees, and what its exclusions leave. Do not restate the parent's 'most damaging behavior' sentence or its profit-seeking vs disruptive defense contrast; build on it without depending on it.",
+          "security-models": "Parent defines a security model broadly (adversaries, trust boundaries, assumptions) and says assumptions age. Adds: the threat model's own parts (assets and properties, goals, exclusions), the guarantee-bounding and ordering logic, and the consequences of exclusion. Do not restate the parent's definition, its aging-assumptions point, trust boundaries or defense in depth; do not define how a threat model relates to a security model (no claim covers it, and the Foundations placement has no such parent)."
+        },
+        "claims": [
+          "what a threat model states and why each part is needed: the assets and the properties wanted of them, the adversary assumed (whose powers belong to Adversaries), the adversary's goals, such as theft, halting the system, excluding others or disruption at its own loss, the assumptions the analysis relies on, and what it declares out of scope; a security guarantee stated without such a statement leaves open against whom and for what it holds, and the goal decides which properties are at stake. Threat Modeling owns the activity of deriving and maintaining it, and Security Assumptions and Trust Assumptions own the assumptions themselves",
+          "how a threat model bounds what a guarantee claims and how guarantees under different models compare: a guarantee holds for the adversaries and goals the model admits and says nothing beyond them; one model is at least as strong as another, for the same property of the same system, when it admits every adversary the other admits, so a guarantee proven under the stronger carries to the weaker while one proven under the weaker need not carry to the stronger, and models that each admit an adversary the other excludes are not ordered by this relation, so comparing two designs' security needs their threat models as well as their claims",
+          "what a threat model leaves out and what follows from it: exclusions such as side channels, compromise of users' own devices, coercion of key holders, misuse of upgrade or governance powers, and agreements made outside the protocol; why losses can come from threats outside the model rather than from breaking a guarantee within it, and why an exclusion stated explicitly can be assigned to another control or accepted as a risk, while one left unstated is assigned to no one. Threat Modeling owns finding such threats and keeping the model current"
+        ],
+        "excludes": [
+          "adversaries",
+          "threat-modeling",
+          "security-assumptions",
+          "trust-assumptions",
+          "assumptions",
+          "security-requirements",
+          "attack-trees",
+          "risk-assessment",
+          "trust-boundaries",
+          "fault-models",
+          "governance-attacks",
+          "strategic-behavior"
+        ],
+        "placements": {
+          "threat-models": "Leaf under Adversarial Environments. Nothing in the claims is specific to a domain or system type: the statement and its logic apply to any security claim. Must not lean on the parent's sentences or on the Security Models parent's vocabulary.",
+          "threat-models-in-security-models": "Leaf under Security Models, beside Adversaries, Byzantine Behavior, Trust Boundaries, Security Assumptions and Defense in Depth. Same text holds: it names the adversary and the assumptions without explaining them, and treats assigning an exclusion to another control without explaining layered defense. No positional or domain wording ('below', 'in this domain')."
+        },
+        "fields": {
+          "contents": [
+            "Parts: assets plus the properties wanted of them; the adversary assumed; the adversary's goals; the assumptions relied on; the exclusions. For each, the note is why it is needed: without it, a guarantee leaves open against whom or for what it holds.",
+            "Assets and properties: a guarantee is about a property of something (funds not taken, the system keeps progressing, actions are included). Properties wanted are not security requirements or their derivation (Security Requirements, excluded); do not draw the threat -> requirements -> controls chain.",
+            "Adversary assumed: name it and say its powers are specified elsewhere (Adversaries). Pitfall: listing what it can observe, delay, inject or corrupt, static vs adaptive corruption, or its computational bound is Adversaries' territory (split). A fault model with a threshold can serve as the adversary assumption: name Fault Models only.",
+            "Goals (theft, halting the system, excluding others, disruption at its own loss): the goal decides which properties are at stake in an attack (theft targets integrity of assets, halting targets progress, exclusion targets inclusion). Keep 'decides which properties are at stake', not 'decides which properties the system has'. A goal assumption also narrows the adversary: a model that admits only profit-seeking adversaries excludes one willing to lose. Do not explain incentive defenses (parent, Strategic Behavior).",
+            "Assumptions: the guarantee is conditional on them and the statement must list them. Security Assumptions and Trust Assumptions (and Assumptions) own what they are, which kinds exist and how they fail; name at most one example, explain none.",
+            "Exclusions: what the analysis declares it does not address; see proves/exposure."
+          ],
+          "producedBy": "Stated by whoever makes the security claim: a protocol specification, a paper's security definition, an audit's scope. How it is derived and kept current is Threat Modeling (authored L1): no attack trees, payoffs, cheapest paths, attack surface or re-review cadence here; name it only.",
+          "proves": [
+            "A threat model proves nothing by itself; it fixes the scope inside which a guarantee is proven or argued.",
+            "Bound: the guarantee holds for the adversaries and goals the model admits and says nothing beyond them. Pitfall: 'says nothing' is not 'fails'. Against an excluded adversary the guarantee may or may not hold; it is simply not established.",
+            "Exposure left by exclusions (claim 3): losses can come from threats outside the model without any guarantee inside it being broken. Example shape, where the model excludes these: a key holder's device is compromised or a key holder is coerced, and funds move with valid signatures; nothing the protocol guaranteed failed. Use 'can'; not every loss is out of scope.",
+            "Claim's example exclusions (side channels, compromise of users' own devices, coercion of key holders, misuse of upgrade or governance powers, agreements made outside the protocol) are exclusions many models make, not ones every model makes. Governance Attacks and Collusion are named only; agreements outside the protocol = e.g. off-chain arrangements among participants, not explained.",
+            "Stated vs unstated exclusion: a stated one can be assigned to another control or explicitly accepted as a risk; an unstated one has no owner because no decision was made about it. Pitfall: unstated does not mean unprotected or certain to be exploited; another control may cover it incidentally, but nobody is responsible for it. Do not explain risk assessment (excluded) or layered defense (Defense in Depth sibling).",
+            "Finding missing threats and keeping the exclusions current is Threat Modeling's: name only."
+          ],
+          "relation": [
+            "Ordering by inclusion of admitted adversaries, for the same property of the same system: model A is at least as strong as B when A admits every adversary B admits. A guarantee proven under A then holds under B, because B's adversaries are among A's; one proven under B need not hold under A.",
+            "Partial, not total: two models can each admit an adversary the other excludes, and then neither is stronger. Example shape: one admits adaptive corruption but assumes bounded message delays; the other admits arbitrary delays but only static corruption, with the same corruption bound otherwise. Static/adaptive are named only (Adversaries owns them).",
+            "One term, one sense: 'stronger model' = admits more adversaries = makes fewer or weaker assumptions. Pitfall: 'stronger assumptions' means the opposite (a weaker model). Do not mix the two phrasings.",
+            "Consequence: two designs' security claims (e.g. tolerated fractions) cannot be compared from the claims alone. If a threshold example is used, give every condition it depends on (timing model, whether messages are signed) and do not explain why the threshold holds (Fault Models). Optional; a qualitative example is safer.",
+            "Equal sets of admitted adversaries: the models are equivalent for this purpose; avoid writing 'stronger' as if strict when it is 'at least as strong'."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Scoping and conditioning: a statement whose parts each limit what a guarantee asserts, a one-way implication between guarantees under ordered models (with incomparable pairs), and the consequences of what is left out.",
+        "whyProse": "The claims are arguments: why each part is needed, a conditional that carries in one direction only and fails to order some pairs, and why out-of-scope losses and unstated exclusions follow. A flow of the five parts would show a list and drop the reason each is needed, which is the content; the ordering is a partial order no block draws and two sentences state with their conditions; the loss-outside-the-model vs broken-guarantee conflation is real but one conditioned sentence carries it, and a distinction block would add a bare contrast without the condition. No order, loop, persistent state, forces in tension or shared-dimension comparison exists in the concept.",
+        "level": "The statement's contents and the logic of bounding and comparing guarantees belong to this concept: neither parent explains them (one only invokes the threat model, the other defines security models broadly), and Adversaries, Threat Modeling and the assumption concepts each own one input or the activity, not the statement.",
+        "territory": "Draws no sibling relationship: the adversary's powers and corruption timing stay with Adversaries, derivation and upkeep with Threat Modeling, the assumptions with Security Assumptions and Trust Assumptions, layered controls with Defense in Depth, boundaries with Trust Boundaries; each is named where the statement refers to it.",
+        "placements": "Prose with no positional wording and no reliance on either parent's sentences reads identically as a complete leaf under Adversarial Environments and under Security Models; examples are generic security claims, not tied to one domain."
+      },
+      "audit": {
+        "at": "2026-10-20T12:01:00.526Z",
+        "note": "Re-audit after repair 1, scoped. The record was re-read at both placements (threat-models under Adversarial Environments; threat-models-in-security-models under Security Models). No complete audit was needed: the repair cut three clauses and reworded three phrases in paragraphs 5 to 7, and it did not change the argument, its assumptions, the structure (prose, as designed) or the scope. Blocking findings resolved. (1) Paragraph 6 now reads 'Both conditions matter, since a guarantee about one property, or about one system, need not carry to another.' 'Need not' claims no impossibility, so implied properties and refinement or reuse arguments no longer contradict it. The 'since' holds: the relation is defined for one property of one system, and a comparison across properties or systems would need a carrying that need not exist. (2) Paragraph 7 no longer says 'No guarantee carries from one design to another'. It now opens with 'What can be compared is the set of adversaries each design has been shown to withstand for the same property, and that needs both models', which is claim 2's own conclusion. (3) The incomparable-model sentence now reads 'does not carry to the other: of the adversaries the other admits, the proof covers only those both admit'. Under the record's own sense of 'carry' (paragraph 6: the proof covered every adversary the target model admits), this is exact. The other model admits an adversary the first excludes, so the guarantee does not carry, and the proof covers exactly the intersection. 'Only' limits what the proof establishes, not what the system resists, which agrees with paragraph 5's bound and with the paragraph's last sentence ('neither result covers everything the other covers'). The example is still correct: adaptive corruption with bounded delays against static corruption with arbitrary finite delays, under the same corruption limit, gives each model an adversary the other excludes. (4) Paragraph 5 cut 'Beyond that it is silent.' Claim 2's 'says nothing beyond them' is still explained by 'the guarantee is not shown to fail; it is not established, and whether the system resists that adversary is a question the analysis did not answer'. (5) Paragraph 6 cut 'Strength belongs to the model, not to its assumptions:'. It now says 'Dropping or weakening an assumption admits at least the adversaries admitted before, so, other things equal, a model with stronger assumptions is at most as strong as one with weaker assumptions'. This holds and fits the ordering's definition. The weaker-assumption model is the stronger-assumption model with an assumption weakened, so it admits every adversary the latter admits. It is therefore at least as strong, which is exactly 'the latter is at most as strong'. The phrase is non-strict, so it agrees with the strict/non-strict distinction that closes the paragraph. Every use of carry, strong(er), weaker and guarantee was re-read. 'The stronger/the weaker' in the carrying sentence are read non-strictly, and when the models are equivalent both directions carry, which 'need not' allows. 'Strictly stronger only when it also admits an adversary the other excludes' is consistent. 'At least as strong ... any goal ... only profit' holds other things equal. The repair introduced no overlap: neither parent's sentences are restated, the adversaries split holds (no powers, corruption timing or computational bound are explained), and the excluded concepts are named only. The text is canonical at both placements and uses American English. Advisory: (a) 'carry' is now used both for a guarantee moving between models and for one moving between properties or systems; the sense is the same (the guarantee extends), but the second use is looser. (b) The sentence on assumptions uses stronger/weaker for assumptions and for models in opposite directions; it is correct but demanding to read. (c) Untouched from the first audits: paragraph 5's 'not shown to fail; it is not established' echoes the Adversaries record, which the group audit may divide or reword; 'the property that a transfer needs a valid signature under the owner's key held throughout' can be misparsed ('key held throughout'); 'The adversary assumed is the next part.' announces; 'attacks the integrity of assets' relabels the authorization property; 'This is why the security of two designs cannot be compared' ties the point only to partiality.",
+        "resolutions": [
+          {
+            "id": "names-concept:672ca4ca77",
+            "resolution": "Adversaries is named as the owner of the adversary model's powers and corruption timing. The incomparable-model example sets static vs adaptive corruption and delay bounds only as the settings of two models, which the model sanctions; it explains neither."
+          },
+          {
+            "id": "names-concept:27129c4d06",
+            "resolution": "Assumptions appear as a part of the statement and as conditions a guarantee depends on. Their nature and failure are left to Security Assumptions and Trust Assumptions, and the ordering sentence uses only that weakening an assumption admits more adversaries, which is this record's ordering claim."
+          },
+          {
+            "id": "names-concept:a4666b2a9c",
+            "resolution": "Collusion is named once, as the concept that concerns agreements made outside the protocol, in the list of recurring exclusions. It is not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault Models is named as the subject of a fault model with its threshold standing in for the adversary part. It is not explained."
+          },
+          {
+            "id": "names-concept:5046331634",
+            "resolution": "Governance Attacks is named as the concept concerning misuse of upgrade or governance powers, in the exclusions list only."
+          },
+          {
+            "id": "names-concept:83a485f780",
+            "resolution": "Protocol specification appears only as one example of what can make a security claim and so carry the statement. It is not explained."
+          },
+          {
+            "id": "names-concept:d4e0f05534",
+            "resolution": "Security Assumptions is named as the owner of what assumptions are and how they fail. The record only says the guarantee depends on them and that the statement lists them."
+          },
+          {
+            "id": "names-concept:62f2066d46",
+            "resolution": "Signature schemes appear only as an assumption example (unforgeable for as long as the guarantee must last) and in the custody and device-compromise examples. How they work is not explained."
+          },
+          {
+            "id": "names-concept:03ce3ca229",
+            "resolution": "Threat Modeling is named twice as the owner of deriving the statement, keeping it current and finding missed threats. The activity is not described."
+          },
+          {
+            "id": "names-concept:3392012f2a",
+            "resolution": "Trust Assumptions is named beside Security Assumptions as an owner of assumptions. It is not explained."
+          },
+          {
+            "id": "absolutes:0e41e8ef77",
+            "resolution": "Each was checked. 'by itself it establishes none' holds (the statement scopes, a proof establishes). 'cannot authorize a transfer by itself' holds under the stated unforgeability with 3 < 7, and withholding leaves 6 < 7. 'cannot be forged' is the stated assumption. 'is established only on condition that they hold' holds. 'Neither is at least as strong', 'does not carry' and 'covers only those both admit' are exact under the record's definition of carrying. 'strictly stronger only when' is the definition. 'the security of two designs cannot be compared from their claims alone' holds because the claims omit the models needed to compare adversary sets. 'a loss does not by itself show' holds. The former false absolutes ('says nothing about another', 'No guarantee carries', 'says nothing under the other', 'Beyond that it is silent') are gone."
+          }
+        ],
+        "recordFingerprint": "cbb4588b64ee4505fe4c6d43887e62cfa512c933f2a65f45e1c38fd7c0ce42fc"
+      }
+    },
+    "byzantine-behavior": {
+      "model": {
+        "meaning": "Note: a participant's departure from its protocol in any way at all, from any cause (bug, corrupted state or memory, misconfiguration, stolen key, malice), with no motive assumed; limited only by what channels and cryptography prevent and by what it (with the adversary coordinating it) can observe. Define briefly: domain prose already defines it (lie, equivocate, tell participants different things); spend the record on what goes beyond.",
+        "kind": "actor",
+        "parents": {
+          "adversarial-environments": "Parent says only that against arbitrary behavior a protocol must limit how much of the system it controls. Adds: what arbitrary behavior concretely does beyond a crash, why tolerant protocols do not rest an outcome on one participant's unchecked word, what evidence it leaves and for whom, and how harm depends on role. Do not restate the parent's resource-bounding or one-third arithmetic, or its collusion paragraph.",
+          "security-models": "Parent frames a security model as adversaries, trust boundaries and assumptions, and does not mention this concept. Adds: what corrupted or faulty participants can actually do, which is part of the setting a security claim addresses. Do not restate the parent's point that the receiving side must check what crosses a boundary; validating role outputs (claim 3) is this concept's own angle, and Trust Boundaries is at most named."
+        },
+        "claims": [
+          "what a Byzantine participant can do beyond stopping or omitting messages, such as equivocating by sending conflicting messages to different participants, sending well-formed messages with false contents, misreporting what it received from others, and timing or targeting its deviations using what it has observed; and why protocols that tolerate it do not let an outcome rest on one participant's unchecked report, cross-checking reports, relaying what they received or relying on signatures, which make forging correct participants' messages infeasible but do not stop a faulty participant from signing conflicting statements of its own. Fault Models owns the fault classes and their thresholds",
+          "which Byzantine behavior can be detected and attributed, and by whom: where messages are signed, conflicting statements, or statements invalid by rules anyone can check from public data, under one participant's key are evidence any third party can verify, while with only pairwise authentication such as message authentication codes a recipient may know a peer is faulty but has nothing to show others, and omission, delay and false reports about inputs no one else can check commonly leave no evidence a third party can verify; and why evidence attributes misbehavior to a key, not to the intent or operator behind it, since a bug, a stolen key and malice can produce the same statements. Slashing is named as one use of such evidence",
+          "how the harm a Byzantine participant can do depends on the role it holds: one that proposes, orders, aggregates or relays for others can mislead or stall those who depend on its output, while one that votes acts mainly through the weight it contributes to thresholds, where equivocating votes can count toward conflicting outcomes; and why designs therefore validate what such roles produce and provide for replacing whoever holds them rather than trusting the role, leaving the replacement constructions to the protocols that define them"
+        ],
+        "excludes": [
+          "fault-models",
+          "failures",
+          "fault-assumptions",
+          "fault-tolerance",
+          "quorums",
+          "partial-knowledge",
+          "consensus",
+          "digital-signatures",
+          "slashing",
+          "accountability",
+          "key-compromise",
+          "adversaries",
+          "collusion",
+          "censorship",
+          "strategic-behavior"
+        ],
+        "placements": {
+          "byzantine-behavior": "Leaf under Adversarial Environments beside Adversaries, Threat Models, Censorship, Collusion and Strategic Behavior. Holds if the record stays on conduct, evidence and role, and leaves adversary powers (Adversaries), coordination among faulty parties (Collusion), exclusion by includers (Censorship) and rational deviation (Strategic Behavior) named only.",
+          "byzantine-behavior-in-security-models": "Leaf under Security Models (Security, Correctness & Resilience). Holds because nothing is consensus-only or Foundations-only: write for any multi-party protocol (replicas, committees, oracle reporters, relayers, peers), never 'in this domain', and do not lean on fault thresholds or quorum sizes, which Fault Models and Quorums own."
+        },
+        "fields": {
+          "powers": [
+            "Equivocation: different, conflicting messages to different participants for the same step; each recipient alone may see a consistent story. Detecting it needs the conflicting messages brought together (relaying, cross-checking).",
+            "Well-formed messages with false contents: syntax and signatures valid, values wrong. Signatures do not stop this; only checking the content against rules or other sources can.",
+            "Misreporting what it received: where relayed messages are signed by their originators it cannot alter or forge them, but can omit, select, or present stale ones; where they are unsigned it can fabricate them.",
+            "Timing and targeting: sends, withholds, delays its own messages selectively, to chosen recipients, at chosen moments, using what it has observed. It controls what it sends, including messages it relays for others; delaying traffic between correct participants that does not pass through it is a separate power, an Adversaries power (name only).",
+            "Also every crash or omission behavior (Fault Models' nesting); do not re-explain the class chain or thresholds.",
+            "Coordination among several faulty participants: name Collusion / Adversaries, do not explain."
+          ],
+          "trustPlaced": [
+            "Claim 1 pitfall: 'do not let one participant's report decide an outcome alone' is true of unchecked reports. A statement others can check themselves (signed evidence of misbehavior, a validity proof) can carry weight from one source because it is checked, not trusted. Say 'unchecked' or equivalent; see claim-accuracy note.",
+            "Means named in the claim: cross-checking reports from several participants, relaying what was received so equivocation surfaces, signatures. Name, do not build any protocol.",
+            "Signatures: forging a correct participant's message is infeasible only under conditions: a computationally bounded adversary and a secure scheme (Adversaries owns the bound), the participant's key not compromised (a participant whose key is taken is counted faulty in the usual models; Key Compromise named only), and verifiers holding the right key-to-participant binding.",
+            "What signatures do not stop: the key holder signing conflicting statements of its own (equivocation), signed false contents, omission, delay, selective relaying, replay of a valid old message where messages are not bound to their context (round, height, chain). They prove who signed, not that the content is true.",
+            "No threshold numbers (more than three times as many processes, or two times with signatures in synchrony): Fault Models owns them."
+          ],
+          "misbehaviour": [
+            "Evidence a third party can verify needs all of: transferable signatures (not only pairwise authentication such as message authentication codes, which convince the recipient but not others); statements that carry enough context to show they conflict under the protocol's rules (same height/round/view, same chain); the verifier knowing those rules and the key's binding to the participant. Then two conflicting signed statements are evidence anyone can check.",
+            "'Invalid statements' are third-party evidence only where the invalidity can be checked from the statement plus public data (e.g. a signed block whose state transition fails on re-execution from known prior state). A signed false report about an input no one else can observe is not.",
+            "Without transferable signatures: a recipient may know a peer is faulty from what it saw itself, but has nothing to show others; its accusation is itself just another report a faulty participant could also make.",
+            "Omission and delay commonly leave no verifiable evidence: a missing message cannot be told apart from loss, delay or a lying accuser. Even where absence is publicly visible (a missing vote or record on a shared ledger), it shows absence, not that the participant rather than the network or an includer caused it. Keep 'commonly'; do not say 'never'.",
+            "Attribution reaches a key, not intent or operator: a bug, an operator running two instances with one key, a stolen key and malice can produce identical signed statements. Binding a key to an operator needs a separate registration; intent is not shown by the statements at all. Do not explain key compromise or accountability (both excluded), and slashing is named as one use of such evidence only.",
+            "Do not claim detection prevents harm: evidence can arrive after the conflicting statements were acted on (Fault Models notes the delayed-exposure point under partial synchrony; do not rebuild it)."
+          ],
+          "role": [
+            "Harm depends on the role held. Producer roles (propose, order, aggregate, relay for others): others depend on their output, so a faulty holder can mislead them (conflicting or invalid proposals, a wrong aggregate (caught where the aggregate is verifiable) or an incomplete one (often not caught), selective relaying) or stall them by withholding.",
+            "Validation catches what is checkable (validity, signatures, consistency); it does not catch choices among valid alternatives (what to include, in what order) or withholding; those are what replacing the holder addresses. Choice of inclusion is Censorship's territory, name only; no MEV.",
+            "Voter roles: act mainly through the weight they contribute. Equivocating votes can count toward conflicting outcomes; in designs whose quorums are sized to tolerate a bound on the weight held by Byzantine participants, and in which a correct participant votes for at most one outcome of a step, conflicting quorums for that step can both complete only if that weight exceeds the bound (quorums sized only for crash faults give no such protection; quorum intersection belongs to Quorums, named only). Withheld votes can stall progress where enough weight is withheld.",
+            "Hence many designs validate role outputs and provide for replacing holders (rotation, replacement on timeout or evidence) instead of trusting the role. Do NOT build any leader-replacement or view-change construction; name that replacement exists and leave it to the protocols that define it.",
+            "Condition for replacement on suspicion: where it is triggered by timeouts under partial synchrony, a slow but correct holder can be replaced too, and a faulty holder can act just within the timeouts. Keep this to a hedged clause if used; it is a limit of replacing, not a construction."
+          ],
+          "incentives": "None assumed, which is the distinction from Strategic Behavior (owns rational, payoff-driven deviation; already authored). Name Strategic Behavior at most: no claim covers how a guarantee against Byzantine behavior relates to rational deviation (domain prose states it), so do not discuss it, nor payoffs, incentive design, griefing or bribery. Byzantine does not mean malicious (Fault Models says so too; do not restate at length)."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional argument: what a faulty participant can do, which of those acts leave evidence that others can verify and under what conditions (signatures, context, checkability), and how harm and the defenses follow from the role it holds.",
+        "whyProse": "Each claim turns on conditions (transferable signatures, statements that carry their context, invalidity checkable from public data, 'commonly' for omission, faulty weight within the bound for voters) that a table cell or flow stage would drop, producing exactly the overclaims audits flag. A comparison of behaviors by detectability or of roles by harm would set out variants with one attribute each, which the catalog treats as sentences, not a table. Byzantine ≠ crash ≠ strategic is already a domain distinction block, so a distinction here would restate it, and the remaining contrasts (knowing vs proving, key vs operator vs intent) are single clauses. Nothing has order, a loop or persistent states.",
+        "level": "Belongs here, not at Adversarial Environments or Security Models: the parents state only that arbitrary behavior must be bounded or is part of the setting; the conduct, its evidence and its role-dependence are this concept's. Fault Models owns classes and thresholds, so this concept carries conduct rather than counts.",
+        "territory": "Names, never explains: Fault Models (classes, thresholds), Adversaries (powers, scheduling, computational bound), Collusion (coordination), Censorship (exclusion by includers), Strategic Behavior (rational deviation), Digital Signatures, Slashing, Accountability, Key Compromise, Quorums, Consensus. Replacement constructions are left to the protocols that define them.",
+        "placements": "Prose stated for multi-party protocols in general (replicas, committees, oracle reporters, relayers, peers), with no consensus-only, domain or positional framing, so the same text reads complete as a leaf under Adversarial Environments and under Security Models."
+      },
+      "audit": {
+        "at": "2026-10-20T12:12:12.059Z",
+        "note": "Re-audit after repair 1 (scoped, not expanded: the repair conditioned two sentences, widened one boundary sentence, deleted one sentence outside the claims and took two wording advisories; it changed no argument, assumption, structure or scope). Blocking findings of findings/byzantine-behavior.md and byzantine-behavior-b.md are resolved. (1) Quorum statement, paragraph 8: it now reads 'In designs whose quorums are sized to tolerate a bound on the weight held by Byzantine participants, and in which a correct participant votes for at most one outcome of a step, quorums for two conflicting outcomes of that step can both complete only if that weight exceeds the bound; why is a matter for Quorums'. Checked: with both conditions, two quorums sized for a Byzantine bound share correct weight, and a correct participant in the intersection votes once, so conflict needs Byzantine weight above the bound; 'only if' is a necessary condition, not a claim that conflict follows; crash-sized majorities are no longer covered; no sizes or numbers are given, so Fault Models and Quorums keep thresholds and intersection; 'that weight' refers unambiguously to Byzantine weight and is consistent with the preceding equivocating-votes and withholding sentences. (2) Means, paragraph 3: 'Common means, which designs combine differently, are cross-checking ...; having participants relay ...; and, where messages are signed, relying on signatures' no longer says every design uses all three, matches the claim's 'or', agrees with paragraph 6 (pairwise authentication only) and leads correctly into the 'unchecked' sentence and paragraph 4's conditions. (3) The strategic-behavior sentence is deleted; paragraph 7 now runs key-not-intent, identical statements from different causes, identity versus operator binding, then Slashing as one use whose penalty cannot by itself tell a bug from an attack, which reads coherently and stays within claim 2. Strategic Behavior is no longer named; the definition's 'with no motive assumed' carries the distinction, and the facet-watch split holds. (4) Controls, paragraph 2: 'What it controls is what it sends, including messages it relays for others; delaying traffic between correct participants that does not pass through it is a separate power that an adversary model may grant, the territory of Adversaries' now agrees with the same paragraph's 'choose which to pass on' and with paragraph 8's relaying role, and keeps Adversaries named only. Term sweep: 'quorum' appears only in paragraph 8; 'relay' in paragraphs 2, 3, 4 and 8 has one sense (passing on others' messages) throughout; 'signature' uses in paragraphs 2 to 6 and 9 are consistent with the conditions in paragraph 4 and with 'which key signed' (advisory taken, consistent with paragraph 7); 'controls' appears only in paragraph 2 and is consistent with the definition's 'limited only by what the channels and cryptography prevent'; 'can come to light' (advisory taken) is consistent with paragraph 6. Overlap per placement: nothing restates Adversarial Environments (no resource bounding, one-third arithmetic or collusion paragraph) or Security Models (Trust Boundaries not explained; validation of role outputs is this concept's angle). Territory: Fault Models, Adversaries, Key Compromise, Quorums, Censorship and Slashing are named only; no threshold numbers. Structure: prose as designed. Canonical validity at both placements: no positional, dated or consensus-only wording; American English; plain text. Model fields powers[3], role[2] and incentives now match the record. Advisory: (a) paragraph 5's evidence conditions omit the secure scheme and bounded adversary assumed from paragraph 4 ('and the scheme is secure' would complete the list); (b) paragraph 4 repeats paragraph 2 on signed false contents and selective relaying; (c) the definition nearly restates Fault Models' 'only what the channels and cryptography prevent' and the domain's list of causes, acceptable as the leading definition; (d) the Slashing clause in paragraph 7 is the most a name-only exclude should carry; (e) paragraph 2's 'what it controls is what it sends' holds, but a participant can also slow correct participants by flooding them, which is still its own sending; no change needed unless the boundary is revised; (f) model trustPlaced[3] still says signatures 'prove who signed', where the record now says 'which key signed'.",
+        "resolutions": [
+          {
+            "id": "names-concept:672ca4ca77",
+            "resolution": "Adversaries is named in paragraph 2 as owning the separate power to delay traffic between correct participants that does not pass through the Byzantine one, and paragraph 4 lists a computationally bounded adversary as a condition of signatures; neither explains adversary powers, scheduling or the bound."
+          },
+          {
+            "id": "names-concept:dd848d6a62",
+            "resolution": "Censorship is named once in paragraph 9 as the concern of choosing which valid actions to include; nothing explains where the power sits, time-bound exclusion or motives."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault Models is named in paragraph 4 as owning how signatures change the fault class and thresholds; no classes, nesting or numbers are explained anywhere in the record."
+          },
+          {
+            "id": "names-concept:927e0a8dbb",
+            "resolution": "Key Compromise is named in paragraph 4 after the hedged 'Analyses usually count a participant whose key has been taken as faulty', which closes the signature condition on untaken keys; how keys are compromised or handled is not explained."
+          },
+          {
+            "id": "names-concept:6e70953b07",
+            "resolution": "Message authentication codes appear in paragraph 6 as the example of pairwise authentication; the one clause of reason (the recipient shares the key, so it could have produced the tag) is claim 2's own point about non-transferable evidence, not an explanation of the mechanism."
+          },
+          {
+            "id": "names-concept:3a247f4315",
+            "resolution": "Quorums is named in paragraph 8 ('why is a matter for Quorums') after the repaired, fully conditioned necessary condition; no quorum sizes, intersection argument or thresholds are given."
+          },
+          {
+            "id": "names-concept:c59d26a9e5",
+            "resolution": "Slashing is named in paragraph 7 as one use of evidence, with one clause that follows from the key-not-intent claim (a penalty based on it does not by itself tell a bug from an attack); no penalty design or mechanism is explained."
+          },
+          {
+            "id": "absolutes:c6dcc0e541",
+            "resolution": "'cannot feasibly forge' in paragraph 4 is stated only where the four listed conditions hold, which is correct; the two uses of 'never arrived' in paragraph 6 describe a message that did not arrive and a complaint about it, not universal claims, and the surrounding claim is hedged with 'commonly'. Each holds as written."
+          }
+        ],
+        "recordFingerprint": "b69a978f34f9e0ba5ce06b154a58907895200424cc7f03769053ff2ba21900ab"
+      }
+    },
+    "censorship": {
+      "model": {
+        "meaning": "Deliberate exclusion or delay of selected actions or participants by a party that controls a step they must pass to reach the system or be included.",
+        "kind": "attack",
+        "parents": {
+          "adversarial-environments": "Parent names a chokepoint (the power to decide what is included) and says the defense is an alternative path; it also says collusion can jointly control a chokepoint. Adds: which steps are chokepoints in practice, the means of exclusion, the condition that bounds the power (alternatives missing or costly), the time-bound case, and motives and how they shape scope and correlation. Pitfall: do not restate the parent's alternative-path sentence; argue from the censor's side. Domain sense: excludes particular actions or participants; keep that sense."
+        },
+        "claims": [
+          "where the power to censor sits and how it is used: whoever controls a step that an action or participant must pass, such as proposers, builders, sequencers, relays, interfaces, RPC providers or network operators, can exclude through omission, delay, filtering by sender or content, or by raising the cost of inclusion; the power extends as far as alternative paths around that step are missing or costly, and omission can pass for congestion or a low fee. Censorship Resistance owns the defenses and their measurement, and reordering for profit belongs to Transaction Ordering and MEV",
+          "censorship of time-bound actions: where a guarantee depends on an action being included within a window, such as a challenge, an exit, a liquidation or a renewal before expiry, delaying it past the window has the effect of excluding it, so the censor needs control of inclusion only for what remains of the window when the action is submitted, at most its length, rather than indefinitely, and a delay can cause a loss that later inclusion does not undo; Challenge Periods and Forced Inclusion are named, not explained",
+          "why parties censor and how that shapes the exclusion: it can be compelled by law or regulation, paid for by a party that benefits, or chosen by the includer for its own gain or to protect an attack under way; targeted exclusion of particular accounts differs from broad exclusion of a class of actions; and includers that follow a common rule, such as one jurisdiction's sanctions, can remove alternative paths together without any agreement among them, which is correlated exclusion rather than Collusion. Bribery is named only"
+        ],
+        "excludes": [
+          "censorship-resistance",
+          "transaction-ordering",
+          "mev",
+          "front-running",
+          "sequencers",
+          "proposer-builder-separation",
+          "inclusion-lists",
+          "forced-inclusion",
+          "challenge-periods",
+          "escape-hatches",
+          "data-withholding",
+          "eclipse-attacks",
+          "denial-of-service-attacks",
+          "liveness",
+          "bribery",
+          "collusion",
+          "adversaries"
+        ],
+        "placements": {
+          "censorship": "Single placement, leaf under Adversarial Environments (Foundations). Keep it general across L1 chains, rollups, relays and network access; no claim that holds only for one chain or one sequencer design; no dated shares or percentages."
+        },
+        "fields": {
+          "preconditions": [
+            "Control of a step the action or participant must pass: submission (interfaces, RPC providers), network access (network operators), building or ordering (builders, relays, sequencers), proposing (proposers). Some steps can be bypassed (another RPC, direct peer-to-peer submission), so control alone is not enough.",
+            "Extent condition: the power reaches as far as alternative paths around that step are missing or costly, and lasts as long as they stay so. A single includer whose turn ends can only delay unless others also exclude. Counting includers and their independence is Censorship Resistance's measure; name it, do not build it.",
+            "Time-bound case: control is needed only until the deadline, i.e. for the part of the window left when the action is submitted (at most the window), not indefinitely. Pitfall: the plan's 'for the window's length' overstates when the action is submitted late; state it as at most the window."
+          ],
+          "mechanism": [
+            "Means: omission (never include), delay (include later), filtering by sender or by content (which accounts, which contracts or kinds of action), raising the cost of inclusion (demanding more for the targeted action). Keep 'raising the cost' to what the includer charges or requires; flooding the network to raise fees for everyone is Denial-of-Service Attacks territory (name only).",
+            "Omission and delay give cover: a missing action can look like congestion or a fee that was too low ('can pass for', not 'is indistinguishable in every case'). Censorship Resistance's record already explains why omission leaves no evidence and how inclusion obligations make it detectable: say only that the cover exists, as part of how the power is used.",
+            "Delay past a window has the effect of exclusion: the action, if included after the deadline, no longer protects what it was for (rejected, or the outcome already settled). Examples must be actions whose guarantee depends on inclusion before a deadline: a challenge within a challenge period, an exit, an option exercise or a name renewal before expiry; a liquidation only in the sense that it must land before collateral no longer covers the debt (not a fixed protocol window; either the liquidation or the borrower's top-up can be the delayed action).",
+            "Not reordering: exclusion and delay only. Reordering for profit is Transaction Ordering and MEV; front-running excluded. If an example has the includer excluding a competitor's transaction to capture an opportunity itself, keep it about the exclusion, name MEV only."
+          ],
+          "impact": [
+            "Excluded or delayed actions or participants lose access to a function for as long as the censorship lasts. Where the system commits to eventual inclusion, only exclusion that never ends breaks that commitment, a failure of Liveness for the affected actions; a delay that ends breaks at most a stated bound on how soon actions are included, where the system promises one (Liveness named only).",
+            "Time-bound: a delay can cause a loss that later inclusion does not undo (an invalid claim finalized after the challenge window closes, an exit missed, a position liquidated, a name lost). 'Can', not 'will': it depends on the action being time-bound.",
+            "Broad exclusion of a class of actions impairs that function for everyone using it; targeted exclusion of accounts falls on the listed parties."
+          ],
+          "defences": "Named only. Censorship Resistance (authored L1) owns the defenses and their measurement; Forced Inclusion, Inclusion Lists, Escape Hatches and Proposer-Builder Separation are excluded, name at most. Do not explain how any of them works, and do not imply any one of them removes the power.",
+          "detection": "Omission can pass for congestion or a low fee; this is the cover the censor uses. Openly declared filtering under a rule (published compliance policy) can be visible, unlike quiet omission; hedge with 'can'. How omission is made detectable and attributable belongs to Censorship Resistance: name it, do not explain inclusion obligations.",
+          "variants": [
+            "Motives (claim 3): compelled by law or regulation; paid for by a party that benefits (Bribery named only, no bribe mechanics); chosen by the includer for its own gain; or to protect an attack under way (e.g. keeping challenges out until a challenge period ends; Challenge Periods named only).",
+            "Scope: targeted (particular accounts) vs broad (a class of actions, e.g. every interaction with one contract). Pitfall: motive does not fix scope; a sanctions rule is compelled and rule-based yet targets listed accounts. Do not map motive to scope one to one. Do not claim a targeted party can always evade by switching accounts (only if the censor does not link the new account to the old, whether because it cannot or because its rule covers only the listed accounts).",
+            "Correlation: includers following a common rule, such as one jurisdiction's sanctions, can remove alternative paths together without any agreement, so several includers can behave as one path. That is correlated exclusion, not Collusion: Collusion requires an agreement, and telling correlation from agreement is Collusion's claim; name Collusion only. Do not say correlated exclusion can never involve collusion; say it needs no agreement."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional argument: the censor's power is bounded by the availability and cost of alternative paths and, for time-bound actions, by the window; motives explain scope and correlation of exclusion. Causation and conditions, not order, states or alternatives on shared dimensions.",
+        "whyProse": "Each claim turns on a condition (alternatives missing or costly; the window left before a deadline; a common rule rather than an agreement) that prose states with its hedge. A motive x scope/duration comparison would force a mapping that does not hold (a sanctions rule is compelled yet targets listed accounts). The time-bound case is one causal chain a sentence carries, so a flow adds nothing. Censorship vs congestion is Censorship Resistance's evidence point, and correlated exclusion vs collusion is Collusion's distinction to draw; a distinction block here would draw a neighbour's relationship.",
+        "level": "The parent names the chokepoint and its defense in general; who holds such steps, how exclusion is carried out, the window case and the motives are specific to this concept. Defenses sit at Censorship Resistance, reordering at Transaction Ordering and MEV.",
+        "territory": "Draws no sibling relationship: Adversaries (powers in general) and Collusion (agreement, sustainment, evidence) are named only; Censorship Resistance, Forced Inclusion, Challenge Periods, Bribery, Liveness, MEV and Transaction Ordering are named, not explained. Omission's cover is stated as part of the censor's means, not as CR's detection argument.",
+        "placements": "One placement (Foundations / Adversarial Environments); the prose stays general across chains, rollups, relays and network access, with no positional references."
+      },
+      "audit": {
+        "at": "2026-10-20T12:22:31.166Z",
+        "note": "Re-audit after repair 1 (scoped, not expanded: the repair conditioned three sentences and took three wording advisories; it changed no argument, assumption, structure or scope, and the record is still the designed prose in six body paragraphs). Blocking findings of findings/censorship.md and censorship-b.md are resolved. (1) Liveness, time-bound paragraph: 'Where a system commits to including valid actions eventually, only exclusion that never ends breaks that commitment, a failure of Liveness for the actions it covers. A delay that ends breaks no such commitment, though it breaks a stated bound on how soon actions are included when it outlasts that bound, where the system promises one.' Checked: an eventual-inclusion commitment is violated by no finite delay, so 'only' holds; the bounded promise is not called Liveness, matching the Liveness model (bounded versions are safety properties a finite run can violate), and the record does not explain that classification, so Liveness stays named only; consistent with the domain sentence ('eventually included'), with 'a censor that could not keep an action out for good' later in the paragraph, and with the corrected model impact[0]. (2) Fresh-account escape, motives paragraph: 'can escape by acting from a fresh account unless the censor links that account to the listed one ...; a censor that could link them may still not, when its rule covers only the accounts listed.' Checked: the condition is now on what the censor does, not what it can do; no 'only' or 'cannot'; consistent with the corrected model variants[1] and with 'Targeted censorship excludes actions sent by particular accounts'. (3) Liquidation: 'a liquidation that lands past it while the collateral still falls short leaves debt that the collateral cannot repay.' Checked: 'cannot repay' now holds whenever it applies, since a liquidation executed while collateral is below the debt leaves the shortfall unrepaid by collateral; a price recovery before it lands is excluded by the condition. The top-up sentence ('once the position becomes open to liquidation, a top-up avoids liquidation only if it lands before a liquidation does') is a true necessary condition (a late top-up cannot undo a landed liquidation; recovery or an insufficient top-up do not falsify 'only if'), and the summary sentence ('depends on how prices move, and for a top-up on when a liquidation lands, rather than on a fixed time') matches both cases. Re-read every use of Liveness (one), bound, link, window, deadline and liquidation: the window sentences ('at most the window's whole length, and less when the action is submitted late'), 'control of inclusion' (now used in both sentences, consistent with the first paragraph's point that holding a step does not by itself decide exclusion), Forced Inclusion 'only if it lands the action before the deadline' and the attack motive 'until the window for its invalid claim has closed' are consistent with the repaired sentences. Overlap: the one placement (Foundations / Adversarial Environments) and the domain sentence are not restated; the chokepoint and alternative-path point is argued from the censor's side. Territory and hazard: all named concepts named, not explained; the eventual-versus-bounded remark applies the inclusion commitment without explaining Liveness; correlated exclusion vs Collusion stays a named boundary. No positional words; American English; plain text. Depth follows the three claims. Advisory: (a) 'How many independent parties must refuse before exclusion holds, and what refusing costs them, is what Censorship Resistance measures' is closer to Censorship Resistance's record as 'how long exclusion can be sustained, and at what cost'; (b) 'Censorship works by exclusion and delay.' restates the definition; (c) 'a stated bound ... where the system promises one' says the condition twice, 'a bound on how soon actions are included, where the system promises one' suffices; (d) relays pass or withhold builders' blocks rather than choose their contents, optional precision in 'decide what enters a block or batch'; (e) with 'actions sent by particular accounts', a sanctions rule refusing payments to a listed person sits between the targeted and broad kinds; optional clarification; (f) where a liquidator is paid a bonus, the shortfall can begin slightly before collateral stops covering the debt; optional hedge on the deadline.",
+        "resolutions": [
+          {
+            "id": "names-concept:9b3d775be9",
+            "resolution": "Bribery is named once in the motives paragraph as where paying for censorship enters; no bribe mechanics, sustainment or payment structure is explained."
+          },
+          {
+            "id": "names-concept:f4a007b368",
+            "resolution": "Censorship Resistance is named once, in the first body paragraph, as what measures the extent of exclusion; no defense, inclusion obligation or measurement method is explained (wording of the measure is advisory a)."
+          },
+          {
+            "id": "names-concept:4643bd2899",
+            "resolution": "Challenge Periods is named only through the example 'a challenge to a claim within its challenge period' and the attack motive; how a challenge period works or is sized is not explained."
+          },
+          {
+            "id": "names-concept:eb239f3ec0",
+            "resolution": "Collusion is named once to draw the boundary 'correlated exclusion, not Collusion: it needs no agreement'; how collusion forms, is sustained or is detected is not explained."
+          },
+          {
+            "id": "names-concept:0ae4a1b0e0",
+            "resolution": "Denial-of-Service Attacks is named once to place flooding a system outside a censor's means; no flooding or resource-exhaustion mechanism is explained."
+          },
+          {
+            "id": "names-concept:4b8dd17034",
+            "resolution": "Forced Inclusion is named once as an alternative path that protects a time-bound action only if it lands before the deadline; its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:0b3c310fab",
+            "resolution": "Liveness is named once, labeling exclusion that never ends under an eventual-inclusion commitment; the repaired sentence applies that commitment and keeps a bounded promise outside the label without explaining Liveness's formal definition, the safety classification of bounds or progress arguments."
+          },
+          {
+            "id": "names-concept:7d361a1edb",
+            "resolution": "MEV is named twice: as the territory of reordering for value (with Transaction Ordering) and as the value at stake when an includer leaves out a competitor's transaction; extraction mechanics are not explained."
+          },
+          {
+            "id": "names-concept:6959bd9223",
+            "resolution": "RPC providers appear only as one step an action may pass and as one a refused user can switch away from; what an RPC provider is or does beyond relaying is not explained."
+          },
+          {
+            "id": "names-concept:15f969efcb",
+            "resolution": "Sequencers appear only in the list of parties that decide what enters a block or batch; sequencer design, ordering or decentralization is not explained."
+          },
+          {
+            "id": "names-concept:a9c206f095",
+            "resolution": "Transaction Ordering is named once with MEV to place reordering of included actions outside censorship; no ordering rule or mechanism is explained."
+          },
+          {
+            "id": "absolutes:1e1afba1ff",
+            "resolution": "Three absolutes checked: 'never passing it on or including it' defines omission and holds by definition; 'only exclusion that never ends breaks that commitment' holds because an eventual-inclusion commitment is violated by no finite delay (the condition 'Where a system commits to including valid actions eventually' is stated); 'debt that the collateral cannot repay' now holds whenever its condition applies, since it is stated only for a liquidation that lands while the collateral still falls short of the debt."
+          }
+        ],
+        "recordFingerprint": "25951ef61021a49080d1f8a464d5613318f69e5138a4fe98d56d2a3a7916b060"
+      }
+    },
+    "collusion": {
+      "model": {
+        "meaning": "Deliberate coordination among distinct parties pursuing an aligned outcome through an explicit or covert agreement; whether it harms anyone depends on what rule, assumption or interest the agreement defeats.",
+        "kind": "attack",
+        "parents": {
+          "adversarial-environments": "Parent already says collusion lets within-bound participants act as one (pooling past a threshold, sharing private information, joint chokepoint control) and that protocols reason about possible coalitions. Do not restate either. Adds: what makes coordination collusion (an agreement), how an agreement is sustained against members' incentive to depart, and what evidence separates it from correlated behavior.",
+          "oracle-security": "Parent's flow lists collusion among reporters as one point of attack. Adds: reporters agreeing on a false value as one example only; the common-cause point (reporters reading the same source or running the same software can be correlated without any agreement). Oracle Manipulation, Sybil Attacks named only.",
+          "attack-classes": "Parent lists 'coordinating with others' as a recurring class, no detail. Adds the class's anatomy: agreement, sustaining conditions, defenses that raise the cost of sustaining it, evidence. Must not imply that every instance is an attack on a rule.",
+          "market-power": "Parent defines market power as including being 'coordinated with others' and explains algorithmic collusion (no agreement, judged by effects). Adds the agreement-based case it contrasts with; name Algorithmic Collusion, never re-explain learning agents, retaliation-learning or effects-based judgment."
+        },
+        "claims": [
+          "what makes coordination collusion: distinct parties pursuing an aligned outcome through an explicit or covert agreement; when it undermines protocol rules, market integrity or other participants, as when reporters agree on a false value, validators agree to exclude or reorder transactions, sellers fix prices or bidders rig an auction; and why such coordination is not illegal or prohibited in every case: some agreements, such as price fixing, are prohibited by law, while protocols often have no rule against agreements they cannot see, its harm depending on the rule, assumption or interest it defeats. Distinguished by name from Sybil Attacks (one party behind many identities), Coalition Formation, Bribery and Algorithmic Collusion (convergence without agreement)",
+          "how a collusive agreement holds together when each member could gain by quietly departing from it: members need to verify one another's conduct and a way to enforce the terms, such as repeated dealings with the threat of retaliation, side payments, deposits, or contracts that bind the terms without trust between members; and why designs that keep members from proving how they acted, for example receipt-free voting, or that reward a member for exposing the agreement make collusion harder to sustain without preventing it. Coalition Formation owns when a group is stable against members leaving openly, and Bribery owns paying another party to act",
+          "how collusion is told apart from behavior that merely looks coordinated: correlated actions can arise from a common cause, such as shared software, shared information, a common operator or a common rule, and parallel pricing that algorithms reach without agreement is the territory of Algorithmic Collusion, while an agreement can leave no observable trace; so observed correlation is consistent with common dependence, concentration or agreement and does not by itself prove agreement, and establishing collusion needs evidence of the agreement or of conduct that independent choices do not explain. Trust Distribution owns counting possible colluders against a threshold"
+        ],
+        "excludes": [
+          "sybil-attacks",
+          "coalition-formation",
+          "bribery",
+          "algorithmic-collusion",
+          "trust-distribution",
+          "trust-assumptions",
+          "strategic-behavior",
+          "cooperation",
+          "competition",
+          "coordination-communication",
+          "collective-action",
+          "market-concentration",
+          "oracle-manipulation",
+          "vote-buying",
+          "commit-reveal",
+          "censorship",
+          "adversaries",
+          "byzantine-behavior"
+        ],
+        "placements": {
+          "collusion": "Primary. Parent covers what collusion does to thresholds and chokepoints; this record covers what it is, how it holds, how it is told apart. Neutral on legality holds here.",
+          "collusion-in-oracle-security": "Reporter example and the common-cause caution (shared data source, shared software) apply directly; nothing oracle-specific beyond one example, so it holds elsewhere.",
+          "collusion-in-attack-classes": "Attack anatomy (preconditions, enforcement, defenses, detection) fits a class page; the hedge that harm depends on what is defeated keeps it accurate where coordination breaks no rule.",
+          "collusion-in-market-power": "Price fixing and bid rigging examples; agreement vs no-agreement boundary with Algorithmic Collusion stated by name only. Avoid protocol-only vocabulary as the sole frame: examples span protocols and markets."
+        },
+        "fields": {
+          "preconditions": [
+            "Two or more distinct parties (not one party behind many identities: Sybil Attacks, named only).",
+            "An agreement, explicit or covert, on an aligned outcome; covert means hidden from others, not necessarily unwritten.",
+            "To persist when each member could gain by quietly departing: a way to detect departures and a way to enforce the terms. Detection need not be direct observation of conduct; it can be inference from outcomes and can be imperfect. Do not write that members must see each other's every action."
+          ],
+          "mechanism": [
+            "Enforcement means (plan's list, as examples, not exhaustive): repeated dealings with threat of retaliation; side payments; deposits forfeited on departure; contracts that bind the terms without trust between members.",
+            "Contract enforcement reaches only conduct the contract can check (on-chain actions, provable statements); terms about off-chain or unprovable conduct still need trust or repetition. Strategic Behavior's record already explains contract-enforced bribes: do not restate; Bribery (paying another party to act) named only.",
+            "Coalition Formation owns stability against members leaving openly; this concept owns quiet departure from a hidden agreement. Name, do not explain coalition stability."
+          ],
+          "impact": [
+            "Harm is conditional on what the agreement defeats: a protocol rule, an assumption the protocol rests on (e.g. independent reporters, independent bids, a bound on any one party's share), market integrity, or other participants' interests.",
+            "Plan examples: reporters agree on a false value; validators agree to exclude or reorder transactions; sellers fix prices; bidders rig an auction. Keep the Censorship and MEV angles out: exclusion example names the agreement, not how censorship works.",
+            "Pitfall (facet watch): neutral on legality. Not every instance is illegal or prohibited; but do not swing to the opposite overclaim either. Agreements such as price fixing or bid rigging among competitors are prohibited in many jurisdictions; a protocol often has no rule against off-chain agreements it cannot see, so the harm there is a defeated assumption, not a broken rule. Avoid 'collusion is legal' or 'such coordination is not illegal' unqualified.",
+            "Do not restate the parent's threshold/chokepoint arithmetic; Trust Distribution owns counting possible colluders against a threshold (name only)."
+          ],
+          "defences": [
+            "Designs that keep members from proving how they acted (receipt-free voting is the plan's example) deny members proof of one another's conduct when a member's compliance must be checked; they do not hide what the result reveals: a tally can still show that not every member voted as agreed, and with few or unequally weighted voters how a particular member voted. Conditions: it matters only where a member has some gain from departing, so compliance needs checking; it is weakened where a member can hand over keys or credentials or vote under observation. Vote Buying named only.",
+            "Rewarding a member for exposing the agreement (leniency, whistleblower or reveal rewards) adds a gain from departing by exposure, so each member must trust the others not to take it. Commit-Reveal named only if mentioned.",
+            "Both make collusion harder to sustain; neither prevents it. No 'eliminates', 'stops', 'guarantees'."
+          ],
+          "detection": [
+            "Correlated actions can come from a common cause: shared software, shared information, a common operator, a common rule (e.g. one jurisdiction's sanctions; Censorship's plan calls that correlated exclusion, not collusion).",
+            "Parallel convergence of pricing agents without agreement is Algorithmic Collusion (Market Power parent explains it): name only. Pitfall in the plan wording: not all parallel behavior without agreement is Algorithmic Collusion's; common causes and tacit human parallelism are also without agreement.",
+            "An agreement can leave no observable trace, so absence of evidence does not show absence of collusion.",
+            "Correlation alone does not prove agreement, nor does it by itself establish any single cause; it is consistent with common dependence, concentration or agreement. Do not write that correlation 'shows' common dependence.",
+            "Establishing collusion needs evidence of the agreement itself or of conduct that independent choices do not explain; the latter supports an inference, and tacit coordination without agreement can also produce it, so state it as evidence, not proof."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional argument: coordination becomes collusion through agreement; its harm depends on what it defeats; it persists only under detection and enforcement conditions; it is inferred from evidence rather than from correlation. Each claim is a chain of conditions and qualifications.",
+        "whyProse": "No order, loop, state or shared-dimension comparison carries the meaning. The enforcement means are examples of one requirement, not alternatives to compare; a repeated-dealing loop is stated in a clause and the retaliation dynamic is already explained by the Market Power parent. The correlation-vs-agreement point is an argument about inference and its limits, which a distinction block would flatten into labels; the domain already draws Collusion ≠ Coalition Formation ≠ Algorithmic Collusion as a distinction, so another would duplicate it and pull excluded concepts' explanations in.",
+        "level": "Agreement, sustaining conditions and evidence are specific to collusion; the Adversarial Environments parent covers only its effect on thresholds and chokepoints, Attack Classes only lists it, Oracle Security only places it at reporters, and Market Power explains the no-agreement case.",
+        "territory": "Draws no relationship for Sybil Attacks, Coalition Formation, Bribery, Algorithmic Collusion, Trust Distribution, Vote Buying, Commit-Reveal, Censorship or Strategic Behavior: each is named at a boundary only. No threshold counting, no coalition stability analysis, no bribe-contract construction.",
+        "placements": "Prose with examples spanning protocols (reporters, validators, voting) and markets (price fixing, bid rigging) and a legality-neutral harm statement holds at Foundations, Oracle Security, Attack Classes and Market Power alike; nothing is true at only one placement."
+      },
+      "audit": {
+        "at": "2026-10-20T12:32:00.429Z",
+        "note": "Re-audit (scoped) after repair 1 of the blocking finding in findings/collusion.md and collusion-b.md. Resolved: the lead sentence now says a design can deny 'members proof of one another's conduct' instead of taking detection away; 'the others cannot verify it' is gone; the added sentence states that the result can still reveal departures (a tally below the members' combined votes shows that not every member voted as agreed, since non-members can only add votes; with few voters or unequal weights a tally can show how a particular member voted), hedged with 'can' and consistent with the earlier 'members can infer departures from outcomes'. 'Receipt-freeness matters only where a member has something to gain by departing' replaces 'That matters' (needed because the new sentence would otherwise be its antecedent); scoped by 'a member' to the collusion defense, and it holds (a member that wants the agreed outcome votes for it unchecked); the failure conditions (handed-over keys or credentials, observed voting) and 'Neither prevents collusion' are unchanged and consistent. Re-read every use of detect, verify, proof, prove, tally and receipt: detection is used in one sense (finding departures, directly or by inference), proof in the sense of evidence a member can produce or evidence of an agreement; no remaining use says receipt-freeness removes detection. Model fields.defences[0] now carries the tally caveat. The repair narrowed one mechanism claim within the same paragraph and left the argument, assumptions, structure and scope unchanged, so the re-audit did not expand; the rest of the record was re-read for material defects and none was found. Parent overlap per placement: none of Adversarial Environments, Oracle Security, Attack Classes or Market Power mentions receipts, tallies or voting proof, so the new sentence restates no parent. Territory: Vote Buying stays named only (the tally sentence explains collusion detection, not buying votes); no Strategic Behavior overlap; the collusion ~ algorithmic-collusion split is unchanged. Structure: prose as designed. Canonical at all four placements; American English. Advisory: (1) 'a member that promised to vote as agreed cannot show that it did' sits beside 'a tally can show how a particular member voted'; 'cannot itself show' would separate the member's own proof from what the result reveals. (2) The 'Neither prevents collusion' list does not mention inference from the result, which the paragraph now names; acceptable as examples. (3) 'explicit ... or covert' presents independent axes as alternatives. (4) 'collusion that lasts needs a way ... to detect departures and a way to enforce the terms' sits in tension with 'terms about anything else still rest on trust or repetition' and 'members who trust one another ... can still sustain it'. (5) Last sentence weighs conduct 'against the common causes that could explain it' though its reason is coordination without agreement; 'common causes and tacit coordination' would match. (6) 'The problem particular to collusion is the member who departs quietly ...' largely restates the paragraph's opening. (7) 'Leniency programs in competition law' could be scoped 'in many jurisdictions'. (8) 'nodes that appear independent can share one operator' sits close to the Sybil boundary. (9) Accepted claim 2 still says 'members need to verify one another's conduct', stronger than the model and record (detection by inference suffices); a redraft from the claim would reintroduce the overclaim.",
+        "resolutions": [
+          {
+            "id": "names-concept:8d24cd31fc",
+            "resolution": "Algorithmic Collusion is named twice ('parallel pricing that algorithms reach without agreement is the territory of Algorithmic Collusion'; the collusion ~ algorithmic-collusion split); no learning agents, retaliation-learning or effects-based judgment explained."
+          },
+          {
+            "id": "names-concept:9b3d775be9",
+            "resolution": "Bribery is named once as the territory of 'Paying another party to act'; side payments appear only as a means members use to enforce their own agreement, not as a bribe construction."
+          },
+          {
+            "id": "names-concept:905f5e362b",
+            "resolution": "Coalition Formation is named once, as owning 'whether a group holds together against members who leave it openly'; no stability analysis is given, and the record keeps to quiet departure."
+          },
+          {
+            "id": "names-concept:6c9e4f0967",
+            "resolution": "Competition appears only as the generic thing price fixing and bid rigging defeat and in 'Competition law'; competition as a concept is not explained."
+          },
+          {
+            "id": "names-concept:760a268a97",
+            "resolution": "Sybil Attacks is named with a one-clause gloss (one party acting through many identities, no second party to agree with) to draw the boundary; Sybil mechanics and defenses are not explained."
+          },
+          {
+            "id": "names-concept:c0a347a0bf",
+            "resolution": "Vote Buying is named once ('The same property bears on Vote Buying'); the repaired tally sentence concerns members detecting one another's departures, not buying votes, so the name-only boundary holds."
+          },
+          {
+            "id": "absolutes:35863bccef",
+            "resolution": "Each checked: 'could not enforce one it cannot observe' is tautologically conditioned; 'a voter cannot produce proof of how it voted' is the receipt-freeness property, now qualified by the following sentence on what the result reveals; 'a member ... cannot show that it did' concerns the member's own proof and holds (advisory 1 suggests 'cannot itself show'); 'the protocol's guarantees rest on' is not an absolute; 'not always collusion' holds. The removed 'the others cannot verify it' no longer appears."
+          }
+        ],
+        "recordFingerprint": "c9dd25d534d54a15ed91dd31734c4f3fd34f2670d7f3f07c7d04ff94cc16013f"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-21T13:11:38.140Z",
+    "note": "Group audit of adversarial-environments (owned: adversaries, threat-models, byzantine-behavior, censorship, collusion; strategic-behavior dual-role and fixed, read only for boundaries), read side by side with the plan, its two splits, the threat-models ~ adversaries near-synonym hazard and the parent Adversarial Environments. group-signals printed 0 signals, so there are no resolutions. No blocking finding: no contradiction between members, no split or reservation crossed, no member explaining what another claims. Splits checked. (1) Threat Models ~ Adversaries: Threat Models names the adversary model and fault model as the parts that set powers and refers them to Adversaries and Fault Models; its incomparable-models example (adaptive corruption with bounded delays against static corruption with any finite delay, same corruption limit) uses those powers only as labels and agrees with Adversaries' same-budget static/adaptive account. Adversaries leaves assets, goals and model comparison alone ('not real attackers or their aims'; goals referred to Threat Models). The echo flagged by the concept audits is judged legitimate contextual overlap by angle, not a crossed split: both plan claims require the bound (Threat Models claim 2, 'says nothing beyond them'; Adversaries claim 1, 'why a power the model leaves out becomes an assumption the guarantee rests on'). Adversaries' paragraph 4 uses the bound as the premise for converting omitted powers into conditions (delay bound, corruption count, local randomness, keys taken after use), while Threat Models' paragraph 5 applies it to the whole statement (properties, assets, goals, assumptions) and paragraphs 6 and 7 build the ordering on it. The two agree exactly (not established, not broken; the system may still resist). The one repeated point is the closing clause of Adversaries' paragraph 4, 'which is different from being broken, since the system may still resist that attacker for reasons the analysis did not consider', which restates Threat Models' 'not shown to fail; it is not established, and whether the system resists that adversary is a question the analysis did not answer': minor redundancy, advisory. (2) Collusion ~ Algorithmic Collusion: named once as the territory of parallel pricing without agreement, not explained. Other boundaries are references: Byzantine Behavior hands network delay between correct participants to Adversaries and the choice of what to include to Censorship; Adversaries hands what corrupted participants do to Byzantine Behavior and real agreements to Collusion; Censorship names Collusion only to separate correlated exclusion. Terms keep one sense: adversary model, fault model, guarantee established/not established, corruption (full/active vs weaker degrees; Byzantine Behavior's 'stolen key' and 'counted as faulty' agree), agreement (Collusion's defining condition; Censorship's 'without any agreement' uses it identically), evidence/attribution (Byzantine Behavior only). Consistency checked: Adversaries' single-adversary convention ('independent action is one strategy open to it') agrees with Collusion's agreement-based definition and with Byzantine Behavior's 'any adversary coordinating it'; Adversaries' 'authentication stops neither delay nor replay' agrees with Byzantine Behavior's context-binding condition for replay; Adversaries' worst-case 'most damage' and Threat Models' 'goal decides which properties are at stake' agree (damage is relative to the property analyzed; an any-goal model is at least as strong). Advisory: (a) the Adversaries/Threat Models clause above could be trimmed from Adversaries in any later repair, leaving the bound's reading to Threat Models; (b) the common-rule sanctions example appears in Censorship (its claim 3: alternative paths vanish together, correlated exclusion rather than Collusion) and in one clause of Collusion (its claim 3: a common cause among others); both plans claim it and the angles differ, so the repetition follows the claims; (c) omission passing for benign causes appears in Censorship (cover for a censor: congestion, low fee) and Byzantine Behavior (no third-party evidence for omission or delay); different angles, each from its own claim; (d) Collusion's contracts that enforce terms without trust and Strategic Behavior's trustless bribe contract are related but differ in subject (members' agreement vs payment to one party; Bribery is named in both); (e) Adversaries and Threat Models open alike ('The attacker a security ... analysis assumes:' / 'The stated scope of a security analysis:', each followed by an 'It ... not ...' second sentence); two of six members, below the signal threshold, and the definitions differ in head, but later repairs could vary one. Convergence: Byzantine Behavior, Censorship and Collusion open 'X is ...' as the definition-leads rule asks, with different heads (departure, exclusion or delay, coordination); every member is prose, which is the default and fits concepts whose claims are conditions and distinctions rather than orders or lifecycles; Adversaries, Threat Models and Byzantine Behavior each have eight body paragraphs while Censorship has six and Collusion five, and the arcs differ (powers, then corruption timing, then computation; parts, then bound, then ordering, then exclusions; conduct, then countermeasures, then evidence, then roles; where, means, deadlines, motive; definition, harm, enforcement, detection), so the shared count follows three claims each needing mechanism and conditions, not a template; no shared enumeration pattern. Depth: Adversaries (about 1,430 words) and Byzantine Behavior (about 1,300) are long; their concept audits tied each paragraph to a claim, and across the group no point is made twice beyond the advisory overlaps above. Drift (window 30) reports drift-depth only (median 1,274 words), which pauses nothing.",
+    "resolutions": [],
+    "records": {
+      "adversaries": "83a267ff2d2353b5a87302412aa8fb0ee798091d0a4aa3749caa684ccc368043",
+      "threat-models": "cbb4588b64ee4505fe4c6d43887e62cfa512c933f2a65f45e1c38fd7c0ce42fc",
+      "byzantine-behavior": "b69a978f34f9e0ba5ce06b154a58907895200424cc7f03769053ff2ba21900ab",
+      "censorship": "25951ef61021a49080d1f8a464d5613318f69e5138a4fe98d56d2a3a7916b060",
+      "collusion": "c9dd25d534d54a15ed91dd31734c4f3fd34f2670d7f3f07c7d04ff94cc16013f"
+    }
+  }
+}
