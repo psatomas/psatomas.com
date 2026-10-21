@@ -406,4 +406,8 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "verification",
   "trust-minimization",
   "trust-distribution",
+  "coordination-models",
+  "information",
+  "coordination-communication",
+  "collective-action",
 ];

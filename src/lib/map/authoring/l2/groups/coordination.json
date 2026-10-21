@@ -1,0 +1,640 @@
+{
+  "version": 1,
+  "group": "coordination",
+  "domain": "foundations",
+  "parentConceptId": "coordination",
+  "basis": {
+    "membership": "73edc9670b1a3016dba24cbd33b433d94c4eb140a8d83abb9be581f0890d0590",
+    "parents": {
+      "coordination": "94f70d934ce580cdb4ed5fbc66a3b8ab3cba15b54aa8c0ef1bac03f84d5fb559",
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea",
+      "intents-coordination": "41e65dca0efd578f2aba38ee1a83758593718b2299f418121bfb9cafa6de6a87",
+      "multi-party-coordination": "e7fd422bf1b18442feaa1adee9fe60f39e50822abc034bf8b8337bde52dcbe3f"
+    },
+    "fixed": {
+      "competition": "15ee4e3be7e8efef2b2dbe9a487cd51bfee0c9bc8b7fc5a9bf6550cbee82b02b",
+      "cooperation": "3b58f05f3d4b1ff1b6fe95ab1cfc9d83db548daba1e8cf59d004a63d7a5883b7"
+    },
+    "hazards": "f51c16b66d85807c51f06bcad1cda24809c39e16c288f2506dcd5364b6c472c1"
+  },
+  "members": [
+    {
+      "conceptId": "coordination-models",
+      "placementId": "coordination-models",
+      "standing": "owned",
+      "claims": [
+        "what a coordination model settles: whose choices count, what each participant must know or observe in order to choose, what makes following the model worthwhile or compulsory for each participant, and how individual choices are combined into one collective outcome",
+        "what explicit agreement, conventions, markets and a designated coordinator each assume about information: agreement needs participants to exchange messages, and many agreement protocols need a known set of participants; a convention needs shared knowledge of a precedent and the expectation that others will follow it; a market lets each participant act on its own valuations and on prices formed under its rules; a coordinator needs the relevant information to reach it",
+        "what sustains each of these models, whether participants' own interest, rules the protocol carries out, or trust in a party, and the characteristic way each fails when that support is missing, such as a new situation with no precedent or several precedents in conflict, faults beyond what an agreement protocol's fault and timing assumptions tolerate, prices that participants can manipulate, and a coordinator that is unavailable or abuses its discretion",
+        "how protocols combine coordination models, such as agreement that selects a coordinator who orders transactions while a fee market shapes which transactions the coordinator includes first, and why a combination rests on the assumptions of every model it uses"
+      ],
+      "excludes": [
+        "consensus",
+        "agreement",
+        "markets",
+        "auctions",
+        "coordination-mechanisms",
+        "emergent-conventions",
+        "nash-equilibrium",
+        "mechanism-design",
+        "incentives",
+        "trusted-parties",
+        "collective-action",
+        "information",
+        "coordination-communication",
+        "cooperation",
+        "competition"
+      ]
+    },
+    {
+      "conceptId": "information",
+      "placementId": "information",
+      "standing": "owned",
+      "claims": [
+        "how information relevant to coordination is distributed: public information that every participant can observe versus private information only some hold, symmetric versus asymmetric distributions, and how the distribution shapes what participants can expect of one another and which coordination is possible; a fact being public is distinct from participants knowing what the others know",
+        "asymmetric information as a coordination problem: hidden information about a participant's type, such as its costs, valuation or reliability, under which terms offered to all can attract the participants the offering side would least want, and hidden action, where what a participant does after an arrangement is made cannot be observed; and the responses of screening, bonding and making actions observable, with what each leaves unresolved",
+        "verifiable versus unverifiable information: what a participant can check for itself, by reading a shared record or checking a signature or proof, versus what it must accept on a reporter's word, why protocols coordinate on verifiable facts where they can, and the limit that a verifiable record establishes what was recorded and which key or account recorded it, not that an outside fact it reports is true",
+        "when information becomes available and to whom: information revealed before others act can be used against the participant who revealed it, so protocols time disclosure, keeping information hidden until choices are fixed and revealing it afterwards, as sealed bids do, at the cost of delay and of coordination that the hidden information would have supported"
+      ],
+      "excludes": [
+        "partial-knowledge",
+        "verification",
+        "oracle-problem",
+        "incentive-compatibility",
+        "commit-reveal",
+        "sealed-bid-auctions",
+        "front-running",
+        "transparency",
+        "information-sharing",
+        "stake",
+        "coordination-communication",
+        "coordination-models"
+      ]
+    },
+    {
+      "conceptId": "coordination-communication",
+      "placementId": "coordination-communication",
+      "standing": "owned",
+      "claims": [
+        "when a costless statement of intention that binds no one changes what others expect: it is credible when, if believed, the speaker's own best response is to do what it said, and the speaker would want it believed only if it is true; why such statements help participants choose among outcomes they all prefer to miscoordination, and why they are discounted when the speaker gains from the listener's response whatever it intends",
+        "how much a costless report of private information can convey to a listener who acts on it: more when the speaker's and listener's interests are close, less as they diverge, and possibly nothing once they diverge far enough that no informative report would be believed",
+        "what makes a signal credible when interests diverge: a cost that a sender making a false claim would not find worth paying while a truthful sender would, reputation that repeated interaction puts at stake, and content the listener can check; the limits of each, such as resources spent only on proving, reputation worth little to a participant about to leave, and checks that need information the listener lacks; and signals as distinct from binding commitments, which remove options or attach penalties enforced on the deviation itself, where a signal, even one backed by reputation, works only through what others believe"
+      ],
+      "excludes": [
+        "communication",
+        "commitment-devices",
+        "reputation",
+        "verification",
+        "information",
+        "partial-knowledge",
+        "nash-equilibrium",
+        "rational-behavior",
+        "signaling-votes",
+        "agent-to-agent-communication",
+        "coordination-models"
+      ]
+    },
+    {
+      "conceptId": "cooperation",
+      "placementId": "cooperation",
+      "standing": "dual-role"
+    },
+    {
+      "conceptId": "competition",
+      "placementId": "competition",
+      "standing": "dual-role"
+    },
+    {
+      "conceptId": "collective-action",
+      "placementId": "collective-action",
+      "standing": "owned",
+      "claims": [
+        "the two incentive structures a collective action problem can take: in a single interaction where each contribution costs its contributor more than the benefit it brings back to it, whatever the others contribute, each participant does better by not contributing whatever the others do, so the outcome can go unachieved even when every participant wants it; where each would contribute if enough others did, the problem lies in expectations, since contributing pays only if enough others are expected to contribute; and why the first needs payoffs changed while the second needs expectations aligned",
+        "how properties of the shared outcome shape the problem: whether those who did not contribute can be kept from benefiting, whether use by some leaves less for others, which, where users cannot be kept out, turns under-provision of an outcome into over-use of a shared resource, and whether the outcome grows with each contribution or arrives only once contributions pass a threshold, where a single contribution can be decisive and contributions that fall short of the threshold achieve nothing",
+        "how group size and uneven stakes affect collective action: in larger groups each contribution can matter less to the outcome and be harder for others to observe, while a participant with a large enough stake may find it worthwhile to provide the outcome alone, so the same outcome can be reached or missed depending on how interest in it is spread",
+        "what changes the individual payoffs behind a collective action problem: rewards or penalties tied to each participant's own contribution rather than to the outcome, and repeated interaction in which others' future contributions depend on one's present one; and the limitation that enforcing such incentives is itself a contribution participants may withhold"
+      ],
+      "excludes": [
+        "free-riding",
+        "coordination-mechanisms",
+        "commitment-devices",
+        "coordination-failures",
+        "cooperation",
+        "commons-dilemmas",
+        "public-goods-funding",
+        "nash-equilibrium",
+        "incentives",
+        "multi-party-coordination",
+        "coordination-models"
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "communication",
+        "coordination-communication"
+      ],
+      "split": "Communication owns message exchange between processes: the links and channels a protocol assumes, what delivery and authentication they provide, and broadcast to a group; Coordination Communication owns participants exchanging intentions, signals and private information to align their actions, when such statements change expectations without binding anyone and what makes them credible, and names message exchange only as the medium and binding commitments only as a contrast."
+    }
+  ],
+  "concepts": {
+    "coordination-models": {
+      "model": {
+        "meaning": "Note: a coordination model = how a protocol (or a population, for conventions) turns independent choices into one collective outcome: whose choices count, what each must know, why each follows it, how choices are combined. Not only designed mechanisms: conventions can arise without anyone choosing them. Agreement is one model, not the only one (domain prose).",
+        "kind": "mechanism",
+        "parents": {
+          "coordination": "Parent already names the four models and says they differ in how they address collective action and in information/incentive assumptions; do not restate that list or sentence. Adds: the four questions any model settles; each model's specific information assumption; what sustains each and its characteristic failure; how protocols combine models. Parent owns the expectations chain and layered (common) knowledge: use, do not re-explain."
+        },
+        "claims": [
+          "what a coordination model settles: whose choices count, what each participant must know or observe in order to choose, what makes following the model worthwhile or compulsory for each participant, and how individual choices are combined into one collective outcome",
+          "what explicit agreement, conventions, markets and a designated coordinator each assume about information: agreement needs participants to exchange messages, and many agreement protocols need a known set of participants; a convention needs shared knowledge of a precedent and the expectation that others will follow it; a market lets each participant act on its own valuations and on prices formed under its rules; a coordinator needs the relevant information to reach it",
+          "what sustains each of these models, whether participants' own interest, rules the protocol carries out, or trust in a party, and the characteristic way each fails when that support is missing, such as a new situation with no precedent or several precedents in conflict, faults beyond what an agreement protocol's fault and timing assumptions tolerate, prices that participants can manipulate, and a coordinator that is unavailable or abuses its discretion",
+          "how protocols combine coordination models, such as agreement that selects a coordinator who orders transactions while a fee market shapes which transactions the coordinator includes first, and why a combination rests on the assumptions of every model it uses"
+        ],
+        "excludes": [
+          "consensus",
+          "agreement",
+          "markets",
+          "auctions",
+          "coordination-mechanisms",
+          "emergent-conventions",
+          "nash-equilibrium",
+          "mechanism-design",
+          "incentives",
+          "trusted-parties",
+          "collective-action",
+          "information",
+          "coordination-communication",
+          "cooperation",
+          "competition"
+        ],
+        "placements": {
+          "coordination-models": "Single placement, leaf under Coordination (Foundations). Text must stand alone (no 'below', no 'in this domain'); assume the parent's framing of expectations but do not depend on its wording. Foundations-level: protocol examples allowed, no domain-specific mechanism built."
+        },
+        "fields": {
+          "actors": [
+            "Participants whose choices count: model-dependent. Agreement: a known participant set in many protocols, counted equally or weighted by a resource such as stake. Stake-based designs select or weight participants by stake, so they still need to know who holds stake and how much. Only designs in which computational work alone decides who extends the chain (e.g. Bitcoin) need no known set; hybrids that use work to admit a committee that then votes do need one, so do not say work-based designs in general need none. Do not say every agreement protocol needs a known set, nor that weighting by stake removes the need. Convention: whoever is in the population that shares the precedent. Market: whoever trades under its rules. Coordinator: one designated party decides; others submit to it.",
+            "Pitfall: 'designated coordinator' = a party given the deciding role; do not explain trusted parties (excluded), only name trust as its support."
+          ],
+          "inputs": [
+            "What each participant must know or observe (claim 2), keep the plan's wording and conditions:",
+            "agreement: messages exchanged among participants; many (not all) protocols also need the participant set known;",
+            "convention: shared knowledge of a precedent plus the expectation that others follow it; a public precedent alone is not enough (parent owns why layered knowledge matters; do not rebuild it);",
+            "market: each participant's own valuations and prices formed under the market's rules; do not claim prices are correct, efficient or aggregate all information (markets record: a price is not objective truth); do not say participants need nothing else;",
+            "coordinator: the relevant information must reach the coordinator.",
+            "Do not draw public vs private / symmetric vs asymmetric distributions (information sibling) or credibility of statements (coordination-communication)."
+          ],
+          "outputs": "One collective outcome per instance: a decision, an outcome everyone matches, prices and allocations, or the coordinator's choice. Choices combined by a decision rule (agreement), independent matching to a precedent (convention), the market's rules forming prices and allocations, or one party's choice. Name, never explain, how consensus or a market works internally.",
+          "assumptions": [
+            "What sustains each (claim 3); supports mix, do not assign exactly one per model:",
+            "agreement: rules the protocol carries out, valid only under its fault model and timing model (a bound on faulty participants, a timing assumption); many permissionless designs also enlist participants' interest;",
+            "convention: participants' own interest in matching others once they expect others to follow (self-enforcing; may name nash-equilibrium, never explain);",
+            "market: participants' own interest, acting within rules the market's protocol or venue carries out (e.g. settlement);",
+            "coordinator: trust in that party, possibly backed by accountability or replaceability.",
+            "'Compulsory' = the protocol carries out its rules and does not accept inputs that break them; it does not force behavior outside what it can check. Avoid 'forces', 'guarantees'."
+          ],
+          "failures": [
+            "Characteristic failure when the support is missing (claim 3; 'such as', not an exhaustive list):",
+            "convention: a new situation with no precedent, or several precedents in conflict (miscoordination, not cheating);",
+            "agreement: faults or delays beyond what the protocol's fault and timing assumptions tolerate; consequence depends on the protocol and the broken assumption (conflicting decisions or no decision); do not say it always halts or always forks; do not invoke impossibility results unless all conditions are stated (better: do not invoke);",
+            "market: prices participants can manipulate, so outcomes can follow the manipulation rather than participants' valuations;",
+            "coordinator: unavailable (no decision while it is down, unless a fallback replaces it) or abuses its discretion (decides for its own gain, e.g. excluding or reordering others' inputs).",
+            "Do not explain the collective action problem itself (collective-action sibling) or how incentives are designed (mechanism-design, incentives: excluded)."
+          ],
+          "variants": [
+            "The four models: explicit agreement, conventions, markets, designated coordinator (parent's list; go beyond it per facet watch: information, incentives/enforcement, failure for each).",
+            "Combinations (claim 4): example = agreement selects a coordinator who orders transactions, while fees influence which transactions it includes first. Selection is often a protocol rule applied to agreed state (not a vote each time); in some designs selection is by competition, so present it as one example, not how every chain works.",
+            "Pitfall (see claim issue): the market does not by itself decide inclusion; fee priority holds only insofar as the coordinator follows fees, and it keeps discretion.",
+            "A combination inherits the assumptions of every model it uses: a failure of any one's support can affect the outcome. Do not overclaim 'fails whenever any part fails' or 'only as strong as the weakest': one model can bound another's failure (e.g. agreement replacing an unavailable coordinator), but that bound rests on the agreement's own assumptions."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Four alternatives (explicit agreement, convention, market, designated coordinator) read across the same three dimensions the plan claims for each: information it assumes, what sustains it, characteristic failure when that support is missing.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Show the four models side by side on three dimensions (information assumed; what sustains following it; characteristic failure), so the reader reads across: which rest on interest, on executed rules or on trust, and how each breaks.",
+            "whyNotProse": "Twelve values over four models; in paragraphs the reader must reassemble the contrast (e.g. trust vs executed rules vs self-interest, missing precedent vs manipulated prices) across sentences. The parent already lists the four in prose; the facet watch asks to go beyond the list along these dimensions, which is a comparison."
+          }
+        ],
+        "division": "Prose: the four questions any model settles (claim 1); why each model needs its information and the conditions on each cell (many, not all, agreement protocols need a known set; agreement's rules hold only within fault and timing assumptions; supports mix); combination of models and inherited assumptions (claim 4). Comparison: short cell values only, each keeping its condition (e.g. 'faults or delays beyond its fault and timing assumptions'); the prose must not walk the table row by row, and cells must not explain how consensus or a market works.",
+        "level": "The four models are compared only here: the parent merely lists them, and each excluded concept (consensus, markets, emergent-conventions, trusted-parties) explains its own model, not how the models compare.",
+        "territory": "Cells characterize each model only on the plan's three dimensions and name excluded concepts without explaining their workings. No information-distribution, credibility-of-signals or collective-action incentive structure is drawn (siblings' territory); cooperation and competition are not compared.",
+        "placements": "One placement (leaf under Coordination); the comparison and prose carry no positional reference and hold as a standalone explanation."
+      },
+      "audit": {
+        "at": "2026-10-20T02:09:26.629Z",
+        "note": "Re-audit after repair 2 (scoped, not expanded: the repair cut one clause and narrowed one sentence of the information paragraph and corrected model fields.actors[0]; it changed no argument, assumption, structure or scope). Finding 1 of findings/coordination-models-2.md (work-based designs said in general to need no known set) is resolved: the clause is cut, and the sentence now reads 'Opening participation to anyone holding a resource does not by itself remove that need: designs based on stake still select or weight participants by stake, so they need to know who holds it and how much', which holds for stake-weighted voting designs, stake-proportional selection (sortition, slot leaders) and designs that elect a set by stake and then count equally, wherever the stake is recorded; the earlier advisory about 'recorded in the chain's own state' is also resolved. 'by itself' keeps the sentence from implying that every open design needs a known set, and the paragraph says nothing about work-based designs, so nothing now overclaims either way. Earlier fixes hold: the opening list ('the members of a known set, counted equally or weighted by a resource they hold such as stake'), the comparison cell ('in many protocols, a known set of participants'), the fault sentence ('how many participants, or how much weight, may be faulty') and the paragraph's 'many agreement protocols ... count votes against a threshold of that membership' are consistent with the repaired sentence; every use of 'known set', 'stake' and 'membership' was re-read, and 'How such protocols reach a decision is the subject of Consensus' still names Consensus without explaining it. The convention fix ('a convention can arise from precedent without anyone choosing it') and the Market cell ('can follow') are unchanged and correct. Overlap: the single placement's parent (Coordination) lists the four models and the information/incentive framing; the record goes beyond the list along the designed dimensions and restates no parent sentence. Territory: excluded and sibling concepts are named only; no information-distribution, signal credibility or collective-action incentive structure is drawn. Structure: the designed four-by-three comparison is written as designed. No positional or time-sensitive wording; American English. Advisory: model fields.actors[0] says 'Only designs in which computational work alone decides who extends the chain (e.g. Bitcoin) need no known set', which overclaims in the model (longest-chain designs based on other resources, such as space, also need none); the record does not carry it. Earlier advisories in untouched text still apply: prose repeats some comparison cells (failure column, coordinator unavailability); 'A convention needs no exchange at the moment of action' echoes the parent's wording; the definition's pair ('rules a protocol carries out' or 'a precedent') fits a coordinator's discretionary choice only loosely; 'Nash Equilibrium' is capitalized in running prose; 'match different choices' would read better as 'make different choices'.",
+        "resolutions": [
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "agreement: used as the model's name ('Explicit agreement', 'Agreement combines choices through the messages participants exchange') and characterized only on the designed dimensions (information, support, failure); how agreement is reached is not explained and is deferred to Consensus."
+          },
+          {
+            "id": "names-concept:d6797efc38",
+            "resolution": "best-responses: named once ('matching it is its best response') to say why a convention is self-sustaining; the concept is not defined or developed."
+          },
+          {
+            "id": "names-concept:6c9e4f0967",
+            "resolution": "competition: named only ('a competition among would-be proposers') as an alternative way to select a proposer; how competition works and the cooperation/competition contrast are not explained."
+          },
+          {
+            "id": "names-concept:87ef760148",
+            "resolution": "consensus: named only ('How such protocols reach a decision is the subject of Consensus'); no decision procedure, quorum construction or fault-tolerance argument is given."
+          },
+          {
+            "id": "names-concept:c099947613",
+            "resolution": "decision-rules: named only ('a decision rule applied to the messages participants send') as agreement's way of combining choices; no rule is described."
+          },
+          {
+            "id": "names-concept:8aad4152ed",
+            "resolution": "fee-markets: named within claim 4's combination example ('a fee market shapes which transactions it includes first'; fees set priority only as far as the proposer follows them); this states the fee market's role in the combination, not how fee markets price or clear."
+          },
+          {
+            "id": "names-concept:1a33b2951f",
+            "resolution": "information: the word is used in its plain sense for what each model assumes (claim 2); the sibling's territory (public vs private, symmetric vs asymmetric distribution, verifiability, disclosure timing) is not drawn."
+          },
+          {
+            "id": "names-concept:ad7e9cbda5",
+            "resolution": "markets: named only ('how those prices form is the subject of Markets'); the record states only what a market assumes, what sustains it and its characteristic failure, not price formation."
+          },
+          {
+            "id": "names-concept:12a4d24d58",
+            "resolution": "nash-equilibrium: named only ('the precedent holds as a Nash Equilibrium without anyone enforcing it') to label the self-enforcing state; equilibrium is not defined or analyzed."
+          }
+        ],
+        "recordFingerprint": "611ae0da8622aba78bc3510d8b354e6b8294b91b1f8f2be8f9f84dcd087d18a8"
+      }
+    },
+    "information": {
+      "model": {
+        "meaning": "Note: coordinating sense only. The information structure of a coordination setting: who holds which facts relevant to choosing, whether others can observe or check them, and when they become available to whom; and how that structure shapes what participants can expect of one another. Not what a process can know or infer under communication limits (Partial Knowledge: name only).",
+        "kind": "property",
+        "parents": {
+          "coordination": "Parent already says: coordination works on expectations; expectations depend on what a participant knows, about the situation, others, and what others know; flow Information -> Expectations -> Choices -> Outcome; knowing a fact is not always enough (layered knowledge); shared rules fixed in advance; communication of intentions. Do not restate any of these. Adds: the structure of the first link (public/private, symmetric/asymmetric), the two asymmetry problems and the responses with their residue, verifiable vs unverifiable information and its limit, and timing of disclosure."
+        },
+        "claims": [
+          "how information relevant to coordination is distributed: public information that every participant can observe versus private information only some hold, symmetric versus asymmetric distributions, and how the distribution shapes what participants can expect of one another and which coordination is possible; a fact being public is distinct from participants knowing what the others know",
+          "asymmetric information as a coordination problem: hidden information about a participant's type, such as its costs, valuation or reliability, under which terms offered to all can attract the participants the offering side would least want, and hidden action, where what a participant does after an arrangement is made cannot be observed; and the responses of screening, bonding and making actions observable, with what each leaves unresolved",
+          "verifiable versus unverifiable information: what a participant can check for itself, by reading a shared record or checking a signature or proof, versus what it must accept on a reporter's word, why protocols coordinate on verifiable facts where they can, and the limit that a verifiable record establishes what was recorded and which key or account recorded it, not that an outside fact it reports is true",
+          "when information becomes available and to whom: information revealed before others act can be used against the participant who revealed it, so protocols time disclosure, keeping information hidden until choices are fixed and revealing it afterwards, as sealed bids do, at the cost of delay and of coordination that the hidden information would have supported"
+        ],
+        "excludes": [
+          "partial-knowledge",
+          "verification",
+          "oracle-problem",
+          "incentive-compatibility",
+          "commit-reveal",
+          "sealed-bid-auctions",
+          "front-running",
+          "transparency",
+          "information-sharing",
+          "stake",
+          "coordination-communication",
+          "coordination-models"
+        ],
+        "placements": {
+          "information": "Single placement, leaf under Coordination (Foundations); nothing opens beneath it, so the text is a complete explanation. No positional words ('below', 'in this domain', 'the next topic'). May assume the reader met the parent's expectations chain but must not depend on its wording. Foundations level: protocol examples allowed, but no MEV, auction or oracle mechanism built."
+        },
+        "fields": {
+          "statement": [
+            "Four aspects, one per claim: distribution (who holds what), asymmetry as a problem (hidden information, hidden action) and responses, verifiability, timing of availability.",
+            "Public = available for every participant to observe (e.g. on a shared record anyone can read); it does not mean each participant has observed it, or knows that others have. Private = held by some only (own costs, valuations, reliability, own actions, pending intentions).",
+            "Symmetric vs asymmetric: whether participants hold the same relevant information, not whether all of it is public (participants can be symmetrically uninformed).",
+            "'Shapes which coordination is possible': state conditions, e.g. coordinating on a fact needs the participants who act on it to have it or be able to check it; do not claim a given distribution makes coordination impossible in general.",
+            "Public vs knowing what others know: one or two sentences only, naming Partial Knowledge for why that further knowledge is hard to establish; no levels of knowledge, acknowledgments, coordinated attack, common-knowledge impossibility, causal past or staleness (all Partial Knowledge's). The parent already says layered knowledge can be needed: do not restate it."
+          ],
+          "establishedBy": [
+            "Private information arises from participants themselves: their type (costs, valuation, reliability) and what they do after an arrangement is made.",
+            "Publication on a shared record makes a fact available to all who can read the record; checkability comes from signatures and proofs, valid only under their assumptions (scheme and proof system sound, the checker's own software correct, access to the data and to the agreed record). A compromised key does not change which key signed; it breaks only the inference about who holds the key, which a check does not establish. 'Check for itself' still rests on those assumptions; name Verification, do not explain how checking works.",
+            "Protocol rules set timing: keeping content hidden until choices are fixed, then revealing (name Commit-Reveal and Sealed-Bid Auctions as instances; do not explain their steps, hiding/binding properties, or reveal-stage enforcement).",
+            "Responses that change what asymmetry does (claim 2): screening, bonding, making actions observable; see tradeoffs for what each leaves unresolved."
+          ],
+          "confusions": [
+            "Public (anyone can observe) vs commonly known (each knows the others know, and so on): name Partial Knowledge, do not explain.",
+            "Hidden information (about type, present before the arrangement) vs hidden action (what a participant does after it): different problems, different responses.",
+            "Screening (the uninformed side designs terms so that types sort themselves) vs signaling (the informed side acts to reveal its type): signaling and its credibility belong to the Communication sibling (coordination-communication); name only. Why a menu makes types sort themselves is Incentive Compatibility: name only.",
+            "Observable vs verifiable: an action seen by some participant is not thereby provable to others or to a rule that enforces a penalty.",
+            "Verifiable record vs true outside fact: a valid record or signature establishes what was recorded and which key or account recorded it, not that a reported outside fact is true. Name Verification and Oracle Problem; do not explain verification limits or oracle designs. 'By whom' means a key or account, not a real-world identity.",
+            "Hiding information until choices are fixed vs not sharing it at all; and not the Cooperation record's point that information shared with a partner cannot be unshared (authored neighbour): do not restate.",
+            "Transparency (excluded, governance sense) and Information Sharing (excluded): name only if needed."
+          ],
+          "variants": [
+            "Hidden information about type: when terms are uniform and the offering side cannot tell types apart, the terms are most attractive to the types it would least want, so those can be over-represented among takers (e.g. one price for cover attracting the riskiest applicants; one rate attracting the riskiest borrowers). Say 'can'; do not claim the market always unravels or collapses.",
+            "Hidden action: what a participant does after the arrangement cannot be observed. Condition: it is a problem when the observable outcome does not reveal the action (chance or others' actions also affect it, or the outcome is itself unobservable); if outcomes revealed actions exactly, terms tied to outcomes could address it, provided they can be enforced. Avoid saying it always leads to shirking."
+          ],
+          "tradeoffs": [
+            "Screening: needs types to value terms differently enough to sort; leaves a cost (some options made worse for their own type than they would be if types were known; any advantage left to types depends on who sets the terms, so do not state one unconditioned) and fails to separate types that value the menu alike.",
+            "Bonding (a deposit forfeited on proven misbehavior; name Stake, do not explain staking): deters a gain-seeking participant only when the expected forfeit (the bond times the chance the misbehavior is detected and proven to whatever rule or party takes the bond) exceeds the gain, and does not deter one motivated by gains elsewhere or by harm; needs capital, which can exclude capable participants without it; can also deter some unwanted types (selection effect), but not those who expect to gain more than the bond.",
+            "Making actions observable (recording actions on a shared record, monitoring): covers only actions that can be recorded or watched; actions taken elsewhere (off the record, side arrangements, effort, intent) stay hidden; observation without a consequence changes nothing by itself; observation can have its own cost and exposes the observed participant (links to claim 4).",
+            "Verifiable vs unverifiable: protocols coordinate on verifiable facts where they can because participants running the same deterministic check on the same evidence, with correct software, reach the same conclusion without relying on the reporter, so the reporter's credibility no longer matters for what was checked; unverifiable reports instead need incentives, reputation or trust in the reporter (name Incentive Compatibility, the Communication sibling, Oracle Problem; do not explain them).",
+            "Timing: information revealed before others act can be used against the revealer (e.g. a visible bid or pending order can be undercut or acted on first; name Front-Running, do not explain ordering attacks). 'To whom' also covers parties who see information earlier than others, such as whoever receives and orders pending submissions, or whoever opens sealed bids. Hiding until choices are fixed costs delay (a separate reveal step or period) and loses the coordination the hidden information would have supported (participants cannot adjust to each other's choices). Hiding covers the content, not necessarily the fact or time of participation; do not claim it removes all exploitation."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditions and consequences: how each aspect of the information structure (distribution, asymmetry, verifiability, timing of disclosure) shapes expectations, the condition each holds under, and what each response leaves unresolved. Argument and causation, not alternatives on shared dimensions, order or states.",
+        "whyProse": "Each claim is a conditioned causal argument (uniform terms can attract unwanted types; hidden action matters when outcomes do not reveal actions; a check holds under its assumptions; early disclosure can be used against the revealer), and the conditions carry the accuracy, so they belong in sentences. Considered and rejected: a comparison of screening, bonding and observability (three responses aimed at different problems, not alternatives read across shared dimensions; three read better as prose); a distinction 'public != commonly known' (the parent already draws layered knowledge and Partial Knowledge owns it, so a block would explain beyond naming); a distinction 'verifiable record != true outside fact' (Verification already states it; one clause suffices here); a flow of hide-then-reveal (Commit-Reveal's process, excluded). Hidden information versus hidden action is drawn in the prose that defines each.",
+        "level": "The parent names information only as the first link of its expectations chain; the structure of that link (distribution, asymmetry, verifiability, timing) is this concept's. The excluded concepts own the mechanisms it names: Verification (how checks work), Oracle Problem (outside facts), Commit-Reveal and Sealed-Bid Auctions (timed disclosure), Incentive Compatibility (self-sorting), Stake (bonds), Partial Knowledge (what processes can know).",
+        "territory": "Names, never explains: Partial Knowledge for layered and common knowledge (facet watch); Communication sibling for signaling and credibility of statements; Coordination Models for each model's information assumptions; Collective Action for group size and observability of contributions; Cooperation's selective sharing (authored). No excluded mechanism is drawn; the only structure-like content (sorting by types, hide-then-reveal) stays at the level of what it does and what it leaves unresolved.",
+        "placements": "One placement, a leaf under Coordination in Foundations; prose with no positional references stands alone there as a complete explanation."
+      },
+      "audit": {
+        "at": "2026-10-20T02:18:23.677Z",
+        "note": "Re-audit after repair 1 (scoped; the whole record was re-read, and no complete audit was needed because the repair removed errors without changing the argument, structure or scope). Blocking findings resolved: (1) the signature example now reads 'A signed price report establishes which key signed it, not that the price was right', consistent with the preceding sentence that a valid record or signature establishes which key or account recorded it and not which person or organization stands behind the key; (2) the screening clause about 'better-informed types' keeping an advantage is cut, so the record no longer states an information rent without the condition of who sets the terms, and screening's residue is still answered by pooling of types that value the options alike and by the distortion of some options. The check's assumptions no longer list key compromise; they are now the scheme's soundness and the checker having the data and the agreed record, with correct software in the preceding sentence. A compromised key still leaves 'which key signed' true, and the limit paragraph sets who stands behind the key outside what a check establishes, so the two paragraphs agree. The announcing opener 'Verifiability has a limit that is easy to miss.' is gone, and the limit paragraph now opens on its claim. 'A report of an outside price' removes the ambiguity with prices formed on the shared record and matches 'the price was right'. Every use of key (which key or account recorded it, who stands behind the key, which key signed it), signature (checking a signature, the signature or proof scheme is sound, a valid record or signature, a signed price report), check (check for itself, the same deterministic check, a check holds only under its assumptions, how checks work) and type (type as facts that exist before any arrangement, the offering side unable to tell types apart, different types choosing different options, types pooled, one type taking another's option, unwanted types deterred by a bond, the informed side revealing its type) keeps one sense. Model: tradeoffs[0] now leaves any advantage conditioned on who sets the terms, and establishedBy[1] now says a compromised key breaks only the inference about the key's holder; both are consistent with the record. Overlap (single placement information, parent Coordination): no restatement; the public versus knowing-what-others-know clause names Partial Knowledge and does not restate the parent's layered-knowledge point. Territory: every excluded concept is named only (see resolutions); Communication is named for signaling and credibility, without its mechanics; no hazard split is crossed. Structure: prose, as designed. Accuracy and depth: the four claims are each explained with their conditions; the four 'cannot' uses hold. Advisory: (1) 'some options are made worse for their own type than they would be if types were known' holds in welfare terms under competitive screening (the record's insurance case), but under monopoly screening the distorted type can be left no better or worse off; 'set further from what would suit their own type' is more exact (model tradeoffs[0] carries the same wording); (2) hidden action is a problem only when the participant's interest in its action differs from the other side's; this is an optional extra condition; (3) 'effort, intent and arrangements made elsewhere stay hidden': 'can stay hidden', since monitoring can observe some effort; (4) 'matters as much as who holds it' is an unmeasured comparison; 'also matters' is better; (5) 'The information is released rather than withheld': it may be released only to whoever must act on it; (6) 'Hiding also covers the content of a choice': drop 'also'; (7) 'an outside price, of an event outside the system' repeats 'outside'; (8) 'Communication' shares its title with the message-delivery concept; the sibling's title makes it acceptable.",
+        "resolutions": [
+          {
+            "id": "names-concept:f766a1146b",
+            "resolution": "Commit-Reveal is named once, as an instance of timing disclosure. The record gives no commit or reveal steps, hiding or binding properties, or reveal enforcement; the delay cost is stated at the level of 'a separate reveal step or period'."
+          },
+          {
+            "id": "names-concept:587771cf62",
+            "resolution": "Communication (coordination-communication) is named twice: signaling 'belongs to Communication', and Communication is listed among the concepts that take up how unverifiable reports are made credible. Signaling's credibility mechanics are not explained."
+          },
+          {
+            "id": "names-concept:66dd57666f",
+            "resolution": "Front-Running is named for one clause, 'an order visible before it executes can be acted on first, the pattern Front-Running names', which the model allows. The record builds no ordering attack or mechanism."
+          },
+          {
+            "id": "names-concept:0ed10eecbf",
+            "resolution": "Incentive Compatibility is named as the subject of why a screening set makes each type prefer its own option, and among the means of making reports credible. No self-selection constraints or reasoning are given."
+          },
+          {
+            "id": "names-concept:f2abc57f89",
+            "resolution": "Oracle Problem is named only, among the concepts that take up the credibility of unverifiable reports. The limit sentence states the accepted claim 3 boundary and gives no oracle design."
+          },
+          {
+            "id": "names-concept:96f5ef670d",
+            "resolution": "Partial Knowledge is named once, for what participants can know of one another's knowledge, after the single clause separating public from known-to-be-observed. It has no levels, acknowledgments, coordinated attack or impossibility (facet watch respected)."
+          },
+          {
+            "id": "names-concept:5074b4e16d",
+            "resolution": "Sealed-Bid Auctions is named as an instance of timed disclosure, and 'whoever ... opens sealed bids' appears only as an example of uneven availability. No auction format or mechanism is explained."
+          },
+          {
+            "id": "names-concept:1e4fb6edfe",
+            "resolution": "Stake is named once, as 'the role Stake plays in many protocols' for bonding. The bonding argument (expected forfeit against gain, its limits and its selection effect) is claim 2's response, and staking is not explained."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "Verification is named as 'how checks work is the subject of Verification'. The record states only what checkability gives coordination and the assumptions a check holds under, with no account of how signatures or proofs are checked."
+          },
+          {
+            "id": "absolutes:0fb0b6de0d",
+            "resolution": "There are four 'cannot' uses: 'cannot tell types apart' is the stated condition of the adverse-selection sentence; 'the outcome itself cannot be observed' is a stated condition of hidden action; and 'participants who cannot see one another's choices cannot adjust to them' is true by definition of hiding until choices are fixed. None is unconditioned."
+          }
+        ],
+        "recordFingerprint": "1c5c7f3172828bf3974fe2d85455aa757553fe22bf8d648fa116ade3a75a4cb3"
+      }
+    },
+    "coordination-communication": {
+      "model": {
+        "meaning": "Participants exchanging statements of intention or of private information that bind no one, and the conditions under which such statements change what listeners expect and do.",
+        "kind": "mechanism",
+        "parents": {
+          "coordination": "Parent already defines the coordinating sense (intentions, signals, commitments that change expectations; distinct from message delivery) and says protocols make commitments binding or costly. Do not restate either. Start beyond: when a nonbinding statement is credible (self-committing and self-signaling conditions); how much a costless report can convey as interests diverge; the three credibility sources and their limits; signal vs binding commitment as a contrast only."
+        },
+        "claims": [
+          "when a costless statement of intention that binds no one changes what others expect: it is credible when, if believed, the speaker's own best response is to do what it said, and the speaker would want it believed only if it is true; why such statements help participants choose among outcomes they all prefer to miscoordination, and why they are discounted when the speaker gains from the listener's response whatever it intends",
+          "how much a costless report of private information can convey to a listener who acts on it: more when the speaker's and listener's interests are close, less as they diverge, and possibly nothing once they diverge far enough that no informative report would be believed",
+          "what makes a signal credible when interests diverge: a cost that a sender making a false claim would not find worth paying while a truthful sender would, reputation that repeated interaction puts at stake, and content the listener can check; the limits of each, such as resources spent only on proving, reputation worth little to a participant about to leave, and checks that need information the listener lacks; and signals as distinct from binding commitments, which remove options or attach penalties enforced on the deviation itself, where a signal, even one backed by reputation, works only through what others believe"
+        ],
+        "excludes": [
+          "communication",
+          "commitment-devices",
+          "reputation",
+          "verification",
+          "information",
+          "partial-knowledge",
+          "nash-equilibrium",
+          "rational-behavior",
+          "signaling-votes",
+          "agent-to-agent-communication",
+          "coordination-models"
+        ],
+        "placements": {
+          "coordination-communication": "Single placement, a leaf under Coordination in Foundations; nothing beneath it. Same-titled Communication (message delivery) is a different concept: keep every sentence about statements between participants, never about links, channels or delivery guarantees. No positional references. Sibling boundaries at this placement: Information owns public/private and verifiable/unverifiable distinctions and screening/bonding; Coordination Models owns what each model assumes. Reputation, Verification, Commitment Devices, Signaling Votes and Agent-to-Agent Communication are named only."
+        },
+        "fields": {
+          "actors": [
+            "speaker (sender): holds an intention or private information; its payoffs depend on what the listener then does",
+            "listener (receiver): chooses an action after the message; reads the message through the speaker's incentives",
+            "one speaker, one listener is the setting the claim-2 results are stated for; several senders or listeners change the results (do not generalize)"
+          ],
+          "sequence": [
+            "speaker forms an intention or learns private information",
+            "speaker sends a message: costless, nonbinding, and (for claims 1-2) not checkable by the listener",
+            "listener updates beliefs given what it knows of the speaker's incentives",
+            "both act; payoffs follow from actions, not from the message",
+            "no step binds anyone: that is what separates this from a commitment"
+          ],
+          "inputs": [
+            "the speaker's intention or private information",
+            "common knowledge of each side's payoffs, or at least of how their interests are aligned (the listener discounts by what it knows of the speaker's gain)"
+          ],
+          "outputs": [
+            "changed expectations and listener action when the message is credible; otherwise none",
+            "for claim 2: in the standard model the speaker reveals only a range (a coarse report), not the exact information"
+          ],
+          "assumptions": [
+            "results are equilibrium results about participants reasoning about each other's incentives; name rational-behavior and nash-equilibrium, do not explain them",
+            "an uninformative equilibrium in which messages are ignored always exists in cheap talk, so 'helps'/'conveys' means 'can, in some equilibrium', not 'does'",
+            "claim 1 credibility test (self-committing: if believed, saying it makes doing it the speaker's best response; self-signaling: the speaker wants it believed only if it is true) is a theoretical criterion; experiments often find people rely on cheap talk more than the criterion predicts. Say the statement is discounted, not that it carries nothing",
+            "claim 2 (Crawford-Sobel setting): one informed speaker, one listener who acts, message costless and unverifiable, listener cannot commit in advance to how it will respond, a fixed difference between the action each prefers. Statements compare the most informative equilibrium: its precision falls as the difference grows; past some difference only the uninformative equilibrium remains. The threshold depends on the model; avoid quoting a number, or give it with its model (uniform state, quadratic losses)",
+            "claim 3: costly signals separate only if the cost (or the gain from being believed) differs by type so that a truthful sender finds it worth paying and a false one does not; a cost every sender would pay equally, with equal gain, separates nothing; pooling equilibria can also exist"
+          ],
+          "failures": [
+            "statement discounted: speaker gains from the listener's response whatever it intends (stag-hunt pattern: an announced intent to cooperate is self-committing but not self-signaling, because a speaker planning to defect still wants the listener to cooperate)",
+            "clashing announcements when participants all prefer coordination but disagree on which outcome (battle-of-the-sexes pattern): talk can raise the chance of coordinating without guaranteeing it",
+            "babbling: with interests far enough apart, a costless report conveys nothing in equilibrium",
+            "costly signal: resources burned only to prove; pooling if the cost does not separate",
+            "reputation: worth little to a participant about to leave, or one that can take a fresh identity cheaply (name reputation; do not explain reputation systems)",
+            "checkable content: the check needs information the listener lacks; do not restate Information's limit that a verifiable record shows what was recorded, not that an outside fact is true"
+          ],
+          "variants": [
+            "statement of intention (claim 1) vs report of private information (claim 2): the first is about the speaker's own future action, the second about a state the listener cares about",
+            "credibility sources when interests diverge (claim 3): cost that differs by truthfulness, reputation at stake in repeated interaction, content the listener can check"
+          ],
+          "tradeoffs": [
+            "costly signals buy credibility with waste; reputation needs persistent identity and a future; checkable content needs the listener's information and is owned in depth by Verification and Information"
+          ],
+          "relation": "Claim 2 only, in the Crawford-Sobel setting: the informativeness of the most informative equilibrium is nonincreasing in the divergence of preferred actions; at zero divergence full revelation is possible. Monotone, not a formula the record needs.",
+          "invariants": [
+            "nothing in the exchange binds the speaker: a signal, even one backed by reputation, works only through what others believe; a costly signal's cost is paid whatever the speaker later does, and any later cost of a false or broken statement under reputation arises from what listeners come to believe. A binding commitment instead removes options or attaches penalties enforced on the deviation itself (e.g. a deposit forfeited on deviation, rules that carry the act out), without depending on listeners' beliefs. Do not define a commitment as changing what the party 'will want to do' or a signal as changing what no option pays: a reputation-backed statement does both",
+            "consequences to keep straight: a deposit forfeited on deviation is a commitment device or bond (Information names bonding), rather than a costly signal in this sense (it may also sort types, which Information owns); a costly signal's cost is paid whatever the speaker later does; self-committing cheap talk is not a commitment, since nothing stops the speaker deviating"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional argument: each claim is a credibility condition and what follows when it fails (when nonbinding talk is believed, how informativeness falls with diverging interests, which sources restore credibility and where each stops working), plus one contrast with binding commitments.",
+        "whyProse": "The meaning is in conditions and reasons (best responses, who gains whatever is intended, cost differing by truthfulness), which paragraphs carry and blocks would strip. Considered: a comparison of the three credibility sources by what makes lying unprofitable, what it needs and its limit; rejected because three sources with one limit each read better as a paragraph and the condition for each (cost must differ by type, identity must persist) would not fit in a cell. Considered: a distinction block for signal vs commitment; rejected because the contrast needs its condition (a deposit forfeited on deviation is a commitment, a sunk cost paid regardless is a signal) and is one sentence of the argument, not a standalone conflation. No order, loop, persistent state or forces in tension organize the concept.",
+        "level": "The parent names coordinating communication and says commitments are made binding or costly; the credibility conditions, the informativeness-versus-divergence result and the credibility sources are this concept's own and are needed by no sibling.",
+        "territory": "Draws no sibling's relationship: Information keeps how information is distributed, verifiable vs unverifiable, screening and bonding; Coordination Models keeps what each model assumes; Collective Action keeps contribution incentives. Reputation, Verification and Commitment Devices are named as sources or contrast, not explained. The same-titled Communication's delivery guarantees are not touched.",
+        "placements": "One placement, a leaf under Coordination; the prose is self-contained and makes no positional reference, so it holds there."
+      },
+      "audit": {
+        "at": "2026-10-20T02:32:29.065Z",
+        "note": "Re-audit after repair 2, scoped to the one blocking finding in findings/coordination-communication-2.md (the self-committing sentence closing paragraph 8). Not expanded into a complete audit: the repair changed one sentence and narrowed its claim from asserting belief to a condition on it. It did not change the argument, the assumptions, the structure or the scope, and the re-audit after repair 1 was already a complete audit. Resolved: the sentence now reads 'if it is believed and acted on, it is kept because following through is then the speaker's best response, not because anything holds the speaker to it, and nothing prevents deviation if that stops being true'. It no longer says that a self-committing statement is believed. Its condition 'believed and acted on' matches paragraph 2's definition of self-committing ('once the listener believes it and responds accordingly, doing what was said is the speaker's own best response'). So it is consistent with paragraph 2, where belief needs both self-commitment and self-signaling, and with paragraph 3, where the self-committing stag-hunt announcement is discounted yet would be kept if believed. Re-read with the repair: all of paragraph 8 and every sentence on belief, self-commitment and commitment. That covers paragraph 1 ('turns on the speaker's incentives and on what the listener can check'), paragraph 2 ('can be believed when two conditions hold', 'the speaker can keep to it'), paragraph 3 ('if it is believed, joining is the speaker's best response'), paragraph 6, and paragraph 8 ('works only through what others believe', 'enforced on the deviation itself', the deposit sentence). They are mutually consistent. 'Not because anything holds the speaker to it' agrees with 'None of these sources binds the speaker'. Where a reputation is at stake, its effect is part of the speaker's best response, so the 'because' clause still holds. 'Kept' is used in the same sense as 'keep to it' in paragraph 2. The repair introduced no new absolute, term or concept. Overlap with the single placement's parent, Coordination: the sentence does not restate the parent's sentence about stated intentions and binding commitments. Territory: Commitment Devices is still named, not explained, and the sentence stays within claims 1 and 3. Structure: prose as designed. Canonical: no positional or time-sensitive words. American English. Plain text. Depth: unchanged and adequate. Advisory (all in text the repair did not touch, carried from the earlier reviews): (1) paragraph 3's last sentence states Aumann's conclusion without noting that experiments find more reliance on such announcements; paragraph 1's 'analyses' scopes it. (2) The paragraph 3 setup does not say that joining alone pays less than the safe option. (3) Paragraph 2's 'would prefer to say something else' is slightly stronger than self-signaling, which only requires that such a speaker would not want the statement believed. (4) Paragraph 7's 'statements of intention depend on the other sources' omits claim 1's own route; 'or on the conditions above' would close the gap. (5) Paragraph 4's 'fixed, mutually known difference' is the leading special case of Crawford-Sobel, acceptable as 'the standard model'. (6) In paragraph 8, 'without depending on what listeners believe' could be misread as qualifying the commitment's effect rather than its enforcement; 'whose enforcement does not depend on what listeners believe' is unambiguous. (7) Paragraph 7's checkable-content wording runs close to Information's wording on verifiable facts; the group audit should judge it.",
+        "resolutions": [
+          {
+            "id": "names-concept:d6797efc38",
+            "resolution": "The record uses 'best response' as vocabulary, in the analyses' premise ('choosing best responses to what they expect of one another'), the self-committing condition, the stag-hunt example and the repaired paragraph 8 sentence ('following through is then the speaker's best response'). It never explains what a best response is or how one is computed, and the repair added only another use of the term. Named, not explained."
+          },
+          {
+            "id": "names-concept:7e2b192a92",
+            "resolution": "Commitment Devices is named once ('as Commitment Devices describes'). Paragraph 8 gives binding commitments only as claim 3's contrast (they remove options or attach penalties enforced on the deviation itself). The deposit example classifies a deposit and does not explain how devices are built or enforced. The repaired sentence adds no explanation of commitment devices. Named only."
+          },
+          {
+            "id": "names-concept:4aa61ad949",
+            "resolution": "Communication is named only, to draw the delivery boundary ('not on whether the message arrives intact, which is the subject of Communication'). No sentence covers links, channels or delivery guarantees, so the same-title hazard is respected."
+          },
+          {
+            "id": "names-concept:1a33b2951f",
+            "resolution": "Information is named only ('which facts can be checked to Information'). The record does not explain public versus private information, screening, bonding or the verifiable-record limit. Its checkable-content paragraph stays within claim 3; the close wording is listed as an advisory."
+          },
+          {
+            "id": "names-concept:12a4d24d58",
+            "resolution": "Nash Equilibrium is named only, to frame the analyses ('as Rational Behavior and Nash Equilibrium describe'). The record does not define equilibrium. 'Remains consistent' and 'best response' are used, not explained."
+          },
+          {
+            "id": "names-concept:a8fc4eacbc",
+            "resolution": "Rational Behavior is named only, in the same framing sentence. The record does not explain what rationality assumes beyond 'choosing best responses to what they expect of one another', which states the analyses' premise."
+          },
+          {
+            "id": "names-concept:0151411809",
+            "resolution": "Reputation is named only ('How standing is built up and kept is the subject of Reputation'). Paragraph 6 covers reputation only as a credibility source and its limits (the remaining future, cheap fresh identities), which claim 3 owns. It does not explain how standing is built or maintained."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "Verification is named only ('How checks work belongs to Verification'). Paragraph 7 says only when a check settles a claim and that the listener must be able to run it, which is claim 3's credibility source and its limit. It does not explain how checks work."
+          },
+          {
+            "id": "absolutes:f08940c217",
+            "resolution": "Each of the six absolutes holds. (1) 'Always remains consistent': a babbling outcome exists in every cheap-talk game. (2) 'Cannot read the speaker's plan from the words': conditioned by 'since a speaker with either plan would say them'. (3) 'That the listener cannot check' and (4) 'cannot commit in advance' are stated assumptions of the standard model. (5) 'Cannot take them at face value': the equilibrium argument for a listener that knows the speaker would shade. (6) 'What a speaker will do cannot be checked before it acts': holds for future action. The repair added no absolute."
+          }
+        ],
+        "recordFingerprint": "e7a40d8a5cc0602746e43ec2d0e9c9f9610968d4e94e461c2df49bf91b8e92a6"
+      }
+    },
+    "collective-action": {
+      "model": {
+        "meaning": "Note, not record text: several participants pursuing an outcome they would all gain from, where each one's contribution is its own choice and cost; the concept covers both the joint pursuit and the incentive or expectation problem that can leave the outcome unreached. Same meaning at both placements.",
+        "kind": "institutional",
+        "parents": {
+          "coordination": "Parent already states the free-rider form in one sentence (each would rather others pay; sensible individual choices can leave the result unachieved) and that coordination models differ in addressing it. Do not restate or paraphrase that sentence or open with a definition of the problem. Start beyond it: the exact payoff condition under which not contributing pays whatever others do; the second, assurance structure; outcome properties; group size and stakes; what changes payoffs and its limit. Coordination models: named only.",
+          "multi-party-coordination": "Parent already explains conditional pledges executed only once enough arrive with refunds, first-mover exposure, atomic joint execution and ledger-visible commitments. Do not re-explain any of these or judge how well pledges work. Adds: which collective action problems are about expectations and which about payoffs, and why the remedy differs; outcome properties, size and stakes, payoff changes. Commitment devices, coordination mechanisms, coordination failures, joint execution, multi-party intents: name at most, never explain."
+        },
+        "claims": [
+          "the two incentive structures a collective action problem can take: in a single interaction where each contribution costs its contributor more than the benefit it brings back to it, whatever the others contribute, each participant does better by not contributing whatever the others do, so the outcome can go unachieved even when every participant wants it; where each would contribute if enough others did, the problem lies in expectations, since contributing pays only if enough others are expected to contribute; and why the first needs payoffs changed while the second needs expectations aligned",
+          "how properties of the shared outcome shape the problem: whether those who did not contribute can be kept from benefiting, whether use by some leaves less for others, which, where users cannot be kept out, turns under-provision of an outcome into over-use of a shared resource, and whether the outcome grows with each contribution or arrives only once contributions pass a threshold, where a single contribution can be decisive and contributions that fall short of the threshold achieve nothing",
+          "how group size and uneven stakes affect collective action: in larger groups each contribution can matter less to the outcome and be harder for others to observe, while a participant with a large enough stake may find it worthwhile to provide the outcome alone, so the same outcome can be reached or missed depending on how interest in it is spread",
+          "what changes the individual payoffs behind a collective action problem: rewards or penalties tied to each participant's own contribution rather than to the outcome, and repeated interaction in which others' future contributions depend on one's present one; and the limitation that enforcing such incentives is itself a contribution participants may withhold"
+        ],
+        "excludes": [
+          "free-riding",
+          "coordination-mechanisms",
+          "commitment-devices",
+          "coordination-failures",
+          "cooperation",
+          "commons-dilemmas",
+          "public-goods-funding",
+          "nash-equilibrium",
+          "incentives",
+          "multi-party-coordination",
+          "coordination-models"
+        ],
+        "placements": {
+          "collective-action": "Leaf under Coordination (Foundations). The exposition is general game-theoretic structure, true of any participants pursuing a shared outcome, so it holds here without leaning on the parent's free-rider sentence.",
+          "collective-action-in-multi-party-coordination": "Leaf under Multi-Party Coordination (Intents & Coordination). Same structures apply to parties pursuing related outcomes. Pitfalls: nothing that is true only of on-chain pledging or only of protocol participants; no positional words; must not contradict the domain line that collective action does not guarantee cooperation."
+        },
+        "fields": {
+          "distinctions": [
+            "Free-rider structure vs assurance structure. Free-rider: in a single interaction, with self-interested payoffs, each contribution returns to its contributor less than it costs whatever the others contribute, so not contributing is each one's best choice in every case, though all would be better off if all contributed than if none did ('wants it' means this, not merely liking the outcome). Assurance: contributing pays once enough others contribute, so a state where enough contribute and one where none do can each sustain itself; contributing alone risks a wasted cost, which is why expectations decide it. Remedy: the first needs payoffs changed (aligning expectations alone leaves non-contribution the better choice); the second needs expectations aligned. Do not say the assurance case has 'no incentive problem': incentives support contributing only conditionally.",
+            "Threshold outcomes blur the line: a contribution that can be decisive gives a reason to contribute that a gradual outcome lacks, so a threshold good can have assurance-like features; do not present the two structures as a clean partition of all cases.",
+            "Collective action vs cooperation: collective action names the situation and the attempt; whether participants actually cooperate is what is at stake. Collective action does not guarantee cooperation (domain line; do not draw it as a new distinction block, it already exists in the domain). Cooperation: name only.",
+            "Under-provision vs over-use: same incentive logic applied to a resource whose use is rival and from which users cannot be kept out; name commons dilemmas, do not explain over-use mechanics, harvesting rules or governance of commons.",
+            "Collective action problem vs free-riding: free-riding is the behavior, owned elsewhere; here only the payoff structure that makes it pay. Name free-riding at most; no forms, examples or countermeasures of free-riding as such.",
+            "Collective action problem vs coordination failure: a coordination failure is an outcome owned elsewhere; name only."
+          ],
+          "conditions": [
+            "Free-rider dominance needs: one-shot interaction, payoffs counted as each participant's own gain, and the contribution's private return below its cost at every level of others' contributions. Drop any of these and the dominance claim can fail (repeated play, participants who value others' gains or the act of contributing, a pivotal contribution).",
+            "Excludability: if non-contributors can be kept from benefiting, access can be tied to contributing, which weakens the free-rider structure; exclusion can be costly or impossible. Do not claim exclusion solves it.",
+            "Rivalry turns the problem into over-use only together with non-excludability; rival use with exclusion is an ordinary private allocation.",
+            "Threshold: a single contribution is decisive only when the others' total sits just short of the threshold; short of the threshold contributions achieve nothing unless something returns them (the Intents parent's refunds; name, do not explain); contributions beyond the threshold may add nothing.",
+            "Group size: 'can', never 'does'. Each contribution matters less where its benefit is divided among more members or where the chance of being decisive at a threshold falls with size; for an outcome whose value to each member does not fall as members are added, per-member return need not fall. Observability of individual contributions tends to fall with size, which weakens conditional responses. Larger groups can also provide more (more potential contributors, more chance of a large-stake member). No claim that larger groups always fail.",
+            "Uneven stakes: a participant whose own benefit exceeds the full cost may provide alone; this needs an outcome one participant can supply (not one needing many distinct participants, such as a quorum). Where the outcome is gradual, such a provider supplies only up to what it values itself, which can fall short of what the group as a whole would want; others may contribute nothing.",
+            "Rewards or penalties on own contribution need contributions that can be observed and attributed to their contributor; tied to the outcome instead, they go to those who withheld as well, so they add to the shared benefit without separating contributing from withholding.",
+            "Repeated interaction changes payoffs only under conditions: no known last round (in the free-rider structure, standard analysis with a known last round, self-interested participants and common knowledge of both predicts contributions unravel from the end backwards; observed behavior often departs from it, so state it as the analysis, not as fact about people), enough weight on future rounds, contributions observable, participants persisting across rounds. In larger groups withholding future contributions to answer one non-contributor also hurts contributors. Equilibrium theory: name only (nash-equilibrium excluded).",
+            "Second-order limit: monitoring, punishing or rewarding costs whoever does it while its benefit is shared, so it can itself be withheld. Holds when enforcement is costly to the enforcer; protocol rules that carry out penalties automatically lower the per-case cost but still need someone to detect and submit evidence and someone to set and maintain the rule. 'May withhold', not 'will'. Incentives: name only."
+          ],
+          "consequences": "Outcomes everyone values can go under-provided, or shared resources over-used, without anyone acting against the rules; diagnosing which structure applies decides whether the response should change payoffs or align expectations. Pitfall: do not list the responses that sibling concepts own (mechanisms, commitment devices, public goods funding); name them only where a boundary needs it.",
+          "status": "Established (public goods theory, assurance/stag-hunt structure, group-size and privileged-group arguments, second-order free-rider problem). The group-size effect is a conditional argument, empirically mixed; present it with its conditions, not as a law. No author names or dates needed.",
+          "variants": [
+            "Incentive structures: free-rider (dominant non-contribution) and assurance (contribute if enough others do).",
+            "Outcome properties, independent and combinable: excludable or not; rival or not; gradual or threshold."
+          ],
+          "relation": "Optional, linear free-rider case only (equal shares, self-interested payoffs, one shot): a contribution costing c that adds a benefit b to the outcome, shared equally among n members, returns b/n to its contributor; contributing loses privately when b/n < c and gains the group when b > c. State in words first if used; do not generalize to threshold or non-linear outcomes."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional argument: payoff conditions that make non-contribution pay or make contribution depend on expectations, outcome properties that combine to shape the problem, size and stakes effects that hold only under stated conditions, and payoff changes with their conditions and their second-order limit.",
+        "whyProse": "Every claim turns on conditions (one-shot, self-interested payoffs, return below cost at every level of others' contributions, observability, no known last round), and these are what make the statements true; a block would compress them away. The free-rider/assurance contrast is real, but threshold outcomes blur it, so a distinction block would present a clean split the claims do not support, and its remedy difference needs the reason, which is argument. Outcome properties are independent dimensions that combine, not alternatives to compare across shared dimensions, so a comparison would misrepresent them. Repeated interaction's dependence of future contributions on present ones is one clause, not a loop whose steps the reader must see. The domain already carries Collective Action ≠ Guaranteed Cooperation as a distinction; repeating it adds nothing.",
+        "level": "The incentive structures, outcome properties, size and stake effects and payoff changes are this concept's own; the Coordination parent only states the problem in one sentence and the Multi-Party Coordination parent explains one device (conditional pledges), so neither parent carries the analysis, and the concepts that respond to it (mechanisms, commitment devices, public goods funding) assume it.",
+        "territory": "Draws no sibling's or excluded concept's relationship: free-riding, commons dilemmas, public goods funding, commitment devices, coordination mechanisms, coordination failures, cooperation, incentives, Nash equilibrium and coordination models are named only to mark a boundary. Nothing explains coordination models' assumptions (Coordination Models), information distribution or disclosure timing (Information), or credibility of statements (Communication).",
+        "placements": "The analysis is general to any participants pursuing a shared outcome, so one text holds as a leaf under Coordination and under Multi-Party Coordination; it assumes neither parent's sentences, uses no positional or domain-specific framing, and stays consistent with the domain line that collective action does not guarantee cooperation."
+      },
+      "audit": {
+        "at": "2026-10-20T11:22:06.449Z",
+        "note": "Re-audit after repair 1 (scoped; the whole record was re-read, and no complete audit was needed because the repair corrected sentences without changing the argument, its assumptions, the structure or the scope). Blocking findings resolved: (1) the opening no longer paraphrases the Intents domain line 'Collective action does not guarantee cooperation' or the Coordination parent's 'Shared interest does not guarantee a shared outcome'; it now reads 'Whether each participant contributes turns on what contributing gains or costs it, which can depend on what the others do, and a collective action problem can take two incentive structures', which restates neither parent (the Coordination parent's 'A participant's choice depends on what it expects others to do' concerns expectations, the record's sentence concerns payoff interdependence) and gives 'a collective action problem' an antecedent at both placements; (2) the large-stake provider now finds providing alone worthwhile 'even if no one else contributes', which follows from its benefit exceeding the full cost, and no longer carries the dominance phrase; (3) the unraveling sentence now requires that every participant is self-interested and that both this and when the last round falls are common knowledge (glossed as each knows, knows the others know, and so on), and keeps it as standard analysis that observed behavior often departs from; (4) the outcome-tied reward now 'goes to those who withheld as well, so it adds to the shared benefit without separating contributing from withholding', true for any reward size and no longer contradicting paragraph 1 (a decisive contribution) or paragraph 5 (thresholds); the opener is softened to 'Payoffs can be changed by attaching consequences to each participant's own contribution'. Advisories taken: 'even where', 'Free Riding' matches the concept title, 'aligning expectations is enough' no longer reads as the only response. The model conditions entry for rewards or penalties now matches the record. Re-read every use of reward, payoff, last round, 'whatever the others do/contribute' and dominance wording: the remaining 'whatever the others do' uses (paragraph 1 linear case and dominance, paragraph 8 contributor-attached reward or penalty 'large enough' with 'can' and observability) all hold; 'dominant' does not occur; 'the payoffs must change' (paragraph 3) is consistent with paragraph 8, which frames contributor-attached consequences and repeated interaction as payoff changes. Overlap per placement: Coordination parent (whole exposition) and Multi-Party Coordination parent (pledges, refunds, first-mover exposure, atomic execution, ledger visibility) are not restated or explained; the domain line and distinction are not restated. Territory and splits: Free Riding, Coordination Failures, Coordination Mechanisms, Commitment Devices and Commons Dilemmas are named only; Cooperation is no longer named; Information's and Communication's claims are not touched. Structure: prose, as designed. Accuracy and depth: untouched paragraphs (group size, thresholds, outcome properties, enforcement) re-read and sound with their hedges; no positional words, American English. Advisory: (a) paragraph 2 'wastes its cost otherwise' fits threshold-like cases, in a general assurance structure contributing only fails to repay its cost; (b) paragraph 4 'can be costly or impossible, and where it is' is wrong for costly exclusion that is carried out, 'where it is not done' is exact; (c) paragraph 5 'achieve nothing unless something returns them' should be 'achieve nothing, and are lost unless something returns them'; (d) paragraph 9 'cost whoever does them' drops the model's condition that enforcement costs the enforcer more than it earns it ('may withhold' carries the hedge); (e) paragraph 8 'both that and when the last round falls' can be misparsed, 'both this and when the last round falls' or naming self-interest again is clearer; (f) paragraph 8 'standard analysis of the free-rider structure' applies a structure paragraph 1 defines as one-shot to repeated rounds, 'of repeated rounds of the free-rider structure' is exact; (g) 'reward' serves as a verb for making contributing pay (paragraphs 3 and 8) next to the noun for a payment attached to a contributor (paragraph 8), a mild two-sense use; (h) model conditions 'tied to the outcome instead, they go to those who withheld as well' reads awkwardly for penalties.",
+        "resolutions": [
+          {
+            "id": "names-concept:7e2b192a92",
+            "resolution": "Commitment Devices is named once in paragraph 3, as one of the ways either response is put into practice. No pledges, refunds, deposits or device mechanics are explained; the Intents parent's conditional pledges are not restated."
+          },
+          {
+            "id": "names-concept:5f5e7abece",
+            "resolution": "Commons Dilemmas is named once in paragraph 4, as the form the problem takes for a rival resource whose users cannot be kept out. Only the turn from under-provision to over-use (claim 2) is stated; no over-use mechanics, harvesting rules or commons governance are explained."
+          },
+          {
+            "id": "names-concept:907b60d933",
+            "resolution": "Coordination Failures is named once in paragraph 2, as covering the outcome where expectations settle on no one contributing. Its kinds, causes and remedies are not explained."
+          },
+          {
+            "id": "names-concept:6f020c5ab2",
+            "resolution": "Coordination Mechanisms is named once in paragraph 3, with Commitment Devices, as a way the responses are put into practice. No mechanism is described."
+          },
+          {
+            "id": "names-concept:b0fd580775",
+            "resolution": "Free Riding (title now matching) is named once at the end of paragraph 1 as the behavior the free-rider structure makes pay. Its forms, examples and countermeasures are not explained; the record covers only the payoff structure, as its claim says."
+          },
+          {
+            "id": "names-concept:83e32b145b",
+            "resolution": "Incentives is not explained: 'incentive structures' in the opening sentence is the ordinary word naming the two payoff structures this concept owns (claim 1), and paragraph 9 speaks of enforcing consequences, not of incentive design as such."
+          },
+          {
+            "id": "absolutes:cdad0cc5df",
+            "resolution": "All three hold as conditioned: 'excluding non-contributors can be costly or impossible' is hedged by 'can'; 'One whose use is rival and whose users cannot be kept out' defines a resource type, not a claim about all resources; 'where a rule cannot see a violation by itself' is a condition under which detection is still needed."
+          }
+        ],
+        "recordFingerprint": "ad1e99e433d3aaa3c2bf3bfdd6af89d9522c110a70b304daa58010ecec4c2d9e"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-21T13:11:04.956Z",
+    "note": "Group audit of coordination (owned: coordination-models, information, coordination-communication, collective-action; cooperation and competition dual-role and fixed), read side by side with the plan, the parent Coordination and the fixed Cooperation and Competition records. group-signals printed 0 signals, so there are no resolutions. No contradiction between members and no crossed split or reservation: the Communication/Coordination Communication split holds (Coordination Communication names message delivery only to set it aside and binding commitments only as a contrast). Terms keep one sense across members: best response and Nash Equilibrium (Coordination Models' worthwhile-to-follow test and convention equilibrium, Coordination Communication's self-committing test); signaling (Information names the informed side revealing its type as signaling and defers it to Communication, whose costly-signal account matches); deposit/bond (Information's bond forfeited on proven misbehavior answers hidden action and sorts types only through what each expects to forfeit, consistent with Coordination Communication's ruling that a deposit forfeited on deviation is a commitment, not a costly signal); stake (weight in Coordination Models, bond in Information, both the staked-resource sense). Checked for contradiction: Collective Action's second structure ('aligning expectations is enough') and Coordination Communication's joint-effort example (an announcement of joining is not self-signaling when the speaker gains from the other joining whatever it does) are compatible: Collective Action states what the second structure needs, not that costless talk supplies it, and Coordination Communication shows when talk fails to supply it; Coordination Models' convention held as an equilibrium agrees with Collective Action's two self-sustaining states. Overlaps judged legitimate by angle: (1) checkable content appears in Information (verifiable versus unverifiable facts and why protocols coordinate on them; its claim) and Coordination Communication (checkable content as one source of a statement's credibility and its limit for intentions; its claim), each deferring how checks work to Verification and Coordination Communication naming Information for which facts can be checked; (2) observation and proof feeding enforcement appear in Information (an action seen is not thereby provable to a rule; bond deterrence scaled by the chance of proof) and Collective Action (rewards need contributions observed and attributed; enforcement as a second-order contribution), different arguments on different subjects. Convergence: openings differ in head and form (Coordination Models opens 'A coordination model is an account of...'; the other three are noun-phrase definitions with different heads: facts and their structure, exchange of non-binding statements, pursuit of a shared outcome); forms differ (one comparison in Coordination Models; prose in the other three, the expected default); paragraph counts differ (4 plus a comparison, 9, 8, 9); lengths 1,071 to 1,254 words, none above 1,300. Information (screening, bonding, observability, each with what it leaves unresolved) and Coordination Communication (cost, reputation, checkable content, each with its limits) both run a three-item enumeration with limits; this repetition follows their plan claims, which each list three responses or sources with their limits, and is not template convergence. Advisory: (a) the point that a check removes reliance on the supplier is made in both Information ('the supplier's credibility no longer matters for what was checked') and Coordination Communication ('the claim stands or falls on the check ... rather than on the incentives of whoever made it'); minor cross-record redundancy within each claim, could be trimmed in Coordination Communication on a later repair. (b) Collective Action glosses common knowledge in parentheses, which the parent's layered-knowledge paragraph already conveys; a one-clause gloss of a condition, acceptable. (c) Information's three responses and Coordination Communication's three sources could each be candidates for a comparison block (what it answers, how, what it leaves unresolved); prose carries the per-item limits adequately, so this is optional. Drift (window 30) reports drift-depth (median 1,274 words), a slice-level report; no member of this group exceeds 1,300 words and each concept audit tied its paragraphs to claims.",
+    "resolutions": [],
+    "records": {
+      "coordination-models": "611ae0da8622aba78bc3510d8b354e6b8294b91b1f8f2be8f9f84dcd087d18a8",
+      "information": "1c5c7f3172828bf3974fe2d85455aa757553fe22bf8d648fa116ade3a75a4cb3",
+      "coordination-communication": "e7a40d8a5cc0602746e43ec2d0e9c9f9610968d4e94e461c2df49bf91b8e92a6",
+      "collective-action": "ad1e99e433d3aaa3c2bf3bfdd6af89d9522c110a70b304daa58010ecec4c2d9e"
+    }
+  }
+}

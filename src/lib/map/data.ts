@@ -18792,6 +18792,169 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "coordination-models-content",
+      conceptId: "coordination-models",
+      definition:
+        "A coordination model is an account of how participants' independent choices are turned into one collective outcome, whether by rules a protocol carries out or, for a convention, by a precedent a population already shares.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Four questions distinguish one coordination model from another. The first is whose choices count: for instance, the members of a known set, counted equally or weighted by a resource they hold such as stake; whoever trades under a market's rules; or a single party whose choice stands for everyone's while the others submit inputs to it. The second is what each participant must know or observe in order to choose. The third is what makes following the model worthwhile or compulsory for each participant. Following is worthwhile when, given what a participant expects the others to do, it does better by following than by deviating. It is compulsory only in the sense that a protocol carries out its rules and rejects inputs that break them, which reaches what the protocol can check and leaves other behavior to the participant. The fourth is how individual choices become one outcome: a decision rule applied to the messages participants send, prices and allocations that a market's rules form from orders, one party's choice, or, for a convention, no combining step at all, because each participant matches the precedent on its own and the outcome is what they jointly do. That last case shows that a coordination model need not be designed: a convention can arise from precedent without anyone choosing it.",
+        },
+        {
+          kind: "comparison",
+          label: "Four coordination models compared",
+          dimensions: ["Information it assumes", "What sustains following it", "Characteristic failure"],
+          alternatives: [
+            { name: "Explicit agreement", values: ["Messages exchanged among participants; in many protocols, a known set of participants", "Rules the protocol carries out, within its fault and timing assumptions; often participants' interest as well", "Faults or delays beyond those assumptions, leading to no decision or conflicting decisions depending on the protocol"] },
+            { name: "Convention", values: ["Shared knowledge of a precedent and the expectation that others will follow it", "Each participant's interest in matching what it expects the others to do", "A new situation with no precedent, or several precedents in conflict"] },
+            { name: "Market", values: ["Each participant's own valuations and the prices formed under the market's rules", "Participants' own interest, within rules the market carries out, such as settlement", "Prices participants can manipulate, so outcomes can follow the manipulation rather than valuations"] },
+            { name: "Designated coordinator", values: ["The relevant information reaching the coordinator", "Trust in the coordinator, sometimes backed by accountability or the means to replace it", "Unavailability, or discretion used for its own gain"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The models differ first in where information has to travel. Explicit agreement and a designated coordinator both gather it. Agreement combines choices through the messages participants exchange, and many agreement protocols also need to know who the participants are, because they count votes against a threshold of that membership. Opening participation to anyone holding a resource does not by itself remove that need: designs based on stake still select or weight participants by stake, so they need to know who holds it and how much. How such protocols reach a decision is the subject of Consensus. A coordinator concentrates the gathering in one party, so its choice can take into account only what reaches it: inputs that are delayed, withheld or never sent are missing from the outcome however well the coordinator decides. A convention needs no exchange at the moment of action and relies instead on knowledge participants already share, so a precedent that everyone can see but no one expects the others to follow coordinates nothing. A market lets each participant act on its own valuations and on the prices its rules form, without needing to learn what the others value; how those prices form is the subject of Markets.",
+        },
+        {
+          kind: "paragraph",
+          text: "Participants keep to a model out of their own interest, because a protocol carries out its rules, or because they trust a party, and many models rest on a mix. A convention is the case where interest can suffice: once each participant expects the others to follow the precedent, matching it is its best response, so the precedent holds as a Nash Equilibrium without anyone enforcing it. Agreement protocols carry out rules, and many permissionless ones also enlist interest through rewards and penalties, but what the rules guarantee holds only within the protocol's fault and timing assumptions: a bound on how many participants, or how much weight, may be faulty, and an assumption about how long messages may take. Failures follow from the support that is missing, and they differ in kind. A convention can fail without anyone cheating, when well-meaning participants facing an unprecedented situation, or conflicting precedents, match different choices. An agreement protocol can fail when its assumptions are broken, and whether the result is no decision or conflicting decisions depends on the protocol and on which assumption broke. Manipulated prices and a coordinator's self-serving use of its discretion are failures of another kind, in which a participant pursues its interest against the model, while a coordinator that is merely unavailable leaves no decision while it is down, unless a fallback replaces it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Protocols often combine models, each answering a different part of the problem. In many blockchains, a rule that every participant applies to the agreed state of the chain determines which party proposes the next block; that proposer acts as a designated coordinator for the order of transactions in its block, and a fee market shapes which transactions it includes first. Other designs select the proposer through a competition among would-be proposers instead, so this is one arrangement among several. The fee market does not itself decide inclusion: fees set priority only as far as the proposer follows them, and the proposer keeps discretion to exclude or reorder transactions. A combination therefore rests on the assumptions of every model it uses, and a failure of any one model's support can reach the outcome. An agreement whose fault or timing assumptions are broken can leave participants disagreeing about which proposer was selected or which ordering stands, and a proposer that abuses its discretion can distort the ordering whatever fees were offered. One model can bound another's failure, as when an agreement protocol turns to another proposer after one fails to propose in time, but that bound holds only under the agreement's own assumptions, so combining models moves the assumptions a protocol depends on rather than removing them.",
+        },
+      ],
+    },
+    {
+      id: "information-content",
+      conceptId: "information",
+      definition:
+        "The facts relevant to participants' choices in a coordination setting, together with their structure: who holds each fact, whether others can observe or check it, and when it becomes available to whom. That structure bounds what participants can expect of one another.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A fact is public when every participant can observe it, as with an entry on a shared record that anyone may read, and private when only some participants hold it: a participant's own costs, how much it values an outcome, how reliable it is, what it has done and what it intends to do next. A distribution is symmetric when participants hold the same relevant facts and asymmetric when some hold facts that others lack. The two distinctions do not coincide. Participants who are all equally uninformed about an outcome that none can yet observe are symmetric, and a setting in which most facts are public is still asymmetric if one party alone knows the fact that matters, such as the quality of what it sells.",
+        },
+        {
+          kind: "paragraph",
+          text: "A participant can condition its choice on a fact only if it holds the fact or can obtain it before choosing. Coordination that turns on a fact therefore depends on the participants who must act on it having it in time; those who lack it act on beliefs about it and, where others are better informed, on beliefs about what those others know and will do. A fact being public means that each participant could observe it, not that each has, nor that each knows the others have; what participants can know of one another's knowledge is the subject of Partial Knowledge.",
+        },
+        {
+          kind: "paragraph",
+          text: "Asymmetric information raises two problems that are easily run together. Hidden information concerns a participant's type, facts about it that exist before any arrangement is made, such as its costs, its valuation or its reliability. When the offering side cannot tell types apart and offers the same terms to all, those terms can be most attractive to the types it would least want: a single premium for insurance is most attractive to applicants who know they are likely to claim, so they can make up a larger share of those who accept than of applicants overall, and a premium priced for the average applicant can then fall short. Hidden action concerns what a participant does after an arrangement is made, such as how carefully an operator runs a service it is paid to provide. It is a problem when the outcome others can observe does not reveal the action, because chance or other participants' actions also affect the outcome or because the outcome itself cannot be observed. If outcomes revealed actions exactly, terms tied to outcomes could address it, provided those terms could be enforced.",
+        },
+        {
+          kind: "paragraph",
+          text: "Screening answers hidden information from the uninformed side: it offers a set of terms designed so that different types choose different ones, as when a choice between a low premium with a high deductible and a high premium with a low deductible separates applicants who expect few claims from those who expect many. Why such a set makes each type prefer its own option is the subject of Incentive Compatibility, and the informed side acting to reveal its type is signaling, which belongs to Communication. Screening needs types to value the terms differently enough to sort, so types that value the options alike stay pooled together. Sorting also has a price: to keep one type from taking another's option, some options are made worse for their own type than they would be if types were known.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bonding asks a participant to deposit something it forfeits if misbehavior is proven, the role Stake plays in many protocols. For a participant weighing expected gain against expected loss, a bond deters misbehavior when the expected forfeit, the bond multiplied by the chance that the misbehavior is detected and proven to whatever rule or party takes the bond, exceeds what the misbehavior would gain. It deters less when the misbehavior pays off outside the arrangement, where the gain can exceed a bond sized against the arrangement itself, it does not deter a participant who aims to cause harm whatever the cost, and it requires capital that capable participants may lack. Because a deposit is costly to put at risk, it can also discourage some unwanted types from joining at all, though not those who expect to gain more than they risk.",
+        },
+        {
+          kind: "paragraph",
+          text: "Making actions observable, by recording them on a shared record or by monitoring, addresses hidden action directly, but only for actions that can be recorded or watched; effort, intent and arrangements made elsewhere stay hidden. Observation deters little unless some consequence follows from what is observed, and an action one participant sees is not thereby provable to others or to a rule that imposes a penalty. Observation has costs of its own, among them exposure: what a participant must reveal so that its actions can be watched becomes information others can act on.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some information a participant can check for itself, by reading a shared record, checking a signature or checking a proof; other information it can only accept on a reporter's word, such as a report of an outside price, of an event outside the system or of the reporter's own costs. Many protocols coordinate on verifiable facts where they can, because participants who run the same deterministic check on the same evidence, with correct software, reach the same conclusion without relying on whoever supplied the evidence, so the supplier's credibility no longer matters for what was checked. A check holds only under its assumptions, among them that the signature or proof scheme is sound and that the checker has the data and the agreed record; how checks work is the subject of Verification. Unverifiable reports are made credible, where they can be, by means such as incentives to report truthfully, reputation or trust in the reporter, which Incentive Compatibility, Communication and the Oracle Problem take up.",
+        },
+        {
+          kind: "paragraph",
+          text: "A valid record or signature establishes what was recorded and which key or account recorded it, not that an outside fact it reports is true, and not which person or organization stands behind the key. A signed price report establishes which key signed it, not that the price was right.",
+        },
+        {
+          kind: "paragraph",
+          text: "When information becomes available, and to whom, matters as much as who holds it. Information revealed before others act can be used against the participant who revealed it: a bid visible before bidding closes can be outbid by a small margin, and an order visible before it executes can be acted on first, the pattern Front-Running names. Availability is also uneven within a protocol, since whoever receives and orders pending submissions, or opens sealed bids, may see them before other participants do. Many protocols therefore time disclosure, keeping information hidden until choices are fixed and revealing it afterwards, as in Commit-Reveal and Sealed-Bid Auctions. The information is released rather than withheld, but only after the choices it could have been used against are fixed. This costs delay, because a separate reveal step or period must follow the choices, and it gives up the coordination the hidden information would have supported, since participants who cannot see one another's choices cannot adjust to them. Hiding also covers the content of a choice, not necessarily the fact or the time of participation, so it narrows what early information can be used for rather than removing every use.",
+        },
+      ],
+    },
+    {
+      id: "coordination-communication-content",
+      conceptId: "coordination-communication",
+      definition:
+        "The exchange, between participants who coordinate, of statements that bind no one, about what a speaker will do or what it privately knows, together with the conditions under which such statements change what listeners expect and do.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Whether such a statement is believed turns on the speaker's incentives and on what the listener can check, not on whether the message arrives intact, which is the subject of Communication. The results that follow come from analyses that treat participants as choosing best responses to what they expect of one another, as Rational Behavior and Nash Equilibrium describe, with each side's preferences known to both apart from any information the speaker holds privately. In those analyses a listener may ignore costless statements, and a speaker facing such a listener gains nothing by choosing its words, so an outcome in which talk conveys nothing always remains consistent. The question is when talk can be believed, not whether it must be.",
+        },
+        {
+          kind: "paragraph",
+          text: "A costless statement of intention can be believed when two conditions hold. It is self-committing if, once the listener believes it and responds accordingly, doing what was said is the speaker's own best response. It is self-signaling if the speaker would want the listener to believe it only when it is true, so that a speaker with any other plan would prefer to say something else. Where participants face several outcomes that each prefers to failing to coordinate, an announcement can meet both conditions and pick one of those outcomes out. Two operators who must use the same one of two interchangeable formats, and who do not care which, are in this position: an announcement of one format is self-committing and self-signaling, so the listener can follow it and the speaker can keep to it. When each prefers a different format but both still prefer matching to mismatching, each may announce its favored one, and clashing announcements leave them facing the original choice; analyses of such games find that talk can raise the chance of coordinating without ensuring it.",
+        },
+        {
+          kind: "paragraph",
+          text: "A statement is discounted when the speaker gains from the listener's response whatever it intends. Suppose a joint effort pays each participant well only if both join, while a safe option pays less but pays its taker more when the other has joined the effort. An announcement of joining is self-committing, since if it is believed, joining is the speaker's best response. It is not self-signaling, because a speaker planning the safe option also wants the other to join and would make the same announcement. The listener cannot read the speaker's plan from the words, since a speaker with either plan would say them, so the words give the listener no reason to change what it expected the speaker to do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reports of private information raise a related question: how much a costless report can convey to a listener who acts on it. The standard model has one speaker that privately knows a quantity on a scale and one listener, a report that costs nothing and that the listener cannot check, a listener that cannot commit in advance to how it will respond, and a fixed, mutually known difference between the action the speaker would like the listener to take and the action the listener would choose if it knew what the speaker knows. When that difference is zero, an exact report can be believed. Otherwise, a listener that took exact reports at face value would give the speaker reason to shade them toward its own preferred action, and a listener that knows this cannot take them at face value. What can survive is a coarse report: the speaker says only which of a limited number of ranges the quantity falls in, with each boundary placed where a speaker that knows the quantity lies exactly there is indifferent between the actions the two adjacent ranges lead to. In the most informative such outcome, as the difference grows the report conveys less and the number of ranges it distinguishes does not increase, until past some difference only the outcome in which reports are ignored remains. Where that point lies depends on the model's assumptions about the information and the payoffs, and with several speakers, a listener that can commit to its responses, or reports that can be checked, the conclusions can differ.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where interests diverge, credibility can come from something other than the words. One source is cost. A signal separates truthful senders from false ones when it carries a cost that a sender making a false claim would not find worth paying while a truthful sender would, either because the cost is lower for a truthful sender or because being believed is worth more to it. A cost that every sender bears equally, for an equal gain, separates nothing, since all senders then pay it or none does. Even where a separating cost exists, outcomes in which all senders pay alike, or none pays, can also be consistent, so the cost makes separation possible rather than certain. Where the cost does nothing but prove the claim, it is waste borne by the truthful sender, and it is paid whatever the sender does afterward.",
+        },
+        {
+          kind: "paragraph",
+          text: "A second source is reputation, which repeated interaction puts at stake. Where listeners can eventually tell whether a speaker's statements were true and can keep track of who made them, a false statement now can cost the speaker the belief its later statements would otherwise earn, and a speaker that values that belief more than what a false statement gains has reason to be truthful. The stake shrinks with the speaker's remaining future among its listeners, so a participant about to leave risks little, and a participant that can take on a fresh identity cheaply can shed a damaged one. How standing is built up and kept is the subject of Reputation.",
+        },
+        {
+          kind: "paragraph",
+          text: "A third source is content the listener can check. For what the check covers, the claim stands or falls on the check, under that check's own assumptions, rather than on the incentives of whoever made it. A check helps only a listener that has what it needs to run it, such as the data or record the claim refers to, and what a speaker will do cannot be checked before it acts, so statements of intention depend on the other sources. How checks work belongs to Verification, and which facts can be checked to Information.",
+        },
+        {
+          kind: "paragraph",
+          text: "None of these sources binds the speaker. A signal, costly or not, works only through what others believe: it takes no option away from the speaker, and a costly signal's cost, paid whatever the speaker does next, attaches to none of its later choices. Where a reputation is at stake, a false or broken statement can cost the speaker later, but only through what listeners come to believe afterward, not through anything the statement puts in place. A binding commitment instead removes options or attaches penalties enforced on the deviation itself, without depending on what listeners believe, as Commitment Devices describes. A deposit forfeited on deviation is therefore a commitment rather than a costly signal in this sense, because what it costs depends on what the speaker does. A self-committing statement is not a commitment either: if it is believed and acted on, it is kept because following through is then the speaker's best response, not because anything holds the speaker to it, and nothing prevents deviation if that stops being true.",
+        },
+      ],
+    },
+    {
+      id: "collective-action-content",
+      conceptId: "collective-action",
+      definition:
+        "The pursuit, by several participants, of an outcome they would all gain from, where each decides for itself whether to contribute and bears the cost of its own contribution.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Whether each participant contributes turns on what contributing gains or costs it, which can depend on what the others do, and a collective action problem can take two incentive structures. In the first, the interaction happens once, each participant counts only its own gain, and a contribution brings back to its contributor less than it costs, whatever the others contribute. Not contributing is then each participant's better choice in every case, so the outcome can go unachieved even where every participant would be better off if all contributed than if none did. A linear case shows the gap: if a contribution costing its contributor one unit adds three units of benefit, shared equally among ten members, the contributor gets back three tenths of a unit and loses seven tenths whatever the others do, while the group gains two units more than the contribution cost. The conclusion rests on each condition. Repeated interaction, participants who value others' gains or the act of contributing, or a contribution that can decide the outcome can each make contributing worthwhile. Free Riding is the behavior this structure makes pay.",
+        },
+        {
+          kind: "paragraph",
+          text: "In the second structure, each participant would contribute if enough others did. Contributing pays once enough others contribute and wastes its cost otherwise, so a state in which enough contribute and one in which no one does can each persist: when enough are contributing, each does best to contribute too, and when no one is expected to, contributing alone is a loss. Which state participants reach depends on what each expects the others to do. The payoffs favor contributing here, but only conditionally, and a group whose expectations settle on no one contributing misses the outcome although each would have contributed had it expected enough others to; such an outcome is among those Coordination Failures covers.",
+        },
+        {
+          kind: "paragraph",
+          text: "The two structures call for different responses. In the first, aligning expectations is not enough: a participant certain that all the others will contribute still does better by withholding, so the payoffs must change until contributing pays its contributor. In the second, the payoffs already reward contributing once enough others do; what is missing is each participant's confidence that they will, so aligning expectations is enough, and the payoffs need not change. Coordination Mechanisms and Commitment Devices are among the ways either response is put into practice.",
+        },
+        {
+          kind: "paragraph",
+          text: "Properties of the shared outcome shape which problem arises. If those who did not contribute can be kept from benefiting, access can be tied to contributing, which weakens the free-rider structure because withholding then also forfeits the benefit; but excluding non-contributors can be costly or impossible, and where it is, nothing ties the benefit of the outcome to contributing. Whether use by some leaves less for others matters in combination with exclusion. A resource whose use is rival and whose users can be kept out can be allocated among those admitted, as private goods are. One whose use is rival and whose users cannot be kept out turns the same structure around: restraint in using it becomes the contribution each would rather leave to others, so the problem shows up as over-use of a shared resource rather than under-provision of an outcome, the form Commons Dilemmas covers.",
+        },
+        {
+          kind: "paragraph",
+          text: "An outcome may also grow with each contribution or arrive only once contributions pass a threshold. When it grows gradually, each contribution adds a little and none is decisive. With a threshold, a single contribution is decisive when the others' total sits just short of it; contributions to a total that falls short of it achieve nothing unless something returns them, and contributions beyond the threshold may add nothing. The chance of being decisive gives a reason to contribute that a gradual outcome lacks, while the expectation that others will pass the threshold without one's own contribution gives a reason to hold back, so whether contributing pays turns on what each expects of the others. A threshold outcome can therefore show features of both structures, and the two are not a clean division of every case.",
+        },
+        {
+          kind: "paragraph",
+          text: "Group size can push in more than one direction. In a larger group, each contribution can matter less to its contributor, where the benefit it adds is divided among more members or where the chance that it decides a threshold falls; for an outcome whose value to each member does not shrink as members are added, the return to each contributor need not fall. Individual contributions can also become harder for others to observe as a group grows, which weakens any response that depends on knowing who contributed. A larger group can also include more potential contributors and members with large stakes, so size alone does not decide whether the outcome is reached.",
+        },
+        {
+          kind: "paragraph",
+          text: "How interest is spread matters as well as how many share it. A participant whose own benefit from the outcome exceeds the full cost of providing it may find it worthwhile to provide the outcome alone, even if no one else contributes, provided the outcome is one a single participant can supply rather than one that needs many distinct participants, such as a quorum. Where the outcome grows with each contribution, such a participant has reason to provide only up to what it values itself, which can fall short of what the group as a whole would want, while the others may contribute nothing. The same total interest can therefore see an outcome reached when it is concentrated in one participant and missed when it is spread thinly across many.",
+        },
+        {
+          kind: "paragraph",
+          text: "Payoffs can be changed by attaching consequences to each participant's own contribution. A reward for contributing or a penalty for withholding, large enough and attached to the contributor rather than to the outcome, can make contributing pay its contributor whatever the others do, provided contributions can be observed and attributed to whoever made them. A reward paid to everyone once the outcome is reached goes to those who withheld as well, so it adds to the shared benefit without separating contributing from withholding. Repeated interaction can change payoffs in another way, when others' future contributions depend on one's present one, so that withholding now can cost the contributions others would make later. It can do so when participants persist across rounds, contributions can be observed, and future rounds carry enough weight. Standard analysis of the free-rider structure, where every participant is self-interested and both that and when the last round falls are common knowledge (each knows them, knows that the others know them, and so on), finds no future left to reward contributing in the last round and predicts that contributions unravel from the end back to the start; observed behavior often departs from that prediction. In a larger group, answering one participant's withholding by withholding in turn also takes contributions away from those who did contribute.",
+        },
+        {
+          kind: "paragraph",
+          text: "Enforcing such consequences is itself a contribution. Monitoring others, rewarding contributors and penalizing those who withhold cost whoever does them, while the benefit goes to the whole group, so participants may withhold enforcement just as they withhold the original contribution, and the problem reappears one level up. Rules that a protocol carries out automatically can lower the cost of each act of enforcement, but where a rule cannot see a violation by itself, someone must still detect it and submit evidence, and choosing or changing the rule can be a contribution of the same kind.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
