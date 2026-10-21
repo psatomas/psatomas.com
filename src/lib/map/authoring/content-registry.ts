@@ -415,4 +415,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "byzantine-behavior",
   "censorship",
   "collusion",
+  "safety",
+  "liveness",
+  "availability",
+  "consistency",
+  "fault-tolerance",
 ];

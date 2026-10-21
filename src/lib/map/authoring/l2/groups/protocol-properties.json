@@ -1,0 +1,858 @@
+{
+  "version": 1,
+  "group": "protocol-properties",
+  "domain": "foundations",
+  "parentConceptId": "protocol-properties",
+  "basis": {
+    "membership": "354a6d7c89965d03501109a0473d7830762ce93cebe5611149b484986b909d25",
+    "parents": {
+      "autonomous-protocols": "41d33417081334f1dbb93c8bcd637897bce7e4b9e7f945187855ff5913863118",
+      "distributed-storage": "1b9dedb1921ba35456a450ab8448215fdc9540efd5636a209e7a7ad0a7ae5979",
+      "foundations": "e545d685ad6bac378f4e654f02bc59a522565dcb3ed3418c504ce5636be684ea",
+      "protocol-properties": "4aefaaedee3b4d80e442a5de13b38e0a82c16cb543f38478e113ee474d9224fc",
+      "resilience": "9326ab5a91cfe6cae93205c710fa8ea83b353237a0098bc744a2ea0a07c85ca7",
+      "security-correctness-resilience": "ce9d0a9865bf71ddae0e4d92f467dea6522f9ce6faf0193fd710921ce8de06be",
+      "security-properties": "f625789d8e03aaf234b85684e27e995cb7d4836689ae923eee9b8266b8544f0a",
+      "self-healing": "cf8bc3640fc8890de8c8fbeeb6055702daad927378de786a925bc83ee8d0b3a8",
+      "storage-availability": "d5e04e2b13a186c03f40ad13958ca73e321f20ab66f788fe04b1b0d131f5b5bf"
+    },
+    "fixed": {
+      "censorship-resistance": "e84f769985f29d418595c794f53d6129eb9adc53e625e8e5cabe38649c334cc4",
+      "finality": "57657b1915902da039907d296721fd7d40799a70866c70c16bca0764bb1769ee"
+    },
+    "hazards": "a03e91117dc63f9e9f55ffcb05795c8352c33075d4147ae25e6fd96917f6fce4"
+  },
+  "members": [
+    {
+      "conceptId": "safety",
+      "placementId": "safety",
+      "standing": "owned",
+      "claims": [
+        "what makes a property of individual executions a safety property in formal terms: every violation is witnessed by a finite prefix of the execution that no continuation can repair, so a violation is irrevocable once it occurs and can in principle be recognized from a finite record of the run, which is what lets a monitor report it, while a run that has not violated the property can in general still go on to violate it",
+        "how safety properties are established: by an inductive invariant, a condition that holds in every initial state, is preserved by every step the protocol permits, including steps of faulty processes and losses or delays of messages that the fault model allows, and implies the property, so the argument covers every execution without fairness or eventual progress, and without timing facts unless the protocol relies on a delay bound for safety; and why the invariant that works is often stronger than the property it proves",
+        "why many consensus protocols designed for partial synchrony keep safety under any message timing: a decision needs votes from sets of processes large enough that any two overlap in a process that will not vote both ways, as long as faulty processes stay within the threshold, so timing assumptions bear only on progress; and the limit of that independence, since safety is no longer guaranteed when faults that can vote both ways exceed the threshold, and protocols that rely on a delay bound for safety, such as synchronous protocols tolerating more faults or longest-chain protocols, can lose it when the bound is broken"
+      ],
+      "excludes": [
+        "liveness",
+        "invariants",
+        "formal-specifications",
+        "model-checking",
+        "fault-models",
+        "quorums",
+        "agreement",
+        "consensus",
+        "finality",
+        "confidentiality",
+        "latency",
+        "byzantine-behavior"
+      ]
+    },
+    {
+      "conceptId": "liveness",
+      "placementId": "liveness",
+      "standing": "owned",
+      "claims": [
+        "what makes a property of individual executions a liveness property in formal terms: every finite prefix can still be extended to an execution that satisfies it, so no finite observation shows a violation; and why bounded versions, such as a response within a stated time, are safety properties that a finite run can violate",
+        "how liveness is argued: a progress measure over a well-founded order, which no step increases and which a step the protocol is assumed eventually to take decreases, and why such arguments need fairness assumptions, such as that a step enabled continuously is eventually taken, without which a scheduler that forever postpones a process's enabled step or a message's delivery can defeat the property when progress depends on that step or message",
+        "why, in designs whose safety does not rely on timing, liveness is the part of fault-tolerant agreement that carries timing assumptions: deterministic protocols in a fully asynchronous system in which even one process may crash cannot guarantee termination while keeping agreement and a nontrivial validity condition, so many designs guarantee progress only once delays stay bounded for long enough, or use randomization to terminate with probability one; and what this leaves exposed, since an adversary able to delay messages can postpone decisions for as long as it sustains the delay, without violating safety"
+      ],
+      "excludes": [
+        "safety",
+        "availability",
+        "censorship-resistance",
+        "latency",
+        "fault-models",
+        "consensus",
+        "agreement",
+        "formal-specifications",
+        "finality",
+        "fault-detection"
+      ]
+    },
+    {
+      "conceptId": "finality",
+      "placementId": "finality-in-protocol-properties",
+      "standing": "dual-role"
+    },
+    {
+      "conceptId": "availability",
+      "placementId": "availability",
+      "standing": "owned",
+      "claims": [
+        "the two senses of availability and why they are not interchangeable: the property sense used in partition trade-offs, in which every request reaching a non-failed replica eventually receives a non-error response, and the operational sense, the fraction of a period in which a service answers within a deadline, so a system can meet one and miss the other; and how both differ from data availability, which asks whether published data can be obtained by those who need to check it",
+        "for whom a service is available: availability holds only for clients that can reach enough working components, so during a partition a design that needs a quorum or a leader can stay available on the side that has one and unavailable on the other, and an availability claim needs to state which clients it covers",
+        "how availability composes along a request path: when a request needs several components in series, its availability is no higher than that of the least available one, and under independent failures it is close to the product of theirs, so a single dependency outside the replicated core, such as a coordinator, gateway or name service, can bound it; and why adding redundant parts raises it only against causes of failure those parts do not share",
+        "why availability can be lost while every component is correct: overload, from demand or from denial-of-service attacks, exhausts capacity without requiring any component to fail, so a tolerance bound stated in failed components does not cover it, and admission limits can keep the service available to some requests by refusing others before they consume the capacity that is short"
+      ],
+      "excludes": [
+        "liveness",
+        "censorship-resistance",
+        "data-availability",
+        "denial-of-service-attacks",
+        "denial-of-service-resistance",
+        "rate-limiting",
+        "redundancy",
+        "consistency",
+        "quorums",
+        "network-partitions",
+        "fault-tolerance"
+      ]
+    },
+    {
+      "conceptId": "consistency",
+      "placementId": "consistency",
+      "standing": "owned",
+      "claims": [
+        "what a consistency model constrains in the replica sense: which values reads may return given the writes, judged against an order of operations, and the questions that separate models, such as whether every observer agrees with one order and whether that order respects real time, with linearizability, sequential, causal and eventual consistency as reference points; and how this sense differs from the transactional one, in which consistency means preserving integrity constraints",
+        "why stronger models cost coordination even without failures: keeping one order of operations that every observer agrees with requires, when more than one replica serves operations, some operations to wait for communication with other replicas before they complete, while weaker models such as causal or eventual consistency let a replica answer from its local state, so the choice trades latency against the anomalies clients can observe, such as stale or out-of-order reads",
+        "why eventual convergence alone promises little: in its basic form it is a liveness condition that permits any interim values and constrains nothing while updates continue, so weak models add safety constraints clients can rely on, such as causal order or session guarantees like reading one's own writes",
+        "how replicas that accept updates independently reconcile concurrent ones: by a rule such as last-writer-wins, which orders every pair of writes without detecting concurrency and can silently discard updates, by detecting concurrency, for example with version vectors, and keeping the conflicting versions, or by merge operations designed to commute, under the delivery the design assumes, so that replicas that have received the same updates converge whatever order they arrived in"
+      ],
+      "excludes": [
+        "state-machine-replication",
+        "data-replication",
+        "finality",
+        "agreement",
+        "availability",
+        "safety",
+        "liveness",
+        "latency",
+        "network-partitions",
+        "transactions"
+      ]
+    },
+    {
+      "conceptId": "fault-tolerance",
+      "placementId": "fault-tolerance",
+      "standing": "owned",
+      "claims": [
+        "masking, fail-safe and non-masking tolerance: which parts of a specification a design keeps while faults within its assumptions are present, whether both its safety and liveness parts, its safety part only by halting or refusing rather than acting wrongly, or an eventual return to correct behavior once faults stop, after a period in which safety may be violated, as in self-stabilizing designs; and why one design can offer different kinds of tolerance against different fault classes",
+        "how tolerance differs from fault avoidance and from recovery: avoidance tries to keep faults from arising, tolerance keeps specified properties holding, or for non-masking designs returns to them, while faults are present, within an assumed number and class, by combining redundancy with a rule that masks errors or detects and contains or corrects them, while recovery restores a correct state after a failure has already taken effect; and why a design usually needs recovery as well as tolerance, since tolerance covers only the faults it assumes",
+        "what a tolerance claim promises once faults exceed its assumed bound, which correlated failures make more likely than a count of independent faults suggests: nothing by itself, unless the design also establishes, by a separate argument, which property gives way first, such as halting rather than violating safety, or keeping a safety violation attributable to the participants who caused it"
+      ],
+      "excludes": [
+        "fault-models",
+        "failures",
+        "redundancy",
+        "graceful-degradation",
+        "failure-isolation",
+        "recovery",
+        "automatic-failover",
+        "fault-detection",
+        "disaster-recovery",
+        "resilience",
+        "safety",
+        "liveness",
+        "byzantine-behavior",
+        "data-replication",
+        "accountability"
+      ]
+    },
+    {
+      "conceptId": "censorship-resistance",
+      "placementId": "censorship-resistance",
+      "standing": "dual-role"
+    }
+  ],
+  "splits": [
+    {
+      "concepts": [
+        "safety",
+        "liveness"
+      ],
+      "split": "Safety owns properties whose violations a finite prefix witnesses and no continuation repairs, their proof by inductive invariants, and why a protocol's safety can be kept independent of message timing; Liveness owns properties that no finite prefix violates, their proof by progress measures under fairness, why bounded deadlines turn them into safety properties, and the timing or randomization assumptions progress in agreement needs. The decomposition itself, and the finality and halting examples, stay with the parent; each names the other only to draw this boundary."
+    },
+    {
+      "concepts": [
+        "availability",
+        "liveness"
+      ],
+      "split": "Availability owns whether the service and its data can be obtained by the clients that request them: the partition sense versus measured uptime, which clients are covered, composition along a request path, and loss through overload; it names only that its partition sense has a liveness shape. Liveness owns the eventual-progress shape any property can take, how it is argued and the fairness and timing assumptions it needs, and does not discuss service availability."
+    }
+  ],
+  "concepts": {
+    "safety": {
+      "model": {
+        "meaning": "The class of properties of individual executions whose every violation shows in a finite prefix of the run that no continuation can repair; informally, a statement of what must never happen.",
+        "kind": "property",
+        "parents": {
+          "protocol-properties": "Parent already gives: the safety/liveness decomposition, the finality-never-reversed and halting examples, all-permitted-executions vs observed runs. Adds: the formal finite-prefix criterion and its two consequences (irrevocable; a monitor can report a violation, while a run without one can in general still go on to violate the property); the inductive-invariant proof rule and why the working invariant is stronger than the property; when safety is independent of message timing, and where that stops. Do not restate the decomposition or the parent's two examples; the monitor point is the safety-specific sharpening of 'observation only samples', not a restatement of it.",
+          "security-properties": "Parent only lists 'preventing invalid states' among protections and says properties need a stated scope. Adds: what makes a protection safety-shaped, that the proof covers adversarial steps only as far as the fault model admits them, and what breaks it when adversarial power exceeds the threshold or a relied-on delay bound. Do not restate the composition point or explain integrity (sibling there)."
+        },
+        "claims": [
+          "what makes a property of individual executions a safety property in formal terms: every violation is witnessed by a finite prefix of the execution that no continuation can repair, so a violation is irrevocable once it occurs and can in principle be recognized from a finite record of the run, which is what lets a monitor report it, while a run that has not violated the property can in general still go on to violate it",
+          "how safety properties are established: by an inductive invariant, a condition that holds in every initial state, is preserved by every step the protocol permits, including steps of faulty processes and losses or delays of messages that the fault model allows, and implies the property, so the argument covers every execution without fairness or eventual progress, and without timing facts unless the protocol relies on a delay bound for safety; and why the invariant that works is often stronger than the property it proves",
+          "why many consensus protocols designed for partial synchrony keep safety under any message timing: a decision needs votes from sets of processes large enough that any two overlap in a process that will not vote both ways, as long as faulty processes stay within the threshold, so timing assumptions bear only on progress; and the limit of that independence, since safety is no longer guaranteed when faults that can vote both ways exceed the threshold, and protocols that rely on a delay bound for safety, such as synchronous protocols tolerating more faults or longest-chain protocols, can lose it when the bound is broken"
+        ],
+        "excludes": [
+          "liveness",
+          "invariants",
+          "formal-specifications",
+          "model-checking",
+          "fault-models",
+          "quorums",
+          "agreement",
+          "consensus",
+          "finality",
+          "confidentiality",
+          "latency",
+          "byzantine-behavior"
+        ],
+        "placements": {
+          "safety": "Leaf under Protocol Properties. Parent supplies the decomposition; the record goes past it (facet watch) and must not depend on the parent's examples. Siblings liveness, fault-tolerance, finality: name only to draw the boundary.",
+          "safety-in-security-properties": "Leaf under Security Properties, beside integrity, confidentiality, liveness, availability. One exposition holds because the criterion, the proof rule and the threshold argument are stated with their fault model, and adversarial behavior enters as faulty steps the model permits; nothing is specific to one domain. No 'in this domain' or positional wording. Same sense of 'safety' at both placements (the formal class), not the safety-engineering sense."
+        },
+        "fields": {
+          "statement": [
+            "Scope: properties of individual executions (trace properties). Properties that compare executions (some forms of confidentiality) are outside; the parent says so, name only, and do not claim confidentiality in general is not safety.",
+            "Criterion (Lamport's informal 'nothing bad happens', made formal by Alpern and Schneider): P is safety iff every execution not in P has a finite prefix such that no extension of that prefix is in P. Executions are modeled as infinite; a halted run continues with steps that change nothing.",
+            "Irrevocable: once a bad prefix has occurred, every continuation violates P. This is about the execution, not operations: rollback, manual repair or a social-layer fork can restore service but do not un-violate the property for that run.",
+            "The 'bad thing' need not be a single state: it can involve a sequence or transition (a decided value later changing; a response with no prior request). Do not write 'only a bad state' (domain prose says 'a state'; history variables reconcile the two, so do not contradict it either).",
+            "Monitoring: a monitor that observes every event the property refers to can report a violation at the end of the bad prefix; for a requirement on every state of a run that keeps going, the next step may break it, so while the run continues the monitor can only say 'no violation so far', not that P holds. 'In principle': recognizing a bad prefix can be costly or undecidable for some properties, and a distributed run needs a consistent record of events to judge.",
+            "Pitfall: the converse (no finite observation shows a liveness violation; deadline properties are safety) is Liveness's claim. Name the contrast at most; do not explain it."
+          ],
+          "establishedBy": [
+            "Inductive invariant I, three obligations: (1) every initial state satisfies I; (2) every step the model permits, taken from ANY state satisfying I (not only reachable states), leads to a state satisfying I; (3) I implies P (for a property over histories, P is checked on states extended with history or auxiliary variables). Induction over steps then covers every execution.",
+            "'Every step the model permits' includes steps of processes that follow the protocol, faulty processes' actions as the fault model allows (crash: stop; Byzantine: send any message the model lets it construct), and message loss, delay, reordering or duplication as the model allows. Where faulty processes may behave arbitrarily, their local state is unconstrained, so I speaks of the other processes' state and of messages in transit. A process that only crashes followed the protocol until it stopped, so I constrains its state like any other ('correct' is a property of a whole execution, so under crash faults a state predicate cannot select the correct processes).",
+            "No fairness, no 'eventually': this is what separates it from progress arguments (Liveness owns those; name only).",
+            "Timing condition: in an untimed (asynchronous) step model the argument never mentions delays. When a protocol relies on a delay bound for safety, the bound is part of the permitted steps and the proof does use it. Do not say safety proofs never involve timing.",
+            "Why stronger: P is often not inductive, because some unreachable states satisfy P yet have a permitted step to a violation (for example, a state where a conflicting vote is already in transit). The working invariant adds facts that exclude them, typically about votes cast, values locked and messages in transit. Finding that strengthening is the hard part of the proof.",
+            "Testing and monitoring sample executions and can refute, not establish. Model checking and formal specifications are named only (excludes; Model Checking precedent: it owns search and counterexample shapes). 'Invariants' is excluded: the angle here is the proof rule for safety, not invariants as a general design notion."
+          ],
+          "violatedBy": [
+            "A reachable step outside what the proof covered: a design flaw (invariant not actually inductive), an implementation that takes steps the model did not include, or a broken assumption.",
+            "Faulty processes beyond the threshold, but only of a class that can act inconsistently: equivocation (voting both ways), or crash-recovery that loses persisted votes so a process can vote again differently. Pitfall: in many crash-tolerant protocols (Paxos-style), crashes beyond the threshold halt progress without violating safety. So 'safety can fail / is no longer guaranteed', never 'safety fails' when the threshold is exceeded.",
+            "A broken delay bound, for protocols whose safety relies on one: synchronous protocols tolerating more faults; longest-chain protocols, whose fork-resistance analysis assumes bounded delay relative to the block interval as well as an honest majority of mining power or stake.",
+            "Longest-chain safety is probabilistic: a confirmed block can be reversed with probability that falls with confirmation depth. Do not present it as a deterministic safety guarantee.",
+            "Broken cryptographic assumptions (forged votes) or a membership/threshold configuration in which decision sets no longer overlap (e.g., reconfiguration that does not preserve overlap)."
+          ],
+          "confusions": [
+            "safety ~ liveness (hazard): split by what each rules out or requires and how each is established; name liveness to draw this boundary only.",
+            "Do not restate the parent's decomposition or its finality and halting examples (facet watch). Finality is excluded: no finality example.",
+            "Formal 'safety' is not the safety-engineering sense (protection from accidental harm, set against security). One term, one sense.",
+            "Formal irrevocability vs operational recovery (see statement).",
+            "'No violation observed' vs 'property holds'.",
+            "Timing-independent safety is a property of many quorum-based designs, not of all consensus, and not of partial synchrony alone: asynchronous randomized protocols also keep safety under any timing. Do not write 'only' or 'all'.",
+            "A system whose agreement core is timing-independent can still rely on timing for safety elsewhere, e.g. lease-based reads that assume bounded clock drift. Do not extend the claim to a whole system.",
+            "Quorums, agreement, consensus, fault-models, byzantine-behavior are excluded: state the overlap condition the argument needs, do not explain quorum constructions, sizes, or consensus protocols. Latency excluded."
+          ],
+          "tradeoffs": [
+            "Timing-independent safety costs fault tolerance: designs that rely on a delay bound for safety can tolerate more faulty participants (for Byzantine agreement with signatures, a faulty minority rather than fewer than a third) but lose safety when the bound fails. Name the contrast; sizes belong to Quorums.",
+            "The overlap argument's condition, stated in full: within one round or view, two decisions need decision sets that share a process that will not vote both ways: under faults that only stop, any shared process (it followed the protocol until it stopped); where some faults can vote both ways, a process outside that faulty set, which holds only while those faults stay within the threshold. A process that follows the protocol votes for at most one value there; across rounds or views it also relies on a rule that processes following the protocol obey (such as carrying votes or locks forward and refusing conflicting proposals), and on those votes persisting (stable storage under crash-recovery). Overlap alone, without that rule, does not give safety. Threshold may be counted in processes or in weight (stake)."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "An argument chain under conditions: a formal criterion; two consequences that follow from it (irrevocability; recognition of a violation from a finite record, while a run without one can in general still go on to violate the property); a proof rule that the criterion makes sufficient; an argument (decision sets sharing a process that will not vote both ways: any shared process under faults that only stop, a process outside the faulty set while faults that can vote both ways stay within the threshold) for why timing bears only on progress in many designs; and the limits where that argument's conditions fail.",
+        "whyProse": "Each claim is a 'because ... provided that ...' chain whose conditions are the content: the step relation includes faulty and network steps, the threshold applies only to faults that can vote both ways, the delay bound matters only for designs that rely on it. Prose keeps each condition attached to its conclusion. The three invariant obligations are a conjunction, not ordered stages, so a flow would invent an order. The Safety/Liveness distinction is already drawn in both domains' prose (flow and distinction blocks), so a distinction block would restate it. A comparison of timing-independent and delay-reliant designs would turn into a table of consensus families and fault thresholds, excluded territory, and its terse cells would drop the conditions (probabilistic longest-chain safety, crash vs equivocating faults). No persistent states, loop or forces in tension belong to this concept.",
+        "level": "The parent names safety as one shape of property and gives examples; it does not state the criterion, the proof rule or the timing argument. These belong to Safety, not to Liveness (the complementary shape and its progress proofs), Invariants (the general notion), Quorums (construction and sizes) or Fault Tolerance (which properties survive which faults).",
+        "territory": "Liveness, invariants, quorums, fault-models, agreement, consensus, finality, byzantine-behavior, model-checking, formal-specifications, confidentiality and latency are named only, each to say what safety works on or where it stops. No structure redraws the domain's Safety ≠ Liveness boundary or compares consensus families. Bounded-deadline properties and fairness are left to Liveness; masking vs fail-safe is left to Fault Tolerance.",
+        "placements": "Both placements are leaves. The text states its fault and timing conditions explicitly and uses one sense of 'safety' (the formal class), so it reads the same under Protocol Properties and Security Properties, with adversaries entering as faulty steps the model permits. No positional or domain-relative wording."
+      },
+      "audit": {
+        "at": "2026-10-20T16:27:50.578Z",
+        "note": "Re-audit after repair 1, expanded into a complete audit: the repair changed the overlap argument's assumptions (sharing a process that will not vote both ways, with separate conditions for faults that only stop and faults that can vote both ways), the invariant's fault-model conditions, and replaced the central term 'correct process' throughout, so every sentence was re-read at both placements (Foundations / Protocol Properties; Security, Correctness & Resilience / Security Properties). Blocking findings resolved: (1) the invariant sentence now conditions unconstrained local state on faulty processes that 'may behave arbitrarily' and adds that a process that only crashes followed the protocol until it stopped and is constrained like any other, which is right for crash-stop and Byzantine models alike; (2) vote sets now 'share a process that will not vote both ways': under stop-only faults any shared process, where some can vote both ways a process outside that faulty set while those faults stay within the threshold; this matches the claim and is now consistent with the limits paragraph (stop faults beyond the threshold do not by themselves void safety; equivocation or vote-losing recovery beyond it does); (3) the monitor sentence is conditioned ('for a requirement on every state of a run that keeps going ... may break it') and matches re-recorded claim 0 ('can in general still go on to violate it'); (4) a break from a reachable state is a protocol flaw only if the property itself fails in some reachable state, otherwise the condition claimed too much; a break from an unreachable state calls for strengthening; (5) the single-state example is now two processes deciding differently under a requirement that binds every process that decides, and the unreachable-state example no longer names correct processes. Every use of 'follows the protocol' (step list, crash sentence, overlap conditions, within-view vote, across-view rule, delay sentence) carries one sense, a process whose steps so far are protocol steps, consistent with the crash-recovery stable-storage clause and with vote-losing recovery counted among faults that can vote both ways. 'fault', 'overlap', 'threshold', 'monitor' and 'invariant' were each checked; see Advisory for the one residual sense shift. Overlap per placement: the Protocol Properties parent's decomposition, finality and halting examples are not restated; the stop-fault sentence explains why the halting case keeps safety (no conflicting vote) under the argument's condition, which the claim's limit needs, rather than restating it; the confidentiality scope sentence stays close to the parent but is needed at the Security Properties placement, whose parent says nothing about safety, and the composition point of that parent is not restated. Territory: Liveness, Invariants, Formal Specifications, Fault Models, Quorums, agreement, consensus, confidentiality are named only; Byzantine behavior enters only as permitted steps; no quorum sizes, consensus protocols, fairness argument, bounded-deadline point or fail-safe classification is explained; the longest-chain clause gives only the limit of safety and does not explain finality; the safety ~ liveness split holds. Structure: prose, as designed; no block needed. Canonical: no positional or time-sensitive words; one formal sense of safety, with the engineering sense set aside explicitly; American English. Depth: see the depth-long resolution. Advisory: (a) paragraph 6 'which holds only while those faults stay within the protocol's threshold' states necessity; where a design's quorums have slack beyond its stated threshold the overlap survives more faults, so 'which the sizing guarantees while those faults stay within the protocol's threshold' is safer; (b) paragraph 5 'the condition is not an invariant at all' uses 'invariant' in the reachable-state sense right after 'the invariant that works' meant the inductive one; 'the condition does not hold in every reachable state' keeps one sense; (c) paragraph 3 'The qualification matters in practice' now follows the 'run continues' sentence, so its antecedent ('in principle') is ambiguous; (d) paragraph 7 'processes that crash, lose the votes they had recorded and vote differently on recovery' reads as a three-item list; (e) paragraph 7 'Synchronous protocols are one case' reads as all synchronous protocols; (f) paragraph 6 states timing independence three times ('under any message timing', 'Nothing in the argument depends on how long messages take', 'Delay can keep ...'); the middle sentence could go; (g) paragraph 2's confidentiality sentence closely echoes the Protocol Properties parent; (h) model violatedBy[0] calls a non-inductive invariant a 'design flaw', the same reachable-versus-unreachable conflation the record repaired (a proof flaw, not necessarily a protocol flaw).",
+        "resolutions": [
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "Agreement is named in 'It also covers only the agreement argument'; agreement as a property is not defined or explained. The decision example in paragraph 2 illustrates the safety criterion, not agreement."
+          },
+          {
+            "id": "names-concept:84d4597997",
+            "resolution": "Confidentiality is named once ('as some forms of confidentiality do') to bound the criterion's scope; nothing about confidentiality itself is explained, and it is not said to be non-safety in general."
+          },
+          {
+            "id": "names-concept:87ef760148",
+            "resolution": "Consensus is named in 'Many consensus protocols designed for partial synchrony' and 'not every consensus protocol does'; no consensus protocol or its phases is explained, only the overlap condition the safety argument needs."
+          },
+          {
+            "id": "names-concept:9b13bc799a",
+            "resolution": "Distributed system is named once, as the setting in which a monitor must assemble a consistent record of events; not explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault Models is named as owning which faults the steps include; the record says only that faulty steps are permitted as the model allows (stopping, Byzantine messages), which the claim requires, and does not classify fault models."
+          },
+          {
+            "id": "names-concept:c9700141d1",
+            "resolution": "Formal Specifications is named as owning how the property and step relation are written down; no specification language or method is explained."
+          },
+          {
+            "id": "names-concept:04f783bd8b",
+            "resolution": "Invariants is named as owning invariants as a general notion; the record explains only inductive invariants as the proof rule for safety and why they are often stronger than the property, which claim 1 requires."
+          },
+          {
+            "id": "names-concept:0b3c310fab",
+            "resolution": "Liveness is named as the subject of progress; the record does not explain the liveness criterion, fairness arguments, progress measures or bounded-deadline properties. The safety ~ liveness split holds: safety is defined by finite bad prefixes and established by induction without eventuality."
+          },
+          {
+            "id": "names-concept:d09b7e8456",
+            "resolution": "Local state is named in 'their local state is unconstrained', to condition what the invariant can constrain under arbitrary faults; not explained."
+          },
+          {
+            "id": "names-concept:3a247f4315",
+            "resolution": "Quorums is named as owning how vote sets are sized and built; the record states only the sharing condition (a process that will not vote both ways, under each fault class) that the timing-independence argument needs, with no sizes or constructions."
+          },
+          {
+            "id": "absolutes:35457b4a2d",
+            "resolution": "Each absolute checked: 'must never happen' is the informal definition; 'none of whose extensions satisfies it' and 'every continuation ... violates' are definitional; 'none of them makes the execution ... satisfy the property' follows from irrevocability; 'never assumes that anything eventually happens' holds of the inductive argument; 'the protocol never enters them' and 'cannot be reached' restate unreachability; 'cannot make a process that follows the protocol vote both ways' and 'cannot supply a conflicting vote' hold by the protocol's one-vote rule and because a stopped process voted at most once before stopping; 'Nothing in the argument depends on how long messages take' holds of the overlap argument as scoped; 'does not reach zero' holds for longest-chain reversal under the standard analyses. Guarantee language is conditioned ('no longer guaranteed', 'does not by itself void'). The earlier 'never that the property holds' is now conditioned. 'holds only while' is noted as advisory (a)."
+          },
+          {
+            "id": "depth-long:b42729e159",
+            "resolution": "1,361 words against three claims, each a conditioned argument: paragraphs 1-3 carry claim 0 (criterion, scope, irrevocability, monitor with its condition and practical qualification), paragraphs 4-5 claim 1 (proof rule, permitted steps by fault class, no fairness, timing condition, why stronger, how breaks are read), paragraphs 6-7 claim 2 (overlap argument with its fault-class conditions and cross-view rule, its scope, and its limits including delay-reliant designs). The growth from repair 1 is fault-model conditions that make sentences true, which Depth says to keep. Condensable: the repeated timing-independence sentence in paragraph 6 (advisory f) and the confidentiality scope sentence (advisory g), about 30 words together; neither makes the record exceed its claims. Length is justified."
+          }
+        ],
+        "recordFingerprint": "3ad7cdc5ae8bb823f0f5a0a4a7a05eaeeac8af89e3f55e2918cde067a3cdc69c"
+      }
+    },
+    "liveness": {
+      "model": {
+        "meaning": "The class of properties of individual executions that no finite prefix of a run can violate, because every prefix can still be extended to a run that satisfies them; informally, a statement of what must eventually happen.",
+        "kind": "property",
+        "parents": {
+          "protocol-properties": "Parent already gives: the safety/liveness decomposition, the finality 'results do become final' and the halting examples, all permitted executions vs observed runs. Adds: the formal extension criterion and its consequences (no finite observation refutes it; bounded versions are safety); the progress-measure proof rule and the fairness it needs; why progress in fault-tolerant agreement is where timing or randomization enters (FLP with all its conditions), and the exposure left. Do not restate the decomposition, the 'never finalizing anything' example or the halting example. Claim 3's delay adversary is a different case from the parent's halting example: faults within the threshold, delay alone.",
+          "security-properties": "Parent only lists 'guaranteeing progress' among protections and says properties need a stated scope. Adds: what makes a protection progress-shaped, that the argument depends on fairness and timing assumptions an adversary may attack, and that an adversary controlling delay can postpone decisions without breaking safety (for designs whose safety does not rely on timing). Do not restate the composition point; do not explain availability or censorship resistance (siblings there)."
+        },
+        "claims": [
+          "what makes a property of individual executions a liveness property in formal terms: every finite prefix can still be extended to an execution that satisfies it, so no finite observation shows a violation; and why bounded versions, such as a response within a stated time, are safety properties that a finite run can violate",
+          "how liveness is argued: a progress measure over a well-founded order, which no step increases and which a step the protocol is assumed eventually to take decreases, and why such arguments need fairness assumptions, such as that a step enabled continuously is eventually taken, without which a scheduler that forever postpones a process's enabled step or a message's delivery can defeat the property when progress depends on that step or message",
+          "why, in designs whose safety does not rely on timing, liveness is the part of fault-tolerant agreement that carries timing assumptions: deterministic protocols in a fully asynchronous system in which even one process may crash cannot guarantee termination while keeping agreement and a nontrivial validity condition, so many designs guarantee progress only once delays stay bounded for long enough, or use randomization to terminate with probability one; and what this leaves exposed, since an adversary able to delay messages can postpone decisions for as long as it sustains the delay, without violating safety"
+        ],
+        "excludes": [
+          "safety",
+          "availability",
+          "censorship-resistance",
+          "latency",
+          "fault-models",
+          "consensus",
+          "agreement",
+          "formal-specifications",
+          "finality",
+          "fault-detection"
+        ],
+        "placements": {
+          "liveness": "Leaf under Protocol Properties beside safety, availability, consistency, fault-tolerance, finality, censorship-resistance. Parent supplies the decomposition and the finality/halting examples; the record goes past them (facet watch) and must not depend on them. Siblings named only to draw a boundary.",
+          "liveness-in-security-properties": "Leaf under Security Properties beside safety, integrity, confidentiality, availability, censorship-resistance. One exposition holds because the criterion, the proof rule and the FLP result are stated with their fault, timing and fairness models; the adversary enters as a scheduler or network delay the model permits. Same formal sense of 'liveness' at both placements. No 'in this domain' or positional wording; the domain sentence 'Availability is not liveness' must stay true."
+        },
+        "fields": {
+          "statement": [
+            "Scope: properties of individual executions (trace properties), same scope as Safety. Executions modeled as infinite (a halted run continues with steps that change nothing).",
+            "Criterion (Alpern and Schneider): P is liveness iff every finite prefix has at least one extension in P. Consequence: no finite prefix witnesses a violation; a violation is a property of the whole infinite run.",
+            "Pitfall on observation: 'no finite observation shows a violation' is the claim. Do not write that observation can never confirm a liveness property: 'eventually p' is confirmed once p occurs; 'p infinitely often' can be neither confirmed nor refuted by a finite record. A stall seen so far is consistent with the property, so it does not by itself show a violation; with knowledge of the protocol a finite record can settle it, e.g. a state from which no permitted continuation reaches the good event.",
+            "Bounded versions ('a response within d time units / k steps / r rounds') are safety: the prefix that reaches the bound without the good event witnesses the violation and no continuation repairs it. Condition: the bound is measured in something the execution records (steps, rounds, or real time in a timed model). Name safety for this, do not explain safety's criterion.",
+            "Liveness says nothing about how long: a decision after any finite delay satisfies it. What users experience as speed is latency (excluded; name only) and needs bounded, safety-shaped versions plus timing assumptions.",
+            "Obligations usually bind processes that keep taking steps (e.g. termination for correct processes); which processes count as correct is the fault model's definition (fault-models excluded: name only). A crashed process is not required to act.",
+            "Not every property that is not safety is liveness; that every trace property splits into the two is the parent's statement: do not restate."
+          ],
+          "establishedBy": [
+            "Progress measure (ranking function) into a well-founded order (no infinite strictly descending chain: naturals, lexicographic tuples). Obligations, stated over states where the goal has not yet been reached: (1) no permitted step increases the measure (including faulty processes' steps and message delays the model allows); (2) some step, the 'helpful' one, decreases it or reaches the goal; (3) fairness ensures the helpful step is eventually taken. Since the measure cannot decrease forever, the goal is reached.",
+            "Fairness conditions: weak fairness = a step continuously enabled is eventually taken; strong fairness = a step enabled infinitely often is eventually taken. Pair the rule with the fairness kind it uses; the helpful step must stay enabled (weak) or recur (strong) until taken. Fairness on channels: every message sent between correct processes is eventually delivered.",
+            "Why fairness is needed: without it, a permitted execution can postpone the helpful step forever (never schedule a waiting process's step, never deliver a message), and the measure never decreases. Fairness is an assumption about the scheduler or environment, not something the protocol enforces; it is itself liveness-shaped, so no finite run can show it was violated.",
+            "Partial synchrony: the helpful step is often available only once delays are bounded (e.g. a correct leader's messages arriving before timeouts), so the argument holds only after stabilization. Variants (Dwork, Lynch, Stockmeyer): a delay bound exists but is unknown, or a known bound holds only after an unknown stabilization time. Processes do not know when stabilization occurs.",
+            "Randomized protocols: the measure decreases with some probability per round (bounded away from zero, given the adversary's limits); the conclusion is termination with probability one, not in every run.",
+            "Contrast with safety's invariant rule: name only to draw the boundary (safety ~ liveness hazard). Formal specifications and temporal-logic proof systems are excluded: name at most."
+          ],
+          "violatedBy": [
+            "An infinite run in which the good event never occurs. Forms: livelock (steps keep happening but the measure never decreases, e.g. competing proposers repeatedly preempting each other); starvation (some process's request never served while others progress); indefinite postponement by message delay; faults beyond the threshold that halt progress (the parent's halting example: name, do not restate).",
+            "Pitfall: 'no deadlock' stated as 'never reach a state with no enabled step' is a safety property (a bad state). Do not use deadlock as the archetype of a liveness violation without that care.",
+            "A broken fairness or timing assumption: an unfair scheduler, unbounded delay, stabilization that never comes. For randomized designs, an adversary that can predict or bias coin outcomes, beyond what the design tolerates.",
+            "Exposure (claim 3), scoped: in designs whose safety does not rely on timing and whose progress needs bounded delay, an adversary controlling delay (keeping messages beyond the protocol's timeouts, or targeting each successive leader) can postpone decisions for as long as it sustains it, with faults within the threshold and safety intact. In designs that rely on a delay bound for safety, the same delay can break safety (Safety's territory: name only). Against classic randomized asynchronous designs, delay slows decisions in real time but does not make non-termination more than a probability-zero event, as long as the adversary cannot predict the coins.",
+            "Detection pitfall: a sustained postponement is indistinguishable in finite time from slow progress; operators see a missed bound (a safety-shaped surrogate), not a proven liveness violation. Fault detection is excluded: name only."
+          ],
+          "confusions": [
+            "safety ~ liveness (hazard): split by what each rules out or requires and how each is established (extension criterion and progress measure under fairness here; finite bad prefix and inductive invariant there). Name safety to draw the boundary; do not explain its criterion, invariant rule or quorum-overlap argument.",
+            "availability ~ liveness (hazard): liveness is the eventual-progress shape any property can take; availability protects the service and its data, and its partition sense is one liveness-shaped property. Do not discuss service availability, uptime or clients covered. Keep 'availability is not liveness' true.",
+            "Censorship resistance is named at most (a liveness-shaped commitment about each valid action); do not explain it.",
+            "Liveness vs latency: eventual vs bounded; a guarantee with no bound gives no response time.",
+            "'Fairness' here is scheduling fairness (enabled steps are eventually taken), not fair transaction ordering or economic fairness. One term, one sense.",
+            "Probability one is not certainty: non-terminating runs exist but have probability zero.",
+            "FLP is about guaranteeing termination in every admissible run of a deterministic protocol; it does not say consensus never terminates in practice, nor that agreement or validity must fail. Consensus and agreement are excluded: state the result's conditions, do not explain consensus protocols or the agreement property.",
+            "Do not restate the parent's decomposition, its 'never finalizing anything' example or the halting example (facet watch). Finality excluded: no finality example."
+          ],
+          "relation": [
+            "FLP (Fischer, Lynch, Paterson 1985), all conditions: deterministic processes; fully asynchronous (no bound on message delay or on relative process speeds, no synchronized clocks); reliable channels (every message eventually delivered, so loss is not the cause); at most one process may fail, by crashing (crash-stop); required: agreement, nontrivial validity (each of two values is decided in some run), and termination in every admissible run. Conclusion: no protocol guarantees all three; some admissible run never decides. That run need contain no crash: the possibility of one suffices.",
+            "Ways designs proceed despite FLP, not exhaustive: guarantee progress only once delays stay bounded long enough (partial synchrony; safety kept under any timing in many quorum-based designs); randomization, terminating with probability one (e.g. Ben-Or style, under thresholds and with coins the adversary cannot predict; expected rounds depend on the coin design); failure detectors, which encapsulate timing assumptions (fault-detection excluded: name only); synchrony assumptions, as in longest-chain protocols, which also weaken agreement to a probabilistic form. Do not write 'the only' or 'the two ways'.",
+            "Pitfall: 'make progress only during periods of bounded delay' is wrong as worded; deterministic designs can decide during asynchronous periods, they are only not guaranteed to. Use 'guaranteed only once'.",
+            "Pitfall: 'liveness is the part that carries timing assumptions' holds for designs whose safety does not rely on timing; synchronous and longest-chain protocols rely on a delay bound for safety too (Safety's claim). Scope it: 'in many designs' / 'in designs whose safety is timing-independent'."
+          ],
+          "tradeoffs": [
+            "Under asynchrony with possible crashes (FLP conditions), a deterministic design cannot guarantee both safety and termination; designs built for partial synchrony keep safety unconditionally and make liveness conditional on timing, choosing to stall rather than decide inconsistently.",
+            "Timeouts: short timeouts recover sooner from a faulty leader but can fire spuriously during slow periods and keep a protocol from deciding; many designs grow timeouts so that, once delays are bounded, they eventually exceed the delay. Name only; latency excluded."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional argument: a definition with its consequence and its bounded counterpart, a proof rule whose validity depends on a fairness assumption, and an impossibility result whose force depends on every one of its conditions, leading to the exposure it leaves.",
+        "whyProse": "Each claim is carried by its conditions (fairness kind, timing model, determinism, crash-stop, nontrivial validity, the adversary's limits), and the record fails if any is dropped; prose keeps each condition attached to the statement it qualifies. The proof rule's obligations are conditions that hold together, not an ordered process, so a flow would misrepresent them. The safety/liveness contrast is already drawn as structure at the parents (the two-question flow, the Safety-Liveness tension, the Security distinction), so a distinction here would repeat it and would draw Safety's territory. Bounded vs unbounded progress is one conditioned sentence, not a conflation needing a block. Asynchronous and stabilized periods are not modes the concept owns (timing models are network territory), so no state model.",
+        "level": "The extension criterion, the progress-measure rule with fairness, and FLP's bearing on progress belong to liveness itself: the parent only states the decomposition, and neither consensus (excluded) nor fault models (excluded) owns why progress, specifically, needs timing or randomization.",
+        "territory": "Draws no sibling relationship: Safety's finite-prefix criterion, invariant rule and overlap argument are named only for contrast; availability and censorship resistance are named as liveness-shaped commitments without explanation; latency, fault models, consensus, agreement, fault detection and formal specifications are named with their key property at most; no finality example.",
+        "placements": "Prose stated with its fault, timing and fairness models holds unchanged under Protocol Properties and Security Properties; the adversary appears as a scheduler or delay the model permits, so the Security angle needs no separate framing, and no structure carries placement-specific labels."
+      },
+      "audit": {
+        "at": "2026-10-20T16:40:28.717Z",
+        "note": "Scoped re-audit after repair 1 (not expanded: the repair added conditions and one qualifying sentence; it did not change the argument, its assumptions, the structure or the scope). Read at both placements (Foundations / Protocol Properties; Security, Correctness & Resilience / Security Properties) against both parents, the accepted claims (claim 2 as re-recorded), model and design (prose). Blocking findings resolved: (1) the stall sentence now says a stall observed so far 'does not by itself show a violation', and the new sentence says concluding that it will last takes knowledge of the protocol, such as a state from which no permitted continuation reaches the good event; this matches claim 1 ('no finite observation shows a violation'), the paragraph's own caveat that the extension need not be one the protocol can produce, and the closing detection sentence, which stays correct in its partial-synchrony scope (a finite record remains consistent with later stabilization). (2) The bounded requirement now reads 'within a stated number of steps or rounds, or of seconds in a model whose executions record real time', so the bound is fixed in the requirement and the safety classification holds. (3) The fairness sentence now reads 'can yield', conditioned on progress depending on the unscheduled step or withheld message, and ends with 'the good event never occurs' in place of the measure claim; it matches claim 2 and model establishedBy[2], and the summary 'Without fairness, the argument has nothing to stand on' stays consistent because it concerns the proof's third obligation. Advisory Availability sentence rewritten: it draws the hazard split (Availability named for what it protects; liveness a shape any requirement can take), keeps the domain sentence 'Availability is not liveness' true and explains nothing of Availability. Model statement[2] now scoped to the property and names the protocol-knowledge case. Re-read every use of stall, fair/fairness, postpone, bound, deadline and Availability: 'Adding a bound changes the shape' and 'a missed deadline, a bounded and safety-shaped surrogate' agree with the stated-bound condition; partial-synchrony 'eventually bounded' and timeout uses are unchanged and correct; 'fair to every process and every message' in the FLP run is exact for a run with no crash; 'postpone decisions' and 'In none of these cases does a postponement appear as a liveness violation' stay scoped to faults within the threshold. No error introduced by the repair. Overlap per placement: none material; the halting and 'never finalizing' examples are not restated. Territory: Safety, Availability, Latency, Agreement, fault models and fair ordering named only; no fault-detection explanation in the new sentence. Structure: prose as designed. Depth unchanged and proportionate. Self-check of proposed advisory fixes: none adds an absolute. Advisory: (1) paragraph 1, the new sentence could say 'knowledge of the protocol and of its fault and fairness assumptions', since which continuations are permitted also depends on the environment (for example, crashed processes not recovering); (2) the Availability sentence echoes the Protocol Properties parent's 'defined by what they protect ... the service and its data'; acceptable because the hazard split requires the boundary at the Security placement, whose parent does not draw it, but it could avoid the parent's phrase; (3) channel fairness 'a process that has not failed' is time-indexed; prefer 'a process that does not fail'; (4) coin conditions differ: 'neither predict nor bias' (paragraph 6) versus 'stay unpredictable' (paragraph 7); (5) FLP 'channels that eventually deliver every message' could say 'every message to a process that does not fail'; (6) the rhetorical lines 'Without fairness, the argument has nothing to stand on' and 'Agreement among processes that can fail is where fairness runs out' are optional tightening; (7) model establishedBy[2] still says 'the measure never decreases' when the helpful step is postponed; other steps may decrease it, so 'need not decrease' is exact (the record no longer carries this).",
+        "resolutions": [
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "Agreement is named twice, as a property FLP requires and in 'Agreement among processes that can fail is where fairness runs out'; no agreement protocol or the agreement property's definition is explained."
+          },
+          {
+            "id": "names-concept:555ce40b25",
+            "resolution": "Availability is named once in the rewritten sentence to draw the hazard split (named for what it protects; liveness a shape); its senses, clients covered and composition are not explained, and 'Availability is not liveness' stays true."
+          },
+          {
+            "id": "names-concept:f020cbbfcb",
+            "resolution": "Fair ordering is named only to fix the sense of 'fairness' ('not the fair ordering of transactions'); nothing about it is explained."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault models are named only as the source of admitted delays and faulty steps in the proof obligations; no fault model is defined or compared."
+          },
+          {
+            "id": "names-concept:fda11800c7",
+            "resolution": "Latency is named once ('the concern of Latency') to place speed on bounded requirements; no latency analysis."
+          },
+          {
+            "id": "names-concept:d8819269c9",
+            "resolution": "Safety is named for the bounded-requirement classification and the timing-dependent-safety boundary; its criterion, invariant rule and overlap argument are not explained."
+          },
+          {
+            "id": "absolutes:b2c9bd4b60",
+            "resolution": "Each checked: 'never about a finite part' holds by definition of a violation; 'cannot keep falling forever' follows from well-foundedness; 'a protocol cannot enforce' (the scheduler is the environment); 'no finite run can show' fairness broken follows from fairness being liveness-shaped; the repaired fairness sentence is hedged ('can yield', conditioned on dependence); FLP 'no deterministic protocol can guarantee termination' carries all conditions; 'never decides' and 'cannot promise a decision in all runs' are the result; 'no process can tell when that time has come' holds under partial synchrony; 'cannot make non-termination more than a probability-zero event' is conditioned on the threshold and unpredictable coins; 'not proof that decisions will never come' is scoped. None overreaches."
+          }
+        ],
+        "recordFingerprint": "7a4073869cf7715c7cc05648e71cab3bb2828776e2a43ada53104dce8f8b0622"
+      }
+    },
+    "availability": {
+      "model": {
+        "meaning": "The property that a service, and the data it serves, can be obtained by the clients that request it; one word with two senses (eventual non-error response from every non-failed replica; measured fraction of a period answered within a deadline), so the sentence must cover both without picking one.",
+        "kind": "property",
+        "parents": {
+          "protocol-properties": "Parent names availability as protecting 'the service and its data' and uses it in the partition trade-off (keep answering on every side vs one up-to-date order). Adds: that the trade-off uses the partition sense, which differs from measured uptime; for which clients a claim holds; how it composes along a request path; loss through overload with no failed component. Do not restate the partition sentence or the 'defined by what they protect' sentence; no 'pick two' wording.",
+          "security-properties": "Parent says availability concerns the service as a whole, is judged 'by how much of the time the system works' (the measured sense), and that ledgers buy it by replicating everything. Adds: a measured fraction hides which clients were excluded; replication raises availability of the replicated core, while the request path can still be bounded by a single dependency outside it and by shared causes of failure; overload, including denial-of-service, removes it without any component failing. Must not contradict the parent's replication sentence: qualify it (scope), do not deny it. Do not restate the availability vs censorship-resistance sentence."
+        },
+        "claims": [
+          "the two senses of availability and why they are not interchangeable: the property sense used in partition trade-offs, in which every request reaching a non-failed replica eventually receives a non-error response, and the operational sense, the fraction of a period in which a service answers within a deadline, so a system can meet one and miss the other; and how both differ from data availability, which asks whether published data can be obtained by those who need to check it",
+          "for whom a service is available: availability holds only for clients that can reach enough working components, so during a partition a design that needs a quorum or a leader can stay available on the side that has one and unavailable on the other, and an availability claim needs to state which clients it covers",
+          "how availability composes along a request path: when a request needs several components in series, its availability is no higher than that of the least available one, and under independent failures it is close to the product of theirs, so a single dependency outside the replicated core, such as a coordinator, gateway or name service, can bound it; and why adding redundant parts raises it only against causes of failure those parts do not share",
+          "why availability can be lost while every component is correct: overload, from demand or from denial-of-service attacks, exhausts capacity without requiring any component to fail, so a tolerance bound stated in failed components does not cover it, and admission limits can keep the service available to some requests by refusing others before they consume the capacity that is short"
+        ],
+        "excludes": [
+          "liveness",
+          "censorship-resistance",
+          "data-availability",
+          "denial-of-service-attacks",
+          "denial-of-service-resistance",
+          "rate-limiting",
+          "redundancy",
+          "consistency",
+          "quorums",
+          "network-partitions",
+          "fault-tolerance"
+        ],
+        "placements": {
+          "availability": "Leaf under Protocol Properties beside safety, liveness, consistency, fault-tolerance, finality, censorship-resistance. Parent uses the partition sense; the record states that sense with its model (non-failing replicas, unbounded response time, network that may lose messages) and also the measured sense, so it stands without the parent. Consistency, liveness and fault tolerance are siblings: named only. No positional or 'in this domain' wording.",
+          "availability-in-security-properties": "Leaf under Security Properties beside safety, liveness, integrity, confidentiality, censorship-resistance. Parent uses the measured sense; same one exposition holds because both senses are defined in the record, and the adversary enters as overload (denial-of-service, named only) or as an induced partition, both stated as conditions, not as a security-only framing. Must keep true the domain sentences 'Availability is not liveness', 'censorship resistance is not generic availability' and 'Redundancy does not guarantee availability'."
+        },
+        "fields": {
+          "statement": [
+            "Subject: the service as a whole and the data it serves to its clients (parent: 'the service and its data'). Not the publication of committed data for verification (that is Data Availability: name only) and not each valid action (Censorship Resistance: name only).",
+            "Partition sense (Gilbert and Lynch's formalization of Brewer's conjecture): every request received by a non-failed replica eventually gets a response; the plan's 'non-error' is the usual reading of that response. Conditions to keep: 'non-failed' is defined by the fault model (crash/omission in that formalization; do not carry it to Byzantine replicas without saying so); no time bound ('eventually'); the response need not reflect the latest writes (that is consistency's concern, named only). It says nothing about requests that reach no non-failed replica.",
+            "Measured (operational) sense: the fraction of a stated period in which the service answers within a stated deadline, measured from some vantage point; also often computed over requests (successful requests / all requests) rather than time. The number depends on the deadline, the success criterion, the vantage point and the request mix chosen; state that, do not present one number as intrinsic.",
+            "Meet one, miss the other (both directions, with conditions): (a) a majority-quorum design can show a high measured fraction yet fail the partition sense, because replicas cut off from a majority refuse or stall during a partition for operations that need the quorum (the high fraction holds when partitions are rare or short); (b) a design can satisfy the partition sense yet score poorly on the measured sense, since the partition sense sets no deadline and imposes nothing on requests that reach no non-failed replica (e.g. while replicas are down), whereas the measured sense counts slow answers and downtime as failures.",
+            "Shape: the partition sense has two parts: its eventual-response part is liveness-shaped (no deadline), and its non-error part constrains what the answer may be, not when it comes. Do not classify the non-error part as safety: the requirement binds only replicas that do not fail, so where the fault model lets a replica stop later, an error answer is not a violation that no continuation repairs. Name the liveness shape only; do not explain liveness or safety, and do not call the whole requirement liveness. The measured sense is a statistic over a period, not a property every execution must satisfy; do not call it a liveness or safety property. Do not say availability is liveness (domain prose: 'Availability is not liveness').",
+            "Scope of coverage: an availability statement names which clients (and, where designs differ, which operations, e.g. reads vs writes) it covers; a high aggregate can coexist with some clients fully cut off. Quorum/leader pitfall: keep 'can stay available'. A leader-based design that also needs a quorum to commit is not available on the leader's side if that side lacks a majority (the leader cannot commit; the majority side may be unavailable until it elects a new leader); if no side holds a quorum, no side is available for those operations. Do not write 'the side with the leader stays available' unconditionally."
+          ],
+          "establishedBy": [
+            "Partition sense: by design argument over the model, i.e. the operation can complete from what a replica can reach; a replica that must hear from others before answering cannot guarantee a response when messages can be lost indefinitely, as that model allows. Name only that this is where the consistency trade-off bites; do not explain consistency models or restate the parent's partition sentence.",
+            "Measured sense: by measurement over a past period (probes, request logs, service-level objectives) and by estimate from component figures (composition, see relation). Measurement samples behavior; it is not a guarantee over all executions (parent's property vs observed behavior distinction: do not restate it, but do not present a measured figure as a proven property either).",
+            "Estimates depend on assumed failure and repair rates and on independence; state the assumption when giving a figure."
+          ],
+          "violatedBy": [
+            "Partition sense: a non-failed replica that returns an error or never responds, e.g. one that refuses because it cannot reach a quorum or leader.",
+            "Measured sense: time or requests beyond the stated budget: components down beyond what redundancy covers; clients partitioned from enough working components; a failure in a series dependency; a common-cause failure across redundant parts; overload pushing answers past the deadline or into refusal.",
+            "Overload while every component is correct: capacity exhausted by demand or by denial-of-service attacks (named only). Condition: where the fault model counts a component that follows its protocol as correct however slowly it runs, nothing has failed, so a tolerance bound stated as 'up to f failed components' (fault tolerance, named only) does not cover it; where late responses count as timing failures, overload that slows many components at once can exceed such a bound instead. Pitfalls: overload can also produce real failures (out-of-memory crashes), which do count against the bound; and it can feed on itself (timeouts make failure detection wrongly suspect slow but correct nodes, triggering failover or retries that add load), but a correct node wrongly suspected is not a failure and does not count against the bound. Do not write that overload never causes failures; and not every denial-of-service is overload (some exploit crash bugs, which are failures)."
+          ],
+          "confusions": [
+            "availability ~ liveness (hazard): liveness is the eventual-progress shape any property can take; availability is defined by what it protects. Only the partition sense has liveness shape; the measured sense has a deadline and is a statistic. Name liveness, explain nothing of its criterion, proof or fairness.",
+            "availability ~ censorship resistance: service as a whole vs each valid action; parent already makes this contrast, so do not restate it. At most one naming sentence if needed for the coverage claim (refusing particular clients' requests on purpose is censorship resistance's subject, not explained here).",
+            "availability ~ data availability (authored concept): data availability asks whether data a system has committed to can be obtained in full by those who need to verify it, in time. Different subject (published data, verifiers, withholding) and different adversary; a service can answer its clients while data needed for verification is withheld. Name with its key property only; do not explain sampling, committees or the withholding argument.",
+            "partition sense ~ measured uptime: the facet-watch distinction; keep the two labeled distinctly throughout (one term, one sense per sentence). The parent of each placement uses a different one.",
+            "available ~ correct or up to date: a non-error response is not a correct or current one; consistency and integrity are separate properties (name only).",
+            "redundancy ~ availability: redundancy (named only) raises availability only against failures the redundant parts do not share and only for components it replicates; domain prose 'Redundancy does not guarantee availability' must stay true.",
+            "Do not write 'pick two of three' or restate the CAP trade-off; the parent states it."
+          ],
+          "relation": [
+            "Series (a request needs every component): availability of the path is at most the minimum of the components' availabilities. This bound needs no independence: the path is up only when each component is up. Condition: availabilities measured in the same sense, over the same period and requests; caching, fallbacks or retries can take a component out of strict series.",
+            "Under independent failures the path's availability is (close to) the product: e.g. five components at 99.9% give about 99.5% (0.999^5 = 0.99501). Without independence the product is not the answer: positively correlated failures (that tend to coincide) put it between the product and the minimum; the minimum bound always holds. Never state the product without its independence condition.",
+            "Consequence: one dependency outside the replicated core (coordinator, gateway, name service, a single access endpoint to a replicated network) bounds the path however well the core is replicated.",
+            "Parallel (any one of k parts suffices): under independence unavailability multiplies, 1 - product of (1 - A_i); a shared cause of failure (same software defect, same configuration push, same power, region or provider) acts like a single component in series with the redundant set, so the set is no more available than that cause allows. Redundancy still helps against causes the parts do not share; do not write that any shared cause makes redundancy useless. Failover detection and switching time counts as downtime for requests arriving during it, and failover machinery can itself be a series component.",
+            "Keep arithmetic illustrative and correct; do not attach invented figures to real systems."
+          ],
+          "tradeoffs": [
+            "Admission limits (rate limiting and denial-of-service resistance named only; load shedding, quotas; if fees are used as an example, keep it to general admission, not exclusion of particular parties, which is censorship resistance's subject) can keep the service available to some requests by refusing others before they consume the capacity that is short; a limit that refuses only after that capacity is spent (e.g. a flood saturating the link in front of a server's rate limiter) does not protect the requests it admits. The refused requests are unavailable to their clients, so this chooses whom availability covers rather than raising it for everyone. A refusal is an error response: it does not satisfy the partition sense for that request.",
+            "Availability vs consistency during a partition: parent's trade-off; name only.",
+            "Coverage vs aggregate: designs and measurements can trade a few clients' total loss for a high average; why the coverage statement is part of the claim."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "One word, two senses that the two parents each use (partition sense under Protocol Properties, measured fraction under Security Properties), plus a third concept sharing the word (data availability): a real conflation, followed by conditions (coverage, composition arithmetic with its independence condition, overload) that are arguments best carried in prose.",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Mark the conflation the first claim resolves: availability in the partition sense (every non-failed replica eventually answers) is not availability as a measured fraction answered within a deadline, and neither is data availability; give each a short distinct label the rest of the record then uses consistently.",
+            "whyNotProse": "The two senses share one word and readers arrive from parents that each use a different one; prose that defines them in successive sentences lets the reader carry one sense into the other's claims (coverage, composition and overload are argued in the measured sense, the partition trade-off in the other). A distinction sets the labels side by side once, so later sentences can refer to a sense without re-defining it."
+          }
+        ],
+        "division": "Prose defines each sense with its conditions (fault model, no deadline, vantage point and deadline of the measurement), argues both directions in which a system meets one and misses the other, names data availability with its key property, and carries the coverage, composition and overload claims with their conditions. The distinction block shows only the three labels as distinct notions (short labels, e.g. partition sense, measured availability, data availability); it must not restate definitions or examples the prose gives, and must not explain data availability.",
+        "level": "The two senses, coverage, composition along a request path and overload are about availability itself, not about protocol or security properties in general; the parents only name availability and each use one sense. Liveness, consistency and fault tolerance own the shape, the replica-order models and tolerance bounds respectively, so none of them should carry these claims.",
+        "territory": "Liveness is named only as the shape of the partition sense; consistency only as the other side of the parent's trade-off and as 'a non-error answer need not be current'; fault tolerance only as the failed-component bound overload escapes; censorship resistance and data availability named with their key property; quorums, network partitions, redundancy, rate limiting, denial-of-service attacks and resistance named as the things availability depends on or is lost to, never explained. The distinction block includes data availability as a label only.",
+        "placements": "Both placements are leaves; both senses are defined in the record, so it stands under the parent that uses the partition sense and under the parent that uses the measured sense. Adversaries appear as conditions (overload, induced partition) stated generally; no positional, domain-specific or 'in this domain' wording."
+      },
+      "audit": {
+        "at": "2026-10-20T16:56:39.266Z",
+        "note": "Scoped re-audit after repair 2 (not expanded: the repair replaced one clause of paragraph 2, withdrawing the safety classification of the non-error part, and corrected the model's statement Shape; it did not change the record's argument, assumptions, structure or scope, and the other paragraphs read as the repair-1 re-audit found them, 1,302 words against 1,310). Blocking finding B1 of findings/availability-2.md is resolved: the sentence now reads 'Its demand for an eventual response sets no deadline, so that part has the shape of liveness; its demand that the response not be an error constrains what the answer may be, not when it comes.' Safety is no longer named, so no formal classification is made that depends on whether the requirement binds replicas that may stop later, and the descriptive clause is true under every fault model the record names (an error reply is excluded whatever its timing). Agreement with the Protocol Properties parent: the parent says reading availability 'only as safety or only as liveness loses part of what they promise'; the record says the requirement has two parts, of which only the eventual-response part has the shape of liveness and the other constrains content, so a liveness-only reading misses it, which agrees; it does not deny the parent's decomposition ('a part that rules out bad events and a part that requires good events eventually'), it simply leaves the non-error part unclassified. The eventual-response part stays liveness-shaped with its reason (no deadline), consistent with the Liveness record's criterion. Domain sentences 'largely liveness commitments' (Foundations) and 'Availability is not liveness' (Security) stay true. Terms re-read: 'shape' occurs once (paragraph 2) and 'liveness' once, both as the shape only, with Liveness's criterion, proof and fairness unexplained (hazard split held); 'part/parts' is used for the requirement's two parts in paragraph 2, for 'part of the network' in the coverage paragraph, and for redundant components in the redundancy paragraph (see advisory). The overload paragraph's 'A refusal is an error, so the refused requests are unavailable to their clients' still agrees with the non-error part as now worded. Nothing new was introduced besides the clause. Overlap per placement: neither the Protocol Properties partition sentence nor its 'defined by what they protect' sentence is restated; at Security Properties the 'service as a whole' versus censorship resistance sentence and the replication sentence are not restated (the latter is qualified, not denied). Territory and splits: liveness, consistency, fault tolerance, quorums, network partitions, redundancy, rate limiting, denial-of-service attacks, censorship resistance and data availability remain named only; all four claims are explained. Structure: the distinction carries only the three labels, as designed. Canonical at both placements, American English, plain text. Accuracy and depth: earlier resolved findings (wrongly suspected replicas, admission limits with their condition, the fault-model condition for overload) still hold; every paragraph is tied to a claim. The model's statement Shape now matches the record. Advisory: (1) 'constrains what the answer may be, not when it comes' sets content against timing, while the liveness part also sets no deadline; 'not whether it comes' would contrast the two parts more exactly. (2) 'part/parts' carries two senses (the requirement's parts in paragraph 2; redundant components in the redundancy paragraph); context separates them, but 'two demands' in paragraph 2 would keep one term in one sense. (3) Carried over, unchanged: 'a replica that has not failed' reads as relative to the moment of receipt, where Gilbert and Lynch mean a replica that does not fail; the overload opener 'while every component is correct' could read 'while no component has failed'; 'from what it can still reach' (own state would be clearer); 'In the operational sense' versus the distinction's 'Measured availability'; the series bound's 'measured in the same sense' condition reduced to 'the same period and requests'; Data Availability glossed without 'in time'; failover versus client retry delay; the redundancy paragraph's first clause holds without independence, only the product needs it.",
+        "resolutions": [
+          {
+            "id": "names-concept:f4a007b368",
+            "resolution": "Censorship resistance is named once at the end of the coverage paragraph as the subject of deliberately keeping particular parties' requests out; nothing of its mechanisms or measures is explained, and the Security parent's contrast sentence is not restated."
+          },
+          {
+            "id": "names-concept:eb7ef7252d",
+            "resolution": "Consistency is named once in paragraph 2 as the question whether the answer reflects preceding writes; no consistency model, ordering or cost is explained."
+          },
+          {
+            "id": "names-concept:3a2dbfa58a",
+            "resolution": "Data availability is named as a third notion with its key property (data committed to can be obtained in full by verifiers) and one contrast (a service can answer while verification data is withheld); sampling, committees and the withholding argument are not explained."
+          },
+          {
+            "id": "names-concept:0ae4a1b0e0",
+            "resolution": "Denial-of-service attacks are named as a source of overload and as sometimes exploiting crash defects; attack techniques and defenses are not explained (the rate limiter flood case states only the condition on admission limits)."
+          },
+          {
+            "id": "names-concept:bcc63b045c",
+            "resolution": "Fault models are named as what fixes which replicas count as not failed and which components count against a tolerance bound; the record states only the conditions of the Gilbert and Lynch formalization and of the overload sentences, not a taxonomy or explanation of fault models."
+          },
+          {
+            "id": "names-concept:7e780a44b8",
+            "resolution": "Fault tolerance is named once, as the form of claim stated as a number of failed components that overload escapes; masking, fail-safe and non-masking tolerance and recovery are not explained."
+          },
+          {
+            "id": "names-concept:0b3c310fab",
+            "resolution": "Liveness is named once, as the shape of the eventual-response part (no deadline); its criterion, proofs and fairness are not explained, the requirement is not called liveness as a whole, and 'Availability is not liveness' stays true (hazard split held)."
+          },
+          {
+            "id": "names-concept:d09b7e8456",
+            "resolution": "Local state is named in 'a design whose replicas always answer from local state' to describe a design that meets the partition sense; nothing about local state as a concept is explained."
+          },
+          {
+            "id": "names-concept:1f35a334a5",
+            "resolution": "Network partitions are named as the setting of the partition sense and as caused by a fault or an adversary in the coverage paragraph; partition detection, healing or the CAP argument are not explained, and the parent's partition sentence is not restated."
+          },
+          {
+            "id": "names-concept:3a247f4315",
+            "resolution": "Quorums are named as what a majority-quorum or leader design needs on a side to serve operations; quorum sizing and intersection are not explained."
+          },
+          {
+            "id": "names-concept:34d454b625",
+            "resolution": "Rate limiting is named as one kind of admission limit, with the condition (refuse before the request consumes the scarce capacity); algorithms and placement of rate limiters are not explained."
+          },
+          {
+            "id": "absolutes:153c8950a4",
+            "resolution": "Each checked: 'stated either as a guarantee' is a definition; 'cannot promise a response when messages may be lost indefinitely' holds in that stated model; 'cannot guarantee partition-sense availability' holds because a replica cut off from the majority refuses or stalls; 'replicas always answer from local state' describes the design; 'not always enough' is a hedge; 'a leader on the minority side cannot commit' is conditioned on a leader that must gather a quorum; 'cut off entirely' sits under 'can'. The repaired paragraph 2 adds no absolute."
+          },
+          {
+            "id": "prose-narrates-structure:2b428565cf",
+            "resolution": "Expected by design: the prose defines each sense with its conditions and the distinction carries only the three labels; the block adds the side-by-side separation of the labels and restates no definition or example."
+          },
+          {
+            "id": "depth-long:04021784a8",
+            "resolution": "1,302 words; every paragraph is tied to a claim (definition, partition sense, measured sense, meet one and miss the other with data availability, coverage, composition, redundancy, overload) with no background paragraph; the repair shortened the record slightly, and nothing condenses without dropping a condition an earlier audit required."
+          }
+        ],
+        "recordFingerprint": "d8b0633531b1f86c9f88c666c62369d0e42f6aa677e3a62930e1806eb79d4019"
+      }
+    },
+    "consistency": {
+      "model": {
+        "meaning": "Note: replica sense only (domain prose: what different participants may observe of the same state). A consistency model is a constraint on which values reads may return given the writes, stated against an order of operations (or, for eventual consistency, only as convergence).",
+        "kind": "property",
+        "parents": {
+          "protocol-properties": "Parent names consistency as protecting the relation between what participants observe, and states the partition trade-off (keep some availability or some consistency). Adds: what a model constrains and what separates the reference models; the failure-free coordination cost; why bare convergence is weak and what weak models add; how independently accepted concurrent updates are detected and resolved. Do not restate the parent's partition sentence or its safety/liveness decomposition; name them at most."
+        },
+        "claims": [
+          "what a consistency model constrains in the replica sense: which values reads may return given the writes, judged against an order of operations, and the questions that separate models, such as whether every observer agrees with one order and whether that order respects real time, with linearizability, sequential, causal and eventual consistency as reference points; and how this sense differs from the transactional one, in which consistency means preserving integrity constraints",
+          "why stronger models cost coordination even without failures: keeping one order of operations that every observer agrees with requires, when more than one replica serves operations, some operations to wait for communication with other replicas before they complete, while weaker models such as causal or eventual consistency let a replica answer from its local state, so the choice trades latency against the anomalies clients can observe, such as stale or out-of-order reads",
+          "why eventual convergence alone promises little: in its basic form it is a liveness condition that permits any interim values and constrains nothing while updates continue, so weak models add safety constraints clients can rely on, such as causal order or session guarantees like reading one's own writes",
+          "how replicas that accept updates independently reconcile concurrent ones: by a rule such as last-writer-wins, which orders every pair of writes without detecting concurrency and can silently discard updates, by detecting concurrency, for example with version vectors, and keeping the conflicting versions, or by merge operations designed to commute, under the delivery the design assumes, so that replicas that have received the same updates converge whatever order they arrived in"
+        ],
+        "excludes": [
+          "state-machine-replication",
+          "data-replication",
+          "finality",
+          "agreement",
+          "availability",
+          "safety",
+          "liveness",
+          "latency",
+          "network-partitions",
+          "transactions"
+        ],
+        "placements": {
+          "consistency": "Single placement, under Protocol Properties in Foundations; general replicated-data framing, no ledger-specific sense needed. The record must still stand alone (L2), so state the replica sense in its own words rather than leaning on the parent's phrase."
+        },
+        "fields": {
+          "statement": [
+            "A model is a set of allowed histories: given the writes (and their timing/issuing client), which values each read may return. Judged against an order of operations the history must be explainable by.",
+            "Separating questions the claim names: is there one order every observer agrees with; does that order respect real time (an operation completed before another started comes first). Add only what the claims need; no full hierarchy, no isolation levels, no per-object composability.",
+            "Reference points: linearizability (one order, respects real time: each operation takes effect at some point between its invocation and its response); sequential (one order, respects each client's own order, not real time across clients); causal (observers agree on the order of causally related operations only; concurrent writes may be seen in different orders by different observers); eventual (basic form: if updates stop, replicas eventually return the same value; says nothing about interim reads).",
+            "Transactional sense (ACID C): a transaction preserves the application's integrity constraints. Different question: which states are valid, not what different observers see. Name Transactions only; do not explain atomicity or isolation."
+          ],
+          "establishedBy": [
+            "Strong models (linearizable, sequential): some operations wait for communication with other replicas before completing. Condition: holds when more than one replica serves operations; a design with a single node answering everything pays instead in clients' round trips to it and, unless it replicates a write before answering, in losing that write if it fails. Which operations wait (reads, writes, or both) is a design choice; the basic lower bound (in a model with a known minimum message delay) applies to a read and a write together, so a design can make one fast at the other's expense; do not state a per-operation bound.",
+            "Coordination here means waiting for messages (e.g. quorum round trips), not necessarily consensus: linearizable read/write registers can be built without solving consensus (crash faults, a majority correct, asynchronous); general operations such as compare-and-swap, or a replicated state machine, do need agreement. Do not write 'strong consistency requires consensus'. Agreement is named only.",
+            "How replicas apply one sequence and where a read is placed in it (read ordered as an input, read after the last fixed position, leader-local reads under timing assumptions) belongs to State Machine Replication: name, do not explain.",
+            "Weak models: a replica answers reads and accepts writes from local state and propagates later. Causal: a replica makes a remote write visible only once the writes it depends on are visible there (tracking dependencies costs metadata, not waits on other replicas at answer time). Session guarantees: per client session; serving them locally needs the client to stay with replicas that have its session's writes, or to carry what it has seen so a replica that lacks them waits or refuses.",
+            "Convergence by reconciliation (claim 4): not every rule detects concurrency. Last-writer-wins orders every pair of writes by timestamp without detecting concurrency. Keeping concurrent versions for the application to resolve needs concurrency detected, e.g. with version vectors (one dominates -> ordered; neither -> concurrent); physical timestamps (any single number) cannot detect it. Merges designed to commute combine updates, many without detecting concurrency; under their delivery assumptions they guarantee convergence, not that every concurrent update survives: how much each keeps depends on the type (grow-only counters and sets keep everything; last-writer-wins registers, max registers, add-wins and remove-wins sets drop effects)."
+          ],
+          "violatedBy": [
+            "Anomalies a model may forbid or permit: stale reads; out-of-order reads (an effect seen before its cause); successive reads by one client going backwards as it moves between replicas; a client not seeing its own write. Which is a violation depends on the model: sequential consistency can still permit reads stale in real time; causal permits stale reads.",
+            "Last-writer-wins silently discards all concurrent writes except the winner. With physical clock timestamps and clock skew it can also discard a write that causally followed the winner; timestamps that respect causality (logical/hybrid clocks) avoid that case but still drop concurrent writes. Deterministic, so replicas converge; the loss is the cost.",
+            "Merges converge only under their delivery assumptions: state-based merges must also be associative and idempotent (duplicates, any order); operation-based designs commonly need exactly-once and causal delivery, with only concurrent operations required to commute. 'Whatever the delivery order' holds within those assumptions, not unconditionally.",
+            "Convergence is not invariant preservation: two updates each valid alone can merge into a state violating an application constraint (e.g. a balance below zero, a duplicate unique name); keeping such constraints needs coordination. Keep to one sentence; do not drift into transactions."
+          ],
+          "confusions": [
+            "Replica consistency vs ACID consistency (facet watch): same word, different question.",
+            "Eventual consistency is not just the weakest point on the strength scale: in basic form it is a liveness condition (Liveness, Safety named only), constraining nothing while updates continue; weak models add safety constraints (causal order, session guarantees) on top.",
+            "Causal consistency alone does not require replicas to converge on concurrent writes; convergence is a separate addition (causal plus convergence). Do not write that causal implies eventual.",
+            "A stale answer is not by itself a fault: whether it is acceptable is what the model says (SMR's record already points here).",
+            "Consistency vs Finality: a completed write under a model is not finality; name Finality only. Consistency vs availability under partition: parent's sentence; name only, do not restate.",
+            "'Strong consistency' is ambiguous (often linearizability, sometimes sequential or strict serializability); avoid or define."
+          ],
+          "variants": [
+            "Reference points by strength as histories allowed: every linearizable history is sequentially consistent, every sequentially consistent one is causally consistent; eventual is a different kind of constraint (convergence), not the next point on the chain. Strength only as far as the claims need.",
+            "Session guarantees (read your writes, monotonic reads, and similar) are per-client constraints that can be added to a weak model; name one or two, do not catalog."
+          ],
+          "tradeoffs": [
+            "Failure-free cost: latency of waiting operations vs anomalies clients can observe (stale, out-of-order reads). Latency named only.",
+            "Under partitions the trade-off is availability vs consistency: parent owns that sentence; at most a back-reference, no restatement.",
+            "Accepting writes at any replica independently buys local answers for writes as well as reads, and pays with reconciliation: lost updates (last-writer-wins), merge-restricted data types, or application-level resolution of kept conflicting versions."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A family of models told apart by the same questions (one agreed order? tied to real time? can a replica answer locally?), plus a term the reader conflates with a different sense of the same word. The coordination cost, the weakness of bare convergence and the reconciliation of concurrent updates are causal arguments with conditions.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Linearizability, sequential, causal and eventual consistency read across the claim's separating questions: the order observers agree with, whether it respects real time, and whether a replica can answer without waiting for other replicas (failure-free, more than one replica serving operations). The strong models' cell says some operations wait, not every operation.",
+            "whyNotProse": "Four models against three questions is twelve values the reader must compare across; in prose they scatter over sentences and the reader loses that sequential and linearizable consistency share one agreed order and part on real time, while causal and eventual consistency give up the single order, which is the point the coordination claim builds on."
+          },
+          {
+            "structure": "distinction",
+            "purpose": "Consistency of replicas (what different observers may see of the same state) versus consistency in the transactional sense (preserving integrity constraints).",
+            "whyNotProse": "The two senses share a word and are routinely conflated when partition trade-offs are read against ACID; marking the conflation as a distinction makes the term's sense explicit before the models are compared."
+          }
+        ],
+        "division": "The comparison shows each model's answer to the three questions and nothing else: no conditions, no reasons. Prose explains what a model constrains, why keeping one agreed order makes some operations wait (with the multi-replica, failure-free scope and the coordination-is-not-consensus caution), why eventual is a liveness condition and what safety constraints weak models add, and reconciliation of concurrent updates with its conditions; prose must not re-list the table's cells. The distinction shows only the two senses; one prose sentence says what the transactional sense asks, naming Transactions without explaining it.",
+        "level": "The models, their coordination cost and reconciliation are this concept's own claims; the parent only names consistency as one protected relation and states the partition trade-off, and no sibling owns observed-value constraints.",
+        "territory": "The comparison's local-answer column states only whether waiting is needed, not how a read is placed in a sequence (State Machine Replication) nor how data is replicated (Data Replication); eventual's liveness shape is named, not argued (Liveness, Safety); no partition column, since that trade-off is the parent's and Availability's; Finality, Agreement, Latency and Transactions appear by name only.",
+        "placements": "One placement, Foundations / Protocol Properties; the models, distinction and arguments are general to replicated data and hold there without a ledger-specific sense."
+      },
+      "audit": {
+        "at": "2026-10-21T13:00:28.152Z",
+        "note": "Scoped re-audit after repair 1 (not expanded: the repair rewrote the opening and the last-writer-wins sentence of the reconciliation paragraph, rewrote the first sentence of the merge paragraph, added 'How much of each concurrent update a merge keeps depends on the type', narrowed the invariant sentence to 'does not by itself', and corrected model establishedBy[4] and claim 4; it narrowed claims within claim 4 and did not change the record's argument, assumptions, structure or scope). Blocking finding 1 (consistency.md) and B1 (consistency-b.md) are resolved: the paragraph now says replicas need a rule for concurrent writes and only a design that keeps concurrent versions has to recognize which writes are concurrent; 'Last-writer-wins needs no such recognition: it keeps the write with the largest timestamp' agrees with the physical-timestamp sentence and with the lagging-clock loss of a causally later write, so the contradiction is gone. Blocking finding 2 (consistency.md) is resolved: 'Other rules can keep what last-writer-wins throws away' is conditional, the counter ('adds every increment') and grow-only set ('keeps every addition') examples keep everything as stated, and 'How much of each concurrent update a merge keeps depends on the type' makes no category-wide retention claim. Re-read every use of concurrent (comparison causal cell, causal-alone non-convergence, version-vector rule, last-writer-wins loss, operation-based delivery needing only concurrent operations to commute), recognize (only the two reconciliation sentences), merge (state-based associativity and idempotence, the withdrawal example), converge/convergence (last-writer-wins determinism with ties broken by a fixed rule, convergence within delivery assumptions, causal plus convergence) and keep (concurrent versions, merge retention, keeping an invariant needs coordination before accepting some updates): all consistent and correct; the repair introduced no new error. Model establishedBy[4] and claim 4 now state that last-writer-wins orders every pair without detecting concurrency and that merges guarantee convergence, not survival of every update, matching the record. Overlap: single placement under Protocol Properties; the partition sentence and the safety/liveness decomposition are not restated. Territory: Agreement, Latency, Liveness, Safety, State Machine Replication, state machines and Transactions named only; no availability or partition argument; Finality absent. Structure: comparison and distinction as designed, unchanged. Accuracy of untouched text stands as the two first audits found it (comparison cells, inclusion chain, store-buffer lower bound with its timing and multi-replica conditions, quorum registers without consensus, version-vector rule). Depth: 1,342 words over four claims plus the sense distinction; each paragraph serves a claim (1-3 claim 1, 4-6 claim 2, 7 claim 3, 8-9 claim 4) and each claim carries its mechanism, conditions and failure; no repetition beyond the minor advisory overlaps, so depth-long is earned. Advisory: (1) comparison eventual cell 'None while updates continue' implies an order constraint after updates stop; 'None; only agreement once updates stop' would match the prose; (2) single-node clause 'nothing waits on another replica ... unless the node copies a write elsewhere before acknowledging it' is in mild tension, and 'losing the write if the node fails' fits loss of the node or its storage better than a crash after a durable write; (3) 'Weak models become usable by adding safety constraints' overstates; prefer 'give clients something to rely on'; (4) 'replicas that hold its session's writes' fits read-your-writes; monotonic reads need what the session has read too; (5) 'the value of the last write before it' could say 'to the same item'; (6) in the anomaly list only the third item carries 'where causal order is not kept', implying causal consistency permits successive reads going backwards; (7) state-based convergence also assumes local updates that only move up in the merge order; (8) compare-and-swap 'do require Agreement' relies on the previous sentence's asynchronous fault-tolerant setting; (9) the distinction paragraph's last clause spells out the distinction block's entries and some prose partly restates comparison cells (minor); (10) 'a design that keeps concurrent versions, rather than overwriting or merging them' sits loosely with multi-value registers, which are merge types that keep concurrent versions; optional wording.",
+        "resolutions": [
+          {
+            "id": "names-concept:9a12565a61",
+            "resolution": "Agreement is named once ('do require Agreement') for operations such as compare-and-swap; nothing about how agreement is reached is explained."
+          },
+          {
+            "id": "names-concept:fda11800c7",
+            "resolution": "Latency is named once as the quantity the model choice trades against anomalies; it is not defined or analyzed."
+          },
+          {
+            "id": "names-concept:0b3c310fab",
+            "resolution": "Liveness appears as 'a liveness condition' classifying basic eventual consistency, which is this concept's own claim 3; the liveness concept itself is not explained."
+          },
+          {
+            "id": "names-concept:d8819269c9",
+            "resolution": "Safety appears as 'safety constraints' that weak models add (claim 3); the safety concept is not explained."
+          },
+          {
+            "id": "names-concept:7b2788d27c",
+            "resolution": "State Machine Replication is named once as owning how replicas applying one sequence place a read in it; no explanation."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "'a replicated state machine applying arbitrary commands' names state machines only as an example needing Agreement; nothing about state machines is explained."
+          },
+          {
+            "id": "names-concept:71d23fa142",
+            "resolution": "Transactions is named as owning the ACID sense; the one-sentence integrity-constraint definition is the distinction claim 1 asks for; atomicity and isolation are not explained."
+          },
+          {
+            "id": "absolutes:9153cd7bae",
+            "resolution": "Five checked: 'cannot remove it' holds under the stated multi-replica, minimum-delay read-write lower bound with the single-node exception stated next; 'cannot make this distinction' holds for any single scalar timestamp; 'never reading a value older' and the two 'guarantee(s)' are the statement and name of session guarantees. None overclaims."
+          },
+          {
+            "id": "depth-long:ed5a2c01b6",
+            "resolution": "1,342 words over four claims plus the sense distinction: paragraphs 1-3 serve claim 1, 4-6 claim 2, 7 claim 3, 8-9 claim 4; each claim carries its mechanism, conditions and failure mode, the repair added about one sentence of needed conditioning, and only minor overlap with the comparison remains (advisory). Depth is earned."
+          }
+        ],
+        "recordFingerprint": "f2e171e946c128f27b0ff08d500ba26ce1361d5002617b3c56b4005cac27859f"
+      }
+    },
+    "fault-tolerance": {
+      "model": {
+        "meaning": "A design's guarantee that its specified properties keep holding (all of them, or only the safety part) or are returned to once faults stop, while faults stay within an assumed class and number; outside those assumptions it promises nothing unless a separate argument covers those executions.",
+        "kind": "property",
+        "parents": {
+          "protocol-properties": "Parent already says: FT is a claim about other properties (which survive, through which faults, how many); incomplete until it names survivors; they survive differently; consensus halting rather than finalizing conflicting results. Do not restate any of it, nor reuse the halting example as the main illustration. Adds: the named kinds (masking, fail-safe, non-masking) as the vocabulary for 'survive differently'; one design, different kinds per fault class; tolerance vs avoidance vs recovery; what the claim promises past its bound.",
+          "distributed-storage": "Parent already says: storage FT = how many correlated losses a design absorbs; independence of copies beats count; repair restores a decaying margin. Do not restate correlation-vs-copies or explain repair. Adds: the general bounded-guarantee frame the storage sentence applies; correlation changes the likelihood of exceeding the bound, not the bound; what a storage design can promise past its bound (e.g., failing reads rather than returning wrong data, see violatedBy/variants notes).",
+          "resilience": "Parent covers graceful degradation, efficiency vs resilience, correlated failures, recovery as coordination; the domain distinction 'Fault Tolerance ≠ Resilience ≠ Recovery ≠ Account Recovery' already exists. Adds: FT as the 'continued operation within assumed faults' part, its kinds, and its boundary with avoidance and recovery, without explaining resilience, recovery, graceful degradation or failure isolation.",
+          "self-healing": "Parent covers detecting faults and responding on its own (failover, reduced form, restoring state). Domain prose: 'fault tolerance does not eliminate faults'. Adds: tolerance as a property fixed by design for assumed faults, vs responses after a fault; non-masking (self-stabilizing) tolerance as a guaranteed return, without equating self-healing with it and without explaining failover, recovery modes or state repair."
+        },
+        "claims": [
+          "masking, fail-safe and non-masking tolerance: which parts of a specification a design keeps while faults within its assumptions are present, whether both its safety and liveness parts, its safety part only by halting or refusing rather than acting wrongly, or an eventual return to correct behavior once faults stop, after a period in which safety may be violated, as in self-stabilizing designs; and why one design can offer different kinds of tolerance against different fault classes",
+          "how tolerance differs from fault avoidance and from recovery: avoidance tries to keep faults from arising, tolerance keeps specified properties holding, or for non-masking designs returns to them, while faults are present, within an assumed number and class, by combining redundancy with a rule that masks errors or detects and contains or corrects them, while recovery restores a correct state after a failure has already taken effect; and why a design usually needs recovery as well as tolerance, since tolerance covers only the faults it assumes",
+          "what a tolerance claim promises once faults exceed its assumed bound, which correlated failures make more likely than a count of independent faults suggests: nothing by itself, unless the design also establishes, by a separate argument, which property gives way first, such as halting rather than violating safety, or keeping a safety violation attributable to the participants who caused it"
+        ],
+        "excludes": [
+          "fault-models",
+          "failures",
+          "redundancy",
+          "graceful-degradation",
+          "failure-isolation",
+          "recovery",
+          "automatic-failover",
+          "fault-detection",
+          "disaster-recovery",
+          "resilience",
+          "safety",
+          "liveness",
+          "byzantine-behavior",
+          "data-replication",
+          "accountability"
+        ],
+        "placements": {
+          "fault-tolerance": "Leaf under Protocol Properties beside Safety and Liveness: the kinds are stated in terms of a specification's safety and liveness parts, which those siblings own; reference the parts by name, never their formal definitions, proofs, quorum-intersection or timing arguments.",
+          "fault-tolerance-in-distributed-storage": "Holds for storage: a storage design's specification (data retrievable, reads return what was written) has the same safety/liveness parts and the same bounded, assumption-relative guarantee. Pick at least one example or phrasing that is not consensus-specific so the text does not read as consensus-only; no storage-only claim.",
+          "fault-tolerance-in-resilience": "Holds as the continued-operation facet named in the Resilience parent; text must not define resilience or depend on that parent. No security-only claim; adversarial faults enter only as a fault class (Fault Models owns classes).",
+          "fault-tolerance-in-self-healing": "Holds where protocols respond automatically: tolerance is what the design guarantees within its assumptions, detection-and-response mechanisms are one way it is built (named only). No claim that all self-healing is fault tolerance or vice versa."
+        },
+        "fields": {
+          "statement": [
+            "A conditioned claim: specified properties (named), against a fault class and bound (from the fault model, named only), under a timing model where it matters.",
+            "Three kinds by what of the specification is kept while assumed faults occur: masking = safety and liveness parts both hold; fail-safe = safety part holds, liveness may be lost (stops/refuses rather than acting wrongly); non-masking = safety may be violated for a while, but the system returns to correct behavior once faults stop (or stay absent long enough to converge). Self-stabilizing designs are the extreme non-masking case: from any state, for transient faults that corrupt state, with the code itself intact.",
+            "Condition pitfall: the non-masking return is promised only after faults cease; do not write it as holding 'while faults are present'.",
+            "Keep 'safety'/'liveness' in the specification sense the siblings own; masking guarantees are usually stated for correct processes where the fault class allows faulty ones to deviate (do not say 'stated over correct processes' as a universal; uniform variants exist under crash/omission, owned by Fault Models)."
+          ],
+          "establishedBy": [
+            "Redundancy in some form (extra replicas, repeated attempts in time, redundant information such as codes/checksums) plus a rule that uses it: masking typically via rules that outvote or outnumber faulty contributions (voting, quorum-style rules) or via error-correcting information; detection plus containment (stop, refuse, exclude) for fail-safe; detection plus correction for non-masking. Redundancy is named only; do not explain replication, quorums or voting thresholds.",
+            "Argued, not observed: the claim covers every execution within the assumptions (parent Protocol Properties already says properties are established by reasoning; do not restate). Safety/liveness proof techniques belong to siblings.",
+            "Pitfall: the redundancy-managing element (voter, coordinator, detector) is itself a component; if it is not covered by the assumptions it can become the single point whose fault defeats the claim. Say 'can', not 'is'."
+          ],
+          "violatedBy": [
+            "Within the assumptions: a flaw in the design or implementation of the masking/detection rule (the claim was simply false).",
+            "Outside the assumptions the claim is not violated but void: more faults than the bound, or faults outside the class (e.g., a crash-recovery process that loses state it had acted on, under a model that did not allow it — Fault Models owns why). Correlated causes (shared software, operator, host, region, key) make exceeding the bound likelier than an independent-fault count suggests; a common-mode design fault in identical replicas can strike all of them at once, so adding identical replicas does not tolerate it. Correlation does not change the bound; it changes how likely executions beyond it are.",
+            "Overlap watch: Availability owns 'redundant parts raise availability only against causes they do not share' and parents state correlation; FT's angle is only the likelihood of leaving the assumed bound and what the claim then promises."
+          ],
+          "confusions": [
+            "Tolerance vs avoidance: avoidance (prevention and removal of faults, e.g., careful engineering, verification, testing) reduces faults arising; tolerance assumes they will arise within a bound. 'Fault tolerance does not eliminate faults' (domain prose).",
+            "Tolerance vs recovery (Recovery named only): one term, one sense — reserve 'recovery' for restoring a correct state after a failure has taken effect, typically beyond or outside the design's tolerance claim (restart, restore, coordinated intervention). The non-masking return is the hard case: it also follows a period of violation, but it is a guaranteed part of the design's own behavior for its assumed faults; draw that line explicitly so the record does not contradict itself. Within-design error correction should not be called 'recovery' in the record (dependability literature does; avoid the second sense).",
+            "Why both are needed: tolerance covers only assumed faults; faults outside the class or beyond the bound leave recovery (and avoidance) as what remains. Say 'usually'; not every system has a recovery path.",
+            "Fail-safe tolerance vs the engineering 'fail-safe state' and vs graceful degradation: fail-safe here is relative to the specification's safety part; halting is 'safe' only if the safety part does not itself require timely action. Where the environment keeps moving while the system is halted (prices, external deadlines), keeping a safety property can require acting, e.g., a collateral invariant that holds only if under-collateralized positions are liquidated in time, so halting need not preserve it. (That bounded deadlines are safety properties is the Liveness sibling's point; reference only.) Graceful degradation (reduced function) is named only.",
+            "Fault tolerance vs resilience: named only; domain-level distinction exists, do not redraw it."
+          ],
+          "variants": [
+            "One design, different kinds per fault class (claim 1 second half). Simplest safe example: a design can mask crashes of up to its bound of replicas while being only non-masking (self-stabilizing) against transient corruption of state. A timing example (consensus keeping safety but missing a decision deadline when delays exceed a bound) is fail-safe only relative to a specification with that deadline, where late messages count as performance faults, and only for designs whose safety does not rely on timing (Safety/Liveness siblings own why); under plain partial synchrony, periods of long delay are inside the model, not faults. Use it only with those conditions stated, or avoid it. Use 'many'/'can', never 'every'.",
+            "Past the bound (claim 3): by itself the claim promises nothing; a design can additionally establish (by a separate argument, not merely state) which property gives way first. Which one gives way can depend on which class exceeds the bound: too many silent/crashed participants can leave a quorum-based protocol halted with safety intact, while too many participants that vote both ways can break safety (Safety sibling owns the threshold argument; name only). Attributable violation (accountable safety), in designs built for it: if safety breaks, signed protocol messages can identify participants that provably broke the protocol (some designs guarantee a stated minimum share of them); needs signatures and access to the conflicting messages; it does not prevent or undo the violation; consequences belong to Accountability (named only).",
+            "Storage-fitting past-bound example, if used: a reader that checks data against a hash it already trusts gets an error rather than wrong data once too many copies are lost or corrupted (fail-safe beyond bound for integrity; retrievability lost). Condition: the reader verifies against a trusted digest."
+          ],
+          "tradeoffs": [
+            "Masking often costs more redundancy and coordination than fail-safe for the same faults (not in every design); fail-safe trades liveness for safety; non-masking accepts temporary safety violations for a guaranteed return (and often cheaper or more general coverage of transient faults). Keep it qualitative; resource numbers belong to Fault Models.",
+            "Do not let this become a sibling's or Redundancy's cost argument; one sentence at most."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A conditioned guarantee and its qualifications: kinds of tolerance defined by which parts of a specification survive under which conditions, a boundary with avoidance and recovery that turns on when and by whom correctness is kept or restored, and what the claim promises outside its assumptions. The meaning is argument, condition and qualification.",
+        "whyProse": "The three kinds differ on two short facts each (safety kept, liveness kept or return after faults stop), stated in one sentence; a comparison table would show a trivial truth table and drop the conditions that make it true (return only once faults stop, fail-safe relative to the safety part, per-fault-class kinds). Tolerance vs avoidance vs recovery is already drawn as a domain-level distinction (Fault Tolerance ≠ Resilience ≠ Recovery) and the hard case (non-masking return vs recovery) needs an argued condition, not an A ≠ B. The past-bound claim is conditional reasoning (which property gives way, under which class, with what evidence). No order, loop, persistent states or tension pair carries meaning here.",
+        "level": "These claims are about the tolerance claim itself (its kinds, its boundary with neighboring approaches, its behavior past the bound); the parents only state that FT names surviving properties or absorbs correlated losses, and Fault Models owns classes and thresholds, so the analysis belongs at this concept.",
+        "territory": "Draws no sibling relationship: safety/liveness are referenced as parts of a specification, not defined or proven; Availability's composition and shared-cause redundancy point is not repeated; Fault Models' classes, nesting and thresholds, and Redundancy, Graceful Degradation, Failure Isolation, Recovery, Automatic Failover, Fault Detection, Accountability and Resilience are named only.",
+        "placements": "Prose with general, condition-stated sentences holds at all four placements; at least one example fits non-consensus systems (storage), and nothing refers to a parent, domain or position."
+      },
+      "audit": {
+        "at": "2026-10-21T13:08:41.722Z",
+        "note": "First audit (auditor A), complete, of the freshly drafted record (prose, four paragraphs, 896 words, as designed). Overlap per placement: Protocol Properties: no parent sentence restated; the definition adds the three kinds to the parent's 'which properties survive', and the parent's halting example appears only as the stalled half of a class-dependent contrast that makes a new point. Distributed Storage: the parent's correlated-losses and independence-over-count point is not restated; the record adds that correlation changes how likely executions beyond the bound are, not the bound, and the storage examples (erasure-coded store masking fragment loss, trusted-digest reader) keep the text from reading as consensus-only. Resilience: the parent's graceful-degradation priorities, efficiency-versus-resilience and recovery-as-coordination are not restated, and the domain distinction is not redrawn. Self-Healing: the parent's detect-and-respond framing is not restated; detection and failover are tolerance only where the design argues their outcome, and no equation of self-healing with tolerance is made. Territory: Fault Models, Redundancy, Graceful Degradation, Recovery, Automatic Failover, Fault Detection, Safety, Liveness and Accountability are named only; Failure Isolation, Resilience, Disaster Recovery, Byzantine Behavior and Data Replication are not named or explained; recovery gets the one contrast sentence the claim requires and nothing of its mechanism. Safety's threshold argument is deferred ('for reasons that belong to Safety'); Availability's composition and shared-cause argument is not repeated. All three claims are explained. Accuracy: masking, fail-safe and non-masking match the Arora-Kulkarni sense (safety and liveness kept; safety kept by halting or refusing; temporary violation with return once faults stop for long enough); self-stabilization is stated with its transient-fault scope, intact code and assumed scheduling. Fail-safe is relative to the safety part: halting trivially preserves a property that only forbids the system's own actions but not an environment-dependent invariant, and the lending example illustrates that correctly. Flagged items: 'masking often needs more redundancy and coordination than fail-safe' is hedged and supported (masking combines detection with correction, fail-safe needs detection only; duplex comparison versus triple voting, detecting versus correcting codes); the replicated service that masks crashes but offers only non-masking tolerance against transient state corruption is an existence claim ('can') supported by self-stabilizing replicated state machine designs, and it correctly illustrates per-fault-class kinds. Avoidance (prevention and removal) versus tolerance versus recovery is drawn without contradiction, including the non-masking hard case (a guaranteed return by the design's own rules for assumed faults). Past the bound: excess or out-of-class faults void rather than falsify the claim, a flaw in the rule falsifies it; the vote-set contrast is scoped to 'many protocols that decide by overlapping vote sets'; the trusted-digest reader carries its collision-resistance condition; accountable safety carries obtainable messages and unforgeable signatures, identifies 'at least some' violators and neither prevents nor undoes the violation. Every absolute checked. Canonical validity: no positional or dated words; holds at all four placements; American English. Structure: prose as designed; no order, loop, state or real conflation is buried. Depth fits the three claims. Advisory: (1) 'Tolerance works while they are present' sits loosely beside the non-masking return, which is promised only once faults stop; 'Tolerance acts on faults that have arisen' would avoid the reading (the plan claim's 'returns to them, while faults are present' carries the same looseness). (2) 'its failure alone can defeat the claim' sits uneasily beside 'do not falsify the claim'; 'can defeat the properties the claim covers' is exact. (3) The cost sentence's last two clauses restate the paragraph's own fail-safe and non-masking sentences; only the masking-cost clause is new. (4) Lending example: 'undercollateralized' must be read as below the protocol's required ratio; 'before their collateral stops covering their debt' would be exact. (5) The Byzantine scope sentence's reason clause ('since nothing binds the others') repeats a point Fault Models owns; the condition itself is needed. (6) The definition's 'returns to them once the faults stop' omits the body's 'for long enough' and 'from then on' (a violated safety property is not regained by the whole execution); the body states it precisely. (7) The correlated-cause examples overlap the Resilience and Distributed Storage parents' and Availability's examples; the angle differs. (8) Listing redundancy's forms (extra components, repeated attempts, redundant information) edges toward Redundancy's territory; one clause, no mechanism. (9) Cross-record: the Fault Models record already states that properties hold beyond the threshold only where a separate argument shows it, which is this concept's third claim; for the group or slice review.",
+        "resolutions": [
+          {
+            "id": "names-concept:f4de497f40",
+            "resolution": "Accountability is named once, in the last sentence ('what follows from it belongs to Accountability'); the record explains only the attributable-violation fallback its third claim owns (evidence from conflicting signed messages, its conditions, that it neither prevents nor undoes the violation), not penalties or consequences."
+          },
+          {
+            "id": "names-concept:bc21966bd6",
+            "resolution": "Automatic failover is named once as one of the means tolerance rules use, with the condition under which such a response counts as tolerance; how failover works, what it fails over to, and its limits are not explained."
+          },
+          {
+            "id": "names-concept:86dd2d4d79",
+            "resolution": "'failure' appears only in 'after a failure has already taken effect' and 'its failure alone', as ordinary vocabulary bounding recovery and the single-point case; failures as a concept (causes, manifestation, detection) are not explained."
+          },
+          {
+            "id": "names-concept:547a4d759d",
+            "resolution": "Fault detection is named once alongside automatic failover as a means rules use; 'detect an error' in the rule descriptions states what a fail-safe or masking rule does, within claim 2, without explaining how faults are detected or detector properties."
+          },
+          {
+            "id": "names-concept:24ac2e00a3",
+            "resolution": "Fault models are referenced as 'the class and number the design's fault model assumes' and 'a class the model excludes'; classes, thresholds, their forms and nesting are not explained. The Byzantine scope condition is stated minimally as a condition on the masking guarantee (advisory 5)."
+          },
+          {
+            "id": "names-concept:3dbbc839ba",
+            "resolution": "Graceful degradation is named once to draw the boundary that the kind is fixed by which part of the specification holds, not by how much function remains; its mechanism and priorities are not explained."
+          },
+          {
+            "id": "names-concept:0b3c310fab",
+            "resolution": "Liveness is used only as 'the liveness part' of a specification and as 'progress'; its formal definition, progress measures, fairness and timing arguments are not explained."
+          },
+          {
+            "id": "names-concept:d6db1e7266",
+            "resolution": "Recovery gets the one contrast sentence claim 2 requires (restores a correct state after a failure has taken effect) and the reason a design usually needs it; how recovery works is not explained, and the non-masking return is distinguished without contradiction."
+          },
+          {
+            "id": "names-concept:0864ec9781",
+            "resolution": "Redundancy is named as what tolerance pairs with a rule, with a one-clause list of its forms as the claim's 'combining redundancy with a rule' needs; replication, quorum sizing, independence and repair are not explained (advisory 8)."
+          },
+          {
+            "id": "names-concept:d8819269c9",
+            "resolution": "Safety is used only as 'the safety part' of a specification, and Safety is named for the reason equivocators break vote-set protocols ('for reasons that belong to Safety'); prefixes, invariants and quorum intersection are not explained."
+          },
+          {
+            "id": "absolutes:6c993b84ab",
+            "resolution": "Each checked. 'guarantee' (definition) and 'the guarantee binds' are conditioned on assumed class and number, and on the arbitrary-fault class; 'guaranteed way back' summarizes the preceding sentence's 'once faults stop for long enough'; 'what the design guarantees for its assumed faults' is conditioned; 'never covered those executions' holds by definition of the claim's scope; 'signatures cannot be forged' is a stated proviso, not a claim. All hold."
+          }
+        ],
+        "recordFingerprint": "ae03eb16804fc172891458612940c05257f7e535bc600809c662de4cdf3497e4"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-21T13:11:39.234Z",
+    "note": "Group audit of protocol-properties (owned: safety, liveness, availability, consistency, fault-tolerance; finality and censorship-resistance dual-role, read for contradictions only), read side by side with the plan, its two splits and the parent Protocol Properties. group-signals printed 0 signals, so there are no resolutions. Splits: safety ~ liveness holds. Safety keeps finite-prefix violation, monitors, inductive invariants and timing-independent quorum safety with its limits; Liveness keeps no-finite-violation, bounded deadlines as safety, progress measures under fairness, FLP and partial synchrony/randomization. Each names the other only at the boundary ('progress is the subject of Liveness'; 'a different case, which belongs to Safety'). The two adversarial-delay passages agree (Safety: delay cannot make a process that follows the protocol vote both ways; Liveness: delay postpones decisions without a conflicting decision) and are argued from opposite sides. availability ~ liveness holds: Availability says only that the eventual-response part of the partition sense has the shape of liveness, and Liveness's one sentence on Availability draws the boundary (what is protected vs shape) without discussing service availability. Terms: 'a process that follows the protocol' is used in one sense in Safety (crash-only processes followed it until they stopped; crash-recovery processes that lose votes count as faults that can vote both ways), Fault Tolerance ('the guarantee binds the processes that follow the protocol') and Availability ('a component that follows its protocol ... however slowly'); Liveness's 'a process that has not failed' (channel fairness) and 'faulty processes' agree with it. Safety/liveness shapes are applied consistently: Consistency's basic eventual consistency as a liveness condition and session/causal guarantees as safety constraints, Availability's eventual non-error response, Fault Tolerance's safety and liveness parts of a specification, Liveness's missed deadline as a safety-shaped surrogate, Censorship Resistance's 'indefinitely' plus delay as its measure. No member re-explains the decomposition itself. No contradictions: Safety's 'processes that only stop ... do not by itself void safety', Fault Tolerance's 'too many silent ones would only stall progress' and fail-safe halting, the parent's halting example and Finality's 'protocol stops until a quorum returns' agree; Safety's probabilistic longest-chain reversal matches Finality's probabilistic row; Availability's 'tolerance bound stated as a number of failed components' matches Fault Tolerance's class-and-number claim. Convergence: definitions open 'X is ...' as the definition-leads rule requires, with different heads (class, shape, property, constraint, guarantee); forms differ (Safety, Liveness and Fault Tolerance prose; Availability one distinction; Consistency a distinction and a comparison); paragraph counts and arcs differ; no shared enumeration pattern. Safety and Liveness both open their body with Alpern and Schneider and end on timing and adversaries; that mirrors the split, not a template. Advisory: (1) Safety's 'a requirement that relates several executions, as some forms of confidentiality do, falls outside it' closely restates the parent's confidentiality sentence (minor redundancy; could be cut to a clause). (2) Liveness's 'Availability differs on another axis: it names what is protected ... while liveness is a shape' paraphrases the parent's 'defined by what they protect rather than by their shape' (boundary-drawing, minor redundancy). (3) Safety and Liveness each restate that executions are infinite sequences of states (Safety adds stopped runs padded with stuttering steps); repetition follows both claims. (4) Correlated failure appears in Availability (shared causes cap a redundant set) and Fault Tolerance (correlation makes exceeding the bound likelier but leaves the bound); different subjects and arguments, the repetition follows the claims. (5) The 'belongs to' deferral idiom recurs (Safety three times, Liveness, Consistency, Fault Tolerance twice); each names a different owner, but later slices could vary it.",
+    "resolutions": [],
+    "records": {
+      "safety": "3ad7cdc5ae8bb823f0f5a0a4a7a05eaeeac8af89e3f55e2918cde067a3cdc69c",
+      "liveness": "7a4073869cf7715c7cc05648e71cab3bb2828776e2a43ada53104dce8f8b0622",
+      "availability": "d8b0633531b1f86c9f88c666c62369d0e42f6aa677e3a62930e1806eb79d4019",
+      "consistency": "f2e171e946c128f27b0ff08d500ba26ce1361d5002617b3c56b4005cac27859f",
+      "fault-tolerance": "ae03eb16804fc172891458612940c05257f7e535bc600809c662de4cdf3497e4"
+    }
+  }
+}
