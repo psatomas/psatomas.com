@@ -439,7 +439,29 @@ it, and refuses steps out of order:
 
 Each concept is modelled, designed, drafted and audited from its own
 `l2 context`, in a fresh bounded context. The campaign never runs as one
-growing conversation.
+growing conversation, and neither does the session that orchestrates it.
+
+**Orchestration.** Each slice starts in a fresh orchestrator session, never
+in one carried over from earlier slices or other work. Between ownership
+groups, `/clear` or a new session is recommended once the conversation has
+grown. Nothing a later step needs lives only in a conversation: the run
+state, the plans and records, the campaign's standing authorizations and the
+orchestrator's local ledger carry it. A new session hands off by reading, in
+order:
+
+1. `git status` and the current branch, to confirm the run's branch and a tree
+   holding only the run's own changes;
+2. `l2 campaign` and `l2 status`, for the merge authorization, the slice, its
+   stage and the next step;
+3. the local campaign ledger (`.map-authoring/campaign/ledger.md`,
+   git-ignored): its standing rules and exceptions, and its tail for recent
+   decisions and pending notes;
+
+then it continues from the recorded step. Earlier conversations are never
+reconstructed. A slice starts only on a human's explicit go for that slice.
+Within an authorized slice, the run continues without further approval
+checkpoints, until it merges under the standing authorization or a stop
+condition fires.
 
 ## Repairs
 
@@ -551,6 +573,14 @@ decision needed; `resume --decision ..` continues after a human decides.
 | Inventory problems | `start` refuses |
 | Slice-wide convergence of form, opening, opener or paragraph shape (a long median alone is reported, not a stop) | `complete audit` stops once; resume with the calibration decision |
 | Verification failure; git, remote or PR mismatch; a PR that cannot merge | As for domain runs; the merge stage refuses anything but the validated PR |
+
+**Platform limits.** Only an actual Claude platform limit (an HTTP 429, or a
+session or weekly usage limit) interrupts a run for usage. The interrupted
+step stays unrecorded until it completes; the run state and every recorded
+step hold, and that step resumes or reruns once the limit resets. The
+campaign sets no usage thresholds, usage readings or reading checkpoints of
+its own. The parked batch pipeline keeps its separate accounting policy
+([l2-pipeline-v2.md](l2-pipeline-v2.md)).
 
 ## Pilot
 
