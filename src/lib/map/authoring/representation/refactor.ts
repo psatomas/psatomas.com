@@ -270,4 +270,4 @@ export function specDiffProblems(base: AcceptedDesignSpec, head: AcceptedDesignS
 
 export const refactorBranch = (domainId: string) => `refactor/map-${domainId}-l1-representations`;
 /** Branches of MAP runs of every kind (L1 authoring, refactor, L2 slices and the pilot): one open PR among them blocks starting another run. */
-export const MAP_RUN_BRANCH = /^(feat\/map-.*-l1|refactor\/map-.*-l1-representations|feat\/map-.*-l2-\d+|feat\/map-l2-pilot)$/;
+export const MAP_RUN_BRANCH = /^(feat\/map-.*-l1|refactor\/map-.*-l1-representations|feat\/map-.*-l2-\d+|fix\/map-.*-l2-\d+-repair-\d+|feat\/map-l2-pilot)$/;

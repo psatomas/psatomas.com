@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   completeStage,
+  createL2RepairRunState,
   createL2RunState,
   gitProblems,
   invalidate,
@@ -254,4 +255,77 @@ test("a merge of main made outside the tool is adopted only if it is exactly the
   assert.match(unadoptableMerge(done, { ...observed, secondParentInMain: false }) ?? "", /second parent main2 is not a commit of main/);
   assert.match(unadoptableMerge(done, { ...observed, cleanMerge: false }) ?? "", /changes more than merging its parents/);
   assert.match(unadoptableMerge(done, { ...observed, trackedChanges: ["x"] }) ?? "", /tracked changes: x/);
+});
+
+// ---------------------------------------------------------------- repair runs of a merged slice
+
+/** finishedRun, merged under the campaign's authorization; a was repaired once in the run. */
+function mergedRun(): RunState {
+  const done = finishedRun();
+  return { ...done, l2: { ...done.l2!, repairs: { a: 1 }, history: [{ kind: "repair", cycle: 1, at: T0, reason: "audit", concepts: ["a"], closedAt: T0 }], merged: { sha: "merge1", at: T0 } } };
+}
+const repairInput = { id: "pilot-repair-1", concepts: ["a"], reason: "review: a overclaims", baseline, branch: "fix/map-x-l2-1-repair-1", baseSha: "main2", now: T1 };
+
+test("a repair run takes only drafted, audited, unblocked concepts of a merged run, and refuses everything else", () => {
+  const merged = mergedRun();
+  assert.throws(() => createL2RepairRunState(finishedRun(), repairInput), /pilot is not merged: reopen its concepts in that run/);
+  assert.throws(() => createL2RepairRunState(merged, { ...repairInput, concepts: ["zzz"] }), /zzz is not a concept of slice pilot/);
+  assert.throws(() => createL2RepairRunState(merged, { ...repairInput, concepts: [] }), /name the concepts to repair/);
+  assert.throws(() => createL2RepairRunState(merged, { ...repairInput, reason: " " }), /needs its reason/);
+  assert.throws(() => createL2RepairRunState({ ...merged, l2: { ...merged.l2!, blocked: ["b"] } }, { ...repairInput, concepts: ["b"] }), /b is blocked by its design/);
+  const steps = { ...merged.l2!.steps };
+  delete steps["audit:b"];
+  assert.throws(() => createL2RepairRunState({ ...merged, l2: { ...merged.l2!, steps } }, { ...repairInput, concepts: ["b"] }), /b was not drafted and audited in pilot/);
+  assert.throws(() => createL2RepairRunState({ ...merged, kind: undefined }, repairInput), /only L2 runs/);
+});
+
+test("a repair run carries the repair count and its budget: the limit holds across the merged run and earlier repair runs", () => {
+  const merged = mergedRun();
+  const atLimit = { ...merged, l2: { ...merged.l2!, repairs: { a: MAX_REPAIRS } } };
+  assert.throws(() => createL2RepairRunState(atLimit, repairInput), (error: unknown) => error instanceof RepairLimitError && error.conceptIds.join() === "a");
+  // A human allowance resolved at the limit in the merged run allows one more, and travels with the repair run.
+  const allowed = { ...atLimit, resolvedStops: [{ stage: "author" as const, subject: repairLimitSubject("a"), evidence: "e", why: "w", decision: "d", at: T0, resolution: "one more", resolvedAt: T0 }] };
+  const third = createL2RepairRunState(allowed, repairInput);
+  assert.equal(third.l2!.repairs.a, MAX_REPAIRS + 1);
+  assert.equal(repairAllowance(third, "a"), MAX_REPAIRS + 1);
+  // An earlier repair run's repairs count: a was repaired again there, so it is now at its limit.
+  const first = createL2RepairRunState(merged, repairInput);
+  assert.equal(first.l2!.repairs.a, 2);
+  assert.throws(() => createL2RepairRunState(merged, { ...repairInput, id: "pilot-repair-2", earlier: [first] }), RepairLimitError);
+  assert.equal(createL2RepairRunState(merged, { ...repairInput, concepts: ["b"], earlier: [first] }).l2!.repairs.b, 1);
+});
+
+test("a repair run is a new run: the merged run is untouched, and only the named concepts, their plans and designs carry over", () => {
+  const merged = mergedRun();
+  const before = JSON.stringify(merged);
+  const state = createL2RepairRunState(merged, repairInput);
+  assert.equal(JSON.stringify(merged), before);
+  assert.deepEqual([state.domainId, state.branch, state.baseSha, state.stage, state.title], ["pilot-repair-1", "fix/map-x-l2-1-repair-1", "main2", "author", "L2 pilot, repair"]);
+  assert.deepEqual(state.l2!.repairOf, { run: "pilot", merged: "merge1" });
+  assert.equal(state.l2!.committed, true);
+  assert.equal(state.l2!.mergeAuthorized, undefined);
+  assert.deepEqual(state.l2!.slice.groups.map((group) => [group.group, group.concepts]), [["g1", ["a"]]]);
+  assert.deepEqual(Object.keys(state.l2!.steps).sort(), ["design:a", "plan:g1"]);
+  assert.deepEqual(state.l2!.steps["plan:g1"], merged.l2!.steps["plan:g1"]);
+  assert.deepEqual(state.l2!.repair, { cycle: 2, at: T1, reason: "review: a overclaims", concepts: ["a"], groups: ["g1"], baseline });
+  assert.deepEqual([state.plan.eligible, state.concepts, state.commits, state.checks], [["a"], { a: { done: false } }, [], {}]);
+  assert.deepEqual(pendingL2Steps(state).map(stepKey), ["author:a", "audit:a", "group-audit:g1"]);
+});
+
+test("a repair run resumes from its persisted state through re-drafting, re-audit and group re-audit, and closes its cycle at commit", () => {
+  let state = persisted(createL2RepairRunState(mergedRun(), repairInput));
+  assert.match((nextAction(state) as { message: string }).message, /^repair a \(cycle 2: review: a overclaims\)/);
+  assert.throws(() => recordL2Step(state, { kind: "audit", subject: "a" }, T1), /record author:a first/);
+  state = persisted(recordL2Step(state, { kind: "author", subject: "a" }, T1, { fingerprint: "a-v2" }));
+  // Drafting is recorded once in the repair run too: a further change is another cycle.
+  assert.throws(() => recordL2Step(state, { kind: "author", subject: "a" }, T2), /a is drafted: changing it is a repair/);
+  assert.match((nextAction(state) as { message: string }).message, /^re-audit a in a fresh context/);
+  state = persisted(recordL2Step(state, { kind: "audit", subject: "a" }, T1, { fingerprint: "a-v2" }));
+  assert.match((nextAction(state) as { message: string }).message, /^re-audit group g1/);
+  state = persisted(recordL2Step(state, { kind: "group-audit", subject: "g1" }, T1));
+  for (const stage of ["audit", "gates", "browser", "render", "diff"] as const) state = persisted(completeStage(state, stage, T2));
+  state = persisted(completeStage(state, "commit", T2));
+  assert.equal(state.l2!.repair, undefined);
+  assert.deepEqual(state.l2!.history, [{ kind: "repair", cycle: 2, at: T1, reason: "review: a overclaims", concepts: ["a"], closedAt: T2 }]);
+  assert.equal(state.stage, "push");
 });

@@ -40,6 +40,7 @@
 //   npm run map:author -- l2 check [--group <group>] [--json]
 //   npm run map:author -- l2 campaign                    every slice, the next one, and whether merging is authorized
 //   npm run map:author -- l2 start --slice <id> | --pilot [--dry-run]
+//   npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".." [--dry-run]   repair merged concepts in a new run
 //   npm run map:author -- l2 record plan|design|author|audit|group-audit <subject> [--note ..] [--audit-file <json>]
 //   npm run map:author -- l2 group-signals <group>       a group audit's signals
 //   npm run map:author -- l2 reopen <id>[,<id>..] --reason ".."   repair drafted concepts (a counted cycle)
@@ -56,7 +57,7 @@ import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
 import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
-import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
@@ -79,6 +80,7 @@ import {
   addFix,
   AGENT_STAGES,
   clearL2Checkpoint,
+  createL2RepairRunState,
   createL2RunState,
   pendingL2Steps,
   recordL2Step,
@@ -604,6 +606,7 @@ function commandL2Start() {
     const id = flag("--slice") ?? fail(`start needs --slice <id> or --pilot; see \`${CLI} campaign\``);
     slice = slices.find((candidate) => candidate.id === id) ?? fail(`unknown slice ${id}; see \`${CLI} campaign\``, 1);
   }
+  if (flags.has("--repair")) return commandL2StartRepair(slice);
   const remaining = sliceRemaining(slice, finished);
   const branch = l2Branch(slice);
   const existing = readState(slice.id);
@@ -627,6 +630,45 @@ function commandL2Start() {
   if (authorization && !pilot) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
   saveState(state);
   console.log(`\nstarted ${slice.id} on ${branch} at ${baseSha.slice(0, 7)}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
+  console.log(`next: ${(nextAction(state) as { message: string }).message}`);
+}
+
+/**
+ * Starts a repair run for concepts of a merged slice run (docs/map-authoring/
+ * l2-authoring.md, "Repairs"): a new run and branch from main, its state in
+ * its own file. Every check runs before anything is written, so a refused
+ * request changes neither the campaign state nor git.
+ */
+function commandL2StartRepair(slice: L2Slice) {
+  const concepts = (flag("--repair") ?? fail("--repair needs concept ids")).split(",").map((conceptId) => conceptId.trim()).filter(Boolean);
+  const reason = flag("--reason") ?? fail("a repair run needs --reason: the finding it answers");
+  const original = readState(slice.id) ?? fail(`no run of ${slice.id} to repair`, 1);
+  const earlier = existsSync(STATE_DIR) ? readdirSync(STATE_DIR).filter((file) => file.startsWith(`${slice.id}-repair-`) && file.endsWith(".json")).map((file) => readState(file.slice(0, -5))!) : [];
+  const open = earlier.find((state) => state.stage !== "done");
+  if (open) fail(`${open.domainId} is still open: finish it first (\`${CLI} status --domain ${open.domainId}\`)`, 1);
+  const id = `${slice.id}-repair-${earlier.length + 1}`;
+  const branch = l2RepairBranch(slice, earlier.length + 1);
+  const create = (baseSha: string) => createL2RepairRunState(original, { id, concepts, reason, baseline: repairBaseline(readPlans(), concepts), branch, baseSha, now: now(), earlier });
+  try {
+    create("0".repeat(40));
+  } catch (error) {
+    if (error instanceof RepairLimitError) fail(`repair limit: ${error.conceptIds.join(", ")} used every repair cycle allowed, in ${slice.id} and its repair runs; a human decides`, 1);
+    // Any other refusal (a concept no plan owns, say) is reported the same way: nothing has been written.
+    fail((error as Error).message, 1);
+  }
+  const problems = observeStart(branch, id);
+  if (problems.length) {
+    console.log(`cannot start ${id}:\n  ${problems.join("\n  ")}`);
+    process.exit(1);
+  }
+  if (dryRun) return console.log(`dry run: would create ${branch} and repair ${concepts.join(", ")} of ${slice.id} (merged in ${original.l2!.merged!.sha.slice(0, 7)})`);
+  const baseSha = branchFromMain(branch);
+  if (!baseSha) return;
+  let state = create(baseSha);
+  const authorization = readCampaign().mergeAuthorization;
+  if (authorization) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
+  saveState(state);
+  console.log(`started ${id} on ${branch} at ${baseSha.slice(0, 7)}: repair cycle ${state.l2!.repair!.cycle} of ${concepts.join(", ")}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
   console.log(`next: ${(nextAction(state) as { message: string }).message}`);
 }
 
@@ -1410,6 +1452,7 @@ async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registr
     headPlans,
     signals: Object.fromEntries(authored.filter((conceptId) => recordOf(conceptId)).map((conceptId) => [conceptId, signalsOf(conceptId, headPlans).map((signal) => signal.id)])),
     groupSignals: Object.fromEntries(headPlans.filter((plan) => groups.includes(plan.group)).map((plan) => [plan.group, groupSignalsOf(plan).map((signal) => signal.id)])),
+    ...(state.l2!.repairOf ? { repaired: authored } : {}),
   });
   if (!report.ok) {
     stop(recordCheck(state, "diff", false, `FAILED: ${report.problems.length} problem(s)`, at, tree), {
@@ -1532,6 +1575,7 @@ function l2Body(state: RunState): string {
     fixes: state.fixes,
     auditNotes: state.auditNotes,
     history: record.history,
+    ...(record.repairOf ? { repairOf: record.repairOf } : {}),
     footer: state.attribution?.footer,
   });
 }
@@ -1693,7 +1737,7 @@ function openPr(state: RunState): RunState {
     return { ...state, pr: { number: existing.number, url: existing.url } };
   }
   const body = refactor ? refactorPrBody(state, state.refactor!.diff!, state.attribution?.footer) : l2Mode ? l2Body(state) : prBody(state, state.diff!, state.attribution?.footer);
-  const title = refactor ? refactorPrTitle(state) : l2Mode ? l2PrTitle(state.l2!.slice) : prTitle(state);
+  const title = refactor ? refactorPrTitle(state) : l2Mode ? l2PrTitle(state.l2!.slice, Boolean(state.l2!.repairOf)) : prTitle(state);
   const result = sh("gh", ["pr", "create", "--base", MAIN, "--head", state.branch, "--title", title, "--body-file", "-"], { input: body });
   // The outcome is read back from GitHub, never inferred from the attempt.
   const created = matchingPr(state, branchPrs(state));

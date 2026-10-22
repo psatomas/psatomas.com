@@ -3,7 +3,7 @@ import test from "node:test";
 import { mapKnowledge } from "../../data.ts";
 import { atL2Checkpoint, clearL2Checkpoint, completeStage, createL2RunState, nextAction, pendingL2Steps, recordL2Step, RunStateError, STAGES, type RunState } from "../orchestrator/run-state.ts";
 import { MAP_RUN_BRANCH } from "../representation/refactor.ts";
-import { DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2Slices, pilotSlice, recordSpans, REGISTRY_FILE, sliceRemaining, sliceSteps, stepKey, viewWithout, VIEW_FILE, withoutRecords, withoutRegistryEntries } from "./campaign.ts";
+import { DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2RepairBranch, l2Slices, pilotSlice, recordSpans, REGISTRY_FILE, sliceRemaining, sliceSteps, stepKey, viewWithout, VIEW_FILE, withoutRecords, withoutRegistryEntries } from "./campaign.ts";
 import { filledG1, model, REGISTRY } from "./fixtures.ts";
 
 const NOW = "2026-10-02T00:00:00.000Z";
@@ -134,4 +134,18 @@ test("commit and PR text name the groups, the authored and the blocked", () => {
   const body = l2PrBody({ slice, groups: [{ group: "g1", title: "Group One", authored: ["a"], blocked: ["b"] }], checks: { gates: { ok: true, detail: "passed" } }, fixes: [], auditNotes: ["fine"], footer: "footer" });
   assert.match(body, /\*\*Group One\*\* \(`g1`\): a; blocked: b/);
   assert.match(body, /- gates: passed/);
+});
+
+test("a repair run has its own branch, matched as a MAP run branch, and a repair PR that says what it changed", () => {
+  const slice = l2Slices(mapKnowledge).find((entry) => entry.id === "foundations-2")!;
+  const branch = l2RepairBranch(slice, 1);
+  assert.equal(branch, "fix/map-foundations-l2-2-repair-1");
+  assert.notEqual(branch, l2Branch(slice));
+  assert.ok(MAP_RUN_BRANCH.test(branch));
+  assert.ok(!MAP_RUN_BRANCH.test("fix/map-foundations-l2-2"));
+  assert.equal(l2PrTitle(slice, true), "fix(map): repair Foundations L2 topics, part 2");
+  const body = l2PrBody({ slice, groups: [{ group: "adversarial-environments", title: "Adversarial Environments", authored: ["collusion"], blocked: [] }], checks: {}, fixes: [], auditNotes: [], history: [{ kind: "repair", cycle: 19, reason: "review: bounded share", concepts: ["collusion"] }], repairOf: { run: "foundations-2", merged: "aff2488adba3" } });
+  assert.match(body, /^Repair of 01 Foundations, part 2 \(run foundations-2, merged in aff2488\): 1 concept\(s\) in 1 ownership group\(s\), one repair commit per group/);
+  assert.match(body, /Only the repaired records and their groups' files changed; no record was added or removed/);
+  assert.match(body, /- Repair cycle 19 \(collusion\): review: bounded share/);
 });
