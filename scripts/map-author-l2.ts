@@ -4,18 +4,23 @@
 // work) are repository-owned under src/lib/map/authoring/l2/groups/.
 //
 //   l2 context <concept-id> [--json]          the bounded L2 authoring context of one concept
+//   l2 cost [--branch <b>] [--since <iso>] [--until <iso>] [--session <id>] [--agents] [--json]
+//                                             model spend of the orchestrator and its subagents, from the local transcripts
 //   l2 territory <group> [--write]            the group's plan, or its skeleton; --write creates the skeleton file
 //   l2 check [--group <group>] [--json]       validate plans (completeness, claims, hazards, staleness, cross-plan)
 //                                             and each owned concept's work at the stage it has reached
 //   l2 signals <concept-id> [--json]          the audit signals of an authored concept, to resolve in its audit
 //   l2 group-signals <group> [--json]         the signals of a group's audit, over its owned members' records
 //   l2 drift [--window <n>] [--json]          convergence across the latest authored L2 records (descriptive)
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
 import type { MapConceptContent } from "../src/lib/map/types.ts";
 import { assembleL2Context, formatL2Context } from "../src/lib/map/authoring/l2/context.ts";
+import { costByRole, projectSlug, sessionCost, type CostFilter, type SessionCost } from "../src/lib/map/authoring/l2/cost.ts";
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { finishedConcepts } from "../src/lib/map/authoring/l2/campaign.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
@@ -89,6 +94,47 @@ export function planReport(plans: readonly L2GroupFile[], only?: readonly string
     });
 }
 
+/** Transcript lines, read in chunks so a long session's transcript is never held whole. */
+function* linesOf(path: string): Generator<string> {
+  const fd = openSync(path, "r");
+  const buffer = Buffer.alloc(1 << 20);
+  let rest = "";
+  try {
+    for (let read; (read = readSync(fd, buffer, 0, buffer.length, null)) > 0; ) {
+      const lines = (rest + buffer.toString("utf8", 0, read)).split("\n");
+      rest = lines.pop()!;
+      yield* lines;
+    }
+    if (rest) yield rest;
+  } finally {
+    closeSync(fd);
+  }
+}
+
+/**
+ * Every orchestrator session of this checkout and its subagents, costed under
+ * the filter. Transcripts last written before `since` are not read.
+ */
+export function campaignCost(filter: CostFilter, { session, dir = join(process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), ".claude"), "projects", projectSlug(ROOT.replace(/\/$/, ""))) }: { session?: string; dir?: string } = {}): SessionCost[] {
+  if (!existsSync(dir)) throw new Error(`no transcripts at ${dir}`);
+  const fresh = (path: string) => !filter.since || statSync(path).mtime.toISOString() >= filter.since;
+  const costs: SessionCost[] = [];
+  for (const file of readdirSync(dir).filter((name) => name.endsWith(".jsonl") && (!session || name === `${session}.jsonl`)).sort()) {
+    if (fresh(join(dir, file))) costs.push(sessionCost(linesOf(join(dir, file)), "orchestrator", filter));
+    const subagents = join(dir, file.replace(/\.jsonl$/, ""), "subagents");
+    if (!existsSync(subagents)) continue;
+    for (const agent of readdirSync(subagents).filter((name) => name.endsWith(".jsonl")).sort()) {
+      if (!fresh(join(subagents, agent))) continue;
+      const meta = join(subagents, agent.replace(/\.jsonl$/, ".meta.json"));
+      const description = existsSync(meta) ? ((JSON.parse(readFileSync(meta, "utf8")) as { description?: string }).description ?? agent) : agent;
+      costs.push(sessionCost(linesOf(join(subagents, agent)), description, filter));
+    }
+  }
+  return costs.filter((cost) => cost.calls > 0);
+}
+
+const thousands = (value: number) => Math.round(value).toLocaleString("en-US");
+
 export function commandL2(command: string | undefined, positional: string[], flag: (name: string) => string | undefined, has: (name: string) => boolean): void {
   const json = has("--json");
   switch (command) {
@@ -97,6 +143,28 @@ export function commandL2(command: string | undefined, positional: string[], fla
       if (!conceptId) throw new Error("usage: l2 context <concept-id> [--json]");
       const context = assembleL2Context(conceptId, mapKnowledge, readPlans());
       process.stdout.write(json ? `${JSON.stringify(context, null, 2)}\n` : formatL2Context(context));
+      return;
+    }
+    case "cost": {
+      const filter: CostFilter = {
+        branch: flag("--branch") ?? execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(),
+        ...(flag("--since") ? { since: flag("--since") } : {}),
+        ...(flag("--until") ? { until: flag("--until") } : {}),
+      };
+      const sessions = campaignCost(filter, { session: flag("--session") });
+      const roles = costByRole(sessions);
+      if (json) {
+        console.log(JSON.stringify({ filter, roles: Object.fromEntries(roles), ...(has("--agents") ? { sessions } : {}) }, null, 2));
+        return;
+      }
+      console.log(`model spend on ${filter.branch}${filter.since ? ` since ${filter.since}` : ""}${filter.until ? ` until ${filter.until}` : ""} (weighted = input + 0.1 cache read + 1.25 cache write + 5 output)`);
+      console.log(`${"role".padEnd(13)} ${"sessions".padStart(8)} ${"calls".padStart(6)} ${"input".padStart(9)} ${"cache write".padStart(12)} ${"cache read".padStart(13)} ${"output".padStart(10)} ${"weighted".padStart(12)}`);
+      const row = (name: string, entry: { sessions: number; calls: number; usage: SessionCost["usage"]; weighted: number }) =>
+        console.log(`${name.padEnd(13)} ${String(entry.sessions).padStart(8)} ${String(entry.calls).padStart(6)} ${thousands(entry.usage.input_tokens).padStart(9)} ${thousands(entry.usage.cache_creation_input_tokens).padStart(12)} ${thousands(entry.usage.cache_read_input_tokens).padStart(13)} ${thousands(entry.usage.output_tokens).padStart(10)} ${thousands(entry.weighted).padStart(12)}`);
+      for (const [role, entry] of [...roles].sort((a, b) => b[1].weighted - a[1].weighted)) row(role, entry);
+      const total = costByRole(sessions.map((session) => ({ ...session, role: "total" }))).get("total");
+      if (total) row("total", total);
+      if (has("--agents")) for (const session of sessions) console.log(`  ${session.role.padEnd(12)} ${thousands(session.weighted).padStart(10)} weighted, ${String(session.calls).padStart(3)} calls  ${session.description}`);
       return;
     }
     case "territory": {
@@ -167,6 +235,6 @@ export function commandL2(command: string | undefined, positional: string[], fla
       return;
     }
     default:
-      throw new Error(`unknown l2 command ${command ?? "(none)"}: context, territory, check, signals, group-signals, drift`);
+      throw new Error(`unknown l2 command ${command ?? "(none)"}: context, cost, territory, check, signals, group-signals, drift`);
   }
 }
