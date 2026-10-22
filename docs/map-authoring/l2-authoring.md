@@ -409,7 +409,16 @@ npm run map:author -- l2 run [--until <stage>]            # gates → browser �
 npm run map:author -- l2 fix | stop | resume              # as for domain runs
 npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
 npm run map:author -- l2 authorize --repair-exception ".."  # a human's standing repair exception (Repairs)
+npm run map:author -- l2 cost [--branch <b>] [--since <iso>] [--agents] [--json]   # what the slice's model sessions spent
 ```
+
+**Cost.** `l2 cost` reads the local Claude Code transcripts of this checkout:
+the orchestrator sessions and every subagent, each API call counted once with
+its input, cache writes, cache reads and output. It totals them by step role
+and weights them as the batch pipeline does (input + 0.1 × cache read + 1.25 ×
+cache write + 5 × output). Calls are attributed to the branch the session was
+on; a call without recorded usage is skipped, never estimated. A subagent's
+reported `subagent_tokens` is its final context size, not its spend.
 
 **Slices.** Each domain's ownership groups, in L1 order, are split into the
 fewest slices of at most 30 owned concepts, balanced, never splitting a

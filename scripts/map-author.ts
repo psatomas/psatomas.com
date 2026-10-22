@@ -35,6 +35,7 @@
 // L2 authoring (docs/map-authoring/l2-authoring.md), from scripts/map-author-l2.ts:
 //
 //   npm run map:author -- l2 context <concept-id> [--json]
+//   npm run map:author -- l2 cost [--branch <b>] [--since <iso>] [--until <iso>] [--session <id>] [--agents] [--json]
 //   npm run map:author -- l2 territory <group> [--write]
 //   npm run map:author -- l2 check [--group <group>] [--json]
 //   npm run map:author -- l2 campaign                    every slice, the next one, and whether merging is authorized
@@ -136,7 +137,7 @@ const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
   const arg = rest[index];
   if (!arg.startsWith("--")) positional.push(arg);
-  else if (["--json", "--dry-run", "--write", "--pilot"].includes(arg)) flags.set(arg, true);
+  else if (["--json", "--dry-run", "--write", "--pilot", "--agents"].includes(arg)) flags.set(arg, true);
   else {
     const value = rest[++index];
     if (value === undefined || value.startsWith("--")) fail(`${arg} needs a value`);
@@ -149,7 +150,7 @@ const dryRun = flags.has("--dry-run");
 const refactor = first === "refactor";
 /** `l2 <command>` runs L2 slice runs (docs/map-authoring/l2-authoring.md); its read-only commands live in map-author-l2.ts. */
 const l2Mode = first === "l2";
-const L2_READ_ONLY = new Set(["context", "territory", "check", "signals", "group-signals", "drift"]);
+const L2_READ_ONLY = new Set(["context", "cost", "territory", "check", "signals", "group-signals", "drift"]);
 const command = refactor ? (positional.shift() ?? "domains") : l2Mode ? (positional.shift() ?? "campaign") : first;
 const STATE_DIR = refactor ? join(STATE_ROOT, "refactor") : l2Mode ? join(STATE_ROOT, "l2") : STATE_ROOT;
 const CLI = refactor ? "map:author -- refactor" : l2Mode ? "map:author -- l2" : "map:author --";
