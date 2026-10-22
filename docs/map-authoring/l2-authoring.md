@@ -397,11 +397,12 @@ are committed by the run.
 ```bash
 npm run map:author -- l2 campaign                         # every slice, the next one, merge authorization
 npm run map:author -- l2 start --slice <id> | --pilot
+npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".."   # repair merged concepts in a new run (Repairs)
 npm run map:author -- l2 status | next
 npm run map:author -- l2 record plan <group> | design <id> | author <id>
 npm run map:author -- l2 record audit <id> | group-audit <group> --audit-file <json>   # binds the audit to the records as they are
 npm run map:author -- l2 group-signals <group>            # the group audit's signals
-npm run map:author -- l2 reopen <id>[,<id>..] --reason ".."   # a repair (below); --domain <slice> for a finished run
+npm run map:author -- l2 reopen <id>[,<id>..] --reason ".."   # a repair (below); --domain <slice> for a run not yet merged
 npm run map:author -- l2 sync                             # merge a moved main into the run's branch (below)
 npm run map:author -- l2 checkpoint --decision ".."       # the pilot's human review
 npm run map:author -- l2 complete audit --note ".."
@@ -526,6 +527,19 @@ editing the record and recording again.
   that group's repaired records and its group file. The push is a
   fast-forward of the run's own push. The PR is kept and its text
   regenerated with the repair history. Nothing is amended or force-pushed.
+- **After the merge.** A merged run is not reopened. `l2 start --slice <id>
+  --repair <ids> --reason ..` starts a repair run instead: a new run, in its
+  own state file (`<slice>-repair-<n>`) and on its own branch
+  (`fix/map-<domain>-l2-<n>-repair-<k>`) from `main`, leaving the merged run's
+  state as it is. It takes only concepts the merged run drafted, audited and
+  did not block. Their repair counts carry over, with any allowance a human
+  granted at their limit and the repairs of the slice's earlier repair runs,
+  so the budget is the one the run had. It starts with those concepts' plans
+  and designs recorded and a repair cycle open, then follows the steps above:
+  repair, fresh re-audit, group re-audit, the tool stages and one repair
+  commit per group. Its diff adds nothing: it may change only its repaired
+  records, each re-audited, and their groups' files (`validateL2Diff` with
+  the repaired concepts). A refused request writes nothing.
 
 **A moved main.** `l2 sync` merges `origin/main` into an open run's branch
 (a merge commit, never a rebase), provided main changed none of the run's

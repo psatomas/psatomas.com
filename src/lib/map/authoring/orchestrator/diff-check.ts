@@ -66,6 +66,8 @@ export type DiffInput = {
   registry: FileDiff;
   /** Concepts the run recorded as authored. */
   expectedConcepts: readonly string[];
+  /** Existing records a repair run revises: each must change, and no other existing record may. */
+  revised?: readonly string[];
   fixes: readonly DeclaredFix[];
   /** Added plus deleted lines across the declared fixes' files. */
   fixLines: number;
@@ -110,7 +112,8 @@ export function validateContentDiff(input: DiffInput): DiffReport {
   }
   const unchangedFixFiles = fixFiles.filter((file) => !input.changedFiles.includes(file));
   if (unchangedFixFiles.length) problems.push(`declared fix files without changes: ${unchangedFixFiles.join(", ")}`);
-  if (input.data.deleted > 0) problems.push(`data.ts deletes ${input.data.deleted} line(s); a content run only adds`);
+  // A revision replaces lines of the records it revises; the record comparison below confines it to them.
+  if (input.data.deleted > 0 && !input.revised?.length) problems.push(`data.ts deletes ${input.data.deleted} line(s); a content run only adds`);
   const code = input.data.added.filter((line) => DATA_CODE.test(line));
   if (code.length) problems.push(`data.ts adds code, not content records: ${code.map((line) => line.trim()).join(" | ")}`);
   if (input.registry.deleted > 0) problems.push(`the registry file deletes ${input.registry.deleted} line(s)`);
@@ -125,7 +128,11 @@ export function validateContentDiff(input: DiffInput): DiffReport {
   const headContent = new Map(input.head.content.map((record) => [record.conceptId, JSON.stringify(record)]));
   for (const [conceptId, record] of baseContent) {
     if (!headContent.has(conceptId)) problems.push(`existing content removed: ${conceptId}`);
-    else if (headContent.get(conceptId) !== record) problems.push(`existing content changed: ${conceptId}`);
+    else if (headContent.get(conceptId) !== record && !input.revised?.includes(conceptId)) problems.push(`existing content changed: ${conceptId}`);
+  }
+  for (const conceptId of input.revised ?? []) {
+    if (!baseContent.has(conceptId)) problems.push(`a revised record does not exist at the base: ${conceptId}`);
+    else if (headContent.get(conceptId) === baseContent.get(conceptId)) problems.push(`a revised record is unchanged: ${conceptId}`);
   }
   const addedConcepts = [...headContent.keys()].filter((conceptId) => !baseContent.has(conceptId));
   if (!same(addedConcepts, input.expectedConcepts)) {

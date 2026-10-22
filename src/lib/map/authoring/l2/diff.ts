@@ -9,6 +9,8 @@
  * run's group files may change; every other plan is byte-identical. Each run
  * group must be valid, current and consistent with every plan, each authored
  * concept audited with every signal resolved, and each group audited.
+ * A repair run of a merged slice adds nothing: it may change only the
+ * existing records it repairs, each audited again, and their groups' files.
  */
 import { validateContentDiff, type DiffInput, type DiffReport } from "../orchestrator/diff-check.ts";
 import { groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "./contracts.ts";
@@ -24,6 +26,8 @@ export type L2DiffInput = Omit<DiffInput, "expectedConcepts"> & {
   signals: Readonly<Record<string, readonly string[]>>;
   groupSignals: Readonly<Record<string, readonly string[]>>;
   hazards?: L2Hazards;
+  /** A repair run's concepts: existing records it revises, never adds. */
+  repaired?: readonly string[];
 };
 
 export type L2DiffReport = DiffReport & { groups: string[]; authored: string[]; blocked: string[] };
@@ -48,7 +52,8 @@ export function validateL2Diff(input: L2DiffInput): L2DiffReport {
   const blocked = owned.filter(({ plan, conceptId }) => blocks(plan, conceptId)).map(({ conceptId }) => conceptId);
   const expected = owned.filter(({ plan, conceptId }) => !blocks(plan, conceptId) && !input.base.content.some((record) => record.conceptId === conceptId)).map(({ conceptId }) => conceptId);
 
-  const content = validateContentDiff({ ...input, changedFiles: input.changedFiles.filter((file) => !runFiles.has(file)), expectedConcepts: expected });
+  const repaired = input.repaired ?? [];
+  const content = validateContentDiff({ ...input, changedFiles: input.changedFiles.filter((file) => !runFiles.has(file)), expectedConcepts: expected, ...(repaired.length ? { revised: repaired } : {}) });
   problems.push(...content.problems);
 
   const inventory = inventoryL2(input.head, { authoredContent: input.headRegistry });
@@ -58,7 +63,7 @@ export function validateL2Diff(input: L2DiffInput): L2DiffReport {
   for (const plan of runPlans) {
     problems.push(...planProblems(plan, input.head, options).map((problem) => `${plan.group}: ${problem}`));
     problems.push(...staleProblems(plan, input.head, options).map((problem) => `${plan.group} is stale: ${problem}`));
-    for (const conceptId of expected.filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {
+    for (const conceptId of [...expected, ...repaired].filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {
       problems.push(...workProblems(plan, conceptId, input.head, "audited", input.signals[conceptId] ?? []));
     }
     for (const conceptId of blocked.filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {

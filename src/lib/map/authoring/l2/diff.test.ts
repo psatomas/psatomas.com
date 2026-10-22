@@ -114,3 +114,73 @@ test("a concept owned by one run group and placed in another is judged only by i
   blocked.head = model([record("a"), record("b")]);
   assert.match(validateL2Diff(blocked).problems.join(), /b: its design blocks it, yet it has a record/);
 });
+
+/** A repair run of g1 after a and b were merged: only a's record changes, re-audited, with g1's group file. */
+function repairRun() {
+  const merged = [record("a"), record("b")];
+  const repaired = { ...merged[0], body: [{ kind: "paragraph" as const, text: "How a works, with its condition." }] };
+  const base = model(merged);
+  const head = model([repaired, merged[1]]);
+  const audited = (records: MapConceptContent[]) => {
+    const plan = filledG1(base) as L2GroupFile & { groupAudit?: unknown };
+    plan.concepts = { a: work("a", ["how alpha starts"]), b: work("b", ["how beta follows"]) };
+    for (const entry of records) (plan.concepts[entry.conceptId] as L2ConceptWork).audit = { at: "t", note: "judged", resolutions: [], recordFingerprint: contentFingerprint(entry) };
+    plan.groupAudit = { at: "t", note: "boundaries hold", resolutions: [], records: Object.fromEntries(records.map((entry) => [entry.conceptId, contentFingerprint(entry)])) };
+    return plan;
+  };
+  const input: L2DiffInput = {
+    base,
+    head,
+    baseView: viewOf(base),
+    headView: viewOf(head),
+    baseRegistry: [...REGISTRY, "a", "b"],
+    headRegistry: [...REGISTRY, "a", "b"],
+    changedFiles: ["src/lib/map/data.ts", groupFile("g1")],
+    data: { added: ['      body: [{ kind: "paragraph", text: "How a works, with its condition." }],'], deleted: 1 },
+    registry: { added: [], deleted: 0 },
+    fixes: [],
+    fixLines: 0,
+    groups: ["g1"],
+    basePlans: [audited(merged), filledG2(base)],
+    headPlans: [audited([repaired, merged[1]]), filledG2(base)],
+    signals: {},
+    groupSignals: {},
+    hazards: HAZARDS,
+    repaired: ["a"],
+  };
+  return input;
+}
+
+test("a repair run's diff is exactly its repaired records, re-audited, and their group files: nothing added, flipped or registered", () => {
+  const report = validateL2Diff(repairRun());
+  assert.deepEqual(report.problems, []);
+  assert.deepEqual([report.authored, report.flipped, report.registryAdded], [[], [], []]);
+});
+
+test("a repair run may not change another record, leave its own unchanged, add a record, or skip the re-audit", () => {
+  const other = repairRun();
+  other.head = { ...other.head, content: other.head.content.map((entry) => (entry.conceptId === "b" ? { ...entry, definition: "b, edited." } : entry)) };
+  assert.match(validateL2Diff(other).problems.join("\n"), /existing content changed: b/);
+
+  const unchanged = repairRun();
+  unchanged.head = unchanged.base;
+  assert.match(validateL2Diff(unchanged).problems.join("\n"), /a revised record is unchanged: a/);
+
+  const added = repairRun();
+  added.head = { ...added.head, content: [...added.head.content, record("t")] };
+  added.headView = viewOf(added.head);
+  assert.match(validateL2Diff(added).problems.join("\n"), /added content \["t"\] differs from the run's authored concepts \[\]/);
+
+  const stale = repairRun();
+  stale.headPlans = [stale.basePlans[0], stale.headPlans[1]];
+  const problems = validateL2Diff(stale).problems.join("\n");
+  assert.match(problems, /a: the record changed after its audit: audit it again/);
+  assert.match(problems, /g1: a changed after the group audit/);
+
+  // The same change outside a repair run is a domain run's diff: existing content may not change.
+  const notRepair = repairRun();
+  delete notRepair.repaired;
+  const refused = validateL2Diff(notRepair).problems.join("\n");
+  assert.match(refused, /existing content changed: a/);
+  assert.match(refused, /data.ts deletes 1 line\(s\); a content run only adds/);
+});

@@ -246,7 +246,11 @@ export function repairCommitMessage(group: { title: string; repaired: readonly s
   return [...lines, ...(trailer ? ["", trailer] : [])].join("\n");
 }
 
-export const l2PrTitle = (slice: Pick<L2Slice, "id" | "domainTitle" | "index">) => (slice.id === PILOT_SLICE ? "feat(map): author the L2 pilot" : `feat(map): author ${slice.domainTitle} L2 topics, part ${slice.index}`);
+export const l2PrTitle = (slice: Pick<L2Slice, "id" | "domainTitle" | "index">, repair = false) =>
+  repair ? `fix(map): repair ${slice.domainTitle} L2 topics, part ${slice.index}` : slice.id === PILOT_SLICE ? "feat(map): author the L2 pilot" : `feat(map): author ${slice.domainTitle} L2 topics, part ${slice.index}`;
+
+/** A repair run's branch: its own, never the merged run's. */
+export const l2RepairBranch = (slice: Pick<L2Slice, "id" | "domain" | "index">, repair: number) => `fix/map-${slice.domain}-l2-${slice.index}-repair-${repair}`;
 
 export function l2PrBody(input: {
   slice: L2Slice;
@@ -255,11 +259,16 @@ export function l2PrBody(input: {
   fixes: readonly { message: string; reason: string }[];
   auditNotes: readonly string[];
   history?: readonly ({ kind: "repair"; cycle: number; reason: string; concepts: readonly string[] } | { kind: "sync"; from: string; to: string })[];
+  /** A repair run: the merged run it repairs and that run's merge commit. */
+  repairOf?: { run: string; merged: string };
   footer?: string;
 }): string {
   const authored = input.groups.flatMap((group) => group.authored);
+  const name = input.slice.id === PILOT_SLICE ? "the L2 pilot" : `${input.slice.ordinal} ${input.slice.domainTitle}, part ${input.slice.index}`;
   const lines = [
-    `L2 exposition for ${input.slice.id === PILOT_SLICE ? "the L2 pilot" : `${input.slice.ordinal} ${input.slice.domainTitle}, part ${input.slice.index}`}: ${authored.length} concept(s) in ${input.groups.length} ownership group(s), one commit per group (docs/map-authoring/l2-authoring.md).`,
+    input.repairOf
+      ? `Repair of ${name} (run ${input.repairOf.run}, merged in ${input.repairOf.merged.slice(0, 7)}): ${authored.length} concept(s) in ${input.groups.length} ownership group(s), one repair commit per group (docs/map-authoring/l2-authoring.md).`
+      : `L2 exposition for ${name}: ${authored.length} concept(s) in ${input.groups.length} ownership group(s), one commit per group (docs/map-authoring/l2-authoring.md).`,
     "",
     "## Groups",
     "",
@@ -273,7 +282,9 @@ export function l2PrBody(input: {
     "",
     "## Diff boundary",
     "",
-    "Only the authored records, their registry entries, hasContent flips at every placement of them, and the run's group files changed; every existing record, taxonomy, other group files and the L0 projection are byte-identical (validateL2Diff).",
+    input.repairOf
+      ? "Only the repaired records and their groups' files changed; no record was added or removed, and every other record, the registry, hasContent, taxonomy, other group files and the L0 projection are byte-identical (validateL2Diff)."
+      : "Only the authored records, their registry entries, hasContent flips at every placement of them, and the run's group files changed; every existing record, taxonomy, other group files and the L0 projection are byte-identical (validateL2Diff).",
   ];
   if (input.fixes.length) lines.push("", "## General fixes", "", ...input.fixes.map((fix) => `- ${fix.message}: ${fix.reason}`));
   if (input.auditNotes.length) lines.push("", "## Audit notes", "", ...input.auditNotes.map((note) => `- ${note}`));

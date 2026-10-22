@@ -74,6 +74,8 @@ export type L2RunRecord = {
   mergeAuthorized?: { at: string; authorization: string };
   diff?: { authored: string[]; blocked: string[]; flipped: string[] };
   merged?: { sha: string; at: string };
+  /** A repair run: the merged run whose concepts it repairs, and that run's merge commit. */
+  repairOf?: { run: string; merged: string };
 };
 
 export type RunState = {
@@ -211,6 +213,74 @@ export function createL2RunState(input: { slice: L2Slice; remaining: readonly st
     auditNotes: [],
     checks: {},
     commits: [],
+  };
+}
+
+/**
+ * A run that repairs concepts of a merged slice run, on its own branch from
+ * main; the merged run's state is left as it is. Only concepts that run
+ * drafted and audited, and did not block, may be named. Their repair counts,
+ * and any human allowance at their limit, carry over, so the budget is the
+ * one the run had. The repair run holds only the named concepts' groups,
+ * starts with their plans and designs recorded as the merged run recorded
+ * them and a repair cycle open, and counts as committed: its commit stage
+ * adds one repair commit per group on top of main. `earlier` are the slice's
+ * finished repair runs: their repairs count too.
+ */
+export function createL2RepairRunState(
+  original: RunState,
+  input: { id: string; concepts: readonly string[]; reason: string; baseline: L2RepairBaseline; branch: string; baseSha: string; now: string; earlier?: readonly RunState[] },
+): RunState {
+  const record = original.l2;
+  if (original.kind !== "l2" || !record) throw new RunStateError("only L2 runs have concepts to repair");
+  if (!record.merged) throw new RunStateError(`${original.domainId} is not merged: reopen its concepts in that run (\`l2 reopen\`)`);
+  if (!input.reason.trim()) throw new RunStateError("a repair needs its reason: the finding it answers");
+  const named = [...new Set(input.concepts)];
+  if (!named.length) throw new RunStateError("name the concepts to repair");
+  for (const conceptId of named) {
+    if (!(conceptId in original.concepts)) throw new RunStateError(`${conceptId} is not a concept of slice ${record.slice.id}`);
+    if (record.blocked.includes(conceptId)) throw new RunStateError(`${conceptId} is blocked by its design: there is no record to repair`);
+    if (!record.steps[`author:${conceptId}`] || !record.steps[`audit:${conceptId}`]) throw new RunStateError(`${conceptId} was not drafted and audited in ${original.domainId}`);
+  }
+  const runs = [original, ...(input.earlier ?? [])];
+  const used = (conceptId: string) => Math.max(...runs.map((run) => run.l2?.repairs[conceptId] ?? 0));
+  const resolved = runs.flatMap((run) => run.resolvedStops ?? []).filter((stop, index, all) => all.findIndex((other) => other.subject === stop.subject && other.resolvedAt === stop.resolvedAt) === index);
+  const allowance = (conceptId: string) => repairAllowance({ ...original, resolvedStops: resolved }, conceptId);
+  const over = named.filter((conceptId) => used(conceptId) + 1 > allowance(conceptId));
+  if (over.length) throw new RepairLimitError(over);
+  const groups = record.slice.groups.map((group) => ({ ...group, concepts: group.concepts.filter((conceptId) => named.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
+  const concepts = groups.flatMap((group) => group.concepts);
+  const recorded = (key: string) => (record.steps[key] ? [[key, record.steps[key]] as const] : []);
+  const steps = Object.fromEntries([...groups.flatMap((group) => recorded(`plan:${group.group}`)), ...concepts.flatMap((conceptId) => recorded(`design:${conceptId}`))]);
+  const repairs = Object.fromEntries(concepts.map((conceptId) => [conceptId, used(conceptId) + 1]));
+  const cycle = runs.reduce((sum, run) => sum + (run.l2?.history ?? []).filter((entry) => entry.kind === "repair").length, 0) + 1;
+  const resolvedStops = resolved.filter((stop) => concepts.some((conceptId) => stop.subject === repairLimitSubject(conceptId)));
+  return {
+    version: 1,
+    kind: "l2",
+    l2: {
+      slice: { ...record.slice, groups },
+      steps,
+      blocked: [],
+      repairs,
+      repair: { cycle, at: input.now, reason: input.reason, concepts, groups: groups.map((group) => group.group), baseline: input.baseline },
+      committed: true,
+      repairOf: { run: original.domainId, merged: record.merged.sha },
+    },
+    domainId: input.id,
+    title: `${original.title}, repair`,
+    branch: input.branch,
+    baseSha: input.baseSha,
+    createdAt: input.now,
+    stage: "author",
+    completed: {},
+    plan: { authored: [], eligible: concepts, deferred: [], facet: [] },
+    concepts: Object.fromEntries(concepts.map((conceptId) => [conceptId, { done: false }])),
+    fixes: [],
+    auditNotes: [],
+    checks: {},
+    commits: [],
+    ...(resolvedStops.length ? { resolvedStops } : {}),
   };
 }
 
