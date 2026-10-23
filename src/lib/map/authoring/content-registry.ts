@@ -432,4 +432,11 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "transaction-execution",
   "transaction-atomicity",
   "transaction-reversion",
+  "contract-state",
+  "contract-execution",
+  "contract-calls",
+  "message-calls",
+  "contract-deployment",
+  "execution-context",
+  "contract-lifecycle",
 ];
