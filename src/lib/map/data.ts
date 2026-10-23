@@ -19571,6 +19571,269 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "transaction-lifecycle-content",
+      conceptId: "transaction-lifecycle",
+      definition:
+        "A transaction's lifecycle is the set of states a signed transaction can be in on its way to an outcome, from held by no node through pending and included to final or never includable, together with the conditions that move it between them, including the moves back from pending and from included.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Before inclusion, a transaction's status is not one fact that every party can see. The sender knows what it signed and where it sent it. Each node knows directly only whether it holds the transaction itself, in its mempool, after receiving it from the sender or from another node through transaction propagation. The chain records the transaction only once a block includes it. These views can disagree: a transaction unknown to one node may be pending at another, and a block producer the sender never contacted can include it after receiving it through relay. The states of the lifecycle therefore describe the transaction's situation across the network and the chain, which no single participant observes. Pending means held by at least one node or producer. A node or sender can learn that a particular other node holds the transaction, but no participant can establish that no node or producer does. Inclusion gives the status a public record, though until the block is final, nodes following different branches can still disagree about it.",
+        },
+        {
+          kind: "state",
+          label: "The states of a transaction and what moves it between them",
+          states: ["Held by no node", "Pending", "Included, not yet final", "Final", "Never includable"],
+          transitions: [
+            { from: "Held by no node", to: "Pending", when: "the sender, or anyone else holding a copy, submits it and a node admits it" },
+            { from: "Pending", to: "Held by no node", when: "every node and producer that held it evicts or discards it, without it becoming invalid" },
+            { from: "Pending", to: "Included, not yet final", when: "a block producer includes it in a block" },
+            { from: "Included, not yet final", to: "Pending", when: "a reorganization removes its block before that block is final, the surviving branch does not include it, and nodes take it back as pending" },
+            { from: "Included, not yet final", to: "Final", when: "its block becomes final, by the depth the observer accepts or by the protocol's finality rule" },
+            { from: "Held by no node", to: "Never includable", when: "a competing transaction for the same sequence number or input becomes final, or the format's expiry passes in a block that is final" },
+            { from: "Pending", to: "Never includable", when: "a competing transaction for the same sequence number or input becomes final, or the format's expiry passes in a block that is final" },
+            { from: "Included, not yet final", to: "Never includable", when: "a reorganization removes its block before it is final, and a competing transaction on the surviving branch becomes final in its place" },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Dropping is not invalidation. A node evicts a pending transaction for reasons of its own, such as a full mempool or a fee bid lower than what its mempool policies accept at the time, and nodes can stop relaying a transaction they still hold, which stops it from spreading further. None of this changes whether the transaction satisfies the protocol's rules, and its signature keeps authorizing the same action. A dropped transaction is in the same position as one that was signed and never sent: the sender, or any party that received a copy, can submit it again, and it becomes pending wherever a node admits it. Admission is not assured, since the policy that evicted it can refuse it again, so a dropped transaction can stay out of every node for a long time and resurface when conditions change, for instance when fees fall.",
+        },
+        {
+          kind: "paragraph",
+          text: "Replacement turns on what a transaction consumes when it is included. In account-based designs with sequence numbers, the sender can sign a second transaction with the same sequence number; in UTXO designs, a second transaction that spends the same input. The sender and sequence number, or the spent input, form the slot these versions compete for, and within any one chain history at most one of them can be included, because including either consumes what the other needs. Which version is included is decided by what a producer puts in a block, not by which one the sender signed last, and different nodes may hold different versions at the same time.",
+        },
+        {
+          kind: "paragraph",
+          text: "Inclusion can be undone in designs where a block can still be removed after it is included. When a reorganization replaces the branch that contained a transaction's block, a transaction that the surviving branch also includes stays in the chain, in another block. One that the surviving branch does not include is no longer in the chain that nodes follow; nodes that take it back hold it as pending, and it can be included again in a block of the surviving branch, unless that branch already includes a competing transaction for the same slot. In designs where a committed block is final, as in many protocols with deterministic finality, a transaction moves from pending straight to final, and a committed block can be removed only if the protocol's safety assumptions fail. Under probabilistic finality, the move from included to final is a threshold each observer chooses, such as a number of blocks built on top, rather than an event every observer sees at once, and a reorganization deeper than that threshold is unlikely but remains possible. So the final state and the never-includable end, whether that end rests on a competing transaction being final or on an expiry passing in a block that is final, hold only as far as the observer's threshold or the protocol's safety assumptions hold.",
+        },
+        {
+          kind: "paragraph",
+          text: "A transaction can end in three outcomes, and its sender tells them apart by looking at different things. Executed successfully and included but reverted both leave the transaction in a final block, and the outcome status recorded for it separates them, so inclusion alone does not show that the requested action took effect; what a reverted transaction keeps and costs belongs to Transaction Reversion. Never included leaves no trace under the transaction's own identifier. The sender learns of it by seeing the slot consumed by another transaction that is final, through the account's sequence number advancing past it or the input being spent, or, where the format provides an expiry, by seeing it pass in a block that is final.",
+        },
+        {
+          kind: "paragraph",
+          text: "Without one of those ends, a dropped transaction is not retired. Its absence from every node the sender can query does not show that no copy exists elsewhere, and a copy can be submitted later, when its effect may no longer be wanted. A sender who wants to cancel a pending transaction therefore generally has to get a competing one included, such as a transfer of zero value to its own account with the same sequence number, or a spend of the same input back to itself. Canceling is a race rather than an instruction: if the original is included first, it is the competing transaction that can no longer be included in that chain history. Only where the format provides an expiry can the sender instead wait for it to pass in a block that is final.",
+        },
+        {
+          kind: "paragraph",
+          text: "Tracking a transaction by its identifier can lose sight of it in account-based designs with sequence numbers. A replacement is a different signed transaction with its own identifier, so when the replacement is the one included, the original's identifier does not appear on the chain, and a wallet or explorer watching it can show the original as pending or missing indefinitely although its sequence number has been used. The sender and sequence number identify the slot all the versions compete for, and watching that slot shows which version, if any, was included. This differs from identifier malleability, which Transaction Structure covers: there one transaction circulates under several identifiers, while here the versions are separate transactions, each signed by the sender.",
+        },
+      ],
+    },
+    {
+      id: "transaction-structure-content",
+      conceptId: "transaction-structure",
+      definition:
+        "Transaction structure is the set of fields a transaction format carries and the way they are encoded and signed. It determines what the sender authorizes, whose account acts and whose pays, where and for how long the authorization can be used, and how the transaction is identified.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "In account-based formats with metered execution, such as Ethereum's, the fields fall into four groups, each bounding a different part of what the sender authorizes. Authorization is a signature, with the sender either carried as an explicit field, such as a listed public key, or recovered from the signature and the signed content, as in Ethereum, where the signer's public key, and so its address, can be computed from them; how signatures are made and checked belongs to Digital Signatures and Signature Verification. The requested action is a target account, a value and input data, whose contents belong to Transaction Data. In designs such as the EVM, a transaction that creates a contract leaves the target empty and carries initialization code as its input data. One target is not universal: some formats, such as Solana's, carry a list of instructions, each naming the program it invokes and the accounts it reads or writes.",
+        },
+        {
+          kind: "paragraph",
+          text: "Fee terms bound what the sender can be charged for execution: a limit on the metered resources the transaction may consume, and the price per unit the sender will pay or, where the price actually charged depends on conditions at inclusion, the maximum price per unit the sender accepts. In such formats, the limit times that price caps the charge for those resources; how the charge is computed and settled belongs to Fees and Gas. Validity scope bounds where and for how long the authorization can be used. In many account-based formats it is a sequence number and a chain identifier, whose roles belong to Account Nonces and Replay Protection. Some formats add an expiry, a block height or time after which the transaction is invalid, and some, such as Solana's, carry a reference to a recent block, which limits the transaction's usable life because the protocol accepts only references recent enough.",
+        },
+        {
+          kind: "paragraph",
+          text: "UTXO formats divide the same purposes differently. There is no sender account and no target: a transaction lists the outputs it spends and the outputs it creates, and authorization is given per spent output, as data supplied for each input that satisfies the conditions that output was locked with. What keeps it from being used twice is that each output can be spent only once, not an account counter. In Bitcoin, the fee is not a field but the difference between the value spent and the value created, and the transaction carries no limit on metered resources.",
+        },
+        {
+          kind: "paragraph",
+          text: "A signature binds its signer only to the bytes it covers. Whoever relays a transaction, including the producer that includes it, can change a field outside the signed content without invalidating the signature, so every field that can change the transaction's effect or cost has to be inside it: an unsigned target or value would let a relayer redirect the funds, and an unsigned fee limit or price would let it raise what the sender pays. The chain identifier and the type belong inside for the same reason. The exception is deliberate: some formats let the signer leave parts open, as Bitcoin's signature modes do when they sign only the signer's own input so that others can add inputs, or leave the outputs unsigned, and the signer then accepts that others can change exactly those parts. Signed content can also be larger than the transmitted fields, since some formats sign a value the verifier supplies, such as the chain identifier, without carrying it in the transaction. What no signature can cover is itself, and in designs that keep other unlocking data outside the signed content, that data can vary as well.",
+        },
+        {
+          kind: "paragraph",
+          text: "A simple account-based transaction gives three roles to one party: the account that authorizes the action, the account whose state the action acts from, and the account that pays the fee. A format that separates them must establish that each account debited or acted from consented, by a signature, by a grant recorded beforehand or by the account's own code accepting the transaction; otherwise anyone could name an account as payer or source and spend from it. Some carry several required signatures over one message, one signer designated as fee payer, as in Solana. Some let a sponsor pay under its own authorization: a second signature, or an allowance it recorded on chain beforehand that the transaction names. Some replace the fixed signature field with data that the acting account's own code interprets as authorization, so the account decides what counts as consent; the machinery belongs to Account Abstraction. The same separation can be built on top of a simple format instead, with an ordinary transaction signed and paid for by a relayer and the user's authorization carried in its input data for a contract to check. There the format separates nothing, and the separation holds only as far as that contract's check does. Separation costs more authorizations to verify and, in designs that charge failed transactions, a sponsor paying for failures it did not cause.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many formats are typed: an identifier at the front of the encoding says which layout the remaining bytes follow. A protocol can then add fields, such as further fee terms, a declaration of the state the transaction will access, or references to attached data, as in Blob Transactions, without making existing encodings ambiguous: the type tells every node which layout to apply, so no byte string reads as different contents under different rules. Earlier formats stay decodable under their own rules; in Ethereum, the untyped encoding begins with a byte that no type identifier uses, so a decoder can tell them apart from the first byte. When the type is part of the signed content, a signature made for one format cannot be accepted for another, because the bytes it covers differ even where the other fields hold the same values. The cost falls on validation: every validating node must decode and check every type still accepted, so adding a type is a protocol change all of them must adopt, and a type stays in their rules for as long as it is accepted.",
+        },
+        {
+          kind: "paragraph",
+          text: "Many designs compute a transaction's identifier as a hash of its encoding. Ethereum hashes the full signed encoding, type included; Bitcoin hashes the serialization without its separated witness data and keeps a second identifier that covers it. Others, such as Solana, use the transaction's first signature. An identifier computed this way needs no registry: anyone holding the same bytes derives the same one, and, where it is a collision-resistant hash, it commits to what it covers. Services such as wallets, exchanges and explorers often track transactions by it, and in many UTXO designs, such as Bitcoin's, a transaction refers to each output it spends by the identifier of the transaction that created it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Malleability undermines that use. If the encoding, the signature or other unlocking data admits more than one valid form for the same authorized contents, the same transaction can circulate under several identifiers, all of them valid. Encodings vary where a format accepts redundant forms of the same field, such as a length or integer written with extra leading bytes. Unlocking data outside the signed content varies where the condition it satisfies accepts more than one input, as when its check ignores part of that data. Signatures vary where the scheme accepts several for one message and key, as ECDSA does, since negating one of a signature's two components, modulo the group order, gives a second signature that verifies. Anyone relaying the transaction can produce such a variant without the key, and that variant may be the one included. A service watching the original identifier can then report a payment missing, and pay twice if it retries on that basis; in those UTXO designs, when a variant is included instead, a transaction signed in advance to spend an output of the original refers to an identifier that does not appear on the chain, so it cannot be included. A replacement, which Transaction Lifecycle covers, is different signed content; a malleated transaction authorizes exactly the same action.",
+        },
+        {
+          kind: "paragraph",
+          text: "Designs counter malleability at its sources, and each counter has limits. Requiring a single canonical encoding removes redundant encodings of the same fields, and accepting only one form of each signature, such as only the lower of the two values the negated component can take, removes the variant a third party can derive from an existing signature; Ethereum requires both. Neither fixes what other unlocking data contains: where a condition accepts data its check ignores, rules on that data's form narrow such variants without removing them. Nor does either stop the signer, who can sign the same contents again with a different random value in the signing process and obtain a second valid signature, and so a second identifier wherever the identifier covers the signature. Where the one-form rule is only a relay policy rather than a protocol rule, a producer can still include another form, so the rule narrows malleation without excluding it. Computing the identifier over content that excludes the signature and other unlocking data, as Bitcoin does for data carried in its witness, makes the identifier independent of them for third parties and signer alike, while a change to any signed field still changes it, since that is different content.",
+        },
+      ],
+    },
+    {
+      id: "transaction-validation-content",
+      conceptId: "transaction-validation",
+      definition:
+        "Transaction validation is the evaluation of a transaction against the protocol's validity rules, the conditions it must meet to be includable at its position in the order. It decides whether the transaction may be processed at all, a separate question from whether its execution succeeds.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Validity is evaluated at several points, from a node's first receipt of a transaction to the checking of a block that contains it, and its checks fall into two kinds according to whether their result carries from one point to the next. State-independent checks depend only on the transaction and the protocol's rules: that its encoding is well formed, that its fields lie within their permitted ranges, that its signature verifies over its contents, whether against a key the transaction names or by recovering the sender's key from it, and that its chain identifier matches the chain's. Under the same rules, such a check gives the same result wherever the transaction is evaluated, so a node can perform it once, keep the result with the exact transaction, and reuse it when it relays the transaction, builds a block with it or checks a block that contains it. The reuse lasts as long as the rules do: a protocol upgrade that changes which transaction types, signature schemes or chain identifier are accepted requires evaluating again.",
+        },
+        {
+          kind: "paragraph",
+          text: "A signature check is state-independent only as a cryptographic check against a key the transaction itself supplies. Where an account's authorized keys are kept in state and can be changed, or the account's own code decides what authorizes it, whether a signature authorizes the account is a state-dependent question. In UTXO designs, checking a spend needs the locking conditions of the output it spends. An output's conditions never change once it is created, so the result of checking that a spend satisfies them can be reused, while whether the output is still unspent cannot.",
+        },
+        {
+          kind: "paragraph",
+          text: "State-dependent checks compare the transaction with the state it acts on: that its sequence number is the sender's next one, that the sender's balance covers the largest fee the transaction can incur, and that its fee bid meets the minimum price the protocol requires. Their result is established only for the state they were evaluated against. A node that checks them on receipt uses its own view of the head of the chain, while the verdict that decides inclusion is the one against the pre-state at the transaction's position in a block, which contains the effects of every transaction ordered before it, the same sender's earlier transactions among them. Between the two, the result can move either way: a deposit ordered earlier can make an underfunded transaction valid, and a transaction whose sequence number was ahead of the account's passes that check once the missing ones are included. Checks against the including block, such as an expiry measured in height or time or a reference to an earlier block that must not be too old, behave the same way, as does a minimum price that the protocol sets per block, since their result depends on where the transaction lands rather than on its contents. A node can therefore reuse state-independent results at every point, but evaluates state-dependent and position-dependent checks again against the pre-state at the position, treating any earlier result as a forecast.",
+        },
+        {
+          kind: "paragraph",
+          text: "A validity rule belongs to the protocol. Every validator that follows the protocol applies it in the same way to a transaction at its position, so given the same chain and block all of them reach the same verdict, and a node that applies different rules diverges from the others. Which transactions a node holds in its mempool and relays is decided by its admission policy, the subject of Transaction Admission and Mempool Policies. A policy such as a minimum fee or a limit on pending transactions per sender adds a condition of the node's own to the validity checks and governs only what that node keeps and passes on. It can be stricter than validity, and it can differ from node to node, so a refusal under such a policy does not show that the transaction is invalid: if the transaction is valid at its position, a producer that received it by another route can include it without making the block invalid.",
+        },
+        {
+          kind: "paragraph",
+          text: "Validity also decides what happens to a transaction that has already been ordered. In designs that validate a block by executing it, such as Ethereum, a block containing a transaction that fails a validity rule at its position is itself invalid and is rejected whole, so a producer that wants its block accepted has to evaluate the state-dependent checks against the pre-state it builds on; how a block is checked as a whole belongs to Block Validation. Designs that order transactions without executing them, such as some rollups, fix the order without the ordering step deciding validity at each position, so the agreed order can contain a transaction that fails a validity rule. Their rules have every node skip such a transaction, and because every node applies the same rule to the same order, all of them skip the same transactions and reach the same state.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where the line between validity and execution falls follows from when validity is decided. In designs where an invalid transaction cannot be included, no fee is ever charged for evaluating it, so every validity check is done before any payment is assured, and one that ends in rejection is work the evaluating node does unpaid. Account-based designs with metered execution that include and charge failed transactions, such as Ethereum, therefore keep validity to conditions that are cheap and bounded to decide, and include among them the conditions that establish that the transaction is authorized and that the sender can pay the most it could consume, so that whatever execution follows is paid for. Conditions that can need arbitrary computation, such as what a contract requires of its inputs, are left to execution. A failure there makes the transaction revert instead of being invalid, and the computation spent reaching it is charged to the sender rather than borne by nodes that would otherwise have rejected the transaction unpaid; what the reverted outcome records and keeps belongs to Transaction Reversion. Designs without metered execution, such as Bitcoin, keep every spending condition a validity rule and bound its cost instead through limits on what their script language can express, such as the absence of loops.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bounding that unpaid work matters wherever anyone can submit transactions, since a submitter can make nodes perform it at no cost to itself; the broader defenses belong to Denial-of-Service Resistance. Many designs keep each check bounded by accepting a fixed set of signature schemes, each with a known verification cost, and by requiring only a few state lookups, such as the sender's sequence number and balance, so rejecting a transaction has a low ceiling known in advance. The bound is harder to keep where an account's own code decides part of validity, as in designs built on Account Abstraction: such code could run long before failing, and could make its verdict depend on state that other transactions change. Many designs that allow it restrict validation code, by protocol rule or by the rules nodes apply when admitting such transactions, for example by capping its computation, by forbidding reads of values that differ between validation and inclusion, such as the block's time or number, and by limiting the storage it may read largely to state associated with the account. The storage limit bounds a second cost. Without it, one state change, such as a write to a contract whose state many accounts' validation reads, could invalidate a large number of pending transactions after nodes had spent work admitting them; with it, a change reaches mainly the pending transactions of the accounts whose state it touched, which per-sender limits on pending transactions keep small in number. The price is expressiveness, since an account cannot base its validity on state outside these limits.",
+        },
+      ],
+    },
+    {
+      id: "transaction-execution-content",
+      conceptId: "transaction-execution",
+      definition:
+        "Transaction execution is the protocol's processing of one included transaction against the pre-state its position in the block gives it: the steps the protocol applies around whatever code the transaction triggers, and the outputs that processing yields, a post-state and, in many designs, a record of the transaction's outcome.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Execution starts from a transaction that met the validity rules at its position, which Transaction Validation decides. In account-based designs with metered execution, per-account sequence numbers and the inclusion of failed transactions, such as Ethereum, the protocol brackets the payload, the action the transaction requests, with steps of its own before and after it. Designs outside that scope, such as Bitcoin, process transactions without this envelope.",
+        },
+        {
+          kind: "flow",
+          label: "One transaction's processing in Ethereum",
+          stages: [
+            ["Fee for the full declared limit charged, sender's sequence number advanced"],
+            [
+              "Value transfer",
+              ["Call into the target's code", "Any nested calls into other contracts"],
+              ["Contract creation", "Initialization code runs", "Its output installed as the new contract's code"],
+            ],
+            ["Settlement: unused part of the charge refunded, fee distributed"],
+            ["Post-state, the next transaction's pre-state", "Outcome record"],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "In many designs within that scope, such as Ethereum, the protocol charges the account that pays the fee, the sender unless the format designates another payer, for the transaction's full declared resource limit before any payload code runs, and it advances the sender's sequence number. In Ethereum the charge for the gas limit is the limit times the price per unit the transaction will actually pay, which can be lower than the maximum price the sender offered. Charging for the full limit is possible before execution because the limit bounds what the payload can consume, while the amount it will consume is not known until it ends. In these designs, securing that worst case before any code runs keeps the payload from spending, by transferring it away for example, the balance that has to pay for its own execution; in designs that reserve the amount rather than debit it, the reservation keeps it out of the payload's reach in the same way. Other designs within that scope only check before the payload that the sender's sequence number is the expected one and that the payer can cover the maximum fee, and apply the charge and the sequence-number update in a closing step after it. Either way, the charge and the sequence-number update fall outside the part of processing that a payload failure can undo, so they hold whatever the payload does. Why a reverted transaction keeps them is Transaction Reversion's, and how resources are priced and sequence numbers used belongs to Gas, Fees and Account Nonces. The protocol's own steps outside the payload are not always limited to these two: some designs apply further effects before the payload that its failure also leaves in place, such as the delegations of accounts to contract code that one Ethereum transaction type carries.",
+        },
+        {
+          kind: "paragraph",
+          text: "The payload then runs under the declared limit, and exhausting the limit stops it by the rules of Metering. Any value it moves belongs to the payload rather than to the fee, so a failed payload's transfer is undone with the rest of its effects while the fee is still charged; what is undone, and how, is Transaction Atomicity's. In the same way, a sequence number that changes inside the payload, such as a contract's own when it creates another contract, is a payload effect, not the update the protocol makes to the sender's sequence number outside the payload.",
+        },
+        {
+          kind: "paragraph",
+          text: "In designs that charge by usage, settlement has to come after the payload, since it depends on what the payload consumed. Where such a design charged for the full limit up front, as Ethereum does, the protocol refunds the part of the up-front charge that paid for the unused limit and distributes the rest as its rules direct: in Ethereum, of the charge for the gas used, the part paid at the block's base price per unit is burned and the remainder, the priority part paid in excess of that price, goes to the block's fee recipient. The final charge in those designs never exceeds the up-front charge, and the refund is the whole difference between them. The usage settled on is the count the metering rules produce, which need not match the work performed: some failures consume all of the failing call's remaining allowance, a matter for Transaction Reversion, and rules can lower the count, as Ethereum's capped refunds for clearing storage do. Not every metered design refunds; some charge for the declared limit whatever the payload consumes and settle only by distributing the fee. How the charge is divided and recorded belongs to Fee Accounting.",
+        },
+        {
+          kind: "paragraph",
+          text: "The post-state that processing leaves is the pre-state of the next transaction in the block's order, which is how each transaction comes to execute against what everything ordered before it left. The first transaction starts from the state the block begins with, which in some designs already includes block-level steps applied before any transaction, and the last transaction's post-state is not necessarily the block's final state, since some designs apply further steps after the transactions, as Ethereum does for validator withdrawals. Beside the post-state, designs in the envelope's scope produce a record of the transaction's outcome, such as whether it succeeded or failed, the resources it consumed and the logs it emitted, and many designs gather these records into receipts.",
+        },
+        {
+          kind: "paragraph",
+          text: "The record is needed because a state holds balances, code and storage, not the history of what changed them. In designs that include failed transactions, a failed one changes no state beyond its fee charge, its sequence-number update and any other effects the protocol applies outside the payload. The post-state can therefore show a lower balance and an advanced sequence number without showing whether a transaction was included and failed or succeeded at something that left no further trace. The record keeps that inclusion and failure observable to the sender and to anyone reading the chain, and it carries outputs that do not enter state, such as the EVM's logs, which Logs and Events cover. How designs commit to states and records belongs to State Roots, and committing to results so that nodes detect divergence is Deterministic Execution's.",
+        },
+        {
+          kind: "paragraph",
+          text: "Transaction execution is a different unit from running code. A transfer of value to an account with no code runs no code at all; a call can run the code of many contracts as they call one another; a creation runs initialization code, and what that code returns becomes the installed code, which does not itself run during the creation. Whichever of these happens, the envelope of charge, sequence-number update, settlement and outcome record applies once, to the transaction. Contract Execution owns one invocation of a contract's code, and Execution Context what that code can read.",
+        },
+      ],
+    },
+    {
+      id: "transaction-atomicity-content",
+      conceptId: "transaction-atomicity",
+      definition:
+        "Transaction atomicity is the property that the state changes made by executing a transaction's payload, across every call it makes, take effect on the executing state machine together or not at all. Designs differ in what they keep outside that all-or-nothing unit and in whether a caller can confine a callee's failure to the callee.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The unit is drawn around the payload, the action the transaction requests, and it reaches into every call the payload makes, nested as deeply as the design allows, which in the EVM is 1024 call frames. It covers every kind of state change those calls make, such as value moved between accounts, storage written, and contracts created together with the code installed for them. In designs such as the EVM it also covers the logs the calls emit, which are not state but are discarded with the call that emitted them. A call that returned successfully has not put its changes beyond the unit's reach. A transfer made three calls deep is still undone if a call enclosing it fails afterward, because a call's changes stay provisional until every call enclosing it has succeeded.",
+        },
+        {
+          kind: "paragraph",
+          text: "The unit is narrower than everything processing a transaction changes or produces. Many designs that include failed transactions, such as Ethereum, apply the fee charge and the update to the sender's sequence number, where the design uses sequence numbers, outside the payload, and they record the transaction's failure; all three remain when the payload's changes are undone. Atomicity therefore does not mean that a failed transaction leaves the state as it found it, only that none of its payload's changes remain. Why those effects survive a failure is Transaction Reversion's, and where the protocol applies them is Transaction Execution's.",
+        },
+        {
+          kind: "paragraph",
+          text: "Execution environments provide the unit in two broad ways, which an implementation can also combine. A journal, or undo log, lets each change go straight into the in-memory state that execution reads and records beside it the value it replaced; on failure, entries are undone in reverse order back to a recorded position. Many EVM implementations work this way, for example go-ethereum's state journal and revm's journaled state. A buffered working copy instead collects writes in a layer over the pre-state: reads look in the layer before the state under it, success merges the layer into that state, and failure discards it, as with the Cosmos SDK's cache-wrapped stores, branched for each transaction. The two make different outcomes cheap. With a journal, reads go directly to the state and success costs almost nothing, since the changes are already in place, but every write also records an old value and a failure costs work in proportion to the changes undone. With a buffer, a failure costs little, since dropping a layer drops its changes at once, but reads may have to look through several layers when calls nest, unless the implementation flattens them, and success costs a merge. Which approach a client takes is its own choice; which changes are undone is not. That is fixed by the protocol's execution rules, and clients that undid different changes would compute different post-states.",
+        },
+        {
+          kind: "paragraph",
+          text: "How many points the state must be able to return to depends on what follows a failure. In designs that let a caller continue after a call it made fails, such as the EVM, undoing has to stop where the failing call began: the changes of that call and of every call it made, including those that completed successfully, are undone, while the caller's own earlier changes stay. These designs therefore need a checkpoint as each call begins, a journal position or a new buffer layer, so checkpoints nest as the calls do. A call that succeeds hands its changes on to its caller's still-provisional ones, by keeping its journal entries or merging its layer into the caller's, and only the outermost call's success makes them part of the post-state. In designs where any failure aborts the whole transaction, for example Move-based chains such as Aptos and Sui, where calling code has no way to catch an abort, and Solana, where a failed call from one program into another fails the transaction, there is no intermediate point to return to, and one checkpoint, at the start of the payload, is enough.",
+        },
+        {
+          kind: "paragraph",
+          text: "Catchable failures narrow the guarantee. When a caller handles a callee's failure instead of propagating it by failing in turn, the callee's changes are undone and the caller's stand, so all-or-nothing holds for each call, and the transaction as a whole is all-or-nothing only with respect to failures that propagate to its outermost call. A failure handled on the way leaves a transaction that is partly effective. In the EVM, for example, the status recorded for a transaction reports how its outermost call ended, so a successful status shows that no failure reached the top, not that every action the transaction attempted took effect: a payment to one recipient can have failed and been undone inside a transaction recorded as successful. Handling can be deliberate, as when a caller falls back to an alternative, or the unintended result of how a call is written, the defect Unchecked External Calls names; how calls report and pass on failures belongs to Contract Calls. Designs in which any failure aborts the transaction keep the guarantee for the transaction as a whole, at the price of giving a caller no way to recover from a failed call.",
+        },
+        {
+          kind: "paragraph",
+          text: "All-or-nothing governs which changes remain once the transaction ends, not what can be seen before it ends. Within the transaction, each call runs against the state as the calls before it left it, so code the transaction calls, including a contract re-entered while one of its own calls is still in progress, can read the transaction's uncommitted changes and act on them, with calls and writes that join the same unit and stand or are undone with the calls that enclose them. The attacks grouped as Reentrancy exploit this. Other transactions do not see those intermediate states in designs whose results match running transactions one at a time, but that follows from the execution order, the subject of Sequential Execution and Parallel Execution, not from atomicity.",
+        },
+        {
+          kind: "distinction",
+          left: "All-or-nothing",
+          right: "Isolation",
+        },
+        {
+          kind: "paragraph",
+          text: "The guarantee also stops at the edge of one transaction on one state machine. All-or-nothing across several transactions, as with bundles, or across chains is provided, where it is provided at all, by other mechanisms, which Bundle Atomicity and Atomicity Guarantees cover. Without them, two transactions are atomic only separately, so one can take effect while another that was meant to accompany it fails.",
+        },
+      ],
+    },
+    {
+      id: "transaction-reversion-content",
+      conceptId: "transaction-reversion",
+      definition:
+        "Transaction reversion is the failure path of a transaction that was included and whose execution failed: the changes its payload made are discarded, and the transaction ends with a failed outcome instead of the effects it requested.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Execution can fail because the running code reverts deliberately, because a check the code makes does not pass, because the transaction exhausts the metered resources it was allowed, or because it attempts an invalid operation. These are reasons for failing, and they do not map one to one onto what a failure costs. In the EVM the cost follows how the failing call halts. An explicit revert ends the call, hands the part of its allowance it has not used back to its caller, and can return data describing the failure. An exceptional halt consumes the whole allowance the failing call was given and returns no data; running out of gas is one, and so are an invalid instruction, a jump to an invalid destination and an attempt to change state inside a read-only call. A failed check lands on either side according to how the code expresses it. Solidity code normally turns a failed check, such as an unmet requirement or an arithmetic overflow, into an explicit revert, although Solidity compilers once compiled failed assertions to an invalid instruction, so that the same kind of check consumed everything.",
+        },
+        {
+          kind: "paragraph",
+          text: "Either way, in the EVM the sender pays for the work done before the failure, counted by the rules of Gas and Metering; the trigger decides what happens to the rest of the allowance. When the outermost call halts exceptionally, the rest is everything left under the transaction's declared limit, and the sender is charged for the full limit. A nested call is given only part of what its caller has left, since an EVM caller keeps at least one sixty-fourth of its remaining allowance when it calls. An exceptional halt there consumes the callee's share, while the caller continues with what it kept and can handle the failure or propagate it, and propagating by an explicit revert hands the caller's own unused allowance back in turn. Which trigger fires, and in which call, therefore sets how much of the sender's fee a failure consumes, anywhere from the work done before an explicit revert to the whole declared limit.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reversion discards what the payload did: the storage it wrote, the value it moved, the contracts it created and, in designs such as the EVM, the logs it emitted, which is why an EVM receipt for a reverted transaction lists no logs. How the undo is carried out, and how a caller that handles a callee's failure keeps its own changes, belong to Transaction Atomicity. In designs that include failed transactions, the fee charged for the attempt, the update to the sender's sequence number where the design uses sequence numbers, and a record of the failure remain, along with any other effects the format applies outside the payload. In designs that charge by usage, such as Ethereum, that fee is the charge for the resources consumed.",
+        },
+        {
+          kind: "paragraph",
+          text: "The charge remains because, in designs that validate blocks by executing them, every validating node runs the failed transaction too. If failing were free, a sender could submit transactions that compute almost to their limit and then fail, imposing that work on every node at no cost to itself. The sequence-number update remains because otherwise the signed transaction would stay valid: anyone holding a copy could have it included again, charging the sender each time and possibly succeeding later, in a state the sender never signed it for. Designs without sequence numbers keep an equivalent mark of use; Solana, for example, remembers the signatures of the transactions it has processed, failed ones included, and rejects a repeat for as long as the recent block hash the transaction references is accepted. Account Nonces and Replay Protection cover these mechanisms in general. The record remains because the transaction was included and spent the sender's fee and, where the design uses them, its sequence number, so the sender and anyone reading the chain need to see that it was included and failed rather than still pending. For the sender it marks the attempt as used up: the same signed transaction cannot take effect again, and a retry is a new transaction, signed for the next sequence number where the design uses them.",
+        },
+        {
+          kind: "paragraph",
+          text: "An explicit revert can explain itself. In the EVM it returns a byte string, which Solidity encodes as a four-byte identifier derived from the error's signature followed by its encoded arguments, with standard forms for a failed requirement carrying a message and for a panic such as an arithmetic overflow. An exceptional halt returns nothing, so a call that ran out of gas carries no reason at all. When another contract made the failing call, the data goes to that caller, which can decode it, handle the failure, or revert with the same data and so pass it upward; how a call reports failure to its caller is the subject of Message Calls. When the outermost call fails, the data reaches the end of the transaction, and in the EVM it is not kept: the receipt records the failed status and the gas use but not the reason. An observer that wants the reason, such as a wallet or a block explorer, recovers it by executing the transaction again against the pre-state at its position in its block, which needs that historical state or a node that provides execution traces. That replay after the fact is not Transaction Simulation, which predicts an outcome before submission.",
+        },
+        {
+          kind: "paragraph",
+          text: "Code also reverts on purpose, as a way of enforcing conditions. A contract checks that its caller holds the right an action requires, or that a trade yields at least the minimum its sender will accept, and reverts when the check fails, so that the effects which depended on the condition never land. That holds for the reverting call and for every caller that propagates the failure; a caller that handles it keeps its own effects, the narrowing Transaction Atomicity describes. The protection has a price and limits. The sender still pays the fee for the attempt, and the revert protects only the conditions the code checks: a minimum acceptable result admits every result that meets it, so the check secures the bound, not the result the sender hoped for, and a check that is missing or wrong protects nothing.",
+        },
+        {
+          kind: "distinction",
+          left: "Invalid transaction",
+          right: "Reverted transaction",
+        },
+        {
+          kind: "paragraph",
+          text: "Both outcomes are commonly called failed, but in designs that validate blocks by executing them their consequences diverge. A transaction that fails a validity rule at its position cannot be included, since a block containing it would be invalid, so it leaves no record on the chain, costs its sender nothing and, where the design uses sequence numbers, leaves its sequence number available. A reverted transaction is included, recorded as failed and charged the fee for the attempt, and, where the design uses sequence numbers, it has used its sequence number. Designs that make every condition a validity rule, as Bitcoin does with its scripts, have no reverted outcome: a script that fails makes the transaction invalid, so a failed condition is never charged or recorded, and the outputs the transaction tried to spend stay unspent. This follows from the design rather than from the UTXO model as such: Cardano checks scripts in a separate phase and includes a transaction whose scripts fail, collecting collateral the sender designated instead of applying the transaction. Where a design draws the line between the two outcomes, and why, is Transaction Validation's.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

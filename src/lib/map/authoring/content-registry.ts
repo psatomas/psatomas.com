@@ -426,4 +426,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "parallel-execution",
   "optimistic-execution",
   "speculative-execution",
+  "transaction-lifecycle",
+  "transaction-structure",
+  "transaction-validation",
+  "transaction-execution",
+  "transaction-atomicity",
+  "transaction-reversion",
 ];

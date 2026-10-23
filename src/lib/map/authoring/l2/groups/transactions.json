@@ -1,0 +1,1160 @@
+{
+  "version": 1,
+  "group": "transactions",
+  "domain": "computation-execution",
+  "parentConceptId": "transactions",
+  "basis": {
+    "membership": "c73fc2052d41d8f6a5aec63a6f53f8837edee9b9298f14a69aee47b2566ebce9",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "transactions": "bebbdddeb79cf09aa8d11e5c2cdea3bd9a65c1c61f4e8a6f07b9edde648f78ae"
+    },
+    "fixed": {
+      "transaction-ordering": "75b3527949d196292e5042ad785d1878d1af38f2637dabd29b687691b97cc5bc"
+    },
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "transaction-lifecycle",
+      "placementId": "transaction-lifecycle",
+      "standing": "owned",
+      "claims": [
+        "the states a transaction can occupy between creation and a final outcome, such as signed but not yet submitted, pending at one or more nodes, included in a block, and final, and why before inclusion its status is not one shared fact: the sender, each node and the chain can hold different views of it, so a transaction unknown to one node may be pending at another and be included by a producer the sender never reached. Mempools, Transaction Propagation and Transaction Inclusion are named, not explained",
+        "the returns that make the lifecycle a state model rather than a forward pipeline: a pending transaction can be dropped by nodes, for example evicted or no longer relayed, without becoming invalid, and can become pending again if anyone still holding it resubmits it and a node admits it; it can be replaced by a conflicting transaction from the same sender, one that uses the same sequence number or spends the same input, so that at most one of them can be included; and an included transaction whose block is removed by a reorganization before it is final can return to pending, be included again in another block, or become invalid if a conflicting transaction took its place. Reorganizations and the finality concepts are named, not explained",
+        "the outcomes a transaction can end in and how its sender tells them apart: included and executed successfully, included but reverted, or never included because a conflicting transaction consumed its sequence number or input or, where the format provides one, its expiry passed; why without such an end a dropped transaction is not retired, and anyone holding a copy can submit it later, so a sender that wants to cancel a pending transaction generally has to get a conflicting one included; and why, in account-based designs with sequence numbers, tracking a transaction by its identifier can lose sight of it when a replacement with a different identifier is the one included, while the sender and sequence number identify the slot the competing versions contend for"
+      ],
+      "excludes": [
+        "transaction-ordering",
+        "mempools",
+        "mempool-policies",
+        "transaction-admission",
+        "transaction-propagation",
+        "transaction-inclusion",
+        "transaction-submission",
+        "finality",
+        "probabilistic-finality",
+        "deterministic-finality",
+        "reorganizations",
+        "account-nonces",
+        "replay-protection",
+        "preconfirmations",
+        "intent-lifecycle",
+        "fees",
+        "transaction-validation",
+        "transaction-execution",
+        "transaction-reversion",
+        "transaction-structure"
+      ]
+    },
+    {
+      "conceptId": "transaction-structure",
+      "placementId": "transaction-structure",
+      "standing": "owned",
+      "claims": [
+        "what each group of a transaction's fields is for: authorization (a signature, with the sender either carried explicitly or recovered from the signature), the requested action (a target, a value and input data, or initialization code when the transaction creates a contract), fee terms (a limit on the metered resources it may consume and the price, or maximum price, the sender will pay per unit) and validity scope (in many account-based formats a sequence number and a chain identifier, and in some formats an expiry or a reference to a recent block); and why the signature has to cover every field that can change the transaction's effect or cost, since a field outside the signed content can be altered by whoever relays the transaction, unless the format lets the signer deliberately leave some open to others. Replay Protection, Account Nonces and Transaction Data are named, not explained",
+        "how a format can separate roles that a simple transaction gives to one party: the account that authorizes the action, the account whose state the action acts from, and the account that pays the fee; what a format must carry when these differ, such as several required signatures with one of them designated as fee payer, a sponsor's separate authorization, or data an account's own code interprets as authorization instead of a fixed signature field; Account Abstraction is named, not explained",
+        "why many transaction formats are typed: a type identifier ahead of the encoded fields lets a protocol add fields, such as new fee terms, declarations of the state a transaction will access, or references to attached data, without making existing encodings ambiguous, keeps older formats decodable under their original rules, and, when the type is part of the signed content, keeps a signature made for one format from being accepted for another; and what it costs: every validating node must support every type still accepted, so adding a type is a protocol change. Blob Transactions is named, not explained",
+        "why many designs compute a transaction's identifier from its encoding, and what malleability does to it: if the encoding or the signature admits more than one valid form for the same authorized contents, the same transaction can circulate under several identifiers, misleading anything that tracks it by identifier; and the counters designs use, such as a single canonical encoding, accepting only one form of each signature, or computing the identifier over content that excludes the signature. Digital Signatures and Signature Verification are named, not explained"
+      ],
+      "excludes": [
+        "digital-signatures",
+        "signature-verification",
+        "replay-protection",
+        "account-nonces",
+        "transaction-data",
+        "transaction-construction",
+        "calldata",
+        "blob-transactions",
+        "fees",
+        "transaction-fees",
+        "gas",
+        "account-abstraction",
+        "contract-deployment",
+        "transaction-validation",
+        "transaction-lifecycle",
+        "transaction-execution"
+      ]
+    },
+    {
+      "conceptId": "transaction-ordering",
+      "placementId": "transaction-ordering",
+      "standing": "dual-role"
+    },
+    {
+      "conceptId": "transaction-validation",
+      "placementId": "transaction-validation",
+      "standing": "owned",
+      "claims": [
+        "the difference between state-independent checks, such as well-formed encoding, field ranges, a signature that verifies over the contents against the key it names or the sender recovered from it and a matching chain identifier, whose result under the same protocol rules does not depend on state and so holds wherever the transaction is evaluated, and state-dependent checks, such as a sequence number matching the account's next one, a balance covering the largest fee the transaction can incur, and a fee bid meeting the current minimum price, whose result holds only against the state they were checked against; and why this split decides what a node can check once and reuse, and what has to be evaluated again against the pre-state at the transaction's position",
+        "where validity as a protocol rule ends and admission policy begins: a validity rule is applied identically by every validator to a transaction at its position, while each node's admission policy, such as a minimum fee or a limit on pending transactions per sender, decides only what that node holds and relays, may be stricter than validity and may differ between nodes, so a transaction one node refused can still be validly included; and what happens to an ordered transaction that fails a validity rule: in designs that validate blocks by executing them, the block containing it is invalid, while designs that order transactions without executing them, such as some rollups, have every node skip it by the same rule. Transaction Admission, Mempool Policies and Block Validation are named, not explained",
+        "where a protocol draws the line between validity and successful execution, and why: validity is decided before anyone has paid, so a design keeps it to conditions that are cheap and bounded to decide, while conditions that need arbitrary computation, such as what a contract requires of its inputs, are checked during execution, where a failure is charged to the sender as a reverted transaction rather than borne by the nodes that rejected it; Transaction Reversion owns what the reverted outcome records and keeps",
+        "how validation cost is bounded where anyone can submit transactions: since rejecting an invalid transaction is unpaid work, many designs keep each check bounded, such as a fixed set of signature schemes and a few state lookups, and where validity is decided by an account's own code, they restrict that code, such as limiting its computation and the state it may read, so that validating stays cheap and a single state change can invalidate only a bounded number of pending transactions after nodes have spent work admitting them; Account Abstraction and Denial-of-Service Resistance are named, not explained"
+      ],
+      "excludes": [
+        "transaction-admission",
+        "mempool-policies",
+        "mempools",
+        "block-validation",
+        "signature-verification",
+        "digital-signatures",
+        "account-nonces",
+        "replay-protection",
+        "account-abstraction",
+        "denial-of-service-resistance",
+        "execution-cost",
+        "metering",
+        "fees",
+        "state-machine-replication",
+        "inputs",
+        "invalid-transitions",
+        "transaction-reversion",
+        "transaction-execution",
+        "transaction-structure",
+        "transaction-lifecycle"
+      ]
+    },
+    {
+      "conceptId": "transaction-execution",
+      "placementId": "transaction-execution",
+      "standing": "owned",
+      "claims": [
+        "the protocol steps around the code a transaction triggers and why they come in that order, as in many account-based designs with metered execution, such as Ethereum: before the payload runs, the protocol charges or reserves the fee for the transaction's full declared resource limit and advances the sender's sequence number, outside what a failure of the payload can undo, while other designs only check the sender's sequence number and fee coverage beforehand and apply the charge and the sequence-number update in a closing step that a payload failure does not undo; it then runs the payload, a value transfer, a call into code or a contract creation, under that limit; and afterwards, in designs that charge by usage, such as Ethereum, it settles, refunding the unused part of the charge and distributing the fee as the protocol directs, such as to the block producer or by burning part of it, so that the final charge reflects the resources actually used. Gas, Fees, Fee Accounting and Account Nonces are named, not explained; why a reverted transaction keeps the charge and the sequence-number update is Transaction Reversion's",
+        "what executing one transaction produces: the post-state, which becomes the pre-state of the next transaction in the block, and a per-transaction record of the outcome, such as a success or failure status, the resources consumed and the logs emitted, which many designs gather into receipts; and why the record is needed beside the post-state, since in designs that include failed transactions a failed one changes no state beyond its fee charge, its sequence-number update and any other effects the protocol applies outside the payload, yet its inclusion and failure must stay observable to its sender and to anyone reading the chain. Logs, Events and State Roots are named, not explained; committing results so that nodes detect divergence is Deterministic Execution's",
+        "why transaction execution is a different unit from running code: one transaction may run no code at all, as a plain transfer, the code of many contracts through nested calls, or the initialization code a creation runs to produce the code it installs, while the protocol's envelope of charging, sequence-number update, settlement and outcome record applies once per transaction whatever runs inside it; Contract Execution owns one invocation of a contract's code and Execution Context what that code can read"
+      ],
+      "excludes": [
+        "gas",
+        "fees",
+        "fee-accounting",
+        "metering",
+        "resource-limits",
+        "account-nonces",
+        "transaction-fees",
+        "contract-execution",
+        "execution-context",
+        "message-calls",
+        "contract-calls",
+        "contract-deployment",
+        "evm",
+        "logs",
+        "events",
+        "state-roots",
+        "execution-receipts",
+        "block-validation",
+        "deterministic-execution",
+        "transaction-ordering",
+        "transaction-validation",
+        "transaction-atomicity",
+        "transaction-reversion"
+      ]
+    },
+    {
+      "conceptId": "transaction-atomicity",
+      "placementId": "transaction-atomicity",
+      "standing": "owned",
+      "claims": [
+        "what the all-or-nothing unit covers inside one transaction: the state changes made by every call it makes, nested to any depth, including value transfers, storage writes, contracts created and, in designs such as the EVM, emitted logs; and what designs that keep a failed transaction's fee and sequence-number update place outside the unit, so that it is narrower than everything the transaction's processing changes. Why those survive a failure is Transaction Reversion's",
+        "how execution environments provide the unit on one state machine: recording each change in a journal so that it can be undone on failure, or buffering changes in a working copy that is applied only on success; the trade-off between them, such as cheap reads against the live state versus cheap discards; and why designs that let a caller continue after a callee fails need nested checkpoints, one per call, while designs in which any failure aborts the transaction need only one, so that a failure can be undone back to the point where the failing call began",
+        "where the unit is narrowed: in designs that let a caller handle a callee's failure, such as the EVM, a caller that handles it instead of propagating it keeps its own changes while the callee's are undone, so all-or-nothing holds per call, and the transaction as a whole is all-or-nothing only along paths where failures propagate; and why a successful status therefore does not show that every action the transaction attempted took effect. Contract Calls and Unchecked External Calls are named, not explained",
+        "what atomicity does not provide and where its scope ends: it does not hide a transaction's intermediate states from code the transaction itself calls, which can observe and act on them before the transaction finishes, so all-or-nothing is not isolation within a transaction; and it covers one transaction on one state machine, while all-or-nothing across several transactions, as with bundles, or across chains is provided, where it is, by other mechanisms. Reentrancy, Bundle Atomicity and Atomicity Guarantees are named, not explained"
+      ],
+      "excludes": [
+        "transaction-reversion",
+        "transaction-execution",
+        "atomicity-guarantees",
+        "atomic-state-transitions",
+        "cross-domain-atomicity",
+        "bundle-atomicity",
+        "atomic-composability",
+        "contract-calls",
+        "message-calls",
+        "unchecked-external-calls",
+        "reentrancy",
+        "evm",
+        "execution-failure-handling",
+        "partial-execution",
+        "parallel-execution",
+        "sequential-execution",
+        "logs",
+        "fees",
+        "account-nonces"
+      ]
+    },
+    {
+      "conceptId": "transaction-reversion",
+      "placementId": "transaction-reversion",
+      "standing": "owned",
+      "claims": [
+        "what triggers a revert and how the triggers differ in what the failure costs: an explicit revert by the running code, a failed check, running out of metered resources, or an invalid operation; and why, in the EVM for example, an explicit revert returns the unused part of the failing call's resource allowance while an exceptional halt consumes all of it, so the trigger decides how much of the failing call's allowance, and so of the sender's fee, a failure consumes. Gas and Metering are named, not explained",
+        "what reversion undoes and what survives it in designs that include failed transactions: state changes and emitted logs are discarded, while the fee charged for the attempt, the sequence-number update, in designs that use sequence numbers, and a record of the failure remain; and why each survives: an uncharged failure would let a sender impose execution work on every node at no cost, a sequence number left unspent would let the same signed transaction be executed again, and the record lets the sender and others see that it was included and failed",
+        "how a failure is reported and used: revert data returned to the caller, such as an error identifier with arguments, which a calling contract can decode, handle or pass upward, while in some designs, such as the EVM's receipts, it is not kept in the transaction's record, so an outside observer recovers the reason by re-executing the transaction; and reverting as an enforcement tool, code that checks a condition such as an access right or a minimum acceptable result and reverts when it fails, so effects that depended on it never land where the failure propagates, at the price of the fee for the attempt and with protection only for the conditions the code checks",
+        "the difference between an invalid transaction and a reverted one in their consequences: in designs that validate blocks by executing them, an invalid transaction cannot be included, so it leaves no record, costs its sender nothing and leaves its sequence number free, while a reverted one is included, recorded as failed, charged and consumes its sequence number; and why designs that make every condition a validity rule, as Bitcoin does with its scripts, have no reverted outcome at all, since a failing condition makes the transaction invalid. Transaction Validation owns where the line between the two is drawn"
+      ],
+      "excludes": [
+        "transaction-validation",
+        "transaction-atomicity",
+        "transaction-execution",
+        "gas",
+        "metering",
+        "fees",
+        "fee-accounting",
+        "account-nonces",
+        "replay-protection",
+        "execution-failure-handling",
+        "execution-failures",
+        "contract-calls",
+        "message-calls",
+        "evm",
+        "rollbacks",
+        "reorganizations",
+        "logs",
+        "events",
+        "transaction-simulation",
+        "denial-of-service-resistance",
+        "invalid-transitions"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "transaction-lifecycle": {
+      "model": {
+        "meaning": "The states a signed transaction can occupy on its way to an outcome, from held by no node through pending and included to final or never includable, with the conditions that move it between them, including the returns from pending and from included.",
+        "kind": "mechanism",
+        "parents": {
+          "transactions": "Parent gives the transaction as the unit of authorization, ordering and atomicity, and says validity is judged more than once and sequence numbers make one authorization single-use. This adds the transaction over time: which states it can be in, that before inclusion (and before finality) no single party sees one shared status, the returns (dropped back to resubmittable, included back to pending), the end states and how a sender tells them apart, why cancelling means getting a conflicting transaction included, and why the slot (sender + sequence number, or the spent input) is a steadier handle than the identifier. Do not restate the parent's revalidation point or its authorized-action vs effect distinction."
+        },
+        "claims": [
+          "the states a transaction can occupy between creation and a final outcome, such as signed but not yet submitted, pending at one or more nodes, included in a block, and final, and why before inclusion its status is not one shared fact: the sender, each node and the chain can hold different views of it, so a transaction unknown to one node may be pending at another and be included by a producer the sender never reached. Mempools, Transaction Propagation and Transaction Inclusion are named, not explained",
+          "the returns that make the lifecycle a state model rather than a forward pipeline: a pending transaction can be dropped by nodes, for example evicted or no longer relayed, without becoming invalid, and can become pending again if anyone still holding it resubmits it and a node admits it; it can be replaced by a conflicting transaction from the same sender, one that uses the same sequence number or spends the same input, so that at most one of them can be included; and an included transaction whose block is removed by a reorganization before it is final can return to pending, be included again in another block, or become invalid if a conflicting transaction took its place. Reorganizations and the finality concepts are named, not explained",
+          "the outcomes a transaction can end in and how its sender tells them apart: included and executed successfully, included but reverted, or never included because a conflicting transaction consumed its sequence number or input or, where the format provides one, its expiry passed; why without such an end a dropped transaction is not retired, and anyone holding a copy can submit it later, so a sender that wants to cancel a pending transaction generally has to get a conflicting one included; and why, in account-based designs with sequence numbers, tracking a transaction by its identifier can lose sight of it when a replacement with a different identifier is the one included, while the sender and sequence number identify the slot the competing versions contend for"
+        ],
+        "excludes": [
+          "transaction-ordering",
+          "mempools",
+          "mempool-policies",
+          "transaction-admission",
+          "transaction-propagation",
+          "transaction-inclusion",
+          "transaction-submission",
+          "finality",
+          "probabilistic-finality",
+          "deterministic-finality",
+          "reorganizations",
+          "account-nonces",
+          "replay-protection",
+          "preconfirmations",
+          "intent-lifecycle",
+          "fees",
+          "transaction-validation",
+          "transaction-execution",
+          "transaction-reversion",
+          "transaction-structure"
+        ],
+        "placements": {
+          "transaction-lifecycle": "Single L2 placement under Transactions (computation-execution). The record must still stand without the parent's synthesis: define the states from scratch, name the neighbours (mempools, propagation, inclusion, reorganizations, finality, reversion) only as conditions or outcomes."
+        },
+        "fields": {
+          "sequence": [
+            "Typical forward path: signed (held by sender, no node) -> submitted to one or more nodes -> pending (held by at least one node, possibly relayed onward; possibly held only by a producer or builder reached directly) -> included in a block -> block becomes final.",
+            "The forward path is the special case, not the model: dropping, replacement and reorganization send the transaction back or end it without inclusion.",
+            "Ordering within a block (position) is transaction-ordering's; validation and execution steps are siblings'. Name them, do not walk through them."
+          ],
+          "actors": [
+            "Sender: signs, keeps a copy, may resubmit, may sign a conflicting transaction for the same slot (replacement or cancellation).",
+            "Nodes: each holds and relays by its own admission policy (named, not explained), may evict or stop relaying; each has only its own view.",
+            "Block producer: includes what it holds; can include a transaction the sender never sent to it, reached through relay.",
+            "Anyone holding a copy: once broadcast, copies are not under the sender's control; any holder can resubmit later.",
+            "Trackers (wallets, explorers): observe partial views; see failures field on identifier-based tracking."
+          ],
+          "assumptions": [
+            "Status before inclusion is per-observer: the sender's, each node's, and the chain's views can differ. 'Pending' in the model means held by at least one node; no single participant can observe that no node holds it.",
+            "Do not imply inclusion makes status one shared fact either: before finality, nodes following different branches can disagree about inclusion. The claim only says the pre-inclusion status is not shared; do not overstate the converse.",
+            "Reorganization returns arise in designs where an included block can be removed before an observer counts it final. In designs whose blocks are final when committed (many BFT-style protocols), included is final, and a committed block is removed only if the protocol's safety assumptions fail. State the condition; do not say every chain reorganizes.",
+            "Under probabilistic finality, 'final' is a confidence threshold the observer chooses (depth), not an absolute state: a reorganization deeper than that threshold is unlikely but not impossible. So Final (and Never includable, which rests on a competitor being final or on the expiry passing in a final block) holds to the observer's threshold, or under deterministic finality to the protocol's safety assumptions. Name probabilistic and deterministic finality, do not explain them.",
+            "Conflicts: account-based designs with sequence numbers (same sender, same sequence number) and UTXO designs (same input spent). 'At most one can be included' holds within any one chain history; across a reorganization the competitor on the surviving branch is the one that counts.",
+            "Resubmitting a dropped transaction makes it pending again only where a node admits it: admission policy can refuse it again (for example, the low fee that got it evicted). Keep that condition; do not say resubmission always succeeds.",
+            "'Without an end a dropped transaction stays valid': hold as 'is not retired / stays includable'. In account-based designs its state-dependent checks (such as a balance covering the fee) can fail for a time and pass again later; what never lapses on its own is the authorization, unless an expiry field exists. Do not claim it is valid at every moment.",
+            "Expiry exists only where the format provides one (a deadline block height or time, or a reference to a recent block that ages out). Many formats have none."
+          ],
+          "failures": [
+            "Treating eviction or disappearance from one node's view as cancellation: the transaction can resurface and be included later, possibly in a changed state where its effect differs.",
+            "Treating included-but-not-final as final in designs with reorganizations.",
+            "Tracking by identifier: in account-based designs a replacement for the same sender and sequence number has a different identifier; if the replacement is included, the original's identifier never appears on chain and an identifier-based tracker sees 'still pending' or 'lost'. Track the slot (sender + sequence number; in UTXO designs, the spent input). Identifier malleability is transaction-structure's: different cause, do not explain it here.",
+            "Reading 'included' as 'succeeded': included-but-reverted is an included outcome; why it is charged and what it keeps is transaction-reversion's."
+          ],
+          "states": [
+            "Held by no node: signed, valid for inclusion, but no node holds it. Covers both not-yet-submitted and dropped; the point is that the two are the same situation (any holder can submit it).",
+            "Pending: held by at least one node or producer, not in a block on the chain the observer follows.",
+            "Included: in a block that is not yet final (only where blocks can be removed before finality).",
+            "Final: in a final block, as far as the finality it rests on holds (the observer's depth threshold, or the protocol's safety assumptions). Outcome is either executed successfully or reverted; the sender tells them apart from the recorded outcome status (record contents are transaction-execution's; reverted consequences are transaction-reversion's).",
+            "Never includable: a conflicting transaction for the same slot is final, or the format's expiry has passed in a block that is final. The sender tells this apart by seeing the slot consumed by another transaction (sequence number advanced / input spent) or the expiry passed in a final block, not by the transaction's own identifier."
+          ],
+          "transitions": [
+            "Held by no node -> Pending: submitted, or resubmitted by anyone holding a copy, and admitted by some node.",
+            "Pending -> Held by no node: every node and producer that held it evicts or discards it; it does not become invalid. A node that stops relaying it still holds it.",
+            "Pending -> Included: a producer includes it in a block.",
+            "Included -> Pending: a reorganization removes its block before it is final and the surviving branch does not also include it; nodes that take it back hold it as pending, and it can be included again in another block. A transaction the surviving branch also includes stays included, in another block.",
+            "Included -> Final: its block becomes final.",
+            "Held by no node -> Never includable, and Pending -> Never includable: a conflicting transaction for the same slot becomes final, or expiry passes in a block that is final.",
+            "Included -> Never includable: a reorganization removes its block and a conflicting transaction takes its place on the surviving branch, and that becomes final.",
+            "Condition the move to Never includable on finality, of the conflicting transaction or of a block in which the expiry has passed: before that, a conflicting transaction included in a non-final block can itself be reorganized out, and an expiry passed on a branch a reorganization later replaces does not bind the surviving branch."
+          ],
+          "invariants": [
+            "Of transactions competing for one slot (same sender and sequence number, or same input), at most one is included in any one chain history.",
+            "Nothing but a conflicting inclusion or an expiry retires a signed transaction; eviction, non-relay and the sender's wish do not. Hence cancelling generally means getting a conflicting transaction (such as a zero-value transfer to oneself with the same sequence number) included first; it is a race, not a guaranteed cancel."
+          ],
+          "variants": [
+            "Account-based with sequence numbers: the slot is (sender, sequence number); replacement and cancellation reuse the sequence number; identifier tracking can lose a replaced transaction.",
+            "UTXO: the slot is the spent input(s); a conflicting spend of the same input excludes the other.",
+            "Formats with expiry: an end without any conflicting transaction. Formats without: no such end.",
+            "Designs with immediate finality: no Included-but-not-final state, no reorganization returns.",
+            "Do not develop these into a comparison: they condition the claims, one sentence each where needed."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A transaction's persistent states (held by no node, pending, included, final, never includable) and the events or conditions that move it between them, including returns from pending to held by no node and from included to pending, with two different end states.",
+        "structures": [
+          {
+            "structure": "state",
+            "purpose": "Show the five states in the order a transaction usually moves through them, each transition with its condition (submitted or resubmitted; evicted or no longer relayed; included; block removed by a reorganization before finality; block final; conflicting transaction final or expiry passed), the two returns, and the two final states (final with success or revert, never includable).",
+            "whyNotProse": "The claims' point is that the lifecycle is not the forward pipeline the domain flow suggests: states can be left backward, dropped and unsubmitted are the same state, and there are two different kinds of end. In prose the returns read as exceptions to a pipeline spread over several sentences; a state model shows at once which states can be left backward, under which condition, and which states are final."
+          }
+        ],
+        "division": "The state model shows the states, each transition's condition, the returns and which states are final; the prose must not walk through the transitions again. The prose explains what the model cannot: that status before inclusion is a per-observer view (the model's states are the transaction's situation across the network and chain, which no single party observes); why dropping does not invalidate and why a dropped and an unsubmitted transaction are equivalent; replacement and the at-most-one invariant per slot; the condition that reorganization returns exist only where inclusion can be reversed before finality; how the sender tells success, revert and never-included apart; why cancelling means getting a conflicting transaction included; and why tracking by slot rather than identifier.",
+        "level": "Belongs here, not at Transactions (which defines the unit and its boundaries, not its course over time), and not at mempools, inclusion, reorganizations or finality, each of which owns the mechanism behind one transition; this concept owns how those transitions compose into one transaction's states and ends.",
+        "territory": "The transitions name eviction, relay, inclusion, reorganization, finality and expiry as conditions without explaining their mechanisms (mempools, mempool-policies, transaction-admission, transaction-propagation, transaction-inclusion, reorganizations and the finality concepts stay excluded). Position within a block is not drawn (transaction-ordering, name only). Success and revert share one final state; what a revert keeps and costs is transaction-reversion's, the outcome record's contents transaction-execution's, validity checks transaction-validation's, identifier malleability transaction-structure's. The model does not restate the domain flow's Structure, Validation, Ordering, Execution stages.",
+        "placements": "One placement (Computation & Execution / Transactions / Transaction Lifecycle). The state model and prose define every state from scratch and state the designs each transition depends on (reorganizations, expiry, sequence numbers vs inputs), so the exposition stands without the parent's synthesis."
+      },
+      "audit": {
+        "at": "2026-10-23T00:39:01.413Z",
+        "note": "Re-audit after repair cycle 2, scoped to findings/transaction-lifecycle-2.md R1 (expiry-based Never includable end not conditioned on finality); earlier findings (transaction-lifecycle.md, -b.md) were confirmed resolved by the previous re-audit. R1 resolved: the P4 summary now reads 'the final state and the never-includable end, whether that end rests on a competing transaction being final or on an expiry passing in a block that is final, hold only as far as the observer's threshold or the protocol's safety assumptions hold'; both expiry transitions in the state block (Held by no node -> Never includable, Pending -> Never includable) now say 'the format's expiry passes in a block that is final'; P5 ('seeing it pass in a block that is final') and P6 ('wait for it to pass in a block that is final') match; the model's transitions, assumptions and states fields carry the same condition, and the transitions note explains why (an expiry passed on a branch a reorganization later replaces does not bind the surviving branch). Checked the new wording for accuracy across expiry kinds (deadline height, deadline time, a referenced recent block that ages out): a final block past the deadline fixes every later block on any branch extending it, so the transaction cannot be included; under immediate finality the condition holds trivially, consistent with P4's deterministic-finality sentence. Re-read every other use of 'expiry', 'final' and 'never includable' (definition, state block, P4, P5, P6) for consistency: no contradiction between the summary and the conditioned sentences. The repair narrowed one condition and did not change the argument, structure or scope, so the re-audit was not expanded; parent overlap (Transactions, single placement), territory (mempools, mempool policies, propagation, reorganizations, finality concepts, reversion, structure named only), state-block shape (5 states, 8 transitions, loops present) and canonical validity remain as the previous complete audit found them. Advisory: (1) P4 'it can be included again in a block of the surviving branch, unless that branch already includes a competing transaction for the same slot' omits that an expiry already passed on the surviving branch also prevents re-inclusion (and the state block has no Included -> Never includable edge for that case; the eight-transition cap applies); same class as the carried-over UTXO missing-parent edge case. (2) Model invariants 'Nothing but a conflicting inclusion or an expiry retires a signed transaction' is not conditioned on finality as the record now is. (3) Carried over from the previous re-audit: P1 'public record' unscoped for permissioned chains; P5 'no trace under the transaction's own identifier' (say 'on the chain'); no Pending -> Final edge where committed blocks are final (carried in prose, accepted by design); 'without it becoming invalid' (not permanently invalid); P7 identifier-tracking loss limited to account-based designs; P4 'unlikely' could name the protocol's assumptions.",
+        "resolutions": [
+          {
+            "id": "names-concept:69243170a5",
+            "resolution": "deterministic-finality is named once in P4 ('as in many protocols with deterministic finality') as the condition under which a committed block is final; its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:65344a1da9",
+            "resolution": "fees appear only as eviction and resubmission conditions in P3 ('a fee bid lower than what its mempool policies accept', 'when fees fall'); fee mechanics are not explained."
+          },
+          {
+            "id": "names-concept:40ffdb6733",
+            "resolution": "finality is used as the condition for the Final state and the Never includable end (state block, P4, P5, P6); how finality is reached is left to the finality concepts."
+          },
+          {
+            "id": "names-concept:e0e1669cb8",
+            "resolution": "mempool-policies is named in P3 as the reason a node evicts or refuses a transaction; no policy rule is explained."
+          },
+          {
+            "id": "names-concept:a155bbb0d8",
+            "resolution": "mempools is named in P1 ('in its mempool') as where a node holds a transaction; mempool structure is not explained."
+          },
+          {
+            "id": "names-concept:a1b81626f0",
+            "resolution": "probabilistic-finality is named in P4 only for its consequence for the lifecycle (Final is an observer-chosen threshold such as a depth, and a deeper reorganization remains possible); how confidence grows with depth is not explained."
+          },
+          {
+            "id": "names-concept:a0f32f3d7b",
+            "resolution": "reorganizations appear as the condition for the Included -> Pending and Included -> Never includable transitions and in P4's account of what happens to the transaction; how and why reorganizations occur is not explained."
+          },
+          {
+            "id": "names-concept:703b019742",
+            "resolution": "transaction-propagation is named in P1 ('through transaction propagation') as how a node receives a transaction; relay mechanics are not explained."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "transaction-reversion is named in P5 as owning what a reverted transaction keeps and costs; the record only says reverted transactions are included and distinguished by outcome status."
+          },
+          {
+            "id": "names-concept:42f8001dda",
+            "resolution": "transaction-structure is named in P7 as owning identifier malleability; the one contrasting clause draws the boundary (one transaction under several identifiers versus separate signed versions) without explaining how malleability arises."
+          },
+          {
+            "id": "absolutes:29beba470a",
+            "resolution": "Five 'never' uses checked: 'a block producer the sender never contacted' and 'signed and never sent' are factual descriptions of a case; 'never includable' in the definition and P4 and 'Never included' in P5 are names of the end state, which the record conditions on finality of a competing transaction or of a block past the expiry. All hold."
+          }
+        ],
+        "recordFingerprint": "fd299598ae5712926850bdb8066091de6c2e9a238b0be77d477321b4b57614b8"
+      }
+    },
+    "transaction-structure": {
+      "model": {
+        "meaning": "Transaction structure is the set of fields a transaction format carries and how they are encoded and signed, which determines what the sender authorizes, who acts and pays, where and how long the authorization is usable, and how the transaction is identified.",
+        "kind": "artifact",
+        "parents": {
+          "transactions": "Parent states that a signature binds the sender to exactly the contents, and that sequence numbers and chain identifiers make one authorization usable once and only where intended. This adds: the field groups and what each is for; the consequence of signed coverage (unsigned fields are alterable in relay), not the binding itself again; that one 'sender' can be split into authorizer, acted-from account and fee payer; typed formats; the identifier and malleability. Do not restate the parent's once-and-where sentence or its authorized-action vs effect distinction; build on them."
+        },
+        "claims": [
+          "what each group of a transaction's fields is for: authorization (a signature, with the sender either carried explicitly or recovered from the signature), the requested action (a target, a value and input data, or initialization code when the transaction creates a contract), fee terms (a limit on the metered resources it may consume and the price, or maximum price, the sender will pay per unit) and validity scope (in many account-based formats a sequence number and a chain identifier, and in some formats an expiry or a reference to a recent block); and why the signature has to cover every field that can change the transaction's effect or cost, since a field outside the signed content can be altered by whoever relays the transaction, unless the format lets the signer deliberately leave some open to others. Replay Protection, Account Nonces and Transaction Data are named, not explained",
+          "how a format can separate roles that a simple transaction gives to one party: the account that authorizes the action, the account whose state the action acts from, and the account that pays the fee; what a format must carry when these differ, such as several required signatures with one of them designated as fee payer, a sponsor's separate authorization, or data an account's own code interprets as authorization instead of a fixed signature field; Account Abstraction is named, not explained",
+          "why many transaction formats are typed: a type identifier ahead of the encoded fields lets a protocol add fields, such as new fee terms, declarations of the state a transaction will access, or references to attached data, without making existing encodings ambiguous, keeps older formats decodable under their original rules, and, when the type is part of the signed content, keeps a signature made for one format from being accepted for another; and what it costs: every validating node must support every type still accepted, so adding a type is a protocol change. Blob Transactions is named, not explained",
+          "why many designs compute a transaction's identifier from its encoding, and what malleability does to it: if the encoding or the signature admits more than one valid form for the same authorized contents, the same transaction can circulate under several identifiers, misleading anything that tracks it by identifier; and the counters designs use, such as a single canonical encoding, accepting only one form of each signature, or computing the identifier over content that excludes the signature. Digital Signatures and Signature Verification are named, not explained"
+        ],
+        "excludes": [
+          "digital-signatures",
+          "signature-verification",
+          "replay-protection",
+          "account-nonces",
+          "transaction-data",
+          "transaction-construction",
+          "calldata",
+          "blob-transactions",
+          "fees",
+          "transaction-fees",
+          "gas",
+          "account-abstraction",
+          "contract-deployment",
+          "transaction-validation",
+          "transaction-lifecycle",
+          "transaction-execution"
+        ],
+        "placements": {
+          "transaction-structure": "Single placement, a leaf under Transactions in Computation & Execution. The record must still not lean on positional wording or on the parent's text, and must scope account-based statements explicitly since a reader may hold a UTXO model."
+        },
+        "fields": {
+          "contents": [
+            "Four groups, scoped: the grouping as listed fits account-based formats (Ethereum-style); state the scope. UTXO formats differ: no sender or target account, authorization is per spent output (a script or witness satisfying it). In Bitcoin the fee is implicit (inputs minus outputs) and there is no limit on metered resources; other UTXO designs (e.g. Cardano) carry an explicit fee and per-script execution budgets, so scope those two statements to Bitcoin. Mention the difference only as far as needed to keep the general statements true.",
+            "Authorization: signature(s); sender carried explicitly (e.g. Solana lists signer keys) or recovered from the signature (Ethereum ECDSA). Not how signatures work (Digital Signatures named).",
+            "Requested action: in Ethereum-style formats one target, a value and input data; contract creation as an empty target plus initialization code is an EVM-style convention, say 'in designs such as the EVM'. Some formats (e.g. Solana) carry a list of instructions, each naming a program and the accounts it touches, so 'a target' is not universal. The input data's contents and encoding are Transaction Data's/Calldata's: name only.",
+            "Fee terms: a limit on metered resources and a price or maximum price per unit (EIP-1559 carries maximum fee and maximum priority fee per unit). State what the fields bound; do not explain how fees are computed, charged or refunded (Fees, Gas, Transaction Execution).",
+            "Validity scope: in many account-based formats a sequence number and a chain identifier; some carry an expiry (e.g. a timeout height or expiration time) or a recent-block reference that also bounds lifetime (Solana's recent blockhash). Not every format has a sequence number or a chain identifier: Solana uses a recent blockhash; Bitcoin has neither (an output can be spent only once). Name Replay Protection and Account Nonces; do not explain how they prevent replay (parent already says why they exist).",
+            "Pitfall: 'signed content' is not the same as 'transmitted fields': some formats sign values the verifier supplies rather than carries, e.g. the chain identifier in Cosmos' sign document, or in EIP-155 legacy signing where it is folded into the signing hash and the v value."
+          ],
+          "producedBy": "The sender's wallet or client assembles the fields and signs; with separated roles, several parties sign or authorize. How a transaction is assembled, estimated and signed is Transaction Construction's: name only.",
+          "checkedBy": "Validating nodes decode it under its type's rules and check its authorization and fields; what is checked when, stateless vs state-dependent, is Transaction Validation's and Signature Verification's. Name only; say the structure is what those checks read.",
+          "proves": [
+            "A valid signature shows that the holder of the key authorized exactly the signed content, assuming the key is not compromised. It says nothing about fields outside the signed content: whoever relays the transaction (a node, a relayer, a bundler) can alter those, so a field that changes the effect or the cost (target, value, input data, fee limit or price, chain identifier, type) must be inside it, or a relayer could, for example, raise the fee price or redirect the value.",
+            "Condition the 'must cover' claim: some formats let the signer deliberately leave parts open, e.g. Bitcoin's signature-hash modes (ANYONECANPAY lets others add inputs; NONE leaves outputs unsigned). Then the signer accepts that others can change them. Do not say every format signs every field.",
+            "The signature cannot cover itself, and in many designs other witness data sits outside the signed content: that is where malleability enters (claim 4), changing the identifier but not the authorized effect."
+          ],
+          "lifetime": "Only as the validity-scope fields bound it: a signed transaction stays usable until what those fields refer to is used up or passes (its sequence number consumed, the expiry or the referenced recent block too old). The states and outcomes a transaction passes through are Transaction Lifecycle's: do not describe them.",
+          "variants": [
+            "Role separation (claim 2). Simple account-based transaction: one party authorizes, is acted from and pays. Formats that separate them must carry an authorization from each party whose account is debited or acted from. Examples, each scoped: Solana carries several signatures over one message, the first signer paying the fee; Aptos-style sponsored transactions carry a separate fee-payer signature; Cosmos fee grants let a granter pay under an authorization it recorded beforehand, rather than a signature in the transaction; account-code authorization (e.g. Starknet accounts, ERC-4337 user operations) puts data the account's own code checks in place of a fixed signature field.",
+            "Distinguish protocol-level separation (the format carries the roles) from separation built above a simple format (meta-transactions, ERC-4337): there the outer transaction is ordinary and signed and paid by a relayer or bundler, and the user's authorization travels as data a contract checks. Do not explain Account Abstraction's machinery (entry point, bundlers, paymaster validation): name it.",
+            "Pitfall: a fee payer that is not the authorizer must authorize the fee debit by some means (signature, prior grant, or its own code accepting it); otherwise anyone could make it pay. Say 'must authorize the debit', not 'must sign'.",
+            "Typed formats (claim 3), example EIP-2718: a type byte ahead of the payload; legacy encodings begin with a byte no type uses, so decoding is unambiguous; types added access lists (state the transaction declares it will access, type 1), new fee terms (type 2), blob references (type 3), authorization lists (type 4). Scope: 'many formats', not all; others version or extend formats differently (Bitcoin's version field and SegWit's marker; Cosmos' typed messages inside a transaction). Do not number Ethereum's types in the record unless needed; do not explain Blob Transactions."
+          ],
+          "invariants": [
+            "Every field that can change the effect or cost is inside the signed content, unless the format deliberately lets the signer leave it open.",
+            "When the type is part of the signed content (as in EIP-2718 types, which hash the type byte with the payload), a signature for one format cannot be reinterpreted as a valid signature for another, because the signed bytes differ. Condition it on the type being signed.",
+            "Identifier vs authorized contents: an identifier is stable only if each authorized content has one valid encoding and one valid signature form, or if the identifier excludes what can vary."
+          ],
+          "tradeoffs": [
+            "Typing: extensibility without ambiguity vs every validating node must decode and validate every type still accepted, so a new type is a protocol change (a hard fork in Ethereum) and old types persist while accepted. Wallets and tooling must also support them, but keep the claim's cost to the validating side.",
+            "Role separation: sponsored or multi-party transactions vs more signatures to verify, a payer exposed to paying for others' failures, and, where account code authorizes, unbounded validation that validators must restrict (that restriction is Transaction Validation's: name only)."
+          ],
+          "relation": [
+            "Identifier (claim 4): Ethereum's transaction hash is the hash of the full signed encoding (type byte plus payload); Bitcoin's txid is the double SHA-256 of the serialization without witness data, while the wtxid covers it; Solana identifies a transaction by its first signature. So 'computed from its encoding' holds for many designs, not all: scope it.",
+            "Malleability: more than one valid encoding of the same fields (non-canonical length or integer encodings), more than one valid signature form for the same contents (ECDSA: (r, s) and (r, n - s) both verify), or unlocking data outside the signed content that its condition accepts in more than one form (e.g. data a script ignores) gives one authorized transaction several identifiers. Harm: wallets, exchanges and services tracking by identifier can report a payment missing or retry it; in UTXO designs such as Bitcoin's, later transactions reference outputs by txid, so a malleated parent invalidates pre-signed children (a reason Bitcoin's SegWit moved witness data out of the txid).",
+            "Counters and their limits: canonical encoding (Ethereum requires canonical RLP; Bitcoin's BIP 66 strict DER) and one signature form (Ethereum's low-s rule since Homestead; in Bitcoin low-s is relay policy, not consensus, so it reduces rather than eliminates malleation) stop third parties re-encoding an existing transaction's fields or deriving a second form of its signature; they do not fix what other unlocking data contains where its condition accepts data the check ignores (rules on that data's form narrow this but cannot cover every condition), and they do not stop the signer producing a second valid signature with a fresh nonce. Excluding the signature and other unlocking data from the identifier (SegWit txid) removes their variation from the identifier for both, but not changes to signed fields.",
+            "Boundary with Transaction Lifecycle: malleability is the same authorized content under several identifiers; a replacement is different content contending for the same sequence number, which is Lifecycle's. Do not explain replacement; at most contrast in a clause."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Purpose and consequence: each field group exists to bound something the sender authorizes, and each claim is an argument about what goes wrong when a format leaves something out or lets it vary (unsigned fields altered in relay, unseparated roles, untyped extensions ambiguous, identifiers multiplied by malleability), with conditions that differ by design family.",
+        "whyProse": "The claims are causal arguments carrying design-specific conditions (account-based vs UTXO scope, signed vs transmitted content, consensus rule vs relay policy, which counter stops which source of malleability), and prose keeps each condition next to the statement it limits. The four field groups are variants with one attribute each (their purpose), which the catalog assigns to a sentence, not a block. The three roles could be drawn as a distinction chain, but the claim is about what a format must carry when they differ, which a label chain does not show; a sentence naming the three roles carries the conflation. The three malleability counters differ in conditions rather than along shared named dimensions, so a comparison table would strip the conditions that make them accurate. No order, loop, tension or persistent state carries the meaning.",
+        "level": "The field groups, role separation, typed encodings and identifier rules are properties of a transaction's format, which the parent treats only as signed self-contained contents and its siblings take as given: validation reads the fields, execution charges against the fee terms, lifecycle tracks the transaction. So they belong here, not at Transactions or any sibling.",
+        "territory": "Names, without explaining, how signatures work and are verified, replay protection and nonces, payload encoding (Transaction Data, Calldata), assembly (Transaction Construction), fee computation (Fees, Gas, Transaction Fees), Blob Transactions, Account Abstraction and contract deployment. Says what fields the validation checks read but not which checks run when (Transaction Validation); what the fee terms bound but not charging and refund (Transaction Execution); malleability as one content under several identifiers but not replacement or tracking across a transaction's states (Transaction Lifecycle).",
+        "placements": "One placement, a leaf under Transactions; the record stands alone, scopes account-based statements explicitly, and uses no positional wording."
+      },
+      "audit": {
+        "at": "2026-10-23T19:09:53.707Z",
+        "note": "Re-audit (repair cycle 2), scoped to the group-audit finding B1 (transactions): 'payload' used for a field beside target and value, while transaction-execution, -atomicity and -reversion use it for the whole requested action. Resolved: the record no longer contains 'payload' in any sense. The three sentences now read 'a target account, a value and input data, whose contents belong to Transaction Data', 'carries initialization code as its input data' (correct for EVM contract creation, where the data field holds init code), and 'the user's authorization carried in its input data for a contract to check' (its = the relayer's ordinary transaction). The requested action as target + value + input data is now consistent with the siblings' payload as the whole requested action including value, and 'input data' matches Message Calls' field term (sender, recipient, value, input data). Plan claim 0 and model contents[2] and proves[0] say 'input data'. Earlier repair text intact: the implicit fee and the absent metered-resource limit are scoped to Bitcoin; the unlocking-data limits ('Neither fixes what other unlocking data contains', relay-policy and signer re-signing limits, identifier excluding signature and other unlocking data) are unchanged. Overlap with the parent Transactions (one placement): unchanged, no restatement. Territory: Transaction Data still named only. Structure: prose as designed. I did not expand into a complete audit: the repair substituted one term and changed no argument, assumption, structure or scope. Advisory: (1) the model still uses 'payload' in a third, EIP-2718 encoding sense ('type byte ahead of the payload', 'type byte plus payload' in variants[3], invariants[1], relation[0]); the record does not carry it, but an authoring prompt word could reappear; (2) 'input data' in the account-based paragraphs sits beside UTXO 'input' (spent-output reference) and the malleability paragraph's 'accepts more than one input' (argument to a condition), a mild ambiguity; (3) carried from the cycle-1 re-audit: 'negating one of a signature's two components' could name s; 'narrow such variants without removing them' reads as never; 'all of them valid' attaches validity to identifiers; definition's 'whose account acts and whose pays' vs UTXO 'no sender account'; Solana durable nonces; 'The cost falls on validation' as the only cost; an unsigned value changes the amount rather than redirecting funds.",
+        "resolutions": [
+          {
+            "id": "names-concept:8acc650224",
+            "resolution": "Account Abstraction is named once as owner of the machinery; the sentence states only what claim 2 covers (account code interpreting authorization data), not entry points, bundlers or paymasters."
+          },
+          {
+            "id": "names-concept:d4ea82abfe",
+            "resolution": "Account Nonces is named as owner of the sequence number's role in validity scope; how nonces work is not explained."
+          },
+          {
+            "id": "names-concept:5fd914ed2b",
+            "resolution": "Blob Transactions is named as the example of references to attached data in typed formats; blobs are not explained."
+          },
+          {
+            "id": "names-concept:5d18da2ac0",
+            "resolution": "Digital Signatures is named as owner of how signatures are made; the record states only the ECDSA s-negation variant and re-signing with a new nonce as malleability sources, which claim 4 needs."
+          },
+          {
+            "id": "names-concept:65344a1da9",
+            "resolution": "Fees is named ('Fees and Gas') as owner of how the charge is computed and settled; the record says only what the fee fields bound."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "Gas is named with Fees; metering and charging are not explained, and the fee terms are described only as limit and price fields."
+          },
+          {
+            "id": "names-concept:79a018aa13",
+            "resolution": "Replay Protection is named as owner of the chain identifier's role; the UTXO 'each output can be spent only once' clause is scope, not an explanation of replay protection."
+          },
+          {
+            "id": "names-concept:cc6f047486",
+            "resolution": "Signature Verification is named with Digital Signatures as owner of how signatures are checked; verification is not explained."
+          },
+          {
+            "id": "names-concept:443cab4fe8",
+            "resolution": "Transaction Data is named as owner of the input data's contents; the record says only that the requested action carries input data (and, under EVM-style creation, initialization code as that input data), without explaining its encoding or how a contract reads it."
+          },
+          {
+            "id": "names-concept:8556c15c12",
+            "resolution": "Transaction Lifecycle is named in one contrast clause (a replacement is different signed content); replacement and lifecycle states are not explained."
+          },
+          {
+            "id": "depth-long:5c26ea8210",
+            "resolution": "1,581 words over four claims: field groups, fee and validity-scope terms, the UTXO scoping and signed coverage serve claim 1 (body paragraphs 1-4), role separation claim 2 (5), typing claim 3 (6), identifier, malleability and its counters claim 4 (7-9). Repair 2 was a term substitution adding two words; no paragraph repeats another or carries background the claims do not need, so nothing to condense."
+          }
+        ],
+        "recordFingerprint": "519ed426980b60cc60ddad5a3ded972ece0d20c123eb48e80086241439752a4b"
+      }
+    },
+    "transaction-validation": {
+      "model": {
+        "meaning": "Transaction validation is the evaluation of a transaction against the protocol's validity rules, the conditions it must meet to be includable at its position, which decides whether it may be processed at all, as distinct from whether its execution succeeds.",
+        "kind": "mechanism",
+        "parents": {
+          "transactions": "Premise, not to re-teach: validity is judged more than once and can change between admission and execution because earlier transactions spend funds or use the sequence number. Adds: which checks depend on state and which do not, and so what is reused vs re-evaluated at the position; protocol validity vs a node's admission policy; what an ordered invalid transaction does to a block (execute-to-validate) or how it is skipped (order-without-execute); where designs draw the validity/execution line and why (cost before payment); how validation cost is bounded, including when an account's own code decides validity. Do not restate that one authorization is single-use and chain-bound (parent; Transaction Structure, Replay Protection)."
+        },
+        "claims": [
+          "the difference between state-independent checks, such as well-formed encoding, field ranges, a signature that verifies over the contents against the key it names or the sender recovered from it and a matching chain identifier, whose result under the same protocol rules does not depend on state and so holds wherever the transaction is evaluated, and state-dependent checks, such as a sequence number matching the account's next one, a balance covering the largest fee the transaction can incur, and a fee bid meeting the current minimum price, whose result holds only against the state they were checked against; and why this split decides what a node can check once and reuse, and what has to be evaluated again against the pre-state at the transaction's position",
+          "where validity as a protocol rule ends and admission policy begins: a validity rule is applied identically by every validator to a transaction at its position, while each node's admission policy, such as a minimum fee or a limit on pending transactions per sender, decides only what that node holds and relays, may be stricter than validity and may differ between nodes, so a transaction one node refused can still be validly included; and what happens to an ordered transaction that fails a validity rule: in designs that validate blocks by executing them, the block containing it is invalid, while designs that order transactions without executing them, such as some rollups, have every node skip it by the same rule. Transaction Admission, Mempool Policies and Block Validation are named, not explained",
+          "where a protocol draws the line between validity and successful execution, and why: validity is decided before anyone has paid, so a design keeps it to conditions that are cheap and bounded to decide, while conditions that need arbitrary computation, such as what a contract requires of its inputs, are checked during execution, where a failure is charged to the sender as a reverted transaction rather than borne by the nodes that rejected it; Transaction Reversion owns what the reverted outcome records and keeps",
+          "how validation cost is bounded where anyone can submit transactions: since rejecting an invalid transaction is unpaid work, many designs keep each check bounded, such as a fixed set of signature schemes and a few state lookups, and where validity is decided by an account's own code, they restrict that code, such as limiting its computation and the state it may read, so that validating stays cheap and a single state change can invalidate only a bounded number of pending transactions after nodes have spent work admitting them; Account Abstraction and Denial-of-Service Resistance are named, not explained"
+        ],
+        "excludes": [
+          "transaction-admission",
+          "mempool-policies",
+          "mempools",
+          "block-validation",
+          "signature-verification",
+          "digital-signatures",
+          "account-nonces",
+          "replay-protection",
+          "account-abstraction",
+          "denial-of-service-resistance",
+          "execution-cost",
+          "metering",
+          "fees",
+          "state-machine-replication",
+          "inputs",
+          "invalid-transitions",
+          "transaction-reversion",
+          "transaction-execution",
+          "transaction-structure",
+          "transaction-lifecycle"
+        ],
+        "placements": {
+          "transaction-validation": "Single placement, under Transactions in Computation & Execution. Still write it so it stands without the parent: state the premise it starts from in a clause at most (validity is evaluated at more than one point), then go beyond it."
+        },
+        "fields": {
+          "inputs": [
+            "the transaction's bytes and the protocol rules in force (fork/version): enough for state-independent checks",
+            "state-dependent checks add the pre-state at the evaluation point: for a node at admission, its view of the head state; for a producer or validator, the pre-state at the transaction's position, which includes earlier transactions in the same block (the same sender's among them)",
+            "context of the including block for checks such as an expiry against height or time, a reference to a recent block, or a block-level minimum fee: these depend on where it lands, not on contents alone, so treat them with the position-dependent checks for reuse"
+          ],
+          "outputs": [
+            "a verdict relative to a rule set and, for state-dependent checks, to one state: valid here, or invalid with the failed rule",
+            "a state-independent result can be cached with the exact transaction and rule set and reused across admission, relay, block building and block validation; a state-dependent result is a snapshot that a new head or an earlier transaction at the position can overturn, in either direction (a balance can be topped up, a sequence-number gap filled)"
+          ],
+          "actors": [
+            "nodes applying admission policy to what they hold and relay (policy: theirs, may differ, may be stricter than validity; Transaction Admission and Mempool Policies named only)",
+            "block producers, who must only include valid transactions where an invalid one invalidates the block",
+            "validators/full nodes applying the same validity rules at the position; 'identically' holds for nodes following the protocol (a node applying different rules diverges from the others)",
+            "in some designs, the account's own code, which decides part of validity"
+          ],
+          "assumptions": [
+            "the validity/execution line argument assumes designs with metered execution that include failed transactions and charge for them (account-based, EVM-like). Bitcoin-style designs make every spending condition a validity rule and keep it bounded instead (script size and signature-operation limits, no unbounded loops); Reversion names Bitcoin for 'no reverted outcome': do not explain that outcome here",
+            "the reason for the line: validity is decided before any fee is charged, so it is kept to conditions cheap and bounded to decide; among them the conditions that establish the transaction is authorized and can pay the most it can consume (e.g. balance covering the maximum fee and the value), so whatever execution follows is paid for; conditions needing arbitrary computation are left to execution, where failure is charged to the sender",
+            "'state-independent' holds only under the same protocol rules: a fork that changes rules (types, schemes, chain identifier) requires re-evaluation",
+            "cost bounding is 'many designs', not universal"
+          ],
+          "failures": [
+            "an ordered transaction failing a validity rule: in designs that validate blocks by executing them, the block is invalid; in designs that order without executing, such as some rollups, every node skips it by the same deterministic rule. Do not name a specific rollup unless sure of its rule; Block Validation named only",
+            "unbounded or state-sensitive validation enables unpaid-work abuse: transactions that are expensive to reject, or many pending transactions invalidated by one state change after nodes spent work admitting them (Denial-of-Service Resistance named only)",
+            "a node refusing a transaction under its policy is not evidence the transaction is invalid; it can still be validly included by a producer that received it elsewhere"
+          ],
+          "variants": [
+            "state-independent checks: encoding well formed, field ranges, signature valid over the contents, chain identifier matching. Pitfall: signature validity is state-independent only as cryptographic verification against a key that the transaction carries or from which the sender is recovered. Where an account's keys are kept in state and can be changed, or the account's code decides authorization, whether the signature authorizes the account is state-dependent. In UTXO designs verification needs the spent output's locking data; outputs do not change, so that result can be reused, but whether the output is still unspent is state-dependent",
+            "state-dependent checks: sequence number equal to the account's next, balance covering the largest fee it can incur (and value where the design requires it), fee bid at or above the current minimum price",
+            "conditions decided during execution: anything requiring arbitrary computation, such as what a contract requires of its inputs (not validity in metered designs)"
+          ],
+          "tradeoffs": [
+            "expressiveness of validity vs cost of deciding it: richer validity (account code deciding authorization) lets accounts choose schemes but needs restrictions to stay cheap and stable",
+            "account-code validation restrictions (example: the rules ERC-4337 bundlers apply, ERC-7562): a computation limit, no reading of values that differ between validation and inclusion such as block time or number, and storage access limited to state associated with the account, with exceptions for staked entities throttled by reputation. Effect: one state change invalidates only a bounded set of pending transactions (those whose account's state changed, capped by per-sender limits), not 'none' and not 'cannot'; native account abstraction proposals impose similar limits. Give no specific numbers; Account Abstraction named only",
+            "a fixed set of signature schemes and a few state lookups keep each check bounded, at the cost of flexibility"
+          ],
+          "invariants": [
+            "a validity rule yields the same verdict for the same transaction at the same position under the same rules at every node following the protocol; admission policy has no such requirement",
+            "where an invalid transaction cannot be included, no fee is charged for evaluating it, which is why rejection is unpaid work for the node; designs differ (some charge fees for certain failures detected before execution), so scope the statement. The consequences of invalid vs reverted (record, fee, sequence number) are Transaction Reversion's: name the outcome, do not describe what it records or keeps"
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Argument and causation under conditions: which checks depend on state and therefore what is reused or re-evaluated; why validity is a protocol rule applied alike and policy is not; why the cost of deciding before payment puts some conditions in validity and the rest in execution; and how designs bound that cost. Each step is a reason with a scope (design family, fault of a node, which accounts' code).",
+        "whyProse": "The claims are causal arguments whose truth rests on conditions that vary by design: where a given check falls depends on the design (a signature check is state-independent with fixed keys and state-dependent where keys live in state or account code decides; Bitcoin makes every condition a validity rule), so a comparison of check categories would assert placements that hold only for some designs and lose the conditions in its cells. The stateless/state-dependent split is two categories whose meaning lies in the reasoning about reuse, not in reading across shared dimensions. Validity versus admission policy is a real confusion, but its content is the consequences (differs between nodes, refused yet includable), which a 'A ≠ B' axiom would only name. Nothing here is an ordered process with meaningful branching, a loop, or persistent states.",
+        "level": "Transactions only states that validity is judged more than once; the split of checks, the protocol/policy boundary, the validity/execution line and cost bounding are specific to validating a transaction and belong to no sibling: Lifecycle owns states and returns, Structure owns what fields are for, Execution the steps around the payload, Reversion what the reverted outcome means.",
+        "territory": "Validation owns where the invalid/reverted line is drawn and why; Transaction Reversion owns what each outcome records, costs and keeps (name only). Transaction Admission, Mempool Policies and Mempools are named for the policy side, never explained; Block Validation named for what happens to a block, not how blocks are validated; Signature Verification, Digital Signatures, Account Nonces, Replay Protection named as checks, not explained; Account Abstraction and Denial-of-Service Resistance named with the restriction's purpose only; Transaction Ordering (authored) named for 'position', not explained. Term hazard: 'stateless' here means a check's result does not depend on state, not stateless clients or stateless block validation with witnesses; say so or prefer 'state-independent'.",
+        "placements": "One placement under Transactions; the exposition is written to stand without the parent and holds for the account-based and UTXO designs it names, with each design-dependent statement scoped."
+      },
+      "audit": {
+        "at": "2026-10-23T01:01:31.380Z",
+        "note": "Re-audit (repair cycle 1), scoped; not expanded, since the repair changed wording in two sentences, the admission-policy sentence and cut one redundant sentence, with no change to the argument, assumptions, structure or scope. Finding 1 (A1/B2) resolved: the validity/execution-line sentence now says every check is done before any payment is assured and only a check ending in rejection is unpaid, matching the claims ('validity is decided before anyone has paid'; 'rejecting an invalid transaction is unpaid work'); the next paragraph's 'Bounding that unpaid work' and the reversion sentence's 'rejected the transaction unpaid' still refer correctly. Finding 2 (A2/B1) resolved: holding and relaying is 'decided by its admission policy', and the following sentence says a policy adds a condition of the node's own to the validity checks, so validity is no longer read as playing no part; the refusal sentence is scoped to 'a refusal under such a policy' and inclusion is conditioned on the transaction being valid at its position, matching the claim's 'can still be validly included'. 'governs only what that node keeps and passes on' mirrors the claim's 'decides only what that node holds and relays'. The cut sentence ('The line follows cost, not importance') leaves the paragraph coherent and its 'therefore' still follows from the unpaid-rejection premise. Other uses of 'policy' and 'unpaid' checked: consistent. Overlap: single placement under Transactions; the parent's multi-point premise is still one clause. Territory: Transaction Admission, Mempool Policies, Block Validation, Transaction Reversion, Account Abstraction and Denial-of-Service Resistance named, not explained; the changed text introduces no new concept. Structure: prose, as designed. Accuracy: the four absolutes hold as scoped. Depth: 1328 words, each paragraph tied to a claim; the repair shortened it. Advisory: (1) definition 'includable at its position in the order' fits execute-to-validate designs better than order-without-execute ones, where an invalid transaction is ordered and skipped; (2) the protocol minimum price is mentioned with the state-dependent checks and again with the position-dependent ones; (3) 'evaluates state-dependent and position-dependent checks again against the pre-state at the position': block-context checks are evaluated against the including block, not the pre-state; (4) 'Many designs that allow it restrict validation code' could be 'some' or name the examples; (5) 'what a contract requires of its inputs' sits close to the domain concept Inputs; 'its arguments' would avoid the overlap of senses.",
+        "resolutions": [
+          {
+            "id": "names-concept:8acc650224",
+            "resolution": "Account Abstraction is named as the setting where an account's own code decides validity; only the restriction's purpose (bounding validation cost) is given, as the claim allows; how account abstraction works is not explained."
+          },
+          {
+            "id": "names-concept:c7452b7c57",
+            "resolution": "Block Validation is named as the owner of how a block is checked as a whole; the record says only that a block containing an invalid transaction is rejected in execute-to-validate designs, which is this concept's claim."
+          },
+          {
+            "id": "names-concept:af2968b57b",
+            "resolution": "Denial-of-Service Resistance is named as the owner of the broader defenses; the record explains only why validation cost must be bounded, per its claim."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "'inputs' appears only in the claim's phrase 'what a contract requires of its inputs' (call arguments); the Inputs concept is not explained. Advisory to reword for one sense."
+          },
+          {
+            "id": "names-concept:e0e1669cb8",
+            "resolution": "Mempool Policies is named as the subject of admission policy; the record gives only the policy/validity boundary its claim owns (stricter, node-specific, governs only what the node keeps and relays), with two policy examples taken from the claim."
+          },
+          {
+            "id": "names-concept:a155bbb0d8",
+            "resolution": "Mempool is used only as the place a node holds transactions; nothing about mempool structure or behavior is explained."
+          },
+          {
+            "id": "names-concept:d8b3c5549a",
+            "resolution": "Protocol upgrades appear only as the condition that ends reuse of state-independent results; upgrade mechanics are not explained."
+          },
+          {
+            "id": "names-concept:62f2066d46",
+            "resolution": "Signature schemes appear only as a fixed accepted set with known verification cost (the claim's example) and as something an upgrade can change; no scheme is explained."
+          },
+          {
+            "id": "names-concept:c170b7a09a",
+            "resolution": "Transaction Admission is named as the subject of admission policy; how admission works is not explained."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "Transaction Reversion is named as the owner of what the reverted outcome records and keeps; the record says only that an execution-time failure reverts and is charged to the sender, which is this concept's validity/execution-line claim."
+          },
+          {
+            "id": "absolutes:7c9239c244",
+            "resolution": "Four absolutes checked: 'An output's conditions never change once it is created' holds for UTXO outputs; 'whether the output is still unspent cannot' [be reused] holds; 'In designs where an invalid transaction cannot be included' is a scoping condition; 'an account cannot base its validity on state outside these limits' holds under the restrictions it describes. 'no fee is ever charged for evaluating it' is conditioned on those designs and refers to invalid transactions only."
+          },
+          {
+            "id": "depth-long:78028424ef",
+            "resolution": "1328 words; P1-P3 serve claim 1 (state-independent vs state-dependent checks and reuse), P4-P5 claim 2 (validity vs policy; ordered invalid transactions), P6 claim 3 (validity/execution line), P7 claim 4 (bounding validation cost). The repair cut the one redundant sentence ('The line follows cost, not importance'); no further repetition found that the claims do not need."
+          }
+        ],
+        "recordFingerprint": "867928188dfd822417b00e72a83f33381416bc7e1fe00def1617a08a72997057"
+      }
+    },
+    "transaction-execution": {
+      "model": {
+        "meaning": "Notes: the protocol's processing of one included transaction against the pre-state its position in the block gives it: the steps the protocol applies around whatever code the transaction triggers, and what that processing outputs (a post-state and, in many designs, a per-transaction outcome record). Keep the meaning general (holds for UTXO-style designs too, which have no metered envelope and often no receipts); the envelope is scoped to account-based designs with metered execution in the body.",
+        "kind": "mechanism",
+        "parents": {
+          "transactions": "Parent gives premises: a transaction is the unit of authorization, ordering and atomicity; effects are computed against whatever state exists when it executes; validity can change between admission and execution. Adds: the protocol's own steps around the payload and why they are ordered so; what one execution outputs and why a record is needed beside the state; why the transaction, not a code invocation, is the unit the envelope applies to. Do not re-argue why position matters or restate the authorized-action vs resulting-effect distinction; the post-state chain is the mechanism that gives each transaction its pre-state, stated once without re-teaching position value."
+        },
+        "claims": [
+          "the protocol steps around the code a transaction triggers and why they come in that order, as in many account-based designs with metered execution, such as Ethereum: before the payload runs, the protocol charges or reserves the fee for the transaction's full declared resource limit and advances the sender's sequence number, outside what a failure of the payload can undo, while other designs only check the sender's sequence number and fee coverage beforehand and apply the charge and the sequence-number update in a closing step that a payload failure does not undo; it then runs the payload, a value transfer, a call into code or a contract creation, under that limit; and afterwards, in designs that charge by usage, such as Ethereum, it settles, refunding the unused part of the charge and distributing the fee as the protocol directs, such as to the block producer or by burning part of it, so that the final charge reflects the resources actually used. Gas, Fees, Fee Accounting and Account Nonces are named, not explained; why a reverted transaction keeps the charge and the sequence-number update is Transaction Reversion's",
+          "what executing one transaction produces: the post-state, which becomes the pre-state of the next transaction in the block, and a per-transaction record of the outcome, such as a success or failure status, the resources consumed and the logs emitted, which many designs gather into receipts; and why the record is needed beside the post-state, since in designs that include failed transactions a failed one changes no state beyond its fee charge, its sequence-number update and any other effects the protocol applies outside the payload, yet its inclusion and failure must stay observable to its sender and to anyone reading the chain. Logs, Events and State Roots are named, not explained; committing results so that nodes detect divergence is Deterministic Execution's",
+          "why transaction execution is a different unit from running code: one transaction may run no code at all, as a plain transfer, the code of many contracts through nested calls, or the initialization code a creation runs to produce the code it installs, while the protocol's envelope of charging, sequence-number update, settlement and outcome record applies once per transaction whatever runs inside it; Contract Execution owns one invocation of a contract's code and Execution Context what that code can read"
+        ],
+        "excludes": [
+          "gas",
+          "fees",
+          "fee-accounting",
+          "metering",
+          "resource-limits",
+          "account-nonces",
+          "transaction-fees",
+          "contract-execution",
+          "execution-context",
+          "message-calls",
+          "contract-calls",
+          "contract-deployment",
+          "evm",
+          "logs",
+          "events",
+          "state-roots",
+          "execution-receipts",
+          "block-validation",
+          "deterministic-execution",
+          "transaction-ordering",
+          "transaction-validation",
+          "transaction-atomicity",
+          "transaction-reversion"
+        ],
+        "placements": {
+          "transaction-execution": "Single L2 leaf placement under Transactions; no children, nothing beneath it. The exposition must stand alone and contain no positional references to siblings ('below', 'the next topic')."
+        },
+        "fields": {
+          "sequence": [
+            "Scope first: the envelope described is that of account-based designs with metered execution, per-account sequence numbers and inclusion of failed transactions; say so, and do not present it as how every chain processes transactions. Within that scope the order of the protocol's own steps differs between designs (next item).",
+            "In many such designs, such as Ethereum, up front, before any payload code: charge (or reserve) the fee for the full declared resource limit at the price the protocol settles at, and advance the sender's sequence number. Other designs in the scope only check the sender's sequence number and fee coverage beforehand and apply the charge and the sequence-number update in a closing step after the payload; one conditioned sentence, naming no system unless sure. Either way both sit outside the part a payload failure undoes. Ethereum detail if used: the debit for the gas limit is limit x effective price, not limit x the sender's maximum price; checking that the balance covers the maximum is Transaction Validation's, not a step here.",
+            "Why charging comes first, in the designs that charge up front: the worst-case charge is known from the declared limit, and securing it before code runs keeps the payload from spending the balance that must pay for its own execution. Do not present this order or its reason as necessary for every design in scope. Reason is about ordering, not about why the charge survives a failure (Transaction Reversion's).",
+            "Sequence-number update: say only that it is applied outside the undoable part (up front in designs such as Ethereum, in the closing step in others), so it holds whatever the payload does. Why it must survive a failure (replay) is Transaction Reversion's; how account nonces work is Account Nonces' (named).",
+            "Payload: one of a value transfer, a call into code, or a contract creation, run under the declared limit; running out of the limit stops it (Metering/Gas named, not explained). The value moved belongs to the payload and is undone with it on failure; do not lump it with the fee charge.",
+            "Settlement after the payload: in designs that charge by usage it needs usage, which is known only when the payload ends; that is the reason it comes last. Where the full limit was charged up front (Ethereum), it refunds the unused part of that charge and distributes the fee as the protocol directs (for example, in Ethereum since EIP-1559, the base-fee part of the charge for gas used is burned and the priority part goes to the block's fee recipient).",
+            "'Resources actually used' means used as the metering rules count them: the rules can consume the whole remaining allowance on some failures (Transaction Reversion's) and can reduce the charge by capped refunds (Ethereum caps storage-clearing refunds). Do not say the charge equals the computation performed. Not every metered design refunds: Monad, for example, charges by the gas limit; keep refund-on-settlement scoped to designs that settle on usage (see claim-accuracy note).",
+            "Outputs last: the post-state, and the per-transaction outcome record."
+          ],
+          "actors": [
+            "Every executing node applies the same steps identically (that results must match across nodes is Deterministic Execution's; name only).",
+            "Sender: pays the charge, has its sequence number advanced. Fee recipient / block producer: receives the distributed part. Contracts whose code runs: act inside the payload only.",
+            "In designs that separate the fee payer from the sender (Transaction Structure's), the charge falls on the payer; do not assume sender = payer as a universal."
+          ],
+          "inputs": [
+            "The transaction (its limit, price terms, sequence number, target, value, payload) and the pre-state: the post-state of the previous transaction in the block's order, or for the first, the state the block starts from (which can include block-level steps applied before transactions in some designs; do not claim it is simply the previous block's final state)."
+          ],
+          "outputs": [
+            "Post-state, which is the pre-state of the next transaction in the block's order. In designs that execute transactions in parallel, the result must still equal this sequential chaining (Parallel Execution named only, if at all). The last transaction's post-state need not be the block's final state where block-level steps follow (e.g. Ethereum withdrawals); do not claim it is.",
+            "Per-transaction outcome record, such as status, resources consumed and logs; many designs gather these into receipts (Execution Receipts, Logs, Events named only). Ethereum details if used: receipts carry cumulative gas used in the block, so one transaction's consumption is a difference; pre-Byzantium receipts carried an intermediate state root instead of a status. Keep the list as 'such as'.",
+            "Why the record is needed beside the post-state: in designs that include failed transactions, a failed one leaves almost no trace in state (its fee charge and sequence-number update, plus any other effects the protocol applies outside the payload), so state alone does not show that it was included and failed; the record keeps that observable to the sender and to anyone reading the chain. Committing to records or states (State Roots) and detecting divergence are named only."
+          ],
+          "assumptions": [
+            "Account-based state with per-account sequence numbers, metered execution with a declared limit, and inclusion of failed transactions. Without these (e.g. UTXO designs where any failing condition makes a transaction invalid), the envelope and the failed-transaction record do not apply as described; say so as scope, do not explain those designs.",
+            "The transaction already passed validity at its position (Transaction Validation's); execution here starts from a valid, included transaction. An invalid one is not executed into the block at all; do not describe that path."
+          ],
+          "failures": [
+            "Payload failure: the payload's effects are undone and the envelope still runs (charge stands, sequence number stays advanced, settlement and record happen). Name Transaction Reversion and Transaction Atomicity for what is undone and why the rest survives; do not explain either.",
+            "Up-front steps are not all-inclusive: some designs apply further effects before the payload that a payload failure also does not undo (Ethereum's EIP-7702 authorizations, for example). Avoid wording that makes charge + sequence number the only state a failed transaction changes."
+          ],
+          "invariants": [
+            "The envelope (charge, sequence-number update, settlement, outcome record) applies once per transaction, whatever and however much code runs inside, including none.",
+            "In designs that charge the full limit up front and settle on usage, the final charge never exceeds the up-front charge; the refund is what makes them differ.",
+            "Nonce increments that happen inside the payload (e.g. a contract's nonce when it creates another contract) are payload effects, not the envelope's sequence-number update; do not conflate."
+          ],
+          "variants": [
+            "Payload kinds: plain value transfer to an account with no code (runs no code; a transfer to an account that has code, or delegates to code, runs that code); a call into code, which may nest calls into many contracts (Contract Calls, Message Calls named); a contract creation, which runs initialization code whose output becomes the installed code. The installed code is not what the creation runs (see claim-accuracy note).",
+            "Unit distinction: Contract Execution owns one invocation of a contract's code (entry, what it draws on, how it ends); Execution Context owns what that code can read. This concept owns only the per-transaction envelope and outputs; name both, explain neither."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A process: fixed protocol steps in a meaningful order (charge and sequence-number update, then the payload, then settlement, then the outputs) bracketing a payload that takes one of three forms and converges back into the same settlement and record. The order is what the first claim asks about, and the convergence of very different payloads into one envelope is the third claim's point.",
+        "structures": [
+          {
+            "structure": "process",
+            "purpose": "A flow of the per-transaction envelope: up-front charge and sequence-number update, then a parallel set of the payload kinds (value transfer, call into code that may nest further calls, contract creation running initialization code), converging into settlement (refund of the unused part, fee distribution), then the outputs (post-state and outcome record). Shows the order and that every payload kind passes through the same steps before and after.",
+            "whyNotProse": "The prose must spend its sentences on why each step sits where it does and why the record is needed; the bracket shape, fixed steps before and after, a branching payload in between, converging again, is spatial and is what the reader needs to hold. In prose the convergence of three payload kinds into one settlement disperses across sentences, and the envelope-per-transaction point reads as an assertion rather than a shape."
+          }
+        ],
+        "division": "The prose states the scope (account-based, metered designs), explains why charging precedes the payload and settlement follows it, what 'used' means under metering, what the post-state chain and the outcome record are and why the record is needed, and why the transaction is a different unit from a code invocation. The flow shows only the order and the branching-converging shape, with short stage labels; it must not carry reasons or conditions, and the prose must not re-list the stages as a sequence the flow already shows.",
+        "level": "The envelope and per-transaction outputs exist only at the transaction unit. The parent (Transactions) states what a transaction is and why its three boundaries coincide, not how the protocol processes one; Contract Execution covers one code invocation, which sits inside the payload stage only. So the process belongs here.",
+        "territory": "The flow names the payload kinds and settlement as stages without explaining calls, creation, metering, fees or nonces (Contract Calls, Message Calls, Contract Deployment, Gas, Metering, Fees, Fee Accounting, Account Nonces named only). It draws no failure branch: what is undone and what survives a failure belong to Transaction Atomicity and Transaction Reversion; the inclusion and lifecycle states are Transaction Lifecycle's; validity checks before execution are Transaction Validation's and appear in no stage. Divergence detection is Deterministic Execution's.",
+        "placements": "One leaf placement under Transactions; the flow and prose are self-contained, scoped explicitly to account-based designs with metered execution, and reference no sibling's position."
+      },
+      "audit": {
+        "at": "2026-10-23T01:15:22.949Z",
+        "note": "Re-audit (repair cycle 1), expanded into a complete audit because the repair changed the argument: the up-front order and its reason are now scoped. Finding resolved: the scope paragraph keeps only the bracket for the whole class (true for Ethereum-type designs and for designs such as Aptos, whose prologue checks before and epilogue applies after); the up-front charge and sequence-number advance are scoped to 'many designs within that scope, such as Ethereum'; the reason for charging first is scoped to 'these designs' (those that charge up front), with the reservation variant conditioned; a conditioned sentence covers designs that check sequence number and fee coverage before and charge and advance in a closing step; 'Either way' states only what holds for both (outside the undoable part). Settlement's 'never exceeds' and 'whole difference' are kept to designs that charged the full limit up front; the closing envelope sentence says 'charge'; flow title is Ethereum and its labels carry no conditions; model sequence and invariants fields match. Accuracy checked sentence by sentence: Ethereum's debit is gas limit times effective price; nonce advance sits outside the payload's snapshot (including creation); EIP-1559 burn/priority split for gas used; storage-clearing refunds lower the count; EIP-7702 delegations applied before and kept on failure; block-level steps before (system calls) and after (withdrawals); creation installs init code's output, which does not run; CREATE's contract nonce is a payload effect; non-refunding metered designs exist. Overlap: single placement under Transactions; no parent sentence restated except the carried-over post-state clause (advisory). Territory: Gas, Fees, Account Nonces, Metering, Fee Accounting, Logs, Events, State Roots, EVM, Contract Execution, Execution Context, Deterministic Execution, Transaction Validation, Transaction Atomicity and Transaction Reversion named, not explained; why the charge and number survive a revert left to Transaction Reversion; what is undone left to Transaction Atomicity; no lifecycle states. Structure: the designed process flow (bracket, three payload kinds converging, settlement, outputs) is written as designed; prose gives reasons and does not re-list stages. Canonical: no positional or time-sensitive words; American English. Depth follows the three claims; no repeated point after the repair dropped 'runs in full when the payload fails'. Advisory: (1) 'Either way' and the two-way contrast read as exhaustive, while hybrids exist (Starknet advances the nonce before execution and transfers the fee after); the conclusion still holds, and the model's sequence field carries the same two-way framing. (2) 'only check before the payload that the sender's sequence number is the expected one and that the payer can cover the maximum fee': 'only' contrasts with charging, but such prologues check more (expiry, chain identifier, authentication), and these checks are the validity checks at the position, which sits slightly awkwardly beside 'Execution starts from a transaction that met the validity rules'; 'check rather than apply' would be exact. (3) 'not always limited to these two': settlement is also a protocol step outside the payload; 'these two up-front effects' would be exact. (4) 'which is how each transaction comes to execute against what everything ordered before it left' closely paraphrases the parent's premise. (5) 'refund' in two senses: settlement refund and 'capped refunds for clearing storage' (a reduction of the counted usage). (6) The reservation variant is given without an example design; harmless as a conditional.",
+        "resolutions": [
+          {
+            "id": "names-concept:d4ea82abfe",
+            "resolution": "Account Nonces named once as owning how sequence numbers are used; the record says only where the sequence-number update sits relative to the payload (a claim of this concept) and that an in-payload contract nonce change is a payload effect; nonce semantics not explained."
+          },
+          {
+            "id": "names-concept:6ad1315fe2",
+            "resolution": "Contract Execution named in the closing paragraph to draw the unit boundary (one invocation of a contract's code); how an invocation enters, runs and ends is not explained."
+          },
+          {
+            "id": "names-concept:6bd1f3b071",
+            "resolution": "Deterministic Execution named as owning committing to results so nodes detect divergence; no determinism argument in the record."
+          },
+          {
+            "id": "names-concept:352cb4f8d3",
+            "resolution": "Events named with Logs as covering outputs that do not enter state; not explained."
+          },
+          {
+            "id": "names-concept:ed0d2d3661",
+            "resolution": "EVM appears only as an example label ('the EVM's logs'); nothing about the machine is explained."
+          },
+          {
+            "id": "names-concept:3a8c48e348",
+            "resolution": "Execution Context named as owning what code can read; not explained."
+          },
+          {
+            "id": "names-concept:471df369ab",
+            "resolution": "Fee Accounting named as owning how the charge is divided and recorded; the record gives only Ethereum's burn/priority split as one example of distribution, within claim 1's 'distributing the fee as the protocol directs'."
+          },
+          {
+            "id": "names-concept:65344a1da9",
+            "resolution": "Fees named with Gas as owning how resources are priced; 'fee' is used only for the charge the envelope applies; pricing and fee markets not explained."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "Gas named as owning pricing; 'gas limit' and 'gas used' appear only as Ethereum's names for the declared limit and the usage; gas costs not explained."
+          },
+          {
+            "id": "names-concept:78e97560cc",
+            "resolution": "Logs named ('which Logs and Events cover') as an output outside state that the record carries; not explained."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "Metering named: exhausting the limit stops the payload 'by the rules of Metering'; the record says only that the settled usage is the metering count, which can differ from work performed (claim 1's 'resources actually used'); how metering counts is not explained."
+          },
+          {
+            "id": "names-concept:3a406f1cc7",
+            "resolution": "Resource limits appear as the transaction's declared limit; the record uses only that the limit bounds consumption, which is the reason the worst case can be charged first; how limits are set or enforced is not explained."
+          },
+          {
+            "id": "names-concept:494c5caa00",
+            "resolution": "State Roots named as owning how designs commit to states and records; not explained."
+          },
+          {
+            "id": "names-concept:523a1b1507",
+            "resolution": "Transaction Atomicity named as owning what is undone and how; the record says only that the payload's transfer is undone with the payload's effects, a boundary between payload and fee."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "Transaction Reversion named as owning why a reverted transaction keeps the charge and number and why some failures consume all remaining allowance; the record states where they sit, not why they survive; the record-needed argument is this concept's claim 2."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "Transaction Validation named as deciding validity at the position; the pre-payload sequence-number and fee-coverage checks of Aptos-type designs are mentioned only as where those designs place the charge and update, within claim 1; how validation works is not explained."
+          }
+        ],
+        "recordFingerprint": "00433341802aa496895f52f5adab96dc812c0e86fb9f5140650ca775e135d9ae"
+      }
+    },
+    "transaction-atomicity": {
+      "model": {
+        "meaning": "The property that the state changes made by executing a transaction's payload, across every call it makes, take effect on the executing state machine together or not at all, with designs differing in what they keep outside that unit and in whether a caller can confine a callee's failure to the callee.",
+        "kind": "property",
+        "parents": {
+          "transactions": "Parent already says the transaction is the unit of atomicity (effects applied together or not at all) and that a transaction may revert past a bound; start beyond that, do not restate it. Adds: what exactly the unit covers (nested calls, which kinds of change) and what sits outside it; how execution environments implement it (journal vs buffered working copy, per-call checkpoints where needed); where designs narrow it to one call (handled callee failures) and what that does to the meaning of a success status; what it does not give (isolation from code the transaction calls) and where its scope ends (one transaction, one state machine)."
+        },
+        "claims": [
+          "what the all-or-nothing unit covers inside one transaction: the state changes made by every call it makes, nested to any depth, including value transfers, storage writes, contracts created and, in designs such as the EVM, emitted logs; and what designs that keep a failed transaction's fee and sequence-number update place outside the unit, so that it is narrower than everything the transaction's processing changes. Why those survive a failure is Transaction Reversion's",
+          "how execution environments provide the unit on one state machine: recording each change in a journal so that it can be undone on failure, or buffering changes in a working copy that is applied only on success; the trade-off between them, such as cheap reads against the live state versus cheap discards; and why designs that let a caller continue after a callee fails need nested checkpoints, one per call, while designs in which any failure aborts the transaction need only one, so that a failure can be undone back to the point where the failing call began",
+          "where the unit is narrowed: in designs that let a caller handle a callee's failure, such as the EVM, a caller that handles it instead of propagating it keeps its own changes while the callee's are undone, so all-or-nothing holds per call, and the transaction as a whole is all-or-nothing only along paths where failures propagate; and why a successful status therefore does not show that every action the transaction attempted took effect. Contract Calls and Unchecked External Calls are named, not explained",
+          "what atomicity does not provide and where its scope ends: it does not hide a transaction's intermediate states from code the transaction itself calls, which can observe and act on them before the transaction finishes, so all-or-nothing is not isolation within a transaction; and it covers one transaction on one state machine, while all-or-nothing across several transactions, as with bundles, or across chains is provided, where it is, by other mechanisms. Reentrancy, Bundle Atomicity and Atomicity Guarantees are named, not explained"
+        ],
+        "excludes": [
+          "transaction-reversion",
+          "transaction-execution",
+          "atomicity-guarantees",
+          "atomic-state-transitions",
+          "cross-domain-atomicity",
+          "bundle-atomicity",
+          "atomic-composability",
+          "contract-calls",
+          "message-calls",
+          "unchecked-external-calls",
+          "reentrancy",
+          "evm",
+          "execution-failure-handling",
+          "partial-execution",
+          "parallel-execution",
+          "sequential-execution",
+          "logs",
+          "fees",
+          "account-nonces"
+        ],
+        "placements": {
+          "transaction-atomicity": "Single placement, under Transactions in Computation & Execution. Write for any transaction-executing state machine; mark design-specific facts with the design (EVM, Move-based chains, Solana, Cosmos SDK) rather than presenting EVM behavior as universal."
+        },
+        "fields": {
+          "statement": [
+            "Unit = the state changes made while executing the transaction's payload, across every call it makes however deep the nesting goes. Do not write 'unbounded depth': some designs bound call depth (the EVM at 1024 frames).",
+            "Kinds of change in the unit: value/balance transfers, storage writes, contracts created (the account and its installed code). Logs only with a design attached: in the EVM, logs of a failed frame are discarded with it; some designs keep diagnostic log output of failed transactions (Solana returns program logs for failed transactions), so do not write that logs are always undone. Plan wording 'where a design records them' is flagged as imprecise; condition it on the design, e.g. 'in designs such as the EVM'.",
+            "Outside the unit, in designs that include failed transactions (e.g. Ethereum, Solana): the fee charge, the sequence-number update where the design has one, and the record of the failure. So the unit is narrower than everything the transaction's processing changes. Name only that these survive; why they survive is Transaction Reversion's.",
+            "Scope: one transaction on one state machine. Not several transactions (bundles: Bundle Atomicity, name only), not across chains (Atomicity Guarantees, name only). Do not say such cross-transaction or cross-chain atomicity is impossible; say it is provided, where it is, by other mechanisms."
+          ],
+          "establishedBy": [
+            "Journal (undo log): changes are written to the executing state as they happen, each recorded with what it replaced; a checkpoint is a position in the journal; on failure entries are undone in reverse order back to it. Many EVM clients work this way (e.g. go-ethereum's state journal, revm's journaled state). 'Live state' here means the in-memory state the execution reads, not the persisted database; clients also keep the block's changes in memory before committing them, so do not imply each write hits disk.",
+            "Buffered working copy (overlay, cache branch): writes go to a layer over the pre-state; on success the layer is merged into its parent (or the post-state); on failure it is dropped. Examples, hedged with 'for example': Cosmos SDK cache-wrapped stores, branched per transaction; Solana applies a transaction's account changes only if it succeeds, apart from the fee payer's charge.",
+            "Trade-off (the claim says 'such as', keep it hedged): journal = reads and commit are cheap, discarding costs work proportional to the changes undone; buffer = discarding is dropping a layer, but reads must look through the layers (cost grows with nesting unless flattened) and success needs a merge. Real clients can combine both; present two approaches, not a partition of every implementation, and never say a named client uses 'only' one.",
+            "Nested checkpoints: per-call checkpoints are needed only where a caller can continue after its callee fails (the EVM); there a journal position or a buffer layer per call lets the failing call's changes, including those of its already-successful descendants, be undone back to where it began. Where any failure aborts the whole transaction, one transaction-level checkpoint suffices. The plan claim's 'why either needs nested checkpoints, one per call' is flagged as an overclaim; write the condition.",
+            "Nesting consequence: a callee's success merges its changes into its caller's pending changes, not into final state; they are still undone if any ancestor frame fails. Only the top frame's success commits to the post-state."
+          ],
+          "confusions": [
+            "All-or-nothing is not isolation: code the transaction calls (including a contract re-entered mid-call) reads the transaction's uncommitted writes and can act on them before the transaction ends. Reentrancy named only; no attack walkthrough. Between transactions, whether others see intermediate state is a matter of the execution model (sequential execution, or parallel designs that preserve a serial order): Sequential Execution and Parallel Execution are excluded, so at most name them, do not claim more.",
+            "A successful status is not proof every attempted action took effect: where callers may handle callee failures, the top frame can succeed after inner calls failed and were undone. Unchecked External Calls named only (a low-level call whose failure flag is ignored).",
+            "Atomic does not mean a failed transaction changes nothing: in designs that include failed transactions the fee, sequence-number update and failure record remain (point to Reversion for why).",
+            "Not the same as Bundle Atomicity, Atomicity Guarantees (cross-chain), Atomic Composability, or Atomic State Transitions (State & Data): name for boundary only, explain none. Do not drift into finality or reorganizations (an applied transaction can still be removed by a reorg); that is not in the claims."
+          ],
+          "invariants": [
+            "Per call frame, on designs with catchable failures: when a frame ends, either all changes made in it and in its successfully completed descendants become part of its caller's pending changes, or none do. The transaction's payload changes reach the post-state only if the top frame succeeds.",
+            "Every node must undo exactly the same changes, or nodes diverge; undo is part of the consensus-critical execution rules, not a client choice. State this only if needed; do not explain Deterministic Execution."
+          ],
+          "variants": [
+            "Catchable callee failure (the EVM): a failed call returns a failure indication to its caller, whose frame continues with its own earlier changes intact. The caller can propagate (revert in turn) or handle it. Solidity's high-level calls propagate by default; low-level calls return a status the code must check. Contract Calls named only; do not explain the call model.",
+            "Abort-whole-transaction (for example Move-based chains such as Aptos and Sui, where an abort ends the transaction and cannot be caught; Solana, where a failed cross-program invocation fails the transaction): the unit is not narrowed, and all-or-nothing holds for the transaction as a whole. Use 'for example' and do not claim these are the only such designs.",
+            "Wording pitfall for claim 3: 'all-or-nothing holds per call' applies to designs in the first variant; the plan claim states it without the platform condition (flagged). 'All-or-nothing only along paths where failures propagate' means: the whole transaction is all-or-nothing with respect to failures that propagate to the top frame; a handled failure leaves a partly effective transaction."
+          ],
+          "tradeoffs": [
+            "Journal vs buffer: cheap reads and commits vs cheap discards (see establishedBy).",
+            "Catchable vs abort-all is a consequence to state, not a design argument to build: catchable failures let a caller recover or try an alternative but narrow the guarantee to one call and make an ignored failure a bug class; abort-all keeps the whole-transaction guarantee but gives the caller no recovery. Keep it to that; motives beyond the claims are out of scope."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A property defined by its boundary: what the unit covers and excludes, how it is enforced by nested checkpoints, where designs narrow it to one call, and one guarantee it is commonly mistaken for (isolation).",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Separate all-or-nothing (which effects land) from isolation (who can observe effects before the transaction ends): All-or-nothing ≠ Isolation.",
+            "whyNotProse": "Readers bring the database sense of a transaction, where atomicity and isolation arrive together, and read 'atomic' as 'invisible until done'. That specific conflation is the one this concept must undo, and marking it as a conflation names it as the reading to drop; the paragraph supplies why callees can see the transaction's uncommitted writes."
+          }
+        ],
+        "division": "Prose carries every claim: the unit's coverage and what designs keep outside it, the journal and buffer approaches with their trade-off and when per-call checkpoints are needed, narrowing by handled failures and its effect on a success status, and the scope limit. The distinction only marks the two guarantees as different; the prose explains that code called by the transaction can observe and act on its intermediate state, and the distinction must not restate that reasoning.",
+        "level": "The parent states only that the transaction's effects are applied together or not at all; how far that unit reaches into nested calls, how it is implemented, where it narrows and that it is not isolation are this concept's, at the leaf below Transactions. Cross-transaction and cross-chain atomicity belong to other concepts and are named only.",
+        "territory": "Draws no sibling's relationship: Transaction Reversion owns triggers, what survives a failure and why, and revert data; this concept only places the fee, sequence-number update and record outside the unit. Transaction Execution owns the protocol envelope around the payload. Reentrancy, Contract Calls, Unchecked External Calls, Bundle Atomicity and Atomicity Guarantees are named, never explained. The distinction concerns atomicity's own scope, not reentrancy's mechanism.",
+        "placements": "One placement, under Transactions; the design holds wherever the concept opens because it is stated per design (EVM, Move-based chains, Solana, Cosmos SDK) rather than as one machine's behavior."
+      },
+      "audit": {
+        "at": "2026-10-23T01:24:47.819Z",
+        "note": "Re-audit (repair cycle 1), scoped to finding B1 of findings/transaction-atomicity-b.md and the changed text; not expanded, because the repair narrowed two wordings toward what paragraphs 2, 3 and 6 already state and changed no argument, assumption, structure or scope. B1 resolved: paragraph 7 now says the calls and writes of code the transaction calls 'stand or are undone with the calls that enclose them', which holds in designs with catchable failures (paragraph 2's 'a call's changes stay provisional until every call enclosing it has succeeded', paragraph 6's per-call narrowing and status sentence) and in abort-all designs (any failure undoes all of them); the summary no longer contradicts the conditioned sentences. Definition change checked against every paragraph: 'the state changes made by executing a transaction's payload' matches paragraph 2 ('The unit is drawn around the payload'), paragraph 3 (fee charge, sequence-number update and failure record applied outside the payload; 'none of its payload's changes remain') and Transaction Execution's sense of execution as including the envelope, so the earlier overreach is gone; the second definition sentence ('Designs differ in what they keep outside that all-or-nothing unit') still reads correctly against the payload-scoped unit. Other uses of the changed terms ('unit', 'payload', 'stand') re-read in paragraphs 2, 3, 5, 6 and 7: consistent. The model meaning carries the same corrected wording. Overlap per placement: one placement (Transactions); the changed sentences restate none of the parent's sentences. Territory and splits unchanged: the new wording names no further concept; Transaction Reversion and Transaction Execution still only named; Reentrancy still named without an attack walkthrough. Structure unchanged (prose plus the All-or-nothing vs Isolation distinction, as designed). Canonical validity: no positional or dated words; American English; plain text. Depth unchanged. Advisory: (1) the definition's 'across every call it makes, take effect ... together or not at all' holds per call only where failures are catchable; its second sentence qualifies it explicitly, so no contradiction (carried over from the first audits). (2) Paragraph 2's 'which in the EVM is 1024 call frames' counts frames where the EVM record says 'at most 1024 deep' (the top frame plus 1024 nested); matching the EVM record's wording would be exact (model carries the same). (3) Paragraph 2's opening 'The unit is drawn around the payload' now partly repeats the definition's 'executing a transaction's payload'; minor redundancy. (4) Paragraph 7's last sentence reaches slightly past claim 4's 'within a transaction' when attributing inter-transaction isolation to execution order; it stays at naming.",
+        "resolutions": [
+          {
+            "id": "names-concept:f2c5a223a0",
+            "resolution": "Atomicity Guarantees is named once in the last paragraph as covering all-or-nothing across chains; nothing about its mechanisms is explained. Unchanged by the repair."
+          },
+          {
+            "id": "names-concept:3b73477022",
+            "resolution": "Bundle Atomicity is named once ('as with bundles') to place multi-transaction all-or-nothing outside the scope; no bundle mechanism is explained. Unchanged by the repair."
+          },
+          {
+            "id": "names-concept:aec9ec5485",
+            "resolution": "Contract Calls is named as owning how calls report and pass on failures; the record states only the consequence of a handled failure for the unit, not the call model."
+          },
+          {
+            "id": "names-concept:ed0d2d3661",
+            "resolution": "The EVM is used as an example design (logs discarded with a failed call, depth bound, catchable callee failures, receipt status); frames, call kinds and the depth rule are not explained."
+          },
+          {
+            "id": "names-concept:97142102b8",
+            "resolution": "'Execution environments' is generic subject wording in paragraph 4 (claim 2's wording); the concept is not explained."
+          },
+          {
+            "id": "names-concept:78e97560cc",
+            "resolution": "Logs are named only to say that in designs such as the EVM they are discarded with the call that emitted them (claim 1); what logs are is not explained."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "Parallel Execution is named once, with Sequential Execution, as the subject owning why other transactions do not see intermediate states; its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:1d880b9d9f",
+            "resolution": "Reentrancy is named as the attacks that exploit callees seeing uncommitted changes; the repaired paragraph 7 clause adds no attack sequence or defense."
+          },
+          {
+            "id": "names-concept:7b5f0892ff",
+            "resolution": "Sequential Execution is named once as owning the execution-order reason other transactions do not see intermediate states; not explained."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "'State machine' is plain scope wording (the executing state machine in the definition, one state machine in the last paragraph); not explained."
+          },
+          {
+            "id": "names-concept:653f1d76ff",
+            "resolution": "Transaction Execution is named as owning where the protocol applies the fee charge and sequence-number update; the payload-scoped definition now matches its broader sense of execution, and the envelope's steps are not explained."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "Transaction Reversion is named as owning why the fee, sequence-number update and failure record survive; no triggers, revert data or reasons are given."
+          },
+          {
+            "id": "names-concept:5e21e85710",
+            "resolution": "Unchecked External Calls is named as the defect in which a failure is handled unintentionally; the low-level call pattern is not explained."
+          },
+          {
+            "id": "absolutes:b103925db3",
+            "resolution": "The four uses are 'Catchable failures narrow the guarantee', 'keep the guarantee for the transaction as a whole' (conditioned on designs in which any failure aborts the transaction), 'The guarantee also stops at the edge of one transaction' (a scope limit), and the name Atomicity Guarantees; none is an unconditional claim, and the repair added none."
+          }
+        ],
+        "recordFingerprint": "aa853b590cbbd80ada9af8cfcd0774757c8a587163184ab60cee7dddfe9ee3b2"
+      }
+    },
+    "transaction-reversion": {
+      "model": {
+        "meaning": "Note: the failure path of an included transaction whose execution fails: the effects its payload produced are discarded, and, in designs that include failed transactions, it stays in the chain recorded as failed, with the fee charged for the attempt and the protocol's own updates (such as the sequence-number update) kept. Scope is one transaction's failure on one state machine; not chain rollbacks or reorganizations (excluded), not validity (Validation).",
+        "kind": "mechanism",
+        "parents": {
+          "transactions": "Premises not to re-teach: the all-or-nothing boundary; that reversion rolls back state changes while some systems still include the transaction with fees or nonce updates applied (domain text); that a transaction can carry bounds, such as a minimum acceptable price, beyond which it should revert. Adds: which triggers end execution and how they differ in cost; exactly what is discarded and what survives, and WHY each survivor survives; how the reason is reported and where it is (not) kept; reverting as a deliberate tool with its price and limits; the consequences that separate a reverted transaction from an invalid one."
+        },
+        "claims": [
+          "what triggers a revert and how the triggers differ in what the failure costs: an explicit revert by the running code, a failed check, running out of metered resources, or an invalid operation; and why, in the EVM for example, an explicit revert returns the unused part of the failing call's resource allowance while an exceptional halt consumes all of it, so the trigger decides how much of the failing call's allowance, and so of the sender's fee, a failure consumes. Gas and Metering are named, not explained",
+          "what reversion undoes and what survives it in designs that include failed transactions: state changes and emitted logs are discarded, while the fee charged for the attempt, the sequence-number update, in designs that use sequence numbers, and a record of the failure remain; and why each survives: an uncharged failure would let a sender impose execution work on every node at no cost, a sequence number left unspent would let the same signed transaction be executed again, and the record lets the sender and others see that it was included and failed",
+          "how a failure is reported and used: revert data returned to the caller, such as an error identifier with arguments, which a calling contract can decode, handle or pass upward, while in some designs, such as the EVM's receipts, it is not kept in the transaction's record, so an outside observer recovers the reason by re-executing the transaction; and reverting as an enforcement tool, code that checks a condition such as an access right or a minimum acceptable result and reverts when it fails, so effects that depended on it never land where the failure propagates, at the price of the fee for the attempt and with protection only for the conditions the code checks",
+          "the difference between an invalid transaction and a reverted one in their consequences: in designs that validate blocks by executing them, an invalid transaction cannot be included, so it leaves no record, costs its sender nothing and leaves its sequence number free, while a reverted one is included, recorded as failed, charged and consumes its sequence number; and why designs that make every condition a validity rule, as Bitcoin does with its scripts, have no reverted outcome at all, since a failing condition makes the transaction invalid. Transaction Validation owns where the line between the two is drawn"
+        ],
+        "excludes": [
+          "transaction-validation",
+          "transaction-atomicity",
+          "transaction-execution",
+          "gas",
+          "metering",
+          "fees",
+          "fee-accounting",
+          "account-nonces",
+          "replay-protection",
+          "execution-failure-handling",
+          "execution-failures",
+          "contract-calls",
+          "message-calls",
+          "evm",
+          "rollbacks",
+          "reorganizations",
+          "logs",
+          "events",
+          "transaction-simulation",
+          "denial-of-service-resistance",
+          "invalid-transitions"
+        ],
+        "placements": {
+          "transaction-reversion": "Single L2 placement (Computation & Execution / Transactions / Transaction Reversion), leaf. Stand without the parent: say once what 'reverted' means (included, executed, failed) before building on it. Every EVM-specific statement carries 'in the EVM' or 'such as'; general statements are scoped to 'designs that include failed transactions' or 'designs that validate blocks by executing them'."
+        },
+        "fields": {
+          "sequence": [
+            "Transaction-level path only (message-calls owns how a callee's failure is reported inside a call; atomicity owns how changes are undone and the per-call narrowing): execution hits a trigger, the failing frame's changes are discarded, the failure propagates to the top (or is handled by a caller: name atomicity, do not explain), the transaction ends with a failed outcome, the fee charged for the attempt and, in designs that use sequence numbers, the sequence-number update stand, a failure record is kept.",
+            "The charge and sequence-number update are applied outside the payload before it runs (transaction-execution's ordering, name only); reversion's angle is why they are kept, not when they are applied."
+          ],
+          "actors": [
+            "Running code: reverts explicitly when its own condition fails.",
+            "The execution environment: halts exceptionally (out of metered resources, invalid operation).",
+            "Calling contract: receives revert data; decodes, handles or passes it upward (name only at that depth: message-calls owns the call-level report).",
+            "Sender: pays for the failed attempt; learns the outcome from the record.",
+            "Outside observers (wallets, explorers, indexers): see inclusion and failure from the record; recover the reason by re-executing."
+          ],
+          "inputs": [
+            "Triggers. Two cost classes in the EVM: explicit revert (REVERT opcode; leftover allowance of the failing call returned to its caller, and at top level the unused part is not charged) vs exceptional halt (out of gas, invalid opcode, and other invalid operations such as a bad jump or a state change in a read-only context; the failing call's whole allowance is consumed).",
+            "Pitfall: the four named triggers are not four cost classes. 'Failed check' is not its own class: a check in the code usually ends in an explicit revert (Solidity's require and custom errors, and since Solidity 0.8 also assert and arithmetic panics), while older compilers' assert used an invalid opcode and so consumed everything. Running out of resources is itself an exceptional halt. Cost follows the halt type, not the reason.",
+            "Pitfall: 'consumes all of it' applies to the failing call's allowance. That equals the sender's whole declared limit only when the top-level call halts; a nested call is given at most part of the caller's remaining allowance (in the EVM, all but one 64th). Do not say an exceptional halt always charges the full limit. Avoid 'burn' for this: fee burning is a different thing (transaction-execution names it).",
+            "Explicit revert still charges for everything executed up to the revert."
+          ],
+          "outputs": [
+            "Discarded: the payload's state changes (storage writes, value transfers, contracts created) and the logs it emitted, in designs such as the EVM where logs are part of the reverted effects.",
+            "Kept, in designs that include failed transactions: the fee charged for the attempt (in designs that charge by usage, such as Ethereum, the charge for the resources consumed; not every design charges by consumption, e.g. Solana and Cosmos SDK chains by default); the sequence-number update in designs that use sequence numbers (designs without them keep the equivalent mark of use, e.g. Solana records the transaction's signature and rejects a repeat while the transaction's recent blockhash is still accepted); a record of the outcome with failed status. Do not say these are the only survivors: some formats apply other effects outside the payload that also stand (e.g. EIP-7702 delegations set before execution).",
+            "Why the charge stays: every validating node re-executes the transaction; an uncharged failure would let anyone impose that work for free. Denial-of-Service Resistance named, not explained.",
+            "Why the sequence-number update stays: otherwise the same signed transaction stays valid and anyone holding it could have it included and executed again, charging the sender again each time. Replay Protection and Account Nonces named, not explained.",
+            "Why the record stays: the transaction was included and consumed the sender's fee and sequence number; the sender and readers of the chain need to see that it was included and failed, not that it is still pending or was dropped. Record contents are transaction-execution's (name).",
+            "Revert data: bytes returned by an explicit revert, commonly an error identifier with encoded arguments (Solidity: 4-byte selector plus arguments; standard Error(string) and Panic(code)). Exceptional halts return no data. EVM receipts keep status, resources used and logs, not revert data; recovering the reason needs re-execution against the pre-state at the transaction's position (a node with that historical state or a tracing facility). Re-execution after the fact is not Transaction Simulation (prediction before submission; excluded, name only)."
+          ],
+          "assumptions": [
+            "Survivors claim holds in designs that include failed transactions (Ethereum and EVM chains, Solana, Cosmos SDK chains in their way); not in designs where every condition is a validity rule (Bitcoin).",
+            "Invalid-vs-reverted consequences ('no record, costs nothing, sequence number free') hold in designs that validate blocks by executing them. In designs that order transactions without executing them (some rollups), an invalid transaction can sit in the ordered data and be skipped by every node: Validation's claim, name only, keep the condition.",
+            "Do not generalize Bitcoin to all UTXO designs: Cardano validates scripts in a second phase and includes a transaction whose scripts fail, forfeiting its collateral instead of applying it; a reverted-like outcome exists there. Use only if needed; otherwise keep 'as Bitcoin does'."
+          ],
+          "failures": [
+            "Enforcement limits: a revert protects only the conditions the code checks. A minimum acceptable result still admits every outcome at or above the bound; a missing or wrong check protects nothing. The sender pays for every failed attempt.",
+            "'Effects that depended on the check never land' holds for the reverting call and every caller that propagates the failure; a caller that handles it keeps its own effects (Transaction Atomicity owns this narrowing; name it, do not explain). Do not state the enforcement guarantee unconditionally.",
+            "Reverted is not harmless: a sender can lose most or all of the allowance (exceptional halt at top level) for no effect."
+          ],
+          "variants": [
+            "Designs that include failed transactions (reverted outcome exists: included, charged, sequence consumed, recorded failed) vs designs that make every condition a validity rule (Bitcoin scripts: failing makes the transaction invalid; no reverted outcome, no charge for failure). Where the line is drawn and why is Transaction Validation's; reversion states only the consequences of each outcome.",
+            "Explicit revert vs exceptional halt (EVM): what is returned (leftover allowance, revert data) vs consumed (whole allowance of the failing call, no data)."
+          ],
+          "invariants": [
+            "A reverted transaction in an execution-validated design with sequence numbers leaves on the chain: the fee charged for the attempt, its sequence number used, a failed record, and any other effects the format applies outside the payload; none of the failed payload's state changes or logs. Where a caller handled a nested failure, the undo is per call path (atomicity's narrowing, name only)."
+          ],
+          "tradeoffs": [
+            "Including failures (charge the sender, keep nodes paid for their work, let contracts enforce arbitrary conditions) vs making every condition a validity rule (failures cost nothing to the sender but conditions must stay cheap to decide, so arbitrary checks are not possible as validity rules). State as consequence only; the reasoning about the line's placement is Validation's."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A failure path with conditions (what triggers it, what it costs, what is discarded and what survives and why, how the reason is reported and used) plus one real conflation: invalid and reverted transactions are both called failed, yet differ in every consequence (included or not, recorded or not, charged or not, sequence number used or free).",
+        "structures": [
+          {
+            "structure": "distinction",
+            "purpose": "Mark the conflation 'Invalid transaction ≠ Reverted transaction' at the point where the record turns to consequences, so that a reader who calls both 'failed' sees they are different outcomes before reading what each means.",
+            "whyNotProse": "Prose carries the consequences and their conditions, but the two outcomes share the everyday word 'failed' and the confusion is the one users and tooling make (a reverted transaction shown as failed is assumed to have cost nothing). A distinction marks that non-identity as a claim of its own; inside a paragraph it reads as one more contrast among many."
+          }
+        ],
+        "division": "Prose explains the triggers and their cost classes, what is discarded and why each survivor survives, reporting and enforcement, and the consequences of each outcome with their design conditions (block validation by execution; Bitcoin's validity-only conditions). The distinction shows only that the two are different outcomes; the prose must not restate it as a slogan, and the distinction must not carry the consequences or conditions.",
+        "level": "The parent states the boundary and, as a premise, that some systems keep fees or nonce updates after a revert; the triggers, their costs, the reasons each survivor survives, reporting and the invalid-versus-reverted consequences are this concept's. The distinction belongs here, not at Validation: Validation owns where the line is drawn, reversion owns what each outcome means.",
+        "territory": "Names, never explains: Gas and Metering (cost units), Fees and Fee Accounting (charge, settlement), Account Nonces and Replay Protection (why reuse is prevented generally), Transaction Execution (when the charge and sequence update are applied; record contents), Transaction Atomicity (how changes are undone; per-call narrowing when a caller handles a failure), Message Calls and Contract Calls (call-level failure report), Transaction Validation (where the invalid/reverted line is drawn), Transaction Simulation, Denial-of-Service Resistance, Logs and Events, Rollbacks and Reorganizations (chain-level undo, not this). Atomicity's distinction (all-or-nothing vs isolation) is a different pair. The parent's bound example (minimum acceptable price) is a premise: build on it with price and limits, do not restate it.",
+        "placements": "One placement, a leaf under Transactions. The prose defines a reverted transaction from scratch and scopes each claim to the designs it holds for, so the exposition stands without the parent's synthesis."
+      },
+      "audit": {
+        "at": "2026-10-23T13:28:57.432Z",
+        "note": "Re-audit (repair cycle 1), scoped; not expanded, because the repair narrowed the fee basis and added conditions without changing the argument, its structure or scope. B1 resolved: P4 now says the surviving charge is 'the fee charged for the attempt' and adds a conditioned sentence that only in designs that charge by usage, such as Ethereum, is it the charge for the resources consumed (true for Ethereum's gas used times effective price; Solana's per-signature base fee plus a priority fee on the requested compute-unit limit and Cosmos SDK's up-front gas-limit fee with no default refund are no longer misdescribed). P7 ('pays the fee for the attempt') and P8 ('charged the fee for the attempt') follow. P3's charge statements stay inside the EVM scope (work before failure, full limit on a top-level exceptional halt, 1/64 retention) and agree with P4's usage sentence, since on a top-level halt the resources consumed are the full limit. P5's rationale ('If failing were free') holds for any fee basis. Every sequence-number clause checked: P4, P5 (record and retry sentences) and both P8 clauses now carry 'where the design uses sequence numbers/them'; P5's update rationale is followed by Solana's signature mark of use (status cache while the recent blockhash is accepted), which is accurate; 'cannot take effect again' holds given a consumed sequence number or the signature mark plus blockhash expiry. Definition now says 'the changes its payload made', matching P4 and Transaction Execution's envelope. Consistency with the authored Transaction Execution record (some designs charge for the declared limit) restored. Overlap with the single placement's parent (Transactions): unchanged text, no restatement. Territory unchanged: atomicity, message calls, validation, simulation, nonces and replay protection, gas and metering named only. Structure: the one designed distinction unchanged, prose does not restate it. Model fields meaning, sequence, outputs and invariants now match the record; plan claim 2 reworded. Advisory: (1) plan claim 4 still says an invalid transaction 'leaves its sequence number free' and a reverted one 'consumes its sequence number' without 'where the design uses them' (the record conditions both); (2) P7 'The sender still pays the fee for the attempt' reads loosely for Cardano, where a phase-2 failure collects designated collateral rather than the fee (P8 states this correctly); (3) earlier advisories A2, A4, A5, A6, A7 from the first audit stand in text the repair did not touch.",
+        "resolutions": [
+          {
+            "id": "names-concept:d4ea82abfe",
+            "resolution": "Account Nonces is named once in P5 as covering the mechanisms in general; the record explains only why the sequence-number update survives a revert, its claim."
+          },
+          {
+            "id": "names-concept:ed0d2d3661",
+            "resolution": "EVM is used as the scoping example ('in the EVM'); its halting and allowance rules appear only as they bear on a failure's cost, per claim 1; the EVM itself is not explained."
+          },
+          {
+            "id": "names-concept:d2869377e2",
+            "resolution": "Execution traces are mentioned only as a node facility needed to recover a revert reason in P6; not explained."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "Gas is referenced as the counting rules of Gas and Metering in P3; units and pricing are not explained."
+          },
+          {
+            "id": "names-concept:f65d864244",
+            "resolution": "Historical state is mentioned only as what replaying a transaction needs in P6; not explained."
+          },
+          {
+            "id": "names-concept:78e97560cc",
+            "resolution": "Logs are named only as discarded effects and absent from a reverted receipt (P4); what logs are is not explained."
+          },
+          {
+            "id": "names-concept:3a37020014",
+            "resolution": "Message Calls is named in P6 as owning how a call reports failure to its caller; the record says only that the caller receives the data and can decode, handle or pass it upward, per claim 3."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "Metering is named with Gas in P3 as the counting rules; not explained."
+          },
+          {
+            "id": "names-concept:79a018aa13",
+            "resolution": "Replay Protection is named in P5 as covering the mechanisms in general; only the reason the sequence-number update survives is given."
+          },
+          {
+            "id": "names-concept:523a1b1507",
+            "resolution": "Transaction Atomicity is named in P4 (how the undo is carried out) and P7 (the per-call narrowing); neither the journal/buffer mechanism nor the narrowing is explained."
+          },
+          {
+            "id": "names-concept:3b2538a1fe",
+            "resolution": "Transaction Simulation is named in P6 only to separate after-the-fact replay from prediction before submission."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "Transaction Validation is named at the end of P8 as owning where the line between invalid and reverted is drawn; the record states only each outcome's consequences."
+          },
+          {
+            "id": "absolutes:ead2948348",
+            "resolution": "Five absolutes checked: 'never land' (P7) is conditioned on propagation in the next sentence; 'cannot be included' (P8) is scoped to designs that validate blocks by executing them; 'never charged or recorded' (P8) holds for Bitcoin's script failures; 'cannot take effect again' (P5) holds given a consumed sequence number or Solana's signature mark plus blockhash expiry; 'never signed it for' (P5) is the definition of the replay harm."
+          }
+        ],
+        "recordFingerprint": "465428aed8e56918f6e06562e3ba7f0f05d63b19ae19724fda7dcfe55c52ded5"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-23T20:27:56.205Z",
+    "note": "Group re-audit of transactions (scoped to B1 of findings/group-transactions.md), six owned members read side by side with transaction-ordering (dual-role, fixed) and the parent; 0 group signals. B1 resolved: transaction-structure's record no longer contains 'payload'; its three field-sense uses now read 'input data' ('a target account, a value and input data, whose contents belong to Transaction Data'; 'carries initialization code as its input data'; 'the user's authorization carried in its input data for a contract to check'). Every remaining 'payload' in the group's records (transaction-execution, -atomicity, -reversion) is in the one sense 'the action the transaction requests', value transfer included, as against the protocol's steps outside it. Repair checked for new cross-member defects: structure's requested action (target + value + input data, or a list of instructions as in Solana) now matches execution's payload kinds (value transfer, call into code, contract creation running initialization code) and atomicity's/reversion's payload-scoped unit; 'input data' matches Message Calls' field term; Transaction Data still named, not explained; no other member uses 'input data' in a different sense. No blocking finding. Advisory: (A1) validation and reversion both give the cost rationale for charging failed execution, split by angle per boundaries.md section 4; not leakage. (A2) execution and reversion both conclude the outcome record keeps a failed inclusion observable, from distinct arguments; minor redundancy. (A3) what survives a failure is stated consistently in execution, atomicity and reversion; reversion still says 'any other effects the format applies outside the payload' where execution says 'the protocol applies': prefer 'the protocol' for one wording. (A4) lifecycle and structure each end their replacement/malleability passage with a mirrored contrast sentence; references, not explanations. (A5) lifecycle (dropping is not invalidation) and validation (policy refusal is not invalidity) reach related points from their own claims. (A6) atomicity attributes call failure reporting to Contract Calls, reversion to Message Calls, matching the smart-contracts split. (A7, new, plan wording only) the plan still uses 'payload' outside the group's sense where no record does: transaction-structure's model says 'a type byte ahead of the payload', 'hash the type byte with the payload', 'type byte plus payload' (EIP-2718's encoding sense) and its design territory says 'payload encoding (Transaction Data, Calldata)'; transaction-execution's model inputs list '(its limit, price terms, sequence number, target, value, payload)' in the field sense. The records avoid these ('remaining bytes', 'full signed encoding'), so not blocking; reword to 'the rest of the encoding' / 'input data' if the plans are touched again. Convergence (carried over): all six open 'Transaction X is ...' because the definition leads and the titles share a head noun; forms differ by claim (state model for lifecycle, flow for execution, distinctions for atomicity and reversion, prose only for structure and validation); paragraph counts follow the claims; the recurring hand-off clauses ('... is Transaction Reversion's', 'belongs to ...') follow the named-not-explained plan terms but read as a shared tic; optional thinning.",
+    "resolutions": [],
+    "records": {
+      "transaction-lifecycle": "fd299598ae5712926850bdb8066091de6c2e9a238b0be77d477321b4b57614b8",
+      "transaction-structure": "519ed426980b60cc60ddad5a3ded972ece0d20c123eb48e80086241439752a4b",
+      "transaction-validation": "867928188dfd822417b00e72a83f33381416bc7e1fe00def1617a08a72997057",
+      "transaction-execution": "00433341802aa496895f52f5adab96dc812c0e86fb9f5140650ca775e135d9ae",
+      "transaction-atomicity": "aa853b590cbbd80ada9af8cfcd0774757c8a587163184ab60cee7dddfe9ee3b2",
+      "transaction-reversion": "465428aed8e56918f6e06562e3ba7f0f05d63b19ae19724fda7dcfe55c52ded5"
+    }
+  }
+}
