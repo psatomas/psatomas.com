@@ -420,4 +420,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "availability",
   "consistency",
   "fault-tolerance",
+  "deterministic-execution",
+  "non-deterministic-execution",
+  "sequential-execution",
+  "parallel-execution",
+  "optimistic-execution",
+  "speculative-execution",
 ];

@@ -19325,6 +19325,252 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "deterministic-execution-content",
+      conceptId: "deterministic-execution",
+      definition:
+        "Deterministic execution is the property of a replicated execution environment that a block's result, failures included, is fixed by the state the block starts from, the block's contents and the protocol rules, so that every node executing the block as specified computes the same result and a mismatch between nodes exposes a divergence.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Every value running code can read has to be either chain state, identical on every node starting from the same pre-state, or something the block supplies. Environment values, such as the block's timestamp and number, its producer's address, hashes of earlier blocks or a random value the block carries, are carried in the block or derived from it and the chain before it rather than looked up by each node. An environment secures this by defining the whole interface code can use and leaving out anything that reaches node-local data, such as the wall clock, files, a local source of randomness, the timing of threads or the address at which memory happens to be allocated. That interface includes not only instructions but host functions, system calls a runtime makes on a program's behalf, and library code compiled into the program.",
+        },
+        {
+          kind: "paragraph",
+          text: "One open channel is enough to break the property. Where anyone can deploy code, the environment cannot count on programs leaving a facility it offers unused, so a host function that returns the local time is harmless only until some program reads it in a way that affects its result; from then on, nodes whose clocks differ compute different results for the same block. Closing the channels makes supplied values agreed, not trustworthy: a value in the block is whatever its supplier put there, within the bounds the rules check, and who chooses it and what it can be relied on for are questions for Execution Context.",
+        },
+        {
+          kind: "paragraph",
+          text: "Failure has to be reproducible too. Where code can loop or recurse, nothing guarantees that it finishes, so execution has to be cut off, and where it stops becomes part of the result. A wall-clock timeout, or the memory and stack a node happens to have, would cut it off at different points on different machines. Environments instead bound execution by limits the protocol defines and every node evaluates identically: an allowance consumed at costs the protocol sets for each instruction and host function, the territory of Metering and Gas, and in many environments fixed bounds such as a maximum memory size or call depth. Execution then stops at the same instruction on every node, whichever limit it reaches. This holds only if the bounds sit within what hardware meeting the protocol's requirements can sustain; a node that exhausts its own memory or stack before reaching them has failed as an implementation rather than produced the specified outcome.",
+        },
+        {
+          kind: "paragraph",
+          text: "Running out is one failure path; others include an invalid instruction, an explicit abort by the program and an exceeded bound. Each path needs a specified outcome, not only the fact of failure: which of the transaction's changes are discarded, which persist, such as the fee charged for the work already done, and what status and resource use are recorded. With those fixed, every node records the same failure and the same resulting state; what a failed transaction undoes and keeps is the subject of Transaction Reversion. Deterministic execution therefore does not stop transactions from failing. It makes each failure the same everywhere. The property breaks where a failure path is underspecified, leaving implementations to choose different outcomes. A bug that departs from a fully specified path is a different fault, outside the property: that node no longer executes the block as specified. Whether independent Execution Clients agree is a question for Determinism, and limiting the reach of one client's bug is one for Client Diversity.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each instruction's result is likewise fixed by the rules rather than by the processor or language implementing it. Platforms differ on what happens when a sum does not fit its type: some processors wrap around and some trap, and in some languages signed overflow is undefined, so a compiler may assume it never happens. A shift by at least the value's width can give different results on different processors. Environments therefore specify each operation exactly, many over fixed-width integers with overflow specified to wrap around or to fail, and division by zero specified to fail or to return a set value such as zero. Floating point's basic operations are specified by the IEEE 754 standard to be correctly rounded, so the hazard lies in what implementations may vary around them, not in floating point as such. Some environments leave it out, and programs represent fractions as integers scaled by a fixed factor; others admit a restricted subset or define every result bit for bit, in some cases computing it in software rather than with the processor's instructions. Chains built on WASM settle their own version of these choices.",
+        },
+        {
+          kind: "paragraph",
+          text: "Order is fixed in the same way wherever execution walks a collection. If code can enumerate a map or a set, or the environment iterates over entries it keeps, the rules define the order, by sorted key or by order of insertion for example, rather than leaving it to how an implementation stores the entries. Some environments sidestep the question for programs by offering maps that cannot be enumerated; a program that needs to walk its entries keeps its own list of keys, and that list's order is ordinary state.",
+        },
+        {
+          kind: "paragraph",
+          text: "How a replicated system notices that these measures have failed depends on what its blocks commit to. In designs that commit to the result, the producer publishes a commitment to it, such as a state root summarizing the state after the block, and each node that re-executes the block computes its own and rejects the result if the two differ. Where the published commitment travels depends on the design: many chains carry it in the block it describes, some in the block after it, so that a divergence surfaces one block later, and some in validators' votes. How the commitment is built belongs to State Roots and State Commitments. Only what a commitment covers is compared, so a difference confined to an output no commitment includes can go unnoticed. In designs that publish no commitment to the result, nodes notice a divergence only when they disagree on whether a block is valid, so a difference stays unnoticed until it changes whether some node accepts a block. In either kind of design, a fault every node shares, such as a bug in the only implementation in use, gives every node the same result, so no disagreement exposes it.",
+        },
+        {
+          kind: "paragraph",
+          text: "A mismatch establishes that two results differ, not which one follows the rules. Either side may have executed incorrectly or started from a corrupted pre-state, or the producer may have published a commitment that does not match the result it computed, and the comparison looks the same in every case. Each node acts on its own computation, so a node running a faulty implementation rejects a correct block as firmly as a correct node rejects a wrong one.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a divergence then does depends on how many nodes diverge and how the consensus protocol treats a block that some participants reject. Where nodes follow a fork-choice rule, rejecting nodes treat the block and everything built on it as invalid: if none of them produce blocks, they stop at the last block they accept, and if producers are among them, those producers extend a chain without the block and the network splits into two chains. If such a chain adds finality through votes from two thirds of stake, a split that leaves neither side with two thirds stops finality on both, though blocks may still be produced. Under a protocol that commits a block only with votes from more than two thirds of voting power, rejection by more than a third prevents the block from being committed and the chain stops making progress; a smaller diverging set cannot follow the chain the others commit, and in many implementations its nodes halt. Recovery, by fixing the faulty implementation, coordinating a rollback or changing the rules through a hard fork, lies outside the property.",
+        },
+      ],
+    },
+    {
+      id: "non-deterministic-execution-content",
+      conceptId: "non-deterministic-execution",
+      definition:
+        "Non-deterministic execution is computation whose result can differ between runs, or between executors, that start from the same state and the same agreed inputs, because something outside those inputs, such as an external system, a local reading, the scheduling of concurrent work or the hardware, has a say in the result.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each run still produces one result, and many runs may agree; what is missing is any assurance that an independent recomputation will reproduce it. Around blockchain execution it enters in a few places, each under a condition. Computation done off chain is not non-deterministic in itself: a rollup's execution or a prover's computation can be as deterministic as the chain's own. Off-Chain Execution is where non-determinism often enters, because it runs outside the chain's execution environment, where, unless it is held to the same discipline, nothing stops code from reading a local clock, local files or its own node's view of pending transactions. A call to an external system returns whatever that system holds at the moment of the call, sometimes depending on who asks, and it can fail or time out for one caller and succeed for another. Concurrent scheduling varies the interleaving of work between runs, but the result varies only where interleaved operations interact, through shared state or a total whose value depends on the order of its parts, and nothing fixes the order in which their effects land. A chain's parallel executor is built so that varying interleavings still give one result, which is the subject of Parallel Execution and Concurrency Models. Behavior can also depend on the hardware: the outputs of machine-learning inference can differ across accelerator models, drivers or batch sizes, often only in low-order digits, and a difference that small can change which answer a model picks when two candidates score almost alike.",
+        },
+        {
+          kind: "paragraph",
+          text: "Such computation is used anyway because some useful work cannot be confined to agreed inputs. A price, the outcome of an event or the contents of a web page exists outside the chain until someone records it, and obtaining it exposes the computation to whatever the outside source returns. Other work could be made deterministic, at a cost a design may decline. Fixing the schedule gives up overlap between operations whose effects interact, or adds machinery that imposes one order on them. Making inference reproducible across hardware means pinning down the order and precision of each floating-point operation, which rules out many of the fastest kernels, or emulating floating point in software, and both cost speed. For heavy work such as running a large model, recomputation by every node would be impractical even if the result were reproducible, so a design that wants the work accepts an output that most participants did not compute.",
+        },
+        {
+          kind: "paragraph",
+          text: "Designs that need agreement on such an output, such as a chain whose state will depend on it, deal with it in a few broad ways. Three accept the output from one executor or a group without recomputing it, and a fourth contains the non-determinism by fixing the value before execution, so that what follows can be recomputed. They differ in what is actually checked and in where agreement comes to rest. Challenge-based schemes, such as Optimistic Verification settled by Fraud Proofs, are not among them: they resolve a dispute by re-executing the disputed step, which presupposes a step that every party computes identically.",
+        },
+        {
+          kind: "comparison",
+          label: "How a design that needs agreement handles a non-deterministic result",
+          dimensions: ["What others check", "What agreement rests on", "Who keeps the choice among possible results"],
+          alternatives: [
+            { name: "Proof", values: ["That the output is a result the rules allow", "The proof system's soundness and what the rules bind", "The prover, among the results the rules allow"] },
+            { name: "Attestation", values: ["That attested code produced the output", "The hardware, its vendor's keys and what the code read", "The operator, if it can rerun the code and pick a result"] },
+            { name: "Comparison or aggregation of executors", values: ["Whether the executors' outputs agree, or how they combine", "Enough executors being honest and independent", "Faulty executors, within the tolerance or range the rule leaves"] },
+            { name: "Value fixed before execution", values: ["The execution, recomputed by anyone over the record", "How the recorded value was produced, agreed and included", "Whoever supplied the value or controlled its recording"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A proof checks the output against the rules, and nothing more: it establishes that the output is a result the rules allow for some choice of the values the computation took from outside, such as an external response, a scheduling order or random coins, which the prover supplies as part of what is proved. Where the rules allow one result for the agreed inputs, that settles the matter. Where they allow several, as they can when those outside values are left unbound, any of them can be proved, and the choice among them stays with the prover. Agreement then rests on the soundness of the proof system, under its assumptions, and on the rules capturing what matters. Rules can narrow the choice by binding the outside values, for instance by requiring external data to carry its source's signature. The prover can then pick that data only from values the source has signed; where the rules also fix which signed value counts, such as the one for a given time or round, the choice of it moves to the source. How such proofs are built is the subject of Verifiable Execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "An attestation is not a check against the rules. Hardware states that particular code, identified by a measurement, produced the output, and agreement rests on the hardware being uncompromised, on the keys its vendor uses to vouch for it, and on whatever the attested code read. It shows that a run of that code produced the output, not that no other run could have produced a different one. If the code is non-deterministic and the operator can run it more than once, the operator can, in many designs, present the result it prefers, unless the design keeps it from choosing among runs. The hardware's side belongs to Trusted Execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "Comparing executors puts the check in their agreement. Exact matching works only where honest executors produce identical outputs, and the non-determinism that prompted the comparison can make honest executors differ, so designs compare within a tolerance, take a vote, or aggregate, as with the median of numeric reports. Agreement rests on enough executors being honest and on the threshold the rule sets: a median stays within the range of the honest reports as long as fewer than half the reports are faulty. Within that range, or within the tolerance a comparison allows, faulty or colluding executors can move the result without the rule rejecting it. Independence matters as much as number: executors that share one data source, one model or one implementation share its errors, and their agreement is no evidence against them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Containment takes the non-deterministic step out of execution. The value is obtained and written into the chain's state or a block in an earlier step, as when an oracle report is posted in one transaction, or a random value requested in one transaction is delivered in a later one, and execution then reads the record instead of the outside world. Provided the rest of execution is deterministic, which is what Deterministic Execution secures, anyone holding the state and the record can recompute the result. Correctness moves to how the recorded value was produced and agreed, often by one of the other routes, such as an aggregate of several reporters' outputs, and to the step that recorded it. The supplier sees the value before it is fixed, and because the recording is a transaction or block field, so in many designs does whoever includes it; a block producer that chooses what to include can include the recording, delay it or leave it out, and place transactions that use the value around it. On a chain whose state anyone can read, a recorded value is public, so a use that needs it to be unpredictable has to fix the inputs that consume it before the value is known. Whether a recorded fact about the outside world can be relied on is the Oracle Problem.",
+        },
+      ],
+    },
+    {
+      id: "sequential-execution-content",
+      conceptId: "sequential-execution",
+      definition:
+        "Sequential execution applies the accepted operations one at a time in an agreed order, each starting from the state the one before it left, so that, when every operation is itself deterministic, the starting state and the ordered operations fix the result.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The unit of the sequence is the unit the order is agreed over, typically a transaction, and each is applied in full, including any calls it makes internally and the way it fails, before the next begins. A failed operation is not a gap in the sequence: it keeps its position and leaves whatever the rules retain, such as a fee charged, so its outcome is part of the result along with the final state. With no two operations running at the same time, there are no concurrently running operations to conflict, but operations still interact, since a later one reads what an earlier one wrote. Position settles that interaction: an operation sees the effects of everything before it in the order and nothing after it. This is what lets the strategy serve as a reference, because its result is defined by the order alone, with no schedule to specify.",
+        },
+        {
+          kind: "paragraph",
+          text: "The starting state and the order determine the result only if each operation is deterministic given the state it reads and the inputs the block supplies. Running one operation at a time removes one source of variation, the interleaving of operations that run together, and leaves the others in place: code that reads anything outside the agreed inputs can still give different results on different nodes, however strictly they keep the order. Closing those channels is the work of Deterministic Execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "Tying the result to the order also makes the result depend on it. Two payments from an account whose balance covers either but not both reach execution, and only the one placed first succeeds; two trades against the same pool each get a price set by the trades before it. Operations that touch disjoint state commute, giving the same result in either order, so whether the order matters depends on which operations share state and how they use it. Nodes that apply the same operations in different orders can therefore reach different states, so in a system whose replicas each execute the operations, the order becomes something they must agree on before execution can produce a shared result. How it is chosen, and by whom, is the question of Transaction Ordering.",
+        },
+        {
+          kind: "paragraph",
+          text: "The price of this simplicity is paid in throughput and delay. Execution proceeds as one stream, so however many processors a node has, its execution stage processes no more than one stream can, and that stream's speed includes its reads of state, which can be limited by storage latency more than by computation. The bound is on the execution stage; a system's overall throughput may be limited first elsewhere, by consensus, bandwidth or storage. A single stream also means head-of-line delay: an operation that runs long holds up every operation after it, whatever their own cost. That is one reason systems bound the work a single operation, and a whole block, may consume, in protocol-defined units, as Metering does; another is that every node re-executing a block must be able to finish it, which also limits how much work an attacker can impose on all of them.",
+        },
+        {
+          kind: "paragraph",
+          text: "Work that does not depend on state can overlap the ordered execution without changing its result. Verifying a signature against the transaction's own contents, as in recovering the sender's address from a standard signature, uses nothing any other operation writes, so it can run in parallel across a block's transactions, before or alongside the sequence. The condition is that the work reads no state. A check of a nonce or a balance, or signature validation that, in some account designs, runs contract code against state, reads what earlier operations may have written, and belongs inside the ordered stream.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where each replica executes the operations itself, the reference has to be sequential execution in the agreed order, not in any sequential order. Database serializability requires that the outcome of concurrent transactions equal that of some serial execution of the committed transactions, and leaves the choice of which one to the database. For a single database that is enough, since there is one copy and whichever serial order it realizes is the one that exists. Replicas that each execute the operations independently would be free under the same guarantee to realize different serial orders; where two order-dependent operations land in opposite orders, the replicas reach different states, and nothing in the guarantee says which is right. Strict serializability narrows the choice by requiring that a transaction completed before another began come first, but it leaves the order of overlapping transactions open. A parallel or optimistic executor on a replica that executes for itself is therefore judged against the result of the agreed order: whatever it commits, the final state and each operation's outcome, including which operations failed and what they consumed, must match what executing in that order produces.",
+        },
+        {
+          kind: "paragraph",
+          text: "The agreed order need not be total. Some designs fix the relative order only of operations that touch the same objects and leave operations on disjoint objects unordered; because those commute, every sequence consistent with the fixed pairs gives the same result, and any of them serves as the reference. What has to be agreed is at least the relative order of every two operations whose order changes the result. By contrast, where one party executes and the others adopt the state it produced, as in primary-backup replication, there is a single execution, and whichever serial order it realized is the one every replica ends up with.",
+        },
+      ],
+    },
+    {
+      id: "parallel-execution-content",
+      conceptId: "parallel-execution",
+      definition:
+        "Parallel execution is an execution strategy in which one executor runs operations that do not conflict at the same time, on several processors or threads, while producing exactly the state and the per-operation outcomes that executing them one at a time in their agreed order would produce.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The operations and their order are settled before the executor starts; computing ahead of an order that is not yet settled is Speculative Execution. What makes the concurrent run reproduce that order's result is that the order still governs every conflict: of two conflicting operations, the one later in the order must see the earlier one's writes, and the earlier one must not see the later one's. Operations with no conflict between them cannot observe each other, so they can run side by side on separate execution units. Which operation finishes first then stops mattering, because a write reaches a conflicting operation only in the agreed order, however early it was produced, and many executors go further and commit every result in that order. A node's result therefore does not depend on how many threads it has or how its scheduler happened to interleave them. The failure this guards against is a conflict that goes unnoticed: if two conflicting operations run together and nothing enforces their order, the later one can read state from before the earlier one's write, or their writes can land in either order, and nodes executing the same block can reach different states.",
+        },
+        {
+          kind: "paragraph",
+          text: "Enforcing the order requires knowing which operations conflict, and an executor can learn that in two ways. It can be told before execution which state each operation may touch, for example from a declaration the operation carries, or it can discover conflicts while the operations run and repair them, which is how Optimistic Execution works. Knowing in advance lets the executor fix a schedule before running anything and spend no work on operations that collide, but it depends on that information being complete, and declarations that bind an operation limit what its code can decide at run time. Discovering needs nothing from the operation, but every access has to be tracked, and work that collides is redone, a cost that rises with contention. The routes combine: an executor can schedule from declarations, hints or a trial run and still check during execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "With declared access, each operation names the state it may read and the state it may write, at whatever granularity the environment tracks, such as an account, an object or a storage item; with a coarse unit, operations touching different data inside the same unit conflict. The executor compares declarations, groups operations whose declarations do not conflict to run together, and keeps operations whose declarations do conflict in their agreed order. A declaration can stand in for checking only where it is binding, meaning the protocol checks every access against the declaration, identically on every node. An operation that then reaches outside its declaration fails, as a recorded and deterministic outcome, instead of conflicting unseen with an operation running beside it. A declaration that is only a hint, such as an access list that changes what an operation pays but not what it may touch, can guide a schedule, but an executor relying on it still has to check during execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because an undeclared access fails, an operation that must not fail needs a declaration covering every piece of state it might touch, not only what it touches on a typical run. That is straightforward when the inputs fix the access, as in a transfer between two named accounts, and hard when access depends on values read during execution, as in a trade routed through whichever pools offer the best price when it runs, or a contract that looks up in its own storage which account to update. Such an operation can over-declare, listing everything it could reach, which makes it conflict with more operations and run alongside fewer; declaring write access where a read would do has the same effect, since a write conflicts with every reader of that item. Alternatively, it can declare what a simulation against recent state predicted, often produced by a wallet or other tooling, and accept that if earlier operations change that state so its access differs, it fails and has to be submitted again, typically with a new declaration. The first route spends parallelism; the second spends failed operations whenever state changes between simulation and execution alter what the operation touches.",
+        },
+        {
+          kind: "paragraph",
+          text: "The gain is bounded by the number of execution units and also by the structure of the workload, which adding units does not change. An operation that reads what an operation earlier in the order writes cannot finish its useful work before that write exists, and such dependencies form chains. Contention on frequently updated state is a common source: when many operations update one item, such as the balance of a popular contract or the reserves of a heavily used pool, each reads what the previous one wrote, so they run one after another however many units are idle. Some designs relieve this for updates that commute, such as adding to a counter, so that concurrent increments need not conflict with each other. Chains can also run through different items, one operation's output feeding the next operation's input elsewhere. The speedup is at most the total execution time of the block's operations divided by the execution time of its longest chain, and at most the number of execution units; a block that forms one long chain runs essentially in sequence. Overhead keeps what is achieved short of that bound: checking declarations, tracking accesses, coordinating units and committing in order all cost work, and for a block of few or small operations that cost can exceed what overlapping saves, leaving parallel execution slower than executing one operation at a time.",
+        },
+        {
+          kind: "paragraph",
+          text: "Which route is open, and so whether conflicts can be known before execution, depends on what the execution environment fixes. Advance knowledge needs access to be fixed before an executor runs the code. A transaction format can fix it by having every transaction declare the state it uses. A block can carry a binding record of the state each of its operations read and wrote, which every node that executes the block checks against its own execution, rejecting the block on a mismatch; the node that builds the record, by executing the block first, still has to find conflicts itself. A state model can tie data to owners, so that transactions on disjoint owned data are known not to conflict. Where code can compute at run time which storage it touches, as EVM contracts can by deriving storage locations from values computed during execution, and neither transactions nor blocks bind that access in advance, an executor has nothing binding to schedule from. Such environments can still be executed in parallel, by detecting conflicts during execution or by predicting them and checking; what they do not offer is knowing the conflicts with certainty beforehand. Obtaining that knowledge can mean changing what transactions or blocks carry or how state is organized. A change to what blocks carry can leave the transaction format and state model as they are, while designing an environment for parallelism from the start can mean departing from an existing environment's transaction format or state model and giving up compatibility with it, a trade-off some Alternative VMs make and one that an execution layer weighs in choosing its environment.",
+        },
+      ],
+    },
+    {
+      id: "optimistic-execution-content",
+      conceptId: "optimistic-execution",
+      definition:
+        "Optimistic execution runs operations concurrently, once their set, order and starting state are agreed, without first establishing which of them interfere, and checks afterwards: it records what each operation reads and writes, re-executes any operation whose reads an earlier operation in the agreed order changed, and commits results in that order.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each run of an operation keeps two records. Its read set lists every location the run read with the version or value it saw, including locations it found empty, since an earlier operation that writes there after the run has looked changes what the run should have seen. Its writes go to a buffer rather than to committed state, so a run that proves wrong leaves nothing to undo beyond its own buffer. The check applied to these records is narrower than any overlap of accesses. The result must equal executing the operations one at a time in the agreed order, so a run is valid when every value it read is what that execution would have shown it: the latest write to the location by an earlier operation, or the starting state if no earlier operation writes there. A run fails when an earlier operation wrote a location it read and the run did not see that write, or when it saw a write that the earlier operation, re-executed, has since changed or no longer makes. Only earlier operations can make a read stale. A later operation that writes a location an earlier one read does not invalidate that read, because executing in order would not have shown the write to it either, and two operations that write one location without reading it conflict there, yet neither fails validation over it: committing in the agreed order leaves the later write in place, as executing in order would.",
+        },
+        {
+          kind: "state",
+          label: "What moves one operation between its states in an optimistic executor",
+          states: ["Running", "Executed, awaiting commit", "Committed"],
+          transitions: [
+            { from: "Running", to: "Executed, awaiting commit", when: "the run ends, with its reads recorded and its writes buffered" },
+            { from: "Executed, awaiting commit", to: "Running", when: "validation finds a read that an earlier operation in the agreed order changed without this run seeing the write; the buffered writes are discarded" },
+            { from: "Executed, awaiting commit", to: "Executed, awaiting commit", when: "an earlier operation is re-executed and may have changed what this one read, so it is validated again" },
+            { from: "Executed, awaiting commit", to: "Committed", when: "every earlier operation has committed and this operation's reads still match" },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Re-executing an operation can change what it writes: different values, or different locations when its path through the code depends on what it read. Every later operation whose reads that may affect has to be checked again, both those that read its earlier writes and those that read a location it now writes, even if they had already passed. One re-execution early in the order can in this way send a chain of later operations back to run, each of whose re-executions can expose the next. Designs differ in how they find the operations to recheck; some simply revalidate every later operation that has not committed.",
+        },
+        {
+          kind: "paragraph",
+          text: "Designs also differ in what a run reads. In a multi-version design, a run reads the buffered write of the nearest earlier operation that writes the location, falling back to the starting state, so it often sees what executing in order would have shown it even while earlier operations are unfinished. Block-STM is such a design, and it also marks the locations an aborted operation wrote as likely to be written again, so that a later operation reading one of them waits for the re-execution instead of running and failing repeatedly. In a snapshot design, every operation runs against the starting state and the results are merged in the agreed order; an operation whose reads an earlier operation overwrote is re-executed at merge time, when its predecessors are final, so that re-execution reads the values executing in order would have given it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Matching the sequential result rests on three assumptions. Operations must be deterministic functions of what they read, so that a re-execution against the right values reproduces exactly the result executing in order gives. Read tracking must be complete: every value that can influence an operation's result or its path through the code has to be recorded, because an unrecorded read is never validated, so a stale value read that way can commit, making the node's result differ from the sequential one and from other nodes'. And no run may affect anything outside the executor before it commits, which buffering writes and sending nothing elsewhere provide. A run made on an inconsistent view, mixing values from different points in the order, can take paths executing in order never would, failing, reverting or looping; its outcome is only buffered, and where metering or other protocol bounds limit how long a run can last, validation or re-execution replaces it. Each node runs its own executor, and the interleaving of runs can differ between nodes and between runs on one node; under these assumptions the committed result does not.",
+        },
+        {
+          kind: "paragraph",
+          text: "When validation is against a fixed order, re-execution cannot keep the executor from finishing, given two conditions. Take the earliest operation not yet committed. Once every operation before it has committed, their writes are final, so a run of it that reads those final writes sees exactly what executing in order would show it, and no earlier operation remains that could change what it read; that run validates, the operation commits, and the next operation becomes the earliest. The argument needs that run to read the predecessors' final writes, since a run made before they were final can still fail, and it needs the scheduler eventually to run it. Even a block in which each operation depends on the one before it is therefore completed, though at best at about the pace of executing it in sequence, plus the cost of tracking. The fixed order is what settles in advance which operation gives way when one makes another's read stale: always the later one, whose read it was. Where there is no preset order, as in many databases' optimistic concurrency control, a design has to make that choice itself.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whether the approach pays depends on contention, how often operations read what earlier operations in the same order write. Under low contention most operations validate on their first run, and the speedup approaches what the available processors allow, less the cost of recording and validating accesses and within the bound that chains of dependent operations place on any parallel execution. Under high contention aborts and re-executions multiply, along with the work spent on discarded runs. Because recording and validating cost time on every operation, wasted or not, throughput under heavy contention can be lower than that of executing the operations one at a time. A design can bound that loss, for example by detecting heavy contention and switching to sequential execution, or by having operations wait on likely rewrites, as some multi-version designs do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Optimistic rollups and optimistic verification use the same word for a different bet. They accept a claimed result unless a challenge within a challenge period shows it wrong, so the bet is that whoever made the claim is honest, and correctness rests on someone challenging a wrong claim in time. Optimistic execution bets only that concurrent runs will not interfere, and the executor checks every operation itself before anything commits, so a lost bet costs time rather than correctness, given deterministic operations and complete read tracking. Speculative execution draws a different boundary: it guesses inputs or ordering that are not yet settled, such as the contents of a block consensus has not yet decided, whereas optimistic execution starts from operations, order and state that are already settled and guesses only that they will not conflict. The two answer different questions and can be combined, as when a node executes a proposed block speculatively and uses an optimistic executor to do it.",
+        },
+      ],
+    },
+    {
+      id: "speculative-execution-content",
+      conceptId: "speculative-execution",
+      definition:
+        "Speculative execution runs operations on a guess about inputs or an order that has not yet been settled, and holds each result as provisional, together with the assumptions it was computed under, until settlement shows whether those assumptions held.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The guesses come from wherever settled inputs are still pending. A validator or full node can execute a proposed block before consensus has decided it; a wallet, an RPC service or a party engaged in block building can simulate pending transactions in the order it expects them to be included. The state a guess starts from may itself be provisional. The computation writes into isolated state, such as a scratch copy or an overlay, rather than into the state the node treats as settled, so a guess that proves wrong leaves nothing to undo there. With each result the node records what the result rests on: the set and order of the operations, the starting state, and the environment values the code read, such as the block's timestamp or producer. An identifier for a proposed block that commits to its parent and its contents can stand for all of this at once, given deterministic execution of the chain it extends.",
+        },
+        {
+          kind: "paragraph",
+          text: "When the inputs settle, by whatever rule the system uses to settle them (what counts as settled is finality's question), the node compares them with the recorded assumptions. If every assumption matches, the provisional result becomes the settled one without being computed again; that is where the latency gain comes from, since the work was done while the system was still deciding. If any assumption differs, the result is discarded together with everything computed on top of it, and the result for the settled inputs is computed afresh, unless another speculation already matches them, as when a node executed several competing proposals. Keeping a result on a match is correct only under two conditions. Execution must be deterministic, so that matching inputs give the same result, and the record must cover everything the result read: a record that captures the order of the operations but not the starting state or an environment value can keep a result that is wrong for the settled inputs, and that error is silent rather than merely wasted work. Keeping a result is also only as final as the rule that settled its inputs. Where settlement is probabilistic, a result kept as settled can still be reverted by a reorganization.",
+        },
+        {
+          kind: "paragraph",
+          text: "As long as speculative writes stay isolated, they affect nothing outside the node. The risk lies in effects and commitments that others act on: reporting a result as final, signing or voting for a state, sending a message to another system, releasing something of value. A system keeps these from escaping in one of three ways, each with its own condition. It can withhold them until the assumptions are confirmed, which gives observers only settled results and nothing earlier, though a result whose assumptions held is still ready for them as soon as the inputs settle. It can mark them explicitly as provisional, which lets observers see results before settlement but protects only observers that heed the mark; an application or intermediary that drops or ignores it is unprotected. Or it can tie them to the assumptions, as a message that names the block it depends on and takes effect only once that block is settled does; such an effect lapses with its assumptions, but only where a receiver or a rule actually checks them before acting.",
+        },
+        {
+          kind: "paragraph",
+          text: "Votes show the limits of these options. In a consensus protocol where validators vote on proposals, a vote is part of how a proposed block becomes settled, so it cannot wait for that settlement. It is instead tied to the block it names, so a vote for a proposal that loses lends no support to a competing proposal. It does not vanish entirely, though: protocol rules on what a validator may sign afterwards can still bind it.",
+        },
+        {
+          kind: "paragraph",
+          text: "An observer that treats a provisional result as final can act on a result that is later discarded. A service that credits a deposit it has seen only in a pending transaction or an undecided proposal, and lets the depositor withdraw against it, is left with a credit that rests on nothing if the transaction is never included or the proposal loses. The loss falls on whoever acted on the result, not on the node that speculated.",
+        },
+        {
+          kind: "paragraph",
+          text: "Discarded work costs the node that speculated: the processing it spent, and, where speculative work competes with settled work for the same resources, a possible delay to that settled work. A wrong guess leaves the settled result to be computed as if there had been no speculation, and can delay it, so speculation pays off only when guesses are right often enough for the gain on correct ones to outweigh the cost of wrong ones. The cost compounds when a node speculates on results that are themselves provisional, executing the next proposed block on top of one not yet decided, or a run of pending transactions each on the state the previous one left. When an early assumption fails, every result built on it is discarded, so the waste grows with how far ahead the node ran. How deep to speculate, and how many alternatives to execute, sets how often the work is ready against how much of it can be thrown away.",
+        },
+        {
+          kind: "paragraph",
+          text: "Speculation can also be exploited. An adversary can induce work that nodes will discard, such as submitting transactions that will not be included because they are replaced or invalidated first. In fee designs that charge only for included transactions, such transactions cost their sender nothing in fees, while every node that simulated them has spent the work. The attack works when inducing the work costs the adversary little relative to what nodes spend on it. A node can limit its exposure by bounding the speculative work it does for any one source; which pending transactions it accepts at all belongs to mempool policy.",
+        },
+        {
+          kind: "paragraph",
+          text: "Optimistic execution is a different bet. It starts from operations, order and starting state that are already settled and assumes only that the operations will not conflict, which the executor checks for itself. A speculative guess is confirmed or refuted by settlement, which the node does not decide alone. The two bets are independent: executing a proposed block ahead of its decision fixes nothing about how the block's operations are scheduled, which can be one at a time, in parallel or optimistically.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
