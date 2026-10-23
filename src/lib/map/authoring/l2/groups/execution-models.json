@@ -1,0 +1,923 @@
+{
+  "version": 1,
+  "group": "execution-models",
+  "domain": "computation-execution",
+  "parentConceptId": "execution-models",
+  "basis": {
+    "membership": "cbf2abb66e4b660a5f0944d0c43454bf69232ee65acc3735e24a9b9100c584d8",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "execution-layers": "8bb60f75f71d2f3ed93e666481f9ea263d3dd91b848590ebf682b094f02c84ac",
+      "execution-models": "76f0044a2430b3b995866b9b953ce8f580ebc59a2f8c9d880e2f60d43de0b979",
+      "scaling-modular-systems": "4355f4bee20c95e9c14e2836f99e980b9bf0ea5f80a2f6d52f30772d159b5783"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "deterministic-execution",
+      "placementId": "deterministic-execution",
+      "standing": "owned",
+      "claims": [
+        "how an execution environment keeps every value running code can read identical on every node executing the same block: environment values such as time, block data and randomness are supplied as protocol-fixed inputs carried in or derived from the block rather than read locally, and why one channel left open, such as a host function or system call that reads local state, is enough to let nodes diverge once code reads it; supplying a value fixes it for everyone but says nothing about who chose it, which is execution-context's question",
+        "how an execution environment makes failure itself a deterministic outcome: execution is bounded by protocol-defined limits, such as metered resources and fixed bounds on memory or call depth, rather than local time or memory limits, so an operation runs out at the same step on every node, and the outcome of each failure path, such as an invalid operation or exhausted resources, is specified so every node records the same failed result and the same state changes",
+        "how an execution environment makes arithmetic and ordering part of the rules rather than properties of the platform: operations are specified exactly, such as fixed-width integer arithmetic with defined behavior on overflow and division, while operations whose results can vary across hardware or implementations, such as some floating-point behavior, are excluded, restricted or fully specified, and where execution walks a collection, the order is fixed by the rules, such as sorted keys or insertion order, rather than left to how an implementation stores it; WASM's specific constraints are named, not explained",
+        "how a replicated system detects that execution diverged and what divergence does to it: in designs that commit to the result, each node compares the result it computed, through a commitment such as a state root, with the one the producer published, in the block or, in some designs, a later block or validators' votes, and rejects the result on a mismatch; a mismatch shows that two results differ, from divergent execution or a misstated commitment, not which one followed the rules, while designs that publish no commitment to the result notice a divergence only when nodes disagree on whether a block is valid, and a divergence can split nodes onto different chains or stop the chain from making progress, depending on how many nodes diverge and how the consensus protocol treats a block some of its participants reject"
+      ],
+      "excludes": [
+        "determinism",
+        "non-deterministic-execution",
+        "execution-context",
+        "metering",
+        "gas",
+        "state-roots",
+        "state-commitments",
+        "wasm",
+        "evm",
+        "client-diversity",
+        "execution-clients",
+        "hard-forks",
+        "state-machine-replication"
+      ]
+    },
+    {
+      "conceptId": "non-deterministic-execution",
+      "placementId": "non-deterministic-execution",
+      "standing": "owned",
+      "claims": [
+        "what non-deterministic execution is in blockchain systems: computation whose result can differ between runs or between executors given the same agreed inputs, and where it arises around blockchain execution, such as computation done off chain, calls to external systems, concurrent scheduling whose interleaving varies between runs, and behavior that depends on the hardware it runs on; why such computation is used despite this, because some useful work cannot be confined to agreed inputs, and making other work deterministic, such as fixing scheduling or hardware behavior, can cost more than a design accepts",
+        "how a system that needs agreement can accept the output of a non-deterministic computation instead of recomputing it: one executor, or a group, produces the output and others check it with a proof, rely on an attestation, or compare or aggregate the outputs of several executors; why checking an output against the rules, as a proof does, shows only that it is one of the results the rules allow, leaving any choice among several allowed results with whoever produced it, and what agreement then rests on in each case",
+        "how a system contains non-determinism by fixing the non-deterministic value before execution, such as recording an external report or a random value in an earlier step and then executing over the recorded value: execution can then be recomputed by everyone, but correctness moves to how the recorded value was produced and agreed, and to who could see or influence it before it was fixed"
+      ],
+      "excludes": [
+        "determinism",
+        "deterministic-execution",
+        "oracle-problem",
+        "trusted-execution",
+        "off-chain-execution",
+        "verifiable-execution",
+        "optimistic-verification",
+        "parallel-execution",
+        "concurrency-models",
+        "fraud-proofs"
+      ]
+    },
+    {
+      "conceptId": "sequential-execution",
+      "placementId": "sequential-execution",
+      "standing": "owned",
+      "claims": [
+        "how executing operations one at a time in an agreed order makes the result, for operations that are themselves deterministic, a function of the starting state and that order: each operation reads exactly the state its predecessors left, so conflicts between concurrently running operations cannot arise, and why the same operations in a different order can produce a different result, which makes the order itself something a system whose replicas each execute the operations must agree on; how the order is chosen is transaction-ordering's",
+        "what sequential execution costs: throughput is bounded by one execution stream however many processors are available, and a long or expensive operation delays every operation after it, which is one reason systems bound the work a single operation or block may consume; work outside the ordered execution, such as checking signatures that do not depend on state, can proceed in parallel without changing the result",
+        "why the reference a replicated system whose replicas each execute the operations needs is sequential execution in the agreed order, one that fixes at least the relative order of every two operations whose order changes the result, not any sequential order: a parallel or optimistic executor is correct only if it reproduces that order's result, whereas a guarantee that results match some serial order, as in database serializability, would leave replicas executing independently free to choose different orders and reach different states"
+      ],
+      "excludes": [
+        "parallel-execution",
+        "optimistic-execution",
+        "transaction-ordering",
+        "concurrency-models",
+        "execution-scheduling",
+        "state-access-patterns",
+        "execution-pipelines",
+        "metering",
+        "determinism"
+      ]
+    },
+    {
+      "conceptId": "parallel-execution",
+      "placementId": "parallel-execution",
+      "standing": "owned",
+      "claims": [
+        "how parallel execution runs operations concurrently while producing the state that sequential execution in the agreed order would: operations that do not conflict run at the same time, and conflicting operations take effect in the agreed order (many executors commit every result in that order) so the outcome does not depend on which operation finished first; the two ways of finding conflicts, declaring accessed state in advance or detecting conflicts during execution, are named with their trade-off, and detection and repair are optimistic-execution's",
+        "how declared access lets an executor schedule ahead: each operation names the state it may read or write, operations with non-conflicting declarations are grouped to run together, and, where declarations are binding, an operation that touches state outside its declaration fails instead of conflicting silently; why an operation that must not fail for an undeclared access has to declare every state it might touch, so operations whose access depends on values read at run time over-declare, which reduces parallelism, or declare what a simulation against earlier state predicted and fail if their access differs at execution",
+        "what limits the gain from parallel execution: contention on frequently written state, such as a popular contract or account that many operations update, forces those operations into sequence, unless the design lets such updates commute; chains of operations that each depend on the previous one cannot overlap, so the longest such chain bounds the speedup; and the cost of tracking or declaring access can outweigh the gain when operations are few or small",
+        "why how much parallelism an executor can find, and how, depends on what the execution environment or execution layer fixes: whether conflicts can be known before execution depends on what the environment fixes, such as transactions that declare their state, a state model that ties data to owners, or a binding record of each operation's access carried with the block and checked by every node, while an environment whose code chooses at run time which storage it touches and carries no such record leaves an executor to find conflicts during execution, and designing for parallelism up front can mean changing what transactions or blocks carry or how state is organized"
+      ],
+      "excludes": [
+        "sequential-execution",
+        "optimistic-execution",
+        "speculative-execution",
+        "concurrency-models",
+        "execution-scheduling",
+        "state-access-patterns",
+        "state-models",
+        "alternative-vms",
+        "evm",
+        "execution-layers",
+        "transaction-ordering"
+      ]
+    },
+    {
+      "conceptId": "optimistic-execution",
+      "placementId": "optimistic-execution",
+      "standing": "owned",
+      "claims": [
+        "how optimistic execution runs operations whose inputs are settled concurrently as if they will not conflict and checks afterwards: each operation's reads and writes are recorded, an operation fails validation when something it read was changed by an operation earlier in the agreed order that it did not see, and an operation that fails validation is aborted and re-executed, while later operations whose reads its re-execution may change, including those that read its earlier writes, must be validated again, before results are committed in the agreed order",
+        "when optimistic execution pays off and how it degrades: under low contention most operations validate on their first run and the speedup approaches what the available processors allow, less tracking and validation overhead, while under high contention aborts and re-executions multiply, wasted work grows, and throughput can fall below sequential execution's because of the tracking overhead; why, when validation is against a fixed order, it still makes progress, since the earliest operation not yet committed, once its predecessors are final, cannot be invalidated by any of them",
+        "why optimistic execution, which assumes no conflicts among operations with settled inputs and checks before it commits, is a different idea from optimistic rollups and optimistic verification, which accept a claimed result unless a challenge within a challenge period shows it wrong; and how it differs from speculative execution, which guesses inputs or ordering that are not yet settled rather than the absence of conflicts"
+      ],
+      "excludes": [
+        "speculative-execution",
+        "parallel-execution",
+        "sequential-execution",
+        "optimistic-rollups",
+        "optimistic-verification",
+        "execution-preconfirmations",
+        "execution-scheduling",
+        "concurrency-models",
+        "state-access-patterns",
+        "fraud-proofs"
+      ]
+    },
+    {
+      "conceptId": "speculative-execution",
+      "placementId": "speculative-execution",
+      "standing": "owned",
+      "claims": [
+        "how speculative execution computes results before the inputs or ordering they depend on are settled, such as executing a proposed block before consensus has decided it, or executing pending transactions in an expected order: each result is kept provisional together with the assumptions it rests on, is kept when the settled inputs match those assumptions, and is discarded and recomputed when they differ; what it buys is latency, since the work is ready when the inputs settle",
+        "what must not escape a speculation and how systems keep it contained: effects and commitments others act on, such as reporting a result as final, signing or voting for a state, sending a message to another system, or releasing something of value, must wait until the assumptions are confirmed, be explicitly marked as provisional, or be tied to those assumptions so they lapse with them; an observer that treats a provisional result as final can act on a result that is later discarded",
+        "what wasted speculation costs and who pays: discarded work costs the node that speculated, speculating on results that are themselves provisional compounds the waste when an early assumption fails, and an adversary can exploit speculation by inducing work that will be discarded, such as submitting transactions that will not be included, when doing so costs it little; distinguished from optimistic execution, which assumes no conflicts among operations whose inputs are already settled"
+      ],
+      "excludes": [
+        "optimistic-execution",
+        "parallel-execution",
+        "transaction-ordering",
+        "block-building",
+        "execution-preconfirmations",
+        "optimistic-rollups",
+        "optimistic-verification",
+        "finality",
+        "mempools",
+        "reorganizations",
+        "transaction-inclusion"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "deterministic-execution": {
+      "model": {
+        "meaning": "The property of a replicated execution environment that every node executing the same block from the same pre-state, under the same protocol rules, computes the same result, including the same failures, so that results can be compared and a mismatch exposes divergence.",
+        "kind": "property",
+        "parents": {
+          "execution-models": "Parent states as premises that results are checkable by recomputation only if nothing outside the agreed inputs influences them, and that non-deterministic sources are excluded or turned into agreed inputs. This adds the environment-level discipline: how the whole read surface of running code (opcodes, host functions, system calls, runtime and library facilities) is closed or fed from the block; how resource exhaustion and other failure paths become protocol-specified outcomes; and how replicas detect a divergence through a result commitment and what it does to the chain. Do not restate the parent's exclude-or-input sentence or the semantics/strategy split."
+        },
+        "claims": [
+          "how an execution environment keeps every value running code can read identical on every node executing the same block: environment values such as time, block data and randomness are supplied as protocol-fixed inputs carried in or derived from the block rather than read locally, and why one channel left open, such as a host function or system call that reads local state, is enough to let nodes diverge once code reads it; supplying a value fixes it for everyone but says nothing about who chose it, which is execution-context's question",
+          "how an execution environment makes failure itself a deterministic outcome: execution is bounded by protocol-defined limits, such as metered resources and fixed bounds on memory or call depth, rather than local time or memory limits, so an operation runs out at the same step on every node, and the outcome of each failure path, such as an invalid operation or exhausted resources, is specified so every node records the same failed result and the same state changes",
+          "how an execution environment makes arithmetic and ordering part of the rules rather than properties of the platform: operations are specified exactly, such as fixed-width integer arithmetic with defined behavior on overflow and division, while operations whose results can vary across hardware or implementations, such as some floating-point behavior, are excluded, restricted or fully specified, and where execution walks a collection, the order is fixed by the rules, such as sorted keys or insertion order, rather than left to how an implementation stores it; WASM's specific constraints are named, not explained",
+          "how a replicated system detects that execution diverged and what divergence does to it: in designs that commit to the result, each node compares the result it computed, through a commitment such as a state root, with the one the producer published, in the block or, in some designs, a later block or validators' votes, and rejects the result on a mismatch; a mismatch shows that two results differ, from divergent execution or a misstated commitment, not which one followed the rules, while designs that publish no commitment to the result notice a divergence only when nodes disagree on whether a block is valid, and a divergence can split nodes onto different chains or stop the chain from making progress, depending on how many nodes diverge and how the consensus protocol treats a block some of its participants reject"
+        ],
+        "excludes": [
+          "determinism",
+          "non-deterministic-execution",
+          "execution-context",
+          "metering",
+          "gas",
+          "state-roots",
+          "state-commitments",
+          "wasm",
+          "evm",
+          "client-diversity",
+          "execution-clients",
+          "hard-forks",
+          "state-machine-replication"
+        ],
+        "placements": {
+          "deterministic-execution": "Single L2 leaf under Execution Models (Computation & Execution). Text must stand alone: no positional references, no reliance on sibling records; siblings are named only where a boundary needs it (non-deterministic execution: computation whose result is accepted rather than recomputed)."
+        },
+        "fields": {
+          "statement": [
+            "Scope: execution that every validating node recomputes (re-executing full nodes); not light clients that trust a commitment, and not off-chain computation (non-deterministic-execution's).",
+            "Conditions for 'same result': same pre-state, same block contents, same protocol rules (rule version differences belong to hard-forks: name only), and implementations that conform to the specification (cross-implementation agreement is Determinism's: reference only).",
+            "'Result' covers post-state and per-transaction outcomes, failures included; not only successful paths."
+          ],
+          "establishedBy": [
+            "Claim 1 (read surface): every value code can read is either chain state (identical given the same pre-state) or an environment value carried in or derived from the block (timestamp, block number, producer address, recent block hashes, a randomness value the block carries, such as a beacon output). The new angle beyond Determinism is completeness of the interface: the environment defines what instructions and host functions exist, and leaves out or disables anything that reads node-local data (wall clock, filesystem, environment variables, memory addresses, uninitialized memory, OS randomness, thread timing). Use 'node-local data', not 'local state': 'state' means chain state.",
+            "Values with a bounded window: a block-derived value is safe only if every node holds it, which is why some environments expose only a recent window of past block hashes (example only if used; do not present as universal).",
+            "Claim 3 (arithmetic and ordering, added at plan re-record; Determinism's record hands 'making arithmetic, ordering and limits part of the rules' to this concept): the environment specifies each operation's result exactly, such as fixed-width integers with defined overflow and division-by-zero behavior; operations whose results can vary across hardware or implementations, such as some floating-point results, are excluded, restricted or fully specified, depending on the environment (WASM's constraints: name wasm only). Where execution walks a collection (a map, a set), its order is fixed by the rules (sorted keys, insertion order), not by an implementation's storage layout or hash seed. Pitfalls: IEEE 754 basic operations are themselves exactly specified; variation comes from things like NaN bit patterns, fused operations, library functions and non-default modes, so do not say floating point is inherently nondeterministic. Do not restate Determinism's cross-implementation agreement point.",
+            "Claim 1 limit: supplying a value fixes it for everyone, not that it is a good or unbiased value; who chose it and what it can be trusted for is execution-context's (name only). Determinism already makes the agreement-vs-correctness point in general: reference, do not restate its timestamp example or the predictability of state-derived randomness.",
+            "Claim 2 (bounded failure): work and memory are bounded by protocol-defined limits that every node evaluates identically: per-operation metered costs against an allowance (metering, gas: name only), plus in many environments fixed bounds such as a memory maximum or call-depth limit, which are protocol limits rather than metered charges. Wall-clock timeouts and a node's own memory or stack capacity are not used to decide outcomes, because they differ between nodes. Condition: protocol bounds are set so that hardware meeting the requirements stays within them; a node that runs out of its own memory first has failed as an implementation, not produced the specified outcome.",
+            "Claim 2 (specified outcomes): each failure path (invalid operation, exhausted allowance, exceeded bound) has a specified result: which changes are discarded, which are kept (such as fees charged), and what status is recorded. Name transaction-reversion's territory (what is undone and why fees and nonce survive) only by effect; do not explain it.",
+            "Claim 4 (detection; claim index 3): in designs that commit to the result, the result is committed (state root, possibly also a commitment to receipts or outcomes: state-roots, state-commitments named only), and each re-executing node compares its own commitment with the one the producer published. Condition: where the commitment sits varies by design. Many chains carry the block's post-state commitment in that block; some carry it in the next block (divergence surfaces one block later); some exchange it in validators' votes rather than in the block. Narrow 'the block carries' accordingly. Condition: not every design publishes a commitment to the result (UTXO-style chains such as Bitcoin commit only to the block's transactions). Designs that publish none notice a divergence only when nodes disagree on whether a block is valid; a difference that changes no node's verdict on any block stays unnoticed until it does. Do not state commitment comparison as how every replicated system detects divergence."
+          ],
+          "violatedBy": [
+            "An open channel: a host function, opcode, system call, or language/runtime facility that reads node-local data. It causes divergence only when code reads it and the value differs between nodes in a way that changes the result, so it can stay dormant (do not restate Determinism's 'agree for a long time, part on first exercise' sentence).",
+            "Outcomes decided by node-local limits (timeouts, available memory, native stack depth) rather than protocol bounds.",
+            "Unspecified or underspecified failure paths, which leave implementations free to choose different outcomes. An implementation bug on a fully specified path does not violate the property: that node no longer executes the block as specified (see statement's conformance condition), so the bug is an implementation fault outside the property. Agreement between independent implementations is Determinism's (cross-implementation agreement) and limiting the reach of one client's bug is client-diversity's; execution-clients: name only. Do not paraphrase Determinism's claim.",
+            "Consequence and detection (claim 4; claim index 3): a mismatch shows only that two results differ, not which is right: either side may have computed differently or started from a corrupted pre-state, or, where a commitment is published, the producer may have published a wrong one. Attribution needs the rules, not the comparison.",
+            "Effect on the chain depends on how many nodes diverge and how consensus treats a block some participants reject. Fork-choice chains: nodes rejecting a block follow a chain without it, so the network splits; if the rejecting share is large enough to deny the quorum finality needs, finality stalls. BFT-style protocols that commit a block only with a quorum (e.g. more than two thirds of voting power): if enough voting power rejects that no quorum forms, the chain stops making progress; a diverging minority cannot follow the committed chain and typically halts. State thresholds only with the quorum rule they depend on. Recovery (patches, coordinated rollback, hard-forks) is named only."
+          ],
+          "confusions": [
+            "Determinism (F1) vs deterministic execution: the principle (outcome fixed by state and input, cross-implementation agreement, unpredictability, open choices) is Determinism's; this concept is the environment-level discipline that realizes it for block execution. Reference by name only; do not re-explain floating point, iteration order, or randomness predictability.",
+            "Deterministic failure vs no failure: deterministic execution does not prevent transactions failing; it makes the failure identical everywhere.",
+            "Agreement on a value vs its correctness: a block-supplied value is agreed, not validated (execution-context's question).",
+            "Detection vs attribution: a commitment mismatch detects disagreement; it does not identify the faulty side.",
+            "Not 'deterministic' in the sense of predictable to users: a transaction's outcome depends on the pre-state at its position, which a submitter may not know in advance (ordering is not this concept's; avoid expanding)."
+          ],
+          "relation": "Result = f(pre-state, block contents, protocol rules). Every input to the result must be one of these three; anything else a node can read is a channel for divergence. Use as a note, not as a formula in the record unless it helps."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A property and the conditions under which it holds: three conditioned arguments (a closed read surface fed from the block; failure bounded and specified by protocol limits; detection by commitment and its chain-level consequence, which branches on share of diverging nodes and consensus rule).",
+        "whyProse": "Each claim is an argument whose meaning is in its conditions: which values are safe because every node holds them, why a protocol bound rather than a node limit decides failure and under what hardware assumption, and why the effect of divergence depends on both the diverging share and the consensus rule. A flow of the divergence path (mismatch, then split or halt) would draw the two outcomes as a clean branch and drop the conditions that select between them; a distinction (detection vs attribution, agreement vs correctness) is a single sentence each and the second is Determinism's to draw; there is no persistent mode with returns, no recurrence, and no set of alternatives compared on shared dimensions.",
+        "level": "The parent states only the premise that non-deterministic sources are excluded or made inputs; Determinism (F1) owns the principle and explicitly hands 'how execution environments do that' to this concept. The environment-level mechanics (read surface, protocol bounds, specified failure outcomes, commitment comparison, split or halt) belong here, not at the parent or at Determinism; WASM and EVM own their own instruction-level specifics and are named only.",
+        "territory": "Names without explaining: determinism (principle, cross-implementation agreement, unpredictability), execution-context (who chose a block value and what it can be trusted for), metering and gas (how costs are assigned and charged), state-roots and state-commitments (how the commitment is built), transaction-reversion (what a failed transaction undoes and keeps), client-diversity, execution-clients, hard-forks (recovery), state-machine-replication, non-deterministic-execution (accepting rather than recomputing results), wasm and evm. No sibling's strategy (sequential, parallel, optimistic, speculative) is discussed; a parallel or speculative executor's correctness is theirs.",
+        "placements": "One placement (leaf under Execution Models); prose written to stand alone with no positional reference, so it holds there without reliance on the parent's or siblings' text."
+      },
+      "audit": {
+        "at": "2026-10-22T18:42:04.838Z",
+        "note": "Re-audit after repair cycle 1, expanded into a complete audit because the repair changed the detection argument's assumptions (plan claim index 3 now conditioned on designs that commit to the result, plus a branch for designs that publish none) and the failure paragraph's account of what breaks the property. Findings resolved: B1 (A and B) resolved: the failure paragraph now says the property breaks where a failure path is underspecified, puts a bug on a fully specified path outside the property because that node no longer executes the block as specified (consistent with the definition's 'as specified' and the bounds paragraph's implementation-failure sentence), and only names Determinism (whether independent Execution Clients agree) and Client Diversity (limiting the reach of one client's bug) without restating Determinism's cross-implementation sentence. B2 (A) resolved: commitment comparison is conditioned on designs that commit to the result; designs that publish no commitment notice a divergence only when nodes disagree on a block's validity, matching the reworded claim; the shared-fault sentence now holds 'in either kind of design' and says no disagreement exposes it, which also answers A's advisory about 'not detected at all'. Model: violatedBy now places implementation bugs outside the property and agrees with the statement's conformance condition; establishedBy labels detection as claim 4 (index 3). Overlap per placement: one placement under Execution Models; the parent's exclude-or-input sentence and semantics/strategy split are not restated (the read-surface paragraph adds interface completeness, not the premise). Territory and splits: F1 Determinism's clock, floating-point, iteration-order and resource-limit examples are not restated (the record gives how the rules fix each); agreement-versus-trust is kept to the hand-off to Execution Context as claim 1 sanctions; Metering, Gas, State Roots, State Commitments, Transaction Reversion, WASM, Execution Clients, Client Diversity, Hard Forks and fork-choice rules are named, not explained; no sibling strategy is discussed and Non-Deterministic Execution's acceptance of results is untouched. Structure: prose, as designed (nine paragraphs), no blocks. Accuracy: every claim checked under its condition, including the repaired sentences, the no-commitment branch (UTXO-style chains), the shift-width and overflow examples, division by zero (EVM returns zero, WASM traps), IEEE 754 basic operations, the commitment placements (in the block, the next block, votes), and the fork-choice and more-than-two-thirds consequences with their quorum rules. Every use of 'the property', 'mismatch' and 'commitment' was re-read against the narrowed definition and found consistent. Depth: 1,360 words over four claims, two to three paragraphs each, each tied to a claim; the repair's conditions account for most of the excess. Canonical validity: no positional or dated words, American English, plain text. Advisory: (1) 'library code compiled into the program' is not part of an interface the environment defines; say where programs run natively, the libraries they link. (2) 'notices that these measures have failed' frames detection narrowly while the paragraph also covers implementation faults; 'notices a divergence' would match. (3) 'the producer publishes a commitment' does not fit designs where the commitment travels in validators' votes, which the voters publish. (4) 'rejection by more than a third ... and the chain stops making progress' holds where every candidate block carries the divergent result, as when the commitment is deferred to the next block or the triggering transactions keep being proposed; state that condition. (5) 'not in floating point as such' is slightly broad, since IEEE 754 itself leaves NaN payloads to implementations; 'not in the basic operations' rounding is exact. (6) 'Closing the channels makes supplied values agreed, not trustworthy' stays close to Determinism's agreement-versus-correctness sentence; it could be cut to the hand-off.",
+        "resolutions": [
+          {
+            "id": "names-concept:3eee92edb9",
+            "resolution": "Client Diversity is named once, as the owner of limiting the reach of one client's bug; how diversity does that is not explained."
+          },
+          {
+            "id": "names-concept:d60689c392",
+            "resolution": "Determinism is named once, as the owner of whether independent Execution Clients agree; its cross-implementation sentence and its clock, floating-point, iteration and resource-limit examples are not restated."
+          },
+          {
+            "id": "names-concept:78a695c0f2",
+            "resolution": "Execution Clients is named only, in the sentence handing cross-client agreement to Determinism."
+          },
+          {
+            "id": "names-concept:3a8c48e348",
+            "resolution": "Execution Context is named as the owner of who chooses a supplied value and what it can be relied on for; neither question is answered in the record."
+          },
+          {
+            "id": "names-concept:97142102b8",
+            "resolution": "'execution environment' is used as the general term for what the property belongs to (definition, read-surface paragraph); the Execution Environments concept itself is not explained."
+          },
+          {
+            "id": "names-concept:63fec5349b",
+            "resolution": "'fork-choice rule' names the class of consensus in the consequences paragraph to condition the split outcome; how fork choice selects a chain is not explained."
+          },
+          {
+            "id": "names-concept:ad04528b11",
+            "resolution": "Same single use as fork-choice: a condition on the consequence, not an explanation of fork-choice rules."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "Gas is named with Metering as the territory of the protocol-set allowance; how costs are set or charged is not explained."
+          },
+          {
+            "id": "names-concept:251477d6ae",
+            "resolution": "Hard fork is named once as a recovery route outside the property; not explained."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "Metering is named with Gas; the record states only that the allowance is consumed at protocol-set costs, the key property claim 2 needs."
+          },
+          {
+            "id": "names-concept:44bbd71900",
+            "resolution": "State Commitments is named as the owner of how the commitment is built; the record uses only that a commitment summarizes the result."
+          },
+          {
+            "id": "names-concept:494c5caa00",
+            "resolution": "State Roots is named with State Commitments; 'a state root summarizing the state after the block' is the example claim 4 itself gives, not its construction."
+          },
+          {
+            "id": "names-concept:41088e4163",
+            "resolution": "Transaction Reversion is named as the subject of what a failed transaction undoes and keeps; the record only requires that the failure outcome be specified, with the fee as one example, as claim 2 states."
+          },
+          {
+            "id": "names-concept:3abb29fbd4",
+            "resolution": "WASM is named once ('Chains built on WASM settle their own version of these choices'); its constraints are not explained, as claim 3 requires."
+          },
+          {
+            "id": "absolutes:24f3831301",
+            "resolution": "Each checked: 'cannot count on programs leaving a facility unused' holds where anyone can deploy code (stated); 'nothing guarantees that it finishes' holds where code can loop or recurse (stated); 'a compiler may assume it never happens' is the meaning of undefined signed overflow; 'maps that cannot be enumerated' describes those maps; 'a smaller diverging set cannot follow the chain the others commit' holds because those nodes reject a committed block. The 'only' uses carry their conditions (bounds within hardware requirements; no-commitment designs; what a commitment covers)."
+          },
+          {
+            "id": "depth-long:846db2df41",
+            "resolution": "1,360 words for four mechanism claims: read surface (2 paragraphs), bounded and specified failure (2), arithmetic and ordering (2), detection and consequence (3). Each paragraph carries its claim's mechanism, condition or failure mode; the excess over 1,300 is mostly the repair's conditions (the no-commitment branch, the bug-outside-the-property sentence), which a shorter text would lose. Condensable only by the advisory trims (agreement-versus-trust sentence), not by removing a claim's explanation."
+          }
+        ],
+        "recordFingerprint": "31cfff77e5c917d280b9ffe201ed17ef8daf16a76af71c8073ec294c0dc1a93c"
+      }
+    },
+    "non-deterministic-execution": {
+      "model": {
+        "meaning": "Computation whose result can differ between runs, or between executors, even when they start from the same agreed inputs, because something outside those inputs (an external system, a local reading, scheduling, the hardware) affects the result.",
+        "kind": "property",
+        "parents": {
+          "execution-models": "Parent says only that non-deterministic sources are excluded or turned into agreed inputs, and that where they remain the result is accepted from whoever computed it ('verification into trust'). Adds: where non-determinism arises around blockchain execution and why it is used anyway; that accepting an output is not one undifferentiated act of trust (a proof, an attestation and a comparison of several executors each move agreement onto something different, and a check against the rules still leaves the choice among allowed results with the producer); and what fixing the value before execution buys and costs. Refine the parent, do not contradict it and do not restate its sentence about turning sources into inputs."
+        },
+        "claims": [
+          "what non-deterministic execution is in blockchain systems: computation whose result can differ between runs or between executors given the same agreed inputs, and where it arises around blockchain execution, such as computation done off chain, calls to external systems, concurrent scheduling whose interleaving varies between runs, and behavior that depends on the hardware it runs on; why such computation is used despite this, because some useful work cannot be confined to agreed inputs, and making other work deterministic, such as fixing scheduling or hardware behavior, can cost more than a design accepts",
+          "how a system that needs agreement can accept the output of a non-deterministic computation instead of recomputing it: one executor, or a group, produces the output and others check it with a proof, rely on an attestation, or compare or aggregate the outputs of several executors; why checking an output against the rules, as a proof does, shows only that it is one of the results the rules allow, leaving any choice among several allowed results with whoever produced it, and what agreement then rests on in each case",
+          "how a system contains non-determinism by fixing the non-deterministic value before execution, such as recording an external report or a random value in an earlier step and then executing over the recorded value: execution can then be recomputed by everyone, but correctness moves to how the recorded value was produced and agreed, and to who could see or influence it before it was fixed"
+        ],
+        "excludes": [
+          "determinism",
+          "deterministic-execution",
+          "oracle-problem",
+          "trusted-execution",
+          "off-chain-execution",
+          "verifiable-execution",
+          "optimistic-verification",
+          "parallel-execution",
+          "concurrency-models",
+          "fraud-proofs"
+        ],
+        "placements": {
+          "non-deterministic-execution": "Single L2 placement, leaf under Execution Models beside deterministic, sequential, parallel, optimistic and speculative execution. No positional wording; the record must stand alone without the parent's paragraph on sources of non-determinism."
+        },
+        "fields": {
+          "statement": [
+            "Relative to agreed inputs: a computation is non-deterministic when, given the same agreed inputs (and state), its result CAN differ between runs or between executors. 'Can', not 'does': many runs may agree.",
+            "The property is about what is counted as an agreed input; the principle (input boundary, renaming a local reading as input is not enough) is Determinism's (F1). Name it, do not restate it.",
+            "Each single run still returns one result; the issue is that independent recomputation is not guaranteed to reproduce it, so recomputing is no longer a check."
+          ],
+          "establishedBy": [
+            "Where it arises (claim 1), each with its condition: off-chain computation: not inherently non-deterministic (rollup or prover execution can be fully deterministic); it is where non-determinism often enters because it runs outside the chain's execution discipline and can read local clocks, local state or a node's own view of pending transactions.",
+            "Calls to external systems: the response depends on the system's state, the time of the call and possibly who asks; the call can also fail or time out differently for different callers.",
+            "Concurrent scheduling: interleaving varies between runs; the RESULT varies only where interleaved operations interact (shared state, order-dependent accumulation) and nothing fixes the order of their effects. A chain's parallel executor runs with varying interleaving yet is built to produce one result: name parallel-execution and concurrency-models, do not explain them.",
+            "Hardware dependence: e.g. machine-learning inference whose outputs can differ across GPU models, drivers, kernels or batch sizes (non-associative floating-point reductions). Name it as where it arises off chain; the floating-point mechanisms (fused multiply-add, extended precision, math libraries) are Determinism's examples and deterministic-execution's exclusions: do not re-explain.",
+            "Why used anyway: some useful work cannot be confined to agreed inputs (prices, events, web data exist outside the chain until someone records them); heavy computation such as model inference is impractical to recompute on every node. Pitfall: for scheduling and hardware sources the work CAN often be made deterministic, at a performance cost; do not say every such computation 'cannot' be made deterministic (see claim-accuracy report)."
+          ],
+          "violatedBy": [
+            "What removes the property for the system that consumes the result (claim 3): fix the non-deterministic value before execution by recording it in an earlier step (an oracle report posted in a prior transaction, a random value delivered by a beacon or request-then-fulfill callback), then execute over the record. Condition: the rest of execution must itself be deterministic (deterministic-execution's discipline, named only).",
+            "Removing the dependence altogether is deterministic-execution's and Determinism's territory: name, do not explain."
+          ],
+          "confusions": [
+            "Not an unpredictable input: a deterministic computation over an unpredictable but agreed input is deterministic (State Machines' distinction; do not redraw it).",
+            "Not a choice a specification leaves open on purpose (Determinism's 'choice left open'; F1 owns it; boundaries 6a forbids restating it).",
+            "Not implementations of one fixed rule set disagreeing (cross-implementation divergence: Determinism and deterministic-execution).",
+            "Not 'off chain' as such, and not randomness as such: a randomized computation whose seed is recorded is deterministic over the record.",
+            "Not optimistic verification or fraud proofs: those re-execute a disputed step and need it deterministic; name only if needed."
+          ],
+          "variants": [
+            "Ways a system that needs agreement accepts an output without recomputing it (claim 2), each with what agreement rests on; producer is one executor or a group:",
+            "Proof (verifiable-execution, named only): shows the output is a result the rules allow for SOME choice of the non-deterministic values (external responses, scheduling, coins act as a witness the prover supplies). Rests on the proof system's soundness and on the rules (the proved relation) capturing what matters. Leaves the choice among allowed results with the prover unless the rules bind those values, e.g. external data the rules require to carry its source's signature: the prover can then pick that data only from values the source has signed, and the choice of it moves to the source where the rules also fix which signed value counts (e.g. the one for a given time or round).",
+            "Attestation (trusted-execution, named only): hardware vouches that measured code produced the output. Rests on the hardware, its vendor's attestation keys and the enclave not being compromised, plus whatever the attested code read. It shows a run of that code produced the output, not that it is the only possible result: if the code is non-deterministic, an operator can in many designs run it more than once and present the result it prefers, unless the design prevents re-runs from being selectable. Do not explain enclaves.",
+            "Comparison or aggregation of several executors: exact-match comparison works only where honest executors produce identical outputs; benign non-determinism makes honest executors disagree, so designs compare within a tolerance, vote, or aggregate (e.g. median). Rests on enough executors being honest and independent, the threshold set by the rule (e.g. for a median of reports, the result lies within the range of honest reports while fewer than half are faulty). The tolerance itself is room a faulty or colluding minority can move the result within. Independence matters: executors sharing one data source or model share its errors.",
+            "Pitfall: 'checking against the rules shows only that the output is one of the allowed results' is a statement about the proof (or rule-check) route; attestation and comparison are not checks against the rules. And the residual choice exists only where the rules allow more than one result."
+          ],
+          "tradeoffs": [
+            "Accept vs contain: accepting an output (claim 2) avoids recomputation but places agreement on a prover's rules and soundness, attestation hardware, or a quorum; fixing the value first (claim 3) restores recomputation by everyone holding the state and inputs, but moves correctness to how the recorded value was produced and agreed (who supplied it, which transaction or block carried it) and to who could see or influence it before it was fixed (its supplier, the block producer who includes, delays or omits the recording).",
+            "The two connect: an output accepted under claim 2 is often what gets recorded as the input under claim 3; keep them as two questions (agreeing on the value vs executing over it).",
+            "Condition for unpredictable values: on a chain whose state anyone can read, a recorded value is public; a use that needs it unpredictable needs the inputs that consume it fixed before it is known. Keep this to one condition clause; commit-reveal, VRFs, MEV are not to be explained.",
+            "What the value is worth for facts about the outside world is oracle-problem's question (name only). Who chooses a supplied environment value is execution-context's, not this record's."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Alternatives compared on shared dimensions: four ways a system that needs agreement deals with a non-deterministic result (prove it, attest it, compare or aggregate several executors, or fix the value before execution), each answering the same questions: what others actually check, what agreement then rests on, and who keeps the choice among possible results.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Show, read across four routes (proof, attestation, comparison or aggregation of executors, value fixed before execution), what others check, what agreement rests on, and who keeps the remaining choice, so the reader sees that each route moves trust somewhere different and that only the fixed-value route lets everyone recompute.",
+            "whyNotProse": "Claim 2 asks what agreement rests on 'in each case' and claim 3 adds a route that answers the same questions differently; in prose the three answers per route spread over four paragraphs and the reader must reassemble where the residual choice sits in each. Read across a column, the shift of trust (prover and rules, hardware vendor, quorum, value supplier) is the point."
+          }
+        ],
+        "division": "Prose explains what non-deterministic execution is, where it arises (each source with its condition) and why it is used; why a check against the rules leaves the choice among allowed results with the producer, and the conditions each route depends on (proof soundness and what the rules bind, attestation not excluding re-runs, honest and independent executors and the threshold of the aggregation rule, benign disagreement forcing tolerances); and claim 3's mechanism, recording in an earlier step and executing over the record, with the exposure it leaves. The comparison shows only short cell values per route (what is checked, what agreement rests on, who keeps the choice) and must not restate the prose's conditions cell by cell; conditions and thresholds stay in the prose, never compressed into a cell where they would read as unconditional.",
+        "level": "Belongs at this concept: Execution Models only states that unrecomputable results are accepted on trust; how acceptance can be structured and where the residual trust lands is specific to non-deterministic results. Determinism (F1) owns the principle of the input boundary; deterministic-execution owns removing non-determinism; the routes themselves (verifiable-execution, trusted-execution, oracle networks) are named in cells and prose, not explained.",
+        "territory": "Each cell names a route by its effect on agreement, not by its mechanism: no proof-system construction (verifiable-execution), no enclave mechanics (trusted-execution), no oracle design or worth of external facts (oracle-problem), no challenge games (optimistic-verification, fraud-proofs). Scheduling and hardware sources name parallel-execution and concurrency-models without explaining them. Determinism's input-boundary, unpredictability and open-choice claims are not restated; claim 3 is written at the execution level (recording in an earlier step, recomputation by everyone, who supplied and included the record). Sibling deterministic-execution's environment-value and divergence-detection mechanisms are not drawn.",
+        "placements": "One placement (leaf under Execution Models); the comparison and prose make no positional or domain-specific reference and stand alone without the parent's paragraph."
+      },
+      "audit": {
+        "at": "2026-10-22T18:53:03.866Z",
+        "note": "Re-audit (repair cycle 1), scoped to auditor A's B1 and auditor B's B1, the changed containment and proof paragraphs, model fields tradeoffs[2] and variants[1], and what depends on them; the repair narrowed conditions locally and did not change the argument, assumptions, structure or scope, so the review was not expanded beyond a full read for material defects. A-B1 resolved: 'On a chain whose state anyone can read, a recorded value is public, so a use that needs it to be unpredictable has to fix the inputs that consume it before the value is known' scopes the premise without explaining confidential execution; tradeoffs[2] carries the same scope. B-B1 resolved: the signature binding now limits the prover to values the source has signed, and the choice moves to the source only where the rules also fix which signed value counts (time or round); variants[1] matches, and the Proof cell 'The prover, among the results the rules allow' stays consistent. Changed text also resolves A advisories 4 and 8 and B advisories A2 and A6 ('as they can when'; 'a transaction or block field'; only the includer's view now follows from the 'because', hedged 'in many designs'); the cut clause removed the repetition of the recomputation point, and nothing that depended on it is left dangling. Overlap: the single placement's parent (Execution Models) is refined, not restated; the containment paragraph stays at the execution level beside Determinism's recording argument. Territory: all excluded concepts named, not explained; no new mechanism (commit-reveal, encrypted mempools, confidential state) introduced by the repair; deterministic-execution's environment-value and divergence mechanisms not drawn. Structure: the four-route comparison matches the design and remains accurate. Accuracy: supplier and includer visibility, block-producer power, median bound, attestation re-run and proof-choice claims checked. Depth: 1352 words follows three broad claims and four routes. American English, plain text, no positional words. Advisory: (1) route paragraphs restate their comparison cells (attestation paragraph most), trimming would also shorten the record; (2) 'Around blockchain execution it enters in a few places, each under a condition.' and 'They differ in what is actually checked and in where agreement comes to rest.' only announce; (3) 'Each run still produces one result' sits close to Determinism's wording; (4) 'Independence matters as much as number' is an unsupported comparative, 'matters too' suffices; (5) the inference-reproducibility sentence reads as exhaustive (fixed-point or integer inference, fixed transcendental implementations); (6) the challenge-scheme clause could note that committing the outside values as part of the claim makes such a computation challengeable; (7) a clause could separate the hardware case from cross-implementation divergence of one defined rule; (8) 'the choice of it moves to the source' assumes the source signs one value per time or round; (9) 'before the value is known' could say known to whoever chooses those inputs; (10) 'because the recording is a transaction or block field, so in many designs does whoever includes it' reads awkwardly.",
+        "resolutions": [
+          {
+            "id": "names-concept:b9400084ed",
+            "resolution": "Concurrency Models is named once as where a parallel executor's single result under varying interleavings is explained; no mechanism is given."
+          },
+          {
+            "id": "names-concept:ce128021fb",
+            "resolution": "'data source' appears only as plain vocabulary in the independence sentence (executors sharing one data source share its errors); data sources are not explained."
+          },
+          {
+            "id": "names-concept:d60689c392",
+            "resolution": "Determinism's input-boundary, renaming, unpredictability and open-choice arguments are not restated; the containment paragraph argues at the execution level (recording transaction, inclusion, delay, placement), which claim 3 assigns to this record."
+          },
+          {
+            "id": "names-concept:6bd1f3b071",
+            "resolution": "Deterministic Execution is named as what secures the rest of execution in the containment route; its environment-value, failure, arithmetic, ordering and divergence-detection mechanisms are not drawn."
+          },
+          {
+            "id": "names-concept:97142102b8",
+            "resolution": "'execution environment' is plain vocabulary in the off-chain sentence (code running outside the chain's execution environment); nothing about execution environments is explained."
+          },
+          {
+            "id": "names-concept:f74bda18a5",
+            "resolution": "'external data' appears only as the example of a value the rules can bind with a source signature; external data as a concept is not explained."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "Fraud Proofs is named with Optimistic Verification in one boundary clause (re-executing a disputed step presupposes a step every party computes identically), the minimum needed to say why it is not a route; no challenge game is explained."
+          },
+          {
+            "id": "names-concept:407d7811f3",
+            "resolution": "Off-Chain Execution is named as where non-determinism often enters, under its condition; how off-chain execution works is not explained."
+          },
+          {
+            "id": "names-concept:7be2c1a51e",
+            "resolution": "Optimistic Verification is named in the same single boundary clause as Fraud Proofs; challenge periods and dispute mechanics are not explained."
+          },
+          {
+            "id": "names-concept:f2abc57f89",
+            "resolution": "Oracle Problem is named once as the question whether a recorded outside fact can be relied on; the repair did not touch it and oracle design is not explained."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "Parallel Execution is named as the subject of a parallel executor giving one result under varying interleavings; conflict detection and scheduling are not explained."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "'proof system' is used only in 'the soundness of the proof system, under its assumptions'; no construction is described and Verifiable Execution is named for how proofs are built."
+          },
+          {
+            "id": "names-concept:7d0da2cb8b",
+            "resolution": "'shared state' is plain vocabulary for where interleaved operations interact; shared-state models are not explained."
+          },
+          {
+            "id": "names-concept:6c911b430e",
+            "resolution": "Trusted Execution is named as owning the hardware's side; the attestation paragraph states only what an attestation shows and rests on, with no enclave mechanics."
+          },
+          {
+            "id": "names-concept:a9bee25be7",
+            "resolution": "Verifiable Execution is named as where proofs are built; the proof paragraph states what a proof checks and who keeps the choice (claim 2), and the repaired signature sentence adds no construction."
+          },
+          {
+            "id": "depth-long:7b656ae4a6",
+            "resolution": "1352 words after the repair: each paragraph ties to a claim (definition and sources to claim 1; why used to claim 1; overview, proof, attestation and comparison paragraphs to claim 2; containment to claim 3), and the repair cut the repeated recomputation clause. Remaining condensation (prose restating comparison cells, two announcing sentences) is advisory, not a depth defect."
+          }
+        ],
+        "recordFingerprint": "772abe6dc551d4539efa1e4b39c4d643611ea4d4243eb096747bc85bd7d4e9fc"
+      }
+    },
+    "sequential-execution": {
+      "model": {
+        "meaning": "An execution strategy that applies the accepted operations one at a time in an agreed order, each starting from the state the previous one left, so that, for operations that are themselves deterministic, the result is fixed by the starting state and the ordered operations.",
+        "kind": "mechanism",
+        "parents": {
+          "execution-models": "Parent states as premises that sequential execution is the simplest strategy and the reference the others must be indistinguishable from, that the semantic half typically fixes the result as applying operations one at a time in their agreed order, and (domain prose) that parallel execution must handle conflicts sequential execution avoids by construction. Adds: why one-at-a-time application makes the result depend on the order and so makes the order something replicas that each execute the operations must agree on; what the strategy costs (one execution stream, head-of-line delay) and what work can still overlap it; and why the reference must be the agreed order rather than any serial order, which is the step from single-database serializability to replicas that each execute the operations. Do not restate the parent's semantics/strategy split, its conflict definition, or its 'correct exactly when indistinguishable' sentence; build on them."
+        },
+        "claims": [
+          "how executing operations one at a time in an agreed order makes the result, for operations that are themselves deterministic, a function of the starting state and that order: each operation reads exactly the state its predecessors left, so conflicts between concurrently running operations cannot arise, and why the same operations in a different order can produce a different result, which makes the order itself something a system whose replicas each execute the operations must agree on; how the order is chosen is transaction-ordering's",
+          "what sequential execution costs: throughput is bounded by one execution stream however many processors are available, and a long or expensive operation delays every operation after it, which is one reason systems bound the work a single operation or block may consume; work outside the ordered execution, such as checking signatures that do not depend on state, can proceed in parallel without changing the result",
+          "why the reference a replicated system whose replicas each execute the operations needs is sequential execution in the agreed order, one that fixes at least the relative order of every two operations whose order changes the result, not any sequential order: a parallel or optimistic executor is correct only if it reproduces that order's result, whereas a guarantee that results match some serial order, as in database serializability, would leave replicas executing independently free to choose different orders and reach different states"
+        ],
+        "excludes": [
+          "parallel-execution",
+          "optimistic-execution",
+          "transaction-ordering",
+          "concurrency-models",
+          "execution-scheduling",
+          "state-access-patterns",
+          "execution-pipelines",
+          "metering",
+          "determinism"
+        ],
+        "placements": {
+          "sequential-execution": "Single L2 placement, leaf under Execution Models (Computation & Execution). No positional wording; the record must stand alone without the parent's paragraphs. Siblings are named only to draw a boundary (parallel and optimistic execution reproduce this strategy's result; their mechanisms are theirs)."
+        },
+        "fields": {
+          "sequence": [
+            "Start from the agreed pre-state; take operations in the agreed order; apply each in full (including its internal calls and its failure outcome) to the state the previous one left; the next starts only after. Granularity: the unit of the agreed order (typically the transaction), not steps inside it.",
+            "A failed operation still occupies its position and leaves whatever the rules keep (e.g. fees charged): its outcome is part of the sequence's result, not a gap in it. Name transaction-reversion only if needed; do not explain."
+          ],
+          "inputs": [
+            "The agreed pre-state, the operations, and their agreed order. How the order is chosen and who chooses it is transaction-ordering's (name only; it is authored)."
+          ],
+          "outputs": [
+            "The post-state and each operation's outcome (success or failure, effects, resources used), i.e. everything the protocol commits to or exposes, not only the final state. This matters for claim 3: another executor must reproduce all of it, not just the end state."
+          ],
+          "assumptions": [
+            "Claim 1's 'function of the starting state and that order' holds only if each operation is itself deterministic given the state it reads and the block's agreed inputs. Sequential execution removes one source of variation (interleaving of concurrently running operations), not the others; deterministic-execution and determinism own the rest (name only). Do not let the record say one-at-a-time execution by itself makes the result deterministic (see claim-accuracy report).",
+            "'Conflicts cannot arise' means conflicts between concurrently running operations: none run concurrently. Operations still interact through state; their interaction is settled by position. Pitfall: do not say sequential operations 'do not conflict' or 'do not interfere'.",
+            "Claim 3's replica argument assumes active replication: each replica re-executes the operations itself and replicas must reach the same state. In designs where one party executes and others adopt its resulting state (primary-backup, or accepting a proven or attested result), the executor's choice of serial order is simply adopted; do not state the argument without the independent re-execution condition.",
+            "Total vs partial order: the parent's premise is one agreed order. Some designs agree only the relative order of operations that touch the same state (e.g. per-object version ordering) and leave the rest unordered; every serial order consistent with that partial order then gives the same result, because the unordered operations commute. Do not claim every system agrees a single total order; what must be agreed is at least the relative order of operations whose order changes the result."
+          ],
+          "failures": [
+            "Order dependence (claim 1): the same operations in a different order CAN give a different result, e.g. two spends from one balance that covers only one of them (which one succeeds depends on position), or two trades against the same pool (each gets a price set by those before it). Operations that touch disjoint state commute and give the same result in either order; say 'can', not 'does'.",
+            "Throughput bound (claim 2): execution throughput is bounded by what one stream can process, regardless of available processors. Condition: this is a bound on the execution stage; overall throughput may be limited first by other stages (consensus, bandwidth, storage). The one stream's speed includes its state reads, which can be dominated by storage latency rather than computation; do not say the bound is purely CPU. Prefetching or overlapping state access belongs to state-access-patterns and execution-pipelines (name only).",
+            "Head-of-line delay (claim 2): a long or expensive operation delays every operation after it in the order. Bounding the work per operation or per block (in protocol-defined units, not time) is 'one reason' among others; the other main reason is that every re-executing node must be able to finish the block (and denial of service). Metering names the mechanism; do not explain it or gas.",
+            "Divergence under 'some serial order' (claim 3): if independently re-executing replicas each only had to match some serial order, two could pick different orders of order-dependent operations and reach different states, with nothing in the guarantee saying which is right."
+          ],
+          "invariants": [
+            "Each operation reads exactly the state left by all operations before it in the order and none after it. This is what makes the strategy a reference: its result is defined by the order alone, with no schedule to specify."
+          ],
+          "tradeoffs": [
+            "Simplicity and a result defined without any scheduling or conflict machinery vs throughput limited to one stream and head-of-line delay. The other strategies (parallel, optimistic, speculative execution: named only) buy throughput or latency back at the cost of machinery that must reproduce this result.",
+            "Work that can overlap without changing the result (claim 2): work that does not read or write the state the ordered execution depends on, such as verifying a signature that is checked against the transaction's own contents alone (e.g. recovering the sender from a standard signature). Condition: the work must not depend on state; validation that reads state (nonce and balance checks, or account designs whose signature check runs contract code against state) belongs inside the ordered execution. The result of the overlapped work must be a function of the operation alone. Do not describe pipelining across blocks (execution-pipelines) or scheduling (execution-scheduling)."
+          ],
+          "relation": "Result = apply(op_n, ... apply(op_2, apply(op_1, S0))) for deterministic ops and agreed order op_1..op_n. A note for the author, not necessarily a formula in the record. Serializability (claim 3): the outcome of concurrent execution equals SOME serial execution of the committed transactions; enough for a single database, where only one copy exists, but not for independently re-executing replicas, which need the SAME serial order. Strict serializability adds real-time constraints but still leaves concurrent transactions' relative order open: do not suggest it closes the gap. Name database serializability as the example only; concurrency-models owns isolation levels and their theory (name only). A parallel or optimistic executor is judged by reproducing the outputs above, not by following the order step by step: it may execute in any order or concurrently if what it commits is indistinguishable (parent premise; do not restate)."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A mechanism and three conditioned arguments about it: one-at-a-time application makes the result depend on the order, so the order must be agreed; the strategy's costs and what may overlap it without changing the result; and why replicas need the agreed order, not merely some serial order, as their reference.",
+        "whyProse": "Each claim's meaning lies in its conditions: the result is fixed by state and order only for deterministic operations; 'no conflicts' holds for concurrently running operations while operations still interact through position; overlap is safe only for work that does not depend on state; the throughput bound applies to the execution stage; and the serializability argument holds for replicas that re-execute independently and, where only conflicting operations are ordered, reduces to a partial order. A distinction block (agreed order vs some serial order) would show two terms and drop the replica condition and the divergence argument that are the point, and would sit beside the parent's own semantics/strategy distinction; the sequence is a single repeated step, not a process with stages or branches; the costs are consequences of one design, not forces pulling against each other or alternatives compared on shared dimensions; nothing persists in modes or recurs with feedback.",
+        "level": "The parent only names sequential execution as the simplest strategy and the reference; why the order then needs agreement, what the strategy costs, and why the reference is the agreed order rather than any serial order are specific to this concept. Transaction-ordering owns how the order is chosen; parallel and optimistic execution own how other executors reproduce the result; metering owns how work is bounded; determinism and deterministic-execution own the other sources of variation.",
+        "territory": "Names without explaining: transaction-ordering (who sets the order and how), parallel-execution and optimistic-execution (conflict finding, scheduling, abort and re-execute), concurrency-models (isolation levels; serializability appears only as the contrasting guarantee), execution-scheduling, state-access-patterns and execution-pipelines (what overlaps or prefetches and how), metering (how work is bounded), determinism and deterministic-execution (other sources of divergence). No sibling's strategy is described beyond the requirement that it reproduce this result.",
+        "placements": "One placement (leaf under Execution Models); prose written to stand alone, with no positional reference and no reliance on the parent's paragraphs."
+      },
+      "audit": {
+        "at": "2026-10-22T19:01:25.473Z",
+        "note": "Re-audit (repair cycle 1) of finding B1 (sequential-execution-b.md), expanded into a complete audit because the repair narrowed the scope of the record's central argument (plan claims 0 and 2 and the model's parents field rescoped to replicas that each execute the operations) and restructured the closing paragraph; every block (definition plus seven paragraphs) was re-read. B1 resolved: the order-dependence paragraph now says 'in a system whose replicas each execute the operations, the order becomes something they must agree on'; the serializability paragraph opens 'Where each replica executes the operations itself, the reference has to be sequential execution in the agreed order' and closes on 'a parallel or optimistic executor on a replica that executes for itself'; no unscoped 'replicated system' statement remains, and the closing paragraph's primary-backup sentence ('By contrast, where one party executes and the others adopt the state it produced ... whichever serial order it realized is the one every replica ends up with') is now the contrasting case and agrees with the scoped sentences (one execution, so no order needs agreeing; 'realized' replaces 'followed'). The payments example now reads 'covers either but not both', so 'only the one placed first succeeds' holds. Plan claims 0 and 2 and parents.execution-models carry the same condition, matching the model's assumptions field. Overlap per placement (one, under Execution Models): the parent's semantics/strategy split, conflict definition and 'correct exactly when indistinguishable' sentence are not restated; the serializability paragraph adds why the agreed order, not any serial order, is the reference and what must match (final state, each outcome, failures, consumption). Territory and splits: Transaction Ordering, Metering and Deterministic Execution are named, not explained; parallel and optimistic executors appear only as judged against this result; serializability and strict serializability each get one defining property as the contrasting guarantee; primary-backup gets one clause as the contrast the model's assumption names, not an explanation of replication schemes; the replica sentence stays at the accepted claim and does not explain State Machine Replication's ordering/execution split. Structure: prose as designed. Accuracy: serializability (some serial order of the committed transactions), its sufficiency for one copy, divergence for independently executing replicas, strict serializability leaving overlapping transactions' order open, the partial-order refinement (linearizations consistent with the fixed pairs agree because unordered operations commute), the execution-stage throughput bound including state reads, head-of-line delay as one reason for per-operation and per-block bounds, and state-independent signature recovery overlapping the stream are correct and conditioned. Canonical validity: no positional or time-sensitive words; American English; plain text. Depth follows the three claims. Advisory: (1) 'operations still interact, since a later one reads what an earlier one wrote' would be exact as 'can read'. (2) 'The condition is that the work reads no state' states a sufficient condition as the condition and repeats the paragraph's opening. (3) 'Tying the result to the order also makes the result depend on it' is near-tautological setup. (4) The replica condition is now stated four times across two paragraphs; one or two could be shortened. (5) 'whichever serial order it realized' presupposes the primary executes serializably; 'whatever order of effects it produced' would not. (6) The primary-backup contrast closes the partial-order paragraph, so 'By contrast' reaches back past it to the serializability paragraph; it would sit more naturally there.",
+        "resolutions": [
+          {
+            "id": "names-concept:79a31268d6",
+            "resolution": "Deterministic Execution is named once ('Closing those channels is the work of Deterministic Execution') after one sentence stating only the condition this concept's claim needs (code reading outside the agreed inputs can diverge however strictly the order is kept); environment inputs, metered failure, arithmetic rules and commitment comparison are not explained. Paragraph untouched by the repair. Named, not explained."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "Metering is named as what bounds work 'in protocol-defined units'; the record gives only why bounds exist here (head-of-line delay; every node re-executing a block must finish it) and does not explain gas, pricing or accounting. Named, not explained."
+          },
+          {
+            "id": "names-concept:a9c206f095",
+            "resolution": "Transaction Ordering is named once ('How it is chosen, and by whom, is the question of Transaction Ordering') immediately after the repaired, scoped sentence on why replicas that each execute must agree on the order; no ordering rule, rights, auction or manipulation is described. Named, not explained."
+          }
+        ],
+        "recordFingerprint": "5c88e2bb2c52901575fbbcd680acdfe28e17b997eeebacc2ab62042e105ea9b8"
+      }
+    },
+    "parallel-execution": {
+      "model": {
+        "meaning": "An execution strategy that runs operations that do not conflict at the same time, on several execution units of one executor, while producing exactly the state that executing them one at a time in the agreed order would.",
+        "kind": "mechanism",
+        "parents": {
+          "execution-models": "Parent separates semantics from strategy, defines a conflict (one operation writes state another reads or writes), and names the two ways of learning conflicts with a one-line cost each. This adds: how a parallel executor keeps the agreed-order result (conflicting operations take effect in agreed order; finish order irrelevant); how binding declared access works and why an operation that must not fail for an undeclared access has to declare everything it might touch (others over-declare or declare a simulated prediction and fail if their access differs); what bounds the gain (hot state, dependency chains, overhead); why the environment decides whether conflicts are knowable in advance. Do not restate the parent's conflict definition or its declare-vs-discover cost sentence; build on them.",
+          "execution-layers": "Parent only says alternative VMs offer strengths such as parallel execution, at a tooling cost. This adds why parallelism is something an environment's design (what transactions or blocks carry, state model) enables or limits, so a layer's choice of environment shapes how much parallelism an executor can find and how. Do not explain alternative VMs, EVM equivalence/compatibility or execution layers; name them."
+        },
+        "claims": [
+          "how parallel execution runs operations concurrently while producing the state that sequential execution in the agreed order would: operations that do not conflict run at the same time, and conflicting operations take effect in the agreed order (many executors commit every result in that order) so the outcome does not depend on which operation finished first; the two ways of finding conflicts, declaring accessed state in advance or detecting conflicts during execution, are named with their trade-off, and detection and repair are optimistic-execution's",
+          "how declared access lets an executor schedule ahead: each operation names the state it may read or write, operations with non-conflicting declarations are grouped to run together, and, where declarations are binding, an operation that touches state outside its declaration fails instead of conflicting silently; why an operation that must not fail for an undeclared access has to declare every state it might touch, so operations whose access depends on values read at run time over-declare, which reduces parallelism, or declare what a simulation against earlier state predicted and fail if their access differs at execution",
+          "what limits the gain from parallel execution: contention on frequently written state, such as a popular contract or account that many operations update, forces those operations into sequence, unless the design lets such updates commute; chains of operations that each depend on the previous one cannot overlap, so the longest such chain bounds the speedup; and the cost of tracking or declaring access can outweigh the gain when operations are few or small",
+          "why how much parallelism an executor can find, and how, depends on what the execution environment or execution layer fixes: whether conflicts can be known before execution depends on what the environment fixes, such as transactions that declare their state, a state model that ties data to owners, or a binding record of each operation's access carried with the block and checked by every node, while an environment whose code chooses at run time which storage it touches and carries no such record leaves an executor to find conflicts during execution, and designing for parallelism up front can mean changing what transactions or blocks carry or how state is organized"
+        ],
+        "excludes": [
+          "sequential-execution",
+          "optimistic-execution",
+          "speculative-execution",
+          "concurrency-models",
+          "execution-scheduling",
+          "state-access-patterns",
+          "state-models",
+          "alternative-vms",
+          "evm",
+          "execution-layers",
+          "transaction-ordering"
+        ],
+        "placements": {
+          "parallel-execution": "Leaf under Execution Models: reader knows semantics vs strategy and the conflict definition; the record explains this strategy's mechanism and limits. Must stand alone without the parent paragraph, so conflict may be used with a brief anchor, not re-derived.",
+          "parallel-execution-in-execution-layers": "Leaf under Execution Layers, reached from 'alternative VMs offer parallel execution'. Claim 4 answers that reader directly, stated about execution environments in general (no 'this domain', no 'here'). Nothing in claims 1 to 3 is specific to Execution Models, so the same text holds. Do not imply parallel execution needs an alternative VM: executors that detect conflicts during execution can run an existing environment (including the EVM) in parallel; what fixing access before execution (in transactions, in a binding record carried with the block, or in the state model) buys is knowing conflicts beforehand."
+        },
+        "fields": {
+          "sequence": [
+            "Inputs settled: a block's operations and their agreed order are fixed before this executor runs (guessing unsettled inputs is speculative-execution's; name only).",
+            "Find which operations conflict: from declarations before execution, or by detection during execution (detection and repair = optimistic-execution's; name, do not explain read/write sets, abort, re-execute).",
+            "Run non-conflicting operations at the same time; operations that conflict keep their agreed relative order.",
+            "Make results take effect in the agreed order (many executors commit every result in that order), so a node's result does not depend on thread count, timing or which operation finished first; every node reaches the same state."
+          ],
+          "inputs": [
+            "The ordered operations and the state before them; for the declared route, each operation's declaration of the state it may read or write.",
+            "Pitfall: the order is an input; how it is chosen is transaction-ordering's (name only)."
+          ],
+          "outputs": [
+            "The post-state that sequential execution in the agreed order would produce, plus each operation's outcome (including deterministic failures).",
+            "Invariant to state, not a speedup promise: correctness is equality with the agreed-order result, not with some serial order (why the agreed order and not any serial order is sequential-execution's; name only)."
+          ],
+          "actors": [
+            "The executor: one node's execution engine with several execution units (cores/threads). Parallelism here is inside one executor over one ordered batch; it is not sharding or splitting state across chains or nodes (do not drift there).",
+            "Operation authors/wallets that write declarations, in the declared route; declarations can be produced by tooling such as simulating the operation against recent state."
+          ],
+          "assumptions": [
+            "Each operation is itself deterministic (deterministic-execution's territory; name only if needed).",
+            "Conflict = parent's definition (write vs read or write of the same state); two reads never conflict. Conflicts are judged at the granularity the environment tracks (an account, object or storage item); coarser units make operations that touch different data inside one unit conflict. Do not expand granularity into state-access-patterns or state-models.",
+            "Binding declarations only matter if the protocol enforces them identically on every node, so the failure of an undeclared access is the same deterministic outcome everywhere. Non-binding declarations (e.g. access lists that only change cost) give hints, not guarantees: an executor relying on them still has to check during execution.",
+            "Over-declaration pitfall (see claim-accuracy note): an operation whose access depends on values read at run time cannot know its exact access in advance. Options: declare a superset (more conflicts, less parallelism), or declare what a simulation against earlier state predicted and fail if the state changed so the access differs. Write 'must over-declare' only with that second route acknowledged or the scope narrowed.",
+            "Over-declaring includes declaring write where only read is needed: a write declaration conflicts with every reader."
+          ],
+          "failures": [
+            "Silent conflict: two operations that conflict run concurrently without being detected; result can depend on timing and nodes can diverge. Binding declarations or detection exist to prevent this; name non-deterministic-execution only if needed, do not explain divergence.",
+            "Undeclared access under binding declarations: the operation fails (a recorded, deterministic failure), it does not corrupt others.",
+            "Degenerate parallelism: hot state or long chains leave most work sequential; tracking/declaration overhead then makes it slower than plain sequential execution (with 'can'; depends on operation count, size and overhead)."
+          ],
+          "variants": [
+            "Declared in advance: operations name the state they may touch; executor groups non-conflicting ones before running. Gains: schedule known before execution, no wasted work from conflicts. Costs: an operation that must not fail for an undeclared access has to declare everything it might touch (over-declaration), while one that declares a simulated prediction fails if its access differs at execution; burden on authors/tooling, constrains what code can do at run time.",
+            "Detected during execution: executor runs operations without knowing their access and finds conflicts as they happen (name optimistic-execution; do not explain mechanics). Gains: no declarations, works with environments whose code picks storage at run time. Costs: tracking overhead and re-executed (wasted) work, growing with contention.",
+            "Not mutually exclusive: an executor can use predictions (declarations, hints, static analysis, pre-execution) to schedule and still check during execution. Keep this to a clause; scheduling algorithms are execution-scheduling's (name only)."
+          ],
+          "tradeoffs": [
+            "Gain bounded by the number of execution units and also by the structure of the workload, which adding units does not change: contention on frequently written state (popular contract, account, pool) puts every operation that writes it, or reads what another writes, into agreed-order sequence. Condition: under read/write conflicts; some designs offer updates that commute (e.g. adding to a counter) so concurrent updates need not conflict; if mentioned, keep to a clause with 'some designs'.",
+            "Dependency chains: an operation that needs the previous one's result cannot overlap with it; contention is one source of such chains, so do not present hot state and chains as unrelated, but they are not identical (a chain can run through different state items).",
+            "Overhead: declaring/checking or tracking access, coordinating units and committing in order cost work; with few or small operations this can outweigh the gain ('can', not 'does').",
+            "Environment design: knowing conflicts in advance requires access to be fixed before an executor runs the code (declared state in the transaction format; a binding record of each operation's access carried with the block and checked by every node that executes it, which rejects the block on a mismatch, though the node that builds the record still finds conflicts itself; or a state model that ties data to owners, so operations whose transactions name disjoint owned data are known not to conflict). Where code computes at run time which storage it touches (EVM contracts can: storage locations derived from values computed during execution) and neither transactions nor blocks bind access in advance, the executor detects conflicts during execution, or predicts and still checks. Designing for advance knowledge can mean changing what transactions or blocks carry or how state is organized; departing from an existing environment's transaction format or state model is a compatibility cost (name alternative-vms, evm; do not explain them)."
+          ],
+          "relation": "Work-span bound: speedup <= total execution time of all operations / execution time of the longest chain of operations that must follow one another (chain measured in execution time, not operation count), and <= number of execution units; overhead lowers it further. A bound, not a prediction. State it in words with these conditions; do not name it a law unless accurate."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A correctness condition (agreed-order equivalence) and the reasoning that connects how conflicts are found, what declarations require, what bounds the speedup, and why the environment decides which route is available: causation and conditions, not a shape.",
+        "whyProse": "The claims are conditional arguments (binding vs non-binding declarations, run-time-dependent access forcing over-declaration or failure, contention forming chains, environment fixing access). A comparison of declared vs detected would have to fill the detection row with optimistic-execution's mechanics and flatten conditions into cells; the declared-access sequence is three steps a sentence carries; the three limits are variants with one attribute each, which representation-design says read as prose; the parent already draws the semantics/strategy distinction and no further conflation here needs a block.",
+        "level": "Parallel execution is where agreed-order equivalence under concurrency, binding declarations and the limits of speedup belong: the parent only names declare-vs-discover with one cost each, sequential execution owns the reference result, optimistic execution owns detection and repair, and Execution Layers only names parallel execution as a strength of alternative VMs.",
+        "territory": "Draws no sibling relationship: the reference result is named as sequential-execution's, detection/abort/re-execution as optimistic-execution's, unsettled inputs as speculative-execution's; ordering, scheduling algorithms, access-pattern taxonomies, state models, the EVM, alternative VMs and execution layers are named, not explained. The declared-vs-detected trade-off is stated only at the level claim 1 allows.",
+        "placements": "Prose stated about executors and execution environments in general, with no positional or domain wording, holds as a complete leaf under both Execution Models and Execution Layers; claim 4 answers the Execution Layers reader without implying parallel execution requires leaving an existing environment."
+      },
+      "audit": {
+        "at": "2026-10-22T19:12:38.586Z",
+        "note": "Re-audit (repair cycle 1), expanded into a complete read of every paragraph because the repair changed P6's argument (a third carrier of advance knowledge) and the scope of P4's requirement. Findings resolved: A1/B3 (P5 now bounds the gain by the number of execution units and also by the workload's structure, which adding units does not change; consistent with the work-span sentence); A2/B1 (P4 now requires full coverage only of an operation that must not fail, consistent with the simulated-declaration route); A2b/B2 (the summary now fails only when state changes alter what the operation touches); A3 (P6 adds a binding record carried by the block, checked by every executing node and rejecting the block on a mismatch, notes that the node building it gets no advance knowledge from it, conditions the run-time-storage case on neither transactions nor blocks binding access, and softens 'means' to 'can mean'). Accuracy: block-level access records of this kind list per-operation reads and writes, are validated against each node's own execution and invalidate the block on mismatch, so a schedule derived from a valid record is correct and an invalid one is rejected; the EVM example (storage locations derived from computed values) and the non-binding access-list example are correct; work-span bound stated with both terms; contention, commuting updates and overhead are conditioned with 'common', 'some designs' and 'can'. Overlap per placement: Execution Models parent defines conflict and gives declare/discover with one cost each; the record builds on it (agreed-order rule, binding declarations, limits, environment) without restating its sentences. Execution Layers parent only names parallel execution as an alternative-VM strength; P6 answers that reader without implying an alternative VM is needed (detection runs existing environments; a block-carried record leaves transaction format and state model as they are). Territory: sequential-execution's reference, optimistic-execution's detection and repair, speculative-execution's unsettled inputs, alternative VMs, EVM, execution layers and state models are named, not explained; no sibling argument repeated; plan claims 1 to 4 (claims 1 and 3 as reworded) are each explained. Structure: prose, as designed. Canonical wording holds at both placements; American English. Depth follows the claims. Advisory: (1) P6 'the node that builds the record ... still has to find conflicts itself': a builder executing sequentially need not find conflicts; 'gets no advance knowledge from it' is exact. (2) P6 'transactions on disjoint owned data are known not to conflict': knowing presupposes that transactions name that data (the model says 'name'); 'transactions that name disjoint owned data'. (3) P6 'Which route is open': detection is always open, as the paragraph itself says; 'whether the declared route is open' is exact. (4) P1 'The operations and their order are settled before the executor starts' reads as a dichotomy with speculation; a scope clause would avoid it. (5) P1 the order rule covers visibility, not the final order of two writes, which appears only in the failure sentence. (6) P1 'Operations with no conflict between them cannot observe each other' ignores ordering through a third operation, which P5's chains sentence covers. (7) P3 'checking' is used for conflict detection and for enforcing a declaration. (8) P3 'with a coarse unit, operations touching different data inside the same unit conflict': 'are treated as conflicting' keeps the parent's sense of conflict. (9) P5 the work-span bound assumes each operation is scheduled as a whole. (10) P2 closely follows the parent's declare/discover cost sentence; permitted by claim 1 and needed at the Execution Layers placement.",
+        "resolutions": [
+          {
+            "id": "names-concept:b0c0395d6a",
+            "resolution": "alternative-vms named once in P6 ('a trade-off some Alternative VMs make'); says only that some make the compatibility trade-off, nothing about what an alternative VM is or how it works."
+          },
+          {
+            "id": "names-concept:ed0d2d3661",
+            "resolution": "evm named once in P6 as the example of code that derives storage locations from values computed at run time; this is the claim-4 condition, not an explanation of the EVM."
+          },
+          {
+            "id": "names-concept:97142102b8",
+            "resolution": "execution environment used as a term in P3 (granularity the environment tracks) and P6 (what the environment fixes) to say what this concept depends on; the environment itself is not explained."
+          },
+          {
+            "id": "names-concept:a30b775875",
+            "resolution": "execution-layers named once at the end of P6 ('one that an execution layer weighs in choosing its environment'); what an execution layer is or does is not explained."
+          },
+          {
+            "id": "names-concept:d880b0b6f0",
+            "resolution": "optimistic-execution named in P2 as how discovering and repairing conflicts works; only claim 1's trade-off (tracking, redone work rising with contention) is given, no read/write sets, validation, abort or re-execution order."
+          },
+          {
+            "id": "names-concept:a91fc99f26",
+            "resolution": "speculative-execution named in P1 to bound scope (computing ahead of an unsettled order); its mechanism, containment and cost are not explained."
+          },
+          {
+            "id": "names-concept:34d58c3b0d",
+            "resolution": "state models referred to in P6 only as claim 4 allows ('a state model can tie data to owners' so disjoint owned data is known not to conflict); no taxonomy or mechanism of state models is explained."
+          }
+        ],
+        "recordFingerprint": "7ad4a2d5df12a6c2698c1e281ee5deb32986e0df03cb0cf4373e04f160565f95"
+      }
+    },
+    "optimistic-execution": {
+      "model": {
+        "meaning": "Optimistic execution runs operations whose set, order and starting state are already agreed concurrently on the bet that they will not interfere, records what each one reads and writes, and before committing results in the agreed order re-executes any operation whose reads an earlier operation changed.",
+        "kind": "mechanism",
+        "parents": {
+          "execution-models": "Parent only names the option (discover conflicts during execution, re-execute what collided; costs wasted work when conflicts are frequent) and defines conflict generally. This adds: what is recorded; failing validation, which is narrower than conflict (a read made stale by an earlier operation in the agreed order); the revalidation cascade after a re-execution; commit in agreed order; why a fixed order guarantees progress; how and when it degrades below sequential; the 'optimistic' homonym; the boundary with speculation. Do not restate the parent's two-ways sentence or its conflict definition."
+        },
+        "claims": [
+          "how optimistic execution runs operations whose inputs are settled concurrently as if they will not conflict and checks afterwards: each operation's reads and writes are recorded, an operation fails validation when something it read was changed by an operation earlier in the agreed order that it did not see, and an operation that fails validation is aborted and re-executed, while later operations whose reads its re-execution may change, including those that read its earlier writes, must be validated again, before results are committed in the agreed order",
+          "when optimistic execution pays off and how it degrades: under low contention most operations validate on their first run and the speedup approaches what the available processors allow, less tracking and validation overhead, while under high contention aborts and re-executions multiply, wasted work grows, and throughput can fall below sequential execution's because of the tracking overhead; why, when validation is against a fixed order, it still makes progress, since the earliest operation not yet committed, once its predecessors are final, cannot be invalidated by any of them",
+          "why optimistic execution, which assumes no conflicts among operations with settled inputs and checks before it commits, is a different idea from optimistic rollups and optimistic verification, which accept a claimed result unless a challenge within a challenge period shows it wrong; and how it differs from speculative execution, which guesses inputs or ordering that are not yet settled rather than the absence of conflicts"
+        ],
+        "excludes": [
+          "speculative-execution",
+          "parallel-execution",
+          "sequential-execution",
+          "optimistic-rollups",
+          "optimistic-verification",
+          "execution-preconfirmations",
+          "execution-scheduling",
+          "concurrency-models",
+          "state-access-patterns",
+          "fraud-proofs"
+        ],
+        "placements": {
+          "optimistic-execution": "Single placement, a leaf under Execution Models (Computation & Execution). Exposition is the mechanism on its own terms; no positional references. Holds for any executor that commits in a pre-agreed order (blockchain block execution); database OCC without a preset order is background only, not the subject."
+        },
+        "fields": {
+          "sequence": [
+            "Agreed before execution: which operations, their order, the starting state. These are the settled inputs; one sense of 'inputs' throughout (values an operation reads from state mid-block are its reads, not unsettled inputs).",
+            "Workers run operations concurrently; each run records its read set (locations and the version or value seen, including reads of absent keys) and buffers its writes; nothing reaches committed state.",
+            "Validation: an operation fails validation (a stale read) when a location it read was written by an operation earlier in the agreed order whose write it did not see (or saw a write that the earlier operation later changed or withdrew). Writes by later operations never invalidate it.",
+            "Failed validation: discard its buffered writes and re-execute. Re-execution can change its writes, so later operations whose reads it may affect must be validated again: those that read its earlier writes and those that read a location it now writes. Designs differ in how they find them (many revalidate every later operation).",
+            "Commit: an operation's results become final only when every earlier operation in the agreed order has committed and its reads still match; commits therefore advance as a prefix of the order."
+          ],
+          "actors": "One executor on one node (a scheduler and several worker threads). Every node runs it independently; interleavings can differ between nodes and runs, the committed result cannot (given the assumptions). No outside party checks anything.",
+          "inputs": "The agreed operations, their agreed order, the starting state. Optionally hints about likely conflicts (declared or estimated access) in some designs; declared access as a strategy is parallel-execution's, name only.",
+          "outputs": "Final state and per-operation results equal to executing the same operations one at a time in the agreed order (the reference is sequential-execution's claim: name, do not argue it). Wasted runs are a cost, not an output.",
+          "assumptions": [
+            "Operations are deterministic functions of what they read, so a re-execution against current values reproduces exactly the sequential result.",
+            "Read tracking is complete: every value that can influence an operation's result or control flow is recorded. A missed read is a correctness failure, not a performance one.",
+            "Runs have no effects outside the executor before commit (writes buffered, no external messages). State the executor's rule; do not explain speculation's containment.",
+            "A run on an inconsistent view can fail, revert or loop; its outcome is only buffered, metering or protocol bounds limit the run, and validation or re-execution replaces it. Do not claim an inconsistent run is harmless without the bound."
+          ],
+          "failures": [
+            "High contention: many operations read what earlier ones write; aborts and re-executions multiply; one early re-execution can invalidate a chain of later operations (cascade).",
+            "Overhead: recording and validating reads and writes costs time on every operation, wasted or not; with heavy contention throughput can fall below sequential execution's. Not every design falls to that level: a design can bound the loss (see variants). 'Can', never 'does'.",
+            "Incomplete tracking or a validation bug: a stale read commits, the node's result differs from the sequential one and from other nodes'; this is divergence (deterministic-execution's consequence; name only).",
+            "Worst case progresses at about one commit per run (sequential pace) plus overhead; do not give re-execution counts or bounds."
+          ],
+          "invariants": [
+            "Results commit only in the agreed order.",
+            "A committed operation's recorded reads equal what sequential execution in that order would have given it (under the assumptions).",
+            "Committed state never reflects writes of an uncommitted run.",
+            "Progress (claim 2): with a fixed order, the earliest uncommitted operation, run after all its predecessors are committed, reads only final values, so no earlier operation can invalidate it; it validates and commits, and the next operation becomes earliest. Conditions: fixed order; its run must read the predecessors' final writes (a run done earlier can still fail once); the scheduler eventually runs it. Do not claim that OCC without a fixed order livelocks; at most, without a preset order the design must choose which operation yields, and some designs can abort the same operation repeatedly."
+          ],
+          "tradeoffs": [
+            "Low contention: most operations validate on their first run; speedup approaches what the workers allow, less tracking and validation overhead, and within other limits parallel-execution owns (dependency chains). Avoid 'full concurrency' as an absolute.",
+            "Versus declaring access in advance (parallel-execution's, name only): no declarations and access decided at run time is supported, paid for in tracking and wasted runs. Do not explain declared-access scheduling.",
+            "Gain depends on the workload, so the worst case (heavily conflicting block) is what an executor must still handle in time; hedge."
+          ],
+          "variants": [
+            "Multi-version store: an operation reads the latest buffered write of an earlier operation instead of the starting state, so it often sees what it would have seen sequentially; Block-STM (used by Aptos) is one such design and lets an operation wait on an earlier operation marked as likely to rewrite a location instead of running and failing repeatedly. One example at most; no dated performance figures.",
+            "Snapshot then ordered merge: all operations run against the starting state; results are merged in agreed order and an operation whose reads were overwritten is re-executed at merge, when its predecessors are final, so that re-execution validates.",
+            "Fallback: a design can detect heavy contention and switch to sequential execution, bounding the loss; state it as a possibility ('can'), not as what named systems do, unless a cited design is checked."
+          ],
+          "states": [
+            "Per operation, holding across variants: Running (reads and writes being recorded); Executed, awaiting commit (writes buffered, may be checked several times); Committed (final).",
+            "Avoid labeling the middle state 'provisional' or 'speculative': that wording is speculative-execution's; it keeps the two senses apart."
+          ],
+          "transitions": [
+            "Running -> Executed: the run ends, read and write sets recorded.",
+            "Executed -> Running (return): validation finds a read changed by an earlier operation whose write it did not see; buffered writes discarded.",
+            "Executed stays Executed: an earlier operation re-executes and may change what it read; it is validated again (passing once does not make it final).",
+            "Executed -> Committed: every earlier operation has committed and its reads still match. Final."
+          ],
+          "relation": "Distinctions for claim 3. Homonym, name only: optimistic rollups and optimistic verification accept a claimed result unless a challenge within a challenge period shows it wrong (fraud-proofs excluded: name, do not explain). Optimistic execution's executor checks every operation itself before committing, and a wrong bet costs time, not correctness (given complete tracking and deterministic operations); there the bet is that a claim is honest, and correctness rests on someone challenging. Same word, different object: interference versus honesty. Speculative execution (name, do not explain its mechanism or containment): guesses what is not yet settled (inputs or order, such as a proposed block) and is confirmed only by outside events; optimistic execution has everything settled and bets only that concurrent runs do not interfere, which it checks locally. Orthogonal, not alternatives: a node can execute a proposed block speculatively using an optimistic executor; say 'can'."
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "A mechanism whose core is each operation's status and the conditions that move it: run, then wait to commit while it can be sent back to run again by an earlier operation's write or re-checked after an earlier re-execution, and leave only by committing in the agreed order. The commit condition is also what the progress argument rests on.",
+        "structures": [
+          {
+            "structure": "state",
+            "purpose": "Show one operation's states (Running; Executed, awaiting commit; Committed) and the condition on each transition: the return to Running on a stale read, the self-transition when an earlier operation re-executes, and the single exit to Committed once every earlier operation has committed and its reads still match.",
+            "whyNotProse": "Prose lays the mechanism out as execute, validate, commit and reads as linear; the returns, the fact that passing validation once is not final, and that commit is gated on predecessors rather than on the operation's own check, are what readers miss, and a state model with labelled conditions makes them visible at once."
+          }
+        ],
+        "division": "The prose explains what is recorded, why a conflict is defined against earlier operations in the agreed order (and why later operations' writes and blind overwrites do not count), the revalidation cascade, the assumptions (deterministic operations, complete read tracking, no effects before commit), the progress argument built on the commit condition, how contention degrades throughput, the variants, and the homonym and speculative boundaries. The state model shows only the per-operation states and transition conditions; the prose must not walk through the transitions again, and the model draws no outcome of speculation.",
+        "level": "The per-operation execute/validate/re-execute/commit cycle exists only in optimistic execution. The parent names detection and re-execution in one clause; parallel-execution owns concurrency in general and declared access; sequential-execution owns the reference result. None of them has these states.",
+        "territory": "The states are internal to one executor over settled inputs, so the model draws nothing of speculative-execution (no guessed inputs, no keep-or-discard on settlement) and avoids its 'provisional' wording. It does not draw scheduling policy (execution-scheduling), concurrency-control theory (concurrency-models) or hot-state patterns (state-access-patterns); the homonyms and speculation are named in prose only.",
+        "placements": "One placement, a leaf under Execution Models; the state model and prose describe the mechanism itself and hold for every design that commits in a pre-agreed order, so nothing is placement-specific."
+      },
+      "audit": {
+        "at": "2026-10-23T00:14:05.149Z",
+        "note": "Re-audit (repair cycle 1), scoped; not expanded, because the repair changed wording in two sentences and no argument, assumption, structure or scope. Finding resolved (shared A1/B1): paragraph 2 now keeps the parent's sense, saying two blind writes to one location 'conflict there, yet neither fails validation over it', and the progress paragraph now names the narrower relation directly ('which operation gives way when one makes another's read stale: always the later one, whose read it was'), which holds for fixed-order validation in both the multi-version and the snapshot-merge variants and no longer overclaims for blind write pairs. Every other use of 'conflict' was checked against the parent's definition (one writes state the other reads or writes): the parent-sense use in paragraph 2, and 'guesses only that they will not conflict' in the speculation boundary, which states the bet in the parent's sense; the narrower relation is consistently called failing validation or a stale read ('The check applied to these records is narrower than any overlap of accesses', 'A run fails when', 'Only earlier operations can make a read stale', the contention definition, and the state block's return transition), and the state block uses no 'conflict'. The definition does not use the term. The reworded plan claim 0 ('fails validation when'), model sequence ('fails validation (a stale read)') and parents note ('failing validation, which is narrower than conflict') now match the record. Overlap per placement: the single placement's parent (Execution Models) defines conflict and names discovering it during execution; the record applies the definition without restating it, and the repaired sentences add no parent sentence. Territory: unchanged by the repair; parallel-execution, sequential-execution, speculative-execution, optimistic rollups, optimistic verification and challenge periods remain named, not explained, and the record's broad sense of conflict now agrees with parallel-execution's. Structure: the state block is unchanged and matches the design; the prose does not re-walk its transitions. Accuracy and depth: the repaired sentences are correct and add no new claim; no new absolutes beyond 'always the later one', which holds under the fixed-order condition the paragraph states. Advisory: (1) the design's division still says later operations' writes and blind overwrites 'do not count' as a conflict, using the term narrowly; it is an authoring brief, and the record is right; (2) 'guesses only that they will not conflict' states the bet in the parent's broad sense, which includes harmless blind-write conflicts; 'will not make one another's reads stale' would be tighter; (3) the definition's 're-executes any operation whose reads an earlier operation in the agreed order changed' omits 'without the run seeing the write'; (4) 'A run fails when an earlier operation wrote a location it read and the run did not see that write' is exact for version-based validation; under value-based validation a same-value write leaves the run valid; (5) 'bound that loss ... or by having operations wait on likely rewrites': waiting reduces the loss rather than bounding it; (6) 'checks every operation itself before anything commits' reads as all checks finishing first; 'before it commits' is exact; (7) 'making the node's result differ' would be more accurate as 'which can make'; (8) 'leaves nothing to undo beyond its own buffer' reads as more self-contained than multi-version designs allow, where later runs may have read that buffer (the cascade paragraph covers this); (9) in the progress paragraph, 'Once every operation before it has committed, their writes are final' reads as a premise rather than a consequence.",
+        "resolutions": [
+          {
+            "id": "dated:e32e9cc407",
+            "resolution": "'the latest write to the location by an earlier operation' means the last write by position in the agreed order, not in time; canonical and not time-sensitive."
+          },
+          {
+            "id": "names-concept:19b13e1f07",
+            "resolution": "Challenge periods are named once ('a challenge within a challenge period') to state what optimistic rollups and verification bet on; their length, mechanism and role are not explained."
+          },
+          {
+            "id": "names-concept:7844481cff",
+            "resolution": "Optimistic rollups are named for the homonym boundary with one clause of what they accept; no rollup mechanism, fraud proof or settlement is explained."
+          },
+          {
+            "id": "names-concept:7be2c1a51e",
+            "resolution": "Optimistic verification is named alongside optimistic rollups for the homonym boundary only; nothing of its mechanism is explained."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "Parallel execution is not explained: the record references the dependency-chain bound 'that chains of dependent operations place on any parallel execution' without arguing it, and declared access is not described. Its broad sense of conflict now agrees with this record's."
+          },
+          {
+            "id": "names-concept:7b5f0892ff",
+            "resolution": "Sequential execution is used only as the reference result ('executing the operations one at a time in the agreed order') and for the throughput comparison; why it is the reference is not argued."
+          },
+          {
+            "id": "names-concept:a91fc99f26",
+            "resolution": "Speculative execution is named to draw the boundary (it guesses unsettled inputs or ordering, with one example) and the combination is stated with 'can'; its containment, provisional results and discard on settlement are not explained, and the state block avoids 'provisional' wording."
+          },
+          {
+            "id": "absolutes:b6e5d6472b",
+            "resolution": "'an unrecorded read is never validated' holds by definition of validation over recorded reads; 'paths executing in order never would' is conditioned on a run made on an inconsistent view; 're-execution cannot keep the executor from finishing' is stated under a fixed order and the two named conditions (the run reads the predecessors' final writes; the scheduler eventually runs it); 'always the later one, whose read it was' holds under the fixed order that sentence names, in both variants described."
+          }
+        ],
+        "recordFingerprint": "32c8d0d880d4f393edf046e1005013ea2e6664fbf85385634364b81ada01061d"
+      }
+    },
+    "speculative-execution": {
+      "model": {
+        "meaning": "Speculative execution is an execution strategy that computes results before the inputs or ordering they depend on are settled, holds each result as provisional under the assumptions it was computed on, and keeps it only if the settled inputs match those assumptions.",
+        "kind": "mechanism",
+        "parents": {
+          "execution-models": "Premises the parent already states (do not restate): strategies other than the sequential reference include computing 'ahead of time on a guess'; speculation buys latency with computation that may be thrown away and is safe only when a discarded result can never have been observed as final. The domain prose also gives the one-line definition (compute before inputs or ordering settle, discard if they turn out differently). Start beyond these: what a provisional result carries (the assumptions it rests on, which must be complete), the keep/discard rule at settlement, the three concrete ways an effect is held back (wait, mark provisional, tie to the assumptions) and what each leaves to observers, chained speculation, who pays for waste, and adversarially induced waste. Do not re-explain the semantics/strategy split or the conflict-detection paragraph."
+        },
+        "claims": [
+          "how speculative execution computes results before the inputs or ordering they depend on are settled, such as executing a proposed block before consensus has decided it, or executing pending transactions in an expected order: each result is kept provisional together with the assumptions it rests on, is kept when the settled inputs match those assumptions, and is discarded and recomputed when they differ; what it buys is latency, since the work is ready when the inputs settle",
+          "what must not escape a speculation and how systems keep it contained: effects and commitments others act on, such as reporting a result as final, signing or voting for a state, sending a message to another system, or releasing something of value, must wait until the assumptions are confirmed, be explicitly marked as provisional, or be tied to those assumptions so they lapse with them; an observer that treats a provisional result as final can act on a result that is later discarded",
+          "what wasted speculation costs and who pays: discarded work costs the node that speculated, speculating on results that are themselves provisional compounds the waste when an early assumption fails, and an adversary can exploit speculation by inducing work that will be discarded, such as submitting transactions that will not be included, when doing so costs it little; distinguished from optimistic execution, which assumes no conflicts among operations whose inputs are already settled"
+        ],
+        "excludes": [
+          "optimistic-execution",
+          "parallel-execution",
+          "transaction-ordering",
+          "block-building",
+          "execution-preconfirmations",
+          "optimistic-rollups",
+          "optimistic-verification",
+          "finality",
+          "mempools",
+          "reorganizations",
+          "transaction-inclusion"
+        ],
+        "placements": {
+          "speculative-execution": "Single L2 placement, leaf under Execution Models beside deterministic, non-deterministic, sequential, parallel and optimistic execution. No positional wording ('the next strategy', 'as above'); the record must stand alone without the parent's speculation sentence, so it states its own safety condition in its own terms (claim 2) rather than citing the parent's."
+        },
+        "fields": {
+          "sequence": [
+            "Guess: take inputs or an order not yet settled (a proposed block before consensus decides it; pending transactions in an expected order) and an assumed pre-state, which may itself be provisional.",
+            "Compute on the guess into isolated, uncommitted state (a scratch copy or overlay), never into the state the node treats as settled.",
+            "Record with the result what it rests on: the transaction set and order, the pre-state, and the environment values the code read (block values such as timestamp or producer). A block identifier that commits to parent and contents is one compact way to record this; name, do not explain, how such commitments are built.",
+            "At settlement compare: if the settled inputs match every recorded assumption, the result is kept and nothing is recomputed (this is where the latency gain comes from); if any differ, the result and everything computed on top of it are discarded and the result for the settled inputs is computed (unless another speculation already matches it, e.g. a node that executed several competing proposals).",
+            "Pitfall: 'settled' means whatever the system's own rule says (finality, excluded: name only); under probabilistic finality a result kept as settled can still be reverted (reorganizations, excluded: name only). Do not claim waiting removes all risk in every system."
+          ],
+          "actors": [
+            "The speculating node: for example a validator or full node executing a proposed block before it is decided, or a party simulating pending transactions in an expected order (block builders, wallets, RPC services can do this). Name block-building, do not explain it.",
+            "Observers who might act on a result: users, applications, other systems receiving messages, counterparties releasing value. Claim 2 is about them.",
+            "An adversary who induces discarded work cheaply (claim 3)."
+          ],
+          "inputs": "Unsettled inputs or order plus a possibly provisional pre-state. Condition for the keep rule: the recorded assumptions must cover everything the result reads; matching only part of it (the order but not the block's environment values or the pre-state) can keep a result that is wrong for the settled inputs. Keep-on-match also relies on execution being deterministic: name deterministic-execution, do not explain it.",
+          "outputs": "A provisional result (post-state, outcomes of each transaction, a state commitment) labeled with its assumptions; at settlement it is either kept as the settled result or discarded. Observable effects derived from it are held back per claim 2.",
+          "assumptions": [
+            "Execution is deterministic, so matching inputs give the same result (name the sibling only).",
+            "The assumption record is complete (see inputs).",
+            "Speculative writes are isolated from settled state until kept.",
+            "Containment (claim 2) holds only if every path by which others learn of or act on the result respects it: a mark of 'provisional' protects only observers that heed it; tying an effect to the assumptions needs a receiver or rule that actually checks them and lets the effect lapse.",
+            "Pitfall on 'signing or voting for a state': in consensus, a vote is part of how the assumptions get settled, so it cannot simply wait; it is tied to the block it names and lends no support to a competing proposal (do not say it counts only toward that block). Do not say a signature 'lapses' entirely: protocol rules on what a signer may sign later can still bind it. Keep this as a condition, without explaining consensus voting or slashing.",
+            "Latency is gained only when guesses are usually right; a wrong guess costs work and, where speculation competes with settled work for the same resources, can delay that work (say 'can')."
+          ],
+          "failures": [
+            "Wrong guess: wasted computation, borne by the node that speculated (the cost of claim 3). Its latency for the settled result is then no better than not speculating, and can be worse if resources were busy.",
+            "Escaped speculation: an observer treats a provisional result as final (reported as final, a message sent, value released) and acts on a result later discarded; the loss lands on whoever acted, not on the speculating node. Examples must fit: crediting a deposit seen only in an unconfirmed transaction or proposal fits; do not explain execution preconfirmations, optimistic rollups or bridges.",
+            "Incomplete assumption record: a result kept although the settled inputs differ in something it read; a silent error rather than waste.",
+            "Chained speculation: results computed on provisional results; when an early assumption fails, every result built on it is discarded, so waste grows with how far ahead the node ran ('compounds': state as growth with depth, no formula).",
+            "Induced waste (adversarial): an adversary submits work that will be discarded, such as transactions that will not be included (for example replaced or invalidated before inclusion), which in typical fee designs pay nothing if never included; this works when inducing the work costs the adversary little relative to what nodes spend. Defenses are not claimed: at most one hedged clause (bounding speculative work per source); do not explain mempool policy (mempools, transaction-inclusion excluded)."
+          ],
+          "tradeoffs": [
+            "Latency gained vs computation risked: how far ahead to speculate (chain depth) and how many alternatives to execute raise the chance work is ready and the work that can be thrown away.",
+            "Containment choices: waiting gives observers settled results and nothing before settlement (a result whose assumptions held is still ready for them as soon as the inputs settle); marking provisional lets observers see results before settlement but moves the risk to observers who must heed the mark; tying effects to assumptions lets them be issued before settlement with automatic lapse but needs a receiver or rule that checks the assumptions."
+          ],
+          "relation": "Distinction for claim 3, by what is uncertain (boundaries section 1). Optimistic execution (name; do not explain read/write tracking, validation or re-execution): inputs and order are settled, the bet is only that concurrent operations do not conflict, and it is checked locally. Speculative execution: inputs or order are not yet settled, and the guess is confirmed or refuted by settlement outside the node. Orthogonal, not alternatives: a node can execute a proposed block speculatively with an optimistic or parallel executor (say 'can'). Terminology hazard: some literature calls optimistic concurrent executors 'speculative'; keep the parent's division and avoid that loose sense. The CPU branch-prediction sense is background the claims do not need; leave it out."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Conditional mechanism and its consequences: a result computed under assumptions is kept or discarded according to whether settlement matches them (claim 1); effects that others act on must be held back in one of three ways, each with its condition (claim 2); waste, its compounding under chaining and its adversarial inducement follow from wrong guesses (claim 3); and one boundary with optimistic execution, drawn by what is uncertain.",
+        "whyProse": "The meaning is in conditions and causation: what the assumption record must cover for keep-on-match to be correct, when each containment works (an observer heeding a mark, a receiver checking the assumptions, a vote that cannot wait), why chaining compounds waste and when inducing waste is cheap. The keep/discard rule is one two-way branch a sentence states fully, so a flow would add nothing; the three containment options differ in the conditions they depend on rather than along shared named dimensions, so a comparison would flatten them; the latency/waste trade-off is a single pair a sentence carries, not recurring tensions; the result's life (provisional, then kept or discarded) only moves forward, so it is not a state model; and the optimistic distinction is one clause of claim 3 whose conflation the parent's axis already frames, so a distinction block would overweight it and duplicate the boundary optimistic execution draws from its own side.",
+        "level": "The parent names speculation as one strategy and states its cost and safety condition in one sentence; it does not say what a provisional result must record, how settlement decides its fate, how effects are contained, or who pays for waste. Those belong to this concept, not to the parent or to optimistic or parallel execution, whose inputs are settled.",
+        "territory": "Draws no sibling relationship: optimistic execution's detection and repair, parallel execution's scheduling and deterministic execution's discipline are named only. Transaction ordering, block building, mempools, transaction inclusion, finality, reorganizations, execution preconfirmations, optimistic rollups and optimistic verification are named where a claim touches them (what settles inputs, where pending transactions come from, what 'confirmed' means, what can still revert), never explained.",
+        "placements": "One placement under Execution Models; the prose states the mechanism and its safety condition in its own terms, so it reads the same without the parent's paragraph."
+      },
+      "audit": {
+        "at": "2026-10-23T00:24:23.943Z",
+        "note": "Re-audit after repair 2 (scoped; not expanded, because the repair replaced one phrase and changed no argument, assumption, structure or scope). R1 (findings/speculative-execution-2.md) is resolved: P5 now reads 'a vote for a proposal that loses lends no support to a competing proposal'. 'Conflict' is no longer used outside the parent's operation sense; its only remaining use (P9 'will not conflict') is the parent's sense. 'Competing proposal(s)' is used in one sense in P3 and P5. The new claim holds for round-based BFT voting (a vote for one proposal does not count for another in that round) and for chain-based fork choice (a vote supports the named block and its ancestors, none of which competes with it, and no block on a competing branch). The ambiguous 'it' is gone; the remaining 'It' clearly refers to the vote. The next sentence (protocol rules on later signing can still bind it) is unchanged and still holds. Model fields.assumptions[4] carries the same wording. A1/B1 and A2/B2 stay resolved, as the previous re-audit confirmed. I re-read the whole record for new defects and found none. Overlap with the Execution Models parent (single placement): none; the record starts beyond the parent's speculation sentence. Territory: optimistic execution, finality, reorganizations, mempools, block building and deterministic execution are named, not explained. The structure stays the designed prose. Advisory: P2 'The computation writes into isolated state' is stated for every design ('typically' would match the model's assumption); P6 'not on the node that speculated' should read 'which need not be the node that speculated'; P6 'or the proposal loses' leaves the credit unbacked only until the transaction is included elsewhere; the P2 wallet example fits RPC services and builders better (hedged with 'can'); P8 repeats the delay to settled work in consecutive sentences, and dependent-result discard appears in both P3 and P8; P9 closely mirrors optimistic-execution's boundary sentence (leave for the group audit).",
+        "resolutions": [
+          {
+            "id": "names-concept:d43b1fbcd8",
+            "resolution": "block-building is named only, in P2 ('a party engaged in block building can simulate pending transactions'); nothing about how blocks are built is explained."
+          },
+          {
+            "id": "names-concept:79a31268d6",
+            "resolution": "deterministic-execution is named as a condition only (P3: 'Execution must be deterministic, so that matching inputs give the same result'; P2: 'given deterministic execution'); its discipline is not explained."
+          },
+          {
+            "id": "names-concept:40ffdb6733",
+            "resolution": "finality is named only (P3: 'what counts as settled is finality's question'; 'Where settlement is probabilistic'); no finality mechanism is explained."
+          },
+          {
+            "id": "names-concept:97d08c7182",
+            "resolution": "full-nodes is named only, as an example actor in P2 ('A validator or full node can execute a proposed block'); not explained."
+          },
+          {
+            "id": "names-concept:a155bbb0d8",
+            "resolution": "mempools is named only, in P8 ('which pending transactions it accepts at all belongs to mempool policy'); no admission policy is explained."
+          },
+          {
+            "id": "names-concept:d880b0b6f0",
+            "resolution": "optimistic-execution is named in P9 to draw the boundary by what is uncertain (settled inputs with a conflict bet checked by the executor, against a guess refuted by settlement); conflict detection, validation and re-execution are not explained. This is the accepted claim-3 distinction."
+          },
+          {
+            "id": "names-concept:a0f32f3d7b",
+            "resolution": "reorganizations is named only, in P3 ('can still be reverted by a reorganization'); how reorganizations happen is not explained."
+          },
+          {
+            "id": "absolutes:ab91469f37",
+            "resolution": "'cannot' (P5: a vote is part of how the proposed block becomes settled, so it cannot wait for that settlement) holds within the stated scope, consensus protocols where validators vote on proposals. 'entirely' is negated ('does not vanish entirely'), which hedges. 'never' (P6: 'if the transaction is never included') is a condition, not a claim. All hold."
+          }
+        ],
+        "recordFingerprint": "b47eb7330d9c753e6180845225c9c5a1c8ae3e7a58c5cf54f214f3e306a9746e"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-23T20:27:54.679Z",
+    "note": "Group audit of execution-models (six owned members, read side by side with the parent and boundaries 1, 1b, 6a). No blocking finding. Conflict: the parent's sense (one operation writes state the other reads or writes) holds in every member that uses the word; sequential says only that concurrently running operations cannot conflict, parallel uses it for the order-governed relation and for declared granularity, optimistic explicitly separates conflict from validation failure (only stale reads by later operations fail; write-write conflicts are settled by committing in order), and contention is read-after-write in both parallel and optimistic. No member explains a sibling's mechanism: parallel names detection and repair as Optimistic Execution's with only the trade-off; optimistic and speculative each draw the settled-vs-unsettled boundary without building the other's machinery; sequential, non-deterministic and speculative defer channel-closing to Deterministic Execution; non-deterministic defers interleaving-independence to Parallel Execution; deterministic stays on execution-level discipline and names Determinism, WASM, Metering, State Roots. No contradictions (reference result, per-operation outcomes incl. failures, chain bound, determinism preconditions, floating point all agree). Convergence: paragraph counts 9, 7+comparison, 7, 6, 7+state, 8; two structured forms, four prose; definitions open with the concept as subject per convention but with different verbs and arcs; endings differ. Repetition that follows the claims: the optimistic/speculative distinction is stated in both (each plan claims it), as is the 'determinism plus complete record' precondition for keeping a provisional result or a validated run, over different objects. Advisory: (1) the optimistic and speculative distinction paragraphs both frame it as a 'bet' and both say the two combine with a proposed-block example, an echo a reader of both meets twice; (2) 'leaves nothing to undo' appears in both optimistic (buffered writes) and speculative (isolated state); (3) speculative's 'assumes only that the operations will not conflict, which the executor checks for itself' and optimistic's 'guesses only that they will not conflict' are looser than optimistic's own validation paragraph, which checks stale reads rather than every conflict; not contradictory (the bet can be broader than the check) but could read 'will not invalidate one another's reads'; (4) counted enumerations recur (parallel 'two ways', optimistic 'three assumptions', speculative 'one of three ways', non-deterministic 'three... and a fourth'), each following its claim rather than a template; (5) the retained-fee-on-failure example appears in both sequential and deterministic, for different points.",
+    "resolutions": [],
+    "records": {
+      "deterministic-execution": "31cfff77e5c917d280b9ffe201ed17ef8daf16a76af71c8073ec294c0dc1a93c",
+      "non-deterministic-execution": "772abe6dc551d4539efa1e4b39c4d643611ea4d4243eb096747bc85bd7d4e9fc",
+      "sequential-execution": "5c88e2bb2c52901575fbbcd680acdfe28e17b997eeebacc2ab62042e105ea9b8",
+      "parallel-execution": "7ad4a2d5df12a6c2698c1e281ee5deb32986e0df03cb0cf4373e04f160565f95",
+      "optimistic-execution": "32c8d0d880d4f393edf046e1005013ea2e6664fbf85385634364b81ada01061d",
+      "speculative-execution": "b47eb7330d9c753e6180845225c9c5a1c8ae3e7a58c5cf54f214f3e306a9746e"
+    }
+  }
+}
