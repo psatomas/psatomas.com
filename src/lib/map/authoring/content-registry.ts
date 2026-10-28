@@ -442,4 +442,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "computation-integrity",
   "execution-traces",
   "computation-commitments",
+  "off-chain-execution",
+  "on-chain-verification",
+  "trusted-execution",
+  "untrusted-execution",
+  "off-chain-workers",
 ];

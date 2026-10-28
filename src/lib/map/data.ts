@@ -20171,6 +20171,228 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "off-chain-execution-content",
+      conceptId: "off-chain-execution",
+      definition:
+        "Off-chain execution is running a protocol's computation outside the chain's replicated execution, sometimes together with holding the state or data it works on, and bringing back a claimed result, with whatever evidence the chain's acceptance rule asks for, which in challenge-based designs may be none. The result takes effect on the chain only if that rule is met.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Computation is what moves in every case. State and data may move with it, and the assumptions differ with the choice. State here is the persistent record the program reads and updates, such as balances and storage; data is transaction or input data that a result is checked against. Moving computation alone leaves state and data on the chain, so when the program reads only what the chain holds, a result can be checked against inputs the chain already has, provided the acceptance rule ties the result's claimed inputs to them. Inputs from outside the chain, or private ones, have to be committed or vouched for in some other way. Once state moves as well, the chain holds at most a commitment to it, and a result about that state can be judged only against that commitment, if there is one, and data or state contents supplied with the result or in a dispute.",
+        },
+        {
+          kind: "paragraph",
+          text: "Part of what stays on chain is what lets a result take effect. A result produced off chain has no force of its own: the same output can be accepted under one design and refused under another, because acceptance is the chain's act under its rule. So the acceptance rule stays, along with a record of the claimed result, such as the resulting state. In many designs commitments to the program and to the inputs it was computed from stay too; without them a result can still take effect, but the chain's records cannot show that it came from the intended program and inputs. Beyond those the list depends on the design. Designs that rely on challenges keep dispute resolution on chain. Some publish on chain the data or state contents that others need to check a result or to exit, and others instead assume that they stay available off chain. What a passed check establishes belongs to on-chain verification, what a commitment shows to computation commitments, and what the evidence is to trusted execution and untrusted execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "The move adds assumptions that replicated execution did not need. Three recur. The first is who may produce results: one operator, a committee, anyone who qualifies, or a set of participants. Alongside the acceptance rule, which decides whether a faulty producer can get an invalid result accepted, this decides whether a producer that stops, delays or censors can be routed around: a sole operator can halt or censor everyone, while where anyone who qualifies may produce, others can produce instead if they have the data or state contents. Off-chain workers covers the replacement mechanisms. The second is whether the data or state contents needed to check results or to exit are available. When they are withheld, checking, disputing or exiting can fail even though an accepted result is correct, which is a different failure from a wrong result being accepted. The third is how users recover their assets or state if the off-chain party stops or misbehaves, which matters where state or assets sit off chain and can depend on data or state contents the users hold, on rules on chain, on time limits and on the chain's capacity at that moment. Because some designs leave exit dependent on withheld data or on that capacity, no general statement that users can always exit holds.",
+        },
+        {
+          kind: "paragraph",
+          text: "Sidechains, channels, plasma and validiums can be read as answers to these questions: how far the move goes, what stays on chain, and what each of the three assumptions is. The same questions can be put to any other design. Keeping more on chain can reduce the assumptions a design adds, at the price of more on-chain cost and capacity, and sometimes of what the move was meant to gain, such as privacy; how that balance falls depends on the design.",
+        },
+      ],
+    },
+    {
+      id: "on-chain-verification-content",
+      conceptId: "on-chain-verification",
+      definition:
+        "On-chain verification is the step in which a chain's rules or a contract apply the acceptance rule to an off-chain result, either by running a check on the evidence submitted with it or by leaving a window open for objection, and so decide whether the result takes effect.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The check is code that the chain's validating nodes execute as part of replicated execution, so its cost is the chain's cost. It is charged against the chain's metered resources, and a check that does not fit the limits for a transaction or a block cannot complete there. This is why the size and cost of the evidence matter. What the chain pays for is the work of the check, not the work of the computation behind the result, which is the reason to want succinct evidence: evidence that is cheaper to check than the computation is to redo lets the chain accept results it could not afford to produce itself. How much cheaper, and what the check costs in absolute terms, depends on the kind of evidence, on the proof system where one is used, and on the chain's pricing, and the cost can still be large. Where it is too large, designs shrink the evidence, batch or aggregate checks, or arrange that no check runs unless someone objects.",
+        },
+        {
+          kind: "comparison",
+          label: "Four ways a chain can carry out the acceptance step",
+          dimensions: ["What the chain runs", "When the result takes effect", "What drives the on-chain cost", "What acceptance shows"],
+          alternatives: [
+            {
+              name: "Check a proof",
+              values: [
+                "A verification routine for the proof system, applied to the proof and the statement with the verification key or parameters the verifier holds",
+                "Often in the step where the check passes; some designs add a delay or rate limit after it",
+                "The proof system's checking work, which depends on the system and on the size of the proof and the statement",
+                "That the stated relation holds, under the proof system's soundness assumptions and any setup it needs",
+              ],
+            },
+            {
+              name: "Check signatures or a quorum",
+              values: [
+                "Signature checks against the list of authorized signers the verifier holds, and a count against the required quorum",
+                "Often in the step where enough valid signatures are present; some designs add a delay or rate limit after it",
+                "The number of signatures checked, unless they are aggregated",
+                "That the counted signers vouched for the result, if their keys are not compromised and they are the parties the verifier intends",
+              ],
+            },
+            {
+              name: "Check an attestation",
+              values: [
+                "A check of the attestation against the hardware keys or trust anchors the verifier holds",
+                "Often in the step where the check passes; some designs add a delay or rate limit after it",
+                "The attestation's format and the checking work its signatures require",
+                "That hardware holding an authorized key vouched for the result, if that hardware and its keys are not compromised and the verifier's list is the intended one",
+              ],
+            },
+            {
+              name: "Leave a challenge window open (no evidence is submitted with the result)",
+              values: [
+                "No check of the result in the usual case; a check runs only if an objection is raised",
+                "After the window closes with no successful objection",
+                "Little while nobody objects; delay instead, plus the cost of the check or dispute if someone does",
+                "Only that no objection succeeded in the window; what that says about correctness depends on who could object, which untrusted-execution covers",
+              ],
+            },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Contracts and other on-chain actions that depend on a result can use it only once it has taken effect, whereas a party that checks the result itself can act sooner, at its own risk. So the time a route takes to accept is a delay to those on-chain dependents. A route that spares the chain a check in the usual case does so by making them wait.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whatever the route, what acceptance shows is limited by its evidence and by three conditions on the chain's side, and these apply to every check the chain runs, including one run because an objection was raised. First, the statement checked must fix the right program and version, the right inputs, including environment values, and the claimed output; a check can pass for a statement that names the wrong program or inputs. Second, the verifier must be implemented correctly, with the right verification key, signer list or parameters; a bug or a mis-set value can make it accept what it should reject or reject what it should accept. Third, control over the verifier's upgrade must be limited. Whoever can replace the verifier, whether an admin key, a multisig, a governance process or no one because the verifier is immutable, determines what counts as a pass, so a check is only as strong as the limit on that control, such as a delay with a chance to exit, a quorum, or immutability. That limit is a trust assumption of its own.",
+        },
+        {
+          kind: "paragraph",
+          text: "Even when all three conditions hold, a passed check shows no more than its evidence can, under that evidence's own assumptions, and never that the relation is the intended one. A specification that is wrong still produces results that pass, and a statement that binds the right inputs does not make those inputs true. What the property of following from specified inputs under a specified program covers is the business of computation-integrity; the step described here can only apply the check it was given.",
+        },
+      ],
+    },
+    {
+      id: "trusted-execution-content",
+      conceptId: "trusted-execution",
+      definition:
+        "Trusted execution is accepting a result because the executor or its environment is trusted, instead of checking the computation itself. What is trusted is either an operator or committee relied on by name, or a hardware-isolated environment whose hardware and loaded program are vouched for by remote attestation.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "In the operator or committee form, the relying party accepts results signed by named parties, either one trusted operator or a threshold of a committee. The only check is the signature or quorum. Honesty and competence are assumed and the computation is not rechecked, so a wrong result can be accepted when the trusted operator, or enough committee members to meet the threshold, err, collude or have their keys stolen, and the accepted result alone need not reveal it. Losing a key stops signing; it does not forge a result.",
+        },
+        {
+          kind: "paragraph",
+          text: "In the environment form, hardware isolates a program's memory and execution from the rest of the machine, including from the host, the party that runs the machine, to a degree that depends on the design. When the program is loaded, the hardware records a measurement, a hash of the loaded code and its initial configuration. On request it produces an attestation, a statement of that measurement, plus any attested data the environment includes, signed with a key whose certificate chain leads to a root, which is the hardware manufacturer or, in some designs, a vendor or cloud attestation service. Whoever relies on the result, such as a contract, a client or a committee, checks the chain, compares the measurement with the one expected for the intended program, and checks freshness and revocation status. A requester's challenge in the attested data shows freshness; it does not bind the result. The result is accepted only if the attestation also binds it, often because the environment places the result's hash in the attested data, or signs the result with a key whose public part the attested data contains.",
+        },
+        {
+          kind: "paragraph",
+          text: "Assuming the hardware and its attestation keys are not compromised, the root is honest with its keys uncompromised, and the relying party checks the chain, the measurement, freshness and revocation, an attestation shows that a program with that measurement is running on hardware whose key chain leads to the root, and that whatever the attested data covers, such as a result, an input hash or a signing key, came from that program. It does not establish that the program is correct or free of vulnerabilities, that the specification it implements is the intended one, that its inputs are true, that it is free of side-channel leakage, or that the root is honest, which is an assumption. Inputs are not covered by the attestation unless the design binds them, for example by hashing them into the attested data beside the measurement, and even then the binding shows which inputs were used, not that they are true.",
+        },
+        {
+          kind: "paragraph",
+          text: "The measurement check needs a known target. A valid attestation for the wrong measurement is worthless, and if the program's build cannot be reproduced, others cannot confirm that a measurement corresponds to the code they were shown. Without a nonce or an equivalent, an old attestation can be replayed, and revocation of compromised keys or outdated firmware helps only when the relying party consults current revocation status.",
+        },
+        {
+          kind: "paragraph",
+          text: "The assumptions can fail in several ways. Extracted attestation keys, a flaw in the hardware or firmware, or a physical attack (whose feasibility depends on the design) can let an attacker produce an attestation without the claimed protection, and one extracted key can undermine every device it certifies, depending on how keys are provisioned and how far revocation reaches. Side channels such as cache, timing, transient execution or access patterns can expose data even when memory contents are protected, and whether a design's threat model covers them varies by design. The measurement identifies the program and not its quality, so an exploitable bug can let an attacker steer the program under a perfectly valid attestation. The host controls storage, so an environment reloading its own sealed state cannot tell a current copy from an older one unless the design adds a freshness mechanism, such as a monotonic counter or an external commitment. Availability is not protected at all, because the host controls the machine and can stop it, delay it or withhold its outputs.",
+        },
+        {
+          kind: "paragraph",
+          text: "What the relying party gains is chiefly cost. The program runs on ordinary processors, so the cost is often close to that of ordinary execution, though overhead depends on the workload and the design, for example on memory encryption for memory-heavy work and on transitions into and out of the environment for I/O-heavy work. What it gives up is independent checkability. The evidence is a statement that hardware or named parties vouched for the result, not something anyone can recompute, so if an assumption fails the result alone need not show it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Trust is moved, not removed. In the environment form, the host need not be trusted for the integrity of the running program under the hardware's threat model, but the root, the program's author and the correctness of the hardware must be, and that set is small. Concentrating trust in few parties can be better or worse than spreading it, depending on the setting. The same holds when the measured program is a model with its serving code, as in a claim about running a model on an input. The weights count as part of what is attested only if the design measures them or binds their hash, and even then the attestation bears on which program ran, not on whether the model is good.",
+        },
+        {
+          kind: "paragraph",
+          text: "What the attestation establishes is therefore narrow, a measured program and the attested data it produced, on attested hardware, and acceptance on it rests on every assumption in the chain holding. It does not make the computation correct, which rests on the program being correct, nor the inputs true, which rests on their sources. Policy here means the rules a system is meant to follow, such as limits on what an agent may do. The program can enforce policy in its code, and the attestation shows that this code is what was measured, not that it implements the intended policy, which depends on the specification being the intended one. The outcome is right only if all of these hold, and the attestation supplies none of them. Trusted Computing Base, Attestation Verification and Execution Isolation are separate concepts, checking the computation instead of trusting it is Untrusted Execution, and the step a chain runs on the attestation is On-Chain Verification.",
+        },
+      ],
+    },
+    {
+      id: "untrusted-execution-content",
+      conceptId: "untrusted-execution",
+      definition:
+        "Untrusted execution is accepting an off-chain result from an executor that may deviate arbitrarily, by requiring evidence that the verifier or other parties can check or contest, so that acceptance rests on that evidence and its conditions rather than on the executor's honesty.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A result carries nothing but the executor's assertion. If the executor is not trusted, meaning the protocol does not rely on its honesty or correct behavior, the result needs something beyond itself that a party other than the executor can test. That something is evidence, and the main kinds are three: a proof of the computation, the absence of a successful challenge from parties watching for fraud, and agreement among several executors that computed the same task. Each kind removes reliance on the executor's honesty only while its own conditions hold, and puts reliance somewhere else: on a verifier, a proof system, available data or an able challenger, or, for agreement, on the other executors, which must not collude or share a fault in numbers enough to satisfy the acceptance rule. Reliance on liveness stays in every kind: someone has to produce the result and its evidence, and for agreement enough of the executors have to respond.",
+        },
+        {
+          kind: "paragraph",
+          text: "A result accompanied by a proof the verifier accepts satisfies the relation the proof states, provided the verifier checks correctly, the proof system is sound, and any setup it needs left no one able to forge proofs or is not required. No one has to watch and no second executor has to exist. None of the three kinds shows that the statement checked names the right program and inputs; that condition is on-chain-verification's, and what a claimed result must follow from is computation-integrity's. How the chain runs the check, when acceptance follows and what it costs also belong to on-chain-verification.",
+        },
+        {
+          kind: "paragraph",
+          text: "Under fraud detection a wrong result is stopped only by a challenger, so the protection is only as good as the challengers. At least one has to be honest, meaning it challenges a wrong result it sees rather than colluding with the executor or staying silent for payment. It has to be live, so that it notices in time. It has to hold the data needed to recompute or check the claim, since a claim it cannot examine is one it has no basis to dispute. It has to be able to get its challenge included in time, which censorship or congestion can prevent. And whatever settles the challenge has to settle it correctly. These are joint conditions: unless at least one challenger meets all of them, the wrong result stands, and the lack of a challenge then says nothing about whether the result was right. Separately, if challengers are assumed to act only in their own interest rather than honestly, a challenge that costs more than it returns may go unmade.",
+        },
+        {
+          kind: "paragraph",
+          text: "Redundancy is evidence only to the extent that the executors fail independently. Several executors computing the same task and agreeing is strong when a wrong answer would have to be produced separately by each of them, and weak when it can be produced once and repeated. Executors that collude can agree on a false result, and executors that share a fault, such as the same defective software, the same flawed hardware or the same misleading input source, can agree on a wrong answer without any intent. Agreement therefore matters only if the executors that collude or share a fault are too few to satisfy the acceptance rule on their own, so the reliance on honesty moves onto the others. What counts as few depends on the rule. A rule that accepts when a threshold of executors agree can be satisfied wrongly once that many collude or share a fault, while a rule that requires all to agree can be satisfied wrongly only if every executor gives the same wrong result, so it resists more of them for safety, but it stalls on a single disagreement or silent executor unless a fallback exists. One honest executor being enough is not true of every rule.",
+        },
+        {
+          kind: "comparison",
+          label: "Three kinds of evidence for a result from an executor that is not trusted",
+          dimensions: ["What counts as evidence", "What must hold for it to protect", "What is still relied on"],
+          alternatives: [
+            {
+              name: "Proof of the computation",
+              values: [
+                "A proof that the stated relation holds between the inputs and the claimed output",
+                "The verifier checks correctly, the proof system is sound, and any setup left no one able to forge proofs or is avoided",
+                "The verifier, the proof system and its setup, and someone producing the proof",
+              ],
+            },
+            {
+              name: "Fraud detection by challengers",
+              values: [
+                "No successful challenge to a result accepted provisionally",
+                "At least one honest, live challenger with the data who can get a challenge included in time, and a challenge that is settled correctly",
+                "The availability of that data, the inclusion of a challenge, the verifier that settles it, and the executor producing a result",
+              ],
+            },
+            {
+              name: "Agreement among redundant executors",
+              values: [
+                "Matching results from several executors under a rule that sets how many must agree",
+                "The executors that collude or share a fault are too few to satisfy the rule alone",
+                "The rule and the code that applies it, the independence of the executors, and enough of them responding",
+              ],
+            },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "This is why trust is reduced and not removed, and why a design is better described by what it still relies on than as trustless. Reliance on the executor's honesty moves to the verifier, the soundness and setup of a proof system, the availability of data, an able challenger who can get a challenge included, or enough of the other executors. Reliance on liveness stays: a proof has to be produced by someone, a challenge needs a result to contest, and agreement needs enough executors to respond. Fallbacks for a worker that stops are off-chain-workers'.",
+        },
+      ],
+    },
+    {
+      id: "off-chain-workers-content",
+      conceptId: "off-chain-workers",
+      definition:
+        "An off-chain worker is an actor outside a protocol's replicated execution that performs work the protocol depends on, such as expensive, asynchronous, private or externally dependent work, and returns a result the protocol may accept or act on.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The role is defined by the work done for the protocol, not by who does it: a worker can be a person, a service or a program, automated or not. Protocols use workers for work that replicated execution handles badly: work that costs more than on-chain limits or fees allow, work that waits on time or events, work over data that should not be replicated publicly, and work that needs systems the chain cannot reach. What a worker returns, its result, can be a computed value, a response to a request or a submitted transaction. Keepers, automation networks, execution bots and oracle nodes are separate concepts with their own meanings, and the worker role is not defined by being any of them. Whether a result takes effect is settled by the protocol's acceptance rule, which off-chain execution, trusted execution, untrusted execution and on-chain verification cover.",
+        },
+        {
+          kind: "paragraph",
+          text: "Within the protocol, a worker can do only what its rules let it do, such as submitting results, answering requests, holding a bond or being paid. Performing the work, however consistently, gives it no authority over the protocol's funds, parameters or decisions unless the protocol's rules, roles or keys grant it, including when it operates beside other autonomous actors. A protocol that needs the work depends on its workers, and that dependence gives a worker leverage, not authority: it can withhold or delay work, decline selected jobs, and may see the data the work exposes.",
+        },
+        {
+          kind: "paragraph",
+          text: "A protocol can obtain work in three ways, and each leaves different things open. With assignment, the protocol's rules or its governance name the worker or workers. This leaves open how the worker is paid and removed and who notices a failure, and a single named worker is a single point of dependence. With open competition, any party meeting stated requirements may do the work, and the first valid or best result is often the one rewarded. This leaves open duplicated effort, races that favor the best-connected parties, and the possibility that nobody acts when the reward is less than the cost of doing the job. With requests and callbacks, a contract records a request, an off-chain party fulfills it, and the protocol calls back or accepts the response. That is an interface and not a way of choosing who works: it can sit on top of assignment or open competition, and by itself it does not say who fulfills a request or what happens to one nobody fulfills. Unless the protocol defines expiry, cancellation or reassignment, such a request can stay pending indefinitely.",
+        },
+        {
+          kind: "paragraph",
+          text: "Payment and bonds are incentives, not guarantees. A fee or reward per job makes the work worth doing only when it exceeds the worker's cost at the time, and even a reward above the cost does not make a response certain. A bond is a stake the worker posts and the protocol may forfeit under stated conditions, so it gives the worker something to lose. It deters misbehavior or silence only if the forfeitable amount exceeds what the fault would gain and the protocol can detect the fault and attribute it to that worker. Forfeiting it compensates the parties the fault harmed only if the forfeited funds are paid to them rather than burned or paid to others, and then at most up to the bond's size. Silence is hard to attribute when the work is open to anyone, because no one worker was obliged to act, and forfeiting a bond does not itself produce the missing result.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whichever way the work is obtained, a worker can stop, through a crash, withdrawal, going offline, censorship of its submissions or a job that has become unprofitable, or it can delay or decline selected jobs. The protocol's dependence on workers responding is separate from whether returned results are right, and designs address it with remedies that combine and whose conditions differ. A timeout declares a worker failed after a deadline. It treats lateness beyond the deadline as failure, so it assumes a bound on delay: a deadline too short rejects honest workers that are only slow, one too long stalls users, and either way it starts a next step without producing the result. A fallback path, which the protocol or the affected users may invoke, lets the work proceed without the worker; it is often slower, costlier, less private or less capable, and it helps only if whoever must invoke it can. Redundancy asks several workers, and it helps against one stopping only if enough of them stay responding to meet what the protocol needs; a shared operator, software or infrastructure can take them all out together, and the duplicated payment is a cost. Replacement lets another party take over after a stated condition. It helps only if the replacement can obtain the inputs and has a reason to act, such as a reward that covers its cost or its own interest in the outcome. Where anyone may take over, no particular party has to be present; where only designated parties may, replacement fails when they are absent too.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each remedy moves the dependency onto its own conditions rather than ending it: a bound on delay, other workers or replacements able and motivated to act, or, for a fallback that bypasses workers, the fallback being usable by whoever must invoke it. Once workers stop, the work gets done only as far as those conditions hold.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
