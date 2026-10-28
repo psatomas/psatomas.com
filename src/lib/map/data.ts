@@ -20091,6 +20091,86 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "computation-integrity-content",
+      conceptId: "computation-integrity",
+      definition:
+        "Computation integrity is the property of a claimed result that it follows from the stated inputs under the specified program, so that the claim and the computation it describes agree.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A claim of this kind has four parts, and each is a place where it can be left loose. The program has to be identified together with its version, since a result that follows from one version need not follow from another. The inputs have to include everything the run read, not only the call arguments: environment values such as a block height, a timestamp or a random value, and any state read, can change the result for the same arguments, so an unlisted one leaves the claim underdetermined. The result has to be scoped, as the output alone or as the output together with the resulting state and effects, because a claim about the output says nothing about state changes. And the specification has to be named, meaning whatever gives running the program its meaning, such as an interpreter, a virtual machine's semantics or a transition rule. Where the program admits several outcomes, the relation is that the claimed result is among those the specification allows, not that it equals one value.",
+        },
+        {
+          kind: "paragraph",
+          text: "The property is a fact about how the result relates to its program and inputs, not about how it looks or how confident its producer is. A plausible result, or one the executor sincerely believes, lacks it whenever it is not what the stated program yields on the stated inputs under the specification. That can happen when a different program or version ran, when the inputs differed from those claimed, or when a fault, a bug in the executor or tampering made the run depart from the specification, and each of these matters only where it changes the result; the same result produced by another route still has the property. It also happens when the reported result omits or alters state or effects the claim covers. An honest executor can therefore be wrong by reading a stale value in place of a claimed input, or by running the wrong version. Changing the program, the inputs, the specification or the result scope changes which claim is being made, and integrity of one result says nothing about any other result of the same program.",
+        },
+        {
+          kind: "paragraph",
+          text: "Several nearby questions lie outside the property. A faithful run of a flawed program has integrity, because the property is read against the program as stated and the specification it runs under, and does not ask whether either does what was intended. False inputs are likewise outside it: the property is relative to the inputs given, so a result computed faithfully from false inputs follows from them, and whether they are true of the world is a separate matter. A result with integrity can be withheld from those who need it, so availability is not part of it, and the inputs or the computation can be public or hidden either way, so privacy is not part of it either. It is also a different notion from the security property of integrity, from unaltered data, and from proofs that a program does what it is meant to.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because the property belongs to one claimed result, relative to its program and inputs, it does not belong to the party that produced the result or to the way the result was obtained. A producer's record or a method's soundness is evidence about the result, not the property itself. Replication, hardware attestation and challenge processes are ways of gaining assurance of it, each under its own assumptions and each explained by its own concept, as are verification and computation proofs. Establishing is separate from having: a result can have integrity before anyone checks it and without anyone ever doing so, and a check can be wrong or cover only part of the claim, so a result can pass one without having the property.",
+        },
+      ],
+    },
+    {
+      id: "execution-traces-content",
+      conceptId: "execution-traces",
+      definition:
+        "An execution trace is the record of a computation's run as the sequence of its states, or of its state-changing steps with what each read and wrote, from the initial state fixed by the program and its inputs to the final state that yields the result, complete enough that each step can be checked against the rule defining a legal step.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A trace can be written as a sequence of full states or as a sequence of steps. A step record can hold the instruction or operation executed, the values it read, the values it wrote, and the state before and after it. A trace that stores only the changes still counts, provided the states can be reconstructed from them. The first state is fixed by the program and its inputs. A value that enters only during the run, such as an environment value some designs supply on demand, is recorded in the step that reads it, because otherwise that step could not be checked against anything the trace holds. The last state is the one that yields the result.",
+        },
+        {
+          kind: "paragraph",
+          text: "What makes a record a trace is a test, not a level of detail: it contains enough to check each step against the rule that defines a legal step, such as an instruction set's semantics or a transition function. Without that rule the record is only data. The result alone fails the test, since it says nothing about how it was reached. A log of selected events fails it too, because a log keeps what its writer chose and need not let a reader check each step, and a record that omits what a step read or wrote fails it however detailed it looks. The party that ran the computation holds the trace, recorded as the run proceeds or regenerated by running the computation again on the same inputs. Where the computation is deterministic, running it again yields the same trace; where it is not, a recorded trace is what pins down which run is meant. A checker is given the trace, parts of it, or a commitment to it, and does not produce it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Checking a whole computation one step at a time requires a trace that records enough to establish each step's transition and its connection to the preceding state. Suppose each step follows the transition rule of the machine that runs the program, each step's before-state is the previous step's after-state (or the way states are reconstructed guarantees this), no step is missing, the first state matches the claimed program and inputs (as does any value recorded as entering during the run), and the last state matches the claimed result. Then the whole run is a legal execution of that program on those inputs, ending in that result. Where each step's record holds the full state before and after it, each check involves one step and its neighbors, so the checks are independent: they can be done in any order or by different checkers, instead of following the run from the start. In a trace that records only changes, or only what each step read and wrote, checking that a value read is current ties it to the last write to that location, which can be far back, so the check is not local without a further mechanism.",
+        },
+        {
+          kind: "paragraph",
+          text: "That conclusion needs every one of those checks. Checking only some steps says nothing by itself about the others, because one illegal step among the unchecked ones can go unseen. A sample gives assurance only when the system is built so that a wrong step anywhere shows up in the places sampled, which is a property of particular proof systems and not of traces. The conclusion is also narrow. It establishes a legal run of the claimed program, not that the program does what was intended, so a legal execution of a flawed program passes. It does not show that the inputs are true, and checking a trace in parts does not fix which trace the executor stands by; binding the executor to one, as a commitment can, fixes what was claimed, not that it is what ran. A trace with steps missing, or whose steps do not chain, gives no assurance of a legal execution at all.",
+        },
+        {
+          kind: "paragraph",
+          text: "Traces are used in three ways. A proof can be built over a trace, which is the object whose steps the proof speaks about; how a zkVM lays out and constrains its trace is that concept's subject. A trace is also what a disputed computation is narrowed against: when two parties claim different results, their claimed traces can be compared to locate a step where their states first differ, which reduces the disagreement to whether that one step follows the rule; interactive dispute games and fraud proofs organize this, and are not explained here. And a trace is material for inspection, since a reader can re-execute the computation and compare their own run with the trace step by step.",
+        },
+        {
+          kind: "paragraph",
+          text: "The cost is size. A trace grows with the number of steps and with how much state each step touches, so a long run over large state yields a very large trace. For that reason a trace is usually committed to rather than published in full, and a checker is given only the parts it needs; a short computation can still be shared whole. A trace needs to exist only as long as someone may check or dispute the run. What a commitment binds, and where that stops, belongs to computation commitments.",
+        },
+      ],
+    },
+    {
+      id: "computation-commitments-content",
+      conceptId: "computation-commitments",
+      definition:
+        "A computation commitment is a value that a party hands over before any check, standing for the program (with its version), inputs, output or trace it claims, so that the checking, proving and disputing that follow all concern that one fixed object.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A commitment is a value derived from what it binds, not a copy of it, and is often much shorter than it; the party hands the values over later, in whole or in part, when the commitment is opened. What can be committed to is the program with its version, the inputs, the output and the trace, and a party can commit to one of them or to several together; the combination is what fixes which computation is claimed. Each needs care. A program identifier needs a fixed encoding and version, and the claim is still read under a specification such as a virtual machine's semantics, which the program alone leaves loose. Inputs include the environment values the run reads, and an input left out of the commitment stays free to change. Committing to the output fixes the claimed output, and committing to the trace fixes the claimed sequence of steps, so that later checks and disputes can refer to them. A scheme that supports opening parts of what it commits to lets a checker receive only the steps it needs.",
+        },
+        {
+          kind: "paragraph",
+          text: "Binding has to come before checking because a party that is challenged on a result could otherwise present a different program, other inputs or another output that passes, or adapt its claim to whatever it learns about the check. Once the checkers hold the commitment, the party cannot change the claim it committed to: the check has a fixed target, and a failure is attributable to the committed claim. The commitment then stays the reference for proving, disputing and any later mention of the computation, for as long as the process using it needs. This depends on two conditions. The commitment has to precede the challenge or the check request, since one made afterward says nothing about the earlier choice. And the checkers have to hold the same commitment, because binding constrains how a single commitment can be opened: a party that shows different commitments to different checkers is held to a different claim by each of them, not to one claim, unless they all hold the same commitment, for instance through a shared record. Being bound also does not stop a party from making a new commitment to a different claim; whether others accept that new claim is up to the process that uses the commitments.",
+        },
+        {
+          kind: "paragraph",
+          text: "The binding itself rests on a commitment scheme's binding property. Under the scheme's assumptions, such as collision resistance for a hash-based scheme, it is computationally infeasible to open one commitment to two different values; only a perfectly binding scheme makes it impossible, and such a commitment cannot be shorter than the value it commits to, so a short commitment to a large object binds only computationally. So, provided the assumptions hold, a value that the party later opens and that matches the commitment the checkers hold is the value it committed to, since it cannot find a second one that also matches; a value that does not match is rejected. Hiding is a separate property. A commitment can bind without hiding what it commits to: a public program identity needs only binding, inputs that must stay private need a scheme that also hides them, and a bare hash of a guessable value binds under collision resistance but does not hide the value. How schemes achieve these properties belongs to Commitment Schemes.",
+        },
+        {
+          kind: "paragraph",
+          text: "A commitment shows what was claimed, not that the claim is correct or that it is what ran. A party can be bound to the wrong program, to wrong inputs, or to a result that does not follow from the committed program and inputs. Binding makes the claim fixed and checkable; it does not prevent a wrong result, make a result trustworthy or remove the need to check. Whether the committed claim holds, the property named by Computation Integrity, is established by checking the committed object, through re-execution, a proof, a challenge process or other means that have their own concepts.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

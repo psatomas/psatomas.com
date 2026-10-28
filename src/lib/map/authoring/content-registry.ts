@@ -439,4 +439,7 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "contract-deployment",
   "execution-context",
   "contract-lifecycle",
+  "computation-integrity",
+  "execution-traces",
+  "computation-commitments",
 ];
