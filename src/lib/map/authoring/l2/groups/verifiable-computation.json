@@ -1,0 +1,407 @@
+{
+  "version": 1,
+  "group": "verifiable-computation",
+  "domain": "computation-execution",
+  "parentConceptId": "verifiable-computation",
+  "basis": {
+    "membership": "6b8eb04e1277da148d709ab6046e0c4a9697c9d322bf4d4a559a5ba213f62623",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "verifiable-computation": "0ae9c8f772c818ace9e6bc2a040a2cbdc0f458870469ddd2d45061e0380ad066"
+    },
+    "fixed": {
+      "verification": "541a0f405ecfb6d3d4647e3a5807b535d5acfb74042de0e9624a7bea30eb4187"
+    },
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "computation-integrity",
+      "placementId": "computation-integrity",
+      "standing": "owned",
+      "claims": [
+        "what the property says and what it pins down: that a claimed result follows from the inputs under the specified program, which fixes four things a claim can leave loose, namely which program and version the result is claimed to follow from, which inputs it is claimed for (including environment values such as a block height, a timestamp or randomness it read, not only the call arguments), what counts as the result (the output alone or also the resulting state and effects), and under what specification the relation is read; and why a result that looks plausible, or that the executor sincerely believes, does not have the property unless that relation holds",
+        "what the property does not cover: whether the program as stated, or the specification it is read under, matches what was intended (a result that follows from a flawed program has integrity), whether the inputs are true (the property is relative to the inputs given, so false inputs yield a result that follows from them), whether the result is available to those who need it, and whether the inputs or the computation stay private; and why it is a property of one claimed result relative to its program and inputs, not of the party who produced it or of the way it was obtained, so that replication, proofs, hardware attestation or a challenge process are ways of establishing it that are named here and explained by their own concepts. Verification and Computation Proofs are named, not explained"
+      ],
+      "excludes": [
+        "verification",
+        "computation-proofs",
+        "execution-traces",
+        "computation-commitments",
+        "integrity",
+        "data-integrity",
+        "correctness-proofs",
+        "formal-verification",
+        "deterministic-execution",
+        "non-deterministic-execution",
+        "trusted-execution",
+        "untrusted-execution"
+      ]
+    },
+    {
+      "conceptId": "execution-traces",
+      "placementId": "execution-traces",
+      "standing": "owned",
+      "claims": [
+        "what a step-by-step trace of a computation holds, namely the sequence of states or of state-changing steps (for example the instruction executed, the values read and written, and the state before and after each step) from an initial state fixed by the program and its inputs (with any value that enters only during the run, such as an environment value some designs supply on demand, recorded in the step that reads it) to the final state that yields the result, and why a trace is a record of how the result was reached and not a result or a log of selected events: it contains enough to check each step against the rule that defines a legal step",
+        "why a trace that records enough to establish each step's transition and its connection to the preceding state turns checking a whole computation into checks of single steps: if each step follows the transition rule of the machine that runs the program, the first state matches the claimed program and inputs, and the last matches the claimed result, then the whole run is a legal execution of that program on those inputs; where the trace records the full state before and after each step, these checks are local, so a checker can examine steps individually and in any order instead of following the run from the start (in a trace that records only changes, or only what each step read and wrote, checking that a value read is current ties it to the last write to that location, which can be far back, so the check is not local without a further mechanism), while checking only some steps does not establish the unchecked ones, since one illegal step among them can go unseen, unless a proof system is built so that a sample suffices; the limit is that this establishes a legal run of the claimed program, not that the program does what was intended, and that a trace missing steps, or whose steps do not chain, gives no such assurance",
+        "what traces are used for, namely as the object a proof is built over, as the record that a disputed computation is narrowed against by locating one step where the two sides' claims first diverge, and as material for inspection by re-execution; and their cost, which grows with the number of steps and the size of the state touched, so a trace is usually committed to rather than published, and a checker is given only the parts it needs. The mechanics of a zkVM's trace, interactive dispute games and fraud proofs are named, not explained"
+      ],
+      "excludes": [
+        "computation-integrity",
+        "computation-commitments",
+        "computation-proofs",
+        "verification",
+        "zkvms",
+        "interactive-fraud-proofs",
+        "dispute-games",
+        "fraud-proofs",
+        "validity-proofs",
+        "transaction-execution",
+        "distributed-traces",
+        "reasoning-traces",
+        "deterministic-execution",
+        "state-machines"
+      ]
+    },
+    {
+      "conceptId": "computation-commitments",
+      "placementId": "computation-commitments",
+      "standing": "owned",
+      "claims": [
+        "what is committed to and why binding must come before checking: a party fixes, ahead of any verification, through a commitment to it, the program (and version), the inputs, the output or the trace it claims, so that it cannot change the claim it has committed to once it is challenged or once a check is requested, provided the checkers hold that same commitment beforehand, and so that proofs, disputes and later references all concern one fixed object instead of whatever the party presents next",
+        "what the binding rests on and where it stops: it rests on a commitment scheme's binding property, which makes it infeasible under the scheme's assumptions to open one commitment to two different values (impossible only for perfectly binding schemes, whose commitments cannot be shorter than the values they commit to, so a short commitment to a large object binds only computationally), while hiding is a separate property that some uses need and others do not; a commitment shows what was claimed, not that the claim is correct, so a party can be bound to a wrong program, wrong inputs or a wrong result, and correctness is established by checking the committed object, which other concepts explain. Commitment Schemes and Computation Integrity are named, not explained"
+      ],
+      "excludes": [
+        "commitment-schemes",
+        "cryptographic-commitments",
+        "state-commitments",
+        "polynomial-commitments",
+        "vector-commitments",
+        "model-commitments",
+        "solver-commitments",
+        "computation-integrity",
+        "execution-traces",
+        "computation-proofs",
+        "verification",
+        "fraud-proofs",
+        "dispute-games",
+        "zkvms"
+      ]
+    },
+    {
+      "conceptId": "computation-proofs",
+      "placementId": "computation-proofs",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "evidence that lets others check a claimed result against the specified relation without repeating the whole computation, and what that checking costs relative to re-execution"
+      ]
+    },
+    {
+      "conceptId": "verification",
+      "placementId": "verification-in-verifiable-computation",
+      "standing": "owned-elsewhere"
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "computation-integrity": {
+      "model": {
+        "meaning": "Computation integrity is the property of a claimed result that it follows from the stated inputs under the specified program, so that the claim and the computation it describes agree, whoever produced the result and however anyone comes to check it.",
+        "kind": "property",
+        "parents": {
+          "verifiable-computation": "The parent frames integrity as one of two concerns and says only that the output results from the given inputs and program. This concept states what that relation pins down (program and version, full inputs including environment values, what counts as the result, the specification it is read under), what it leaves uncovered, and that it is a property of one claimed result, not of a party or a method."
+        },
+        "claims": [
+          "what the property says and what it pins down: that a claimed result follows from the inputs under the specified program, which fixes four things a claim can leave loose, namely which program and version the result is claimed to follow from, which inputs it is claimed for (including environment values such as a block height, a timestamp or randomness it read, not only the call arguments), what counts as the result (the output alone or also the resulting state and effects), and under what specification the relation is read; and why a result that looks plausible, or that the executor sincerely believes, does not have the property unless that relation holds",
+          "what the property does not cover: whether the program as stated, or the specification it is read under, matches what was intended (a result that follows from a flawed program has integrity), whether the inputs are true (the property is relative to the inputs given, so false inputs yield a result that follows from them), whether the result is available to those who need it, and whether the inputs or the computation stay private; and why it is a property of one claimed result relative to its program and inputs, not of the party who produced it or of the way it was obtained, so that replication, proofs, hardware attestation or a challenge process are ways of establishing it that are named here and explained by their own concepts. Verification and Computation Proofs are named, not explained"
+        ],
+        "excludes": [
+          "verification",
+          "computation-proofs",
+          "execution-traces",
+          "computation-commitments",
+          "integrity",
+          "data-integrity",
+          "correctness-proofs",
+          "formal-verification",
+          "deterministic-execution",
+          "non-deterministic-execution",
+          "trusted-execution",
+          "untrusted-execution"
+        ],
+        "placements": {
+          "computation-integrity": "The only placement is Verifiable Computation. The statement is relative to a program, inputs and a specification, so it needs no context from the parent beyond the vocabulary of result, program and inputs."
+        },
+        "fields": {
+          "statement": [
+            "The property is about one claimed result R, stated relative to: program P at a named version, inputs I, a specification S that gives meaning to running P, and a definition of what counts as the result. Integrity holds when R is what S yields for P on I.",
+            "Inputs include everything the run read: call arguments, but also environment values (block height, timestamp, randomness, state read). An unlisted input makes the claim underdetermined, since the same arguments can give different results under different environment values.",
+            "Result scope must be stated: output only, or output plus resulting state and effects. A claim about the output alone says nothing about state changes.",
+            "S can be an interpreter, a VM's semantics or a transition rule; S is part of what the claim is read under. Where the program is non-deterministic or has several admissible outcomes, the relation is membership of R in what S allows, not equality with one value; say so briefly, do not develop it (non-deterministic-execution is excluded).",
+            "Plausible or sincerely believed results lack the property unless the relation holds: it is a fact about the relation, not about appearance or the executor's confidence. An honest executor can still be wrong (an executor bug, a fault, reading a stale value or the wrong version in place of the claimed ones)."
+          ],
+          "establishedBy": [
+            "Name only: re-execution or replication, proofs, hardware attestation, challenge processes. Each is explained by its own concept; verification and computation-proofs are named, not explained.",
+            "Say that establishing is separate from having: a result can have integrity before and without anyone checking it, and a check can be wrong or partial. Do not describe what each method costs or assumes."
+          ],
+          "violatedBy": [
+            "The claimed result is not what S yields for P on I at the stated result scope. This can happen when a different program or version than the one claimed ran, inputs differed from those claimed (including environment values), the run did not follow S (a fault, an executor bug, tampering), or the reported result omits or alters state or effects the claim covers, each only where it makes the result differ from what the stated program yields on the stated inputs; a different version, different inputs or a masked fault that yields the same result leaves integrity intact.",
+            "Not violations of this property: a program, or a specification S, that does not do what was intended (a faithful run of a flawed program has integrity), false inputs (result follows from the inputs given), unavailability, loss of privacy."
+          ],
+          "confusions": [
+            "Integrity is not whether the program, or the specification S it is read under, does what was intended: a faithful run of a buggy program has it. The property is relative to P as stated and S; intended behavior is a separate question, and the word specification is kept for S only.",
+            "Integrity is not the truth of inputs: it is relative to the inputs given; true-world accuracy of those inputs is a separate question.",
+            "Not availability (the result can have integrity and be unobtainable or withheld) and not privacy (inputs or computation can be public or hidden either way).",
+            "Not a property of the producer (trusted, honest, well-known) nor of the checking method: the same result has or lacks it whichever way it was obtained. Trust in a party or a method is evidence about it, not the property.",
+            "Do not equate with the security property integrity, data-integrity (unaltered data), correctness-proofs or formal verification of programs; name boundaries only if needed."
+          ],
+          "relation": "R = S(P, I), read at a stated result scope: the claim holds when the claimed result is what the specified program yields on exactly the stated inputs. Each of P (and version), I, S and the result scope is a place where a claim can leave something loose.",
+          "invariants": "The relation is fixed by P, I, S and the result scope; changing any one of them changes which claim is being made. Integrity of a result says nothing about any other result of the same program."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A property defined by a relation among result, inputs, program and specification, with a list of what the relation fixes and a list of nearby questions it leaves open; the claims are definitional and explanatory, not ordered, branching or cyclic.",
+        "whyProse": "The four things the relation pins down and the four things it leaves uncovered are each short and need a reason or example that links them to the relation (for instance why environment values count as inputs, why a faithful run of a flawed program still has the property). A distinction block would present the exclusions as a bare list and lose those reasons; no ordering, loop, comparison or state change is involved.",
+        "level": "This is an L2 property under Verifiable Computation: it adds precise content to the parent's one-line statement of the integrity concern, and the exposition belongs here, not at the parent, because it is the concept the parent's trace, commitment and proof siblings serve.",
+        "territory": "Draws no relationship of verification (what a verification consists of, its cost spectrum, the errors), computation-proofs (evidence and its cost), execution-traces, computation-commitments or the excluded neighbors; ways of establishing the property are named, not explained.",
+        "placements": "A single placement, Verifiable Computation; the exposition is stated relative to program, inputs and specification and uses no context specific to the parent."
+      },
+      "audit": {
+        "at": "2026-10-27T01:08:13.496Z",
+        "note": "Re-audit after repair cycle 2, scoped to B3 (findings/computation-integrity-2.md) and the one changed sentence in the last body paragraph; not expanded into a complete audit, since the repair restored the paragraph's existing claim (establishing is separate from having) and changed no argument, assumption, structure or scope. The whole record was nonetheless re-read. B3 resolved: 'a check can be wrong or cover only part of the claim, so a result can pass one without having the property' is modal like its premise, follows from it, completes the two directions of 'Establishing is separate from having' (having without a check, passing a check without having), and agrees with the preceding 'ways of gaining assurance of it, each under its own assumptions' and with the fixed verification record (an acceptance establishes the claim as stated, to the procedure's error bound and under its assumptions; accepting a false claim is a soundness failure). It names that checks can err or be partial without explaining verification's depths or errors. Overlap: single placement (Verifiable Computation); the parent says nothing about the concept and the definition extends rather than restates the domain sentence. Territory: verification, computation proofs, integrity, data integrity (by paraphrase), correctness proofs and formal verification, virtual machines and transition rules are named only; B1/B2 resolutions from cycle 1 still hold (failure stated on the result, run events as causes only where they change it; 'specification' in its semantics sense throughout, 'bug in the executor'). Structure: prose, as designed. Accuracy: no new overclaim; 'can' throughout the changed sentence. Depth unchanged and adequate. Canonical validity: no positional or time-sensitive words, American English, plain text. Advisory: (1) body paragraph 3 'a different notion ... from unaltered data': data is not a notion, 'from data being unaltered' reads better; (2) body paragraph 4 'a method's soundness is evidence about the result' holds for a method applied to this result, 'the soundness of the method that produced it' is closer; (3) definition 'under the specified program' sits beside 'specification' in its semantics sense, 'stated program' would keep them apart; (4) model confusions[3] still says trust in a party or method 'is evidence about it', which the record avoids; (5) plan claim says replication, proofs, attestation or a challenge process are 'ways of establishing it', where the record's 'ways of gaining assurance of it, each under its own assumptions' is more accurate.",
+        "resolutions": [
+          {
+            "id": "names-concept:dd7a5850a0",
+            "resolution": "Computation proofs is named once, in 'as are verification and computation proofs' (ways of gaining assurance, each explained by its own concept); nothing about how proofs are produced or checked, or their cost, is said."
+          },
+          {
+            "id": "names-concept:4c3323c5d8",
+            "resolution": "Integrity is named once to draw a boundary ('a different notion from the security property of integrity'); the security property is not explained."
+          },
+          {
+            "id": "names-concept:f60e2f840b",
+            "resolution": "Transition rules appear only as one example of what can serve as the specification ('such as an interpreter, a virtual machine's semantics or a transition rule'); no transition-rule mechanics are explained."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "Verification is named as a way of gaining assurance explained by its own concept; the changed sentence says only that a check can be wrong or partial, so a result can pass one without having the property, which names the possibility without explaining verification's parts, depths, error types or assumptions, and agrees with the fixed verification record."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "Virtual machines appear only in 'a virtual machine's semantics' as an example of a specification; nothing about virtual machines is explained."
+          }
+        ],
+        "recordFingerprint": "f402f18429ba78199b2b37c4c14f2f1befa639b9dec608e3f2c8c8c5018442fb"
+      }
+    },
+    "execution-traces": {
+      "model": {
+        "meaning": "An execution trace is the record of a computation's run as the sequence of its states, or of its state-changing steps with what each read and wrote, from the initial state fixed by the program and its inputs to the final state that yields the result, complete enough that each step can be checked against the rule defining a legal step.",
+        "kind": "artifact",
+        "parents": {
+          "verifiable-computation": "The parent names traces of the execution as one thing that can carry integrity assurance, with no account of what one holds. This concept adds the content of a trace, why complete and chained steps reduce checking a whole run to local checks, what that does and does not establish, what traces are used for, and what they cost."
+        },
+        "claims": [
+          "what a step-by-step trace of a computation holds, namely the sequence of states or of state-changing steps (for example the instruction executed, the values read and written, and the state before and after each step) from an initial state fixed by the program and its inputs (with any value that enters only during the run, such as an environment value some designs supply on demand, recorded in the step that reads it) to the final state that yields the result, and why a trace is a record of how the result was reached and not a result or a log of selected events: it contains enough to check each step against the rule that defines a legal step",
+          "why a trace that records enough to establish each step's transition and its connection to the preceding state turns checking a whole computation into checks of single steps: if each step follows the transition rule of the machine that runs the program, the first state matches the claimed program and inputs, and the last matches the claimed result, then the whole run is a legal execution of that program on those inputs; where the trace records the full state before and after each step, these checks are local, so a checker can examine steps individually and in any order instead of following the run from the start (in a trace that records only changes, or only what each step read and wrote, checking that a value read is current ties it to the last write to that location, which can be far back, so the check is not local without a further mechanism), while checking only some steps does not establish the unchecked ones, since one illegal step among them can go unseen, unless a proof system is built so that a sample suffices; the limit is that this establishes a legal run of the claimed program, not that the program does what was intended, and that a trace missing steps, or whose steps do not chain, gives no such assurance",
+          "what traces are used for, namely as the object a proof is built over, as the record that a disputed computation is narrowed against by locating one step where the two sides' claims first diverge, and as material for inspection by re-execution; and their cost, which grows with the number of steps and the size of the state touched, so a trace is usually committed to rather than published, and a checker is given only the parts it needs. The mechanics of a zkVM's trace, interactive dispute games and fraud proofs are named, not explained"
+        ],
+        "excludes": [
+          "computation-integrity",
+          "computation-commitments",
+          "computation-proofs",
+          "verification",
+          "zkvms",
+          "interactive-fraud-proofs",
+          "dispute-games",
+          "fraud-proofs",
+          "validity-proofs",
+          "transaction-execution",
+          "distributed-traces",
+          "reasoning-traces",
+          "deterministic-execution",
+          "state-machines"
+        ],
+        "placements": {
+          "execution-traces": "The only placement is Verifiable Computation. The statement is relative to a computation, a rule for legal steps and a result, and needs only the parent's vocabulary of program, inputs and result."
+        },
+        "fields": {
+          "contents": [
+            "A sequence of states, or of steps. A step record can hold: the instruction or operation executed, values read, values written, state before and after. A trace may store full states or only the changes plus enough to reconstruct states; either form is a trace if each step can be checked, though checking a read in a trace of only changes, or only reads and writes, is not local (see checkedBy).",
+            "Endpoints: the first state is fixed by the program and its inputs; only a value that enters during the run (such as an environment value some designs supply on demand) is recorded in the step that reads it; the last state yields the claimed result.",
+            "A trace is the how, not the what: not the result alone, and not a log of selected events (a log keeps what its writer chose; it need not let a reader check each step). The test is the stated one: enough to check each step against the rule for a legal step. A trace that omits what a step read or wrote fails it, however detailed it looks.",
+            "The rule defining a legal step is the machine's step semantics (an instruction set's semantics, a transition function), and the trace is read against it. Without it the trace is just data. The program is not the rule: it is what runs under it, and the first state is fixed by it."
+          ],
+          "producedBy": [
+            "Recorded while a computation runs, or regenerated by running it again on the same inputs. Where the computation is deterministic, re-running yields the same trace; where it is not, a recorded trace is what pins down which run is meant. Say this briefly; do not develop determinism (excluded).",
+            "Not by the checker. The party that ran the computation holds it; a checker is given it, or parts of it, or a commitment to it."
+          ],
+          "checkedBy": [
+            "Per-step check: where the trace records enough to establish each step's transition and its connection to the preceding state, each step follows the transition rule and starts from the previous step's end state. Plus endpoint checks: the first state matches the claimed program and inputs (and any value recorded as entering during the run matches the claimed inputs), the last matches the claimed result.",
+            "If all hold, the whole run is a legal execution of that program on those inputs. Conditions to state: every step is checked and the steps chain (each step's before-state is the previous step's after-state, or reconstruction guarantees this); no step missing. Where each step's record holds the full state before and after it, each check involves one step and its neighbors, so the checks are independent and can be done in any order or by different checkers; this replaces following the run from the start. In a trace that records only changes, or only what each step read and wrote, checking that a value read is current ties it to the last write to that location, which can be far back, so the check is not local without a further mechanism (zkvms owns memory-checking mechanics; name, do not explain).",
+            "Checking only some steps says nothing by itself about the others: one illegal step among many unchecked ones goes unseen. A sample gives assurance only when the system is built so that wrongness anywhere shows up in a sampled place (proof systems); name this, do not explain how (computation-proofs, zkvms are other concepts).",
+            "Do not describe what a verifier repeats or what verification costs by method; that is the fixed verification record."
+          ],
+          "proves": [
+            "What it establishes: that the run is a legal execution of the claimed program on the claimed inputs, ending in the claimed result. What it does not: that the program does what was intended (a legal run of a flawed program passes), that the inputs are true, that the trace is the one the executor actually produced (a commitment binds the executor to a trace, which fixes what was claimed, not that it is what ran; computation-commitments owns that limit, named). A trace missing steps, or whose steps do not chain, gives no such assurance.",
+            "Keep the claim a property of the trace and rule; integrity of the result as a property is computation-integrity's, named at most."
+          ],
+          "lifetime": [
+            "Used as: the object a proof is built over (named; proof construction is excluded); the record a disputed computation is narrowed against, by locating a step where two parties' claims first diverge (named; the game and its rules are interactive-fraud-proofs and dispute-games, excluded); material for inspection by re-execution or replay (a reader can step through and compare).",
+            "Cost: size grows with the number of steps and with how much state each step touches (a long run over large state gives a very large trace). So a trace is usually committed to rather than published in full, and a checker is given only the parts it needs. 'Usually', not always: short computations can be shared whole. Name commitment as the means; computation-commitments explains binding.",
+            "Retention: it need only exist as long as someone may check or dispute the run; do not claim a specific retention rule."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A record whose content is defined by a rule of legality, with a conditional argument: if the steps are complete, chain, and start and end match, then the run is legal; followed by what that establishes, what it leaves open, and uses and cost. The relationship is a chain of conditions and consequences, not an ordered procedure, branch, loop or set of alternatives.",
+        "whyProse": "The central claim is a conditional argument whose value lies in its conditions (every step checked, steps chaining, endpoints matching) and in why partial checking establishes nothing about unchecked steps unless a sample is built to suffice. A flow would present the checks as a procedure and lose that the checks are independent and order-free; a distinction between trace, result and log is one clause of the definition; the uses are three short items each needing a reason, with no shared dimensions that make a comparison pay off.",
+        "level": "This is an L2 artifact under Verifiable Computation: the parent only names traces among what can carry assurance, and this is the concept that says what a trace holds and why it supports local checking; zkVM trace mechanics and dispute games are the specialized concepts built on it.",
+        "territory": "Draws no relationship of computation-integrity (the property of a result), computation-commitments (binding), computation-proofs (evidence and its cost), verification (what a verification consists of and its cost spectrum), zkvms, interactive-fraud-proofs, dispute-games, fraud-proofs, transaction-execution (receipts, logs), distributed-traces or reasoning-traces; they are named where a use is mentioned, never explained.",
+        "placements": "A single placement, Verifiable Computation; the exposition is stated relative to a computation, its step rule and its result, and uses nothing specific to the parent."
+      },
+      "audit": {
+        "at": "2026-10-27T01:36:45.046Z",
+        "note": "Re-audit after repair 3 (final, user-authorized exception), scoped to the blocking finding of findings/execution-traces-3.md and the changed text: paragraph 3's lead sentence, plan claim 1's opening clause and model checkedBy[0]. Not expanded into a complete audit: the repair replaced an unconditional summary sentence with one that states what every per-step reduction needs, and changed no argument, assumption, structure or scope; the conditioned locality sentences, the endpoint conditions and the rest of the record are unchanged from the text the previous re-audit read in full. The whole record was nonetheless re-read once. Finding resolved: 'Checking a whole computation one step at a time requires a trace that records enough to establish each step's transition and its connection to the preceding state' asserts no locality, holds for full-state, change-only and read/write traces alike, and so no longer contradicts the paragraph's own exception ('not local without a further mechanism'); 'local' now has one sense in the record (confined to one step and its neighbors). The reduction claim of plan claim 1 is still explained by the following 'Suppose ... Then the whole run is a legal execution of that program on those inputs' sentence. 'Transition' (a step's before-to-after change) and 'transition rule' (the machine's step rule) are consistent, so 'rule' keeps the one sense B2 fixed. Earlier findings not regressed in the changed paragraph: B1 (values entering during the run matched against the claimed inputs), B2 (program checked in the first state; limit as a legal run of the claimed program), B3 / execution-traces-2 finding 1 (locality only where each step's record holds the full before and after state; change-only and read/write traces tie a read to the last write), B4 (a commitment fixes what was claimed, not that it is what ran). Plan claim 1's opening clause and checkedBy[0] now carry the same conditioned wording. Overlap: one placement (Verifiable Computation, leaf); the parent only names 'traces of the execution' and the domain sentence is not restated. Territory: computation-commitments, dispute-games, fraud-proofs, proof-systems, transition-functions, transition-rules and zkvms named, not explained; computation-proofs honored as reserved; consistent with boundaries.md sections 0 and 1 and the fixed verification, zkvms and computation-integrity records. Structure: prose, as designed. American English, plain text, no positional or dated words. Advisory: (1) the new lead sentence partly restates paragraph 2's test ('enough to check each step against the rule'), and 'one step at a time' could be read as sequential, though the paragraph then says the checks need no order; (2) 'local' now appears only negated ('not local without a further mechanism'), its sense carried by 'one step and its neighbors'; (3) model parents.verifiable-computation ('reduce checking a whole run to local checks') and design.level ('supports local checking') still carry the unconditional locality wording the repair removed from claim 1 and checkedBy[0]; the record is right; (4) model contents[1] 'only a value that enters during the run ... is recorded in the step that reads it' contradicts contents[0]; (5) cost 'grows ... with how much state each step touches' does not fit full-state traces, and producing a trace also costs (claim 3 same); (6) 'A log of selected events fails it too, because ... need not let a reader check each step': 'fails' vs 'need not'; (7) 'a record that omits what a step read or wrote fails it': add 'and from which it cannot be recovered'; (8) 'The party that ran the computation holds the trace' and 'A checker ... does not produce it' are unconditional; (9) dispute narrowing presumes agreement on the first state and a deterministic step rule; (10) 'and are not explained here' is self-referential; (11) the commitment limit appears in paragraph 4 and is assigned to computation commitments in paragraph 6, minor duplication; (12) '(or the way states are reconstructed guarantees this)' is vague.",
+        "resolutions": [
+          {
+            "id": "names-concept:6b515966b9",
+            "resolution": "computation-commitments: named in the last cost paragraph as owning what a commitment binds and its limit; the trace record says only that binding fixes what was claimed, not that it is what ran, which is the owner's own limit stated as a boundary, not an explanation of binding or commitment schemes."
+          },
+          {
+            "id": "names-concept:133798b354",
+            "resolution": "dispute-games: named once ('interactive dispute games ... organize this'); the record says only that comparing claimed traces locates the first differing step, which is the trace's use, not how a game's rounds, bisection or timeouts work."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "fraud-proofs: named beside dispute games as organizing the narrowing; no account of challenge windows, on-chain adjudication or slashing."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "proof-systems: 'a property of particular proof systems and not of traces' names that some proof systems make sampling suffice, without saying how (no encoding, constraints or soundness amplification)."
+          },
+          {
+            "id": "names-concept:007480753c",
+            "resolution": "transition-functions: named as one example of the rule defining a legal step ('an instruction set's semantics or a transition function'); not defined or explained."
+          },
+          {
+            "id": "names-concept:f60e2f840b",
+            "resolution": "transition-rules: 'the transition rule of the machine that runs the program' and the new lead's 'each step's transition' use the term as what a step is checked against; nothing about how such rules are specified or what makes one well formed."
+          },
+          {
+            "id": "names-concept:d513b604c3",
+            "resolution": "zkvms: named once ('how a zkVM lays out and constrains its trace is that concept's subject'); the read/write locality caveat says a further mechanism is needed without describing zkVM memory checking or trace layout."
+          }
+        ],
+        "recordFingerprint": "7c465a90235266d4dbb039d467f1f6765d3fe80e0435e40c0d412574e5d6b31c"
+      }
+    },
+    "computation-commitments": {
+      "model": {
+        "meaning": "A computation commitment is a value a party publishes or hands over before any check, which binds it to a particular program (and version), set of inputs, output or trace, so that later checking, proving and disputing all concern that one fixed object.",
+        "kind": "artifact",
+        "parents": {
+          "verifiable-computation": "The parent lists commitments only as one thing that can fix a computation and carry assurance, beside traces and proofs. This concept says what is committed to, why binding has to precede checking, what the binding rests on, and that a commitment fixes a claim without showing the claim is right."
+        },
+        "claims": [
+          "what is committed to and why binding must come before checking: a party fixes, ahead of any verification, through a commitment to it, the program (and version), the inputs, the output or the trace it claims, so that it cannot change the claim it has committed to once it is challenged or once a check is requested, provided the checkers hold that same commitment beforehand, and so that proofs, disputes and later references all concern one fixed object instead of whatever the party presents next",
+          "what the binding rests on and where it stops: it rests on a commitment scheme's binding property, which makes it infeasible under the scheme's assumptions to open one commitment to two different values (impossible only for perfectly binding schemes, whose commitments cannot be shorter than the values they commit to, so a short commitment to a large object binds only computationally), while hiding is a separate property that some uses need and others do not; a commitment shows what was claimed, not that the claim is correct, so a party can be bound to a wrong program, wrong inputs or a wrong result, and correctness is established by checking the committed object, which other concepts explain. Commitment Schemes and Computation Integrity are named, not explained"
+        ],
+        "excludes": [
+          "commitment-schemes",
+          "cryptographic-commitments",
+          "state-commitments",
+          "polynomial-commitments",
+          "vector-commitments",
+          "model-commitments",
+          "solver-commitments",
+          "computation-integrity",
+          "execution-traces",
+          "computation-proofs",
+          "verification",
+          "fraud-proofs",
+          "dispute-games",
+          "zkvms"
+        ],
+        "placements": {
+          "computation-commitments": "The only placement is Verifiable Computation. The statement is relative to a claimed computation (program, inputs, output, trace) and a later check, and needs nothing from the parent beyond that vocabulary."
+        },
+        "fields": {
+          "contents": [
+            "Contents are the committed items: program (with version), inputs, output, trace; the commitment is a value derived from them, not a copy. A party can commit to one of them or to a tuple of several; the tuple is what fixes which computation is claimed.",
+            "Program identity needs a fixed encoding and a fixed version, and the claim is still read under a specification (the VM or interpreter semantics); say that the program alone leaves the VM or its version loose. Inputs include environment values the run reads, as in computation-integrity; do not re-explain that, only note that an input left out of the commitment is left free to change.",
+            "Output and trace: committing to the output fixes the claimed output; committing to the trace fixes the claimed sequence of steps and lets later checks or disputes refer to them. A scheme may let a trace commitment be opened in parts; say that only briefly, the mechanics belong to execution-traces and commitment-schemes (named).",
+            "Commitment is to what was claimed, whether or not the claim is true. A tuple (program, inputs, output) binds a claimed relation; it does not make the output follow from the program and inputs."
+          ],
+          "producedBy": [
+            "The party making the claim (executor, prover, proposer) produces it, ahead of any verification or challenge, and delivers it to whoever will check or dispute, or records it somewhere they can all rely on.",
+            "Pitfall: timing and visibility are conditions. A commitment made after the challenge or the check request fixes nothing about the earlier choice; and binding is about opening one commitment, so a party that shows different commitments to different checkers is held to a different claim by each, not to one claim, unless they all hold the same commitment (for instance through a shared record). State this as a condition on the use, briefly, without explaining how a shared record works."
+          ],
+          "checkedBy": [
+            "Checkers get the commitment first, then the opened values or parts of them later. Opening is checked against the commitment; a value that matches is the one committed, provided the scheme's binding assumptions hold, and one that does not match is rejected.",
+            "Binding rests on a commitment scheme's binding property: opening one commitment to two different values is computationally infeasible under the scheme's assumptions (for example collision resistance of a hash), or impossible for schemes that are perfectly binding, whose commitments cannot be shorter than the values they commit to (a short commitment to a large object binds only computationally). Name Commitment Schemes; do not explain constructions. Do not say binding holds unconditionally: say it holds under the scheme's assumptions and that some schemes are perfectly binding. Do not claim any scheme is both perfectly binding and perfectly hiding.",
+            "Hiding is a separate property: a commitment can bind without hiding what it commits to. Some uses need hiding (committed inputs that must stay private); others do not (a public program identity). A bare hash of a low-entropy or guessable value is binding under collision resistance but does not hide it. One short statement of hiding being separate; do not develop it."
+          ],
+          "proves": [
+            "A commitment shows what was claimed, not that the claim is correct. A party can be bound to a wrong program, wrong inputs or a wrong result, and a committed result need not follow from the committed program and inputs.",
+            "Correctness (computation integrity) is established by checking the committed object, by re-execution, a proof, a challenge process or other means; those belong to verification, computation-proofs and others: name, do not explain. Computation Integrity is named, not explained.",
+            "Why binding before checking matters: without it, a party challenged on a result could present a different program, inputs or output that passes, or adapt the claim to the check it learns about; with it, the choice of claim is closed once the commitment is delivered, so the check has a fixed target and a failure can be attributed to the committed claim. The claim being bound does not stop the party making a new commitment for a new claim; say it cannot change the claim it already committed.",
+            "Do not say a commitment prevents a wrong result, makes a result trustworthy, or removes the need to check."
+          ],
+          "lifetime": [
+            "Made before the check; stays the reference through proving, disputing and any later reference to the computation; is opened in whole or in part when a check needs the values. It does not itself expire; whether it is still relevant depends on the process that uses it (a challenge window, a settled result). Do not describe any specific protocol's window."
+          ]
+        },
+        "invariants": "Once a checker holds the commitment, the party can later present only values that open to it, under the scheme's binding assumptions; everything checked afterwards (opened values, proofs, disputes) is checked against that one object, not against whatever the party presents next."
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A short ordering (commit, then check) with a conditional argument: binding fixes the claim only if the commitment precedes the check and the scheme is binding under its assumptions, and what it fixes is the claim, not its correctness. The relationship is conditions and a limit, not a procedure with branches, a loop or alternatives compared.",
+        "whyProse": "The value lies in the conditions (made before the check, seen by the checkers, binding under the scheme's assumptions, hiding separate) and in the limit that binding does not establish correctness. A flow of commit then check has two steps and would lose those conditions; a distinction of binding versus hiding is one clause; a comparison of what can be committed to would list four identifiers on no shared dimensions that need a table.",
+        "level": "This is an L2 artifact under Verifiable Computation: the parent only names commitments among what can carry assurance, and this concept says what is committed to, why binding precedes checking and where it stops. Constructions of commitments belong to commitment-schemes and specialized commitment concepts.",
+        "territory": "Draws no relationship of computation-integrity (the property of a result), execution-traces (the record), computation-proofs (evidence and its cost), verification (what a check consists of and its cost spectrum), commitment-schemes and the specialized commitments, fraud-proofs, dispute-games or zkvms; they are named where it matters, never explained.",
+        "placements": "A single placement, Verifiable Computation; the exposition is stated relative to a claimed computation and a later check, and uses nothing specific to the parent."
+      },
+      "audit": {
+        "at": "2026-10-27T01:44:19.812Z",
+        "note": "Re-audit after repair 1 (first audits A: B1-B4, B: B1-B2), expanded into a complete audit because the repair changed the definition (dropped 'short') and reversed the inference of the binding paragraph; territory and the prose-only structure are unchanged. Findings: A-B1/B-B1 resolved (paragraph 2 now says a commitment is a value derived from what it binds, not a copy, and that the program, inputs, output and trace are what is committed to and later opened; consistent with opening parts and with the definition). A-B2 resolved (output and trace commitments fix the claimed output and the claimed sequence of steps, consistent with paragraph 5 and with execution-traces' 'fixes what was claimed, not that it is what ran'). A-B3 resolved (different commitments to different checkers hold the party to a different claim by each, not to one). A-B4 resolved (the scheme's assumptions now condition the inference that a matching opening is the committed value; a mismatch is simply rejected). B-B2 resolved (definition no longer makes shortness definitional; 'often much shorter' in paragraph 2; paragraph 4 states that a perfectly binding commitment cannot be shorter than its value, so a short commitment to a large object binds only computationally, matching reworded plan claim 1 and model checkedBy[1]). The cut sentence and the hash-scoped collision-resistance example introduce no new defect. Overlap per placement: one placement (Verifiable Computation); the parent's 'commitments that fix it' and the domain sentence 'bind a party to a particular computation, trace, or result' are not restated. Territory and splits: Commitment Schemes, Computation Integrity, collision resistance and virtual machines are named only; checking means (re-execution, proofs, challenge processes) named; shared terms consistent with computation-integrity (program with version, environment values among inputs, specification as e.g. a virtual machine's semantics, claimed output) and execution-traces (a trace commitment fixes the claim, not what ran; opening in parts stated from the commitment side only). Structure: prose as designed, five body paragraphs. Accuracy: every absolute checked (cannot change the claim, impossible only for perfect binding, cannot be shorter, cannot find a second opening under the assumptions); the hiding statements and the limit paragraph are correct and conditional. Depth: about 700 words for two claims, each explained. American English, plain text, no positional words. Advisory: (1) paragraph 2 'A program identifier needs a fixed encoding and version' keeps 'identifier' once after the paragraph says the program itself is committed to; 'The program needs a fixed encoding and version' would keep one sense. (2) Paragraph 3 'is held to a different claim by each of them, not to one claim, unless they all hold the same commitment' is circular after 'shows different commitments'; 'without a commitment they all hold, for instance through a shared record, the party can be held to a different claim by each checker' reads cleanly. (3) Paragraph 3 'the party cannot change the claim it committed to' precedes the scheme's assumptions given in paragraph 4; a pointer to the binding property would keep the summary aligned. (4) Strictly, a perfectly binding commitment cannot be shorter than needed to distinguish every value it could commit to (the counting bound is on the number of possible values, not their encoding length); the record's 'large object' reading holds for traces. (5) The commitment list (program, inputs, output, trace) does not mention resulting state or effects, which computation-integrity counts as part of a result in some claims. (6) Design whyProse still says 'four identifiers' and the model invariant says the party 'can later present only values that open to it' (it can present others; they are rejected); neither reaches the record.",
+        "resolutions": [
+          {
+            "id": "names-concept:c49278a5e1",
+            "resolution": "Collision resistance is named twice in paragraph 4 as the example assumption of a hash-based scheme and as what a bare hash binds under; what it is or how it yields binding is not explained."
+          },
+          {
+            "id": "names-concept:280f58ccdf",
+            "resolution": "Commitment Schemes is named once ('How schemes achieve these properties belongs to Commitment Schemes'); the record states only the binding and hiding properties the plan's claim 2 authorizes and no construction."
+          },
+          {
+            "id": "names-concept:24f1a1030e",
+            "resolution": "Computation Integrity is named in paragraph 5 as the property whether the committed claim holds; its parts and what it excludes are not explained, and shared terms (program with version, environment values, specification, claimed output) match its record."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "'a virtual machine's semantics' appears only as an example of the specification a program claim is read under; nothing about virtual machines is explained."
+          },
+          {
+            "id": "absolutes:8775d0285c",
+            "resolution": "Checked each: 'the party cannot change the claim it committed to' is followed by its two use conditions and the scheme's assumptions in paragraph 4 (advisory pointer suggested); 'only a perfectly binding scheme makes it impossible' holds by definition; 'such a commitment cannot be shorter than the value it commits to' is the counting bound (precision noted as advisory); 'cannot find a second one' is conditioned on 'provided the assumptions hold'."
+          }
+        ],
+        "recordFingerprint": "e22d2bfc228ea2c9b4bcdaf95d637831c458c3699c80cf1bf9c8f0b4f7115279"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-28T15:34:34.007Z",
+    "note": "Group audit PASS (fresh context) over computation-integrity, execution-traces and computation-commitments read side by side, against the plan (claims, excludes, computation-proofs reservation), the parent verifiable-computation, the fixed verification record, and the neighbours zkvms and cryptographic-commitments where they meet. No blocking finding. Splits and reservation: none crossed; computation-proofs is only named (computation-integrity P5, computation-commitments P5 'a proof'), and no member explains proof evidence or its cost relative to re-execution; verification's depth spectrum is not re-explained (execution-traces' sampling sentence is its own claim and defers the general condition to proof systems, consistent with verification's 'some encodings and proof systems'). Contradictions: none. The members agree on inputs including environment values (computation-integrity P2; execution-traces P2/P3 values entering during the run matched against the claimed inputs; computation-commitments P2), on nondeterminism (allowed outcomes vs a recorded trace pinning the run), and on the limit that each establishes or fixes a claim relative to the program as stated, not intent or true inputs. zkvms' separate memory argument is consistent with execution-traces' 'not local without a further mechanism'; cryptographic-commitments' binding/hiding tradeoff is consistent with computation-commitments P4. Terms: 'specification' is used in one sense across members (what gives running the program its meaning: semantics, interpreter, transition rule), with intent kept separate; 'result' vs 'output' is consistent (computation-integrity scopes the result; computation-commitments lists the output as a committable item). No concept ids in prose in this group's records (slice-wide advisory does not apply here). Template convergence: openings are the corpus's definitional form; paragraph counts differ (4/6/4); arcs differ (property: parts, violation, exclusions, owner-independence; record: forms, test, local-check argument, its limits, uses, cost; binding: contents, why before, scheme property and hiding, limit). Each record closes on a 'fixes or establishes the claim, not that it is intended or correct' limit and all three are prose-only; both follow the plan, whose every claim pairs a mechanism with its limit, and each design records why no block fits, so this repetition follows the claims and is not convergence. Advisory: (1) computation-commitments P2 'Each needs care' restates computation-integrity's parts (program with version, inputs including environment values, the specification the claim is read under) from the binding angle without their reasons; legitimate contextual overlap by angle, though naming Computation Integrity there would mark the boundary; 'A program identifier needs a fixed encoding and version' introduces 'identifier' beside 'the program with its version' (a code hash already fixes the version), wording only. (2) execution-traces P4 'binding the executor to one, as a commitment can, fixes what was claimed, not that it is what ran' states computation-commitments' limit in one clause; a reference with its key property, and P6 hands the topic to computation commitments. (3) execution-traces P3 'A checker is given the trace, parts of it, or a commitment to it' reads narrower than zkvms' 'the verifier receives the proof, not the trace'; not a contradiction since P5 has proofs built over the trace, but 'or a proof about it' would close the gap. (4) execution-traces model/design.level 'local checks' unconditional; the record conditions locality on full before/after states, so not rendered and advisory. (5) The 'flawed program passes' / 'inputs not true' limit appears once in each member; computation-integrity owns the reason, the other two apply it in a clause each. (6) execution-traces and computation-commitments say 'checker' where the parent and verification say 'verifier'; same sense, no defect.",
+    "resolutions": [],
+    "records": {
+      "computation-integrity": "f402f18429ba78199b2b37c4c14f2f1befa639b9dec608e3f2c8c8c5018442fb",
+      "execution-traces": "7c465a90235266d4dbb039d467f1f6765d3fe80e0435e40c0d412574e5d6b31c",
+      "computation-commitments": "e22d2bfc228ea2c9b4bcdaf95d637831c458c3699c80cf1bf9c8f0b4f7115279"
+    }
+  }
+}

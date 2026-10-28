@@ -1,0 +1,795 @@
+{
+  "version": 1,
+  "group": "off-chain-computation",
+  "domain": "computation-execution",
+  "parentConceptId": "off-chain-computation",
+  "basis": {
+    "membership": "8411f968d32bf485347307e3bacadf90ee9c410c2f39eff5564a60a09c5fbe54",
+    "parents": {
+      "ai-intelligent-systems": "93e36c1b1e8e11e4ed38e5a1277e25744171fbca41286d915ad019803025c93c",
+      "autonomous-execution": "8e3ad3ec1831b117f913c374fc2fd29941a890938251a08f7e2110b2e2135ab0",
+      "autonomous-protocols": "41d33417081334f1dbb93c8bcd637897bce7e4b9e7f945187855ff5913863118",
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "execution-environments": "6fb72dc503e48549225b2c40c51a1ac6b0d364f5df66cd95030c23649b9ff897",
+      "off-chain-computation": "a4696bbe0f50fd93769e46786724fcee46a729fa7529a393bb313e2e4865d3b6",
+      "off-chain-scaling": "d2854184b959f663e49beb5ab8276ef0272d181daa9eefefa16e75d0c0ca6ae6",
+      "protocol-agents": "25d819b6d7cd052326d2c75b8112ee6a087694a86360bd73435fa40206e810de",
+      "scaling-modular-systems": "4355f4bee20c95e9c14e2836f99e980b9bf0ea5f80a2f6d52f30772d159b5783",
+      "verifiable-ai": "132a29125780a680da6af962f6dcab9e881924fae958cf084cc43b83233e3e87"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "off-chain-execution",
+      "placementId": "off-chain-execution",
+      "standing": "owned",
+      "claims": [
+        "where a protocol's computation can run outside the chain's replicated execution and what comes back: a result, with whatever evidence the acceptance rule the chain applies asks for, which in challenge-based designs may be none",
+        "what can move off chain, such as computation, state and data, and what has to stay on chain for a result to bind: the acceptance rule and commitments to what was claimed, plus, depending on the design, dispute resolution and either the data others need to check the result or exit, or an assumption that the data stays available off chain",
+        "the assumptions off-chain execution adds, such as who may produce results, whether the data needed to check them is available, and how users get out if the off-chain party fails, and that designs such as sidechains, channels, plasma and validiums differ in them, named and not explained"
+      ],
+      "excludes": [
+        "sidechains",
+        "state-channels",
+        "payment-channels",
+        "plasma",
+        "validiums",
+        "rollups",
+        "optimistic-rollups",
+        "zk-rollups",
+        "data-availability",
+        "escape-hatches",
+        "forced-inclusion",
+        "off-chain-data",
+        "verification",
+        "computation-integrity",
+        "computation-commitments",
+        "execution-traces",
+        "computation-proofs",
+        "gas",
+        "metering",
+        "off-chain-workers",
+        "trusted-execution",
+        "untrusted-execution",
+        "on-chain-verification",
+        "deterministic-execution",
+        "non-deterministic-execution"
+      ]
+    },
+    {
+      "conceptId": "on-chain-verification",
+      "placementId": "on-chain-verification",
+      "standing": "owned",
+      "claims": [
+        "the step a chain's rules or contracts run on evidence before an off-chain result takes effect, such as verifying a succinct proof, checking signatures or a quorum of them, checking an attestation, or leaving a challenge window open without a check unless someone objects",
+        "when acceptance happens and what it costs on chain: immediately after the check versus after a window, and why the on-chain cost of checking, bounded by metered resources, makes the size and cost of the evidence matter",
+        "what this step establishes only if the statement checked binds the right program and inputs, the verifier itself is correct, and control over its upgrade is limited; a passed check shows only what its evidence can show: for a proof, that the stated relation holds under the proof system's soundness assumptions; for signatures or an attestation, that the named parties or hardware vouched for the result; in no case that the relation is the intended one"
+      ],
+      "excludes": [
+        "fraud-proofs",
+        "validity-proofs",
+        "proof-verification",
+        "succinct-verification",
+        "optimistic-verification",
+        "challenge-periods",
+        "dispute-games",
+        "interactive-fraud-proofs",
+        "light-client-verification",
+        "attestations",
+        "attestation-verification",
+        "verification",
+        "computation-integrity",
+        "computation-commitments",
+        "computation-proofs",
+        "execution-traces",
+        "gas",
+        "metering",
+        "untrusted-execution",
+        "trusted-execution",
+        "off-chain-execution",
+        "data-availability"
+      ]
+    },
+    {
+      "conceptId": "trusted-execution",
+      "placementId": "trusted-execution",
+      "standing": "owned",
+      "claims": [
+        "accepting a result because the executor or its environment is trusted: a trusted operator or committee, or a trusted execution environment with remote attestation, and what the protocol gives up by not checking the computation",
+        "what attestation establishes, assuming the hardware and its keys are not compromised: a program with a given measurement running on hardware whose key chain leads to its manufacturer or, in some designs, to a vendor or cloud attestation service, and what it does not: that the code is correct, that inputs are true, freedom from side channels, or the manufacturer's honesty",
+        "how trust in hardware fails and why it moves trust rather than removing it: compromised keys or hardware, side-channel leakage, vulnerable code, and the cost, often close to that of ordinary execution, that makes the approach attractive, including where defined hardware or attestation properties do not make computation, inputs, policy or outcome correct"
+      ],
+      "excludes": [
+        "trusted-hardware",
+        "trusted-computing-base",
+        "trusted-components",
+        "attestations",
+        "attestation-verification",
+        "sandboxing",
+        "execution-isolation",
+        "verifiable-inference",
+        "zkml",
+        "trust-assumptions",
+        "trusted-parties",
+        "adversaries",
+        "threat-models",
+        "verification-limits",
+        "untrusted-execution",
+        "on-chain-verification",
+        "off-chain-workers",
+        "computation-integrity",
+        "non-deterministic-execution"
+      ]
+    },
+    {
+      "conceptId": "untrusted-execution",
+      "placementId": "untrusted-execution",
+      "standing": "owned",
+      "claims": [
+        "what evidence makes the result of an executor that is not trusted acceptable without relying on its honesty: a proof of the computation, fraud detection by challengers, or agreement among redundant executors",
+        "the conditions each kind of evidence needs: fraud detection needs at least one honest and live challenger who has the data and can get a challenge included in time, and agreement among redundant executors matters only if the executors that collude, or that share a fault such as the same faulty software, are too few to satisfy the acceptance rule on their own",
+        "what trust remains, so that trust is reduced though not removed: the verifier, the proof system's soundness and any setup, data availability, the executor's liveness, and the ability to get a challenge included"
+      ],
+      "excludes": [
+        "fraud-proofs",
+        "validity-proofs",
+        "optimistic-verification",
+        "challenge-periods",
+        "dispute-games",
+        "interactive-fraud-proofs",
+        "proof-verification",
+        "succinct-verification",
+        "collusion",
+        "data-availability",
+        "liveness",
+        "verification",
+        "trust-assumptions",
+        "computation-integrity",
+        "computation-proofs",
+        "execution-traces",
+        "computation-commitments",
+        "non-deterministic-execution",
+        "trusted-execution",
+        "on-chain-verification",
+        "off-chain-workers",
+        "off-chain-execution"
+      ]
+    },
+    {
+      "conceptId": "off-chain-workers",
+      "placementId": "off-chain-workers",
+      "standing": "owned",
+      "claims": [
+        "who performs off-chain work and why a protocol uses such actors: work that is expensive, asynchronous, private or dependent on outside systems, in roles that keep this meaning in a protocol with autonomous actors without their activity establishing protocol authority",
+        "how a protocol obtains and pays for their work: assignment or open competition, often through requests and callbacks, with payment and bonds as incentives, and what each leaves open about who does the work and what happens if no one does",
+        "the liveness dependency of using workers: a worker can stop responding, and designs address this with timeouts, fallbacks, redundancy or permissionless replacement, each with conditions such as who may replace the worker and what the timeout assumes about delay"
+      ],
+      "excludes": [
+        "keepers",
+        "automation-networks",
+        "execution-bots",
+        "oracle-nodes",
+        "on-chain-agents",
+        "off-chain-execution",
+        "trusted-execution",
+        "untrusted-execution",
+        "on-chain-verification",
+        "liveness",
+        "collusion",
+        "verification",
+        "computation-integrity",
+        "gas"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "off-chain-execution": {
+      "model": {
+        "meaning": "Off-chain execution is running part of a protocol's work, computation and sometimes state or data handling, outside the chain's replicated execution, and bringing back a result that the chain accepts under a rule it applies, so that what binds users is decided by that rule and by what stays on chain.",
+        "kind": "mechanism",
+        "parents": {
+          "off-chain-computation": "The parent says why results made outside replicated execution need an acceptance rule, that each rule rests on a different assumption, that inputs must be committed, and that workers can stop responding. This adds the pattern itself: what can be moved (computation, state, data), what has to remain on chain for a result to bind, and the assumptions the move adds (producer, data, exit). Not the rules' internals (sibling concepts) and not the actors (workers).",
+          "off-chain-scaling": "The parent compares sidechains, channels, plasma and validiums by data location, validity checking and operator failure. This adds the general pattern those designs vary, seen as one choice of what moves and what stays, so the assumptions can be asked of any design. Name the designs, never explain them or repeat the parent's comparison."
+        },
+        "claims": [
+          "where a protocol's computation can run outside the chain's replicated execution and what comes back: a result, with whatever evidence the acceptance rule the chain applies asks for, which in challenge-based designs may be none",
+          "what can move off chain, such as computation, state and data, and what has to stay on chain for a result to bind: the acceptance rule and commitments to what was claimed, plus, depending on the design, dispute resolution and either the data others need to check the result or exit, or an assumption that the data stays available off chain",
+          "the assumptions off-chain execution adds, such as who may produce results, whether the data needed to check them is available, and how users get out if the off-chain party fails, and that designs such as sidechains, channels, plasma and validiums differ in them, named and not explained"
+        ],
+        "excludes": [
+          "sidechains",
+          "state-channels",
+          "payment-channels",
+          "plasma",
+          "validiums",
+          "rollups",
+          "optimistic-rollups",
+          "zk-rollups",
+          "data-availability",
+          "escape-hatches",
+          "forced-inclusion",
+          "off-chain-data",
+          "verification",
+          "computation-integrity",
+          "computation-commitments",
+          "execution-traces",
+          "computation-proofs",
+          "gas",
+          "metering",
+          "off-chain-workers",
+          "trusted-execution",
+          "untrusted-execution",
+          "on-chain-verification",
+          "deterministic-execution",
+          "non-deterministic-execution"
+        ],
+        "placements": {
+          "off-chain-execution": "Computation & Execution: the general pattern of running work outside replicated execution. Write it in terms of work, evidence and an acceptance rule, with nothing that depends on a ledger-scaling purpose.",
+          "off-chain-execution-in-off-chain-scaling": "Scaling & Modular Systems: the same pattern is the thing sidechains, channels, plasma and validiums vary. State what moves, what stays and the added assumptions generally, so each named design is a case of it. Do not make throughput or fees the point, and do not state anything that holds only for scaling designs or only for computation offloading."
+        },
+        "fields": {
+          "sequence": [
+            "Work runs outside the chain's replicated execution, by whoever the design allows.",
+            "A claimed result returns, with whatever evidence the chain's acceptance rule asks for (in challenge-based designs, possibly none), and the rule decides whether it takes effect.",
+            "Do not restate the parent's sequence or its spectrum of acceptance bases, and do not take on-chain-verification's timing. Name the siblings (on-chain-verification, trusted-execution, untrusted-execution) to place the step, never explain them."
+          ],
+          "inputs": "What gets moved off chain: computation (running the program) always, and with it, in some designs, state (the persistent record the program reads and updates, such as balances and storage, with the chain holding at most a commitment to it) and data (transaction or input data the result is checked against). Distinguish them, since the assumptions differ: moving computation alone leaves state and data on chain, and a result can then be checked against inputs the chain holds only if the program reads nothing else and the acceptance rule ties the result's claimed inputs to them.",
+          "outputs": "A claimed result (new state, a value, a message), with whatever evidence the chain's acceptance rule asks for (in challenge-based designs, possibly none), and a record of the claimed result on chain; in many designs also commitments to the program and inputs it was computed from. The result takes effect on the chain only when the chain's acceptance rule is met. Pitfall: a result produced off chain has no force of its own, and the same output can be accepted under one design and not under another.",
+          "assumptions": [
+            "Who may produce results: one operator, a committee, anyone who qualifies, or a set of participants. Alongside the acceptance rule, which decides whether a faulty producer can get an invalid result accepted, this decides whether a producer that stops, delays or censors can be routed around (off-chain-workers owns the replacement mechanisms).",
+            "Data availability: whether the data needed to check a result or to exit is published on chain, held by a committee, or kept only by the producer. State the condition, not a ranking: when data is withheld, checking, disputing or exiting can fail even if an accepted result is correct, which differs from the result being wrong.",
+            "Exit: how users recover their assets or state if the off-chain party stops or misbehaves, and what it depends on (data they hold, rules on chain, time limits, the chain's capacity at the time). Differs by design; say which statement holds for which kind of design and avoid 'users can always exit'.",
+            "What stays on chain, by design: the acceptance rule and a record of the claimed result; commitments to the program and inputs where the rule checks the computation; dispute resolution in designs that rely on challenges; data or exit rights depending on the design. Do not claim a fixed list for all designs.",
+            "Named differences: sidechains, channels, plasma, validiums differ in availability, verification, settlement and exit assumptions (the domain prose says so); name them as cases, and do not describe their mechanisms."
+          ],
+          "failures": [
+            "Producer stops, censors or withholds data: the chain can still keep invalid results out under some rules, but liveness and exit depend on the design's exit path.",
+            "Evidence checked against the wrong statement or uncommitted inputs: owned by on-chain-verification and computation-commitments; at most name them, do not explain.",
+            "Evidence rule's own assumptions fail (a dishonest quorum, compromised hardware, no watcher during a window): do not explain these, point to the sibling concepts."
+          ],
+          "tradeoffs": "Moving work off chain trades the cost and constraints of replicated execution (expense, bounded capacity, public state, no outside access) against the assumptions above; fewer assumptions usually means more must stay on chain, though how much depends on the design. Avoid 'cheaper but less secure' as a general ranking: security depends on which assumptions a design adds and how a user is protected if they fail.",
+          "variants": "Where the move stops differs: computation only, computation plus state, computation plus state plus data. Name the scaling designs as examples of variants along the data and verification choices; do not explain them."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A pattern with a general core: what moves off chain, what must stay for a result to bind, and the assumptions the move adds. These are explained as dependent claims (a result binds only if the rule is met; the assumptions follow from what moved), and the comparison of named designs already belongs to the parent off-chain-scaling.",
+        "whyProse": "The claims are dependent and conditional: what binds depends on what stayed on chain, and each assumption depends on the design. No order, branch, loop, persistent state or shared-dimension comparison is the point here; a comparison would repeat the parent's table at off-chain-scaling and explain designs that are excluded, and a flow of run, return, accept would only restate the sequence the parent already gives.",
+        "level": "A leaf of off-chain-computation and of off-chain-scaling, where the general pattern is needed; its parents give the reason for an acceptance rule and the comparison of scaling designs, and the siblings own the checking step, the trust kinds and the actors.",
+        "territory": "Names verification, evidence kinds, workers, data availability, escape hatches and the scaling designs without explaining them. It does not repeat the parent's spectrum of acceptance rules or comparison, and it does not restate the fixed verification record.",
+        "placements": "The exposition is written as a general pattern with no purpose tied to scaling or to computation offloading, so it holds under Off-Chain Computation and Off-Chain Scaling."
+      },
+      "audit": {
+        "at": "2026-10-28T15:46:03.763Z",
+        "note": "Re-audit 3 (third and final repair, user-authorized exception 2026-10-28), scoped to blocking finding G1 of findings/group-off-chain-computation.md and the changed text: P1's clause 'bringing back a claimed result, with whatever evidence the chain's acceptance rule asks for, which in challenge-based designs may be none' and its second sentence 'The result takes effect on the chain only if that rule is met'; model fields.outputs and fields.sequence[1]; plan claim 0. Not expanded into a complete audit: the repair conditioned one clause of the definition and changed one referent; it changed no argument, assumption, structure or scope. The whole record was nonetheless re-read once at both placements (Off-Chain Computation, Off-Chain Scaling). G1 resolved: the definition no longer says every result returns with evidence; it now agrees with on-chain-verification's window row ('no evidence is submitted with the result') and definition ('by running a check on the evidence submitted with it or by leaving a window open for objection'), with untrusted-execution's fraud-detection evidence ('No successful challenge to a result accepted provisionally', which arises on chain afterwards and is not brought back), and with the fixed verification record ('or, in some designs, nothing until the claim is disputed'). The clause reads as evidence brought back with the result, so 'may be none' does not contradict untrusted-execution counting the later absence of a challenge as evidence. Territory: the clause says only that evidence may be absent; it does not say what a window shows, who may object, or how a dispute settles (on-chain-verification's and untrusted-execution's), and 'the chain's acceptance rule' keeps the verifier unnarrowed (a chain's rules or a contract), as the group audit asked. Class naming: 'challenge-based designs' matches on-chain-verification's challenge window and untrusted-execution's challengers, and P3's 'Designs that rely on challenges' names the same class. Accuracy of 'may be none': in challenge-based designs what is submitted is the claimed result or a commitment to it (a state or output root), often with a bond and published data; the record keeps the record of the claimed result (P3), published data or state contents (P3) and the evidence apart, a bond is collateral rather than evidence about the result, and an authorized-proposer check is authorization, not evidence of correctness; 'may' avoids claiming that no such design asks for anything. 'Acceptance rule' is used in one sense throughout (P1 twice, P2 'provided the acceptance rule ties', P3 'the acceptance rule stays', P4 'Alongside the acceptance rule'); 'evidence' elsewhere appears only in P3's hand-off 'what the evidence is to trusted execution and untrusted execution', consistent with the new clause. P3's challenge and published-data sentences unchanged and consistent. Overlap: the parent off-chain-computation's 'decides whether it takes effect under an acceptance rule stated in advance' is not restated beyond the existing take-effect sentence, already judged in earlier audits; off-chain-scaling not restated. Structure: prose, as designed. Model fields.outputs, sequence[1] and plan claim 0 conditioned the same way and accurate. American English, plain text, no positional words in the change. Advisory: (1) 'challenge-based designs' (P1) and 'Designs that rely on challenges' (P3) name one class two ways; harmless; (2) 'with whatever evidence ... which ... may be none' could say 'submitted with it' to mirror on-chain-verification exactly; wording only; (3) carried over unchanged from re-audit 2: P4 'withheld data' without 'or state contents'; 'a record of the claimed result, such as the resulting state'; findings/off-chain-execution-2.md advisories 3 to 8; plan claim 1's frame conflating acceptance with check/exit; and group-audit advisories 5 and 9 for this member; none made material by the change.",
+        "resolutions": [
+          {
+            "id": "names-concept:6b515966b9",
+            "resolution": "computation-commitments is named once ('what a commitment shows to computation commitments') to hand off what a commitment establishes; unchanged by the repair. Named, not explained."
+          },
+          {
+            "id": "names-concept:a8c8b5e2bd",
+            "resolution": "dispute-resolution appears only as 'Designs that rely on challenges keep dispute resolution on chain' and 'in a dispute'; the new P1 clause says only that evidence may be none in challenge-based designs and describes no dispute procedure. Named, not explained."
+          },
+          {
+            "id": "names-concept:39a85fd10e",
+            "resolution": "off-chain-workers is named as owner of replacement mechanisms ('Off-chain workers covers the replacement mechanisms'); assignment, payment and replacement are not described. Named, not explained."
+          },
+          {
+            "id": "names-concept:b923046954",
+            "resolution": "on-chain-verification is named once to hand off what a passed check establishes; the new P1 clause agrees with its window row (no evidence submitted with the result) without saying what the window shows, when acceptance follows or what it costs, and keeps 'the chain's acceptance rule' so its verifier (a chain's rules or a contract) is not narrowed. Named, not explained."
+          },
+          {
+            "id": "names-concept:64e5dd9e14",
+            "resolution": "plasma is named only in 'Sidechains, channels, plasma and validiums can be read as answers to these questions'; its exit game is not described. Named, not explained."
+          },
+          {
+            "id": "names-concept:97b9c3a5b8",
+            "resolution": "sidechains is named only in the same list of designs; its validator set and bridge are not described. Named, not explained."
+          },
+          {
+            "id": "names-concept:6c911b430e",
+            "resolution": "trusted-execution is named once, with untrusted execution, as owner of what the evidence is; the new clause says only that the evidence is whatever the acceptance rule asks for, not what any trust basis consists of. Named, not explained."
+          },
+          {
+            "id": "names-concept:510ea79ca0",
+            "resolution": "untrusted-execution is named once as co-owner of what the evidence is; the new 'may be none' clause concerns evidence brought back with the result and does not explain fraud detection, challengers or their conditions, so it neither contradicts nor paraphrases untrusted-execution's fraud-detection row. Named, not explained."
+          },
+          {
+            "id": "names-concept:31b603e994",
+            "resolution": "validiums is named only in the list of designs; its proof-plus-off-chain-data arrangement is not described. Named, not explained."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "verification occurs inside 'on-chain verification' and 'a passed check'; the new clause agrees with the fixed verification record's 'or, in some designs, nothing until the claim is disputed' without restating or narrowing it. Named, not explained."
+          }
+        ],
+        "recordFingerprint": "09c0e5470de6e8043c7937ffc544aa14039a0ea09bf9fab520e234b75618eee3"
+      }
+    },
+    "on-chain-verification": {
+      "model": {
+        "meaning": "The step in which a chain's rules or contracts run on the evidence that accompanies an off-chain result, or leave a window open for objection, and so decide whether the result takes effect.",
+        "kind": "mechanism",
+        "parents": {
+          "off-chain-computation": "The parent says the protocol keeps the decision and applies an acceptance rule stated in advance. This concept is that rule applied on chain: what the chain runs, when acceptance happens, what it costs, and what a passed check does and does not establish. It does not repeat why each rule rests on a different assumption."
+        },
+        "claims": [
+          "the step a chain's rules or contracts run on evidence before an off-chain result takes effect, such as verifying a succinct proof, checking signatures or a quorum of them, checking an attestation, or leaving a challenge window open without a check unless someone objects",
+          "when acceptance happens and what it costs on chain: immediately after the check versus after a window, and why the on-chain cost of checking, bounded by metered resources, makes the size and cost of the evidence matter",
+          "what this step establishes only if the statement checked binds the right program and inputs, the verifier itself is correct, and control over its upgrade is limited; a passed check shows only what its evidence can show: for a proof, that the stated relation holds under the proof system's soundness assumptions; for signatures or an attestation, that the named parties or hardware vouched for the result; in no case that the relation is the intended one"
+        ],
+        "excludes": [
+          "fraud-proofs",
+          "validity-proofs",
+          "proof-verification",
+          "succinct-verification",
+          "optimistic-verification",
+          "challenge-periods",
+          "dispute-games",
+          "interactive-fraud-proofs",
+          "light-client-verification",
+          "attestations",
+          "attestation-verification",
+          "verification",
+          "computation-integrity",
+          "computation-commitments",
+          "computation-proofs",
+          "execution-traces",
+          "gas",
+          "metering",
+          "untrusted-execution",
+          "trusted-execution",
+          "off-chain-execution",
+          "data-availability"
+        ],
+        "placements": {
+          "on-chain-verification": "There is one placement, under Off-Chain Computation, so the exposition holds where the protocol decides whether a result produced outside replicated execution takes effect. Keep it about the step the chain runs; the evidence kinds and their conditions are the siblings' and are only named."
+        },
+        "fields": {
+          "sequence": [
+            "A result arrives with its evidence, or with a claim that stays open to objection. The evidence is whatever the design uses: a succinct proof, signatures from a party or a quorum, an attestation, or nothing at all until someone challenges.",
+            "The chain's rules or a contract run the check on the evidence (verify a proof, verify signatures and count them against the required quorum, verify an attestation), or, in the window case, run nothing unless an objection arrives.",
+            "Acceptance: with an immediate check the result can take effect in the step the check passes, though some designs add a delay or rate limit after it; with a window it takes effect after the window closes with no successful objection. If the check fails, or an objection succeeds, the result does not take effect.",
+            "Keep the three steps short. Do not explain how each kind of evidence is produced or what it needs from its producers; name the kind and leave that to the siblings and the excluded concepts."
+          ],
+          "actors": [
+            "The submitter who posts the result and evidence (who it may be depends on the design).",
+            "The verifier: protocol rules or a contract on the chain that every validating node executes as part of replicated execution.",
+            "Whoever controls the verifier's upgrade (an admin key, a multisig, a governance process, or nobody if it is immutable), because that party can change what counts as a pass.",
+            "In the window case, a challenger, who matters only to say that acceptance there depends on someone objecting; what challengers need is the untrusted-execution sibling's."
+          ],
+          "inputs": [
+            "The evidence and the statement it is checked against. The statement must fix the program (and version) and the inputs, including environment values, that the result is said to follow from, plus the claimed output. A check can pass for a statement that names the wrong program or inputs.",
+            "A verification key, parameters or a list of authorized signers or hardware keys, held by the verifier. These are part of what is trusted."
+          ],
+          "outputs": [
+            "An accept or reject decision, and on acceptance the state change or release of funds the result gates.",
+            "What a pass shows is bounded by the evidence. A proof: the stated relation holds, under the proof system's soundness assumptions (and any setup it needs). Signatures or an attestation: the named parties or hardware vouched for the result, under the assumption that their keys are not compromised and that they are the parties the verifier intends. An accepted result after a window: no objection succeeded in that window, what that says about correctness depends on who could object, which untrusted-execution covers. Never that the relation is the intended one, nor that the inputs are true."
+          ],
+          "assumptions": [
+            "The statement checked binds the right program and inputs.",
+            "The verifier is implemented correctly; a bug makes it accept what it should reject or reject what it should accept.",
+            "Control over the verifier's upgrade is limited. An upgrade authority that can swap the verifier can change what passes, so a check is only as strong as the limit on that control (for example a delay or exit period, a quorum, or immutability), and this is a trust assumption of its own.",
+            "The on-chain cost of the check fits within the chain's metered limits."
+          ],
+          "failures": [
+            "Wrong statement: the check passes but the program, version or inputs are not the intended ones.",
+            "Verifier bug or a mis-set verification key, signer list or parameters.",
+            "Compromised or captured upgrade control, replacing the verifier.",
+            "Check too costly for the limits: evidence that is too large or too expensive to check on chain cannot be used directly, so designs shrink the evidence, batch or aggregate checks, or avoid checking unless challenged.",
+            "Window case: nobody objects to a wrong result, and the wrong result is accepted."
+          ],
+          "variants": [
+            "Check immediately (proof, signatures or quorum, attestation): acceptance can follow the check immediately, though some designs add a delay or rate limit after it; the on-chain cost is paid on every accepted result or batch of results, and depends on the evidence (the proof system's verification work, the number of signatures unless aggregated, the attestation format).",
+            "Open a window (challenge-based): no check in the normal case, so little on-chain cost then; the cost is delay before acceptance, plus the cost of the check or dispute when someone objects.",
+            "These are the claims' own examples; do not claim that they are the only designs or that cost always orders them this way. Proof checking is often cheap relative to re-execution but can still be large in absolute terms, and cost varies with the proof system."
+          ],
+          "tradeoffs": [
+            "Immediate acceptance vs delay: a window delays finality of the accepted result but avoids checking in the common case; an immediate check pays on chain for each result.",
+            "Evidence size and check cost vs what the evidence can show: richer or stronger evidence can cost more to check on chain, which is why size and cost shape what a design can use. State as a pressure, not a law."
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Alternatives compared on shared dimensions (what the chain runs, when acceptance happens, the on-chain cost driver, what a pass shows), set beside a conditional argument that a pass shows something only if the statement, the verifier and its upgrade control are sound.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Show four ways the step is carried out (verify a proof, check signatures or a quorum, check an attestation, leave a challenge window open) on the same dimensions: what the chain runs, when the result takes effect, what drives the on-chain cost, and what a pass shows.",
+            "whyNotProse": "The claims turn on the same four questions asked of each alternative; in paragraphs the reader must hold four by four facts and cannot see that timing and cost vary while the dependence on the statement and the verifier does not."
+          }
+        ],
+        "division": "The comparison shows only what differs by kind of evidence. The prose carries what the step is, the argument about metered cost and evidence size, and the conditions that apply whatever the evidence: the statement binds the right program and inputs, the verifier is correct, upgrade control is limited, and a passed check never shows the relation is the intended one. The prose must not restate the cells; the siblings' conditions for each evidence kind are only named.",
+        "level": "The step belongs here, under Off-Chain Computation, as the point where the protocol's acceptance rule is applied on chain. Its parent states that the protocol decides; the evidence kinds and their needs are the siblings'; the general act of verifying and the cost model are fixed or excluded elsewhere.",
+        "territory": "It names fraud proofs, validity proofs, attestations, challenge periods, gas and the siblings' evidence conditions without explaining them. It does not explain how a proof, attestation or fraud proof works (excluded concepts), what verification consists of or how much a verifier repeats (the fixed verification record), or how metering works (the fixed gas and metering records).",
+        "placements": "One placement, under Off-Chain Computation. The exposition is about the on-chain step and is the same wherever the concept is reached."
+      },
+      "audit": {
+        "at": "2026-10-27T02:17:47.359Z",
+        "note": "Re-audit 2 (recording auditor), scoped to blocking finding R1 of findings/on-chain-verification-2.md and the two changed strings: the window row's 'What the chain runs' cell and the model's fields.failures window entry. Not expanded into a complete audit: the repair replaced a named verifier with a passive clause in one cell and narrowed one model failure; it changed no argument, assumption, structure, scope or claim. R1 resolved: the cell now reads 'No check of the result in the usual case; a check runs only if an objection is raised', which names no verifier and so no longer narrows 'a chain's rules or a contract' (definition, model sequence and actors) to the base protocol; it holds where a settlement-chain contract resolves the dispute as well as where protocol rules do. Row re-read: the timing cell ('after the window closes with no successful objection'), the cost cell ('the cost of the check or dispute if someone does') and the shows cell ('only that no objection succeeded in the window', pointer to untrusted-execution) agree with the new cell. Every verifier reference re-read: the definition ('a chain's rules or a contract'); paragraph 1 ('code that the chain's validating nodes execute', which covers both protocol rules and contracts; 'arrange that no check runs unless someone objects', which the cell now matches in wording); the three checked rows ('the verifier holds'); paragraph 3 ('every check the chain runs, including one run because an objection was raised', the verifier's implementation, key, signer list, parameters and upgrade control); paragraph 4. All use the verifier in one sense, consistent with the definition. Model fields.failures window entry ('nobody objects to a wrong result, and the wrong result is accepted') is accurate under the timing rule and drops the earlier lean toward untrusted-execution's challenger conditions; the record carries no paraphrase of those conditions. Overlap with the parent off-chain-computation (one placement): unchanged by the repair, none; the parent's 'some honest party is watching during a window' is not restated. Territory and splits: unchanged; untrusted-execution, attestations, computation-integrity and verification remain names only. Structure: the comparison is still the designed four-by-four. Canonical: no positional or time-sensitive words; American English; plain text. Advisory: (1) window cost cell 'delay instead' answers the on-chain-cost dimension with something that is not an on-chain cost; (2) paragraph 4 'never that the relation is the intended one' uses 'relation', defined only by the proof row, for every route; (3) paragraph 2 'the time a route takes to accept is a delay to those on-chain dependents' is near circular; (4) model fields.outputs window case has a comma splice; (5) signature and attestation shows cells condition only on keys and hardware, not on the signature scheme's security; (6) 'succinct evidence' glossed more loosely than its technical sense; (7) signatures row: 'count' misfits weighted quorums, the verifier may hold a commitment to the signer set, aggregation cost and scheme cost are unstated; (8) paragraph 1 'charged against the chain's metered resources' may not hold for native checks bounded by other limits; (9) paragraph 3 'or no one because the verifier is immutable, determines what counts as a pass' reads as no one determining, and 'That limit is a trust assumption' should be reliance on the limit; (10) paragraph 4 'A specification that is wrong still produces results that pass': a specification does not produce results; (11) paragraph 3 first condition uses computation-integrity's enumeration of a claim's parts, acceptable as the claim's binding condition; (12) 'the step described here' is self-referential; (13) 'limited by its evidence' fits the window route awkwardly.",
+        "resolutions": [
+          {
+            "id": "names-concept:5cc88d7ff4",
+            "resolution": "attestations: named only, in the attestation row ('Check an attestation', hardware keys or trust anchors the verifier holds) and its shows cell; how an attestation is produced or what it needs is not explained. Repair did not touch this text."
+          },
+          {
+            "id": "names-concept:24f1a1030e",
+            "resolution": "computation-integrity: named once in paragraph 4 as the owner of what following from specified inputs under a specified program covers, with a one-clause identifying gloss; its property is not explained. Repair did not touch this text."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "proof-systems: named as a dependency ('the proof system's soundness assumptions and any setup it needs', 'depends on the proof system'); no explanation of how proof systems work. Unchanged by the repair."
+          },
+          {
+            "id": "names-concept:832d6ce899",
+            "resolution": "trust-assumptions: named once in paragraph 3 ('a trust assumption of its own') to classify reliance on upgrade control; the concept is not explained. Unchanged by the repair."
+          },
+          {
+            "id": "names-concept:510ea79ca0",
+            "resolution": "untrusted-execution: named as a pointer in the window row shows cell ('which untrusted-execution covers'); the repaired 'What the chain runs' cell and the repaired model failure add no paraphrase of its challenger conditions (who can object, data, inclusion)."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "verification: appears only in 'verification routine' and 'verification key'; the record does not explain what verification consists of or how much a verifier repeats. Unchanged by the repair."
+          }
+        ],
+        "recordFingerprint": "5901a1de774ceada1405c7a03257f64f772c2ec76b5de3cef57de3d5fcb602cd"
+      }
+    },
+    "trusted-execution": {
+      "model": {
+        "meaning": "Trusted execution is accepting a result because the party or environment that produced it is trusted, either an operator or committee relied on by name, or a hardware-isolated environment whose identity and loaded program are vouched for by remote attestation, instead of checking the computation itself.",
+        "kind": "mechanism",
+        "parents": {
+          "off-chain-computation": "The parent lists trust in attested hardware as one acceptance basis among several and says the trust boundary can move to a trusted execution environment. This adds what that basis consists of, what attestation does and does not establish, how it fails and what the protocol gives up by not checking. Do not restate the parent's replicated-execution argument or its other acceptance rules.",
+          "verifiable-ai": "The parent's comparison gives trusted execution a cost (close to running the model normally) and a trust requirement (the hardware's integrity and its manufacturer's attestation). This adds why the cost is low, what the attestation covers (a measured program, not the model's output quality), and the failure modes behind the stated trust requirement. Do not reproduce the comparison's other rows.",
+          "execution-environments": "The parent says trusted execution can give defined hardware or attestation properties without making computation, inputs, policy or outcome correct. This adds what those defined properties are (a measured program on attested hardware) and why each of the four stays unestablished. Do not explain isolation or sandboxing mechanics."
+        },
+        "claims": [
+          "accepting a result because the executor or its environment is trusted: a trusted operator or committee, or a trusted execution environment with remote attestation, and what the protocol gives up by not checking the computation",
+          "what attestation establishes, assuming the hardware and its keys are not compromised: a program with a given measurement running on hardware whose key chain leads to its manufacturer or, in some designs, to a vendor or cloud attestation service, and what it does not: that the code is correct, that inputs are true, freedom from side channels, or the manufacturer's honesty",
+          "how trust in hardware fails and why it moves trust rather than removing it: compromised keys or hardware, side-channel leakage, vulnerable code, and the cost, often close to that of ordinary execution, that makes the approach attractive, including where defined hardware or attestation properties do not make computation, inputs, policy or outcome correct"
+        ],
+        "excludes": [
+          "trusted-hardware",
+          "trusted-computing-base",
+          "trusted-components",
+          "attestations",
+          "attestation-verification",
+          "sandboxing",
+          "execution-isolation",
+          "verifiable-inference",
+          "zkml",
+          "trust-assumptions",
+          "trusted-parties",
+          "adversaries",
+          "threat-models",
+          "verification-limits",
+          "untrusted-execution",
+          "on-chain-verification",
+          "off-chain-workers",
+          "computation-integrity",
+          "non-deterministic-execution"
+        ],
+        "placements": {
+          "trusted-execution": "Off-Chain Computation: trust-based acceptance branch of the parent's flow; a result produced off chain is accepted without checking the computation, on the strength of an operator, committee or attested environment. Hold the explanation to who is trusted and what that buys.",
+          "trusted-execution-in-verifiable-ai": "Verifiable AI: the same acceptance basis applied to a claim about running a model on an input. Stay general enough that the model case is one instance (a measured program can include model and serving code); never say the attestation shows the output is correct or the model good. Do not state AI-specific costs beyond the parent's.",
+          "trusted-execution-in-execution-environments": "Autonomous Execution / Execution Environments: the environment where an autonomous system's actions run. Stay on what hardware or attestation properties are, and that they bound what is claimed about the running program, not policy, inputs or outcome. No sandbox or isolation mechanics, which belong to siblings."
+        },
+        "fields": {
+          "sequence": [
+            "Two forms. (a) Trusted operator or committee: the protocol accepts results signed by named parties (one operator, or a threshold of a committee); its check is only that signature or quorum; honesty and competence are assumed and the computation is not rechecked. (b) Trusted execution environment (TEE): hardware isolates a program's memory and execution from the rest of the machine, including the host that runs the machine (strength depends on the design); on start the hardware records a measurement (hash of the loaded code and initial configuration); on request it produces a signed attestation of that measurement, signed with a key whose certificate chain leads to the manufacturer; a verifier checks the chain, compares the measurement to the one expected for the intended program, checks freshness and revocation status; the result is accepted if the attestation also binds the result (by including the result's hash in the attested data, or by the enclave signing it with a key whose public part the attested data contains; a requester's challenge shows freshness, not binding).",
+            "Attestation is a statement made by hardware, so it is checked by whoever relies on it (a contract, a client or a committee). Name that checking step only; its mechanics belong to excluded concepts."
+          ],
+          "actors": [
+            "Host who runs the machine and may be adversarial toward the program; the program's author, whose code is what the measurement identifies; the hardware manufacturer, who holds or certifies the root of the key chain and, in some designs, runs attestation services; the verifier relying on the attestation; for form (a), the trusted operator or committee members.",
+            "Be exact about who is trusted in each form: in a TEE the host is not trusted for confidentiality or integrity of the running program (under the hardware's threat model), but the manufacturer, the program's author and the hardware's correctness are."
+          ],
+          "inputs": "The program (identified by its measurement), the inputs it is given, and a verifier-chosen challenge or nonce where freshness is needed. Inputs are not covered by the attestation unless the design binds them, for example by hashing them into the attested data beside the measurement. The attestation says nothing about whether inputs are true.",
+          "outputs": "A result plus an attestation (or signatures) the verifier can check. The result is accepted on that evidence, not on the computation being repeated. Say what the evidence shows (see statement of what attestation establishes under assumptions) and not more.",
+          "assumptions": [
+            "What attestation establishes, only if the hardware and its keys are not compromised, the root is honest and the verifier checks the right things: a program with the given measurement ran on hardware whose key chain leads to the root and produced the attested data. Do not say it establishes more, and do not say 'proves'.",
+            "What it does not establish: that the program is correct or free of vulnerabilities, that its inputs are true, that the specification the program implements is the intended one, freedom from side-channel leakage, or that the manufacturer is honest (the manufacturer sits at the root of trust and could in principle issue or leak keys).",
+            "The verifier must know which measurement is the intended program: a valid attestation for the wrong measurement is worthless, and an unreproducible build makes the measurement uncheckable by others.",
+            "Freshness matters: without a nonce or equivalent, an old attestation may be replayed; revocation of compromised keys or outdated firmware only helps if the verifier checks current revocation status."
+          ],
+          "failures": [
+            "Compromised keys or hardware: extraction of attestation keys, a vulnerability in the hardware or firmware, or physical attacks (feasibility depends on the design) let an attacker produce an attestation without the claimed protection; one broken key can undermine every device it certifies, depending on how keys are provisioned and how far revocation reaches.",
+            "Side-channel leakage (cache, timing, speculative-execution, access-pattern and similar channels, depending on the design) can expose data processed in the environment even when memory contents are protected; whether the design's threat model includes them differs by design.",
+            "Vulnerable code: the measurement identifies the program, not its quality; a bug lets an attacker control it inside a perfectly valid attestation.",
+            "Rollback, replay and stale state, when the environment's persisted state or old attestations are accepted.",
+            "Availability: the host controls the machine, so can stop or delay it or withhold outputs; trusted execution gives no protection there.",
+            "Operator or committee form: error, collusion or key theft by the operator, or by enough committee members to meet the threshold, yields wrong accepted results with no check to catch them; losing a key stops signing but does not forge."
+          ],
+          "tradeoffs": [
+            "Why it is attractive: the computation runs on ordinary processors, so the cost is often close to ordinary execution (overhead varies by workload and design, for example memory encryption and transitions into and out of the environment), and arbitrary programs are supported, unlike approaches whose cost grows far beyond execution.",
+            "What is given up: independent checkability. The evidence is a statement that a party or hardware vouched, not something anyone can recompute; if the trust assumption fails, the result alone need not reveal it. Say so without comparing in detail to the siblings' territory.",
+            "Trust is moved, not removed: from the executor to the hardware, its manufacturer's key chain and the program's author. Concentrates trust in a small set of parties, which can be better or worse than distributed trust depending on the setting."
+          ],
+          "variants": "Trusted operator, trusted committee (threshold of signers), and TEE with remote attestation (several hardware designs and granularities, from process enclaves to whole virtual machines, differing in what is in the trusted base and which attacks they address). Present the TEE designs only as variation in strength, not by product name or generation, which date quickly.",
+          "invariants": "Under this basis, acceptance rests on every assumption in the chain holding: hardware sound, keys uncompromised, manufacturer honest, program correct, inputs true, measurement the intended one, attestation fresh (for the operator or committee form, the named parties honest and competent). The hardware and attestation do not fix whether the outcome is correct."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A chain of assumptions where each link supports a narrow statement (measured program on certified hardware) and the conclusion the protocol wants (a correct result) lies beyond them; trust is relocated, not eliminated.",
+        "whyProse": "The claims are conditional and sequential: what the basis gives, what attestation does and does not establish, how it fails and why trust only moves. The conditions attach to each statement, and a table or list of establishes/does-not-establish would drop them. No order, branch, loop, state or comparison on shared dimensions is needed beyond what the parents already show.",
+        "level": "At this level it explains the acceptance basis and attestation's limits for one trust-based choice. The parent shows only where it sits among acceptance rules and the general trust boundary, and the siblings own the chain's acceptance step and the untrusted alternative.",
+        "territory": "Names, without explaining, trusted hardware, the trusted computing base, attestation checking, isolation, sandboxing, verifiable inference and zkML, and leaves the acceptance step to on-chain verification, the untrusted case to untrusted execution and the actors to off-chain workers.",
+        "placements": "The explanation is about the acceptance basis and what hardware or attestation can and cannot establish, which is the same in off-chain computation, in a claim about running a model, and in an execution environment, so no placement-specific wording is needed.",
+        "division": "Prose carries all of it; no structure is used."
+      },
+      "audit": {
+        "at": "2026-10-27T02:30:01.764Z",
+        "note": "Re-audit 1 (auditor A recording), expanded into a complete audit because the repair changed the definition-level terms (operator/host, measurement/attested data), the statement of what attestation establishes, its assumptions and the closing paragraph. All blocking findings of trusted-execution.md (A1-A5) and trusted-execution-b.md (B1-B4) are resolved: P4 now states the establishment under all its conditions (hardware and attestation keys uncompromised, root honest with keys uncompromised, chain, measurement, freshness and revocation checked) and includes that whatever the attested data covers came from that program, consistent with the fixed verification-limits record and with P9's summary; P3 binds the result by its hash in the attested data or by a key whose public part the attested data contains, and the challenge shows freshness only; P2 states the threshold, key theft, and that key loss stops signing without forging; operator names only the trusted party of the first form and host the runner of the machine (P3, P6, P8), and P1 says what is trusted rather than calling the environment a party; inputs are bound into the attested data beside the measurement, so the measurement keeps P3's sense (code and initial configuration) everywhere, including the weights sentence; the closing paragraph defines policy and gives each of computation, inputs, policy and outcome its reason without echoing the domain sentence. Accuracy of new technical sentences: rollback of sealed state (host controls storage; authenticated sealed data is not fresh without a monotonic counter or external commitment) is correct; transient-execution side channels are correctly classed as side channels that expose data despite memory protection; weights are attested only if measured or hash-bound, and even then only which program ran. One term, one sense checked for operator, host, measurement, attested data, policy, trust, root, relying party and freshness (attestation and sealed-state freshness share the sense not stale). Lead and summary sentences (P1, P7 opener, P8 opener, P9 opener) carry no condition-free claim that contradicts the conditioned sentences. Overlap per placement: Off-Chain Computation parent (acceptance rules, attested hardware and manufacturer sound) not restated; Verifiable AI parent comparison row extended (why cost is low, root may be a vendor or cloud service, author also trusted) without contradiction, and 'not on whether the model is good' does not restate the parent's correctness sentence; Execution Environments parent says nothing of the concept, and the domain sentence's four items are each explained rather than echoed. Territory and splits: on-chain-verification, untrusted-execution, attestation-verification, trusted-computing-base and execution-isolation only named; relying-party checks appear only as the conditions of claim 2; policy is glossed in one clause, not explained as execution-policies or policy-constraints. Structure: prose as designed. Canonical: no positional or dated words; American English. Depth: 1,098 words, every paragraph tied to a claim, all three claims explained. Advisory: (1) P4 'the binding shows which inputs were used' strictly shows which inputs the measured program reported, the rest resting on program correctness; (2) P4 lists 'a signing key' as covered by attested data where its public part is, and binding by that key also needs the private key to stay inside (side-channel leakage would break it); (3) P9 'every assumption in the chain' reuses 'chain', elsewhere the certificate chain; (4) P9 implementing the intended policy also depends on the code implementing the specification, not only on the specification; (5) P5 'cannot confirm that a measurement corresponds to the code they were shown' could say source code and allow trusted build provenance; (6) P6 opener announces, and availability is an unprotected property rather than a failing assumption; (7) P6 rollback sentence leaves implicit that a validly attested result can be computed on stale state; (8) P7 'gains is chiefly cost' means low cost, and 'ordinary processors' are general-purpose processors with security extensions or accelerators in a confidential mode; (9) P2 'Losing a key stops signing' stops that holder, not necessarily a threshold committee; (10) 'Trust is moved, not removed.' echoes the AI domain sentence, and 'Policy here means' can drop 'here'; (11) challenge (P3) and nonce (P5) name one thing; (12) P4 repeats input binding after listing an input hash in its first sentence; model: sequence says 'on start' where the record correctly says when loaded.",
+        "resolutions": [
+          {
+            "id": "names-concept:b9be117dd9",
+            "resolution": "Attestation Verification appears only in the closing sentence as a separate concept. The relying party's checks in P3 and P5 (chain, measurement, freshness, revocation, known target, reproducible build) are the conditions claim 2's statement of what attestation establishes depends on, not the mechanics of checking attesters' claims."
+          },
+          {
+            "id": "names-concept:5cc88d7ff4",
+            "resolution": "The record uses 'attestation' for the remote attestation of this concept's environment form, which claim 2 owns (a signed statement of a measurement plus attested data). The general Attestations concept (signed claims under Identity and Provenance) is not explained."
+          },
+          {
+            "id": "names-concept:7f0bdb099b",
+            "resolution": "Execution Isolation is named in the closing sentence. P3 says only that hardware isolates the program from the rest of the machine and the host to a design-dependent degree, the premise of the environment form, with no isolation mechanism explained."
+          },
+          {
+            "id": "names-concept:b923046954",
+            "resolution": "On-Chain Verification is named as the step a chain runs on the attestation. The record does not explain that step's timing, on-chain cost or what a chain's check establishes; the relying party is general (contract, client or committee)."
+          },
+          {
+            "id": "names-concept:9317a04eaa",
+            "resolution": "Threat model appears twice as a scope qualifier ('whether a design's threat model covers them', 'under the hardware's threat model'), named only; nothing about how threat models are stated is explained."
+          },
+          {
+            "id": "names-concept:dde1ff2d43",
+            "resolution": "Trusted Computing Base is named only in the closing sentence; variation in what is trusted is stated as the root, the program's author and the hardware's correctness, without explaining the trusted-base concept."
+          },
+          {
+            "id": "names-concept:510ea79ca0",
+            "resolution": "Untrusted Execution is named as checking the computation instead of trusting it; its evidence kinds (proofs, fraud detection, redundant executors) and their conditions are not explained."
+          },
+          {
+            "id": "absolutes:85d51ee685",
+            "resolution": "Three uses of 'cannot': 'if the program's build cannot be reproduced' is a condition; 'others cannot confirm that a measurement corresponds to the code they were shown' holds under that condition for source code (advisory 5 on build provenance); 'an environment reloading its own sealed state cannot tell a current copy from an older one unless the design adds a freshness mechanism' holds with its stated exception, since sealing authenticates but does not date state the host stores. Other absolutes checked: 'The only check is the signature or quorum' holds by the form's definition; 'accepted only if the attestation also binds it' is the acceptance rule of the form; 'helps only when' and 'only if the design measures them or binds their hash' hold; 'not protected at all' holds for availability; 'every assumption' and 'only if all of these hold' are stated over the record's own list."
+          }
+        ],
+        "recordFingerprint": "b343ecddbb3ae37cb9d153d1fee70e751514c50f51aed94c3d8bb90ee2092694"
+      }
+    },
+    "untrusted-execution": {
+      "model": {
+        "meaning": "Accepting an off-chain result without relying on the executor's honesty, by requiring evidence that others can check or contest, so that trust is moved onto the evidence mechanism and its conditions rather than removed.",
+        "kind": "mechanism",
+        "parents": {
+          "off-chain-computation": "The parent says acceptance rules rest on different assumptions and names the kinds. This adds the untrusted-executor branch: what each kind of evidence is, the conditions under which it actually protects, and the trust that remains. Do not restate the parent's list of assumptions or the trusted-executor branch."
+        },
+        "claims": [
+          "what evidence makes the result of an executor that is not trusted acceptable without relying on its honesty: a proof of the computation, fraud detection by challengers, or agreement among redundant executors",
+          "the conditions each kind of evidence needs: fraud detection needs at least one honest and live challenger who has the data and can get a challenge included in time, and agreement among redundant executors matters only if the executors that collude, or that share a fault such as the same faulty software, are too few to satisfy the acceptance rule on their own",
+          "what trust remains, so that trust is reduced though not removed: the verifier, the proof system's soundness and any setup, data availability, the executor's liveness, and the ability to get a challenge included"
+        ],
+        "excludes": [
+          "fraud-proofs",
+          "validity-proofs",
+          "optimistic-verification",
+          "challenge-periods",
+          "dispute-games",
+          "interactive-fraud-proofs",
+          "proof-verification",
+          "succinct-verification",
+          "collusion",
+          "data-availability",
+          "liveness",
+          "verification",
+          "trust-assumptions",
+          "computation-integrity",
+          "computation-proofs",
+          "execution-traces",
+          "computation-commitments",
+          "non-deterministic-execution",
+          "trusted-execution",
+          "on-chain-verification",
+          "off-chain-workers",
+          "off-chain-execution"
+        ],
+        "placements": {
+          "untrusted-execution": "Single placement (Off-Chain Computation). The exposition is about the trust model, not any one chain or design, so it holds wherever an executor is not trusted. Name concrete designs only as examples of an evidence kind, never as the subject."
+        },
+        "fields": {
+          "actors": [
+            "executor: produces the result and is assumed possibly dishonest or faulty (fault model: arbitrary deviation, not only crashes)",
+            "verifier or challenger: checks the evidence, or contests the result; who they are depends on the evidence kind",
+            "redundant executors: several parties computing the same task"
+          ],
+          "assumptions": [
+            "Proof: if the verifier checks correctly, the proof system is sound and any setup was honest or is avoided, a result accompanied by an accepted proof satisfies the stated relation; the executor need not be honest. Soundness is relative to the statement, so it does not say the statement is the intended computation (name once for all kinds; computation-integrity, on-chain-verification own that).",
+            "Fraud detection: result accepted provisionally, valid unless contested. Protects only if at least one honest challenger is live, has the data needed to recompute or check, and can get a challenge included within the contest period. Without any one of these, a wrong result stands. Stay at conditions; do not explain dispute games or windows (named only).",
+            "Redundancy: results from several executors are compared or aggregated. Agreement is evidence only to the extent errors are independent: the rule's agreement threshold must not be reached by colluding executors, and executors must not share a fault such as the same buggy software, hardware or input source, since shared faults can agree on a wrong answer. Reliance on one executor's honesty shifts onto the other executors. For safety, a threshold rule tolerates some colluders and an all-must-agree rule tolerates more, but it stalls on one disagreement or silent executor; say which rule is assumed rather than 'one honest suffices' for all.",
+            "Remaining trust, differing by kind: the verifier (code or contract that checks; correctness and upgrade control), proof soundness and any setup, availability of the data challengers or provers need, the executor's liveness (a result may never arrive; evidence does not force one), and the ability of a challenger to get a challenge included (censorship or congestion can block it)."
+          ],
+          "failures": [
+            "Evidence accepted but the statement or program was wrong: evidence shows the checked relation, not that it is the intended one.",
+            "No challenger acts, or none can: fraud goes unchallenged (absent, uninformed through missing data, censored, or colluding with the executor). If challengers are assumed to act only in their own interest, a challenge costing more than it returns may also go unmade; keep that separate from honesty.",
+            "Correlated executors: agreement gives false assurance.",
+            "Unsound proof system, flawed setup or buggy verifier: false results accepted.",
+            "Executor stops: safety (no wrong result accepted) can hold while liveness fails; keep the two separate."
+          ],
+          "outputs": "A result the protocol can accept without trusting the executor, at the price of the conditions above; not a guarantee absolute across all designs.",
+          "tradeoffs": [
+            "Kinds differ in what must be present for safety (a sound verifier, an active challenger with data, independent executors) and in when acceptance can be treated as settled; timing detail belongs to on-chain-verification, so only mention that it differs.",
+            "Reduced, not removed: reliance on the executor's honesty moves to the verifier, the assumptions of the proof system, data availability, an able challenger with inclusion, or enough of the other executors; reliance on liveness stays: someone has to produce the result and its evidence, and for agreement enough executors have to respond. Do not say 'trustless'."
+          ],
+          "variants": [
+            "proof of the computation",
+            "fraud detection by challengers",
+            "agreement among redundant executors"
+          ]
+        }
+      },
+      "design": {
+        "decision": "structure",
+        "relationship": "Three alternative kinds of evidence compared on shared dimensions: what the evidence is, the condition that must hold for it to protect, and the trust that remains. The same three questions apply to each kind.",
+        "structures": [
+          {
+            "structure": "comparison",
+            "purpose": "Sets proof, fraud detection and redundant agreement side by side on what makes a result acceptable, what must hold for it to protect, and what trust remains, so the reader sees that each kind reduces trust differently and none removes it.",
+            "whyNotProse": "The claims are a 3-by-3 grid of kinds against shared questions; prose would serialize nine cells and lose the cross-kind comparison of conditions and residual trust."
+          }
+        ],
+        "level": "The trust model for untrusted executors is a distinct branch of off-chain computation, beside trusted execution; it is not the parent's overview and not a single evidence mechanism's internals.",
+        "territory": "Names proofs, fraud detection, challenge windows, and on-chain checking without explaining them; the evidence kinds are treated only at the level of conditions and residual trust. Acceptance timing and checking cost are on-chain-verification's; trusting the executor is trusted-execution's; where work runs is off-chain-execution's.",
+        "placements": "One placement under Off-Chain Computation; the trust model is stated independently of any chain or design, so it holds there.",
+        "division": "Prose defines untrusted execution, why evidence is needed, and explains the conditions, especially the independence and honest-challenger requirements and why trust is reduced rather than removed; the comparison shows the three kinds against the shared dimensions and must not restate the prose's explanations."
+      },
+      "audit": {
+        "at": "2026-10-27T02:44:37.488Z",
+        "note": "Re-audit 2 (recording auditor), scoped to findings R1 and R2 of untrusted-execution-2.md; not expanded, because the repair corrected two sentences and the final paragraph's lead within the accepted claims, model and design and did not change the argument, assumptions, structure or scope. R1 resolved: paragraph 1 now says reliance on liveness stays in every kind, that someone has to produce the result and its evidence and that for agreement enough of the executors have to respond; the final paragraph's lead ('Reliance on liveness stays:') now matches its own elaboration, the proof row ('someone producing the proof'), the agreement row ('enough of them responding') and the redundancy paragraph's contrast between threshold and all-must-agree rules, so there is no longer a contradiction. Every other use of liveness and live (the fraud paragraph's live challenger and the fraud row) was re-read and is consistent. R2 resolved: 'None of the three kinds shows that the statement checked names the right program and inputs' is accurate for each kind (a proof establishes the relation for the statement it is checked against, a challenge is settled against the statement the protocol fixed, and agreement covers only the task the executors were given), and it no longer speaks of intent, which computation-integrity disowns. It names its owners correctly without explaining them: on-chain-verification states as its first condition that the statement checked must fix the right program and version and the right inputs, and computation-integrity owns what a claimed result follows from (stated inputs under the specified program). The next sentence ('also belong to on-chain-verification') reads correctly after it. The only other uses of statement-related wording (the relation the proof states, the comparison's stated relation) keep their sense; 'right program' appears once. Overlap with the parent (Off-Chain Computation, the only placement) was re-checked for the changed sentences: the parent's sentence on committed inputs and its liveness paragraph are not restated, and fallbacks stay named as off-chain-workers'. Territory per boundaries.md sections 0 and 2: names only for computation-integrity, on-chain-verification, off-chain-workers, verification and proof systems. Structure unchanged (5 paragraphs, one 3 by 3 comparison, as designed). No positional or dated words; American English. Advisory: (1) the model's assumptions note still says the statement may not be 'the intended computation' and assigns that to computation-integrity, which excludes intent; the record is right, the model wording is coarse. (2) Plan claim 3 and the model's remaining-trust note still say 'the executor's liveness' (advisory as before). (3) Paragraph 1's 'produce the result and its evidence' fits fraud detection loosely, since its evidence is the absence of a successful challenge (related to the earlier A7). (4) The fraud row's 'the executor producing a result' is narrower than paragraph 1's 'someone'; it holds for the executor that proposed. (5) The earlier advisories A1 to A6 of untrusted-execution-2.md remain open where the text was not changed.",
+        "resolutions": [
+          {
+            "id": "names-concept:24f1a1030e",
+            "resolution": "computation-integrity is named once in paragraph 2 as owning what a claimed result must follow from; nothing about its four parts or its exclusions is explained."
+          },
+          {
+            "id": "names-concept:0b3c310fab",
+            "resolution": "liveness is used in its ordinary sense (someone producing a result, enough executors responding) in paragraph 1 and the final paragraph; the safety/liveness distinction itself is not explained."
+          },
+          {
+            "id": "names-concept:39a85fd10e",
+            "resolution": "off-chain-workers is named once in the final sentence as owning fallbacks for a worker that stops; no timeout, fallback or replacement mechanism is explained."
+          },
+          {
+            "id": "names-concept:b923046954",
+            "resolution": "on-chain-verification is named in paragraph 2 as owning the condition that the statement checked names the right program and inputs, and how the chain runs the check, its timing and cost; none of these is explained."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "proof systems are referred to only by the conditions this concept depends on (soundness, setup that left no one able to forge proofs); no proof-system internals are explained."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "the verifier is referred to as a party whose correct checking is relied on; the verification spectrum (re-execution, sampling, proof checking, checking on challenge) and its costs are not re-explained."
+          }
+        ],
+        "recordFingerprint": "21d0f2b97665a904ebc13a1ef829c39ed4250e0082ab1ee2d9b61b0ad03cd6ff"
+      }
+    },
+    "off-chain-workers": {
+      "model": {
+        "meaning": "An off-chain worker is an actor outside the protocol's replicated execution that performs work the protocol depends on, such as expensive, asynchronous, private or externally dependent work, and returns a result the protocol may accept or act on.",
+        "kind": "actor",
+        "parents": {
+          "off-chain-computation": "Parent gives: result produced outside replicated execution, accepted under a stated rule; worker can stop responding; protocol needs a way to proceed. Add the actor view: who the workers are, why a protocol uses them, how work is obtained and paid for (assignment, open competition, requests and callbacks; payment, bonds), what each leaves open, and the concrete liveness remedies with their conditions. Do not restate acceptance rules or the stop-responding sentence; do not explain the rules (other siblings own them).",
+          "protocol-agents": "Parent gives: off-chain bots, worker services and automation networks inherit operators' reliability; keep actions open to any participant and checked on-chain; more than one operator able and motivated. Add: off-chain worker as a role defined by the work it does for the protocol, kept distinct from keeper/automation network/execution bot/oracle node (named only), and the point that a worker doing a protocol's work does not thereby hold protocol authority; authority is what the protocol's rules grant, not what the worker does."
+        },
+        "claims": [
+          "who performs off-chain work and why a protocol uses such actors: work that is expensive, asynchronous, private or dependent on outside systems, in roles that keep this meaning in a protocol with autonomous actors without their activity establishing protocol authority",
+          "how a protocol obtains and pays for their work: assignment or open competition, often through requests and callbacks, with payment and bonds as incentives, and what each leaves open about who does the work and what happens if no one does",
+          "the liveness dependency of using workers: a worker can stop responding, and designs address this with timeouts, fallbacks, redundancy or permissionless replacement, each with conditions such as who may replace the worker and what the timeout assumes about delay"
+        ],
+        "excludes": [
+          "keepers",
+          "automation-networks",
+          "execution-bots",
+          "oracle-nodes",
+          "on-chain-agents",
+          "off-chain-execution",
+          "trusted-execution",
+          "untrusted-execution",
+          "on-chain-verification",
+          "liveness",
+          "collusion",
+          "verification",
+          "computation-integrity",
+          "gas"
+        ],
+        "placements": {
+          "off-chain-workers": "Under Off-Chain Computation the worker is the producing actor behind a proposed result. Exposition speaks of the role and the protocol's relationship to it, not of acceptance rules, so it holds as the WHO beside the siblings' WHERE/TRUST/ACCEPTANCE.",
+          "off-chain-workers-in-protocol-agents": "Under Protocol Agents the same actor is one kind of off-chain actor among agents. Same role, same dependency (a protocol needs work done and may get none); add nothing about autonomy. State that doing the work establishes no authority; what the worker may do is set by the protocol. Nothing in the text may assume results are computed values or that the protocol is an agent."
+        },
+        "fields": {
+          "role": "Performs work for a protocol outside its replicated execution; returns a result, a response to a request, or a submitted transaction. Reasons to use one: expensive (cost or bounds on chain), asynchronous (waits on time or events), private (data not to be replicated publicly), externally dependent (needs systems the chain cannot reach). Role is defined by work done for the protocol, not by who the operator is or whether the operator is automated. A worker can be a person, service, or program; do not narrow. Reference only: keepers, automation networks, execution bots, oracle nodes keep their own meanings.",
+          "powers": "Within the protocol, only what its rules let it do: submit results, answer requests, hold bonds or be paid. The protocol keeps the decision on whether work takes effect (acceptance rules belong to siblings). Doing work does not by itself give authority over the protocol, funds or parameters; any authority comes from rules, roles or keys the protocol grants. Being needed gives practical leverage (withhold or delay work, decline selected jobs, see data the work exposes), which is dependence, not authority; use each word in one sense.",
+          "incentives": "Ways work is obtained: (1) assignment: protocol or governance names the worker(s); leaves open how pay and removal work, single point of dependence, and who monitors; (2) open competition: any qualifying party may do the work, often first valid or best result is rewarded or paid; leaves open duplicated effort, races that favor the best-connected, and that nobody may act if reward is below cost; (3) requests and callbacks: a contract records a request, off-chain party fulfills it, protocol calls back or accepts the response; this is an interface and can sit on top of assignment or competition, so it does not by itself say who does the work; it leaves open what happens to an unfulfilled request. Payment: fees or rewards per job; bonds posted by the worker, forfeitable under stated conditions. Say what payment and bonds do (make doing the work worth the cost; give something to lose) and not more: a bond deters only if the forfeitable amount exceeds the fault's gain and the fault can be detected and attributed; it compensates harmed parties only if forfeited funds go to them, and then at most up to its size; it can be forfeited only for what the protocol can detect and prove; a reward does not guarantee someone responds when cost exceeds reward. Both are incentives, not guarantees.",
+          "trustPlaced": "Depends on what the protocol relies on the worker for. To the extent the protocol needs the work, it depends on the worker or workers (or on a replacement path) to respond. Correctness trust depends on the acceptance rule (sibling territory; reference only). Do not say a worker is trusted or untrusted in general.",
+          "misbehaviour": "Stops responding (crash, outage, withdrawal, going offline, censorship by or of the worker, unprofitable job); delays; or declines selected jobs. Wrong or dishonest results belong to acceptance rules and trust siblings; name as outside this concept. Remedies, each with conditions: timeout (assumes a bound on delay; too short rejects honest slow workers or network delay, too long stalls users; a timeout starts a fallback, it does not produce the result); fallback path (invoked by the protocol or by users; often slower, costlier, less private or less capable; helps only if whoever must invoke it can); redundancy (several workers asked; helps against one stopping only if enough of them are independent and live; shared operator, software or infrastructure defeats it; costs duplicated payment); replacement (another party takes over after a stated condition; helps only if it can obtain the inputs and has reason to act, such as a reward covering its cost or its own interest; where anyone may, no particular party must be present; where only designated parties may, it fails when they too are absent). Pitfall: liveness is the concept's dependency; do not explain liveness as a property or collusion."
+        },
+        "variants": "Three ways to obtain work (assignment, open competition, requests/callbacks as interface layered on either) and four liveness remedies (timeout, fallback, redundancy, permissionless replacement). Remedies combine; a timeout is usually what triggers the others."
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A role defined by what it does for a protocol and a dependency it creates; the sourcing and remedy options are listed with conditions that attach to each, in a sequence of explanation (who and why, how obtained and paid, what happens when nothing arrives).",
+        "whyProse": "The claims are conditioned arguments: each way of obtaining work leaves different things open, and each remedy depends on who may act and what delay is assumed. A comparison table would force single values per cell and drop those conditions; no order, branch, loop or state recurrence is the point. Prose carries the conditions.",
+        "level": "At L2 because the actor, its sourcing and its liveness dependency need the room that the parent's single sentence on stopping cannot give; it is the WHO that the parent's acceptance-focused text leaves out.",
+        "territory": "Does not explain where computation runs, how a result is checked or accepted, trust in executors, hardware, proofs, challengers, gas, or the neighbours keepers, automation networks, execution bots, oracle nodes and on-chain agents. They are named only to draw boundaries.",
+        "placements": "The role, sourcing and liveness dependency are the same under Off-Chain Computation and Protocol Agents; nothing refers to scaling or to agent autonomy, and activity is stated to give no authority by itself."
+      },
+      "audit": {
+        "at": "2026-10-27T02:56:57.374Z",
+        "note": "Re-audit 1 of the repaired record, expanded into a complete audit of every sentence because the repair changed the definitions of key terms (authority, leverage, replacement, fallback) and the closing argument. Both prior files resolved. Auditor A: B1 resolved (P2 now scopes the opening to 'Within the protocol', keeps authority as what rules, roles or keys grant and states leverage from dependence separately: withhold, delay, decline selected jobs, see exposed data); B2 resolved (deterrence carries the amount-versus-gain and detect-and-attribute conditions; compensation only if forfeited funds go to the harmed and at most up to the bond's size); B3 resolved (closing now says each remedy moves the dependency onto its own conditions rather than ending it, the worker-bypassing fallback is listed with its own condition, the necessary-condition sentence is scoped to 'Once workers stop', and the circular user-path clause is gone). Auditor B: 1 and 2 resolved as above; 3 resolved (replacement is one sense, another party taking over, with anyone-may and designated-only cases marked; 'reason to act' admits a reward covering cost or own interest; fallback invoked by the protocol or the users and helps only if whoever must invoke it can); 4 resolved (no circularity, parent's 'letting users act directly' clause no longer restated). Term discipline: 'authority', 'leverage', 'replacement', 'fallback', 'dependency' and 'worker' each keep one sense across P2 to P6; the P6 condition list maps to the P5 remedies (timeout: bound on delay; redundancy and replacement: other workers or replacements able and motivated; worker-bypassing fallback: usable by its invoker; a fallback to another source falls under other workers). Accuracy: bond, fee, timeout, redundancy and replacement conditions are necessary conditions stated as such; no unscoped any/every/always/only remains. Overlap per placement: Off-Chain Computation parent (stop-responding sentence and its remedy list) is expanded with causes and per-remedy conditions, not restated; Protocol Agents parent (outage or capture stalls; open to any participant; more than one operator with means and reason) is given its conditions, not restated; domain sentences on the four reasons and on activity not establishing authority are elaborated. Territory (boundaries 0 and 2): keepers, automation networks, execution bots, oracle nodes and the four siblings are named only; acceptance, evidence, exit and correctness-redundancy stay with off-chain-execution and untrusted-execution, whose records point replacement and fallbacks here; liveness and collusion are not explained; protocol-properties/availability not contradicted. Structure: prose as designed. Canonical: holds at both placements, no autonomy or scaling assumption, results not assumed to be computed values; American English. Depth follows the three claims. Advisory: (1) P2 'its rules' has an ambiguous referent, and 'including when it operates beside other autonomous actors' attaches after 'grant it' and implies workers are autonomous although P1 says 'automated or not'; (2) P2 attributes seeing exposed data to the protocol's dependence, though it follows from doing the work, and 'delay ... decline selected jobs' recurs in P5's opening; (3) P5 'dependence on workers responding is separate from whether returned results are right' echoes both parents' point (acceptance versus arrival; stalls however sound the on-chain logic); it could be dropped; (4) P3 'leaves open' shifts from open questions to risks, and 'three ways' counts an interface the paragraph says is not a way of choosing who works; (5) P5 timeout 'either way' reads oddly, and the closing's 'a bound on delay' could say the deadline must match actual delay, since a timeout itself produces no result; (6) replacement's 'can obtain the inputs and has a reason to act' echoes the Protocol Agents parent's 'means and the reason to act', acceptable because it supplies the conditions; (7) P1 'Whether a result takes effect is settled by the protocol's acceptance rule' restates the Off-Chain Computation parent's point, kept as the boundary reference the Protocol Agents placement needs; (8) the definition's four adjectives echo the domain sentence and P1 lists them again; (9) 'crash' and 'going offline' overlap; (10) model: variants still says 'permissionless replacement' where the record generalizes, misbehaviour keeps 'outage' and 'censorship by or of the worker', and incentives keeps 'a reward does not guarantee someone responds when cost exceeds reward', which invites the inverse reading the record avoids.",
+        "resolutions": [
+          {
+            "id": "positional:c24757306f",
+            "resolution": "Heuristic false positive: 'a reward above the cost' in P4 compares amounts; it is not positional and refers to nothing on the page."
+          },
+          {
+            "id": "names-concept:24a3543103",
+            "resolution": "automation-networks: named once in P1 as a separate concept with its own meaning; nothing about how automation networks work is explained."
+          },
+          {
+            "id": "names-concept:b91db26167",
+            "resolution": "execution-bots: named once in P1 as a separate concept; not explained."
+          },
+          {
+            "id": "names-concept:3295cb7501",
+            "resolution": "keepers: named once in P1 as a separate concept; not explained."
+          },
+          {
+            "id": "names-concept:407d7811f3",
+            "resolution": "off-chain-execution: named in P1 only as a concept covering acceptance; its where-it-runs, what-stays-on-chain and exit arguments are not restated."
+          },
+          {
+            "id": "names-concept:b923046954",
+            "resolution": "on-chain-verification: named in P1 only as covering the acceptance step; no check, timing or cost claim of its own is explained."
+          },
+          {
+            "id": "names-concept:6e37fe5822",
+            "resolution": "oracle-nodes: named once in P1 as a separate concept; not explained."
+          },
+          {
+            "id": "names-concept:6c911b430e",
+            "resolution": "trusted-execution: named in P1 only as covering acceptance; operator, committee and attestation content is not explained."
+          },
+          {
+            "id": "names-concept:510ea79ca0",
+            "resolution": "untrusted-execution: named in P1 only; the record's redundancy is about workers staying responsive, not agreement as evidence, so its correctness argument is not paraphrased."
+          },
+          {
+            "id": "names-concept:73a8bf0ab2",
+            "resolution": "verification: appears only inside the name 'on-chain verification' in P1; the verification spectrum is not explained."
+          }
+        ],
+        "recordFingerprint": "f572603b8777037210ba0c36a43df45c35cc4320790575465776b5d7433a8953"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-28T15:47:34.289Z",
+    "note": "Group re-audit PASS (fresh context), scoped to G1 and the changed off-chain-execution text, with every member (off-chain-execution, on-chain-verification, trusted-execution, untrusted-execution, off-chain-workers) read once side by side against the plan and the parent off-chain-computation. G1 resolved: off-chain-execution P1 now says the claimed result comes back 'with whatever evidence the chain's acceptance rule asks for, which in challenge-based designs may be none', and that it takes effect 'only if that rule is met'. This agrees with on-chain-verification's definition ('either by running a check on the evidence submitted with it or by leaving a window open for objection') and its window row ('no evidence is submitted with the result'), with untrusted-execution's fraud-detection evidence ('No successful challenge to a result accepted provisionally', which arises after submission, not with the result), and with off-chain-execution's own P3 ('Designs that rely on challenges keep dispute resolution on chain'). Model fields.outputs, fields.sequence[1] and plan claim 0 carry the same condition, so the unconditioned phrase is not copied back. No new cross-member defect: the verifier is not narrowed ('the chain's acceptance rule' fits on-chain-verification's 'a chain's rules or a contract'); 'may' is kept; P1 says nothing about what the window shows or when acceptance happens, so it does not take on-chain-verification's or untrusted-execution's territory; 'takes effect' keeps the sense shared with on-chain-verification and off-chain-workers. Other members unchanged; no material defect found on reading them. Group signals: 0. Convergence: unchanged from the previous group audit (openings definitional; trusted/untrusted share 'is accepting a result' as the parent's two branches; paragraph counts and comparison dimensions differ and follow each member's claims); not convergence. Advisory: (new) 'evidence' in off-chain-execution P1 and on-chain-verification means what accompanies the result, while untrusted-execution counts the later absence of a successful challenge as a kind of evidence; P1's 'bringing back ... with' scopes its 'none' to what accompanies the result, so no contradiction, but one clause could make the two senses explicit; (new) off-chain-execution P1's 'takes effect only if that rule is met' and P3's 'has no force of its own' overlap within the record. Carried: (1) on-chain-verification attestation row omits the root's honesty, which trusted-execution and the parent state; (2) trusted-execution committee threshold and untrusted-execution threshold agreement state the same k-of-n condition without drawing the named-trust vs independent-computation distinction; (3) proof conditions in both untrusted-execution and on-chain-verification, by angle; (4) shared-fault point in untrusted-execution (safety) and off-chain-workers (liveness), by angle; (5) off-chain-execution P4 replacement gives capability only, off-chain-workers adds 'a reason to act'; (6) 'specification' and 'intended' wording across trusted-execution, on-chain-verification and computation-integrity; (7) on-chain-verification P4 'the claimed output' vs computation-integrity's 'result'; (8) concept-id and naming style in prose inconsistent across members; (9) carried plan/model lags (off-chain-execution plan claim 2 frame and P4 'withheld data'; on-chain-verification plan claim 2 'immediately after the check'; untrusted-execution 'executor's liveness' and 'intended computation'; off-chain-workers model variants, misbehaviour and incentives).",
+    "resolutions": [],
+    "records": {
+      "off-chain-execution": "09c0e5470de6e8043c7937ffc544aa14039a0ea09bf9fab520e234b75618eee3",
+      "on-chain-verification": "5901a1de774ceada1405c7a03257f64f772c2ec76b5de3cef57de3d5fcb602cd",
+      "trusted-execution": "b343ecddbb3ae37cb9d153d1fee70e751514c50f51aed94c3d8bb90ee2092694",
+      "untrusted-execution": "21d0f2b97665a904ebc13a1ef829c39ed4250e0082ab1ee2d9b61b0ad03cd6ff",
+      "off-chain-workers": "f572603b8777037210ba0c36a43df45c35cc4320790575465776b5d7433a8953"
+    }
+  }
+}
