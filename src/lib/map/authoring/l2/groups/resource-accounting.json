@@ -1,0 +1,786 @@
+{
+  "version": 1,
+  "group": "resource-accounting",
+  "domain": "computation-execution",
+  "parentConceptId": "resource-accounting",
+  "basis": {
+    "membership": "c2d48b3ea03bdd2a27ec9a2629414337f05ec8f4fc0ce804f3f1825ea2f2db20",
+    "parents": {
+      "computation-execution": "d1093d7580fe43975a4cabbb30b29f902827f491c4905bac47d9e6c7bfb2332a",
+      "resource-accounting": "bdb53dce2f92ffd97216be0562dc13670fb4b79fe93d07e7c2c899b06e67e41d"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "gas",
+      "placementId": "gas",
+      "standing": "owned",
+      "claims": [
+        "Why many protocols meter in a protocol-defined unit separate from the fee currency: the schedule fixes in the protocol the amount each operation consumes, or the rule that computes it from what the operation touches, so a price that varies, or a currency whose value moves, does not change what a given computation consumes on the same inputs, state and execution context, including any price the code itself reads; the limitation is that the unit measures only what the schedule models.",
+        "How a schedule assigns amounts per operation, including components that depend on state accessed, data size or memory growth, and how repricing by protocol upgrade changes them; code that assumed fixed amounts, such as fixed forwarded allowances or tuned gas estimates, can break when a schedule changes.",
+        "Other designs' units, such as compute units, weight, cycles or several separately metered dimensions, are named as other designs' units, which differ from Ethereum-style gas in what they count and, for some, in metering more than one dimension, not explained."
+      ],
+      "excludes": [
+        "message-calls",
+        "metering",
+        "execution-cost",
+        "fee-accounting",
+        "resource-limits",
+        "transaction-fees",
+        "fee-markets",
+        "gas-abstraction",
+        "evm",
+        "wasm",
+        "deterministic-execution",
+        "transaction-reversion"
+      ]
+    },
+    {
+      "conceptId": "execution-cost",
+      "placementId": "execution-cost",
+      "standing": "owned",
+      "claims": [
+        "What one execution costs the participants who process, store or prove it, in separate kinds of cost: computation, state access and disk I/O, storage kept after the operation, bandwidth, and proving where results are proven; these scale differently, so a charge that tracks one need not track the others.",
+        "How a charged amount relates to that cost: per-operation amounts plus intrinsic per-transaction components, calibrated against reference hardware and a worst-case or average-case assumption, so a charge is an approximation that can be mispriced relative to real cost.",
+        "Why the charge for a transaction is often only estimated before submission and can differ from the amount at inclusion when the state or block context it depends on changes between estimate and inclusion."
+      ],
+      "excludes": [
+        "gas",
+        "metering",
+        "resource-limits",
+        "fee-accounting",
+        "fee-markets",
+        "priority-fees",
+        "congestion-pricing",
+        "transaction-fees",
+        "dynamic-fees",
+        "blockspace-pricing",
+        "state-growth",
+        "contract-state",
+        "zkvms",
+        "denial-of-service-resistance",
+        "resource-pricing"
+      ]
+    },
+    {
+      "conceptId": "metering",
+      "placementId": "metering",
+      "standing": "owned",
+      "claims": [
+        "How a protocol measures resource use while code runs: charging in advance of an operation versus after, the granularity of counting (per instruction, per block of code, or through instrumentation), and handling operations whose cost is known only at run time, with the metering overhead this adds.",
+        "Why metering must produce the same count at every node that executes the same code, state and inputs under the same schedule version, since a count that differs between nodes can make the outcome differ, for example where one node exhausts the budget and another does not, or where the amount used is recorded in the result or visible to running code; the consequence for failure when the budget is exhausted is deterministic-execution's and is only named.",
+        "What metering does not capture, such as work done outside the metered steps (decoding, signature checks, which a protocol may cover with fixed intrinsic charges instead), propagation, long-lived storage, and node-specific costs, so metered use is a model of cost and not the cost itself."
+      ],
+      "excludes": [
+        "gas",
+        "execution-cost",
+        "resource-limits",
+        "wasm",
+        "evm",
+        "deterministic-execution",
+        "transaction-validation",
+        "message-calls",
+        "denial-of-service-resistance",
+        "contract-state"
+      ]
+    },
+    {
+      "conceptId": "resource-limits",
+      "placementId": "resource-limits",
+      "standing": "owned",
+      "claims": [
+        "What caps bound and why: per-execution bounds (the sender's limit, protocol caps on call depth, stack, memory, code size) and aggregate bounds (per-block limits, a target versus a maximum, separate limits per resource), each protecting different participants or resources.",
+        "How limits tie to who can keep up: the limit is chosen against the node hardware and time the protocol expects participants to have, and is fixed by protocol rules and changed through upgrades or, in some designs, adjusted within protocol bounds by block producers, with changes shifting the cost of participation.",
+        "Why valid computation that exceeds a limit cannot complete within one execution, and what that implies for the design of programs, without describing the specific mechanisms of other concepts that work around it."
+      ],
+      "excludes": [
+        "gas",
+        "metering",
+        "execution-cost",
+        "fee-accounting",
+        "denial-of-service-resistance",
+        "recursion-limits",
+        "rate-limiting",
+        "spending-limits",
+        "state-growth",
+        "scaling-bottlenecks",
+        "message-calls",
+        "execution-context",
+        "availability"
+      ]
+    },
+    {
+      "conceptId": "fee-accounting",
+      "placementId": "fee-accounting",
+      "standing": "owned",
+      "claims": [
+        "Who pays and how the charge is computed and settled: the sender by default; in many metered designs, such as Ethereum, units used times a price, with the fee for the declared limit reserved up front and the unused part refunded, while some designs charge for the requested amount whether or not it is used; and, in designs that refund for freeing storage, refund caps and why they exist; the structure of fee payer roles is transaction-structure's and sponsorship is gas-abstraction's, both only named.",
+        "Where payment goes after it is charged: burned, to the block proposer, to a treasury, or split between components, and what each destination means for the accounting, such as a burn removing the amount from supply; incentive and allocation analysis is fee-allocation's and fee-markets', only named; the step order and failure charging are transaction-execution's and transaction-reversion's, only named."
+      ],
+      "excludes": [
+        "gas",
+        "execution-cost",
+        "metering",
+        "resource-limits",
+        "transaction-fees",
+        "fee-markets",
+        "priority-fees",
+        "dynamic-fees",
+        "blockspace-pricing",
+        "congestion-pricing",
+        "gas-abstraction",
+        "transaction-structure",
+        "transaction-execution",
+        "transaction-reversion",
+        "fee-allocation"
+      ]
+    },
+    {
+      "conceptId": "denial-of-service-resistance",
+      "placementId": "denial-of-service-resistance",
+      "standing": "owned",
+      "claims": [
+        "The contribution of accounting to resisting resource exhaustion: where work is metered and priced adequately, an attacker pays for the work it imposes at the schedule's rates and the prevailing price, so the attack's cost tracks the load it creates, and limits cap the damage possible per execution or block; the condition is adequacy of metering and pricing, and the contribution is not a guarantee.",
+        "What stays exposed despite accounting: mispriced operations, unmetered work such as validation before any fee is paid, storage paid for once and kept, and worst-case blocks; complementary defenses outside accounting, such as admission policies, peer scoring or rate limiting, are named only."
+      ],
+      "excludes": [
+        "gas",
+        "execution-cost",
+        "metering",
+        "resource-limits",
+        "fee-accounting",
+        "denial-of-service-attacks",
+        "rate-limiting",
+        "state-growth",
+        "transaction-validation",
+        "availability"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "gas": {
+      "model": {
+        "meaning": "Gas is the name Ethereum and similar protocols give to a protocol-defined unit in which they count the resources an operation consumes, kept separate from the currency in which the resulting fee is paid, with a schedule that fixes how many units each operation consumes, or the rule that computes the amount from what the operation touches.",
+        "kind": "parameter",
+        "parents": {
+          "resource-accounting": "The parent says the unit of account is a model of cost and that protocols fold costs into one unit with an adjustable price table or meter dimensions separately. This adds why a separate unit exists, how its schedule assigns amounts (including state-, size- and memory-dependent parts), what repricing by upgrade does and breaks, and names other designs' units. It does not repeat the parent's account of budgets, storage underpricing or limits."
+        },
+        "claims": [
+          "Why many protocols meter in a protocol-defined unit separate from the fee currency: the schedule fixes in the protocol the amount each operation consumes, or the rule that computes it from what the operation touches, so a price that varies, or a currency whose value moves, does not change what a given computation consumes on the same inputs, state and execution context, including any price the code itself reads; the limitation is that the unit measures only what the schedule models.",
+          "How a schedule assigns amounts per operation, including components that depend on state accessed, data size or memory growth, and how repricing by protocol upgrade changes them; code that assumed fixed amounts, such as fixed forwarded allowances or tuned gas estimates, can break when a schedule changes.",
+          "Other designs' units, such as compute units, weight, cycles or several separately metered dimensions, are named as other designs' units, which differ from Ethereum-style gas in what they count and, for some, in metering more than one dimension, not explained."
+        ],
+        "excludes": [
+          "message-calls",
+          "metering",
+          "execution-cost",
+          "fee-accounting",
+          "resource-limits",
+          "transaction-fees",
+          "fee-markets",
+          "gas-abstraction",
+          "evm",
+          "wasm",
+          "deterministic-execution",
+          "transaction-reversion"
+        ],
+        "placements": {
+          "gas": "One placement under Resource Accounting. The exposition speaks of metered protocols in general and uses Ethereum's gas as the main worked case, named as one design; it must not depend on EVM opcodes or on any one chain's table."
+        },
+        "fields": {
+          "measures": [
+            "The consumption of a computation in protocol units: a count, not a price and not a duration.",
+            "Held in the unit: the amounts, or rules computing them, that the schedule assigns to operations. Not held in the unit: the price per unit, which is a separate quantity set elsewhere.",
+            "Scope of the separation: the schedule's amounts do not depend on the price or currency value, so the same code, inputs, state and execution context consume the same count at any price. Where running code can read the price, as in Ethereum, the price it reads is one of its inputs; do not say the price never matters to what a computation uses.",
+            "Limitation: the unit measures only what the schedule models. Burdens the schedule leaves out (long-lived storage burden, node-specific costs) are not in the count; work outside execution may be covered only coarsely by fixed or per-byte intrinsic charges and is counted only to that extent. Name these; leave their analysis to metering and execution-cost."
+          ],
+          "setBy": [
+            "The protocol: the schedule is part of its rules, so nodes must agree on it, and it changes through protocol upgrade (or, in other designs, a governance or parameter mechanism; do not assert one mechanism for all).",
+            "Pitfall: do not say amounts are set to equal real cost. Calibration is execution-cost's; here say only that amounts are chosen by the protocol, with the reasons for them left out."
+          ],
+          "tradeoff": [
+            "Separate unit: stabilizes what a program consumes against price and currency movement and lets the price float independently; the cost is an extra concept, and a mismatch between the schedule and real cost persists until a schedule change addresses it.",
+            "A single unit compresses several kinds of cost into one number: simple to budget, but it ties the relative amounts of different resources together. Separately metered dimensions track them more closely but make budgeting and limits multi-valued.",
+            "Schedule change (repricing, which changes amounts, not the price per unit): meant to correct mispriced operations, but code with embedded assumptions about amounts can break."
+          ],
+          "extremes": [
+            "Name other designs' units briefly and do not explain them: compute units, weight, cycles, several separately metered dimensions. Say these differ from Ethereum-style gas in what they count and, for some, in metering more than one dimension; do not claim a common structure beyond that.",
+            "Do not claim every protocol has a unit separate from its fee currency. Claim 1 says many do."
+          ]
+        },
+        "variants": "Schedule components: a fixed amount per operation; amounts that depend on state accessed (for instance whether data was accessed before in the transaction, in designs that distinguish this), on data size, or on memory growth. Present these as examples of components in some designs, not as universal.",
+        "relation": "Fee charged is units consumed times a price per unit in many designs; only named here, and settlement is fee-accounting's. Do not state the relation as universal.",
+        "invariants": "Amounts per operation, or the rules computing them, are fixed by the protocol at a given point in its rules; price varies independently. Every node must apply the same schedule for the same code and state, a requirement metering and deterministic-execution own; only name it.",
+        "transitions": "Schedule change (repricing) by upgrade: operations whose amounts change alter total consumption of existing code. Breakage conditions: code that hardcodes a forwarded allowance sized to an old amount, or off-chain or on-chain estimates tuned to old amounts. An increase can make a fixed allowance insufficient, so a call that once succeeded now halts. A decrease can invalidate assumptions in the other direction, for instance that an operation is too costly to repeat in a loop within a limit. Say only what the claim supports; do not say upgrades usually break code. Allowance passing itself is message-calls'; out-of-gas failure is transaction-reversion's and deterministic-execution's: name only."
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A unit and its table: why the unit is separate from price, what the schedule assigns, and what changes when the table changes. These are linked reasons and consequences, not an order, branch or loop.",
+        "whyProse": "The claims are a chain of reasons and conditions (separation, schedule components, repricing consequences, alternatives named). The schedule's components are open-ended and differ by design, so a comparison or table would imply a shared set of dimensions that does not exist. Alternatives are only named, which does not support a comparison structure. No order, branch, cycle or persistent state is at issue.",
+        "level": "Gas is the unit at the leaf of Resource Accounting. The parent describes unit-of-account in general; this concept explains the one-unit design and its schedule, which no ancestor does.",
+        "territory": "Measurement during execution is metering's, cost versus charge and calibration are execution-cost's, caps are resource-limits', payment flow is fee-accounting's, exhaustion defense is denial-of-service-resistance's. Allowance passing, fee markets, sponsorship, EVM and WASM specifics, determinism and reversion are named only.",
+        "placements": "Single placement; the exposition is general and uses one chain's gas as a named example, so it holds regardless of path."
+      },
+      "audit": {
+        "at": "2026-10-27T07:59:27.693Z",
+        "note": "Re-audit 1 after repair 1, expanded into a complete audit because the repair changed the definition (the sense of 'gas'), the central price-independence argument and its condition, the limitation passage and the alternatives paragraph; every sentence was re-read. Blocking findings resolved: A1 (the definition and paragraph 2 now say the schedule fixes amounts or the rule computing them, consistent with the state-, size- and memory-dependent components). A2/B1 (the separation now rests on amounts stated in units without reference to the price, the price code reads is made one of its inputs, and the summary narrows to 'the schedule's dependence on price and currency value'; accurate for Ethereum's GASPRICE/BASEFEE). A3/B2 (validation and propagation are no longer called absent; work outside execution is covered coarsely by fixed or per-byte intrinsic charges, accurate for the 21,000 base and calldata charges; metering's list is no longer paraphrased, only lasting storage and node-specific burdens are named as absent). A4 (repricing is introduced once as a schedule change that alters amounts, not the price per unit; 'repriced' and 'at the price of' are gone; 'price' keeps one sense throughout). A5/B3 (gas is consistently the Ethereum-family name for the protocol unit; compute units, weight and cycles are named as differently named units differing in what they count, and only weight's computation-time/proof-size parts and separately metered dimensions are said to count more than one thing, which is accurate; the parent restatement is reduced to what the alternatives sentence needs, and the one-budget versus multi-valued budgets point adds to the parent). Overlap: the single placement's parent (Resource Accounting) says nothing about gas; the fold-or-separate wording is only named, and the repricing breakage, schedule components and price separation add beyond the parent. Territory: metering, execution cost, fee accounting, deterministic execution, message calls and transaction reversion are named only; the fee-equals-units-times-price clause is a one-clause reference with settlement left to fee accounting, as the model's relation allows; resource limits are not explained. Structure: prose as designed, no structured block. Accuracy: cold/warm access, data-size and quadratic memory components, intrinsic and per-byte charges, Weight v2 parts, fixed forwarded allowances (stipend-style) breaking on increases and loop assumptions breaking on decreases all check. Canonical validity: no positional words, American English, plain text. Depth fits the three claims. Advisory: (1) paragraph 2's lead 'the same code, inputs, state and execution context consume the same count whatever the price' holds only once the later clause makes a price the code reads one of its inputs; placing that condition in the lead would read more directly. (2) 'some ... count more than one thing' clashes mildly with the definition, where gas also counts several resources; 'keep more than one count' or 'have more than one dimension' is exact. (3) 'a mismatch ... remains until a schedule change addresses it' overstates: a mismatch can also shift as hardware or clients change real burdens; 'the count itself does not adjust; only a schedule change alters the amounts' is safer (the model's tradeoff field has the same wording). (4) 'a cold, first access to an item within a transaction from a warm one' still reads as if every first access were cold; access-list and pre-warmed items start warm. (5) Ethereum itself meters blob data in a separate blob-gas dimension (EIP-4844), so 'other designs ... meter several dimensions separately' could note that Ethereum-style gas is the execution dimension. (6) The name gas is also used outside Ethereum-like designs (Cosmos SDK, NEAR, Aptos, Sui); 'Ethereum and similar protocols' is vague rather than false. (7) Ownership language in reader text remains ('is the business of', 'belongs to', 'take up'). (8) 'Ethereum's gas is the worked case' is mildly self-referential. (9) Paragraph 4's opening 'A schedule assigns each operation an amount of units' and paragraph 2's opening repeat the definition.",
+        "resolutions": [
+          {
+            "id": "names-concept:6bd1f3b071",
+            "resolution": "deterministic-execution is named twice (every node applying the same schedule; failure when a budget runs out) and never explained; no account of failure determinism or divergence detection."
+          },
+          {
+            "id": "names-concept:9958f74683",
+            "resolution": "'execution context' appears only as a generic phrase in the separation condition (same code, inputs, state and execution context); the execution-context concept and what it exposes are not explained."
+          },
+          {
+            "id": "names-concept:447187bfb1",
+            "resolution": "execution-cost is named once ('Metering and execution cost take up how closely a count follows what nodes bear'); calibration, cost kinds and mispricing analysis are not explained."
+          },
+          {
+            "id": "names-concept:471df369ab",
+            "resolution": "fee-accounting is named in one reference clause ('in many designs the fee is the units consumed times that price, with settlement left to fee accounting'), hedged and allowed by the model's relation; reservation, refunds and destinations are not explained."
+          },
+          {
+            "id": "names-concept:3a37020014",
+            "resolution": "message-calls is named for allowance passing and the call-frame halt; the forwarded-allowance example stays at the level claim 2 grants and does not explain allowance mechanics, consistent with the fixed message-calls record."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "metering is named twice (closeness of count to burdens; nodes applying the same schedule); its timing, granularity and list of uncaptured work are no longer paraphrased (the repair removed the item-by-item list)."
+          },
+          {
+            "id": "names-concept:d8b3c5549a",
+            "resolution": "protocol upgrades are named as the mechanism by which the schedule changes in Ethereum-like designs; the upgrade process is not explained."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "transaction-reversion is named once with message calls and deterministic execution for failure when a budget runs out; revert triggers and fee survival are not explained."
+          }
+        ],
+        "recordFingerprint": "3d4e278d88cd0ded7f9f0d9a3af686f143dc3a899e5df66a6129af84b621865c"
+      }
+    },
+    "execution-cost": {
+      "model": {
+        "meaning": "Execution cost is what one execution actually imposes on the participants who process, store or prove it, in several kinds that scale differently, set against the amount a protocol charges for it, which approximates that cost and can diverge from it.",
+        "kind": "parameter",
+        "parents": {
+          "resource-accounting": "The parent says the unit of account is a model of cost, that work has several kinds of cost that do not reduce to one number, and that storage is the hardest case. This adds the cost-versus-charge relation: what each kind of cost is and what scales it, how a charged amount is composed (per-operation plus intrinsic per-transaction parts) and calibrated, why a charge is an approximation that can be mispriced, and why a pre-submission estimate can differ from the amount at inclusion. It does not repeat the parent's account of budgets, storage underpricing in general, or limits."
+        },
+        "claims": [
+          "What one execution costs the participants who process, store or prove it, in separate kinds of cost: computation, state access and disk I/O, storage kept after the operation, bandwidth, and proving where results are proven; these scale differently, so a charge that tracks one need not track the others.",
+          "How a charged amount relates to that cost: per-operation amounts plus intrinsic per-transaction components, calibrated against reference hardware and a worst-case or average-case assumption, so a charge is an approximation that can be mispriced relative to real cost.",
+          "Why the charge for a transaction is often only estimated before submission and can differ from the amount at inclusion when the state or block context it depends on changes between estimate and inclusion."
+        ],
+        "excludes": [
+          "gas",
+          "metering",
+          "resource-limits",
+          "fee-accounting",
+          "fee-markets",
+          "priority-fees",
+          "congestion-pricing",
+          "transaction-fees",
+          "dynamic-fees",
+          "blockspace-pricing",
+          "state-growth",
+          "contract-state",
+          "zkvms",
+          "denial-of-service-resistance",
+          "resource-pricing"
+        ],
+        "placements": {
+          "execution-cost": "One placement under Resource Accounting. The exposition speaks of metered protocols in general; any chain's schedule is at most a named example. Do not rely on one VM, one unit or one fee design."
+        },
+        "fields": {
+          "measures": [
+            "The real burden one execution puts on participants, by kind: computation (CPU time); state access and disk I/O (reads and writes against stored state, whose cost depends on state size and caching); storage kept after the execution (borne by every participant holding the state; scales with the amount and how long it is kept); bandwidth (receiving, propagating and, where required, storing the transaction and its data); proving, only in designs where results are proven (the proving burden falls on provers, not on every node, while checking falls on verifiers; do not say all nodes pay it).",
+            "Kinds scale differently: they depend on different inputs and different hardware limits, so a charge tracking one kind need not track another. Say 'need not', not 'does not'. Do not claim fixed ratios or a ranking of kinds, which vary by design; do not restate the parent's point on hardware and state size.",
+            "Who bears each kind differs (all nodes, nodes holding state, provers, the network); keep this to what the claims need.",
+            "Cost is not a duration or a price: it is a burden in several resources. Keep it distinct from the unit and the currency amount, which are other concepts'; name them only."
+          ],
+          "setBy": [
+            "A charge is composed of amounts for the individual operations an execution runs plus intrinsic per-transaction components, charged for the transaction itself however little its payload does: commonly a fixed base for processing it and, in many designs, an amount per byte of the data it carries. Present as common components, not as a universal composition. Reserve 'operation' for one metered step and 'execution' for the whole.",
+            "In designs that calibrate by measurement, amounts are set against reference hardware and a worst-case or average-case assumption; other designs set them by judgment or inherit them. Say 'where calibrated', do not claim all schedules are benchmarked.",
+            "Worst-case calibration: price the operation at its most expensive input or state, so cheap cases are overcharged and, on hardware, implementation and state size like those calibrated against, a chosen input cannot push cost past what the operation's amount represents. Average-case: price typical cost, so adversarial inputs that hit the worst case are underpriced relative to their cost. Which assumption suits depends on whether an adversary can pick the input; do not state one as better in general.",
+            "Reference hardware: the choice sets which participants' costs the charge represents; real node hardware, caching and implementation differ from it, so cost differs between nodes (name that, no more).",
+            "Scope pitfall: this concept owns cost versus charge and calibration. Pricing in currency, price dynamics, payment flow, the unit and its schedule, and measurement during execution are other concepts'; name them only."
+          ],
+          "tradeoff": [
+            "Fidelity versus simplicity: tracking each kind of cost closely needs more dimensions or more terms and is harder to budget and to keep current; a coarse charge is easier to use and misprices more.",
+            "Worst-case versus average-case calibration, as above: safety against chosen inputs versus overcharging ordinary use.",
+            "Mispricing in both directions, stated as an amount, for an operation or an intrinsic component, out of proportion with the burden it stands for, relative to the burden per unit the schedule's other amounts assume (not as what the sender pays, which depends on a price that is other concepts'): an underpriced amount lets a sender impose more burden per unit charged than assumed, so a budget or limit in units admits more real work (the exposure is denial-of-service-resistance's, name only); an overpriced amount takes more units than its burden warrants and can discourage legitimate use. Mispricing arises from calibration error, hardware and software change, state growth, or a cost kind the charge omits."
+          ],
+          "extremes": [
+            "Pitfall: do not say a charge equals cost or that charged amounts measure cost; they approximate it, and the approximation is only as good as the model and calibration behind it.",
+            "Storage kept after the execution is the kind where a one-time charge and an ongoing burden differ most; the parent covers the general point, so here say only that this kind outlasts the execution and that a per-operation amount does not by itself track it. State growth is excluded; name only.",
+            "Do not claim proving cost applies to every protocol; limit it to where results are proven, and keep prover internals and zkVM mechanics out (zkvms' territory)."
+          ],
+          "relation": "Charged amount is an approximation of cost, built from per-operation amounts plus intrinsic per-transaction parts; the gap between charge and cost is the mispricing. Do not write this as a formula valid for all designs.",
+          "tradeoffs": "Estimate before submission versus amount at inclusion: a transaction's charge is often estimated by simulating it against some state and block context before it is submitted, and what is charged at inclusion is determined by the state and block context it actually runs against and by the transaction as submitted. Where the path, the data touched, or a state-dependent amount the schedule assigns (such as a write charged by the value it replaces) depends on state or block values that change in between (another transaction's effects, different block values, state that has grown or been written), the amount can differ, in either direction. The amount can also differ when the transaction is submitted with different fields than it was simulated with and running code can read them, as with the declared limit or the price offered in designs where code can read them. So say 'often estimated' and 'can differ', not 'always differs'. Consequence: senders tend to add a margin to a declared limit, at a price in reserved funds (reservation mechanics are fee-accounting's and transaction-execution's; name only). Do not discuss price changes between estimate and inclusion: those are fee-markets' and dynamic pricing's."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "Cost versus charge: a real multi-kind burden, a charge built from parts and calibrated against assumptions to approximate it, and a gap between them (mispricing, estimate drift). These are linked reasons and conditions, an argument about approximation, not an order, branch, loop or set of states.",
+        "whyProse": "The claims are a chain of conditioned reasons: kinds of cost scale differently, so a charge tracking one need not track the others; the charge is composed and calibrated under assumptions, so it approximates; the approximation can be wrong, and an estimate can drift from the amount at inclusion. A comparison of the kinds over shared dimensions would invite fixed values (who bears it, what scales it) that vary by design and over time, and the claim is only that they scale differently. The calibration choices (worst-case versus average) are conditional on who can choose inputs, which prose states with its conditions. No stage order, loop or persistent state is at issue.",
+        "level": "Execution cost is a leaf under Resource Accounting. The parent names the several kinds of cost in general; this concept sets real cost against the charge: its kinds, how a charge is composed and calibrated, and why charge and cost diverge, which no ancestor says.",
+        "territory": "The unit and its schedule are gas's, measurement during execution is metering's, caps are resource-limits', payment flow is fee-accounting's, exhaustion defense is denial-of-service-resistance's. Markets and pricing in currency, state growth, contract state, zkVMs and resource pricing are named only.",
+        "placements": "Single placement; the exposition speaks of metered protocols in general, so it holds regardless of path."
+      },
+      "audit": {
+        "at": "2026-10-27T08:11:54.472Z",
+        "note": "Re-audit 2 after repair 2, scoped (not expanded): the repair removed P5's sufficient condition for the estimate holding and renamed operation-level numbers without changing the argument, assumptions, structure or scope; the paragraph's argument (the amount at inclusion can differ, so senders add a margin) stands. The whole record (definition and 5 paragraphs) was nevertheless re-read for every use of charge, amount, cost and price. Overlap per placement: one placement (Computation & Execution / Resource Accounting / Execution Cost); P1 and the changed P3-P5 sentences do not restate the parent's sentences on kinds of cost, storage or limits. R1 resolved: the 'estimate holds' sentence is gone, so no incomplete sufficient condition remains; the added sentence ('The amount can also differ when the transaction is submitted with different fields than it was simulated with and running code can read them, as in designs where code can read the limit it declares or the price it offers') is an existence statement, true for Ethereum (GAS/remaining units derived from the declared limit, GASPRICE) and NEAR (prepaid gas), and 'follows ... and the transaction as submitted' adds the transaction as an input; the price appears only as an input code reads, not as a fee change, so fee-markets' territory is not crossed. R2 resolved: 'charge' (noun) is now used only for an execution's amount (definition, P1 'a charge that tracks one kind', P2, P4 lead and causes, P5 'the charge of a transaction'); operation-level numbers are 'amount' (P3 'what its amount represents', P4 mispricing over 'an amount, for an operation or an intrinsic component ... relative to the burden per unit that the schedule's other amounts assume'), and the verb 'charged' for operations is consistent with a charge built from their amounts. 'Cost' is burden throughout (no payment sense left); 'price' is the per-unit payment rate (P4 'at whatever price applies, makes its sender pay more') or the offered field (P5); 'mispriced' is the established schedule-error term the record defines. Territory and splits: unit/schedule (gas), measurement (metering), payment and reservation (fee accounting, transaction execution) and DoS exposure (denial-of-service resistance) are named only. Structure: prose, as designed. Canonical validity, American English and plain text: clean. Model tradeoffs, setBy[2] and tradeoff[2] match the record. Advisory: (1) P5 'code can read the limit it declares': in Ethereum code reads the remaining units derived from it, and the call-forwarding rule or a limit below what was used makes the limit matter without code reading it; 'or what remains of it' and 'or forward' would be more precise (the sentence is non-exclusive, so not false). (2) P4's lead says a charge can be mispriced, then defines mispricing over component amounts; 'its amounts can be mispriced' would tie the two levels. (3) P5 uses 'amount' for the total ('the amount at inclusion') beside a component amount in the same sentence; 'the charge at inclusion' would keep the levels apart. (4) P4 compares an overpriced amount, which may be an intrinsic component, with 'operations of similar burden'. Carried from re-audit 1 in untouched text: P1 storage sentence close to the parent (keep no longer); P3 'calibrated against' assumes measured calibration; a margin can itself change the amount where code reads the limit; designs charging the full declared limit; 'a write charged by the value it replaces' simplifies Ethereum's rule (keep as example); fidelity-versus-simplicity sentence near gas's single-budget sentence (group audit).",
+        "resolutions": [
+          {
+            "id": "names-concept:af2968b57b",
+            "resolution": "Named only in P4 ('an exposure that denial-of-service resistance treats'); the record states the mispricing consequence in units (a budget or limit admits more real work) and does not explain the defense or its limits."
+          },
+          {
+            "id": "names-concept:471df369ab",
+            "resolution": "Named only in P5's closing clause ('reservation belongs to fee accounting and transaction execution'); payment computation, reserve-then-refund and payment destination are not explained; P4 mentions only that a price applies, without its computation."
+          },
+          {
+            "id": "names-concept:4215fcc7dc",
+            "resolution": "Named only in P5's closing clause alongside fee accounting; step order, reservation before the payload runs and failure charging are not explained, only that some designs reserve funds for the declared limit."
+          }
+        ],
+        "recordFingerprint": "90744588bb5be63b63e4f8c45c716025a87290699c67060cd00437084c5ac93e"
+      }
+    },
+    "metering": {
+      "model": {
+        "meaning": "Metering is the step-by-step counting of resource use under a schedule: when each amount is taken relative to its step, how finely steps are grouped, and that every node reaches the same count. It yields a running count against the budget, which some designs also expose to the running code.",
+        "kind": "mechanism",
+        "parents": {
+          "resource-accounting": "The parent says metering happens during execution against a budget the sender supplied and that the unit is a model of cost. Add what the measuring itself consists of: when a step is charged relative to running it, how finely counting is done, how costs known only at run time are handled, what the counting costs, why every node must reach the same count, and which resource use the count never sees. Do not re-explain the budget, the unit's model-of-cost point, storage's lasting burden or who-can-keep-up (parent's)."
+        },
+        "claims": [
+          "How a protocol measures resource use while code runs: charging in advance of an operation versus after, the granularity of counting (per instruction, per block of code, or through instrumentation), and handling operations whose cost is known only at run time, with the metering overhead this adds.",
+          "Why metering must produce the same count at every node that executes the same code, state and inputs under the same schedule version, since a count that differs between nodes can make the outcome differ, for example where one node exhausts the budget and another does not, or where the amount used is recorded in the result or visible to running code; the consequence for failure when the budget is exhausted is deterministic-execution's and is only named.",
+          "What metering does not capture, such as work done outside the metered steps (decoding, signature checks, which a protocol may cover with fixed intrinsic charges instead), propagation, long-lived storage, and node-specific costs, so metered use is a model of cost and not the cost itself."
+        ],
+        "excludes": [
+          "gas",
+          "execution-cost",
+          "resource-limits",
+          "wasm",
+          "evm",
+          "deterministic-execution",
+          "transaction-validation",
+          "message-calls",
+          "denial-of-service-resistance",
+          "contract-state"
+        ],
+        "placements": {
+          "metering": "Single placement under Resource Accounting. The exposition speaks of protocols that execute code and count its use, without tying itself to one VM or unit; gas, EVM and WASM specifics are named only, so it holds wherever it is reached."
+        },
+        "fields": {
+          "sequence": [
+            "Order of events per metered step: determine the amount for the step, compare with the remaining budget, deduct, then run the step (deduction before), or run it and deduct afterward (deduction after).",
+            "Deduction before: the check precedes the work, so a step that cannot be afforded never runs and none of the step's own work is done without its amount deducted. Needs the amount to be known before the step runs. Determining and checking the amount is itself work and can read state. Deduction after: only possible where the work is bounded by something else, or the overshoot is tolerable; otherwise unpaid work can be imposed. State this as a condition, not a rule.",
+            "Amounts that depend on run-time quantities (data sizes, memory growth, state accessed, loop counts or callee behavior): often computable from the step's operands and state when it is reached, so the whole amount is deducted before it runs. Where a quantity is learned only as the work proceeds: deduct a base and add amounts as the quantity becomes known (before the work each covers only where known in advance), or deduct an upper bound and adjust, or cap the size so the maximum can be deducted up front; otherwise the revealing work needs something else to bound it, such as a cap on the quantity or a base amount set to cover it at its largest, or the work it does past the remaining budget is unpaid and has no limit. Name these as options, not as what all designs do.",
+            "Granularity: per instruction (finest, exact for the schedule, most overhead), per block of code with the fixed amounts of straight-line code summed ahead of time and deducted at one point per block, at its start or its end (less overhead, but the block's fixed amounts are checked at one point per block, so the point of exhaustion shifts), through instrumentation (counters inserted into the program before it runs, in the host or compiled code). WASM-specific instrumentation is wasm's: name only."
+          ],
+          "actors": [
+            "The executing node or VM (counts and deducts), the sender (supplies the budget), the protocol rules (define the amounts). Running code may be able to read the remaining amount in some designs; not in all."
+          ],
+          "inputs": [
+            "The code being run, the state it reads, its inputs and environment values, the remaining budget, the amount schedule in force (version matters: same code and state can count differently under a different schedule)."
+          ],
+          "outputs": [
+            "A running count or remaining budget; the signal that the budget is exhausted; in many designs the amount used, recorded in the result or receipt. Consequence of exhaustion is deterministic-execution's: name only."
+          ],
+          "assumptions": [
+            "Every node applies the same counting rules, the same schedule version and the same amount rule to the same code, state and inputs, and the count depends on nothing node-specific such as hardware speed, wall-clock time, cache state, local scheduling or implementation internals (including different client implementations).",
+            "The amounts are a model: they stand for cost, they are not measurements of it. Count is deterministic because it is derived from the executed steps and their data, not from timing.",
+            "Granularity affects where exhaustion takes effect; the rules must fix that point wherever it can change the outcome, and an implementation may count more coarsely only if it reproduces that outcome."
+          ],
+          "failures": [
+            "Divergence: if nodes count differently, outcomes can differ. Concrete ways: one node exhausts the budget and another does not; the amount used is written to a result or receipt or is readable by running code, so a different count gives a different recorded state or a different branch taken. State the dependence on the count being observable or on exhaustion; do not claim any count difference always changes the outcome.",
+            "Unmetered work: work not drawn against the budget during execution is not limited by it: decoding the transaction as received and protocol-level signature checks (not contract-side decoding or account-code validation that runs metered), propagation and relay, storing data after the operation, node-specific costs (cache misses, disk speed, implementation differences). Some are covered by other means such as fixed per-transaction amounts or size caps; metering during execution is not what limits them. Do not explain those other means (execution-cost, transaction-validation, DoS resistance): name only.",
+            "Mismatch between count and real cost makes metered use a model of cost; mispricing itself is execution-cost's and DoS exposure is denial-of-service-resistance's: name only.",
+            "Overhead: counting adds work per step or per block; finer granularity costs more; instrumentation grows the program or slows its execution. Overhead is itself unmetered unless the amounts price it in."
+          ],
+          "invariants": [
+            "For identical rules, code, state and inputs, the count at every step is the same on every node."
+          ],
+          "tradeoffs": [
+            "Granularity: precision of the count and of the exhaustion point versus overhead.",
+            "Deduction before versus after: none of the step's own work unpaid versus the need to know or bound the amount in advance.",
+            "Simplicity of the rules (few cheap-to-count categories) versus fidelity to real cost; more fidelity means more to count and more to keep identical across nodes."
+          ],
+          "variants": [
+            "Per-instruction counting, per-block counting, instrumentation; charge before versus after. Present as ways to meter, with the dimension they differ on, not as a ranking."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A mechanism whose three claims are one argument by dependence: how the count is taken (when, how finely, how run-time costs are handled) determines what must be identical across nodes and what the count never sees. Granularity options differ chiefly in one tradeoff (precision and where exhaustion is detected versus overhead), which a sentence or two carries.",
+        "whyProse": "The claims are conditional causation: charging before requires an amount known in advance; per-block counting shifts the point of exhaustion; identical counts matter because the count can be observed or exhaustion can differ; unmetered work follows from what runs outside the counted steps. No order, branch, loop, persistent state or shared-dimension comparison carries meaning that paragraphs would obscure. The granularity options are three short variants on essentially one tradeoff, so a comparison table would only restate that dimension.",
+        "level": "Belongs at metering, not Resource Accounting: the parent states that metering happens during execution against a budget, while this concept holds the measuring mechanism and its two conditions (same count everywhere; what the count omits). Not gas (the unit and schedule), not execution-cost (what the work really costs and calibration), not resource-limits (bounds).",
+        "territory": "Names gas as the unit and schedule, execution-cost for real cost and mispricing, resource-limits for caps, deterministic-execution for the consequence of exhaustion, wasm and evm for VM specifics, transaction-validation and denial-of-service-resistance for unpaid pre-execution work and exposure, message-calls and contract-state for allowance passing and storage, without explaining any of them. It draws the relationship of measurement to execution only.",
+        "placements": "Single placement under Resource Accounting; the exposition is about counting during execution in general, so it reads the same however it is reached."
+      },
+      "audit": {
+        "at": "2026-10-27T11:15:54.301Z",
+        "note": "Re-audit 3 (recording auditor, scoped) after the third and final repair (user-authorized exception), answering R3 of findings/metering-3.md. R3 resolved: P3's clause now reads 'otherwise the work it does past the remaining budget is unpaid and has no limit'. It no longer states the whole revealing work as unpaid. Because that work's amount is deducted after it runs, only the part beyond the remaining budget goes unpaid, and with no bound nothing limits that part, so the clause is accurate. It separates 'unpaid' from 'unlimited', so the cap example (which limits the overshoot) and the base-amount example (which deducts enough in advance) are no longer presented as making the overshoot paid. It is consistent with P2's conditioned 'Where neither holds, a sender could have work performed that the budget never pays for': P2 says whether unpaid work can arise, and P3 says which part is unpaid when it does. No condition was lost: the clause sits under 'Where none applies' and 'otherwise' (no bound). Re-read in full: P3 (the run-time quantity cases, the three strategies, the fallback sentence, the closing trade-off sentence), P2's deduction-before/after statements and the 'bound ... or make the overshoot tolerable' condition, P4's per-block overshoot sentence, and the uses of 'unpaid', 'bound', 'cap', 'base amount' and 'remaining budget'. No contradiction or overclaim was introduced. Scope: everything outside the clause matches the record described in findings/metering-3.md (definition, P2 'Where neither holds', P3 'which holds only where the bound is valid', P4 'fixed amounts are checked against the budget at one point per block', P4 'grows the program or slows its execution', P5, P6). Model sequence[2] is corrected to match, and sequence[3] is unchanged. Not expanded: the repair changed one clause's wording, not the argument, its assumptions, the structure or the scope. Territory and splits unchanged: a single placement under Resource Accounting with no parent overlap introduced, deterministic-execution, execution-cost and denial-of-service-resistance named only, and gas/wasm/evm specifics not explained. Prose-only design unchanged. American English, plain text, no positional words. Advisory: (1) P3 'the work it does': 'it' could grammatically attach to 'the design' or 'the quantity'; 'the work that reveals the quantity' is the intended antecedent. (2) P3 fallback examples overlap the strategies ('Where none applies' reads somewhat circularly) (carried). (3) P3 'which holds only where the bound is valid' has an unclear antecedent (carried). (4) P3 'needs something else to bound that work' omits P2's 'or to make the overshoot tolerable' alternative (not contradictory: without a bound the overshoot is unlimited) (carried, untouched text). (5) P2 'a sender could have work performed that the budget never pays for' would be more exact as unbounded work past the budget (carried). (6) Definition 'every node reaches the same count' is broader than P5's 'Every node that executes the code' (carried; model meaning same). (7) Model sequence[3] 'the point of exhaustion shifts' is stronger than the record's 'can differ' (carried). (8) P4 'it grows the program or slows its execution': instrumentation typically does both (carried). (9) P6 storage clause close to the parent's storage sentence (carried). (10) Group-audit sibling sense: gas says intrinsic-covered work 'is counted only to that extent', metering says the count 'does not see' it (carried).",
+        "resolutions": [
+          {
+            "id": "names-concept:af2968b57b",
+            "resolution": "denial-of-service-resistance is named once in P6 ('the exposure that unmetered or mispriced work leaves belongs to denial-of-service resistance') as the owner of exposure. Nothing about attacks, defenses or the limits of accounting is explained. Reference only."
+          },
+          {
+            "id": "names-concept:6bd1f3b071",
+            "resolution": "deterministic-execution is named once in P5 ('That exhaustion stops execution at the same step on every node belongs to deterministic execution') to hand over the failure consequence. P5 explains only why counts must be identical, which is metering's claim 2. The consequence of failure is not explained. Reference only."
+          },
+          {
+            "id": "names-concept:447187bfb1",
+            "resolution": "execution-cost is named once in P6 ('How closely the count tracks the real burden, and what mispricing does, belong to execution cost'). Calibration, the composition of costs and mispricing are not explained. The record says only that the count models the burden (claim 3). Reference only."
+          },
+          {
+            "id": "absolutes:167c60b356",
+            "resolution": "All six checked. P2 'a step that cannot be afforded never runs' holds under its stated conditions (deduction before the step, amount known before it runs). P2 'the budget never pays for' sits inside 'Where neither holds ... could' and is conditioned. P3 'Some amounts cannot be fixed per operation' is true for amounts that depend on run-time quantities. P4 'Amounts that depend on run-time quantities cannot be summed ahead' is true by definition of summing fixed amounts ahead of time. P5 'the rules cannot rely on that' is a correct design constraint, because an unobserved count difference only might not change the outcome. Each holds as conditioned. The repaired clause adds no new absolute ('has no limit' is stated under 'otherwise', meaning no bound)."
+          }
+        ],
+        "recordFingerprint": "6abeab87ce82984a6c82c67dea5780f2b01783feecc79adda8256ced4b46cc0f"
+      }
+    },
+    "resource-limits": {
+      "model": {
+        "meaning": "A resource limit is a protocol-set or sender-set ceiling on how much of some resource one execution, or all the work accepted into one block or period, may use; protocol-set limits are meant to keep the work every participant must perform within what participants are expected to be able to do, and a sender-set limit bounds the sender's own exposure.",
+        "kind": "parameter",
+        "parents": {
+          "resource-accounting": "The parent says limits are a choice about who can keep up and that raising them raises the resources needed to participate. This adds: the kinds of limit (per execution, aggregate), what each bounds and protects, who sets and changes each, and the consequence that valid computation above a limit cannot complete within one execution."
+        },
+        "claims": [
+          "What caps bound and why: per-execution bounds (the sender's limit, protocol caps on call depth, stack, memory, code size) and aggregate bounds (per-block limits, a target versus a maximum, separate limits per resource), each protecting different participants or resources.",
+          "How limits tie to who can keep up: the limit is chosen against the node hardware and time the protocol expects participants to have, and is fixed by protocol rules and changed through upgrades or, in some designs, adjusted within protocol bounds by block producers, with changes shifting the cost of participation.",
+          "Why valid computation that exceeds a limit cannot complete within one execution, and what that implies for the design of programs, without describing the specific mechanisms of other concepts that work around it."
+        ],
+        "excludes": [
+          "gas",
+          "metering",
+          "execution-cost",
+          "fee-accounting",
+          "denial-of-service-resistance",
+          "recursion-limits",
+          "rate-limiting",
+          "spending-limits",
+          "state-growth",
+          "scaling-bottlenecks",
+          "message-calls",
+          "execution-context",
+          "availability"
+        ],
+        "placements": {
+          "resource-limits": "One placement under Resource Accounting. Speak of metered protocols in general; use Ethereum (sender gas limit, per-block gas limit with a target and a maximum, call depth, stack, memory, code size) as one named worked case and at most one contrasting design (several separately limited resources). Do not depend on EVM opcodes or one chain's constants."
+        },
+        "fields": {
+          "measures": [
+            "What is bounded: work per execution (computation, memory, stack and call depth, size of deployed code or of a transaction) and work per block or period (total computation, and where designed separately, state access, data or bandwidth). Some limits are in the metering unit (a gas limit), others in natural units (bytes, depth, entries). Do not explain the unit or the counting (gas, metering): name them.",
+            "Different limits protect different parties: the sender's limit caps what the sender can be charged and lets it bound its own exposure; protocol caps on depth, stack, memory and code size keep one execution's worst case bounded for every node (including limits that metering alone does not enforce); per-block limits bound what any node must process, store and relay per unit of time. Keep to what each bounds and why; the pricing of that work is not here."
+          ],
+          "setBy": [
+            "Sender's limit: chosen per transaction by the sender within protocol caps; if it is lower than the work needs, the execution cannot complete (what happens to the failed execution and the fee is transaction-reversion's and fee-accounting's: name only).",
+            "Protocol rules: fixed in the rules and changed by protocol upgrade (a coordinated change that the participants adopt), or in some designs adjusted by block producers within protocol-set bounds (for example producers signal a change in the per-block limit each block, bounded in step size); say which holds only where the design is named. Changes shift the cost of participation for the participants who process state; do not describe any governance process.",
+            "Chosen against hardware and time: for protocol-set limits, the expected node hardware, bandwidth and the time available to process and propagate a block; the choice also reflects how fast state grows and how much sync time is tolerated, but state-growth and scaling-bottlenecks are only named. Protocol-set limits are a policy about who is expected to participate; they are not derived from a single measurement. The sender's limit is chosen against the sender's own exposure."
+          ],
+          "tradeoff": [
+            "Higher limits: more work per block or per execution and larger programs, but a higher bar for participation (hardware, bandwidth, sync time), longer worst-case processing, and possibly fewer independent participants able to keep up. Lower limits: lower bar and shorter worst-case time, but less throughput and more valid programs that do not fit.",
+            "Per-execution caps versus aggregate: a low per-execution cap bounds the worst single operation, but does not by itself bound a block (many executions); an aggregate cap bounds the block but, if an execution may use most of it, one execution can crowd out the others. Both are needed for different bounds; neither replaces the other.",
+            "Block target versus maximum (where a design has both): a target is the usage at which a price mechanism holds steady, a maximum is the hard ceiling that allows temporary bursts; the price mechanism is fee-markets' and is named only. Say 'in designs that have both', Ethereum as the named example (target is a fraction of the maximum, as designed)."
+          ],
+          "extremes": [
+            "Too low: valid programs that need more than the cap cannot complete within one execution in that system; a per-block limit below what a single allowed execution needs would make that execution impossible to include. Too high: the worst-case block or execution exceeds what some participants can process in time, so they fall behind, validate late or stop validating, and the set of who can keep up narrows. Say that the safe level depends on assumptions about hardware and network and is not a universal number.",
+            "Hard ceiling: a limit stops an execution or a block from growing unboundedly; it does not make the work correctly priced and does not by itself keep an attacker from filling every block to the limit at a cost. The exposure left is denial-of-service-resistance's (named only): say only that limits cap the damage per execution or block, and that a protocol-set limit protects the participants who can process work at that level, while those below it fall behind."
+          ],
+          "variants": [
+            "Per-execution limits: sender's limit, protocol caps on call depth, stack, memory, code size.",
+            "Aggregate limits: per-block or per-period limit, target and maximum, one combined or several separate limits per resource (so that a block full on one resource still has room on another; where several dimensions are limited separately, a transaction may be bounded by whichever resource it exhausts first)."
+          ],
+          "invariants": [
+            "Valid computation (computation allowed by the rules, with correct result if it were run to the end) that needs more than a limit allows cannot complete within one execution under that limit: the limit, whether a protocol rule or a value the transaction carries, is a fixed condition of that execution, not an error to be retried with the same inputs, state and context. A larger sender's limit helps only up to the protocol caps and block limit; above those the work has to be shaped to fit. Implication for program design, stated as design pressure without describing other concepts' workarounds: bound the work per call, do not let the cost of one call grow with data or state the program does not control, and expect that work that does not fit must be split or avoided, with what is lost on splitting (a single all-or-nothing execution) left to the concepts that own it. Caution: 'cannot complete' means within one execution under that limit; do not say 'cannot be done'; do not say limits are 'never' changed."
+          ],
+          "tradeoffs": [
+            "Pitfalls for the author: do not explain gas, metering, execution-cost, fee payment, DoS attacks, rate limiting, spending limits (limits on value), recursion limits (name only), state growth or availability; do not assert that limits guarantee DoS resistance; do not give constants as universal; avoid 'only', 'always', 'never', 'any' unless true in every case; 'block limit' and 'sender limit' are two different things, keep the terms apart; a limit that is a count of metered units is not the same as a limit in bytes or depth; do not say validators 'vote' or 'set' limits without naming the design; spell 'target versus maximum' as a feature of some designs only."
+          ]
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A bound and what it protects: each limit caps one resource for one party's benefit, and the level at which it sits is a policy against what participants are expected to be able to do; the relationships are explanatory (why, for whom, who sets it, what follows when valid work exceeds it) rather than an order, a branch, a loop or states.",
+        "whyProse": "The claims are reasons: what each cap protects, why the level depends on who can keep up, and why exceeding a cap prevents completion within one execution. Per-execution and aggregate limits are two categories, not a set of alternatives compared on shared dimensions across several rows, and nothing here is an ordered process, a loop or a set of persistent states; a structure would reduce the conditions (in some designs, within bounds) to labels.",
+        "level": "It belongs at this concept, below Resource Accounting, because the parent only states that limits are a choice about who can keep up; the kinds of limit, who sets and changes them, and the consequence for valid computation are the concept's own claims, not the parent's.",
+        "territory": "Names, never explains, gas, metering, execution-cost, fee-accounting, denial-of-service-resistance, recursion-limits, rate-limiting, spending-limits, state-growth, scaling-bottlenecks, message-calls, execution-context and availability; speaks of bounds, who they protect and who sets them, not of counting, units, pricing, payment or attack exposure.",
+        "placements": "One placement under Resource Accounting; the exposition speaks of limits in metered protocols generally, with one named design as an example, and does not depend on any one chain's constants."
+      },
+      "audit": {
+        "at": "2026-10-27T11:28:39.162Z",
+        "note": "Re-audit 2 (recording auditor), scoped to repair 2 of findings/resource-limits-2.md (R1-R3); not expanded, because the repair reworded three sentences in place and changed neither the argument, its assumptions, the structure (prose, six paragraphs) nor the scope. R1 resolved: the definition now says protocol-set limits 'are meant to keep' the work within expected capacity, which is consistent with P4 (the safe level rests on hardware and network assumptions) and P5 (a level that is too high leaves some expected participants behind). R2 resolved: the 'protects participants only if ... weakest participant' sentence is gone. P5 still reads coherently: too high, then too low, then what a limit does not do (pricing, attackers filling blocks), with denial-of-service resistance named. The planned point that participants below the level fall behind is still carried by P5's first sentence. R3 resolved: P6 now gives the reason as 'the limit, whether a protocol rule or a value the transaction carries, is a fixed condition of that execution rather than a fault to be retried away'. This holds for both senses, and it agrees with the retry conditions (same inputs, state, context and limit), with the next sentence on raising the sender's limit and with the fixed deterministic-execution record, which it does not explain. Every other use of 'limit' was re-read for the protocol-set versus sender sense: definition, P2 (sender's limit chosen per transaction within caps; protocol caps fixed by the rules), P3 (aggregate versus per-execution), P4 and P5 (explicitly 'protocol-set'), P6 (generic limit, sender's limit, protocol caps and block limit kept apart). No term now carries two senses. Overlap: one placement, under Resource Accounting. The changed text restates no parent sentence; P5's too-high consequence goes beyond the parent's 'who can keep up'. Territory: no change. The text names state growth, scaling bottlenecks, fee markets, protocol upgrades and denial-of-service resistance and does not explain them. The model fields were aligned (meaning, extremes[0], extremes[1], setBy[1], invariants[0]), and they now match the record. Accuracy: the six absolutes hold (see resolutions). Depth unchanged. Advisory: (1) the P6 parenthetical 'whether a protocol rule or a value the transaction carries' reads as exhaustive but leaves out a producer-adjusted per-block value carried in a block header (P4). The claim that the limit is a fixed condition still holds, and 'whether set by the protocol or carried by the transaction' would match the record's own dichotomy. (2) 'The two limits are also distinct quantities, although the aggregate one caps what a single execution may declare' shifts referent, and 'declare' is Ethereum-shaped (carried). (3) The definition's 'set by the protocol or by the sender' leaves out producer adjustment (carried). (4) Paragraph 2 'within the protocol's caps' omits the block limit (carried). (5) 'each with its own per-block amount': 'limit' would be clearer (carried). (6) Claim 1 lists memory among the caps and the record does not treat it; this is accurate for Ethereum (carried). (7) 'Aggregate limits bound all the work accepted' means the use of the limited resources (carried). (8) 'left to the concepts that own it' names no concept (carried). (9) 'fixes the budget that execution starts with': 'determines' would be exact, since intrinsic charges are deducted first (carried).",
+        "resolutions": [
+          {
+            "id": "names-concept:af2968b57b",
+            "resolution": "Named once at the end of P5 ('what stays exposed is for denial-of-service resistance') after the record states only its own claim that a limit does not price work or keep blocks from being filled. The exposure itself is not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:8aad4152ed",
+            "resolution": "P3: 'that mechanism belongs to fee markets', after one sentence on what target and maximum are (this concept's claim). The price mechanism is not described. Named, not explained."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "Appears only as 'gas limit' in the Ethereum example in P3 (a transaction's gas limit above the block's gas limit cannot be included). The unit and its schedule are not explained. Named, not explained."
+          },
+          {
+            "id": "names-concept:d8b3c5549a",
+            "resolution": "P4: 'changed by protocol upgrade, a coordinated change that participants adopt'. This is a short gloss on how a limit changes, which is claim 1, and no upgrade process or governance is described. Named, not explained."
+          },
+          {
+            "id": "names-concept:336dbadb9e",
+            "resolution": "P4: 'which are matters for state growth and scaling bottlenecks'. Named as what the level also reflects, not explained."
+          },
+          {
+            "id": "names-concept:883e72fb0e",
+            "resolution": "P4, the same sentence as scaling bottlenecks: 'how fast state grows ... matters for state growth'. Named, not explained."
+          },
+          {
+            "id": "absolutes:f0da8a88a2",
+            "resolution": "Each checked. (1) P2 'if it is lower than the work needs, the execution cannot complete': true by definition of the budget. (2) P3 'a transaction whose gas limit exceeds the block's gas limit cannot be included at all': true in Ethereum, scoped to it. (3) P5 'would make that execution impossible to include': conditional on a per-block limit below a single allowed execution's need, true. (4) P6 'Under that limit it cannot complete within one execution': scoped to that limit and one execution, true. (5) P6 'a function that cannot complete under those limits while the data stays that large': conditioned, true. (6) P6 'such a call cannot rely on a single execution doing all of it': true for work whose size the program does not control. None is unconditional beyond its stated scope."
+          }
+        ],
+        "recordFingerprint": "965496d973e13431ee277e251567e7e22478e54b78c70845d686a4da75c848e1"
+      }
+    },
+    "fee-accounting": {
+      "model": {
+        "meaning": "Fee accounting is how a metered protocol settles the charge for an operation: who is debited, how the amount follows from what was used and the price, what is reserved and returned, and where the collected payment goes.",
+        "kind": "mechanism",
+        "parents": {
+          "resource-accounting": "The parent says metered work is usually charged even when the operation fails, and that the unit of account models cost. This adds the settlement: the payer, the computation of the amount from use and price, reservation and refund, and the destination of the payment. It adds no measurement, pricing-in-currency or market analysis."
+        },
+        "claims": [
+          "Who pays and how the charge is computed and settled: the sender by default; in many metered designs, such as Ethereum, units used times a price, with the fee for the declared limit reserved up front and the unused part refunded, while some designs charge for the requested amount whether or not it is used; and, in designs that refund for freeing storage, refund caps and why they exist; the structure of fee payer roles is transaction-structure's and sponsorship is gas-abstraction's, both only named.",
+          "Where payment goes after it is charged: burned, to the block proposer, to a treasury, or split between components, and what each destination means for the accounting, such as a burn removing the amount from supply; incentive and allocation analysis is fee-allocation's and fee-markets', only named; the step order and failure charging are transaction-execution's and transaction-reversion's, only named."
+        ],
+        "excludes": [
+          "gas",
+          "execution-cost",
+          "metering",
+          "resource-limits",
+          "transaction-fees",
+          "fee-markets",
+          "priority-fees",
+          "dynamic-fees",
+          "blockspace-pricing",
+          "congestion-pricing",
+          "gas-abstraction",
+          "transaction-structure",
+          "transaction-execution",
+          "transaction-reversion",
+          "fee-allocation"
+        ],
+        "placements": {
+          "fee-accounting": "Only placement: Computation & Execution / Resource Accounting. The exposition is about settlement as bookkeeping and holds for any metered protocol; Ethereum is one example of a design, not the definition. Keep every statement conditioned on design, not on one chain."
+        },
+        "fields": {
+          "sequence": [
+            "Notes for the author, not for the record. Order here is conceptual, not the step order of a transaction (transaction-execution's, name only): (1) a limit and a maximum price are declared; (2) the balance must cover the limit at the maximum price, and the amount taken or held is the limit at the price the payer will actually pay; (3) use is measured (metering's, name only); (4) the final charge is units used times the price in force, or the full requested amount in designs that charge for the request; (5) in usage-based charging designs, where the charge follows units used, the part that paid for unused units is returned to the payer; (6) the collected amount goes to its destinations.",
+            "Where a price has components (for example a protocol-set part and a payer-chosen part, as in Ethereum after EIP-1559), say that destinations can differ per component; do not explain the pricing mechanism (fee-markets, priority-fees, dynamic-fees: name only).",
+            "Storage refunds: in designs that grant them, the storage refund is credited when the freeing happens and is usually applied at the end; in designs where it offsets the execution's own charge, caps bound it as a fraction of the units used before it (Ethereum: a fraction of gas used, reduced by EIP-3529 from one half to one fifth). Reasons designs give for such a cap: an uncapped storage refund would let one execution cancel most or all of its own charge, so the fee could depart from the work performed without bound and the work a block contains could exceed what counts against its limit. A cap bounds these gaps rather than closing them, and the cap bounds the storage refund, not the return of the unused part; it does not change what use costs."
+          ],
+          "actors": "The payer (the sender by default; a separate payer or sponsor exists in some designs: named only, structure is transaction-structure's, sponsorship is gas-abstraction's); the recipients of payment (proposer or producer, a treasury, other protocol components); the supply that a burn reduces. Do not describe fee payer roles or sponsor mechanics.",
+          "inputs": "The declared limit, the price terms the payer committed to (a maximum or fixed price), the measured use or requested amount, the price in force when the charge is settled (how it is set is fee-markets', name only), the storage freed where refunds exist.",
+          "outputs": "A final charge debited from the payer, a returned remainder where the design reserves first, and amounts credited to each destination or removed from supply. The resources consumed can be reported in a receipt (transaction-execution's, name only).",
+          "assumptions": [
+            "Settlement as described presumes use is measured identically everywhere (metering's, name only) and that the payer can cover the reserved amount; if it cannot cover it, the design must either reject the transaction or charge less. Do not state which, it varies and the order is transaction-execution's.",
+            "Designs differ and each statement must name its design class: reserve-then-refund (Ethereum-style, charge follows use) versus charge for the request whether or not used (the unused part is not returned; the payer's incentive is then to request accurately). Do not say a design 'always' refunds.",
+            "Destinations are protocol rules, not universal: burning exists in some designs (Ethereum burns the protocol-set part since EIP-1559), others pay everything to the proposer or split. What a burn does to supply is bookkeeping: the amount leaves circulation; whether that is good for value or incentives is fee-allocation's and fee-markets', name only."
+          ],
+          "failures": "What goes wrong in the accounting itself: a generous limit ties up the payer's balance until settlement; an uncapped storage refund can be farmed, and a capped one only bounded; a design that charges for the request penalizes over-requests and does not return the margin; a change of fee destinations alone leaves the rule that computes the charge unchanged. The fee surviving a failed execution and why is transaction-reversion's: name only. Distinguish a charge that is correctly computed from amounts that are correctly calibrated to the burden (the latter is execution-cost's; how the price per unit is set is fee-markets').",
+          "tradeoffs": "Reserve-then-refund lets the payer set a generous limit at the cost of tying up balance until settlement; charging for the request avoids the refund step but pushes the payer to estimate tightly. A storage refund rewards cleanup but can be gamed; a cap bounds both the gain and the gaming without removing them. Burning removes the amount from supply while paying a proposer or treasury moves it to a recipient; state only the bookkeeping difference.",
+          "relation": "Charge = units used x price, where price may have several components; amount taken up front = limit x price the payer will actually pay, and the balance must cover limit x maximum price; credited back = amount taken minus charge (the storage refund, where it offsets the charge, lowers the units charged and is capped as a fraction of use in designs that cap). Present as a relation among named quantities for specific designs, not as a universal formula."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A conditional sequence of bookkeeping (reserve, charge by use or request, return the unused part, route the payment) with design variants at two points (reserve-then-refund versus charge-for-request; destinations). The ordering is of quantities, and the transaction step order belongs to transaction-execution.",
+        "whyProse": "The claims are conditions on designs and the reasons behind them (why a reservation exists, why refunds are capped, what a burn does to supply). Prose carries those conditions. A flow would draw the transaction's step order, which is transaction-execution's and fixed. A comparison of destinations would need dimensions such as incentive effect, which are fee-allocation's and fee-markets', so it would pull in analysis this concept only names.",
+        "level": "L2 under resource-accounting: it is the settlement mechanism, beyond the parent's statement that metered work is charged, and needs its own exposition because the payer, the reservation and refund, and the destinations are not in the parent.",
+        "territory": "Draws no sibling's relationship: gas owns the unit and schedule, metering owns measurement, execution-cost owns charge versus real cost, resource-limits owns bounds, denial-of-service-resistance owns accounting's defensive contribution. Pricing, markets, payer structure, sponsorship, step order and failure charging are named only.",
+        "placements": "A single placement under Resource Accounting; the prose is stated per design class, so it holds without relying on one chain or on the parent's surrounding sections."
+      },
+      "audit": {
+        "at": "2026-10-28T15:12:39.711Z",
+        "note": "Re-audit 3 (recording auditor) after the third and final repair (user-authorized exception 2026-10-28), scoped, not expanded: the repair removed one clause and changed no argument, assumption, structure (prose, as designed) or scope. Finding resolved: fee-accounting-3 B1 (P5 opening asserted a credit-back for a design class that includes P4's charge-for-request designs) is gone; P5 now opens with the storage refund, so nothing asserts a credit-back outside P3's usage-based settlement, and P4's 'No part of the request is credited back' and 'a protocol cannot be assumed to credit back unused units' stand uncontradicted. Re-read: the new P5 opening, all of P5 (accumulation, application at the end, cap, reasons, 'bounds both gaps', 'bounds the storage refund, not the return of the unused part'), P3 (two-move settlement, validity at the maximum price, amount taken at the price paid, credit-back of the part for unused units, drawback sentence) and P4. 'A separate source of credit' has a clear and correct referent: the credit-back of unused units stated in P3 and named in P4's last sentence immediately before, and P5's closing sentence makes the contrast explicit; in Ethereum the storage refund is a distinct reason for credit (it lowers the units charged and so raises what is returned), and in deposit-style designs that return funds when data is freed it is also distinct from any return of unused units; in a charge-for-request design without a credit-back the statement stays true, so this is not material. Every other use of 'credited back', 'refund' and 'amount' re-checked (P1, P3, P4, P5, P7); none depends on the removed clause. Untouched text matches findings/fee-accounting-3.md's description (P3 drawback sentence verbatim; all carried advisory wordings still present), so nothing outside the authorized scope changed. Overlap with the single parent (resource-accounting): none introduced; the repair added no text. Territory and splits: unchanged; transaction-execution, transaction-reversion, transaction-structure, gas-abstraction, fee markets, priority fees, dynamic fees, fee allocation, metering and execution cost remain named only. Model: sequence[0] item (5) now reads 'in usage-based charging designs, where the charge follows units used', aligned with assumptions[1]. Accuracy and depth: no new claim; depth unchanged. Advisory: (1) P5 'a separate source of credit' leaves 'separate from what' implicit ('separate from the credit-back of unused units' would be explicit); (2) P5 'the return of the unused part' now takes its antecedent from P3 rather than locally, and gives a currency sum an 'unused part' ('the return of the part that paid for unused units' would match P3); (3) P5 'is capped at a fraction' is a universal over its class ('is typically capped' or 'can be capped'); (4) P7 'Whether the amounts match that burden' ('amounts' means units in P1 and currency in P3 and P5); (5) P6 'the part the sender offers beyond that' ('the part paid beyond that'); (6) P3 'Ethereum-style designs' names the class by chain, not mechanism; (7) P2 'the payer here is whoever is debited' (self-referential 'here'); (8) P2 'units the execution used' versus P3 'after any storage refund'; (9) 'charge' used for units (P5) and currency (P6); (10) P5 'Reasons are given for such a cap.' is a stilted lead-in; (11) P4 'Settlement styles are design choices' partly repeats P1; (12) P6 'unchanged by itself' is nearly tautological; (13) P3 drawback names only the hold during execution, not the validity requirement at the maximum price stated just before.",
+        "resolutions": [
+          {
+            "id": "names-concept:8da4a59e66",
+            "resolution": "dynamic-fees is named once in P6 as one of the subjects that set the price parts ('the subject of fee markets, priority fees and dynamic fees'); no pricing mechanism is explained. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:447187bfb1",
+            "resolution": "execution-cost is named in P7 as owning whether the amounts match the burden; the record does not explain cost composition or calibration. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:230999be49",
+            "resolution": "fee-allocation is named in P6 as owning whether a destination is wise and its incentive effects; only the bookkeeping difference (burn removes supply, payment moves it) is stated. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:f70d434af9",
+            "resolution": "fee-markets is named in P6 and P7 as owning how price parts and the price per unit are set and destination incentives; no market mechanism is explained. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:b27f6a8629",
+            "resolution": "The word gas occurs only inside the name 'gas abstraction' (P2); the record counts limits and use in generic 'units' and does not explain the unit, schedule or repricing. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:909891be72",
+            "resolution": "gas-abstraction is named in P2 as covering sponsorship; no sponsor mechanics are described. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "metering is referenced in P2 as the source of the unit count and the consistency it presumes; measurement itself is not explained. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:a6bba45c69",
+            "resolution": "priority-fees is named in P6 alongside fee markets and dynamic fees; the sender-offered part is identified only as a destination component, not explained. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:d8b3c5549a",
+            "resolution": "protocol-upgrades appears only as the means by which destinations can change (P6); upgrade processes are not explained. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:653f1d76ff",
+            "resolution": "transaction-execution is named in P3 as owning the order of the steps within a transaction; the record orders quantities, not steps. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "transaction-reversion is named in P3 as owning what happens to the fee when an execution fails; failure charging is not explained. Repair did not touch it."
+          },
+          {
+            "id": "names-concept:42f8001dda",
+            "resolution": "transaction-structure is named in P2 as describing how fee payer roles are separated; the structure is not described. Repair did not touch it."
+          }
+        ],
+        "recordFingerprint": "9e925c3f2a7d64981ada872269ebe8d6f27b6c97cbaf7877b60abef8d6b6c06d"
+      }
+    },
+    "denial-of-service-resistance": {
+      "model": {
+        "meaning": "Denial-of-service resistance is the degree to which a system keeps serving participants while others try to deny them service; resource accounting contributes to resisting the form of it that exhausts resources, where metering, pricing and limits make imposing load costly to whoever pays for it and bounded per execution and per block, a contribution that holds only for work the protocol measures and prices adequately.",
+        "kind": "property",
+        "parents": {
+          "resource-accounting": "The parent says accounting bounds and charges work so no one can impose unlimited cost on others. This adds the security reading: the conditions under which that charging and bounding actually resists exhaustion, and the work it leaves exposed. Do not repeat the parent's account of metering, storage cost or who can keep up."
+        },
+        "claims": [
+          "The contribution of accounting to resisting resource exhaustion: where work is metered and priced adequately, an attacker pays for the work it imposes at the schedule's rates and the prevailing price, so the attack's cost tracks the load it creates, and limits cap the damage possible per execution or block; the condition is adequacy of metering and pricing, and the contribution is not a guarantee.",
+          "What stays exposed despite accounting: mispriced operations, unmetered work such as validation before any fee is paid, storage paid for once and kept, and worst-case blocks; complementary defenses outside accounting, such as admission policies, peer scoring or rate limiting, are named only."
+        ],
+        "excludes": [
+          "gas",
+          "execution-cost",
+          "metering",
+          "resource-limits",
+          "fee-accounting",
+          "denial-of-service-attacks",
+          "rate-limiting",
+          "state-growth",
+          "transaction-validation",
+          "availability"
+        ],
+        "placements": {
+          "denial-of-service-resistance": "Single placement under Resource Accounting; the exposition is about accounting's contribution, so it reads the same wherever accounting appears. Keep it free of any one chain's schedule or fee numbers."
+        },
+        "fields": {
+          "statement": [
+            "Scope: resistance to resource exhaustion that works by charging for load and capping it, not through who is allowed to send it. Name it as a contribution of accounting, one defense among several.",
+            "Cost side: where an operation is metered, its amount approximates its cost to nodes, and the fee grows with the execution's charge at a price that is not negligible, whoever pays for that load pays more as it grows. State the conditions before the consequence, and say the price in force can differ over time where the design lets it respond to demand and stays fixed where the rules fix it. How fees are computed and who pays them is fee accounting's. Do not say attack cost 'equals' node cost: amounts approximate cost and attackers can also have motives other than gain.",
+            "Bound side: per-execution and per-block limits cap how much metered work one execution or one block can force, and real work only as far as the amounts track it. This bounds the damage of each execution or block, not how many an attacker can pay for, and does not by itself make the work paid for. Cap and charge are separate mechanisms; keep them distinct.",
+            "Not a guarantee: say what the contribution depends on (adequacy of metering and pricing), not that it fails in general."
+          ],
+          "establishedBy": [
+            "Metering that covers the work; a schedule whose per-operation amounts track real cost across the operations and inputs an attacker can choose (the attacker picks the cheapest-to-charge, costliest-to-node ones); a price high enough that paying for sustained load is expensive.",
+            "Pitfall: adequacy is judged against the attacker's best choice of operation and input, not the average workload."
+          ],
+          "confusions": [
+            "Exposure the limit leaves (the concept is a limit, so there is no violatedBy): mispriced operations (amount below node cost, which an attacker can repeat and which also lets a full block force more real work than its limit intends; a gap that is typically found only after it is exploited); work neither metered nor covered by an intrinsic amount, and work done before any fee is paid; storage paid for once and kept, where the attacker's outlay ends at the write and the burden continues; worst-case blocks an attacker willing to pay can produce deliberately, if limits were sized against typical content.",
+            "Do not say accounting 'prevents' or 'stops' DoS. Do not say pricing makes attacks unprofitable: that depends on the attacker's goal and on how the harm compares with the cost paid.",
+            "Distinguish payment from harm: an attacker who pays still imposes the load; paying makes it costly, it does not remove the effect on others while it lasts. Congestion from paid load is not a failure of accounting.",
+            "Complementary defenses outside accounting (admission policies, peer scoring, rate limiting) are named only, as addressing some of the load accounting does not reach, chiefly unpaid traffic before admission. Do not explain what they do. Do not define denial-of-service attacks, availability, state growth or transaction validation; name them if needed."
+          ],
+          "tradeoffs": "Tighter limits and higher prices shrink the exposure but restrict legitimate use and raise cost for honest users; looser ones do the reverse. Do not argue the optimum; the limits' own trade-off (who can keep up) is resource-limits'.",
+          "invariants": "The contribution is conditional on adequacy of metering and pricing at every statement: no sentence should claim resistance without the condition, and none should claim failure without saying which kind of work is outside it."
+        }
+      },
+      "design": {
+        "decision": "prose",
+        "relationship": "A conditional contribution and its limits: a claim that holds only when conditions are met, followed by a list of exposures that fall outside the conditions. This is a qualified claim with exceptions, not an ordered process, branch, cycle or comparison on shared dimensions.",
+        "whyProse": "The exposition is one qualified argument: accounting raises attacker cost and caps damage where metering and pricing are adequate, and four named exposures remain, each with its own reason. The reasons depend on the conditions stated beside them, which paragraphs carry. A distinction or comparison would reduce the conditions to table cells, and no order, branch, loop or states are present.",
+        "level": "This belongs at L2 under Resource Accounting because it states what the accounting machinery buys in security terms and where it stops, which the parent only implies and the sibling concepts (unit, measurement, cost, bounds, payment) each treat from their own side.",
+        "territory": "It names gas, metering, execution cost, limits and fee accounting only as the things whose adequacy matters, without explaining them. It leaves attack taxonomy to denial-of-service-attacks, rate limiting, state growth, transaction validation and availability, naming complementary defenses only.",
+        "placements": "One placement, under Resource Accounting; the contribution and its exposures do not depend on any other context, so one exposition holds."
+      },
+      "audit": {
+        "at": "2026-10-28T15:27:10.520Z",
+        "note": "Re-audit 2 (recording auditor) after repair 2, scoped, not expanded into a complete audit: the repair took the re-audit 1 fixes verbatim (definition broadened to the property with accounting scoped to the exhausting form; P4 subject narrowed to accounting's contribution; P5 until-clause dropped) and changed no argument, assumption, structure (prose, as designed) or claim scope; the record's subject stays accounting's contribution and its exposures. The definition was nonetheless read against every paragraph, and the whole record was re-read. Findings resolved: B1, the definition ('keeps serving participants while others try to deny them service. Resource accounting contributes to resisting the form of it that exhausts resources') no longer narrows denial of service to exhaustion, so it agrees with the fixed availability record ('Not every denial of service works by overload either'); other attack forms are not explained (denial-of-service-attacks and availability excluded, only the boundary is drawn). B2, P4 'Accounting's contribution therefore rests on metering ..., on amounts ..., and on a price ...' no longer makes the whole property rest on accounting and agrees with the definition's 'a contribution rather than a guarantee' and P9's outside defenses. B3, P5 now ends the Ethereum example at 'has repriced operations by protocol upgrade after they proved cheap relative to their burden' (EIP-150 after the 2016 attacks; EIP-1884 and EIP-2929 after analysis showed state access underpriced; 'proved' covers both), with no exhaustive claim about how an exposure ends. Dependent claims checked: the definition's adequacy condition against P2's three conditions, P3's limits ('whatever the sender is willing to pay'; mispriced or unmetered work enlarging real work within a limit), P4, P5's block-level gap, P6 (intrinsic amounts named via metering; pre-fee work bounded and handed to transaction validation, consistent with the fixed record), P7 storage reading (no parent restatement), P8 worst-case blocks (sizing handed to resource limits), P9 ('address some of', 'chiefly unpaid traffic before admission'); no sentence claims resistance for the whole system or claims failure without naming the work outside the conditions. Overlap: one placement (Computation & Execution / Resource Accounting / Denial-of-Service Resistance); nothing restates the parent's metering, storage or keep-up sentences or the domain sentence. Territory: siblings and excluded concepts named only; the hazard boundaries of boundaries.md section 3 held; fixed records (availability, transaction-validation) referenced, not narrowed. Structure: prose as designed. Canonical: no positional or time-sensitive words; American English; plain text. Model meaning and confusions[0] were realigned with the record. Advisory: (1) model confusions[0] 'a gap that is typically found only after it is exploited' is an unsupported generalization (EIP-1884 and EIP-2929 repricings came from benchmarking and analysis, not from exploitation); the record does not carry it ('after they proved cheap'); (2) P4 'Accounting's contribution therefore rests on ... a price high enough' applies the price condition to the whole contribution though limits bound metered work whatever the price; 'Its cost side therefore rests on' would be exact, non-material because P3 separates limits explicitly; (3) definition 'the form of it that exhausts resources': the nearest antecedent of 'it' is 'service'; 'the form of denial of service that exhausts resources' is explicit; (4) 'participants' means those served in the definition and those processing in P3 and P7 (a broad term covering both; untouched wording); (5) re-audit 1 advisories A1-A4 remain in untouched text (P2 'so the same load costs more or less' consequence placed after the fixed-price clause; 'Even when these conditions hold, amounts approximate burden' repeats the condition; 'may be willing to pay more than the fee' reads oddly; authoring vocabulary 'is the business of', 'is the subject of', 'treats it').",
+        "resolutions": [
+          {
+            "id": "names-concept:447187bfb1",
+            "resolution": "execution-cost is named once in P5 ('Why amounts drift from burden is the subject of execution cost'); why amounts drift, calibration and charge composition are not explained. The repair removed the preceding until-clause only."
+          },
+          {
+            "id": "names-concept:471df369ab",
+            "resolution": "fee-accounting is named once in P2 ('How the fee is computed and who pays it is the business of fee accounting'); the fee computation, settlement and payer roles are not explained ('whoever pays' only keeps the payer general). Untouched by the repair."
+          },
+          {
+            "id": "names-concept:1567bd411c",
+            "resolution": "metering is named in P6 ('covered by intrinsic amounts, as metering describes'); the definition and P4 use metering as a condition ('metering that covers the work') without explaining how measurement during execution works. Untouched by the repair apart from P4's subject."
+          },
+          {
+            "id": "names-concept:d8b3c5549a",
+            "resolution": "protocol upgrades are named in P5's Ethereum example ('repriced operations by protocol upgrade'); how upgrades are adopted or governed is not explained. The repair dropped the clause about adoption, which removes the only sentence that touched upgrade adoption."
+          },
+          {
+            "id": "names-concept:34d454b625",
+            "resolution": "rate limiting is named once in P9 among defenses outside accounting ('admission policies, peer scoring and rate limiting, address some of the load it does not reach'); what it does is not explained. Untouched."
+          },
+          {
+            "id": "names-concept:6449e260b7",
+            "resolution": "resource accounting is the parent and is named in the definition ('Resource accounting contributes to resisting the form of it that exhausts resources'); the record does not restate the parent's account of metering, storage or who can keep up, only gives the security reading."
+          },
+          {
+            "id": "names-concept:3a406f1cc7",
+            "resolution": "resource-limits is named in P8 ('whether blocks stay processable depends on how the limits were sized, which resource limits treats'); P3 states only what limits bound for this concept's argument (metered work, damage per execution or block, not their number) and does not explain how limits are set, changed or sized against node hardware."
+          },
+          {
+            "id": "names-concept:883e72fb0e",
+            "resolution": "state growth is named once in P7 ('state growth treats the accumulation'); the paragraph gives only the denial-of-service reading of storage paid once (outlay ends at the write, burden continues) and does not explain growth or its remedies."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "transaction validation is named in P6 ('transaction validation treats it'); the paragraph says pre-fee checking is unpaid work a protocol keeps bounded and pairs with admission policy, consistent with the fixed record, without explaining validity rules or the validity-versus-admission split."
+          }
+        ],
+        "recordFingerprint": "544b65c8e88d23f3f8de2a1f8bb31bbc10ecf1ca37a3d70d1cfdde3361ca1a2c"
+      }
+    }
+  },
+  "groupAudit": {
+    "at": "2026-10-28T15:47:47.444Z",
+    "note": "Group audit PASS (fresh context) over gas, execution-cost, metering, resource-limits, fee-accounting and denial-of-service-resistance read side by side, against the plan (claims, excludes; no splits or reservations), boundaries.md section 3, the parent resource-accounting, and the merged neighbours transaction-execution, transaction-reversion and deterministic-execution. No blocking finding. Ownership and boundaries: each member keeps its angle and names the others. Mispricing is defined and its causes given in execution-cost P5, exploited in denial-of-service-resistance P5, which defers 'why amounts drift' to execution cost; the price-versus-burden question is execution-cost's, and fee-accounting's last paragraph and denial-of-service-resistance P2 only state it as a condition and name execution cost and fee markets. Limits: resource-limits owns what caps bound, their sizing and too-high/too-low; denial-of-service-resistance P3 says what limits contribute against an attacker (bound per execution or block, not how many, not paid for), resource-limits P5 hands that exposure over, and denial-of-service-resistance P8 hands sizing back to resource limits. Unmetered work: metering owns what the count does not see; denial-of-service-resistance P6 cites 'as metering describes' and keeps the unpaid pre-admission angle for transaction validation. Settlement: fee-accounting P3 matches transaction-execution (full limit at the price actually paid, capped by the declared maximum, taken before the payload; unused part credited back; base part burned, remainder to the fee recipient) and names step order and failure charging; metering P5 names deterministic execution for same-step exhaustion, consistent with that record. Contradictions: none. Terms across members: 'amount' is the schedule-assigned quantity in units in gas, execution-cost, metering and denial-of-service-resistance; 'charge' is execution-cost's defined sense (the amount assigned to an execution, in units) and denial-of-service-resistance's 'the fee grows with the execution's charge' keeps it, with 'fee' the currency sum throughout; 'burden' is the nodes' real cost in every member; 'unit' is the protocol unit throughout; 'limit' keeps resource-limits' split (the sender's limit vs protocol-set limits and caps), and denial-of-service-resistance's 'cap on one execution ... whatever the sender is willing to pay' is the protocol cap; fee-accounting reserves 'credited back' for the unused part and 'storage refund' for freeing storage, and P5 separates them explicitly. 'Operation' is the scheduled step in every member and 'execution' one transaction's run. No concept ids in prose in this group (the only hyphenated tokens are 'denial-of-service' and 'state-dependent'), so the slice-wide advisory does not apply here. Template convergence: openings are the corpus definitional form; gas, execution-cost, metering and resource-limits each have a definition plus five paragraphs, fee-accounting six and denial-of-service-resistance eight; each of the first four has three claims, and their arcs differ (gas: why separate, its limit, schedule, other units, repricing; execution-cost: kinds, composition, calibration, mispricing, estimate; metering: deduction order, run-time amounts, granularity, identical counts, what is unseen; resource-limits: two groups, aggregate, level-setting, mis-sizing, valid computation that does not fit), so the equal count follows the claims and is not convergence. All six are prose-only, each design deciding it; several paragraphs close on a handoff ('is the business of', 'belongs to'), which follows the plan's many 'only named' clauses, not a copied form. Drift (window 30) raises no flag. Advisory: (1) gas P3 'counted only to that extent' vs metering P6 'The count does not see work that happens outside the metered steps': the same substance (intrinsic amounts cover outside work coarsely) with 'count' meaning total units in gas and the metered-step count in metering; not a contradiction, since metering P1 scopes its count to steps the schedule assigns amounts to, but a reader moving between them meets two senses of 'count'. (2) fee-accounting uses 'amount' for units ('the amount used or requested') and for currency ('the amount taken from the sender's balance'); context disambiguates; 'sum' as elsewhere in that record would align it with the other members. (3) transaction-execution (merged, fixed) uses 'charge' for the currency debit, while execution-cost defines it in units; the group is internally consistent and the neighbour's context ('charges the account') disambiguates. (4) Same consequence stated three times: an underpriced amount lets a budget or limit admit more real work than intended (execution-cost P5, denial-of-service-resistance P3 and P5); execution-cost names denial-of-service resistance, and P3/P5 in that record could share one statement. (5) The attacker-chooses-the-input point appears in execution-cost P4 (calibration) and denial-of-service-resistance P4 (adequacy); legitimate overlap by angle. (6) The lasting-storage point appears in gas P3, execution-cost P2, metering P6 and denial-of-service-resistance P7, each from its angle (absent from the unit count; a kind of cost; outside the count; attacker lever), one or two sentences each; gas's 'absent from the count' sits slightly against its own 'a change of amounts can at most approximate them', wording only. (7) 'Units used times a price' is stated in gas P2 and fee-accounting P2; gas defers settlement to fee accounting, minor redundancy. (8) The margin on the declared limit tying up funds is stated in execution-cost P6 and fee-accounting P3; execution-cost names fee accounting and transaction execution for reservation. (9) denial-of-service-resistance uses 'participants' for those served (P1) and those who process (P3), and 'cost' in P7 for the attacker's outlay where execution-cost uses it for the nodes' burden; P7 says 'outlay' just before, so the sense is clear. (10) Carried concept-audit advisories, judged not blocking across members: gas 'whatever the price' ahead of its condition and 'mismatch remains until a schedule change addresses it'; execution-cost 'code can read the limit it declares' (in the EVM the limit is observed through remaining gas and the offered price through the effective price, so the hedged 'designs where' claim holds in substance) and the charge/amount mix in its mispricing sentence; metering model 'shifts' vs record 'can differ' (model only) and 'the work it does' antecedent; resource-limits P6 parenthetical omitting the producer-adjusted block limit (the 'under the same limit' condition still makes the sentence true); fee-accounting 'separate source of credit', 'is capped', 'amount' in two senses, priority 'offers' (read as the part of the price actually paid, consistent with transaction-execution); denial-of-service-resistance model confusions[0] (model only) and 'its cost side'. Signal tooling: the gas name signal firing on 'gas abstraction' is a tooling note, with no group signal now open.",
+    "resolutions": [],
+    "records": {
+      "gas": "3d4e278d88cd0ded7f9f0d9a3af686f143dc3a899e5df66a6129af84b621865c",
+      "execution-cost": "90744588bb5be63b63e4f8c45c716025a87290699c67060cd00437084c5ac93e",
+      "metering": "6abeab87ce82984a6c82c67dea5780f2b01783feecc79adda8256ced4b46cc0f",
+      "resource-limits": "965496d973e13431ee277e251567e7e22478e54b78c70845d686a4da75c848e1",
+      "fee-accounting": "9e925c3f2a7d64981ada872269ebe8d6f27b6c97cbaf7877b60abef8d6b6c06d",
+      "denial-of-service-resistance": "544b65c8e88d23f3f8de2a1f8bb31bbc10ecf1ca37a3d70d1cfdde3361ca1a2c"
+    }
+  }
+}

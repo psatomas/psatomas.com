@@ -20393,6 +20393,190 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "gas-content",
+      conceptId: "gas",
+      definition:
+        "Gas is the name Ethereum and similar protocols give to a protocol-defined unit in which they count the resources an operation consumes, kept distinct from the currency in which a fee is paid. A schedule in the protocol's rules fixes how many units each operation consumes, or the rule that computes the amount from what the operation touches.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Many metered protocols count consumption in a protocol-defined unit rather than in the fee currency, and in Ethereum-style designs that unit is gas. The schedule states its amounts, and the rules that compute them, in units without reference to the price, so the same code, inputs, state and execution context consume the same count whatever the price per unit or the currency's value. The price is a separate quantity set elsewhere, and in many designs the fee is the units consumed times that price, with settlement left to fee accounting. Consumption can still differ between runs when the state or block context differs, and where running code can read the price, as Ethereum lets it, the price it reads is one of its inputs. What the separation removes is the schedule's dependence on price and currency value, not dependence on everything. Not every protocol separates the two; Ethereum's gas is the worked case, one design among several.",
+        },
+        {
+          kind: "paragraph",
+          text: "A count in gas is only as complete as the schedule. Work the schedule does not model, such as the lasting burden of stored data or burdens particular to individual nodes, is absent from the count. Some work outside execution is covered only coarsely, by fixed or per-byte intrinsic charges, and is counted only to that extent. Metering and execution cost take up how closely a count follows what nodes bear. The consequence for this unit is that a mismatch between the schedule and real burdens remains until a schedule change addresses it, and for burdens absent from the count a change of amounts can at most approximate them.",
+        },
+        {
+          kind: "paragraph",
+          text: "A schedule assigns each operation an amount of units. In the simplest form the amount is fixed per operation. Some designs add components that depend on what the operation touches: the state it accesses (Ethereum distinguishes a cold, first access to an item within a transaction from a warm one), the size of the data it handles, or how far it grows memory. The amounts are chosen by the protocol as part of its rules, so every node has to apply the same schedule, which metering and deterministic execution take up.",
+        },
+        {
+          kind: "paragraph",
+          text: "Other designs use differently named units, such as compute units, weight or cycles, or meter several dimensions separately. They differ from Ethereum-style gas in what they count, and some, such as weight with separate computation-time and proof-size parts, or separately metered dimensions, count more than one thing. One number gives programs a single budget to plan against, while separate dimensions make budgets and limits hold several values.",
+        },
+        {
+          kind: "paragraph",
+          text: "The schedule changes by protocol upgrade in designs like Ethereum's, and other designs may use a governance or parameter mechanism. Such a schedule change, often called repricing, alters amounts, not the price per unit. It is meant to correct operations whose amounts no longer suit, but it changes the total consumption of existing code that runs those operations, because the code stays the same while the amounts of its operations change. Code and tooling that embedded assumptions about amounts can then break. A contract that forwards a fixed allowance sized to old amounts may find it insufficient after an increase, so a call that once succeeded halts for lack of allowance, and gas estimates tuned to old amounts may no longer fit. A decrease can break assumptions in the other direction, such as that repeating an operation in a loop is too expensive to fit within a limit. Passing allowances is the business of message calls, and the failure when a budget runs out belongs to message calls, transaction reversion and deterministic execution.",
+        },
+      ],
+    },
+    {
+      id: "execution-cost-content",
+      conceptId: "execution-cost",
+      definition:
+        "Execution cost is the burden that one execution puts on the participants who process, store or prove it, in several kinds that scale differently, set against the charge a protocol assigns for it, which approximates that burden and can diverge from it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The burden of one execution falls in several kinds, each growing with something different. Computation is processor time, growing with the work the operations do. State access and disk I/O are the reads and writes against stored state, whose cost depends on how large the state is and how much of it is cached. Bandwidth is the receiving and propagating of the transaction and its data, growing with the bytes they occupy. Storage kept is borne by every participant that holds the state and grows with the amount of data and how long it is kept, so an amount charged per operation does not by itself track it. In designs where results are proven, proving adds a burden that grows with the size of the computation proven and falls on provers rather than on every node, while checking a proof falls on verifiers. Because the kinds depend on different inputs, a charge that tracks one kind need not track another, and their relative costs vary by design.",
+        },
+        {
+          kind: "paragraph",
+          text: "A charge is the amount a protocol's schedule assigns to an execution. It is commonly composed of amounts for the individual operations the execution runs plus intrinsic per-transaction components, which are charged for the transaction itself however little its payload does: commonly a fixed base for processing it and, in many designs, an amount per byte of the data it carries. In designs that calibrate by measurement, amounts are set against reference hardware, and that choice determines whose cost the charge represents. Real nodes differ in hardware, caching and implementation, so the cost of the same execution differs between nodes and one charge cannot match all of them. Other designs set amounts by judgment or inherit them from earlier schedules.",
+        },
+        {
+          kind: "paragraph",
+          text: "Calibration also rests on an assumption about inputs. Under a worst-case assumption an operation is charged as if it met its most expensive input or state, so operations that are cheap in practice are overcharged, while an adversary who chooses the input cannot push an operation's cost past what its amount represents on hardware and an implementation like those it was calibrated against, provided the worst case was identified correctly there and the state size it assumed still holds. Under an average-case assumption an operation is charged near its typical cost, which fits ordinary use more closely, but inputs that hit the worst case are charged less than they cost. Which assumption suits depends in part on whether anyone can choose the input, and neither is better in general.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because a charge is an approximation, it can be mispriced in either direction. Mispricing is an amount, for an operation or an intrinsic component, out of proportion with the burden it stands for, relative to the burden per unit that the schedule's other amounts assume. An amount smaller than its burden warrants lets a sender impose more burden for each unit charged than the schedule assumes, so a budget or limit stated in those units admits more real work than intended, an exposure that denial-of-service resistance treats. An amount larger than its burden warrants takes more units than that burden calls for, so legitimate use consumes more of a budget or limit and, at whatever price applies, makes its sender pay more than for operations of similar burden, which can discourage it. Mispricing arises from calibration error, change in hardware or software, growth of state, or a kind of cost the charge leaves out. Fidelity also trades against simplicity: following each kind closely takes more dimensions or terms, which are harder to keep current, while a coarse charge is easier to use and tends to misprice more.",
+        },
+        {
+          kind: "paragraph",
+          text: "Senders often learn the charge of a transaction only as an estimate, by simulating it against some state and block context before submitting it. What is charged at inclusion follows the state and block context the transaction actually runs against, and the transaction as submitted. Where the path it takes, the data it touches, or a state-dependent amount the schedule assigns (such as a write charged by the value it replaces) depends on state or block values that change in between, such as another transaction's effects or different block values, the amount at inclusion can differ from the estimate, in either direction. The amount can also differ when the transaction is submitted with different fields than it was simulated with and running code can read them, as in designs where code can read the limit it declares or the price it offers. Senders therefore often add a margin to the limit they declare, which in designs that reserve funds for the declared limit ties up funds for more than the transaction uses; reservation belongs to fee accounting and transaction execution.",
+        },
+      ],
+    },
+    {
+      id: "metering-content",
+      conceptId: "metering",
+      definition:
+        "Metering is the step-by-step counting of resource use under a schedule: when each amount is taken relative to its step, how finely steps are grouped, and that every node reaches the same count. It yields a running count taken against the budget, which some designs also expose to the running code. The count covers only the steps a schedule assigns amounts to, so it models the burden of an execution and does not cover all of it.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "For each metered step, a node determines the amount the schedule assigns, compares it with the remaining budget, and deducts it. When the deduction comes before the step and the amount is known before the step runs, a step that cannot be afforded never runs, so none of the step's own work is done without its amount deducted. Determining the amount and checking it are not covered by that, and where the amount depends on state, as when a write's amount is set by the value it replaces, determining it can itself read state. When the deduction comes after the step, the design needs something else to bound what a single step can do, or to make the overshoot tolerable. Where neither holds, a sender could have work performed that the budget never pays for.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some amounts cannot be fixed per operation, because they depend on quantities known only at run time: the size of the data an operation handles, how far memory grows, how much state it touches. Often such a quantity follows from the step's operands or the state it addresses, so it is known when the step is reached and the whole amount can be computed and deducted before the step runs. A quantity can instead become known only as the work proceeds, as when an operation's result length is learned by reading it. Designs differ in how they handle that. One deducts a base amount first and adds further amounts as the quantity becomes known, which keeps each deduction before the work it covers only where that work's quantity is known beforehand. Another deducts an upper bound up front and adjusts afterward, which holds only where the bound is valid. A third caps the quantity, so that the maximum can be deducted in advance. Where none applies, the work that reveals the quantity runs before its amount is deducted, so the design needs something else to bound that work, such as a cap on the quantity or a base amount set to cover it at its largest; otherwise the work it does past the remaining budget is unpaid and has no limit. The options trade more deductions, an adjustment step, or a limit on what programs may do for keeping deduction ahead of the work.",
+        },
+        {
+          kind: "paragraph",
+          text: "The granularity of counting trades precision against overhead. Per-instruction counting deducts the amount for each instruction as it executes, which follows the schedule step by step and adds a check to every instruction. Per-block counting sums the fixed amounts of a straight-line block of code ahead of time and deducts the sum at one point for the block, at its start in some implementations and at its end in others. A deduction at the end comes after the block's work, with the overshoot bounded by the block's length. Amounts that depend on run-time quantities cannot be summed ahead and are deducted at their operation. Per-block counting takes less counting work, but the block's fixed amounts are checked against the budget at one point per block, so the point at which exhaustion is detected can differ from per-instruction counting for the same code. Instrumentation places the counting inside the program before it runs, as counters inserted by the host or by compilation, and these counters can sit at either granularity; it grows the program or slows its execution. The counting is itself work, and it is not drawn against the budget unless the amounts are set to include it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every node that executes the code has to reach the same count for the same code, state and inputs, including any context the code can read, under the same schedule version. The count is not only internal bookkeeping. If one node exhausts the budget at a step where another does not, or if the amount used is written into a result or can be read by running code, a different count can produce a different outcome, such as a different recorded state or a different branch taken. A count that differs without being observed or reaching exhaustion need not change the outcome, but the rules cannot rely on that. So the count has to follow from the executed steps and their data, and not from anything node-specific such as hardware speed, wall-clock time, cache state, local scheduling or the internals of a particular client implementation. The rules have to fix the point at which exhaustion takes effect wherever that point can change the outcome, such as what survives, what is recorded and what the code observed; an implementation may count at a coarser granularity only if it reproduces that outcome. That exhaustion stops execution at the same step on every node belongs to deterministic execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "The count does not see work that happens outside the metered steps. Decoding the transaction as it is received and the protocol's own signature checks are examples, unlike the decoding that contract code does with its inputs or validation that runs as account code, which are metered steps. A protocol may cover such work with intrinsic amounts, fixed or per byte, which cover it only as far as its burden follows that form. Propagating the transaction and its data across the network is likewise outside the count. So is storage after the operation, since the data stays with participants long after the steps that wrote it have been counted. Node-specific costs, such as cache misses, disk speed or differences between implementations, are left out for a further reason: the requirement of identical counts rules out letting them influence the count. How closely the count tracks the real burden, and what mispricing does, belong to execution cost, and the exposure that unmetered or mispriced work leaves belongs to denial-of-service resistance.",
+        },
+      ],
+    },
+    {
+      id: "resource-limits-content",
+      conceptId: "resource-limits",
+      definition:
+        "A resource limit is a ceiling, set by the protocol or by the sender, on how much of some resource one execution, or all the work accepted into a block or period, may use. Limits the protocol sets are meant to keep the work participants must perform within what they are expected to be able to do; the sender's limit bounds what the sender commits to.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Limits come in two groups that bound different things. Per-execution limits bound one run. The sender's limit is chosen per transaction, within the protocol's caps, and fixes the budget that execution starts with; it lets the sender bound its own exposure, and if it is lower than the work needs, the execution cannot complete. Protocol caps are fixed by the rules for every sender and keep the worst case of a single execution bounded for every node. Some are stated in natural units such as depth, entries or bytes rather than in the metered unit. In Ethereum-style designs, for example, call depth, stack size and deployed code size are capped and checked as such, so these bounds do not come from the metered budget.",
+        },
+        {
+          kind: "paragraph",
+          text: "Aggregate limits bound all the work accepted into one block or period, and with it what each node must process, store and relay in each block or period. They are needed alongside per-execution caps because each bounds something the other does not. A low per-execution cap bounds the worst single execution but not a block, which holds many executions. An aggregate limit bounds the block, but if one execution may use most of it, that execution can crowd out the others. The two limits are also distinct quantities, although the aggregate one caps what a single execution may declare: in Ethereum, a transaction whose gas limit exceeds the block's gas limit cannot be included at all. Some designs give a block both a target and a maximum. The target is the usage around which a price mechanism holds steady, and the maximum is the hard ceiling that allows temporary bursts; that mechanism belongs to fee markets. Other designs limit several resources separately, such as computation, state access and data, each with its own per-block amount. A block that is full on one resource can then still have room on the others, and a transaction is bounded by whichever resource it exhausts first.",
+        },
+        {
+          kind: "paragraph",
+          text: "The level of a protocol-set limit is chosen against the node hardware and bandwidth the protocol expects participants to have and the time they have to process and propagate a block. It also reflects how fast state grows and how long synchronizing is tolerated, which are matters for state growth and scaling bottlenecks. No single measurement yields it, and the safe level rests on assumptions about hardware and the network, so it is not a universal number. In many designs a protocol-set limit is fixed in the protocol rules and changed by protocol upgrade, a coordinated change that participants adopt. In some designs block producers adjust such a limit within protocol-set bounds; in Ethereum, a producer may move the per-block limit by a bounded step from the previous block's value. Whoever changes it, the change shifts the cost of participation for the participants who process state. A higher protocol-set limit allows more work per block or per execution and larger programs, at the expense of a higher bar in hardware, bandwidth and synchronization time, longer worst-case processing, and possibly fewer independent participants able to keep up. A lower one lowers the bar and shortens the worst case, but leaves less throughput and more valid programs that do not fit.",
+        },
+        {
+          kind: "paragraph",
+          text: "A protocol-set level that is too high lets the worst-case block or execution exceed what some expected participants can process in time, so they fall behind, validate late or stop validating. A protocol-set level that is too low leaves valid programs that need more than the cap unable to complete within one execution in that system, and a per-block limit smaller than a single allowed execution needs would make that execution impossible to include. A protocol-set limit does not make the work correctly priced or keep an attacker from filling blocks to the limit; what stays exposed is for denial-of-service resistance.",
+        },
+        {
+          kind: "paragraph",
+          text: "Computation that the rules allow, and whose result would be correct if run to the end, can still need more than a limit permits. Under that limit it cannot complete within one execution, and retrying with the same inputs, state and context under the same limit does not change that, because the limit, whether a protocol rule or a value the transaction carries, is a fixed condition of that execution rather than a fault to be retried away. Raising the sender's limit helps only while the need stays within the protocol caps and the block limit. Beyond those, the work has to be shaped to fit, and what shaping it costs a program is left to the concepts that own it. For program design this is a pressure to bound the work of each call. If a call loops over data that anyone can keep lengthening, its work grows with that data, and from some size on it no longer fits, which leaves a function that cannot complete under those limits while the data stays that large. Work whose size the program does not control is better kept out of a call that must fit, since such a call cannot rely on a single execution doing all of it.",
+        },
+      ],
+    },
+    {
+      id: "fee-accounting-content",
+      conceptId: "fee-accounting",
+      definition:
+        "Fee accounting is the bookkeeping by which a metered protocol settles what an execution owes: who is debited, how the fee follows from the amount used or requested and the price, what is held back and credited back, and where the collected payment goes. Designs differ at each of these points.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "By default the sender pays. Designs in which another party pays are the business of transaction structure, which describes how fee payer roles are separated, and of gas abstraction, which covers sponsorship; the payer here is whoever is debited. In many metered designs, Ethereum among them, the fee for execution is the number of units the execution used times a price per unit, and the price can itself have several components. The count of units comes from metering, so settlement is only as consistent as that count: it presumes that every node measures the same use for the same execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "Ethereum-style designs settle in two moves. The sender declares a limit in units and a maximum price per unit. For the transaction to be valid, the balance has to cover the full limit at that maximum price. Before the payload runs, the amount taken from the sender's balance is the full limit at the price per unit the transaction will actually pay, which cannot exceed the declared maximum. When the execution ends, the fee is the units used, after any storage refund, times that price, and the part of the amount taken that paid for unused units is credited back to the sender. The order of these steps within a transaction belongs to transaction execution, and what happens to the fee when an execution fails belongs to transaction reversion. The drawback of the arrangement is that a generous limit ties up balance until settlement, because the amount taken for the full limit is held during execution even though the part for unused units is credited back.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some designs charge for the requested number of units whether or not they are used. No part of the request is credited back, so the payer pays for any margin and has reason to request accurately; the design avoids the credit-back step at the expense of that pressure to estimate tightly. Settlement styles are design choices, and a protocol cannot be assumed to credit back unused units.",
+        },
+        {
+          kind: "paragraph",
+          text: "A storage refund is a separate source of credit in designs that grant one when execution frees stored data, as Ethereum does for clearing storage. In designs where the storage refund offsets the execution's own charge, as in Ethereum, it is accumulated while the freeing happens, is commonly applied when the execution finishes so that it lowers the units charged, and is capped at a fraction of the units used before it. Reasons are given for such a cap. An uncapped storage refund could let one execution cancel most or all of its own charge, so the fee could depart from the work performed without bound, and the work a block contains could exceed, without bound, what counts against its limit. A cap bounds both gaps rather than closing them. It bounds the storage refund, not the return of the unused part, and it does not change what the operations themselves are charged.",
+        },
+        {
+          kind: "paragraph",
+          text: "Once charged, the payment is routed by protocol rules that vary between designs. It can be burned, paid to the block proposer, paid to a treasury, or split among these. Where the price has components, the destinations can differ per component: in Ethereum the protocol-set part of the price is burned and the part the sender offers beyond that goes to the fee recipient the block names, often a builder's address when the block is externally built, though how those parts are set is the subject of fee markets, priority fees and dynamic fees. In accounting terms a burn removes that sum from the supply of the currency, whereas payment to a proposer or a treasury moves that sum to a recipient and leaves supply unchanged. Whether a destination is wise, and what it does to participants' incentives, is the analysis of fee allocation and the fee markets, and is not settled by the bookkeeping. A change of destinations by protocol upgrade leaves the rule that computes the charge unchanged by itself; whether it changes the prices payers face is a question for fee allocation and the fee markets.",
+        },
+        {
+          kind: "paragraph",
+          text: "A fee can be computed exactly as the design prescribes and still be a poor reflection of what the execution cost the participants who processed it. Whether the amounts match that burden is the question of execution cost; how the price per unit is set belongs to the fee markets.",
+        },
+      ],
+    },
+    {
+      id: "denial-of-service-resistance-content",
+      conceptId: "denial-of-service-resistance",
+      definition:
+        "Denial-of-service resistance is the degree to which a system keeps serving participants while others try to deny them service. Resource accounting contributes to resisting the form of it that exhausts resources, where metering, pricing and limits make imposing load expensive for whoever pays for it and bound each execution and block; that holds only for work the protocol measures and prices adequately, and it is a contribution rather than a guarantee.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "On its cost side, accounting works through price, not through deciding who may send. Where an operation is metered, its amount approximates its burden on the nodes, and the fee grows with the execution's charge at a price that is not negligible, whoever pays for that load pays more as the load grows. Each condition carries weight: the work has to be counted, the amount has to track what the work costs the nodes, and the price has to matter. How the fee is computed and who pays it is the business of fee accounting. The price in force can differ from moment to moment where the design lets it respond to demand, and stays put where the rules fix it, so the same load costs more or less depending on when it is imposed. Even when these conditions hold, amounts approximate burden, and a party whose goal is the harm itself may be willing to pay more than the fee. Where they hold, accounting makes an attack expensive; whether it makes the attack unprofitable or unattractive depends on the attacker's goal and how the harm compares with what is paid.",
+        },
+        {
+          kind: "paragraph",
+          text: "Limits are a separate mechanism with a different effect. A cap on one execution and a limit on one block bound how much metered work that execution or block can force on participants, whatever the sender is willing to pay. They bound the damage of each execution or block, not how many an attacker can pay for, and they do not make the work paid for. Where work is mispriced or unmetered, an execution or block within its limits can force more real work than the limit intends. Paying does not remove the effect either: load that is paid for still occupies participants while it lasts, so congestion from paid load is the accounting working as described, not a failure of it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Adequacy is judged against the attacker's best choice, not against the average workload. An attacker can pick the operations and inputs whose amount is lowest relative to their burden. Accounting's contribution therefore rests on metering that covers the work, on amounts that track burden across the operations a sender can choose, and on a price high enough that sustained load is expensive.",
+        },
+        {
+          kind: "paragraph",
+          text: "One exposure is mispriced operations. If an operation's amount is far lower than its burden, an attacker can repeat it, and the fee grows far more slowly than the load; the same gap enlarges the real work a full block can force within its limit. Ethereum, for example, has repriced operations by protocol upgrade after they proved cheap relative to their burden. Why amounts drift from burden is the subject of execution cost.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some work outside the metered steps is covered by intrinsic amounts, as metering describes. What stays exposed is work that no amount reflects and work done before any fee is paid: nodes do the latter whether or not the sender ever pays. Checking a transaction before it is accepted for execution is the usual example. A protocol with such work relies on keeping it bounded and on admission policy, outside accounting, and transaction validation treats it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Storage paid for once and kept is a lasting lever for an attacker: its outlay ends when the write is paid, while the burden stays with every holder of state, including later joiners, after the attack has stopped. For storage, then, the cost tracks the load at the moment of writing but not over its lifetime; state growth treats the accumulation.",
+        },
+        {
+          kind: "paragraph",
+          text: "Worst-case blocks remain exposed. Where limits admit blocks far costlier to process than typical ones, a party willing to pay can produce them deliberately and repeatedly, filled with the operations whose burden per amount is highest, so the worst case is not rare under attack. Accounting prices that work but does not make it lighter; whether blocks stay processable depends on how the limits were sized, which resource limits treats.",
+        },
+        {
+          kind: "paragraph",
+          text: "Defenses outside accounting, such as admission policies, peer scoring and rate limiting, address some of the load it does not reach, chiefly unpaid traffic before admission. Tuning the accounting itself trades exposure against use. Higher prices make use more expensive for honest senders as well, and tighter limits restrict what executions and blocks may contain, while looser prices and limits do the reverse.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

@@ -447,4 +447,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "trusted-execution",
   "untrusted-execution",
   "off-chain-workers",
+  "gas",
+  "execution-cost",
+  "metering",
+  "resource-limits",
+  "fee-accounting",
+  "denial-of-service-resistance",
 ];
