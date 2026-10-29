@@ -341,6 +341,19 @@ export const MAX_REPAIRS = 2;
 export const repairLimitSubject = (conceptId: string) => `repair limit: ${conceptId}`;
 export const repairAllowance = (state: RunState, conceptId: string) => MAX_REPAIRS + (state.resolvedStops ?? []).filter((resolved) => resolved.subject === repairLimitSubject(conceptId)).length;
 
+/**
+ * A repair cycle's reason for display. The stored reason keeps every
+ * reopening's finding ("...; then <concepts>: <finding>"), which is the
+ * cycle's audit history and grows with each reopening; status and next-step
+ * messages show only the latest reopening and how many came before it.
+ */
+export function latestRepairReason(reason: string, max = 400): string {
+  const parts = reason.split(/; then (?=[a-z0-9][a-z0-9-]*(?:, [a-z0-9][a-z0-9-]*)*: )/);
+  const latest = parts[parts.length - 1];
+  const clipped = latest.length > max ? `${latest.slice(0, max - 1)}…` : latest;
+  return parts.length > 1 ? `${clipped} (latest of ${parts.length} reopenings; \`status --verbose\` prints all)` : clipped;
+}
+
 /** A reopen that would take concepts past their repair allowance: the run stops for a human. */
 export class RepairLimitError extends RunStateError {
   readonly conceptIds: string[];
@@ -756,7 +769,7 @@ export function nextAction(state: RunState): NextAction {
     const repairing = state.l2!.repair;
     if (repairing && (repairing.concepts.includes(step.subject) || repairing.groups.includes(step.subject))) {
       const repairMessages: Partial<Record<L2StepKind, string>> = {
-        author: `repair ${step.subject} (cycle ${repairing.cycle}: ${repairing.reason}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
+        author: `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
         audit: `re-audit ${step.subject} in a fresh context against its record as repaired, then \`map:author -- l2 record audit ${step.subject} --audit-file <json>\``,
         "group-audit": `re-audit group ${step.subject} in a fresh context with its repaired records, then \`map:author -- l2 record group-audit ${step.subject} --audit-file <json>\``,
       };

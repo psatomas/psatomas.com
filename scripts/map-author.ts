@@ -88,6 +88,7 @@ import {
   RepairLimitError,
   repairAllowance,
   repairLimitSubject,
+  latestRepairReason,
   staleL2Steps,
   syncL2Base,
   unadoptableMerge,
@@ -139,7 +140,7 @@ const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
   const arg = rest[index];
   if (!arg.startsWith("--")) positional.push(arg);
-  else if (["--json", "--dry-run", "--write", "--pilot", "--agents"].includes(arg)) flags.set(arg, true);
+  else if (["--json", "--dry-run", "--write", "--pilot", "--agents", "--verbose"].includes(arg)) flags.set(arg, true);
   else {
     const value = rest[++index];
     if (value === undefined || value.startsWith("--")) fail(`${arg} needs a value`);
@@ -148,6 +149,8 @@ for (let index = 0; index < rest.length; index++) {
 }
 const flag = (name: string) => (typeof flags.get(name) === "string" ? (flags.get(name) as string) : undefined);
 const dryRun = flags.has("--dry-run");
+/** Status and reopen print long histories (every repair finding, every stop resolution) whole only on request. */
+const verbose = flags.has("--verbose");
 /** `refactor <command>` runs the same commands over representation refactor state. */
 const refactor = first === "refactor";
 /** `l2 <command>` runs L2 slice runs (docs/map-authoring/l2-authoring.md); its read-only commands live in map-author-l2.ts. */
@@ -808,7 +811,7 @@ function commandL2Reopen() {
     throw error;
   }
   saveState(state);
-  console.log(`reopened ${concepts.join(", ")} in repair cycle ${state.l2!.repair!.cycle}: ${state.l2!.repair!.reason}`);
+  console.log(`reopened ${concepts.join(", ")} in repair cycle ${state.l2!.repair!.cycle}: ${verbose ? state.l2!.repair!.reason : latestRepairReason(state.l2!.repair!.reason)}`);
   commandNext(state);
 }
 
@@ -917,7 +920,7 @@ function commandStatus(state = activeState()) {
           `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}`,
           `steps recorded: ${Object.keys(state.l2.steps).length}; next steps: ${pendingL2Steps(state).slice(0, 4).map((step) => `${step.kind} ${step.subject}`).join(", ") || "none"}`,
           `blocked: ${state.l2.blocked.join(", ") || "none"}; repair cycles: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
-          ...(state.l2.repair ? [`repair open: cycle ${state.l2.repair.cycle} (${state.l2.repair.concepts.join(", ")}): ${state.l2.repair.reason}`] : []),
+          ...(state.l2.repair ? [`repair open: cycle ${state.l2.repair.cycle} (${state.l2.repair.concepts.join(", ")}): ${verbose ? state.l2.repair.reason : latestRepairReason(state.l2.repair.reason)}`] : []),
           ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
           ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
@@ -931,7 +934,7 @@ function commandStatus(state = activeState()) {
     `stages remaining: ${STAGES.slice(stageIndex).filter((stage) => stage !== "done").join(", ") || "none"}`,
   ];
   console.log(report.join("\n"));
-  for (const resolved of state.resolvedStops ?? []) console.log(`resolved stop at ${resolved.stage}: ${resolved.subject} → ${resolved.resolution}`);
+  for (const resolved of state.resolvedStops ?? []) console.log(`resolved stop at ${resolved.stage}: ${resolved.subject} → ${verbose || resolved.resolution.length <= 240 ? resolved.resolution : `${resolved.resolution.slice(0, 239)}… (\`status --verbose\` prints it whole)`}`);
   if (state.stop) printStop(state);
   else commandNext(state);
 }
