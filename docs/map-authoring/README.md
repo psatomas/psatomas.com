@@ -36,6 +36,9 @@ Read these before authoring. If they disagree, the earlier source wins.
    built: territory plans, context, contracts, depth, territory precedents,
    runs and repairs. [`l2-pilot.md`](l2-pilot.md) records what the 22-concept
    pilot showed and what changed before the campaign.
+   Its "Pipeline modes" section describes the legacy and simplified modes; the
+   simplified mode's agent instructions are versioned in
+   [`l2-simplified/`](l2-simplified/README.md).
    [`l2-pipeline-v2.md`](l2-pipeline-v2.md) is the batch pipeline that authors
    the remaining L2 content: one group per batch, a deterministic driver,
    independent and verified reviews, and per-batch cost metrics with stop rules.

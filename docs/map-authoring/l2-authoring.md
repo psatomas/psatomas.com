@@ -27,7 +27,7 @@ drafted, and committed with the group's content.
 
 ```bash
 npm run map:author -- l2 territory <group>            # the plan, or a skeleton if none exists
-npm run map:author -- l2 territory <group> --write    # create the skeleton file
+npm run map:author -- l2 territory <group> --write [--pipeline simplified]   # create the skeleton file (declaring the pipeline)
 npm run map:author -- l2 check [--group <group>]      # validate every plan
 npm run map:author -- l2 context <concept-id>         # one concept's bounded context
 ```
@@ -386,6 +386,52 @@ placement the way a reader does. At 1280 and 375 pixels it:
 An L2 run's render stage runs both checks for every placement of every
 concept it authored.
 
+## Pipeline modes
+
+A slice runs under one **pipeline mode**, chosen when it starts and kept for
+its whole run, its repairs and its repair runs
+([`pipeline.ts`](../../src/lib/map/authoring/l2/pipeline.ts)). Each mode has
+a version; a change to what its agents do is a new version.
+
+- **legacy** (the default, version 1): everything this document describes:
+  territory plans with assertion claims, then a persisted concept model and
+  representation design per concept (above), then drafting and audits.
+- **simplified** (version 1): territory plans whose claims are **topic
+  labels**, then drafting and audits, with no model or design step. A topic
+  label is one short phrase naming a question the concept must explain; it
+  asserts nothing, so the accuracy of every statement is the author's and the
+  auditors'. `l2 check` refuses claims with the mechanical signs of an
+  assertion (a colon or semicolon, a parenthetical, a full stop, an "including"
+  or "such as" list, more than 24 words). The author chooses the
+  representation under [representation-design.md](representation-design.md),
+  and the audits judge it there. The agent instructions are versioned in
+  [`l2-simplified/`](l2-simplified/README.md).
+
+The mode is recorded twice, and both must agree: in the run state, and as
+`"pipeline": { "mode": "simplified", "version": 1 }` in each of the slice's
+group files, so a committed plan validates under the mode it was written for
+on any checkout. A run state or group file without one is legacy, which keeps
+every plan merged before modes existed valid as it was accepted. Under the
+simplified mode a group file's `concepts` holds only audits, created when the
+first one is recorded, and a model or design there is refused.
+
+What does not change between modes: two independent first audits per concept,
+audit records bound to record fingerprints, territory (excludes, splits,
+reservations), group audits, repair accounting and limits, the gates, the diff
+boundary and the guarded integration.
+
+**Routing.** Each mode has a default model per role (plan, design in legacy
+only, author, first-audit, repair, re-audit, group-audit); `--routing
+role=model,...` at `l2 start` overrides any of them, and `l2 status` prints the
+run's routing. The tool does not launch agents: the orchestrator applies the
+routing, and `l2 cost` measures it. The simplified default is Opus for every
+role, the choice for its pilot; the 2026-10 benchmark does not show that one
+model suits every role, and Sonnet can be evaluated by routing.
+
+**Rollback** is at the slice boundary: a slice started under one mode finishes
+under it; the next slice may start under the other. Switching a running slice
+is not supported (its plans and recorded steps belong to its mode).
+
 ## Runs
 
 An L2 run authors one **slice** from a clean, current `main` to a validated
@@ -396,9 +442,9 @@ are committed by the run.
 
 ```bash
 npm run map:author -- l2 campaign                         # every slice, the next one, merge authorization
-npm run map:author -- l2 start --slice <id> | --pilot
+npm run map:author -- l2 start --slice <id> [--pipeline legacy|simplified] [--routing role=model,..] | --pilot
 npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".."   # repair merged concepts in a new run (Repairs)
-npm run map:author -- l2 status | next
+npm run map:author -- l2 status [--verbose] | next          # --verbose prints every repair finding and stop resolution whole
 npm run map:author -- l2 record plan <group> | design <id> | author <id>
 npm run map:author -- l2 record audit <id> | group-audit <group> --audit-file <json>   # binds the audit to the records as they are
 npm run map:author -- l2 group-signals <group>            # the group audit's signals
@@ -410,7 +456,7 @@ npm run map:author -- l2 run [--until <stage>]            # gates → browser �
 npm run map:author -- l2 fix | stop | resume              # as for domain runs
 npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
 npm run map:author -- l2 authorize --repair-exception ".."  # a human's standing repair exception (Repairs)
-npm run map:author -- l2 cost [--branch <b>] [--since <iso>] [--agents] [--json]   # what the slice's model sessions spent
+npm run map:author -- l2 cost [--branch <b>] [--since <iso>] [--agents] [--json]   # what the slice's model sessions spent: weighted tokens and list-price USD, by role and model
 ```
 
 **Cost.** `l2 cost` reads the local Claude Code transcripts of this checkout:
@@ -419,7 +465,14 @@ its input, cache writes, cache reads and output. It totals them by step role
 and weights them as the batch pipeline does (input + 0.1 × cache read + 1.25 ×
 cache write + 5 × output). Calls are attributed to the branch the session was
 on; a call without recorded usage is skipped, never estimated. A subagent's
-reported `subagent_tokens` is its final context size, not its spend.
+reported `subagent_tokens` is its final context size, not its spend. Weighted
+tokens price every model alike, so each role and the total also show the
+list-price estimate in USD from the per-model usage (`cost.ts` `PRICES`,
+dated; 1-hour cache writes at 2× input, 5-minute at 1.25×), and a by-model
+breakdown. A model without a listed price is reported as unpriced (`+?`),
+never guessed. The USD figure estimates API-equivalent spend, not a bill or a
+plan's usage limits. Weighted totals are unchanged, so earlier measurements
+stay comparable.
 
 **Slices.** Each domain's ownership groups, in L1 order, are split into the
 fewest slices of at most 30 owned concepts, balanced, never splitting a
