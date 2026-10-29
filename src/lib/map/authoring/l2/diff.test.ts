@@ -77,7 +77,7 @@ test("another group's plan, a missing audit, a changed parent or an unexpected r
   assert.match(validateL2Diff(otherPlan).problems.join(), /another group's plan changed: g2/);
 
   const unaudited = run();
-  delete (unaudited.headPlans[0].concepts.b as L2ConceptWork).audit;
+  delete (unaudited.headPlans[0].concepts!.b as L2ConceptWork).audit;
   assert.match(validateL2Diff(unaudited).problems.join(), /b: the concept audit is missing/);
 
   const unresolved = run();

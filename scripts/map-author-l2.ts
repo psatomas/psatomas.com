@@ -21,7 +21,7 @@ import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-regi
 import type { MapConceptContent } from "../src/lib/map/types.ts";
 import { assembleL2Context, formatL2Context } from "../src/lib/map/authoring/l2/context.ts";
 import { costByRole, projectSlug, sessionCost, type CostFilter, type SessionCost } from "../src/lib/map/authoring/l2/cost.ts";
-import { groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { conceptWorkOf, groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { finishedConcepts } from "../src/lib/map/authoring/l2/campaign.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 import { conceptSignals, driftReport, groupSignals, type L2Signal } from "../src/lib/map/authoring/l2/signals.ts";
@@ -52,7 +52,7 @@ export function signalsOf(conceptId: string, plans: readonly L2GroupFile[]): L2S
   if (!record) throw new Error(`${conceptId} has no record yet`);
   const context = assembleL2Context(conceptId, mapKnowledge, plans);
   const domain = mapKnowledge.placements.find((placement) => placement.id === (context.owner?.domain ?? ""));
-  const work = plans.find((plan) => plan.group === context.owner?.group)?.concepts[conceptId] as L2ConceptWork | undefined;
+  const work = conceptWorkOf(plans.find((plan) => plan.group === context.owner?.group), conceptId) as L2ConceptWork | undefined;
   const neighbours = context.authoredNeighbours.map(recordOf).filter((entry): entry is MapConceptContent => !!entry);
   return conceptSignals({ conceptId, record, context, model: mapKnowledge, work, neighbours, domainOrder: domain?.order ?? 0 });
 }

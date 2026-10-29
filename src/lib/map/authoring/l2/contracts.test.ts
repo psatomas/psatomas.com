@@ -3,7 +3,7 @@ import test from "node:test";
 import type { MapConceptContent } from "../../types.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import { assembleL2Context } from "./context.ts";
-import { designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
+import { conceptWorkOf, designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
 import { filledG1, model, options } from "./fixtures.ts";
 import { conceptSignals, containment, DEPTH, driftReport, groupSignals, mentionedConcepts, recordWords, sliceStopSignals } from "./signals.ts";
 
@@ -205,4 +205,17 @@ test("L2 records are written in American English: a fixed list of British forms 
   assert.deepEqual(spellingProblems(record("Its behaviour is modelled and summarised; the artefact favours honour.")), ["British spelling (behaviour, modelled, summarised, artefact, favours, honour): MAP is written in American English"]);
   // American forms, and words that only look British, pass.
   assert.deepEqual(spellingProblems(record("Its behavior is modeled; analyses, the specialist, emphasis, a premise, otherwise precise, a promise, its exercise.")), []);
+});
+
+test("signals run on a concept whose group file has no concepts key, or an audit-only entry (l2 signals crashed on both)", () => {
+  const m = model([ALPHA]);
+  const plan = filledG1(m);
+  delete plan.concepts;
+  const context = assembleL2Context("a", m, [plan], options);
+  const input = { conceptId: "a", record: ALPHA, context, model: m, neighbours: [], domainOrder: 1 };
+  assert.equal(conceptWorkOf(plan, "a"), undefined);
+  assert.doesNotThrow(() => conceptSignals({ ...input, work: conceptWorkOf(plan, "a") as L2ConceptWork | undefined }));
+  const audited = { ...plan, concepts: { a: { audit: { at: "2026-10-29T00:00:00.000Z", note: "n", resolutions: [], recordFingerprint: "f" } } } };
+  assert.doesNotThrow(() => conceptSignals({ ...input, work: conceptWorkOf(audited, "a") as L2ConceptWork | undefined }));
+  assert.equal(conceptWorkOf(audited, "a")?.audit?.note, "n");
 });

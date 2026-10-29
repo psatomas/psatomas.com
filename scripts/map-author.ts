@@ -60,7 +60,7 @@ import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./m
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
-import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { conceptWorkOf, groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 import { driftReport, sliceStopSignals } from "../src/lib/map/authoring/l2/signals.ts";
@@ -714,7 +714,7 @@ async function commandL2Record() {
       break;
     case "design":
       refuse([...staleProblems(plan, mapKnowledge).map((problem) => `the plan is stale: ${problem}`), ...workProblems(plan, subject, mapKnowledge, "designed"), ...scope({ redesigned: [subject] })]);
-      blocks = (plan.concepts[subject] as L2ConceptWork).design.decision === "block";
+      blocks = conceptWorkOf(plan, subject)?.design?.decision === "block";
       break;
     case "author": {
       const registration = createMapAuthoringInspector(mapKnowledge).inspectConcept(subject).registration;
@@ -750,7 +750,7 @@ async function commandL2Record() {
   saveState(state);
   console.log(`recorded ${kind} ${subject}; ${pendingL2Steps(state).length} step(s) to go`);
   if (blocks) {
-    const design = (plan.concepts[subject] as L2ConceptWork).design as L2Design;
+    const design = conceptWorkOf(plan, subject)?.design as L2Design;
     stop(state, {
       subject: `representation gap: ${subject}`,
       evidence: `${design.gap?.structure}: ${design.gap?.reason}`,
@@ -772,7 +772,8 @@ function writeAudit(kind: "audit" | "group-audit", subject: string, group: strin
   const path = join(ROOT, groupFile(group));
   const plan = JSON.parse(readFileSync(path, "utf8")) as L2GroupFile & { groupAudit?: L2GroupAudit };
   const audit = { at: now(), note: input.note ?? "", resolutions: input.resolutions ?? [] };
-  if (kind === "audit") (plan.concepts[subject] as L2ConceptWork).audit = { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) };
+  // A group file may hold no concept work yet: the audit creates the entry.
+  if (kind === "audit") plan.concepts = { ...(plan.concepts ?? {}), [subject]: { ...((plan.concepts?.[subject] as object | undefined) ?? {}), audit: { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) } } };
   else {
     const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
     plan.groupAudit = { ...audit, records: Object.fromEntries(owned.map((conceptId) => [conceptId, recordFingerprint(recordOf(conceptId))])) };

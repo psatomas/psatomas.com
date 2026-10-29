@@ -32,7 +32,7 @@ export type L2DiffInput = Omit<DiffInput, "expectedConcepts"> & {
 
 export type L2DiffReport = DiffReport & { groups: string[]; authored: string[]; blocked: string[] };
 
-const blocks = (plan: L2GroupFile, conceptId: string) => (plan.concepts[conceptId] as L2ConceptWork | undefined)?.design?.decision === "block";
+const blocks = (plan: L2GroupFile, conceptId: string) => (plan.concepts?.[conceptId] as L2ConceptWork | undefined)?.design?.decision === "block";
 
 export function validateL2Diff(input: L2DiffInput): L2DiffReport {
   const problems: string[] = [];

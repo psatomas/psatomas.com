@@ -58,8 +58,8 @@ export type L2GroupFile = {
   members: L2PlanMember[];
   /** A recorded split for every hazard pair touching an owned member: near-synonyms and category/member relations. */
   splits: { concepts: [string, string]; split: string }[];
-  /** Concept models, designs and audits of owned members (contracts.ts). */
-  concepts: Record<string, unknown>;
+  /** Concept models, designs and audits of owned members (contracts.ts); may be absent, so read it through contracts.ts conceptWorkOf. */
+  concepts?: Record<string, unknown>;
 };
 
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");

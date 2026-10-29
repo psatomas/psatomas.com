@@ -77,6 +77,9 @@ export type L2Design = {
 export type L2Resolution = { id: string; resolution: string };
 export type L2Audit = { at: string; note: string; resolutions: L2Resolution[]; recordFingerprint: string };
 export type L2ConceptWork = { model: L2ConceptModel; design: L2Design; audit?: L2Audit };
+
+/** One owned concept's work in its group file, or undefined: a group file may have no `concepts` key, and an entry may hold only an audit. Read it through here, never as plan.concepts[id].model. */
+export const conceptWorkOf = (plan: Pick<L2GroupFile, "concepts"> | undefined, conceptId: string) => plan?.concepts?.[conceptId] as Partial<L2ConceptWork> | undefined;
 /** The group audit, over every owned member as authored. */
 export type L2GroupAudit = { at: string; note: string; resolutions: L2Resolution[]; records: Record<string, string> };
 
@@ -190,7 +193,7 @@ export type L2WorkStage = "designed" | "authored" | "audited";
  * audited, the audit bound to exactly this record with every signal resolved.
  */
 export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKnowledgeModel, stage: L2WorkStage, signalIds: readonly string[] = []): string[] {
-  const work = plan.concepts[conceptId] as L2ConceptWork | undefined;
+  const work = conceptWorkOf(plan, conceptId) as L2ConceptWork | undefined;
   if (!work) return [`${conceptId}: no concept work in ${plan.group}`];
   const record = model.content.find((entry) => entry.conceptId === conceptId);
   const problems = [...modelProblems(work, conceptId, plan, model), ...designProblems(work.design)];
