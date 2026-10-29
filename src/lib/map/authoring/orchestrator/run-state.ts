@@ -10,6 +10,7 @@ import type { DomainPlan } from "./plan.ts";
 import type { Decision, RefactorPlan } from "../representation/refactor.ts";
 import { sliceSteps, stepKey, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
 import type { L2RepairBaseline } from "../l2/repair.ts";
+import { pipelineOf, PIPELINES, routingOf, type L2Pipeline } from "../l2/pipeline.ts";
 
 /**
  * A run's stages. "merge" exists only for an L2 campaign run whose merging a
@@ -58,6 +59,8 @@ export type L2HistoryEntry =
 /** An L2 slice run's own record (docs/map-authoring/l2-authoring.md). */
 export type L2RunRecord = {
   slice: L2Slice;
+  /** The pipeline mode, its version and routing the run started with (l2/pipeline.ts); absent in runs started before modes existed, which are legacy. */
+  pipeline?: L2Pipeline;
   /** Each recorded judgment step ("plan:<group>", "design:<concept>", ...), when, and for drafting and audits the record they bound. */
   steps: Record<string, { at: string; note?: string; fingerprint?: string }>;
   /** Concepts whose design blocks them: they stay unauthored. */
@@ -192,14 +195,14 @@ export function createRefactorRunState(input: { plan: RefactorPlan; designSet: s
  * topics play, each done once audited (or blocked by its design). The
  * judgment steps before and after them are recorded one by one (sliceSteps).
  */
-export function createL2RunState(input: { slice: L2Slice; remaining: readonly string[]; branch: string; baseSha: string; now: string; pilot?: boolean }): RunState {
+export function createL2RunState(input: { slice: L2Slice; remaining: readonly string[]; branch: string; baseSha: string; now: string; pilot?: boolean; pipeline?: L2Pipeline }): RunState {
   const groups = input.slice.groups.map((group) => ({ group: group.group, concepts: group.concepts.filter((conceptId) => input.remaining.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
   const eligible = groups.flatMap((group) => group.concepts);
   if (eligible.length === 0) throw new RunStateError(`slice ${input.slice.id} has nothing left to author`);
   return {
     version: 1,
     kind: "l2",
-    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
+    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
     domainId: input.slice.id,
     title: input.slice.id === "pilot" ? "L2 pilot" : `${input.slice.domainTitle} L2, part ${input.slice.index}`,
     branch: input.branch,
@@ -260,6 +263,7 @@ export function createL2RepairRunState(
     kind: "l2",
     l2: {
       slice: { ...record.slice, groups },
+      ...(record.pipeline ? { pipeline: record.pipeline } : {}),
       steps,
       blocked: [],
       repairs,
@@ -287,7 +291,7 @@ export function createL2RepairRunState(
 /** The slice's judgment steps not yet recorded, in order; a blocked concept skips its drafting and audit. */
 export function pendingL2Steps(state: RunState): L2Step[] {
   const record = state.l2!;
-  return sliceSteps(record.slice.groups).filter((step) => !record.steps[stepKey(step)] && !(record.blocked.includes(step.subject) && (step.kind === "author" || step.kind === "audit")));
+  return sliceSteps(record.slice.groups, pipelineOf(record).mode).filter((step) => !record.steps[stepKey(step)] && !(record.blocked.includes(step.subject) && (step.kind === "author" || step.kind === "audit")));
 }
 
 /** Whether the pilot's checkpoint holds the run: every plan and design recorded, drafting not yet cleared. */
@@ -310,7 +314,7 @@ export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject:
   assertLive(state);
   if (state.kind !== "l2" || !state.l2) throw new RunStateError("steps belong to L2 runs");
   const record = state.l2;
-  const all = sliceSteps(record.slice.groups);
+  const all = sliceSteps(record.slice.groups, pipelineOf(record).mode);
   const key = stepKey(step);
   const index = all.findIndex((candidate) => stepKey(candidate) === key);
   if (index < 0) throw new RunStateError(`${key} is not a step of slice ${record.slice.id}`);
@@ -766,10 +770,17 @@ export function nextAction(state: RunState): NextAction {
     }
     const [step] = pendingL2Steps(state);
     if (!step) return { kind: "agent", stage: "audit", message: "every group audit is recorded: `map:author -- l2 complete audit --note \"...\"`" };
+    const pipeline = pipelineOf(state.l2!);
+    const simplified = pipeline.mode === "simplified";
+    const instructions = PIPELINES[pipeline.mode].instructions;
+    const routing = routingOf(pipeline);
+    const via = (role: keyof typeof routing) => (simplified && routing[role] ? ` (${routing[role]})` : "");
     const repairing = state.l2!.repair;
     if (repairing && (repairing.concepts.includes(step.subject) || repairing.groups.includes(step.subject))) {
       const repairMessages: Partial<Record<L2StepKind, string>> = {
-        author: `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
+        author: simplified
+          ? `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context${via("repair")}, within its accepted territory (${instructions}repair.md); if the finding needs its territory changed, re-record its plan first; then \`map:author -- l2 record author ${step.subject}\``
+          : `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
         audit: `re-audit ${step.subject} in a fresh context against its record as repaired, then \`map:author -- l2 record audit ${step.subject} --audit-file <json>\``,
         "group-audit": `re-audit group ${step.subject} in a fresh context with its repaired records, then \`map:author -- l2 record group-audit ${step.subject} --audit-file <json>\``,
       };
@@ -777,9 +788,13 @@ export function nextAction(state: RunState): NextAction {
       if (message) return { kind: "agent", stage: state.stage, conceptId: step.kind === "group-audit" ? undefined : step.subject, message };
     }
     const messages: Record<L2StepKind, string> = {
-      plan: `write ${step.subject}'s territory plan: \`map:author -- l2 territory ${step.subject} --write\`, fill claims, reservations and splits, then \`map:author -- l2 record plan ${step.subject}\``,
+      plan: simplified
+        ? `write ${step.subject}'s territory plan${via("plan")}: \`map:author -- l2 territory ${step.subject} --write --pipeline simplified\`, fill topic-label claims, reservations and splits (${instructions}plan.md), then \`map:author -- l2 record plan ${step.subject}\``
+        : `write ${step.subject}'s territory plan: \`map:author -- l2 territory ${step.subject} --write\`, fill claims, reservations and splits, then \`map:author -- l2 record plan ${step.subject}\``,
       design: `model and design ${step.subject} in ${step.group}'s group file from \`map:author -- l2 context ${step.subject}\`, then \`map:author -- l2 record design ${step.subject}\``,
-      author: `author ${step.subject} in a fresh context from \`map:author -- l2 context ${step.subject}\` and its design, register it, check \`map:author -- l2 signals ${step.subject}\`, then \`map:author -- l2 record author ${step.subject}\` (recorded once: later changes are repairs)`,
+      author: simplified
+        ? `author ${step.subject} in a fresh context${via("author")} from \`map:author -- l2 context ${step.subject}\` and its plan's topic labels, choosing its representation (${instructions}author.md); register it, check \`map:author -- l2 signals ${step.subject}\`, then \`map:author -- l2 record author ${step.subject}\` (recorded once: later changes are repairs)`
+        : `author ${step.subject} in a fresh context from \`map:author -- l2 context ${step.subject}\` and its design, register it, check \`map:author -- l2 signals ${step.subject}\`, then \`map:author -- l2 record author ${step.subject}\` (recorded once: later changes are repairs)`,
       audit: `audit ${step.subject} in a fresh context: resolve every \`map:author -- l2 signals ${step.subject}\` signal; a defect reopens it (\`map:author -- l2 reopen ${step.subject} --reason ..\`); otherwise \`map:author -- l2 record audit ${step.subject} --audit-file <json>\``,
       "group-audit": `audit group ${step.subject} as a whole in a fresh context: resolve \`map:author -- l2 group-signals ${step.subject}\`; a defect reopens the member concerned; otherwise \`map:author -- l2 record group-audit ${step.subject} --audit-file <json>\``,
     };

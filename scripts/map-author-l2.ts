@@ -27,6 +27,7 @@ import { finishedConcepts } from "../src/lib/map/authoring/l2/campaign.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 import { conceptSignals, driftReport, groupSignals, type L2Signal } from "../src/lib/map/authoring/l2/signals.ts";
 import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, planSkeleton, staleProblems, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
+import { startPipeline } from "../src/lib/map/authoring/l2/pipeline.ts";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 
@@ -177,13 +178,15 @@ export function commandL2(command: string | undefined, positional: string[], fla
     }
     case "territory": {
       const group = positional[0];
-      if (!group) throw new Error("usage: l2 territory <group> [--write]");
+      if (!group) throw new Error("usage: l2 territory <group> [--write] [--pipeline legacy|simplified]");
       const path = join(ROOT, groupFile(group));
       if (existsSync(path)) {
         process.stdout.write(readFileSync(path, "utf8"));
         return;
       }
-      const skeleton = planSkeleton(mapKnowledge, group);
+      // A slice under the simplified pipeline declares it in each group file, so the committed plan validates under its mode.
+      const pipeline = flag("--pipeline") ? startPipeline(flag("--pipeline")) : undefined;
+      const skeleton = { ...planSkeleton(mapKnowledge, group), ...(pipeline && pipeline.mode !== "legacy" ? { pipeline: { mode: pipeline.mode, version: pipeline.version } } : {}) };
       if (has("--write")) {
         mkdirSync(dirname(path), { recursive: true });
         writeFileSync(path, `${JSON.stringify(skeleton, null, 2)}\n`);

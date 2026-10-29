@@ -10,6 +10,7 @@
 import type { MapConceptContent, MapKnowledgeModel } from "../../types.ts";
 import { catalogEntry, STRUCTURED_KINDS, type BlockKind, type Structure } from "../representation/catalog.ts";
 import { contentFingerprint } from "../representation/design.ts";
+import { isSimplified } from "./pipeline.ts";
 import type { L2GroupFile } from "./territory.ts";
 
 export const L2_KINDS = ["mechanism", "property", "actor", "attack", "failure", "parameter", "artifact", "technology", "institutional"] as const;
@@ -78,7 +79,12 @@ export type L2Resolution = { id: string; resolution: string };
 export type L2Audit = { at: string; note: string; resolutions: L2Resolution[]; recordFingerprint: string };
 export type L2ConceptWork = { model: L2ConceptModel; design: L2Design; audit?: L2Audit };
 
-/** One owned concept's work in its group file, or undefined: a group file may have no `concepts` key, and an entry may hold only an audit. Read it through here, never as plan.concepts[id].model. */
+/**
+ * One owned concept's work in its group file, or undefined. A group file may
+ * have no \`concepts\` key at all (a simplified-pipeline plan before any audit
+ * is recorded), and a simplified concept's work holds only its audit: read it
+ * through here, never as plan.concepts[id].model.
+ */
 export const conceptWorkOf = (plan: Pick<L2GroupFile, "concepts"> | undefined, conceptId: string) => plan?.concepts?.[conceptId] as Partial<L2ConceptWork> | undefined;
 /** The group audit, over every owned member as authored. */
 export type L2GroupAudit = { at: string; note: string; resolutions: L2Resolution[]; records: Record<string, string> };
@@ -193,13 +199,21 @@ export type L2WorkStage = "designed" | "authored" | "audited";
  * audited, the audit bound to exactly this record with every signal resolved.
  */
 export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKnowledgeModel, stage: L2WorkStage, signalIds: readonly string[] = []): string[] {
-  const work = conceptWorkOf(plan, conceptId) as L2ConceptWork | undefined;
-  if (!work) return [`${conceptId}: no concept work in ${plan.group}`];
+  const work = conceptWorkOf(plan, conceptId);
   const record = model.content.find((entry) => entry.conceptId === conceptId);
-  const problems = [...modelProblems(work, conceptId, plan, model), ...designProblems(work.design)];
-  if (stage !== "designed" && work.design) problems.push(...recordDesignProblems(work.design, record), ...spellingProblems(record));
+  const problems: string[] = [];
+  if (isSimplified(plan)) {
+    // The simplified pipeline persists no model or design (pipeline.ts): the plan's topic labels and the record are the work.
+    if (work?.model || work?.design) problems.push("the simplified pipeline keeps no concept model or design: remove them from the group file");
+    if (stage === "designed") problems.push("the simplified pipeline has no design stage: the concept is drafted from its plan");
+    if (stage !== "designed") problems.push(...spellingProblems(record));
+  } else {
+    if (!work) return [`${conceptId}: no concept work in ${plan.group}`];
+    problems.push(...modelProblems(work as L2ConceptWork, conceptId, plan, model), ...designProblems(work.design));
+    if (stage !== "designed" && work.design) problems.push(...recordDesignProblems(work.design, record), ...spellingProblems(record));
+  }
   if (stage === "audited") {
-    if (!work.audit) problems.push("the concept audit is missing");
+    if (!work?.audit) problems.push("the concept audit is missing");
     else {
       if (blank(work.audit.note)) problems.push("the concept audit needs its note");
       if (work.audit.recordFingerprint !== contentFingerprint(record)) problems.push("the record changed after its audit: audit it again");
