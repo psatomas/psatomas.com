@@ -60,7 +60,7 @@ import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./m
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
-import { conceptWorkOf, groupAuditProblems, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { PipelineError, PIPELINES, pipelineOf, routingOf, samePipeline, startPipeline, type L2Pipeline, type L2Role } from "../src/lib/map/authoring/l2/pipeline.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
@@ -787,7 +787,7 @@ function writeAudit(kind: "audit" | "group-audit", subject: string, group: strin
   const plan = JSON.parse(readFileSync(path, "utf8")) as L2GroupFile & { groupAudit?: L2GroupAudit };
   const audit = { at: now(), note: input.note ?? "", resolutions: input.resolutions ?? [] };
   // A simplified plan holds no concept work until its first audit is recorded: the audit creates the entry.
-  if (kind === "audit") plan.concepts = { ...(plan.concepts ?? {}), [subject]: { ...((plan.concepts?.[subject] as object | undefined) ?? {}), audit: { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) } } };
+  if (kind === "audit") Object.assign(plan, withConceptAudit(plan, subject, { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) }));
   else {
     const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
     plan.groupAudit = { ...audit, records: Object.fromEntries(owned.map((conceptId) => [conceptId, recordFingerprint(recordOf(conceptId))])) };
@@ -1291,8 +1291,13 @@ const L2_GATE: Gate = {
     const groups = state.l2!.slice.groups.map((group) => group.group);
     const missing = groups.filter((group) => !existsSync(join(ROOT, groupFile(group))));
     if (missing.length) return { ok: false, status: 1, out: `no plan for ${missing.join(", ")}` };
-    const report = planReport(readPlans(), groups);
-    const problems = report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`));
+    const plans = readPlans();
+    const report = planReport(plans, groups);
+    const problems = [
+      ...report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`)),
+      // Every concept the run drafted has a recorded audit: planReport checks only the entries a file holds.
+      ...auditCoverageProblems(plans, state.l2!.slice.groups, state.l2!.blocked),
+    ];
     return { ok: problems.length === 0, status: problems.length ? 1 : 0, out: problems.length ? problems.join("\n") : `${groups.length} group(s) valid, current and audited` };
   },
   detail: (result) => result.out,

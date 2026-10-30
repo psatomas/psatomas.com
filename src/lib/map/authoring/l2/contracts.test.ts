@@ -3,7 +3,7 @@ import test from "node:test";
 import type { MapConceptContent } from "../../types.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import { assembleL2Context } from "./context.ts";
-import { conceptWorkOf, designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
+import { auditCoverageProblems, conceptWorkOf, designProblems, groupAuditProblems, modelProblems, recordDesignProblems, spellingProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design } from "./contracts.ts";
 import { filledG1, model, options } from "./fixtures.ts";
 import { conceptSignals, containment, DEPTH, driftReport, groupSignals, mentionedConcepts, recordWords, sliceStopSignals } from "./signals.ts";
 
@@ -218,4 +218,50 @@ test("signals run on a concept whose group file has no concepts key, or an audit
   const audited = { ...plan, concepts: { a: { audit: { at: "2026-10-29T00:00:00.000Z", note: "n", resolutions: [], recordFingerprint: "f" } } } };
   assert.doesNotThrow(() => conceptSignals({ ...input, work: conceptWorkOf(audited, "a") as L2ConceptWork | undefined }));
   assert.equal(conceptWorkOf(audited, "a")?.audit?.note, "n");
+});
+
+// ---------------------------------------------------------------- audit coverage at the run's gate (PR #233 review)
+
+const T0 = "2026-10-29T00:00:00.000Z";
+const SIMPLIFIED = { mode: "simplified" as const, version: 1 };
+const audit = (record: MapConceptContent) => ({ at: T0, note: "judged", resolutions: [], recordFingerprint: contentFingerprint(record) });
+const G1_RUN = [{ group: "g1", concepts: ["a", "b"] }];
+/** g1 written for the simplified pipeline, with no concept work yet. */
+function simplifiedG1(m = model()) {
+  const plan = { ...filledG1(m), pipeline: SIMPLIFIED };
+  delete plan.concepts;
+  return plan;
+}
+
+test("the run's audit coverage comes from its groups, not the entries a file holds: a missing entry or audit is refused in both modes", () => {
+  // Simplified: no concepts key at all, or an entry for only one concept.
+  const bare = simplifiedG1();
+  assert.deepEqual(auditCoverageProblems([bare], G1_RUN), ["g1: a has no concept work entry, so no recorded concept audit", "g1: b has no concept work entry, so no recorded concept audit"]);
+  const one = withConceptAudit(simplifiedG1(), "a", audit(ALPHA));
+  assert.deepEqual(auditCoverageProblems([one], G1_RUN), ["g1: b has no concept work entry, so no recorded concept audit"]);
+  assert.deepEqual(auditCoverageProblems([withConceptAudit(one, "b", audit(ALPHA))], G1_RUN), []);
+  // Legacy: an entry with model and design but no audit is missing its audit too.
+  const legacy = filledG1();
+  legacy.concepts = { a: { model: {}, design: {} }, b: { model: {}, design: {}, audit: audit(ALPHA) } };
+  assert.deepEqual(auditCoverageProblems([legacy], G1_RUN), ["g1: a: the concept audit is missing"]);
+  // A concept blocked by its design is never authored, so it has no audit to require.
+  assert.deepEqual(auditCoverageProblems([legacy], G1_RUN, ["a"]), []);
+  // Only the run's own concepts: a repair run of a alone does not require b's audit, and unrelated groups are not read.
+  assert.deepEqual(auditCoverageProblems([withConceptAudit(simplifiedG1(), "a", audit(ALPHA))], [{ group: "g1", concepts: ["a"] }]), []);
+  assert.deepEqual(auditCoverageProblems([], G1_RUN), ["g1: no plan"]);
+  assert.deepEqual(auditCoverageProblems([bare], [{ group: "g1", concepts: ["s"] }]), ["g1: s is a run concept the plan does not own"]);
+});
+
+test("recording the first audit of a simplified concept creates its entry; a legacy entry keeps its model and design", () => {
+  const m = model([ALPHA]);
+  const first = withConceptAudit(simplifiedG1(m), "a", audit(ALPHA));
+  assert.deepEqual(Object.keys(first.concepts!), ["a"]);
+  assert.deepEqual(Object.keys(conceptWorkOf(first, "a")!), ["audit"]);
+  // The created entry is a complete simplified audit record, bound to the record.
+  assert.deepEqual(workProblems(first, "a", m, "audited"), []);
+  assert.match(workProblems(withConceptAudit(simplifiedG1(m), "a", { ...audit(ALPHA), recordFingerprint: "other" }), "a", m, "audited").join(), /record changed after its audit/);
+  const legacy = filledG1(m);
+  legacy.concepts = { a: { model: { meaning: "m" }, design: { decision: "prose" } } };
+  const audited = withConceptAudit(legacy, "a", audit(ALPHA));
+  assert.deepEqual(Object.keys(conceptWorkOf(audited, "a") as L2ConceptWork), ["model", "design", "audit"]);
 });

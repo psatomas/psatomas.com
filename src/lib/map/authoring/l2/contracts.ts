@@ -223,6 +223,38 @@ export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKno
   return problems.map((problem) => `${conceptId}: ${problem}`);
 }
 
+/**
+ * Audit coverage of a run: every concept the run drafts has its concept audit
+ * recorded in its group file. The expected concepts are the run's own (its
+ * slice groups' concepts, minus those its designs block), never the entries a
+ * group file happens to hold, so a missing entry is a missing audit in either
+ * pipeline mode. Only presence is checked here; whether a present audit is
+ * bound to its record and resolves its signals is workProblems' (planReport's).
+ * For the run's gates, after its audit stage: planning and drafting never
+ * require audits. A repair run's groups hold only its repaired concepts.
+ */
+export function auditCoverageProblems(plans: readonly L2GroupFile[], groups: readonly { group: string; concepts: readonly string[] }[], blocked: readonly string[] = []): string[] {
+  const problems: string[] = [];
+  for (const { group, concepts } of groups) {
+    const plan = plans.find((candidate) => candidate.group === group);
+    if (!plan) {
+      problems.push(`${group}: no plan`);
+      continue;
+    }
+    for (const conceptId of concepts.filter((id) => !blocked.includes(id))) {
+      if (!plan.members.some((member) => member.conceptId === conceptId && member.standing === "owned")) problems.push(`${group}: ${conceptId} is a run concept the plan does not own`);
+      else if (!conceptWorkOf(plan, conceptId)) problems.push(`${group}: ${conceptId} has no concept work entry, so no recorded concept audit`);
+      else if (!conceptWorkOf(plan, conceptId)!.audit) problems.push(`${group}: ${conceptId}: the concept audit is missing`);
+    }
+  }
+  return problems;
+}
+
+/** The group file with a concept audit recorded: the entry is created if the plan holds none yet (a simplified plan's first audit), and a legacy entry keeps its model and design. */
+export function withConceptAudit<T extends L2GroupFile>(plan: T, conceptId: string, audit: L2Audit): T {
+  return { ...plan, concepts: { ...(plan.concepts ?? {}), [conceptId]: { ...((plan.concepts?.[conceptId] as object | undefined) ?? {}), audit } } };
+}
+
 /** The group audit, bound to every owned member's record as authored, with its group signals resolved. */
 export function groupAuditProblems(plan: L2GroupFile & { groupAudit?: L2GroupAudit }, model: MapKnowledgeModel, signalIds: readonly string[] = []): string[] {
   const audit = plan.groupAudit;
