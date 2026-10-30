@@ -158,3 +158,26 @@ test("status shows a repair cycle's latest finding, not the whole growing chain"
   assert.equal(latestRepairReason("x FAIL: A; B; then not-a-list"), "x FAIL: A; B; then not-a-list");
   assert.equal(latestRepairReason(`one: ${"x".repeat(1000)}`, 50).length, 50);
 });
+
+test("commit and PR text describe a simplified group file as it is; legacy text is unchanged", () => {
+  const group = { title: "Group One", authored: ["a"], blocked: [] };
+  const legacy = groupCommitMessage(group, "Trailer: x");
+  // Legacy keeps its wording, whether the mode is given or not.
+  assert.equal(groupCommitMessage(group, "Trailer: x", "legacy"), legacy);
+  assert.match(legacy, /Territory plan, concept models, designs and audits are in the group file\./);
+  const simplified = groupCommitMessage(group, "Trailer: x", "simplified");
+  assert.equal(simplified.split("\n")[0], "feat(map): author Group One L2 topics");
+  assert.match(simplified, /topic-label territory plan and the recorded audit evidence/);
+  assert.match(simplified, /concept records are in data\.ts/);
+  assert.match(simplified, /keeps no concept model or design/);
+  assert.doesNotMatch(simplified, /concept models, designs/);
+  assert.equal(simplified.split("\n").at(-1), "Trailer: x");
+  const slice = pilotSlice(model(), ["g1"], REGISTRY);
+  const input = { slice, groups: [{ group: "g1", title: "Group One", authored: ["a"], blocked: [] }], checks: {}, fixes: [], auditNotes: [] };
+  assert.equal(l2PrBody({ ...input, mode: "legacy" }), l2PrBody(input));
+  assert.match(l2PrBody(input), /every concept's model and design/);
+  const body = l2PrBody({ ...input, mode: "simplified" });
+  assert.match(body, /topic-label territory plan \(simplified pipeline: no concept model or design is kept\)/);
+  assert.match(body, /recorded audit evidence/);
+  assert.doesNotMatch(body, /every concept's model and design/);
+});

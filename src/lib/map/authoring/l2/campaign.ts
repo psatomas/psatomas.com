@@ -236,10 +236,22 @@ export function groupCommitTrees(input: GroupCommitInput): { problems: string[];
 
 // ---------------------------------------------------------------- text
 
-export function groupCommitMessage(group: { title: string; authored: readonly string[]; blocked: readonly string[] }, trailer?: string): string {
+/** What a group file holds, as the commit and the PR describe it: the simplified pipeline keeps no concept model or design. */
+const GROUP_FILE_TEXT: Record<L2PipelineMode, { commit: string; pr: string }> = {
+  legacy: {
+    commit: "Territory plan, concept models, designs and audits are in the group file.",
+    pr: "Each group file holds its territory plan, every concept's model and design, the concept audits with every signal resolved, and the group audit.",
+  },
+  simplified: {
+    commit: "The concept records are in data.ts. The group file holds the topic-label territory plan and the recorded audit evidence (the concept audits and the group audit, bound to the records); the simplified pipeline keeps no concept model or design.",
+    pr: "Each group file holds its topic-label territory plan (simplified pipeline: no concept model or design is kept) and its recorded audit evidence: the concept audits bound to the records with every signal resolved, and the group audit. The concept records are in data.ts.",
+  },
+};
+
+export function groupCommitMessage(group: { title: string; authored: readonly string[]; blocked: readonly string[] }, trailer?: string, mode: L2PipelineMode = "legacy"): string {
   const lines = [`feat(map): author ${group.title} L2 topics`, "", `Authored: ${group.authored.join(", ") || "none"}.`];
   if (group.blocked.length) lines.push(`Blocked by a missing representation, unauthored: ${group.blocked.join(", ")}.`);
-  lines.push("", "Territory plan, concept models, designs and audits are in the group file.");
+  lines.push("", GROUP_FILE_TEXT[mode].commit);
   return [...lines, ...(trailer ? ["", trailer] : [])].join("\n");
 }
 
@@ -264,6 +276,8 @@ export function l2PrBody(input: {
   /** A repair run: the merged run it repairs and that run's merge commit. */
   repairOf?: { run: string; merged: string };
   footer?: string;
+  /** The run's pipeline mode (pipeline.ts); legacy when absent. */
+  mode?: L2PipelineMode;
 }): string {
   const authored = input.groups.flatMap((group) => group.authored);
   const name = input.slice.id === PILOT_SLICE ? "the L2 pilot" : `${input.slice.ordinal} ${input.slice.domainTitle}, part ${input.slice.index}`;
@@ -276,7 +290,7 @@ export function l2PrBody(input: {
     "",
     ...input.groups.map((group) => `- **${group.title}** (\`${group.group}\`): ${group.authored.join(", ") || "none"}${group.blocked.length ? `; blocked: ${group.blocked.join(", ")}` : ""}`),
     "",
-    "Each group file holds its territory plan, every concept's model and design, the concept audits with every signal resolved, and the group audit.",
+    GROUP_FILE_TEXT[input.mode ?? "legacy"].pr,
     "",
     "## Verification",
     "",

@@ -1551,7 +1551,7 @@ function commitL2(state: RunState): RunState {
         writeFileSync(join(ROOT, file), text);
       }
     }
-    current = commitStaged(current, contentFiles, groupCommitMessage(groups[index], state.attribution?.trailer));
+    current = commitStaged(current, contentFiles, groupCommitMessage(groups[index], state.attribution?.trailer, pipelineOf(state.l2).mode));
   }
   assertComposition(current);
   return current;
@@ -1599,6 +1599,7 @@ function l2Body(state: RunState): string {
     history: record.history,
     ...(record.repairOf ? { repairOf: record.repairOf } : {}),
     footer: state.attribution?.footer,
+    mode: pipelineOf(record).mode,
   });
 }
 
