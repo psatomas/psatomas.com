@@ -109,7 +109,7 @@ test("a run starts only when every earlier run of the slice is finished and inte
   assert.match(problems(at(g1, "author"), notOnMain).join(), /d1-1-g1 is still open \(stage author\): finish it, or stop it and decide its concepts \(a, b\), before starting d1-1-g2/);
   // Overlap: the open run still holds g1, so the whole slice cannot start either.
   assert.match(partialStartProblems({ runs: [at(g1, "pr")], finished: notOnMain, id: "d1-1" }).join(), /d1-1-g1 is still open/);
-  assert.match(problems(at(g1, "merge"), onMain).join(), /d1-1-g1 is integrated on main but its run is still open \(stage merge\): record its merge first \(`l2 run --domain d1-1-g1`, after `l2 resume --domain d1-1-g1 --decision ..` if it stopped\)/);
+  assert.match(problems(at(g1, "merge"), onMain).join(), /d1-1-g1 is integrated on main but its run is still open \(stage merge\): finish it, or resolve its stop \(`l2 status --domain d1-1-g1`\)/);
   assert.match(problems(at(g1, "done"), notOnMain).join(), /d1-1-g1 finished, but its concepts a, b are not on main: integrate its PR first/);
   assert.deepEqual(problems(at(g1, "done"), onMain), []);
   // A blocked concept counts as finished: it is not waiting on main.

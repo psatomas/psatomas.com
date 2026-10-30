@@ -453,7 +453,7 @@ npm run map:author -- l2 reopen <id>[,<id>..] --reason ".."   # a repair (below)
 npm run map:author -- l2 sync                             # merge a moved main into the run's branch (below)
 npm run map:author -- l2 checkpoint --decision ".."       # the pilot's human review
 npm run map:author -- l2 complete audit --note ".."
-npm run map:author -- l2 run [--until <stage>]            # gates → browser → render+expansion → diff → commit → push → pr → ci (→ merge)
+npm run map:author -- l2 run [--until <stage>]            # gates → browser → render+expansion → diff → commit → push → pr → ci (→ merge); on a finished run, records its human merge
 npm run map:author -- l2 fix | stop | resume              # as for domain runs
 npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
 npm run map:author -- l2 authorize --repair-exception ".."  # a human's standing repair exception (Repairs)
@@ -501,15 +501,16 @@ always. A partial run:
   the owner's group runs later (it must claim the claim, or revise it with a
   reason), and a reservation for a group with no plan yet waits for that plan.
 - **continues only from an integrated state.** It starts only when every
-  earlier run of the slice (full-slice or partial; never a repair run) is done
-  and its drafted concepts are on `main`. Integrated concepts are never
+  earlier run of the slice (full-slice or partial; never a repair run) is done,
+  its drafted concepts are on `main` and its merge is recorded. Integrated concepts are never
   authored again: they leave the run's concepts, and a selection that names a
   group with nothing left is refused, as are unknown or repeated groups,
   `--groups` with `--pilot` or `--repair`, and a start that would overwrite a
   finished run's state.
-- **is done once its merge is recorded.** Without a campaign merge
-  authorization, the next selection waits for the human merge to be recorded
-  (Merging, below).
+- **counts as integrated once its merge is recorded.** The next selection
+  waits until the earlier run's merge is recorded: by its merge stage under a
+  campaign merge authorization, or, after a human merge, by `l2 run` on the
+  finished run (Merging, below).
 
 A repair names concepts of one run: the full-slice or partial run that drafted
 them all. Cost is attributed per branch, matched exactly, so each partial run
@@ -666,10 +667,18 @@ merges its own PR, but only when all of these hold:
 
 It then synchronizes `main` and proves the pushed head is in it.
 
-Without the authorization, the run stops at its merge stage. Once a human
-merges the PR, `l2 resume --decision ..` then `l2 run` records that merge,
-only if the PR was merged at exactly the pushed head, synchronizes `main` the
-same way, and the run is done. Recording a merge never merges anything.
+Without the authorization, the run has no merge stage: it is done once CI
+passes, as a validated PR awaiting human merge. Until then its concepts can be
+reopened in the run (`l2 reopen`) to answer review. Once a human merges the
+PR, `l2 run` on the finished run records that merge, then synchronizes `main`
+the same way. It records only the run's own PR, from the run's branch into
+`main`, merged at exactly the pushed head, with that head and the merge
+commit on `main`; anything else is refused and nothing is recorded. An
+unmerged PR changes nothing. With the merge recorded, the run's concepts are
+repaired only in a repair run (`l2 start --repair`), and `l2 reopen` refuses a
+run whose PR is merged, recorded or not, or cannot be read. An authorized
+run's merge stage records a PR a human merged first under the same checks.
+Recording a merge never merges anything.
 
 **Stop conditions.** Each stops the run with evidence and the smallest
 decision needed; `resume --decision ..` continues after a human decides.
