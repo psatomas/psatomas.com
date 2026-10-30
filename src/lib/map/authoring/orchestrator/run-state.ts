@@ -76,7 +76,8 @@ export type L2RunRecord = {
   /** Set only from a human's explicit campaign authorization: the run may merge its own validated PR. */
   mergeAuthorized?: { at: string; authorization: string };
   diff?: { authored: string[]; blocked: string[]; flipped: string[] };
-  merged?: { sha: string; at: string };
+  /** The merge commit; byHand when a human merged the PR and the run recorded it (l2 run, merge stage). */
+  merged?: { sha: string; at: string; byHand?: true };
   /** A repair run: the merged run whose concepts it repairs, and that run's merge commit. */
   repairOf?: { run: string; merged: string };
 };
@@ -286,6 +287,17 @@ export function createL2RepairRunState(
     commits: [],
     ...(resolvedStops.length ? { resolvedStops } : {}),
   };
+}
+
+/**
+ * A PR merged by a human, as the merge stage observes it: recorded only if it
+ * merged exactly the head the run validated and pushed. Undefined while the
+ * PR is not merged; the run never merges anything here itself.
+ */
+export function humanMerge(state: RunState, pr: { state: string; mergeCommit?: { oid: string } | null; headRefOid: string }, now: string): { merged: NonNullable<L2RunRecord["merged"]> } | { problem: string } | undefined {
+  if (pr.state !== "MERGED" || !pr.mergeCommit) return undefined;
+  if (!state.pushedSha || pr.headRefOid !== state.pushedSha) return { problem: `the PR was merged at ${pr.headRefOid.slice(0, 7)}, but the run validated and pushed ${state.pushedSha?.slice(0, 7) ?? "nothing"}` };
+  return { merged: { sha: pr.mergeCommit.oid, at: now, byHand: true } };
 }
 
 /** The slice's judgment steps not yet recorded, in order; a blocked concept skips its drafting and audit. */

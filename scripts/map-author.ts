@@ -90,6 +90,7 @@ import {
   repairAllowance,
   repairLimitSubject,
   latestRepairReason,
+  humanMerge,
   repairStatusLine,
   resolvedStopLine,
   staleL2Steps,
@@ -281,14 +282,18 @@ const runContentFiles = (state: RunState) => [L2_DATA_FILE, L2_REGISTRY_FILE, L2
 const changesBlockingMerge = (state: RunState) => trackedPaths().filter((file) => !(state.l2?.repair && runContentFiles(state).includes(file)));
 const remoteSha = (ref: string) => lines(gitOut("ls-remote", "origin", ref))[0]?.split(/\s+/)[0];
 
-/** Recorded run versus the actual repository; any mismatch is a stop before anything else happens. */
-function verifyGit(state: RunState) {
+/**
+ * Recorded run versus the actual repository; any mismatch is a stop before anything else happens.
+ * remoteMayBeDeleted: the PR is merged at the pushed head, so a branch deleted on merge is expected; a moved one is not.
+ */
+function verifyGit(state: RunState, { remoteMayBeDeleted = false } = {}) {
+  const remote = state.pushedSha ? remoteSha(`refs/heads/${state.branch}`) : undefined;
   const problems = gitProblems(state, {
     branch: currentBranch(),
     head: head(),
     baseIsAncestor: git("merge-base", "--is-ancestor", state.baseSha, "HEAD").ok,
     trackedChanges: trackedChanges(),
-    remoteHead: state.pushedSha ? remoteSha(`refs/heads/${state.branch}`) : undefined,
+    remoteHead: remoteMayBeDeleted ? (remote ?? state.pushedSha) : remote,
   });
   if (problems.length) {
     stop(state, {
@@ -937,7 +942,7 @@ function commandStatus(state = activeState()) {
           ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
           ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
-          `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}` : ""}`,
+          `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}${state.l2.merged.byHand ? " by hand" : ""}` : ""}`,
         ]
       : []),
     `already authored: ${state.plan.authored.join(", ") || "none"}`,
@@ -1602,13 +1607,35 @@ function l2Body(state: RunState): string {
   });
 }
 
+/** After a merge: main fast-forwarded to origin, and the run's pushed head in it. */
+function syncMainAfterMerge(state: RunState) {
+  gitOut("fetch", "--quiet", "origin", MAIN);
+  gitOut("switch", "--quiet", MAIN);
+  gitOut("merge", "--quiet", "--ff-only", `origin/${MAIN}`);
+  if (!git("merge-base", "--is-ancestor", state.pushedSha!, "HEAD").ok || head() !== remoteSha(`refs/heads/${MAIN}`)) throw new ToolFailure("synchronizing main after the merge", `HEAD ${head()}, origin/${MAIN} ${remoteSha(`refs/heads/${MAIN}`)}`);
+}
+
 /**
  * Merges the run's own PR, only under a human's recorded campaign
  * authorization, and only when it is exactly the validated run: open against
  * main at the pushed commit, cleanly mergeable, CI passing and its files the
  * validated set. Then main is synchronized and must contain the pushed head.
+ * A PR a human already merged at the pushed head is recorded instead.
  */
 function mergeL2(state: RunState): RunState {
+  // A PR a human merged by hand is recorded, never merged again: only if it is exactly the validated, pushed head.
+  if (state.pr) {
+    const observed = sh("gh", ["pr", "view", String(state.pr.number), "--json", "state,mergeCommit,headRefOid"]);
+    if (!observed.ok) throw new ToolFailure("gh pr view", observed.out);
+    const outcome = humanMerge(state, JSON.parse(observed.out) as { state: string; mergeCommit?: { oid: string } | null; headRefOid: string }, now());
+    if (outcome && "problem" in outcome) stop(state, { subject: `merged PR #${state.pr.number}`, evidence: outcome.problem, why: "a run records only the merge of exactly what it validated", decision: "reconcile the merge by hand" });
+    if (outcome && "merged" in outcome) {
+      verifyGit(state, { remoteMayBeDeleted: true });
+      syncMainAfterMerge(state);
+      console.log(`  ok  #${state.pr.number} was merged by hand as ${outcome.merged.sha.slice(0, 7)}; recorded`);
+      return { ...state, l2: { ...state.l2!, merged: outcome.merged } };
+    }
+  }
   if (!state.l2?.mergeAuthorized) stop(state, { subject: "merge", evidence: "no recorded authorization", why: "a run merges only under a human's explicit campaign authorization", decision: "merge by hand, or record the authorization" });
   verifyGit(state);
   const viewed = sh("gh", ["pr", "view", String(state.pr!.number), "--json", `${PR_FIELDS},mergeable,mergeStateStatus,files`]);
@@ -1626,10 +1653,7 @@ function mergeL2(state: RunState): RunState {
   const result = sh("gh", ["pr", "view", String(pr.number), "--json", "state,mergeCommit"]);
   const outcome = result.ok ? (JSON.parse(result.out) as { state: string; mergeCommit?: { oid: string } }) : undefined;
   if (outcome?.state !== "MERGED" || !outcome.mergeCommit) throw new ToolFailure("gh pr merge", `${merged.out}\n${result.out}`);
-  gitOut("fetch", "--quiet", "origin", MAIN);
-  gitOut("switch", "--quiet", MAIN);
-  gitOut("merge", "--quiet", "--ff-only", `origin/${MAIN}`);
-  if (!git("merge-base", "--is-ancestor", state.pushedSha!, "HEAD").ok || head() !== remoteSha(`refs/heads/${MAIN}`)) throw new ToolFailure("synchronizing main after the merge", `HEAD ${head()}, origin/${MAIN} ${remoteSha(`refs/heads/${MAIN}`)}`);
+  syncMainAfterMerge(state);
   console.log(`  ok  merged #${pr.number} as ${outcome.mergeCommit.oid.slice(0, 7)}; ${MAIN} is at ${head().slice(0, 7)}`);
   return { ...state, l2: { ...state.l2!, merged: { sha: outcome.mergeCommit.oid, at: now() } } };
 }

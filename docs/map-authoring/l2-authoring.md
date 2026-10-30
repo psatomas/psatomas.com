@@ -633,6 +633,11 @@ merges its own PR, but only when all of these hold:
 
 It then synchronizes `main` and proves the pushed head is in it.
 
+Without the authorization, the run stops at its merge stage. Once a human
+merges the PR, `l2 resume --decision ..` then `l2 run` records that merge,
+only if the PR was merged at exactly the pushed head, synchronizes `main` the
+same way, and the run is done. Recording a merge never merges anything.
+
 **Stop conditions.** Each stops the run with evidence and the smallest
 decision needed; `resume --decision ..` continues after a human decides.
 
