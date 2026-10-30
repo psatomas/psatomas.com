@@ -443,6 +443,7 @@ are committed by the run.
 ```bash
 npm run map:author -- l2 campaign                         # every slice, the next one, merge authorization
 npm run map:author -- l2 start --slice <id> [--pipeline legacy|simplified] [--routing role=model,..] | --pilot
+npm run map:author -- l2 start --slice <id> --groups <group>[,<group>..] [--pipeline ..]   # a partial run: some of the slice's groups (Partial runs)
 npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".."   # repair merged concepts in a new run (Repairs)
 npm run map:author -- l2 status [--verbose] | next          # --verbose prints every repair finding and stop resolution whole
 npm run map:author -- l2 record plan <group> | design <id> | author <id>
@@ -481,6 +482,38 @@ A slice keeps its identity as the campaign advances. A concept is finished
 once it has content, or once its group's plan records a design that blocks
 it. Branches are `feat/map-<domain>-l2-<n>`, and `feat/map-l2-pilot` for the
 pilot. An open PR from any MAP run branch blocks starting another run.
+
+**Partial runs.** `l2 start --slice <id> --groups <g>[,<g>..]` runs some of a
+slice's ownership groups on their own, to a PR integrated before the next
+selection starts. Without `--groups` a run is the whole slice, named as
+always. A partial run:
+
+- **is named from its selection, never from local state.** Its part is the
+  1-based position, in the slice, of the first selected group: run
+  `<slice>-g<part>` (state `.map-authoring/l2/<slice>-g<part>.json`) on
+  `feat/map-<domain>-l2-<n>-g<part>`. Disjoint selections never share a name.
+  The PR title names the groups, and the PR body states the scope.
+- **holds only its groups.** Its steps, audit coverage, commits, diff boundary
+  and group audits are the selected groups'. Every global check is unchanged:
+  other groups' plans must stay byte-identical, records outside the run's
+  groups are refused, and every plan is checked against every other plan. A
+  reservation an earlier run committed therefore binds the owner's plan when
+  the owner's group runs later (it must claim the claim, or revise it with a
+  reason), and a reservation for a group with no plan yet waits for that plan.
+- **continues only from an integrated state.** It starts only when every
+  earlier run of the slice (full-slice or partial; never a repair run) is done
+  and its drafted concepts are on `main`. Integrated concepts are never
+  authored again: they leave the run's concepts, and a selection that names a
+  group with nothing left is refused, as are unknown or repeated groups,
+  `--groups` with `--pilot` or `--repair`, and a start that would overwrite a
+  finished run's state.
+- **is done once its merge is recorded.** Without a campaign merge
+  authorization, the next selection waits for the human merge to be recorded
+  (Merging, below).
+
+A repair names concepts of one run: the full-slice or partial run that drafted
+them all. Cost is attributed per branch, matched exactly, so each partial run
+is costed on its own (`l2 cost --branch <branch>`).
 
 **Steps.** `record` validates each step deterministically before recording
 it, and refuses steps out of order:
@@ -632,6 +665,11 @@ merges its own PR, but only when all of these hold:
 - its files are exactly the validated set.
 
 It then synchronizes `main` and proves the pushed head is in it.
+
+Without the authorization, the run stops at its merge stage. Once a human
+merges the PR, `l2 resume --decision ..` then `l2 run` records that merge,
+only if the PR was merged at exactly the pushed head, synchronizes `main` the
+same way, and the run is done. Recording a merge never merges anything.
 
 **Stop conditions.** Each stops the run with evidence and the smallest
 decision needed; `resume --decision ..` continues after a human decides.

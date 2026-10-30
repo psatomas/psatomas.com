@@ -8,7 +8,7 @@
 import { validateFixes, type DiffReport, type FixKind } from "./diff-check.ts";
 import type { DomainPlan } from "./plan.ts";
 import type { Decision, RefactorPlan } from "../representation/refactor.ts";
-import { sliceSteps, stepKey, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
+import { l2RunId, sliceSteps, stepKey, type L2RunScope, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
 import type { L2RepairBaseline } from "../l2/repair.ts";
 import { pipelineOf, PIPELINES, routingOf, type L2Pipeline } from "../l2/pipeline.ts";
 
@@ -61,6 +61,8 @@ export type L2RunRecord = {
   slice: L2Slice;
   /** The pipeline mode, its version and routing the run started with (l2/pipeline.ts); absent in runs started before modes existed, which are legacy. */
   pipeline?: L2Pipeline;
+  /** A partial run's selected groups (l2/campaign.ts L2RunScope); absent for a full-slice run. */
+  scope?: L2RunScope;
   /** Each recorded judgment step ("plan:<group>", "design:<concept>", ...), when, and for drafting and audits the record they bound. */
   steps: Record<string, { at: string; note?: string; fingerprint?: string }>;
   /** Concepts whose design blocks them: they stay unauthored. */
@@ -76,7 +78,8 @@ export type L2RunRecord = {
   /** Set only from a human's explicit campaign authorization: the run may merge its own validated PR. */
   mergeAuthorized?: { at: string; authorization: string };
   diff?: { authored: string[]; blocked: string[]; flipped: string[] };
-  merged?: { sha: string; at: string };
+  /** The merge commit; byHand when a human merged the PR and the run recorded it (l2 run, merge stage). */
+  merged?: { sha: string; at: string; byHand?: true };
   /** A repair run: the merged run whose concepts it repairs, and that run's merge commit. */
   repairOf?: { run: string; merged: string };
 };
@@ -195,16 +198,22 @@ export function createRefactorRunState(input: { plan: RefactorPlan; designSet: s
  * topics play, each done once audited (or blocked by its design). The
  * judgment steps before and after them are recorded one by one (sliceSteps).
  */
-export function createL2RunState(input: { slice: L2Slice; remaining: readonly string[]; branch: string; baseSha: string; now: string; pilot?: boolean; pipeline?: L2Pipeline }): RunState {
-  const groups = input.slice.groups.map((group) => ({ group: group.group, concepts: group.concepts.filter((conceptId) => input.remaining.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
+export function createL2RunState(input: { slice: L2Slice; remaining: readonly string[]; branch: string; baseSha: string; now: string; pilot?: boolean; pipeline?: L2Pipeline; scope?: L2RunScope }): RunState {
+  const scoped = input.scope ? input.slice.groups.filter((group) => input.scope!.groups.includes(group.group)) : input.slice.groups;
+  if (input.scope && scoped.length !== input.scope.groups.length) throw new RunStateError(`the scope names groups that are not in slice ${input.slice.id}`);
+  const integrated = scoped.filter((group) => !group.concepts.some((conceptId) => input.remaining.includes(conceptId)));
+  // A partial run names its groups explicitly: one with nothing left is a mistake, never silently skipped.
+  if (input.scope && integrated.length) throw new RunStateError(`nothing left to author in ${integrated.map((group) => group.group).join(", ")}: its concepts are already integrated`);
+  const groups = scoped.map((group) => ({ group: group.group, concepts: group.concepts.filter((conceptId) => input.remaining.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
   const eligible = groups.flatMap((group) => group.concepts);
   if (eligible.length === 0) throw new RunStateError(`slice ${input.slice.id} has nothing left to author`);
+  const title = input.slice.id === "pilot" ? "L2 pilot" : `${input.slice.domainTitle} L2, part ${input.slice.index}`;
   return {
     version: 1,
     kind: "l2",
-    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
-    domainId: input.slice.id,
-    title: input.slice.id === "pilot" ? "L2 pilot" : `${input.slice.domainTitle} L2, part ${input.slice.index}`,
+    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(input.scope ? { scope: input.scope } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
+    domainId: l2RunId(input.slice, input.scope),
+    title: input.scope ? `${title}, ${scoped.map((group) => group.title).join(", ")}` : title,
     branch: input.branch,
     baseSha: input.baseSha,
     createdAt: input.now,
@@ -286,6 +295,56 @@ export function createL2RepairRunState(
     commits: [],
     ...(resolvedStops.length ? { resolvedStops } : {}),
   };
+}
+
+/** The concepts a run drafts (eligible and not blocked by a design). */
+const authoredBy = (run: RunState) => run.plan.eligible.filter((conceptId) => !(run.l2?.blocked ?? []).includes(conceptId));
+
+/**
+ * Why a run of a slice may not start now, given the slice's earlier runs (its
+ * full-slice and partial runs; never its repair runs) and the concepts already
+ * integrated on main. Every earlier run must be finished and its concepts
+ * integrated: an open run, or a finished one whose concepts are not on main
+ * (its PR unmerged, or abandoned), is resolved first, so two runs of one slice
+ * never author the same concept or race on the same files. Integrated
+ * concepts are never authored again: they leave the remaining set the run is
+ * created from, and a partial run naming only integrated groups is refused.
+ */
+export function partialStartProblems(input: { runs: readonly RunState[]; finished: ReadonlySet<string>; id: string }): string[] {
+  const problems: string[] = [];
+  for (const run of input.runs) {
+    if (run.l2?.repairOf) continue;
+    const pending = authoredBy(run).filter((conceptId) => !input.finished.has(conceptId));
+    if (run.stage !== "done") {
+      problems.push(
+        pending.length
+          ? `${run.domainId} is still open (stage ${run.stage}): finish it, or stop it and decide its concepts (${pending.join(", ")}), before starting ${input.id}`
+          : `${run.domainId} is integrated on main but its run is still open (stage ${run.stage}): record its merge first (\`l2 run --domain ${run.domainId}\`, after \`l2 resume --domain ${run.domainId} --decision ..\` if it stopped)`,
+      );
+    } else if (pending.length) {
+      problems.push(`${run.domainId} finished, but its concepts ${pending.join(", ")} are not on main: integrate its PR first`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * A PR merged by a human, as the merge stage observes it: recorded only if it
+ * merged exactly the head the run validated and pushed. Undefined while the
+ * PR is not merged; the run never merges anything here itself.
+ */
+export function humanMerge(state: RunState, pr: { state: string; mergeCommit?: { oid: string } | null; headRefOid: string }, now: string): { merged: NonNullable<L2RunRecord["merged"]> } | { problem: string } | undefined {
+  if (pr.state !== "MERGED" || !pr.mergeCommit) return undefined;
+  if (!state.pushedSha || pr.headRefOid !== state.pushedSha) return { problem: `the PR was merged at ${pr.headRefOid.slice(0, 7)}, but the run validated and pushed ${state.pushedSha?.slice(0, 7) ?? "nothing"}` };
+  return { merged: { sha: pr.mergeCommit.oid, at: now, byHand: true } };
+}
+
+/** The merged run a repair of the named concepts repairs: the one run of the slice that drafted every one of them. */
+export function repairOriginal(runs: readonly RunState[], concepts: readonly string[]): RunState {
+  const candidates = runs.filter((run) => !run.l2?.repairOf && concepts.every((conceptId) => authoredBy(run).includes(conceptId)));
+  if (candidates.length === 1) return candidates[0];
+  const owners = concepts.map((conceptId) => `${conceptId}: ${runs.filter((run) => !run.l2?.repairOf && authoredBy(run).includes(conceptId)).map((run) => run.domainId).join(", ") || "no run"}`);
+  throw new RunStateError(candidates.length ? `several runs drafted ${concepts.join(", ")}: ${candidates.map((run) => run.domainId).join(", ")}` : `no single run of the slice drafted every named concept (${owners.join("; ")}): repair the concepts of one run at a time`);
 }
 
 /** The slice's judgment steps not yet recorded, in order; a blocked concept skips its drafting and audit. */
