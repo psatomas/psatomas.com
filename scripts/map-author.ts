@@ -40,6 +40,7 @@
 //   npm run map:author -- l2 check [--group <group>] [--json]
 //   npm run map:author -- l2 campaign                    every slice, the next one, and whether merging is authorized
 //   npm run map:author -- l2 start --slice <id> | --pilot [--dry-run]
+//   npm run map:author -- l2 start --slice <id> --groups <group>[,<group>..] [--dry-run]   a partial run: those groups of the slice only
 //   npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".." [--dry-run]   repair merged concepts in a new run
 //   npm run map:author -- l2 record plan|design|author|audit|group-audit <subject> [--note ..] [--audit-file <json>]
 //   npm run map:author -- l2 group-signals <group>       a group audit's signals
@@ -57,7 +58,7 @@ import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
 import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
-import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2Slices, pilotSlice, PILOT_SLICE, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
@@ -91,6 +92,8 @@ import {
   repairLimitSubject,
   latestRepairReason,
   humanMerge,
+  partialStartProblems,
+  repairOriginal,
   repairStatusLine,
   resolvedStopLine,
   staleL2Steps,
@@ -235,6 +238,15 @@ function readState(domainId: string): RunState | undefined {
 function saveState(state: RunState) {
   mkdirSync(STATE_DIR, { recursive: true });
   writeFileSync(statePath(state.domainId), `${JSON.stringify(state, null, 2)}\n`);
+}
+
+/** Every recorded run of a slice: its full-slice run, its partial runs and its repair runs. */
+function sliceRuns(sliceId: string): RunState[] {
+  if (!existsSync(STATE_DIR)) return [];
+  return readdirSync(STATE_DIR)
+    .filter((file) => file.endsWith(".json") && file !== L2_CAMPAIGN_FILE)
+    .map((file) => readState(file.slice(0, -5))!)
+    .filter((state) => state.l2?.slice.id === sliceId);
 }
 
 function activeState(): RunState {
@@ -617,9 +629,24 @@ function commandL2Start() {
     const id = flag("--slice") ?? fail(`start needs --slice <id> or --pilot; see \`${CLI} campaign\``);
     slice = slices.find((candidate) => candidate.id === id) ?? fail(`unknown slice ${id}; see \`${CLI} campaign\``, 1);
   }
-  if (flags.has("--repair")) return commandL2StartRepair(slice);
+  if (flags.has("--repair")) {
+    if (flag("--groups")) fail("--groups selects the groups of a new run; a repair names its concepts with --repair", 1);
+    return commandL2StartRepair(slice);
+  }
+  // A partial run takes some of the slice's groups (campaign.ts selectGroups); without --groups the run is the whole slice.
+  let scope: L2RunScope | undefined;
+  if (flag("--groups")) {
+    if (flags.has("--pilot")) fail("--groups selects groups of a campaign slice, not of the pilot", 1);
+    try {
+      scope = selectGroups(slice, flag("--groups")!.split(","));
+    } catch (error) {
+      if (error instanceof L2ScopeError) fail(error.message, 1);
+      throw error;
+    }
+  }
   const remaining = sliceRemaining(slice, finished);
-  const branch = l2Branch(slice);
+  const id = l2RunId(slice, scope);
+  const branch = l2Branch(slice, scope?.part);
   // The pipeline is chosen per slice, at its start (pipeline.ts); legacy unless asked.
   let pipeline: L2Pipeline;
   try {
@@ -628,27 +655,36 @@ function commandL2Start() {
     if (error instanceof PipelineError) fail(error.message, 1);
     throw error;
   }
-  const existing = readState(slice.id);
+  const existing = readState(id);
   if (existing && existing.stage !== "done") {
-    console.log(`a run for ${slice.id} already exists; resuming it`);
+    console.log(`a run ${id} already exists; resuming it`);
     return commandStatus(existing);
   }
-  const problems = [...(remaining.length ? [] : [`${slice.id} has nothing left to author`]), ...observeStart(branch, slice.id).filter((problem) => !(existing && /already exists/.test(problem)))];
-  for (const group of slice.groups) console.log(`  ${group.group.padEnd(48)} ${group.concepts.filter((conceptId) => remaining.includes(conceptId)).join(", ") || "(done)"}`);
+  const scoped = slice.groups.filter((group) => !scope || scope.groups.includes(group.group));
+  const integrated = scope ? scoped.filter((group) => !group.concepts.some((conceptId) => remaining.includes(conceptId))).map((group) => group.group) : [];
+  const problems = [
+    ...(remaining.length ? [] : [`${slice.id} has nothing left to author`]),
+    // A finished run's state is its record (steps, repairs, merge): a new start never overwrites it.
+    ...(existing && remaining.length ? [`${id} already ran to the end (${statePath(id)}) with concepts not on main: a finished run's record is never overwritten; integrate its PR, or move the file aside to start again`] : []),
+    ...(integrated.length ? [`nothing left to author in ${integrated.join(", ")}: its concepts are already integrated`] : []),
+    ...partialStartProblems({ runs: sliceRuns(slice.id).filter((run) => run.domainId !== id), finished, id }),
+    ...observeStart(branch, id),
+  ];
+  for (const group of scoped) console.log(`  ${group.group.padEnd(48)} ${group.concepts.filter((conceptId) => remaining.includes(conceptId)).join(", ") || "(done)"}`);
   if (problems.length) {
-    console.log(`\ncannot start ${slice.id}:\n  ${problems.join("\n  ")}`);
+    console.log(`\ncannot start ${id}:\n  ${problems.join("\n  ")}`);
     process.exit(1);
   }
-  if (dryRun) return console.log(`\ndry run: would create ${branch} and author ${remaining.length} concept(s) under the ${describePipeline(pipeline)}`);
+  if (dryRun) return console.log(`\ndry run: would create ${branch} and author ${scoped.flatMap((group) => group.concepts).filter((conceptId) => remaining.includes(conceptId)).length} concept(s) as ${id} under the ${describePipeline(pipeline)}`);
   const baseSha = branchFromMain(branch);
   if (!baseSha) return;
   const pilot = slice.id === PILOT_SLICE;
-  let state = createL2RunState({ slice, remaining, branch, baseSha, now: now(), pilot, pipeline });
+  let state = createL2RunState({ slice, remaining, branch, baseSha, now: now(), pilot, pipeline, ...(scope ? { scope } : {}) });
   const authorization = readCampaign().mergeAuthorization;
   // The pilot always ends at a PR for detailed human review, whatever the campaign authorizes.
   if (authorization && !pilot) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
   saveState(state);
-  console.log(`\nstarted ${slice.id} on ${branch} at ${baseSha.slice(0, 7)} under the ${describePipeline(pipeline)}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
+  console.log(`\nstarted ${id} on ${branch} at ${baseSha.slice(0, 7)} under the ${describePipeline(pipeline)}${scope ? ` (groups ${scope.groups.join(", ")})` : ""}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
   console.log(`next: ${(nextAction(state) as { message: string }).message}`);
 }
 
@@ -661,7 +697,14 @@ function commandL2Start() {
 function commandL2StartRepair(slice: L2Slice) {
   const concepts = (flag("--repair") ?? fail("--repair needs concept ids")).split(",").map((conceptId) => conceptId.trim()).filter(Boolean);
   const reason = flag("--reason") ?? fail("a repair run needs --reason: the finding it answers");
-  const original = readState(slice.id) ?? fail(`no run of ${slice.id} to repair`, 1);
+  // The run that drafted the concepts: the slice's full run, or one of its partial runs.
+  let original: RunState;
+  try {
+    original = repairOriginal(sliceRuns(slice.id), concepts);
+  } catch (error) {
+    if (error instanceof RunStateError) fail(error.message, 1);
+    throw error;
+  }
   const earlier = existsSync(STATE_DIR) ? readdirSync(STATE_DIR).filter((file) => file.startsWith(`${slice.id}-repair-`) && file.endsWith(".json")).map((file) => readState(file.slice(0, -5))!) : [];
   const open = earlier.find((state) => state.stage !== "done");
   if (open) fail(`${open.domainId} is still open: finish it first (\`${CLI} status --domain ${open.domainId}\`)`, 1);
@@ -934,7 +977,7 @@ function commandStatus(state = activeState()) {
       : `authored ${done.length}/${state.plan.eligible.length}: ${done.join(", ") || "none"}${pendingConcepts(state).length ? ` | pending: ${pendingConcepts(state).join(", ")}` : ""}`,
     ...(state.l2
       ? [
-          `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}`,
+          `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}${state.l2.scope ? ` (partial run, part ${state.l2.scope.part}: ${state.l2.scope.groups.length} of the slice's ${state.l2.scope.sliceGroups.length} groups)` : ""}`,
           `pipeline: ${pipelineStatus(state.l2)}`,
           `steps recorded: ${Object.keys(state.l2.steps).length}; next steps: ${pendingL2Steps(state).slice(0, 4).map((step) => `${step.kind} ${step.subject}`).join(", ") || "none"}`,
           `blocked: ${state.l2.blocked.join(", ") || "none"}; repair cycles: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
@@ -1603,6 +1646,7 @@ function l2Body(state: RunState): string {
     auditNotes: state.auditNotes,
     history: record.history,
     ...(record.repairOf ? { repairOf: record.repairOf } : {}),
+    ...(record.scope ? { scope: record.scope, run: state.domainId } : {}),
     footer: state.attribution?.footer,
   });
 }
@@ -1783,7 +1827,7 @@ function openPr(state: RunState): RunState {
     return { ...state, pr: { number: existing.number, url: existing.url } };
   }
   const body = refactor ? refactorPrBody(state, state.refactor!.diff!, state.attribution?.footer) : l2Mode ? l2Body(state) : prBody(state, state.diff!, state.attribution?.footer);
-  const title = refactor ? refactorPrTitle(state) : l2Mode ? l2PrTitle(state.l2!.slice, Boolean(state.l2!.repairOf)) : prTitle(state);
+  const title = refactor ? refactorPrTitle(state) : l2Mode ? l2PrTitle(state.l2!.slice, Boolean(state.l2!.repairOf), state.l2!.scope) : prTitle(state);
   const result = sh("gh", ["pr", "create", "--base", MAIN, "--head", state.branch, "--title", title, "--body-file", "-"], { input: body });
   // The outcome is read back from GitHub, never inferred from the attempt.
   const created = matchingPr(state, branchPrs(state));

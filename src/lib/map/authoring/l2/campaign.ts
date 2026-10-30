@@ -87,7 +87,37 @@ export function finishedConcepts(model: MapKnowledgeModel, plans: readonly L2Gro
 
 export const sliceRemaining = (slice: L2Slice, finished: ReadonlySet<string>) => slice.groups.flatMap((group) => group.concepts).filter((conceptId) => !finished.has(conceptId));
 
-export const l2Branch = (slice: Pick<L2Slice, "id" | "domain" | "index">) => (slice.id === PILOT_SLICE ? "feat/map-l2-pilot" : `feat/map-${slice.domain}-l2-${slice.index}`);
+export const l2Branch = (slice: Pick<L2Slice, "id" | "domain" | "index">, part?: number) =>
+  slice.id === PILOT_SLICE ? "feat/map-l2-pilot" : `feat/map-${slice.domain}-l2-${slice.index}${part ? `-g${part}` : ""}`;
+
+/**
+ * A partial run's scope: some of a slice's ownership groups, run and
+ * integrated on their own (`l2 start --slice <id> --groups <g,..>`). Its
+ * identity is deterministic from the selection, never from local state: the
+ * part is the 1-based position, in the slice, of the first selected group, so
+ * the run is "<slice>-g<part>" on "feat/map-<domain>-l2-<index>-g<part>".
+ * Disjoint selections start at different groups and so never share an
+ * identity; overlapping ones are refused (partialStartProblems).
+ */
+export type L2RunScope = { part: number; groups: string[]; sliceGroups: string[] };
+
+export class L2ScopeError extends Error {}
+
+/** The scope of `--groups`: known groups of the slice, without duplicates, in the slice's order. */
+export function selectGroups(slice: Pick<L2Slice, "id" | "groups">, requested: readonly string[]): L2RunScope {
+  const names = requested.map((group) => group.trim()).filter(Boolean);
+  if (!names.length) throw new L2ScopeError("--groups needs at least one group of the slice");
+  const sliceGroups = slice.groups.map((group) => group.group);
+  const unknown = names.filter((group) => !sliceGroups.includes(group));
+  if (unknown.length) throw new L2ScopeError(`not groups of slice ${slice.id}: ${unknown.join(", ")} (its groups: ${sliceGroups.join(", ")})`);
+  const repeated = names.filter((group, index) => names.indexOf(group) !== index);
+  if (repeated.length) throw new L2ScopeError(`groups named twice: ${[...new Set(repeated)].join(", ")}`);
+  const groups = sliceGroups.filter((group) => names.includes(group));
+  return { part: sliceGroups.indexOf(groups[0]) + 1, groups, sliceGroups };
+}
+
+/** A partial run's state id; a full-slice run keeps the slice's id. */
+export const l2RunId = (slice: Pick<L2Slice, "id">, scope?: Pick<L2RunScope, "part">) => (scope ? `${slice.id}-g${scope.part}` : slice.id);
 
 // ---------------------------------------------------------------- the agent's steps
 
@@ -248,8 +278,12 @@ export function repairCommitMessage(group: { title: string; repaired: readonly s
   return [...lines, ...(trailer ? ["", trailer] : [])].join("\n");
 }
 
-export const l2PrTitle = (slice: Pick<L2Slice, "id" | "domainTitle" | "index">, repair = false) =>
-  repair ? `fix(map): repair ${slice.domainTitle} L2 topics, part ${slice.index}` : slice.id === PILOT_SLICE ? "feat(map): author the L2 pilot" : `feat(map): author ${slice.domainTitle} L2 topics, part ${slice.index}`;
+export const l2PrTitle = (slice: Pick<L2Slice, "id" | "domainTitle" | "index"> & { groups?: readonly { title: string }[] }, repair = false, scope?: L2RunScope) =>
+  repair
+    ? `fix(map): repair ${slice.domainTitle} L2 topics, part ${slice.index}`
+    : slice.id === PILOT_SLICE
+      ? "feat(map): author the L2 pilot"
+      : `feat(map): author ${slice.domainTitle} L2 topics, part ${slice.index}${scope ? `: ${(slice.groups ?? []).map((group) => group.title).join(", ")}` : ""}`;
 
 /** A repair run's branch: its own, never the merged run's. */
 export const l2RepairBranch = (slice: Pick<L2Slice, "id" | "domain" | "index">, repair: number) => `fix/map-${slice.domain}-l2-${slice.index}-repair-${repair}`;
@@ -263,6 +297,9 @@ export function l2PrBody(input: {
   history?: readonly ({ kind: "repair"; cycle: number; reason: string; concepts: readonly string[] } | { kind: "sync"; from: string; to: string })[];
   /** A repair run: the merged run it repairs and that run's merge commit. */
   repairOf?: { run: string; merged: string };
+  /** A partial run: the groups it authors of the slice's, and its run id. */
+  scope?: L2RunScope;
+  run?: string;
   footer?: string;
 }): string {
   const authored = input.groups.flatMap((group) => group.authored);
@@ -271,6 +308,7 @@ export function l2PrBody(input: {
     input.repairOf
       ? `Repair of ${name} (run ${input.repairOf.run}, merged in ${input.repairOf.merged.slice(0, 7)}): ${authored.length} concept(s) in ${input.groups.length} ownership group(s), one repair commit per group (docs/map-authoring/l2-authoring.md).`
       : `L2 exposition for ${name}: ${authored.length} concept(s) in ${input.groups.length} ownership group(s), one commit per group (docs/map-authoring/l2-authoring.md).`,
+    ...(input.scope ? ["", `Partial run \`${input.run}\`: ${input.scope.groups.length} of the slice's ${input.scope.sliceGroups.length} ownership groups (${input.scope.groups.join(", ")}); the others run separately, each after the previous run is integrated.`] : []),
     "",
     "## Groups",
     "",

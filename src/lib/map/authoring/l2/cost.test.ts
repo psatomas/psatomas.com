@@ -38,6 +38,17 @@ test("a filter counts only calls on its branch and inside its time window", () =
   assert.equal(sessionCost(lines, "orchestrator", { branch: "other" }).weighted, 0);
 });
 
+test("partial runs of one slice are costed apart: a branch matches exactly, never by prefix", () => {
+  const lines = [
+    call("full", { input_tokens: 1 }, { gitBranch: "feat/map-d-l2-1" }),
+    call("g1", { input_tokens: 2 }, { gitBranch: "feat/map-d-l2-1-g1" }),
+    call("g3", { input_tokens: 4 }, { gitBranch: "feat/map-d-l2-1-g3" }),
+  ];
+  assert.equal(sessionCost(lines, "orchestrator", { branch: "feat/map-d-l2-1" }).usage.input_tokens, 1);
+  assert.equal(sessionCost(lines, "orchestrator", { branch: "feat/map-d-l2-1-g1" }).usage.input_tokens, 2);
+  assert.equal(sessionCost(lines, "orchestrator", { branch: "feat/map-d-l2-1-g3" }).usage.input_tokens, 4);
+});
+
 test("roles follow the campaign's task descriptions", () => {
   const roles = {
     "Plan coordination group": "plan",
