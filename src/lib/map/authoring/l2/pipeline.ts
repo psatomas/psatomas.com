@@ -70,12 +70,52 @@ export function parseRouting(text: string | undefined, mode: L2PipelineMode): L2
   return routing;
 }
 
-/** The pipeline a new run starts with: a known mode at its current version, with any routing overrides. */
-export function startPipeline(mode: string | undefined, routing?: string): L2Pipeline {
+/** A mode known to this tooling, or a PipelineError. */
+export function pipelineMode(mode: string | undefined): L2PipelineMode {
   const chosen = (mode ?? "legacy") as L2PipelineMode;
   if (!(chosen in PIPELINES)) throw new PipelineError(`unknown pipeline ${mode}: legacy or simplified`);
+  return chosen;
+}
+
+/**
+ * The pipeline a new run starts with: a known mode at its current version,
+ * and the complete routing it starts with (the mode's defaults with any
+ * overrides), recorded so that later changes to the defaults never rewrite
+ * what a run used.
+ */
+export function startPipeline(mode: string | undefined, routing?: string): L2Pipeline {
+  const chosen = pipelineMode(mode);
   const overrides = parseRouting(routing, chosen);
-  return { mode: chosen, version: PIPELINES[chosen].version, ...(Object.keys(overrides).length ? { routing: overrides } : {}) };
+  const defaults = Object.fromEntries(Object.entries(DEFAULT_ROUTING[chosen]).filter(([role]) => PIPELINES[chosen].roles.includes(role as L2Role)));
+  return { mode: chosen, version: PIPELINES[chosen].version, routing: { ...defaults, ...overrides } };
+}
+
+export const describePipeline = (pipeline: L2Pipeline) => `${pipeline.mode} pipeline v${pipeline.version}`;
+
+/**
+ * A run's pipeline and routing for display. A run started before pipeline
+ * modes recorded neither: it is legacy, and its routing is not known, so none
+ * is inferred from today's defaults.
+ */
+export function pipelineStatus(holder: { pipeline?: L2Pipeline } | undefined): string {
+  const pipeline = holder?.pipeline;
+  if (!pipeline) return "legacy pipeline v1 (run predates pipeline modes); routing not recorded";
+  const routing = pipeline.routing ?? {};
+  const roles = PIPELINES[pipeline.mode].roles.filter((role) => routing[role]);
+  return `${describePipeline(pipeline)}; routing ${roles.length ? roles.map((role) => `${role}=${routing[role]}`).join(", ") : "not recorded"}`;
+}
+
+/**
+ * Why a group file cannot be recorded for a run: it declares another pipeline
+ * than the run's. The fix is an edit of that one field (a skeleton is written
+ * only for a group file that does not exist), after which the claims must
+ * still fit the run's mode.
+ */
+export function pipelineMismatchProblem(group: string, file: string, declared: L2Pipeline, run: L2Pipeline): string | undefined {
+  if (samePipeline(declared, run)) return undefined;
+  const edit = run.mode === "legacy" ? `remove the "pipeline" field from ${file}` : `set "pipeline": ${JSON.stringify({ mode: run.mode, version: run.version })} in ${file}`;
+  const claims = run.mode === "simplified" ? "every owned claim is a topic label" : "the claims are the legacy plan's";
+  return `${group} declares the ${describePipeline(declared)} but the run uses the ${describePipeline(run)}: ${edit} (an existing group file is not rewritten by \`l2 territory --write\`), make sure ${claims}, run \`map:author -- l2 check --group ${group}\`, then record the plan again`;
 }
 
 /** Whether two declarations name the same mode and version (routing is the run's, not the plan's). */

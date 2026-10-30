@@ -17,7 +17,7 @@ import type { MapKnowledgeModel } from "../../types.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../content-registry.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import { inventoryL2, type L2Inventory, type L2MemberStanding } from "./inventory.ts";
-import { isSimplified, pipelineProblems, topicLabelProblems, type L2Pipeline } from "./pipeline.ts";
+import { isSimplified, pipelineProblems, startPipeline, topicLabelProblems, type L2Pipeline } from "./pipeline.ts";
 
 export const GROUPS_DIR = "src/lib/map/authoring/l2/groups";
 export const groupFile = (groupPlacementId: string) => `${GROUPS_DIR}/${groupPlacementId}.json`;
@@ -235,6 +235,17 @@ export function planProblems(plan: L2GroupFile, model: MapKnowledgeModel, { regi
     if (!owned.some((member) => member.conceptId === conceptId)) problems.push(`concept work for ${conceptId}, which this group does not own`);
   }
   return problems;
+}
+
+/**
+ * The skeleton plan for a group under a pipeline mode (`l2 territory --write
+ * --pipeline <mode>`): a simplified plan declares its mode; a legacy plan
+ * declares none, as every plan written before modes did.
+ */
+export function territorySkeleton(model: MapKnowledgeModel, groupPlacementId: string, mode?: string, options: L2PlanOptions = {}): L2GroupFile {
+  const pipeline = startPipeline(mode);
+  const skeleton = planSkeleton(model, groupPlacementId, options);
+  return pipeline.mode === "legacy" ? skeleton : { ...skeleton, pipeline: { mode: pipeline.mode, version: pipeline.version } };
 }
 
 /** Why a plan no longer describes the model it was written against. */

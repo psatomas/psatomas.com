@@ -358,6 +358,13 @@ export function latestRepairReason(reason: string, max = 400): string {
   return parts.length > 1 ? `${clipped} (latest of ${parts.length} reopenings; \`status --verbose\` prints all)` : clipped;
 }
 
+/** `l2 status`'s open-repair line: the latest finding, or every finding with --verbose. */
+export const repairStatusLine = (repair: L2Repair, verbose: boolean) => `repair open: cycle ${repair.cycle} (${repair.concepts.join(", ")}): ${verbose ? repair.reason : latestRepairReason(repair.reason)}`;
+
+/** `l2 status`'s line for a resolved stop: a long resolution (a standing exception's text) is clipped unless --verbose. */
+export const resolvedStopLine = (resolved: { stage: string; subject: string; resolution: string }, verbose: boolean, max = 240) =>
+  `resolved stop at ${resolved.stage}: ${resolved.subject} → ${verbose || resolved.resolution.length <= max ? resolved.resolution : `${resolved.resolution.slice(0, max - 1)}… (\`status --verbose\` prints it whole)`}`;
+
 /** A reopen that would take concepts past their repair allowance: the run stops for a human. */
 export class RepairLimitError extends RunStateError {
   readonly conceptIds: string[];

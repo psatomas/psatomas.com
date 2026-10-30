@@ -61,7 +61,7 @@ import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupC
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
-import { PipelineError, PIPELINES, pipelineOf, routingOf, samePipeline, startPipeline, type L2Pipeline, type L2Role } from "../src/lib/map/authoring/l2/pipeline.ts";
+import { describePipeline, PipelineError, pipelineMismatchProblem, pipelineOf, pipelineStatus, startPipeline, type L2Pipeline } from "../src/lib/map/authoring/l2/pipeline.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 import { driftReport, sliceStopSignals } from "../src/lib/map/authoring/l2/signals.ts";
@@ -90,6 +90,8 @@ import {
   repairAllowance,
   repairLimitSubject,
   latestRepairReason,
+  repairStatusLine,
+  resolvedStopLine,
   staleL2Steps,
   syncL2Base,
   unadoptableMerge,
@@ -152,7 +154,6 @@ const flag = (name: string) => (typeof flags.get(name) === "string" ? (flags.get
 const dryRun = flags.has("--dry-run");
 /** Status and reopen print long histories (every repair finding, every stop resolution) whole only on request. */
 const verbose = flags.has("--verbose");
-const describePipeline = (pipeline: L2Pipeline) => `${pipeline.mode} pipeline v${pipeline.version}`;
 /** `refactor <command>` runs the same commands over representation refactor state. */
 const refactor = first === "refactor";
 /** `l2 <command>` runs L2 slice runs (docs/map-authoring/l2-authoring.md); its read-only commands live in map-author-l2.ts. */
@@ -723,7 +724,7 @@ async function commandL2Record() {
   let fingerprint: string | undefined;
   switch (kind) {
     case "plan":
-      if (!samePipeline(pipelineOf(plan), pipelineOf(record))) refuse([`${group} declares the ${describePipeline(pipelineOf(plan))} but the run uses the ${describePipeline(pipelineOf(record))}: set its "pipeline" to the run's (\`l2 territory ${group} --write --pipeline ${pipelineOf(record).mode}\` writes a skeleton that does)`]);
+      refuse([pipelineMismatchProblem(group, groupFile(group), pipelineOf(plan), pipelineOf(record))].filter((problem): problem is string => !!problem));
       refuse([...planProblems(plan, mapKnowledge), ...staleProblems(plan, mapKnowledge).map((problem) => `stale: ${problem}`), ...crossPlanProblems(plans, inventoryL2(mapKnowledge)).filter((problem) => problem.includes(group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`))), ...scope({ replanned: [group], territoryOnly: true })]);
       break;
     case "design":
@@ -929,10 +930,10 @@ function commandStatus(state = activeState()) {
     ...(state.l2
       ? [
           `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}`,
-          `pipeline: ${describePipeline(pipelineOf(state.l2))}; routing ${Object.entries(routingOf(pipelineOf(state.l2))).filter(([role]) => PIPELINES[pipelineOf(state.l2!).mode].roles.includes(role as L2Role)).map(([role, model]) => `${role}=${model}`).join(", ")}`,
+          `pipeline: ${pipelineStatus(state.l2)}`,
           `steps recorded: ${Object.keys(state.l2.steps).length}; next steps: ${pendingL2Steps(state).slice(0, 4).map((step) => `${step.kind} ${step.subject}`).join(", ") || "none"}`,
           `blocked: ${state.l2.blocked.join(", ") || "none"}; repair cycles: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
-          ...(state.l2.repair ? [`repair open: cycle ${state.l2.repair.cycle} (${state.l2.repair.concepts.join(", ")}): ${verbose ? state.l2.repair.reason : latestRepairReason(state.l2.repair.reason)}`] : []),
+          ...(state.l2.repair ? [repairStatusLine(state.l2.repair, verbose)] : []),
           ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
           ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
@@ -946,7 +947,7 @@ function commandStatus(state = activeState()) {
     `stages remaining: ${STAGES.slice(stageIndex).filter((stage) => stage !== "done").join(", ") || "none"}`,
   ];
   console.log(report.join("\n"));
-  for (const resolved of state.resolvedStops ?? []) console.log(`resolved stop at ${resolved.stage}: ${resolved.subject} → ${verbose || resolved.resolution.length <= 240 ? resolved.resolution : `${resolved.resolution.slice(0, 239)}… (\`status --verbose\` prints it whole)`}`);
+  for (const resolved of state.resolvedStops ?? []) console.log(resolvedStopLine(resolved, verbose));
   if (state.stop) printStop(state);
   else commandNext(state);
 }
