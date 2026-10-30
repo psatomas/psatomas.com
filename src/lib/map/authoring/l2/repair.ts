@@ -24,7 +24,10 @@ export type L2RepairBaseline = {
 
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value ?? null)).digest("hex");
 
-const workFingerprint = (work: L2ConceptWork | undefined) => hash(work ? { model: work.model, design: work.design } : null);
+// Only the model and design are fingerprinted, never the audit: an entry with neither (absent, or audit-only under the
+// simplified pipeline, where the first recorded audit creates it) fingerprints like no work at all. An entry with a
+// model or design fingerprints exactly as before, so baselines recorded earlier stay comparable.
+const workFingerprint = (work: Partial<L2ConceptWork> | undefined) => hash(work?.model !== undefined || work?.design !== undefined ? { model: work.model, design: work.design } : null);
 const memberFingerprint = (member: L2GroupFile["members"][number]) => hash({ claims: member.claims, excludes: member.excludes, reserved: member.reserved, revisions: member.revisions, standing: member.standing });
 
 /** The baseline of the given concepts as their group files hold them now. */
