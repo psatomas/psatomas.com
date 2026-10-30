@@ -9,6 +9,7 @@ import type { MapKnowledgeModel } from "../../types.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../content-registry.ts";
 import type { L2ConceptWork } from "./contracts.ts";
 import { inventoryL2 } from "./inventory.ts";
+import type { L2PipelineMode } from "./pipeline.ts";
 import type { L2GroupFile } from "./territory.ts";
 
 /** About thirty concepts per PR: whole groups, in canonical order, never split. */
@@ -99,13 +100,14 @@ export type L2Step = { kind: L2StepKind; subject: string; group: string };
  * concept is modelled; then every concept's model and design; then each
  * concept is drafted and audited in turn (each in its own fresh context); the
  * group audits close the slice. The pilot's checkpoint sits between design
- * and drafting.
+ * and drafting. The simplified pipeline (pipeline.ts) has no model or design
+ * step: drafting follows the plans directly.
  */
-export function sliceSteps(groups: readonly { group: string; concepts: readonly string[] }[]): L2Step[] {
+export function sliceSteps(groups: readonly { group: string; concepts: readonly string[] }[], mode: L2PipelineMode = "legacy"): L2Step[] {
   const concepts = groups.flatMap((group) => group.concepts.map((conceptId) => ({ conceptId, group: group.group })));
   return [
     ...groups.map((group): L2Step => ({ kind: "plan", subject: group.group, group: group.group })),
-    ...concepts.map(({ conceptId, group }): L2Step => ({ kind: "design", subject: conceptId, group })),
+    ...(mode === "simplified" ? [] : concepts.map(({ conceptId, group }): L2Step => ({ kind: "design", subject: conceptId, group }))),
     ...concepts.flatMap(({ conceptId, group }): L2Step[] => [
       { kind: "author", subject: conceptId, group },
       { kind: "audit", subject: conceptId, group },

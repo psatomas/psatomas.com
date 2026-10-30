@@ -97,7 +97,7 @@ test("a repair stays within its territory, model and design unless it re-records
   assert.deepEqual(check([plan()]), []);
   // The model changed: only allowed once the design is recorded again (and so validated) in the repair.
   const remodelled = plan();
-  remodelled.concepts.a = work("Alpha starts everything.");
+  remodelled.concepts!.a = work("Alpha starts everything.");
   assert.match(check([remodelled]).join(), /a: its model or design changed without being recorded again in the repair/);
   assert.deepEqual(check([remodelled], ["a"]), []);
   // The territory of a reopened concept changed: only with the plan recorded again.
@@ -109,7 +109,7 @@ test("a repair stays within its territory, model and design unless it re-records
   // and the model when its design is recorded after it.
   const both = plan();
   both.members.find((member) => member.conceptId === "a")!.claims = ["how alpha starts", "how alpha ends"];
-  both.concepts.a = work("Alpha starts and ends things.");
+  both.concepts!.a = work("Alpha starts and ends things.");
   assert.deepEqual(repairScopeProblems({ baseline: before, reopened: ["a"], plans: [both], redesigned: new Set(), replanned: new Set(["g1"]), territoryOnly: true }), []);
   assert.match(check([both], [], ["g1"]).join(), /a: its model or design changed without being recorded again/);
   assert.deepEqual(check([both], ["a"], ["g1"]), []);

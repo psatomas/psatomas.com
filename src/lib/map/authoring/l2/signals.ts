@@ -174,7 +174,7 @@ export function conceptSignals(input: L2SignalInput): L2Signal[] {
   if (length > DEPTH.longRecord) found.push(signal("heuristic", "depth-long", `${length} words, more than ${DEPTH.longRecord}: tie each paragraph to a claim, and condense repetition, background and examples the claims do not need`));
   if (length < DEPTH.shortRecord && (context.plan?.claims.length ?? 0) >= 3) found.push(signal("heuristic", "depth-short", `${length} words for ${context.plan!.claims.length} claims: is each claim explained, not only named?`));
   const shownWords = new Set(tokens(texts.join(" ")));
-  for (const [field, value] of Object.entries(input.work?.model.fields ?? {})) {
+  for (const [field, value] of Object.entries(input.work?.model?.fields ?? {})) {
     // A guard field lists what the text must avoid, so it never reaches the text.
     if (GUARD_FIELDS.has(field)) continue;
     const content = [...new Set(tokens(Array.isArray(value) ? value.join(" ") : value).filter((word) => word.length >= 5))];

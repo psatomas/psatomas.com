@@ -17,6 +17,7 @@ import type { MapKnowledgeModel } from "../../types.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../content-registry.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import { inventoryL2, type L2Inventory, type L2MemberStanding } from "./inventory.ts";
+import { isSimplified, pipelineProblems, startPipeline, topicLabelProblems, type L2Pipeline } from "./pipeline.ts";
 
 export const GROUPS_DIR = "src/lib/map/authoring/l2/groups";
 export const groupFile = (groupPlacementId: string) => `${GROUPS_DIR}/${groupPlacementId}.json`;
@@ -58,8 +59,10 @@ export type L2GroupFile = {
   members: L2PlanMember[];
   /** A recorded split for every hazard pair touching an owned member: near-synonyms and category/member relations. */
   splits: { concepts: [string, string]; split: string }[];
-  /** Concept models, designs and audits of owned members (contracts.ts). */
-  concepts: Record<string, unknown>;
+  /** Concept models, designs and audits of owned members (contracts.ts); under the simplified pipeline only audits, and absent until the first is recorded. */
+  concepts?: Record<string, unknown>;
+  /** The pipeline mode the plan was written for (pipeline.ts); absent in plans written before modes existed, which are legacy. */
+  pipeline?: L2Pipeline;
 };
 
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -177,7 +180,8 @@ export function planSkeleton(model: MapKnowledgeModel, groupPlacementId: string,
 
 /** Why a plan is not valid on its own terms against the model; empty when it is. */
 export function planProblems(plan: L2GroupFile, model: MapKnowledgeModel, { registry = AUTHORED_CONTENT_CONCEPTS, hazards = HAZARDS }: L2PlanOptions = {}): string[] {
-  const problems: string[] = [];
+  const problems: string[] = [...pipelineProblems(plan.pipeline)];
+  const simplified = isSimplified(plan);
   if (plan.version !== 1) problems.push("version must be 1");
   const inventory = inventoryL2(model, { authoredContent: registry });
   const group = inventory.groups.find((candidate) => candidate.groupPlacementId === plan.group);
@@ -194,6 +198,8 @@ export function planProblems(plan: L2GroupFile, model: MapKnowledgeModel, { regi
     const at = member.conceptId;
     if (member.standing === "owned") {
       if (!member.claims?.length || member.claims.some(blank)) problems.push(`${at}: an owned member needs at least one non-empty claim`);
+      // Under the simplified pipeline a claim names what to explain and asserts nothing (pipeline.ts).
+      if (simplified) for (const claim of member.claims ?? []) for (const problem of topicLabelProblems(claim)) problems.push(`${at}: claim "${claim}" is not a topic label: ${problem}`);
       for (const claim of member.claims ?? []) {
         const key = normalize(claim);
         if (seen.has(key) && seen.get(key) !== at) problems.push(`${at}: claim "${claim}" is also ${seen.get(key)}'s`);
@@ -229,6 +235,17 @@ export function planProblems(plan: L2GroupFile, model: MapKnowledgeModel, { regi
     if (!owned.some((member) => member.conceptId === conceptId)) problems.push(`concept work for ${conceptId}, which this group does not own`);
   }
   return problems;
+}
+
+/**
+ * The skeleton plan for a group under a pipeline mode (`l2 territory --write
+ * --pipeline <mode>`): a simplified plan declares its mode; a legacy plan
+ * declares none, as every plan written before modes did.
+ */
+export function territorySkeleton(model: MapKnowledgeModel, groupPlacementId: string, mode?: string, options: L2PlanOptions = {}): L2GroupFile {
+  const pipeline = startPipeline(mode);
+  const skeleton = planSkeleton(model, groupPlacementId, options);
+  return pipeline.mode === "legacy" ? skeleton : { ...skeleton, pipeline: { mode: pipeline.mode, version: pipeline.version } };
 }
 
 /** Why a plan no longer describes the model it was written against. */

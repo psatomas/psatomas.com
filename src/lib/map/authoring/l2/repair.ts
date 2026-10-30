@@ -33,7 +33,7 @@ export function repairBaseline(plans: readonly L2GroupFile[], conceptIds: readon
   for (const conceptId of conceptIds) {
     const plan = plans.find((candidate) => candidate.members.some((member) => member.conceptId === conceptId && member.standing === "owned"));
     if (!plan) throw new Error(`no plan owns ${conceptId}`);
-    baseline.work[conceptId] = workFingerprint(plan.concepts[conceptId] as L2ConceptWork | undefined);
+    baseline.work[conceptId] = workFingerprint(plan.concepts?.[conceptId] as L2ConceptWork | undefined);
     for (const member of plan.members) baseline.members[member.conceptId] = memberFingerprint(member);
     baseline.splits[plan.group] = hash(plan.splits);
   }

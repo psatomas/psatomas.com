@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mapKnowledge } from "../../data.ts";
-import { atL2Checkpoint, clearL2Checkpoint, completeStage, createL2RunState, nextAction, pendingL2Steps, recordL2Step, RunStateError, STAGES, type RunState } from "../orchestrator/run-state.ts";
+import { atL2Checkpoint, clearL2Checkpoint, completeStage, createL2RunState, latestRepairReason, nextAction, pendingL2Steps, recordL2Step, RunStateError, STAGES, type RunState } from "../orchestrator/run-state.ts";
 import { MAP_RUN_BRANCH } from "../representation/refactor.ts";
 import { DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2PrTitle, l2RepairBranch, l2Slices, pilotSlice, recordSpans, REGISTRY_FILE, sliceRemaining, sliceSteps, stepKey, viewWithout, VIEW_FILE, withoutRecords, withoutRegistryEntries } from "./campaign.ts";
 import { filledG1, model, REGISTRY } from "./fixtures.ts";
@@ -148,4 +148,13 @@ test("a repair run has its own branch, matched as a MAP run branch, and a repair
   assert.match(body, /^Repair of 01 Foundations, part 2 \(run foundations-2, merged in aff2488\): 1 concept\(s\) in 1 ownership group\(s\), one repair commit per group/);
   assert.match(body, /Only the repaired records and their groups' files changed; no record was added or removed/);
   assert.match(body, /- Repair cycle 19 \(collusion\): review: bounded share/);
+});
+
+test("status shows a repair cycle's latest finding, not the whole growing chain", () => {
+  assert.equal(latestRepairReason("first audits FAIL: B1"), "first audits FAIL: B1");
+  const chain = "first audits FAIL: B1; then b: audit FAIL: B2; then a, c: re-audit 1 FAIL: R1 overclaim";
+  assert.equal(latestRepairReason(chain), "a, c: re-audit 1 FAIL: R1 overclaim (latest of 3 reopenings; `status --verbose` prints all)");
+  // A finding's own semicolons do not split it.
+  assert.equal(latestRepairReason("x FAIL: A; B; then not-a-list"), "x FAIL: A; B; then not-a-list");
+  assert.equal(latestRepairReason(`one: ${"x".repeat(1000)}`, 50).length, 50);
 });

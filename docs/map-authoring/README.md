@@ -36,9 +36,13 @@ Read these before authoring. If they disagree, the earlier source wins.
    built: territory plans, context, contracts, depth, territory precedents,
    runs and repairs. [`l2-pilot.md`](l2-pilot.md) records what the 22-concept
    pilot showed and what changed before the campaign.
-   [`l2-pipeline-v2.md`](l2-pipeline-v2.md) is the batch pipeline that authors
-   the remaining L2 content: one group per batch, a deterministic driver,
-   independent and verified reviews, and per-batch cost metrics with stop rules.
+   The "Pipeline modes" section of [`l2-authoring.md`](l2-authoring.md#pipeline-modes)
+   describes the legacy and simplified modes a slice runs under; the simplified
+   mode's agent instructions are versioned in
+   [`l2-simplified/`](l2-simplified/README.md).
+   [`l2-pipeline-v2.md`](l2-pipeline-v2.md) describes a batch pipeline (v2) that
+   is parked: the active campaign does not use it, and its runs are not the
+   governed `l2` runs above.
 7. The code is the ground truth for shapes and rules:
    [`types.ts`](../../src/lib/map/types.ts) (content blocks),
    [`validation.ts`](../../src/lib/map/validation.ts) (structural rules),

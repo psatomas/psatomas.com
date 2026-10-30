@@ -20,12 +20,13 @@ import { mapKnowledge } from "../src/lib/map/data.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
 import type { MapConceptContent } from "../src/lib/map/types.ts";
 import { assembleL2Context, formatL2Context } from "../src/lib/map/authoring/l2/context.ts";
-import { costByRole, projectSlug, sessionCost, type CostFilter, type SessionCost } from "../src/lib/map/authoring/l2/cost.ts";
-import { groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { costByRole, PRICES_AS_OF, priceOf, projectSlug, sessionCost, type CostFilter, type CostTotals, type SessionCost } from "../src/lib/map/authoring/l2/cost.ts";
+import { weighted } from "../src/lib/map/authoring/l2v2/core.ts";
+import { conceptWorkOf, groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { finishedConcepts } from "../src/lib/map/authoring/l2/campaign.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
 import { conceptSignals, driftReport, groupSignals, type L2Signal } from "../src/lib/map/authoring/l2/signals.ts";
-import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, planSkeleton, staleProblems, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
+import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, staleProblems, territorySkeleton, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 
@@ -52,7 +53,7 @@ export function signalsOf(conceptId: string, plans: readonly L2GroupFile[]): L2S
   if (!record) throw new Error(`${conceptId} has no record yet`);
   const context = assembleL2Context(conceptId, mapKnowledge, plans);
   const domain = mapKnowledge.placements.find((placement) => placement.id === (context.owner?.domain ?? ""));
-  const work = plans.find((plan) => plan.group === context.owner?.group)?.concepts[conceptId] as L2ConceptWork | undefined;
+  const work = conceptWorkOf(plans.find((plan) => plan.group === context.owner?.group), conceptId) as L2ConceptWork | undefined;
   const neighbours = context.authoredNeighbours.map(recordOf).filter((entry): entry is MapConceptContent => !!entry);
   return conceptSignals({ conceptId, record, context, model: mapKnowledge, work, neighbours, domainOrder: domain?.order ?? 0 });
 }
@@ -157,25 +158,33 @@ export function commandL2(command: string | undefined, positional: string[], fla
         console.log(JSON.stringify({ filter, roles: Object.fromEntries(roles), ...(has("--agents") ? { sessions } : {}) }, null, 2));
         return;
       }
-      console.log(`model spend on ${filter.branch}${filter.since ? ` since ${filter.since}` : ""}${filter.until ? ` until ${filter.until}` : ""} (weighted = input + 0.1 cache read + 1.25 cache write + 5 output)`);
-      console.log(`${"role".padEnd(13)} ${"sessions".padStart(8)} ${"calls".padStart(6)} ${"input".padStart(9)} ${"cache write".padStart(12)} ${"cache read".padStart(13)} ${"output".padStart(10)} ${"weighted".padStart(12)}`);
-      const row = (name: string, entry: { sessions: number; calls: number; usage: SessionCost["usage"]; weighted: number }) =>
-        console.log(`${name.padEnd(13)} ${String(entry.sessions).padStart(8)} ${String(entry.calls).padStart(6)} ${thousands(entry.usage.input_tokens).padStart(9)} ${thousands(entry.usage.cache_creation_input_tokens).padStart(12)} ${thousands(entry.usage.cache_read_input_tokens).padStart(13)} ${thousands(entry.usage.output_tokens).padStart(10)} ${thousands(entry.weighted).padStart(12)}`);
+      console.log(`model spend on ${filter.branch}${filter.since ? ` since ${filter.since}` : ""}${filter.until ? ` until ${filter.until}` : ""} (weighted = input + 0.1 cache read + 1.25 cache write + 5 output; usd = list price as of ${PRICES_AS_OF}, an estimate)`);
+      console.log(`${"role".padEnd(13)} ${"sessions".padStart(8)} ${"calls".padStart(6)} ${"input".padStart(9)} ${"cache write".padStart(12)} ${"cache read".padStart(13)} ${"output".padStart(10)} ${"weighted".padStart(12)} ${"usd".padStart(9)}  models`);
+      const dollars = (entry: { usd: number; unpriced: string[] }) => `$${entry.usd.toFixed(2)}${entry.unpriced.length ? "+?" : ""}`;
+      const row = (name: string, entry: CostTotals) =>
+        console.log(`${name.padEnd(13)} ${String(entry.sessions).padStart(8)} ${String(entry.calls).padStart(6)} ${thousands(entry.usage.input_tokens).padStart(9)} ${thousands(entry.usage.cache_creation_input_tokens).padStart(12)} ${thousands(entry.usage.cache_read_input_tokens).padStart(13)} ${thousands(entry.usage.output_tokens).padStart(10)} ${thousands(entry.weighted).padStart(12)} ${dollars(entry).padStart(9)}  ${Object.keys(entry.models).sort().join(", ")}`);
       for (const [role, entry] of [...roles].sort((a, b) => b[1].weighted - a[1].weighted)) row(role, entry);
       const total = costByRole(sessions.map((session) => ({ ...session, role: "total" }))).get("total");
-      if (total) row("total", total);
-      if (has("--agents")) for (const session of sessions) console.log(`  ${session.role.padEnd(12)} ${thousands(session.weighted).padStart(10)} weighted, ${String(session.calls).padStart(3)} calls  ${session.description}`);
+      if (total) {
+        row("total", total);
+        for (const [model, usage] of Object.entries(total.models).sort()) {
+          const price = priceOf(model, usage);
+          console.log(`  by model: ${model.padEnd(20)} ${thousands(weighted(usage)).padStart(12)} weighted  ${price === undefined ? "unpriced (no list price in cost.ts PRICES)" : `$${price.toFixed(2)}`}`);
+        }
+      }
+      if (has("--agents")) for (const session of sessions) console.log(`  ${session.role.padEnd(12)} ${thousands(session.weighted).padStart(10)} weighted ${dollars(session).padStart(9)}, ${String(session.calls).padStart(3)} calls  ${Object.keys(session.models).join(", ").padEnd(18)} ${session.description}`);
       return;
     }
     case "territory": {
       const group = positional[0];
-      if (!group) throw new Error("usage: l2 territory <group> [--write]");
+      if (!group) throw new Error("usage: l2 territory <group> [--write] [--pipeline legacy|simplified]");
       const path = join(ROOT, groupFile(group));
       if (existsSync(path)) {
         process.stdout.write(readFileSync(path, "utf8"));
         return;
       }
-      const skeleton = planSkeleton(mapKnowledge, group);
+      // A slice under the simplified pipeline declares it in each group file, so the committed plan validates under its mode.
+      const skeleton = territorySkeleton(mapKnowledge, group, flag("--pipeline"));
       if (has("--write")) {
         mkdirSync(dirname(path), { recursive: true });
         writeFileSync(path, `${JSON.stringify(skeleton, null, 2)}\n`);

@@ -77,7 +77,7 @@ test("another group's plan, a missing audit, a changed parent or an unexpected r
   assert.match(validateL2Diff(otherPlan).problems.join(), /another group's plan changed: g2/);
 
   const unaudited = run();
-  delete (unaudited.headPlans[0].concepts.b as L2ConceptWork).audit;
+  delete (unaudited.headPlans[0].concepts!.b as L2ConceptWork).audit;
   assert.match(validateL2Diff(unaudited).problems.join(), /b: the concept audit is missing/);
 
   const unresolved = run();
@@ -183,4 +183,13 @@ test("a repair run may not change another record, leave its own unchanged, add a
   const refused = validateL2Diff(notRepair).problems.join("\n");
   assert.match(refused, /existing content changed: a/);
   assert.match(refused, /data.ts deletes 1 line\(s\); a content run only adds/);
+});
+
+test("under the simplified pipeline the diff requires every authored concept's audit, though the plan holds no models", () => {
+  const input = run();
+  const plan = input.headPlans[0] as L2GroupFile & { groupAudit?: unknown };
+  const simplified: L2GroupFile = { ...plan, pipeline: { mode: "simplified", version: 1 }, concepts: { a: { audit: (plan.concepts!.a as L2ConceptWork).audit }, b: { audit: (plan.concepts!.b as L2ConceptWork).audit } } };
+  assert.deepEqual(validateL2Diff({ ...input, headPlans: [simplified, input.headPlans[1]] }).problems, []);
+  const missing: L2GroupFile = { ...simplified, concepts: { a: simplified.concepts!.a } };
+  assert.ok(validateL2Diff({ ...input, headPlans: [missing, input.headPlans[1]] }).problems.includes("b: the concept audit is missing"));
 });
