@@ -303,9 +303,10 @@ const authoredBy = (run: RunState) => run.plan.eligible.filter((conceptId) => !(
 /**
  * Why a run of a slice may not start now, given the slice's earlier runs (its
  * full-slice and partial runs; never its repair runs) and the concepts already
- * integrated on main. Every earlier run must be finished and its concepts
- * integrated: an open run, or a finished one whose concepts are not on main
- * (its PR unmerged, or abandoned), is resolved first, so two runs of one slice
+ * integrated on main. Every earlier run must be finished, its concepts
+ * integrated and its merge recorded: an open run, a finished one whose
+ * concepts are not on main (its PR unmerged, or abandoned), or one whose merge
+ * is not recorded (recordHumanMerge) is resolved first, so two runs of one slice
  * never author the same concept or race on the same files. Integrated
  * concepts are never authored again: they leave the remaining set the run is
  * created from, and a partial run naming only integrated groups is refused.
@@ -319,24 +320,74 @@ export function partialStartProblems(input: { runs: readonly RunState[]; finishe
       problems.push(
         pending.length
           ? `${run.domainId} is still open (stage ${run.stage}): finish it, or stop it and decide its concepts (${pending.join(", ")}), before starting ${input.id}`
-          : `${run.domainId} is integrated on main but its run is still open (stage ${run.stage}): record its merge first (\`l2 run --domain ${run.domainId}\`, after \`l2 resume --domain ${run.domainId} --decision ..\` if it stopped)`,
+          : `${run.domainId} is integrated on main but its run is still open (stage ${run.stage}): finish it, or resolve its stop (\`l2 status --domain ${run.domainId}\`)`,
       );
     } else if (pending.length) {
       problems.push(`${run.domainId} finished, but its concepts ${pending.join(", ")} are not on main: integrate its PR first`);
+    } else if (run.pr && !run.l2?.merged) {
+      // Concepts on main without the run's recorded merge: integrated by another route, or a merge not yet recorded.
+      problems.push(`${run.domainId} finished and its concepts are on main, but the merge of its PR #${run.pr.number} is not recorded: \`l2 run --domain ${run.domainId}\` records it`);
     }
   }
   return problems;
 }
 
+/** A run's PR as `gh pr view` reports it when the tool looks for a merge. */
+export type ObservedPr = { number?: number; state: string; mergeCommit?: { oid: string } | null; headRefOid: string; headRefName?: string; baseRefName?: string };
+/** Whether main, freshly fetched, holds the PR's merge commit and the run's pushed head. */
+export type ObservedIntegration = { mergeOnMain: boolean; headOnMain: boolean };
+
 /**
- * A PR merged by a human, as the merge stage observes it: recorded only if it
- * merged exactly the head the run validated and pushed. Undefined while the
- * PR is not merged; the run never merges anything here itself.
+ * A PR merged by a human, as the run observes it (the merge stage of an
+ * authorized run, or `l2 run` on a finished one): recorded only if it is the
+ * run's own PR, from its branch into main, merged at exactly the head the run
+ * validated and pushed, with that head and the merge commit on main.
+ * Undefined while the PR is not merged; anything else is a problem, never a
+ * record. The run never merges anything here itself.
  */
-export function humanMerge(state: RunState, pr: { state: string; mergeCommit?: { oid: string } | null; headRefOid: string }, now: string): { merged: NonNullable<L2RunRecord["merged"]> } | { problem: string } | undefined {
+export function humanMerge(
+  state: RunState,
+  pr: ObservedPr,
+  now: string,
+  { integration, main = "main" }: { integration?: ObservedIntegration; main?: string } = {},
+): { merged: NonNullable<L2RunRecord["merged"]> } | { problem: string } | undefined {
   if (pr.state !== "MERGED" || !pr.mergeCommit) return undefined;
-  if (!state.pushedSha || pr.headRefOid !== state.pushedSha) return { problem: `the PR was merged at ${pr.headRefOid.slice(0, 7)}, but the run validated and pushed ${state.pushedSha?.slice(0, 7) ?? "nothing"}` };
+  const problems = [
+    pr.number !== undefined && state.pr && pr.number !== state.pr.number ? `PR #${pr.number} is not the run's PR #${state.pr.number}` : undefined,
+    pr.headRefName !== undefined && pr.headRefName !== state.branch ? `the PR merged ${pr.headRefName}, not the run's branch ${state.branch}` : undefined,
+    pr.baseRefName !== undefined && pr.baseRefName !== main ? `the PR merged into ${pr.baseRefName}, not ${main}` : undefined,
+    !state.pushedSha || pr.headRefOid !== state.pushedSha ? `the PR was merged at ${pr.headRefOid.slice(0, 7)}, but the run validated and pushed ${state.pushedSha?.slice(0, 7) ?? "nothing"}` : undefined,
+    integration && !integration.mergeOnMain ? `the merge commit ${pr.mergeCommit.oid.slice(0, 7)} is not on ${main}` : undefined,
+    integration && state.pushedSha && !integration.headOnMain ? `the pushed head ${state.pushedSha.slice(0, 7)} is not on ${main}` : undefined,
+  ].filter((problem): problem is string => Boolean(problem));
+  if (problems.length) return { problem: problems.join("; ") };
   return { merged: { sha: pr.mergeCommit.oid, at: now, byHand: true } };
+}
+
+/**
+ * Records, on a finished run, the human merge of its PR (humanMerge). A run
+ * without a merge authorization finishes at its validated PR (completeStage,
+ * ci); once merged its record carries the merge, so its concepts can be
+ * repaired in a repair run and the slice's next run may start.
+ */
+export function recordHumanMerge(state: RunState, merged: NonNullable<L2RunRecord["merged"]>): RunState {
+  if (state.kind !== "l2" || !state.l2) throw new RunStateError("only L2 runs record a merge");
+  if (state.stage !== "done") throw new RunStateError(`${state.domainId} is at stage ${state.stage}: its merge stage records a merge`);
+  if (state.l2.merged) throw new RunStateError(`${state.domainId} already records its merge ${state.l2.merged.sha.slice(0, 7)}`);
+  if (!state.pr || !state.pushedSha) throw new RunStateError(`${state.domainId} has no pushed PR`);
+  return { ...state, l2: { ...state.l2, merged } };
+}
+
+/**
+ * Why a run's concepts may not be reopened, given its PR as observed now: a
+ * merged PR is repaired in a new run, and a PR that cannot be read leaves it
+ * unknown whether it merged. A run without a PR has nothing to observe.
+ */
+export function reopenPrProblem(state: RunState, pr: Pick<ObservedPr, "state"> | undefined): string | undefined {
+  if (!state.pr) return undefined;
+  if (!pr) return `cannot read PR #${state.pr.number}, so whether it merged is unknown: reopen once \`gh pr view ${state.pr.number}\` works`;
+  if (pr.state === "MERGED") return `PR #${state.pr.number} is merged: record the merge (\`l2 run --domain ${state.domainId}\`), then repair in a new run (\`l2 start --slice ${state.l2?.slice.id ?? state.domainId} --repair ..\`)`;
+  return undefined;
 }
 
 /** The merged run a repair of the named concepts repairs: the one run of the slice that drafted every one of them. */
