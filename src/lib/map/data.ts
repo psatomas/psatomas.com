@@ -20577,6 +20577,196 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "state-models-content",
+      conceptId: "state-models",
+      definition:
+        "A state model is the scheme by which a protocol divides its state into units, such as accounts, unspent outputs or objects, and fixes what a transaction may read, consume, create or change in them.",
+      body: [
+        {
+          kind: "comparison",
+          label: "Three state models by what a transaction spends",
+          dimensions: ["Unit of state", "What a spend must reference", "What stops a second spend"],
+          alternatives: [
+            { name: "Account model, as in Ethereum", values: ["A long-lived account whose balance and storage change in place", "The sending account, holding enough at execution, and its next nonce", "Execution lowers the balance, and a nonce already used is rejected"] },
+            { name: "Unspent-output model, as in Bitcoin", values: ["An output holding an amount and a spending condition, consumed whole and never modified", "Each output spent, by transaction identifier and output index, with data that satisfies its condition", "A spent output leaves the unspent set, so a later input naming it is invalid"] },
+            { name: "Object model, as in Sui", values: ["An object with a lasting identifier whose contents change from version to version", "Each owned input object, by identifier, version and digest", "Execution gives each written object a new version, so a reference to the old one fails"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Because an output is consumed whole, a Bitcoin payment smaller than the outputs it spends returns the excess to the payer as a new change output, and input value left unassigned goes to the block producer as the fee. A wallet therefore holds many outputs rather than one balance and has to choose which to spend. The reference is also what keeps a Bitcoin transaction from being applied twice in one history: once its inputs are spent, a replay names outputs that no longer exist. An account offers no consumable item to name, since its balance is a number rather than a set of distinguishable coins, so the account model needs a separate guard against the same signed transfer running again, which is the role of Ethereum's account nonce. Sui's object references carry a version for the same reason, and a client whose record of an object's current version is out of date builds transactions that validators reject.",
+        },
+        {
+          kind: "paragraph",
+          text: "In each of these models the guard holds within one agreed order of transactions. Two conflicting transactions, each valid against the state before the other, are both well formed; the model ensures that at most one takes effect in a given history, and the ordering decides which. A double spend that succeeds in practice, for example by a reorganization that replaces the history a recipient had accepted, defeats the ordering, not the state model. Shielded designs such as Zcash change what a spend references: the spent note is not identified publicly. The transaction instead names an earlier root of the tree of note commitments, proves in zero knowledge that it may spend a note committed under that root, and reveals a nullifier derived from that note, which the protocol rejects if it has appeared before. The guard against a second spend then runs against a set of spent markers rather than a set of unspent outputs.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each model makes something awkward. Under the unspent-output model, state that many users update, such as a pool of liquidity, has to live in an output that each update consumes and recreates, so concurrent updates that reference the same output conflict and at most one of them succeeds. Bitcoin's script language also constrains how an output may be spent while offering little control over what the spending transaction creates, which makes state that must carry across spends hard to express. Under the account model as Ethereum implements it, transactions do not declare in advance which accounts and storage they will touch, and what they touch can depend on values found while executing, so which transactions conflict becomes known only by running them; a sender's transactions also take effect strictly in nonce order, so one that cannot be included holds back the rest. Under the object model as Sui implements it, anything several parties must change becomes a shared object, which consensus has to order before transactions on it execute, and value held in many coin objects has to be split and merged explicitly, much as outputs are.",
+        },
+        {
+          kind: "paragraph",
+          text: "Designs often combine features of more than one model. Cardano's extended unspent-output model attaches data to outputs and lets the script guarding an output inspect the whole spending transaction, so a contract can require that its successor output carry updated data, threading a state machine through a chain of outputs; reference inputs let a transaction read an output without consuming it. Solana keeps mutable accounts but requires each transaction to list the accounts it reads and writes, giving it the declared footprint that the output and object models have, so that conflicts are visible before execution, which its runtime uses for parallel execution. Sui's objects sit between the other two: like accounts they keep an identity while their contents change, and like outputs each version of an owned object can be used as an input once. Account-model chains also host output-style designs inside applications, as when a shielded pool contract keeps note commitments and nullifiers in its own storage.",
+        },
+        {
+          kind: "paragraph",
+          text: "A state model is not the protocol's data model. The state model belongs to the consensus rules: it fixes which units exist and what a valid transaction may do to them, so changing it changes the protocol. A data model structures information for a purpose such as storage, query or exchange, and several can describe the same state. The two are easily confused when a data model presents state in another model's shape. Bitcoin wallets and block explorers show an address with a balance, but Bitcoin's state holds no balance: it is a sum, computed outside the protocol, over the unspent outputs whose spending conditions the software attributes to that address, and no Bitcoin transaction reads or sets it. Expecting a payment to an address to update one entry, or part of a balance to be spendable without consuming whole outputs, is reasoning from the view rather than from what the protocol enforces.",
+        },
+      ],
+    },
+    {
+      id: "global-state-content",
+      conceptId: "global-state",
+      definition: "Global state is the whole of a protocol's state at one position in its agreed order: the complete set of entries, apart from the chain of blocks itself, that the protocol carries forward for later transitions to read, change or consume.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "What that set contains is fixed by the protocol's transition rules, not by what its chain happens to record. Ethereum's account state, which its execution layer's formal specification calls the world state, is every account with its nonce, balance, code and storage; Bitcoin's global state is the set of unspent transaction outputs. A protocol can keep its state in more than one structure, each under its own commitment, and still have one global state at each position: Ethereum keeps validator records and their balances in the beacon state, apart from the account state, and withdrawals move value from the beacon state into accounts.",
+        },
+        {
+          kind: "paragraph",
+          text: "Much of what a chain records stays outside. Transactions and blocks are the input that produced the state and remain in the chain's history once applied: a spent Bitcoin output leaves the unspent set while the transaction that created it stays in its block. Ethereum commits to each block's receipts and event logs in its header, yet no later transaction can read them. Ethereum blobs, data published to be available rather than executed, are committed to by the transactions that carry them and may be pruned by nodes after a retention window, without ever becoming account entries. Bitcoin Core leaves out of its unspent set the outputs it recognizes as unspendable from their script alone, such as those whose script begins with OP_RETURN to carry data, because no later transition can spend them. On-chain data is thus a larger category than state, and an index built from either, such as an explorer's history of an address, is derived state.",
+        },
+        {
+          kind: "paragraph",
+          text: "Given a deterministic transition function and a total order, the state after any prefix of the order follows from the genesis state and everything ordered up to that point, including block-level effects such as rewards or withdrawals, so each position has exactly one global state. Positions include the point after each transaction inside a block, because a transaction's effect is defined against the state its predecessors left. Many protocols commit to only some of these positions. Ethereum puts a state root in each block header, committing to the position at the block's end; Bitcoin headers commit to transactions and to no state at all, yet the unspent set after each block is just as determined. A commitment lets a participant refer to a position's state without holding it; it does not make that state any more defined. Where a design leaves some transactions unordered relative to each other, as Sui does for transactions that touch only owned objects, nodes can apply them in different sequences, and the positions all nodes share are points that fix one set of applied transactions, such as Sui's checkpoints.",
+        },
+        {
+          kind: "paragraph",
+          text: "Between positions there is no global state to observe. While a transaction executes, a node holds intermediate values that belong to no position: they become part of the next state if the transaction succeeds and are discarded if it reverts, which in Ethereum still leaves the fee charged and the sender's nonce advanced. Invariants an application checks at the end of a transaction can therefore be broken inside it, and some designs depend on that: a flash loan lends a pool's funds within one transaction, and the whole transaction reverts unless the funds, with any fee due, are back before it ends.",
+        },
+        {
+          kind: "paragraph",
+          text: "Positions belong to one particular history. Where competing branches can exist, each defines its own global state at the same height, and a node that switches branches must recover the state at their common ancestor and apply the other branch from there. Many clients therefore keep undo data or recent states alongside the current one; Bitcoin Core writes undo data for each block it stores, and a reorganization deeper than a node's undo data or retained states forces it to rebuild state from an earlier point. The word global names scope, not simultaneity: honest nodes at different heights, or on different branches, hold different global states of the same protocol.",
+        },
+        {
+          kind: "paragraph",
+          text: "Checking a new transition takes the current values of every entry it reads or writes and, where the protocol commits to its state, enough of the surrounding structure to compute the commitment that results. Because the next block may touch any entry, a validator that executes blocks from its own copy needs the whole current global state, though not past states, which archive nodes keep as historical state. Checking also reads values from recent headers: Bitcoin's difficulty and timestamp rules use them, and an Ethereum block's base fee follows from its parent's header. In the state-machine sense those values are state, since later transitions depend on them, but they count as global state only where the protocol's rules define entries that hold them; otherwise a node reads them from the recent headers it keeps with the chain. A participant can hold less only by moving the requirement elsewhere, so that what it lacks arrives with the block as proof against a root it already accepted, or is vouched for by parties it trusts.",
+        },
+        {
+          kind: "comparison",
+          label: "What a participant holds and what that lets it check",
+          dimensions: ["What it holds", "What it checks in a new block", "What it relies on"],
+          alternatives: [
+            { name: "Full validating node", values: ["The whole current global state, often with undo data or recent states for reorganizations", "Every transition, executed against its own copy", "Others for the order of blocks, not for their validity"] },
+            { name: "Stateless validator", values: ["A state root it has already accepted", "Every transition, executed against witnesses the block carries for the entries it touches", "Whoever holds the full state to build blocks and their witnesses"] },
+            { name: "Validity-proof verifier", values: ["A state root it has already accepted", "A proof that the new root follows from the old under the rules, without executing the transitions", "The soundness of the proof system, and whoever holds the state to produce later blocks"] },
+            { name: "Light client", values: ["Block headers, or the current set of signers whose signatures make a header valid", "The work or signatures each header carries, not the transitions it commits to", "Consensus participants having followed the rules when they produced or signed the headers"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "The full state still has to live somewhere. If no participant keeps and serves some part of it, those holding only roots can still reject invalid blocks, but nobody can build a valid block that touches that part.",
+        },
+        {
+          kind: "paragraph",
+          text: "Global state is not shared state. In programming a global variable is one any code can reach, and the word invites that reading, but belonging to the global state says nothing about who may change an entry: an output's script decides who can spend it, and in the EVM only code running in a contract's own context writes its storage. Shared state picks out the parts several parties or applications read and write, a matter of access and contention within the whole; global state is the whole, whoever may touch each part.",
+        },
+        {
+          kind: "paragraph",
+          text: "Nor does a global state span protocols. A rollup has a global state of its own, defined over the rollup's order. In many designs the base layer holds a commitment to it in a contract's storage and carries the transaction data published for it, so base-layer validators check their own transitions without holding or executing the rollup's. The base layer's global state contains at most a commitment to the rollup state, not its entries.",
+        },
+      ],
+    },
+    {
+      id: "local-state-content",
+      conceptId: "local-state",
+      definition: "Local state is the portion of a protocol's state that the protocol itself attributes to one account, contract or participant: the entries its rules keep under that entity, as opposed to entries attributed to another entity or to the protocol as a whole.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Where a protocol attributes state, it does so by what its structure records for an entry, such as the entity it is kept under or an owner field, not by whom the entry concerns. Nor does attribution settle who may change an entry, which is the question of state ownership. In Ethereum's account state every entry sits under an address: an account's nonce, balance and code, and each slot of a contract's storage, which is kept in a storage of that account's own. A holder's balance of an ERC-20 token is therefore local state of the token contract, kept in its storage under a key derived from the holder's address, and a plain transfer leaves the holders' own account entries unchanged except where one of them sends the transaction and pays for it. Algorand attributes one slice of state to two entities at once: an application's local state is a set of key-value pairs allocated in an account's record when the account opts in to that application, and paid for by a higher minimum balance on that account. Sui records an owner for each object, which may be an address or another object, while shared and immutable objects have no single owner. Bitcoin's unspent set attributes nothing to a participant. It keys each output by the transaction that created it and an index, and records a spending condition rather than a holder, so which participant an output belongs to is an inference from who can satisfy the condition, and an output that needs signatures from several keys belongs to none of them alone.",
+        },
+        {
+          kind: "paragraph",
+          text: "Confinement to local state gives a precise but narrow independence. If one operation reads and writes only entries attributed to one entity, and another reads and writes only entries attributed to a different one, neither reads what the other writes, so applying them in either order leaves the same state and each computes the same result. The condition covers reads as well as writes: an operation that writes only its own entries but reads a price kept by another contract depends on whatever was last written there. It also covers what the protocol does around an operation. An Ethereum transaction debits its sender for fees, advances the sender's nonce and, when it pays a priority fee, credits the block's fee recipient, so transactions whose own logic stays within separate contracts still both write that recipient's balance. Values fixed for a whole block, such as its timestamp or base fee, do not break the symmetry within the block, but moving an operation to another block can change its result.",
+        },
+        {
+          kind: "paragraph",
+          text: "What confinement can show is limited by the unit a protocol attributes entries to. Two transfers of one ERC-20 token between disjoint pairs of holders both operate on the token contract's local state, so confinement shows nothing about whether their order matters. That a typical pair of such transfers leaves the contract's storage the same in either order follows from the separate balances they read and write, not from attribution. Within one entity there is no such guarantee, since two operations on the same entries can give different results in different orders. Independence of effect is also not independence of inclusion: where confined operations share block space and pass through one ordering, as on Ethereum, activity elsewhere can still delay or exclude them. Enforcing separation between entities is the concern of state isolation, and running confined operations at the same time is that of parallel execution.",
+        },
+        {
+          kind: "distinction",
+          left: "Local state: the entries a protocol attributes to one entity",
+          right: "A node's local copy of the state",
+          further: ["Data a participant keeps for itself outside the state"],
+        },
+        {
+          kind: "paragraph",
+          text: "The word local in a node's local copy names where data is held, not whom it is attributed to: a full node's copy of an unsharded chain's state, however it was obtained, holds every entity's local state along with the rest. Local state in the sense of attribution exists in the protocol's state whether or not a given participant holds it, changes only through transitions the rules accept, and falls under the protocol's state commitment where there is one. Data a participant keeps for itself, such as its keys, an address book, a history of its own transactions, a cached balance or a count of the nonces it has used, is checked by nobody else and changes nothing in the state when it is lost. The two can drift apart: an Ethereum wallet whose nonce count runs behind or ahead of its account's nonce builds transactions that the network rejects or that wait unexecuted. Losing private data can still be decisive. When the only key able to authorize an account's transactions is gone, the state keeps attributing the balance to that account, but nothing that needed the key can happen again. Data held outside the state, off-chain state included, enters a transition only when someone submits it, and the rules then decide what it changes.",
+        },
+      ],
+    },
+    {
+      id: "state-encoding-content",
+      conceptId: "state-encoding",
+      definition: "State encoding is the rule that turns each value in a protocol's state into an exact sequence of bytes, together with the matching rule that reads such bytes back as a value, so that the state can be stored, transmitted and committed to.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An encoding is canonical when every value has exactly one accepted byte string, and that takes both directions of the rule. The encoder must emit one output per value however the value was built, which rules out writing map entries in whatever order an in-memory map yields them, letting an optional field be either omitted or written with its default, and admitting floating-point numbers, whose not-a-number value has many bit patterns and whose zero has two signs, unless one form is fixed. The decoder must accept those outputs and nothing else, rejecting the forms a lenient reader would take for the same value: an integer padded with leading zero bytes, a length written in a longer form than it needs, map entries out of order or repeated, bytes left over after a complete value. Ethereum's RLP, for example, requires integers without leading zeros and the shortest length prefix, and strict decoders reject a string carrying either. General-purpose formats such as Protocol Buffers accept fields in any order and a scalar field written twice, keeping the last, so a protocol that commits to their bytes has to add canonical rules of its own.",
+        },
+        {
+          kind: "paragraph",
+          text: "A decoder can enforce canonical form by checking each rule as it parses, rejecting a leading zero, an overlong length, a map key that does not sort after the one before it, a first offset that does not point where a fixed-size part ends, or input left over at the end. Alternatively it can decode leniently, re-encode the result and reject the input unless the two byte strings match, which is as strict as the encoder is canonical. Rejection is needed even when every honest encoder emits only the canonical form, because bytes to be decoded also arrive from other parties, during sync and inside blocks and proofs. Accepting an alternative form gives one value two byte strings and so two hashes, and anything that identifies data by its hash or compares encodings can then disagree with what the values mean. When such an input appears, clients that differ in how lenient they are disagree about whether it is valid at all, and where the input decides whether a block is valid, that disagreement can split the network of a replicated protocol. Canonical encoding is not deterministic execution: execution concerns whether nodes compute the same values, encoding whether the same values become the same bytes, and agreement on a commitment needs both.",
+        },
+        {
+          kind: "paragraph",
+          text: "Encoding choices also set what state costs to store and read. Variable-length integers keep small values small: RLP writes a zero balance as a single byte where a fixed 32-byte field would spend 32. The price is paid in decoding, since in a length-prefixed format such as RLP a reader reaches a field only by walking the length prefixes of every field before it. Fixed-width fields, such as the little-endian integers of SSZ, the encoding of Ethereum's consensus layer, waste space on small values but sit at known offsets, so a reader can go straight to the one it needs; SSZ keeps that property for variable-length fields by writing their offsets into the fixed-size part. An encoding that carries no field names or type tags and relies on a schema both sides know is smaller than a self-describing one, but from bytes written that way a reader without the schema can recover at most their structure.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hashing cost, and whether one field can be proven alone, depend on whether a record is hashed as one string or field by field. Hashing the whole serialization is a single pass over its bytes, but a change to any field means rehashing all of it, and proving one field to someone who holds only the hash means handing over every field of the record. Ethereum's execution layer works this way for accounts: each is encoded as one RLP string of nonce, balance, storage root and code hash, so evidence of a balance carries the other three fields too. Hashing field by field into a tree, as SSZ's hash tree root does, takes more hash computations to build for all but the smallest records and, where the intermediate hashes are kept, more storage; in return a change to one field rehashes only the path from that field to the record's root, and one field can be proven with a short branch of hashes. Granularity is set by what a leaf holds. SSZ packs small integers several to a 32-byte chunk, four validator balances per chunk in Ethereum's beacon state, so proving one balance also reveals the three that share its chunk. The bytes hashed need not be the bytes stored: SSZ computes its root from the value's structure rather than by hashing its serialization in one piece, so a protocol can choose how it serializes a value and how it hashes it largely independently.",
+        },
+        {
+          kind: "paragraph",
+          text: "Changing an encoding that commitments are computed over changes the commitment even when no value changes. What has to survive the change is agreement, every node turning the same state into the same new bytes and computing the same new commitment, and that rests on how the change is specified. The switch must come at a point every node identifies alike, such as a block height or an epoch, so that which encoding applies is a function of position in the history, and anything checked against a commitment from before the switch is still decoded in the old format. The conversion from old bytes to new must be a deterministic function of the old state, defined for every value the state can hold: a new format that cannot represent some existing value, such as an integer wider than its new field, changes the state rather than its encoding. The new canonical rules must settle edge cases such as empty values, zero and maximum lengths before activation, because a client that encodes one rare case differently computes a different commitment at the first block that exercises it, which can come long after the switch. Where old and new forms coexist, in historical data or in entries not yet rewritten, the format of each byte string must be decidable, from a version prefix that no valid old encoding can begin with or from where the string sits; otherwise a string valid in both formats can decode to two different values.",
+        },
+        {
+          kind: "paragraph",
+          text: "The encodings that must change in lockstep are those consensus depends on, chiefly the one commitments are computed over. Others can change more freely. Encodings used only between peers can be negotiated per connection, as network protocol versions are, and a node may keep state in a database format of its own and change it without coordinating with anyone, provided it reproduces the committed bytes exactly wherever a commitment is computed or checked. How a switch is agreed on and activated belongs to protocol upgrades and hard forks, and rewriting existing entries into a new form is a state migration.",
+        },
+      ],
+    },
+    {
+      id: "state-layout-content",
+      conceptId: "state-layout",
+      definition: "State layout is the placement of a protocol's state within the key space of its state structure: the key under which each account field, storage entry or other item sits, which decides what lies near what and how the structure is shaped.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Protocols arrange their state in one key space or in several nested ones. Ethereum's account trie keys each account by the Keccak-256 hash of its address, and an account's leaf carries the root of a separate storage trie for that account, keyed by the hash of each 32-byte slot key. Contract code lies outside both tries, stored under its own hash, which the account records. Nesting gives every contract a subtree of its own, summarized by one value in its account. Designs proposed for Ethereum to replace those tries with a single tree use one key space instead. A key's first 31 bytes, its stem, are derived by hashing an address together with an index, and its last byte selects one of 256 positions under the stem. An account's balance, nonce and code hash, its first 64 storage slots and its first 128 chunks of code share one stem, and its remaining slots and code chunks fall into groups of 256 consecutive positions under other stems. Solana keys every account by a 32-byte address in one flat space and has no storage area inside a program's account. A program keeps its data in other accounts, often at addresses derived from seeds it chooses together with its own address, so the layout of a program's data is set by how the program derives those addresses. Ethereum's beacon state places validators by position rather than by key: each new validator takes the next index, and its record and its balance sit at that index in two separate lists.",
+        },
+        {
+          kind: "paragraph",
+          text: "Key derivation sets the shape of an ordered structure such as a trie. An entry's depth is the number of branch points on its path, and a branch point appears wherever keys that agree up to some position differ at it. Keys spread evenly over the key space, as the outputs of a cryptographic hash are, keep paths in a trie that branches sixteen ways near the base-16 logarithm of the number of entries. Freely chosen keys need not be spread: anyone able to create entries under keys of their choosing can put a branch at every position along one path for about one entry per level, and every read, update and proof of an entry on that path pays for the depth. Ethereum hashes addresses and slot keys before using them as trie keys to prevent this, which also makes the shape of a contract's storage trie depend on how many slots it uses rather than on which slots its storage layout assigns. Hashing raises the price of the attack rather than removing it. To make keys share a prefix an attacker has to search for inputs whose hashes agree on it, and each further shared hexadecimal digit multiplies the expected work by sixteen, so the depth an attacker can add grows only with the logarithm of the work spent. The search is open to anyone who controls the inputs, such as addresses it can generate, or slot keys a contract computes from data its callers supply.",
+        },
+        {
+          kind: "paragraph",
+          text: "Hashing costs locality. Entries whose original keys are adjacent, such as consecutive slots of one contract, land at unrelated positions, so touching several of them means walking several paths, and a proof covering them shares only the nodes near the root. A trie keyed by hashes also cannot be walked in the order of the original keys, and those keys cannot be read back from it: a node that wants to list the addresses in its state or the slots a contract uses needs a separate store of preimages. Ethereum's nesting keeps one kind of locality, since a contract's slots all lie in its own storage trie however they are hashed. The single-tree designs keep another by hashing only the address and group index into the stem, so the entries of one group share a path, and their positions, fixed by the key's last byte, cannot be deepened by grinding. What those designs give up is the per-account subtree: no single value summarizes one contract's storage.",
+        },
+        {
+          kind: "comparison",
+          label: "Key derivation in an ordered structure such as a trie",
+          dimensions: ["Balance", "Locality of related entries", "Crafted keys"],
+          alternatives: [
+            { name: "Keys used as given", values: ["Follows the distribution of the keys; clustered or chosen keys deepen paths", "Kept: entries with adjacent keys sit together and can be read in key order", "Cheap wherever users choose keys: about one entry per added level"] },
+            { name: "Hashed keys, as in Ethereum's tries", values: ["Paths stay near the logarithm of the number of entries", "Lost: adjacent keys land at unrelated positions, and key order needs a preimage store", "Work grows exponentially with the length of the prefix ground for"] },
+            { name: "Hashed group key, fixed positions within the group, as in the single-tree designs", values: ["Balanced across groups, and each group has a fixed width", "Kept within a group; groups lie at unrelated positions", "Grinding reaches group keys only; a group cannot be deepened"] },
+            { name: "Index assigned by the protocol, as in the beacon state's validator lists", values: ["Balanced, since indices fill the key space in order", "Follows the order of assignment, not relatedness", "Nothing for users to craft, but finding an entity's index needs a separate lookup"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Where a protocol commits to its state through a tree over the keys, the committed layout fixes what the commitment is computed over: which key each item sits under, and therefore which hashes a change must recompute and what a proof of an item contains. It leaves open how a node stores the items and the structure. Go Ethereum's hash-based scheme stored each trie node in a key-value database under the node's own hash, which lets successive states share unchanged nodes but makes it costly to tell when an old node is no longer reachable from any retained state, and so to prune it. Its path-based scheme keys each node by its position in the trie instead, so a new version of a node overwrites the old one on disk, and recent earlier states are reached through reverse differences kept for a bounded number of blocks. Beside the trie, clients keep flat tables of accounts and slots, so that a read is one database lookup rather than a walk down the trie: Go Ethereum's snapshot keys them by hashed address and slot, while Erigon and Reth keep plain state keyed by unhashed address and slot, which also lets a contract's storage be scanned in key order.",
+        },
+        {
+          kind: "paragraph",
+          text: "The committed layout is chosen for balance, proof size and resistance to crafted keys, properties every node computes alike; the physical one for disk reads, write volume and pruning, which each client can settle for itself. They stay coupled because a flat table speeds reads but not commitments: after each block a node must still recompute the hashes along every changed path of the committed tree, which needs the committed nodes, stored or regenerated, and answering peers' requests for proofs draws on them too. An operation can also be cheap in one layout and costly in the other. Ethereum's original SELFDESTRUCT deleted a contract's whole storage, which in the nested committed layout meant replacing one storage root with the empty root, while a node storing slots individually had to find and delete every one, and a single-tree layout offers no root to replace at all. That mismatch was among the reasons Ethereum restricted SELFDESTRUCT to clearing the storage only of a contract created in the same transaction. How nodes organize their databases beyond the layout of state is the subject of state storage.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
