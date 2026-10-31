@@ -1,0 +1,432 @@
+{
+  "version": 1,
+  "group": "state-representation",
+  "domain": "state-data",
+  "parentConceptId": "state-representation",
+  "basis": {
+    "membership": "5dd15a2fc1be05e957ce10f0e8661925fa1ac4b0d4b2d937235036fd82c32de3",
+    "parents": {
+      "protocol-architecture": "22ebec078f082ad01c65dc2798803aea2aea48afcd9435d3407477ee38fd3cde",
+      "state-architecture": "246d2b30774f0963fca0f614a58641f9b0e3d7679f2bb7b2d9a9c0877ba51a87",
+      "state-data": "bc556a0254dbeeeb19b2d45cb87ca261f03b2dd359a179022620b5b8136cc287",
+      "state-representation": "15381f34af81ba4523cf5cadddd83e158dee323556d1a092525b91a424f9fca2"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "state-models",
+      "placementId": "state-models",
+      "standing": "owned",
+      "claims": [
+        "how the account, unspent-output and object models differ in the unit of state a transaction reads, consumes or changes",
+        "how each state model keeps the same value from being spent twice and what a transaction must reference to spend it",
+        "what each state model makes awkward to express and how designs combine features of more than one model",
+        "how a state model differs from a data model of the same protocol"
+      ],
+      "excludes": [
+        "state",
+        "data-models",
+        "accounts",
+        "account-state",
+        "account-nonces",
+        "contract-state",
+        "shared-state",
+        "state-ownership",
+        "state-partitioning",
+        "state-access-patterns",
+        "state-isolation",
+        "parallel-execution",
+        "transitions",
+        "invariants",
+        "global-state",
+        "local-state",
+        "state-encoding",
+        "state-layout",
+        "state-roots"
+      ]
+    },
+    {
+      "conceptId": "global-state",
+      "placementId": "global-state",
+      "standing": "owned",
+      "claims": [
+        "which data the global state comprises and which recorded data stays outside it",
+        "at which points in an ordered history a global state is defined and what holds between those points",
+        "how much of the global state a participant must hold to check new transitions",
+        "how global state differs from shared state and from rollup state"
+      ],
+      "excludes": [
+        "state",
+        "on-chain-data",
+        "protocol-state",
+        "derived-state",
+        "off-chain-state",
+        "historical-state",
+        "state-history",
+        "state-growth",
+        "state-storage",
+        "state-sync",
+        "shared-state",
+        "rollup-state",
+        "state-partitioning",
+        "state-proofs",
+        "state-models",
+        "local-state",
+        "state-layout",
+        "state-roots"
+      ]
+    },
+    {
+      "conceptId": "local-state",
+      "placementId": "local-state",
+      "standing": "owned",
+      "claims": [
+        "how a protocol attributes each part of its state to the account, contract or participant it belongs to",
+        "how far an operation confined to one entity's local state is independent of the rest of the state",
+        "how local state held in the protocol's state differs from data a participant keeps for itself outside it"
+      ],
+      "excludes": [
+        "state",
+        "global-state",
+        "state-models",
+        "state-layout",
+        "state-roots",
+        "accounts",
+        "account-state",
+        "contract-state",
+        "state-ownership",
+        "state-isolation",
+        "state-partitioning",
+        "state-access-patterns",
+        "shared-state",
+        "parallel-execution",
+        "synchronization",
+        "state-sync",
+        "off-chain-state"
+      ]
+    },
+    {
+      "conceptId": "state-encoding",
+      "placementId": "state-encoding",
+      "standing": "owned",
+      "claims": [
+        "what makes a state encoding canonical and how decoders reject the alternative forms of one value",
+        "how an encoding's design affects stored size, decoding and hashing cost, and whether one field can be hashed or proven alone",
+        "how a protocol changes its state encoding while every node keeps computing the same state and commitments"
+      ],
+      "excludes": [
+        "state-models",
+        "state-layout",
+        "state-roots",
+        "state-proofs",
+        "commitment-schemes",
+        "merkle-patricia-tries",
+        "transaction-structure",
+        "redundant-encoding",
+        "data-schemas",
+        "deterministic-execution",
+        "protocol-upgrades",
+        "hard-forks",
+        "state-migrations",
+        "upgrade-coordination"
+      ]
+    },
+    {
+      "conceptId": "state-layout",
+      "placementId": "state-layout",
+      "standing": "owned",
+      "claims": [
+        "how a protocol arranges accounts, contract storage and other state within the key space of its state structure",
+        "how key derivation affects the balance of the structure, the locality of related entries and resistance to crafted keys",
+        "how the layout a protocol commits to differs from the physical layout nodes use to store and read state"
+      ],
+      "excludes": [
+        "storage-layout",
+        "storage-slots",
+        "state-storage",
+        "storage-architecture",
+        "storage-optimization",
+        "merkle-trees",
+        "merkle-patricia-tries",
+        "verkle-trees",
+        "commitment-schemes",
+        "state-roots",
+        "state-proofs",
+        "state-encoding",
+        "state-models",
+        "local-state",
+        "state-access-patterns",
+        "state-partitioning",
+        "state-indexing"
+      ]
+    },
+    {
+      "conceptId": "state-roots",
+      "placementId": "state-roots-in-state-representation",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "what a state root identifies and what accepting one does and does not establish about the state",
+        "how a state root is recomputed as transitions change the state and where a protocol records it",
+        "what trust in a state root depends on wherever it is used outside the protocol that computed it"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "state-models": {
+      "audit": {
+        "at": "2026-10-30T23:49:59.341Z",
+        "note": "Re-audit after repair cycle 1 (auditor A), scoped, not expanded: the repair changed only the Zcash passage in paragraph 2 and left the argument, its assumptions, the structure and the scope unchanged. B1 resolved: the shielded spend now names an earlier root of the note commitment tree (the anchor), proves in zero knowledge that it may spend a note committed under that root, and reveals a nullifier derived from that same note, which is rejected if seen before. Both checks, membership against the named root and absence from the nullifier set, are therefore stated, and the closing sentence ('The guard against a second spend then runs against a set of spent markers') is now scoped to the double-spend guard rather than reading as the whole validity check. Accuracy of the new text: Sapling and Orchard anchors must be an earlier block's final treestate root, and Sprout also allows an interstitial root from an earlier JoinSplit in the same transaction, so 'earlier root' holds in every case; the nullifier is derived from the spent note and its correct derivation is part of the proven statement. Re-read with its paragraph and dependents: it is consistent with the paragraph's lead ('the guard holds within one agreed order'), with paragraph 4's 'shielded pool contract keeps note commitments and nullifiers in its own storage', and with the comparison, which has no shielded row. Terms the repair introduced: 'root' names a commitment-tree root only as what a spend references and explains no state-root content (state-roots reserved, not crossed); 'zero knowledge' is named, not explained (new signal). Territory: the addition answers claim 2 (what a spend must reference) at its existing scope; no sibling, exclude or parent sentence is touched. Canonical validity at both placements (State Representation, State Architecture): 'earlier' refers to protocol history, not position; plain text; American English. Parent overlap: neither parent discusses shielded spends. Untouched text: no material defect found on re-read; prior advisories stand. Advisory: (1) Ethereum's optional, non-binding EIP-2930 access lists could be acknowledged in 'transactions do not declare in advance which accounts and storage they will touch'; (2) 'keeps a Bitcoin transaction from being applied twice' could be scoped to transactions that spend outputs (coinbase); (3) the change sentence could say the excess less the fee returns as change, and that change can be omitted; (4) 'anything several parties must change becomes a shared object' slightly overclaims, since an owned object can be passed between parties or held by a multisig address; (5) 'the ordering decides which' is loose for Sui owned objects, where per-object validator locking decides and equivocation can lock both out; (6) the nonce-ordering consequence is the outer limit for naming account nonces; (7) the account-model cell under 'What a spend must reference' mixes a balance condition with references; (8) 'Each model makes something awkward.' announces its paragraph; (9) 'has to live in an output' could allow state spread over several outputs; (10) 'proves in zero knowledge that it may spend' summarizes the spend as a whole, though in Sapling and Orchard spend authority is completed by a spend authorization signature checked outside the proof.",
+        "resolutions": [
+          {
+            "id": "names-concept:d4ea82abfe",
+            "resolution": "Account nonces are named with their key properties only: the guard against the same signed transfer running again, and strict nonce order as an account-model awkwardness; no nonce mechanism (gaps, replacement, management) is explained. Untouched by the repair; within claims 2 and 3."
+          },
+          {
+            "id": "names-concept:bd6b6592bf",
+            "resolution": "Accounts appear only as the unit of the account model (a long-lived account whose balance and storage change in place) and as holding a balance that is a number rather than distinguishable coins, which claims 1 and 2 need; account structure, types and fields are not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:351b344810",
+            "resolution": "Consensus rules are named once to place the state model inside them ('belongs to the consensus rules') and draw the data-model boundary; not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:2859dd2a55",
+            "resolution": "Data models are characterized in one clause (structure information for storage, query or exchange; several can describe the same state) only to draw the claim-4 boundary; no data-model kinds or design are explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "Parallel execution is named once as what Solana's runtime uses declared footprints for; scheduling and execution mechanics are not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "State is used as the generic term the definition divides into units; what state is is not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "A state machine is named once as what Cardano contracts thread through a chain of outputs; state-machine theory is not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:82febaaef6",
+            "resolution": "Introduced by the repair: 'proves in zero knowledge that it may spend a note committed under that root' names zero knowledge as the means by which a shielded spend shows membership without identifying the note, which claim 2 needs; no proof system, circuit, or zero-knowledge property is explained."
+          }
+        ],
+        "recordFingerprint": "97f8ef3905d41cee073f61ab67e93e07a0693c1cbc6b3160e13d9ef7d5777fa9"
+      }
+    },
+    "global-state": {
+      "audit": {
+        "at": "2026-10-31T00:05:07.558Z",
+        "note": "Re-audit after repair cycle 1, auditor A, expanded to a complete read because the definition (the membership test behind claim 1) changed. Resolved: (1) paragraph 1 now scopes the world state to Ethereum account state and gives Bitcoin global state separately, so the next sentence (account state plus beacon state as one global state) completes rather than contradicts it, and account state keeps one sense in both sentences; (2) the definition excludes the chain of blocks itself, so recent headers (paragraph 6), transactions and blocks (paragraph 2) and the light client headers (comparison) are consistently outside the global state, while copies the protocol keeps as entries (beacon state block roots, the EIP-2935 history contract) remain state, and nothing in the record claims headers are never in state; (3) Many protocols commit to only some of these positions holds, and the Ethereum and Bitcoin sentences after it fit it; (4) the Bitcoin Core sentence matches CScript::IsUnspendable (script beginning with OP_RETURN, or oversized) and claims no other exclusion. Definition checked against every paragraph: contents and outside data (paragraphs 1-2), positions and commitments including Sui checkpoints (3), intermediate values (4), branches and undo data (5), what checking needs (6 and the comparison), where the full state lives (7), shared state (8), rollup state (9); no conflict. Overlap per placement: one placement (State Representation); no parent sentence restated. Territory and splits: excluded and signal-named concepts are named or used to draw boundaries, not explained; State Models boundary holds (models used only as contents); the new execution-layer mention names whose specification it is. Representation: the one comparison (four participants by holds, checks, relies on) is a real read-across not spelled out by the prose; no structure missing. Canonical validity: no positional or dated words, American English, plain text. Depth follows the four claims. Advisory: (a) cross-record, for group audit or human review: paragraph 6 (data read from the chain rather than from the state) and the chain exclusion follow protocol convention, while the State record defines state as the record the rules consult and says no rule reads inputs kept outside it; harmonizing needs a decision across records, not a change confined to this one; (b) the definition says the chain of blocks, which fits block-based designs; for Sui, whose shared positions are checkpoints, the chain record of ordered input would be more general, though the test still classifies correctly; (c) paragraph 1: the Yellow Paper uses account state for one account fields and world state for the whole mapping, so a reader checking the specification meets account state in another sense; (d) paragraph 8 uses global as the whole while the parent uses it as the opposite of local (parent text); (e) paragraph 5: Bitcoin Core writes undo data for each block it connects, not each block it stores; (f) paragraph 9: at most a commitment to the rollup state is unscoped beside in many designs, and optimistic designs keep several output roots; (g) paragraph 4: only the values standing at the transaction end, not every intermediate value, become part of the next state, and a reverted inner EVM call discards its changes; (h) paragraph 2: receipts cannot be read from the state, though a contract can verify a supplied receipt proof; (i) paragraph 5: a node must recover the common ancestor state unless it already holds the other branch state; (j) paragraph 3: one clause on why unordered owned-object transactions give one state (they touch disjoint objects) would state the condition; (k) paragraph 7: nobody can build a block touching an unserved part unless it can be recomputed from the chain history; (l) undo data for reorganizations appears in paragraph 5 and again in the full-node row; (m) paragraph 4: strictly the lender call reverts, which reverts the transaction unless a caller catches it.",
+        "resolutions": [
+          {
+            "id": "names-concept:1f575fc158",
+            "resolution": "account-state: Ethereum account state is named as one of the two structures in its global state, with its contents listed as the example for claim 1; no mechanism of accounts is explained."
+          },
+          {
+            "id": "names-concept:3b3b44d04c",
+            "resolution": "archive-nodes: named once (archive nodes keep past states as historical state) to bound what a validator needs; not explained."
+          },
+          {
+            "id": "names-concept:4f23e24515",
+            "resolution": "base-layers: base layer named in paragraph 9 to say what of a rollup it holds (a commitment and published data); base-layer mechanics not explained."
+          },
+          {
+            "id": "names-concept:931f313a18",
+            "resolution": "consensus-participants: named in the light-client row as whom the client relies on; not explained."
+          },
+          {
+            "id": "names-concept:775f2609ba",
+            "resolution": "derived-state (excluded): named once (an explorer index is derived state) to place it outside on-chain data and state; not explained."
+          },
+          {
+            "id": "names-concept:bb2c59ae03",
+            "resolution": "execution-layers: new with the repair; execution layer names whose formal specification calls the account state the world state; nothing about execution layers is explained."
+          },
+          {
+            "id": "names-concept:1617ce9e68",
+            "resolution": "formal-specifications: named as the source of the term world state; not explained."
+          },
+          {
+            "id": "names-concept:a0df924663",
+            "resolution": "historical-state (excluded): named once as what archive nodes keep; not explained."
+          },
+          {
+            "id": "names-concept:dca9aac339",
+            "resolution": "on-chain-data (excluded): named once (a larger category than state) as the boundary claim 1 asks for; not explained."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "proof-systems: named in the validity-proof row as what the verifier relies on (soundness); not explained."
+          },
+          {
+            "id": "names-concept:beb549ff15",
+            "resolution": "rollup-state (excluded): named in paragraph 9 only as far as claim 4 needs (a separate global state over the rollup order, of which the base layer holds at most a commitment); its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:06a70f97e6",
+            "resolution": "shared-state (excluded): paragraph 8 draws the boundary claim 4 asks for (access and contention within the whole versus the whole); shared state is characterized in one clause, not explained."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "state (excluded): used throughout as the term global state is the whole of; not explained. Cross-record convention on chain data noted as advisory (a)."
+          },
+          {
+            "id": "names-concept:494c5caa00",
+            "resolution": "state-roots (excluded): named where commitments sit (a state root in each Ethereum header) and as what stateless and proof verifiers hold; what a root establishes and how it is recomputed are not explained."
+          },
+          {
+            "id": "names-concept:2082e5afc5",
+            "resolution": "transaction-data: named in paragraph 9 as what the base layer carries for a rollup; not explained."
+          },
+          {
+            "id": "names-concept:007480753c",
+            "resolution": "transition-functions: named as the condition (deterministic transition function) for one state per position; not explained."
+          },
+          {
+            "id": "names-concept:f60e2f840b",
+            "resolution": "transition-rules: named as what fixes the contents of the set; not explained."
+          },
+          {
+            "id": "names-concept:49e7a3c624",
+            "resolution": "validity-proofs: named in the validity-proof verifier row as what that participant checks; not explained."
+          }
+        ],
+        "recordFingerprint": "d7c3046c964f2e3f73a9c9be2feff7812dfe1a8df847eb3476728d1f82cdd3f1"
+      }
+    },
+    "local-state": {
+      "audit": {
+        "at": "2026-10-31T00:16:42.567Z",
+        "note": "Re-audit (auditor A) after repair cycle 1, expanded to a complete audit because the repair removed a paragraph. All four blocking findings resolved: (1) the state-ownership paragraph is gone; paragraph 1's 'Nor does attribution settle who may change an entry, which is the question of state ownership' is a boundary only, and no remaining sentence paraphrases ownership or isolation (no write/remove authority, no clear-state, no 'only through its own code'); (2) the ERC-20 example now says both transfers operate on the token contract's local state, so confinement shows nothing, and attributes the typical storage-level commutation to the disjoint balances they read and write, not to attribution, which fits the definition's unit (entity) and keeps 'attributed' in one sense; the following 'Within one entity there is no such guarantee' still follows; (3) inclusion is scoped to designs where confined operations share block space and one ordering, as on Ethereum, consistent with global-state's Sui case; (4) 'a full node's copy of an unsharded chain's state' holds for Ethereum and Bitcoin full nodes and no longer claims sharded validators. Structure and flow: definition, attribution (Ethereum, Algorand dual attribution, Sui owner field, Bitcoin none), confinement and its conditions (reads, protocol-side writes, block-fixed values), its limits (unit of attribution, inclusion), then the distinction and its explanation; the Algorand sentence stands on its own without the removed paragraph and nothing refers back to it. Overlap: one placement (State & Data / State Representation / Local State); no sentence restates the parent or the domain sentence. Territory: all three claims explained; excludes and named concepts named only (state-layout's key derivation mentioned only to say where the balance sits); boundaries with global-state (shared-state paragraph, validator holdings) and state-models (models described only from the attribution angle) hold. Representation: the one distinction marks a real conflation (the domain flow ends in a 'Local State View'), and the following prose explains each link rather than spelling it out; no other structure is needed. Accuracy checked sentence by sentence, including fee-recipient writes, nonce drift, Algorand opt-in and minimum balance, Sui ownership, Bitcoin outpoints. Canonical validity: no positional or dated words, American English, plain text. Advisory: (a) 'which is kept in a storage of that account's own' reads awkwardly ('in that account's own storage'); (b) 'kept in its storage under a key derived from the holder's address' holds for typical implementations, not by the ERC-20 standard ('typically'); (c) 'symmetry' is not defined ('order independence'); (d) 'Within one entity there is no such guarantee, since two operations on the same entries...' partly repeats the ERC-20 sentence and its reason covers same-entry operations only; (e) 'nothing that needed the key can happen again' is close to tautological; (f) the parent says locality 'determines who can change it'; the record's 'Nor does attribution settle who may change an entry' is correct, and 'attribution alone does not settle' would make the compatibility explicit.",
+        "resolutions": [
+          {
+            "id": "names-concept:68ad4df0dd",
+            "resolution": "account-state: named once as where Ethereum keeps entries under addresses ('In Ethereum's account state every entry sits under an address'); its structure is not explained beyond the attribution fact."
+          },
+          {
+            "id": "names-concept:bd6b6592bf",
+            "resolution": "accounts: 'account' is used as one of the entities state is attributed to (definition, Ethereum and Algorand examples); what an account is, its fields and kinds are not explained."
+          },
+          {
+            "id": "names-concept:97d08c7182",
+            "resolution": "full-nodes: introduced by repair finding 4 in 'a full node's copy of an unsharded chain's state ... holds every entity's local state'; used only to say a node's copy contains local state, not to explain what a full node does or how it syncs."
+          },
+          {
+            "id": "names-concept:947f97d28c",
+            "resolution": "off-chain-state: named once in 'Data held outside the state, off-chain state included, enters a transition only when someone submits it'; that sentence draws the boundary for claim 3 and does not explain off-chain state's kinds or mechanisms."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "parallel-execution: named only as a boundary ('running confined operations at the same time is that of parallel execution'); no scheduling, conflict detection or execution model is explained."
+          },
+          {
+            "id": "names-concept:7daea9d09f",
+            "resolution": "priority-fees: 'when it pays a priority fee, credits the block's fee recipient' is used only to show a protocol-side write that breaks confinement; how priority fees are set or allocated is not explained."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "state: used as the whole the definition partitions; the concept of state itself is not explained."
+          },
+          {
+            "id": "names-concept:c13534652c",
+            "resolution": "state-commitments: named in 'falls under the protocol's state commitment where there is one', scoped and used only to distinguish attributed local state from private data; commitment construction is not explained."
+          },
+          {
+            "id": "names-concept:1a313d8767",
+            "resolution": "state-data: the domain title's words appear only as ordinary nouns (state, data, e.g. 'Data held outside the state'); the State & Data domain is neither named as a concept nor explained."
+          },
+          {
+            "id": "names-concept:0e90de57a1",
+            "resolution": "state-isolation: named once as a boundary ('Enforcing separation between entities is the concern of state isolation'); the repair removed the earlier paraphrase ('changes it only through the token contract's code'), and no remaining sentence explains how separation is enforced."
+          },
+          {
+            "id": "names-concept:46f8f46dbc",
+            "resolution": "state-ownership: named once as a boundary in paragraph 1 ('Nor does attribution settle who may change an entry, which is the question of state ownership'); the repair deleted the paragraph that explained write and removal authority (Algorand clear-state, the lost debt), and nothing remaining paraphrases it."
+          }
+        ],
+        "recordFingerprint": "a2ebb34520905d3a2fac3a2d013d42f36b1b510c9158afb5f9b8337c93fc43b6"
+      }
+    },
+    "state-encoding": {
+      "audit": {
+        "at": "2026-10-31T00:27:02.882Z",
+        "note": "Re-audit (auditor A) after repair cycle 1, scoped to the two blocking findings of WORK/findings/state-encoding-b.md; not expanded, since the repair changed two sentences without changing the argument, its assumptions, the structure or the scope. Finding 1 resolved: paragraph 5 now opens 'Changing an encoding that commitments are computed over changes the commitment even when no value changes', so it no longer says commitments are computed over every encoding and agrees with paragraph 4 (SSZ hashes structure apart from its serialization, so a serialization change need not move the root) and with paragraph 6 ('chiefly the one commitments are computed over'); the rest of paragraph 5 (agreement on new bytes and commitment, the switch point, old-format decoding against old commitments, total deterministic conversion, edge cases, decidable coexisting formats) follows from the narrowed lead. Every other use of 'commitments are computed over' (paragraph 6) is consistent. Finding 2 resolved: paragraph 2 now says 'where the input decides whether a block is valid, that disagreement can split the network of a replicated protocol', a sufficient condition with 'can', so sync responses and proofs outside block validity no longer carry the claim; the preceding sentences (rejection needed for bytes from other parties; two byte strings, two hashes) are unaffected. Overlap per placement: one placement (State & Data / State Representation / State Encoding); the narrowed lead is temporal and conditioned, a premise for the change argument rather than a restatement of the parent's two-participants sentence. Territory and splits: the repair added no content; state-roots, state-proofs, commitment-schemes, deterministic-execution, protocol-upgrades, hard-forks and state-migrations remain named only. Representation: unchanged, all prose, judged right in the first audits. Accuracy: both changed sentences checked as true in every case they claim; a reread of the untouched text found no material defect. Depth: unchanged. Advisory: (1) paragraph 5's lead 'changes the commitment' could read 'can change the commitment', since a change alters a commitment only where it alters the bytes of a value the state holds, as the rare-case sentence later in the paragraph shows; (2) 'a first offset that does not point where a fixed-size part ends' appears before SSZ offsets are introduced; (3) 'in return a change to one field rehashes only the path' depends on the intermediate hashes being kept, a condition stated only on the storage clause; (4) 'encoded as one RLP string' is imprecise in RLP's own terms, where an account is an RLP list; (5) 'is smaller than a self-describing one' could read 'than a self-describing encoding of the same values'.",
+        "resolutions": [
+          {
+            "id": "names-concept:d20bdcbae0",
+            "resolution": "consensus-layers appears only in 'SSZ, the encoding of Ethereum's consensus layer' to identify where SSZ is used; nothing about consensus layers is explained. Untouched by the repair. Named only."
+          },
+          {
+            "id": "names-concept:6bd1f3b071",
+            "resolution": "deterministic-execution (excluded) appears in one boundary sentence in paragraph 2 (execution concerns whether nodes compute the same values, encoding whether the same values become the same bytes); the repaired sentence before it adds no execution content. Named only."
+          },
+          {
+            "id": "names-concept:bb2c59ae03",
+            "resolution": "execution-layers appears only in 'Ethereum's execution layer works this way for accounts', scoping the RLP account example; untouched by the repair. Named only."
+          },
+          {
+            "id": "names-concept:251477d6ae",
+            "resolution": "hard-forks (excluded) appears in the closing boundary sentence handing how a switch is agreed on and activated to protocol upgrades and hard forks; the repaired paragraph 5 lead is about commitments, not fork mechanics. Named only."
+          },
+          {
+            "id": "names-concept:1fe2a53e0c",
+            "resolution": "historical-data appears only as one place old and new forms coexist ('in historical data or in entries not yet rewritten'); untouched. Named only."
+          },
+          {
+            "id": "names-concept:ca345d0f48",
+            "resolution": "protocol-upgrades (excluded) appears only in the closing boundary sentence; paragraph 5 states encoding requirements for a change (claim 3), not how upgrades are coordinated. Named only."
+          },
+          {
+            "id": "names-concept:9ee61e4237",
+            "resolution": "state-migrations (excluded) appears as the one-clause identification 'rewriting existing entries into a new form is a state migration'; the record states only encoding requirements (total deterministic conversion, decidable coexisting formats), not how entries are rewritten. Named only."
+          }
+        ],
+        "recordFingerprint": "d618cd2cc7e10d129ea032ef6d3387ef5fed8b9565bd5a7c7ddc8d6ac69063d3"
+      }
+    },
+    "state-layout": {
+      "audit": {
+        "at": "2026-10-31T00:39:54.643Z",
+        "note": "Re-audit (auditor A) after repair cycle 1, scoped to blocking finding B1 of WORK/findings/state-layout.md; not expanded, since the repair narrowed two phrases to make an existing condition explicit without changing the argument, its assumptions, the record's structure or its scope (all three claims are still covered as before). B1 resolved: paragraph 5 now opens 'Where a protocol commits to its state through a tree over the keys, the committed layout fixes ...', so 'the committed layout' is introduced only for tree commitments (Ethereum's nested tries, the single-tree designs, the beacon state's SSZ tree); paragraph 6's lead ('The committed layout is chosen for balance, proof size and resistance to crafted keys') uses that scoped term, and the coupling sentence now ends on 'every changed path of the committed tree', so the recompute-along-changed-paths claim, which needs committed nodes stored or regenerated, is stated only where it holds. Non-tree designs: the one the record names, Solana (paragraph 2: one flat 32-byte address space, program data in other accounts, often at derived addresses), receives no commitment claim anywhere in the record, so the narrowed scope neither misclassifies Solana as tree-committed nor states a false coupling for an order-independent set hash; nothing in paragraphs 3-6 or the comparison is applied to Solana (paragraphs 3-4 and the comparison are scoped to 'an ordered structure such as a trie'). Every other use of the changed terms checked: 'committed layout' (paragraph 6 twice, including 'the nested committed layout' in the Ethereum-scoped SELFDESTRUCT example) is consistent with the narrowed sense; 'committed structure' no longer appears; 'tree' in 'single tree' and 'single-tree layout' keeps its sense. The repair introduced no new claim and no defect. Overlap per placement: one placement (State & Data / State Representation / State Layout); the parent's 'Layout decides what is cheap' paragraph is not restated; the repaired sentences add no parent wording. Territory and splits: the third claim (committed vs physical layout) is explained for tree commitments; commitment-schemes, state-roots and state-storage remain named, not explained; no sibling (state-encoding, local-state, global-state, state-models) or the State Roots reservation is crossed by the change. Representation: the comparison is unchanged and still scoped to ordered structures; no structure is needed for the narrowed sentences. Accuracy and depth: the narrowed statements hold for every design in their scope; no point is repeated. Advisory: (1) paragraph 6 'a flat table speeds reads but not commitments' carries the tree condition only through paragraph 5's term and the closing 'committed tree'; repeating the condition at the start of the sentence ('Where the commitment is such a tree, they stay coupled ...') would make it read alone. (2) After the narrowing, the third claim is explained for tree commitments only; since paragraph 2 names Solana, the record could name, without explaining, that commitments with no tree over the keys (commitment-schemes) fix no committed layout of this kind; relatedly, the definition's 'how the structure is shaped' says little for a flat, set-hashed space. (3) One term, one sense, extended by the repair: paragraph 2 says the beacon state places validators 'by position rather than by key', while paragraph 5's new scope is 'a tree over the keys' and the comparison treats the assigned index as a key; 'by an assigned index rather than a derived key' would keep the beacon state plainly inside paragraph 5's scope. (4) Paragraph 3 'the shape of a contract's storage trie' is the expected shape; 'expected shape' avoids tension with grinding of caller-supplied slot keys. (5) Paragraph 5 'clients keep flat tables' reads as every client; 'the major clients' is safer. (6) Paragraph 6 SELFDESTRUCT removed the account leaf with its storage root; 'dropping one storage root' is more exact. (7) Paragraph 5 'reverse differences kept for a bounded number of blocks': by default; the window is configurable. (8) Paragraph 2 'the layout of a program's data is set by how the program derives those addresses' holds for data at derived addresses, which the prior clause says is only 'often' the case. (9) Paragraph 5 'Go Ethereum's hash-based scheme stored each trie node': 'stores' avoids a time-sensitive reading for a scheme still supported. (10) The comparison's hashed-key and group-key rows are partly spelled out by paragraphs 3-4; it still earns its place across three dimensions with the unhashed and index rows; no change required.",
+        "resolutions": [
+          {
+            "id": "names-concept:d55a1e3daa",
+            "resolution": "state-storage is named once, in paragraph 6's closing 'How nodes organize their databases beyond the layout of state is the subject of state storage'; the client storage schemes in paragraph 5 (Go Ethereum hash- and path-based, snapshot, Erigon and Reth plain state) illustrate the claimed committed-vs-physical layout distinction and do not explain database organization in general. Unchanged by the repair. Named, not explained."
+          },
+          {
+            "id": "names-concept:89343d982a",
+            "resolution": "storage-layout appears only in paragraph 3's 'rather than on which slots its storage layout assigns', a reference to the contract-level assignment of variables to slots; how a contract's storage layout assigns slots is never explained. Unchanged by the repair. Named, not explained."
+          },
+          {
+            "id": "names-concept:517d55b1f4",
+            "resolution": "storage slots are named as the items this record places ('keyed by the hash of each 32-byte slot key', 'its first 64 storage slots', 'consecutive slots of one contract'); what a slot is or how slots are allocated is not explained, only where the protocol's key space puts them, which is this concept's first claim. Unchanged by the repair. Named, not explained."
+          },
+          {
+            "id": "absolutes:85d51ee685",
+            "resolution": "The three 'cannot' absolutes, all in paragraph 4 and untouched by the repair, hold unconditionally: a trie keyed by hashes 'cannot be walked in the order of the original keys' and the keys 'cannot be read back from it', since a hash-keyed trie orders by hash and stores no preimages (hence the separate preimage store); positions fixed by the key's last byte 'cannot be deepened by grinding', since the 256 positions under a stem form a fixed-width group whatever the inputs. The comparison's 'a group cannot be deepened' is the same fact."
+          }
+        ],
+        "recordFingerprint": "fbcf706c006f91881b841702118b418cc4a2c7b8b28e4693e149042b468da8e0"
+      }
+    }
+  },
+  "pipeline": {
+    "mode": "simplified",
+    "version": 1
+  },
+  "groupAudit": {
+    "at": "2026-10-31T00:42:55.567Z",
+    "note": "Group audit, simplified pipeline v1, fresh context: the five owned members (state-models, global-state, local-state, state-encoding, state-layout) read side by side with the parent (State Representation) and the plan. No group signals were raised. Contradictions: none found. Shared facts agree across members: Ethereum's account state is used in one sense (the whole address-keyed mapping) in global-state and local-state; nonce behavior agrees (state-models: a used nonce is rejected and a stuck transaction holds back later ones; local-state: a wallet count behind or ahead is rejected or waits); Bitcoin outputs keyed by transaction identifier and index with a spending condition agree in state-models, global-state and local-state; the beacon state's separate validator and balance lists in state-layout agree with SSZ packing four balances per chunk in state-encoding; RLP account encoding (state-encoding) agrees with the hashed-key nested tries (state-layout); and the Ethereum single-tree stem layout is consistent with the per-field leaves that state-encoding's provability claim implies. Global versus local: global-state takes global as the whole, local-state takes local as attribution to one entity, and both say membership or attribution does not settle who may change an entry, so the members agree with each other. Territory: no member explains another's labels. Encoding owns byte form, canonicity and hash granularity; layout owns key placement, balance, locality and committed versus physical layout; global-state owns contents, positions and what checking needs; local-state owns attribution and confinement; state-models owns units and spend guards. Where two members touch one subject they divide it by angle: conflicts appear in state-models as a model's awkwardness and in local-state as the independence confinement gives; field provability appears in state-encoding as hash granularity, while state-layout gives only placement. Reservation (state-roots, owned elsewhere): no member explains what a root identifies or establishes, how it is recomputed in general, or trust in it outside its protocol. Global-state names where Ethereum records a root and that a commitment lets a participant refer to a state without holding it, both to serve its positions claim. State-layout says a tree commitment recomputes changed paths, to show why committed and physical layout stay coupled. These are references with a key property, not explanations. Template convergence: the definitions all take the 'X is the ...' form, which is the definitional form, not convergence. Every member ends on a distinction from a neighbor, but that repetition follows the labels, since each plan's last claim is a 'differs from' claim. Forms differ: state-encoding is all prose; state-models, global-state and state-layout each have one comparison, and each comparison does read-across the prose would bury (three models by unit, reference and guard; four participants by holds, checks and relies on; four key derivations by exactly the three properties of layout claim 2); local-state uses one distinction for a real three-way conflation. Paragraph openers and arcs vary. Advisory: (1) state-models (claim 4, last paragraph) and local-state (claim 1, Bitcoin sentence) both make the point that Bitcoin's state records spending conditions rather than holders and that attribution to an address or participant is inferred by software. They make it from different angles (data-model view versus attribution) and briefly, but local-state could shorten its sentence to the attribution point only. (2) The same argument shape recurs: a client record out of date yields rejected transactions (state-models, Sui object versions; local-state, Ethereum wallet nonce count). The angles differ (the version guard versus private data drifting from state); this is minor redundancy. (3) The Ethereum fact that a transaction charges fees and advances the sender's nonce appears in global-state (what survives a revert) and in local-state (writes around an operation). It serves different claims; no change needed. (4) Three members close a paragraph with a hand-off sentence of one form ('... is the concern of state isolation', '... is the subject of state storage', '... belongs to protocol upgrades and hard forks'). These are legitimate boundaries, but the phrasing could vary. (5) For the future state-roots author: global-state's participant comparison (stateless validator, validity-proof verifier, light client by what each relies on) and its sentence on Ethereum and Bitcoin header commitments sit next to state-roots' reserved claims 1 to 3, and state-roots should refer to them rather than restate them. (6) Cross-record, outside the group: the parent's sentence 'Whether a piece of state is local to one account or contract, or global to the protocol, determines who can change it' is in tension with local-state ('Nor does attribution settle who may change an entry') and global-state ('belonging to the global state says nothing about who may change an entry'). The members are the more precise; a later revision of the L1 parent should reconcile this. (7) Several members open a paragraph with a short declarative lead ('Each model makes something awkward.', 'Much of what a chain records stays outside.', 'Hashing costs locality.'). This is a stylistic preference only.",
+    "resolutions": [],
+    "records": {
+      "state-models": "97f8ef3905d41cee073f61ab67e93e07a0693c1cbc6b3160e13d9ef7d5777fa9",
+      "global-state": "d7c3046c964f2e3f73a9c9be2feff7812dfe1a8df847eb3476728d1f82cdd3f1",
+      "local-state": "a2ebb34520905d3a2fac3a2d013d42f36b1b510c9158afb5f9b8337c93fc43b6",
+      "state-encoding": "d618cd2cc7e10d129ea032ef6d3387ef5fed8b9565bd5a7c7ddc8d6ac69063d3",
+      "state-layout": "fbcf706c006f91881b841702118b418cc4a2c7b8b28e4693e149042b468da8e0"
+    }
+  }
+}

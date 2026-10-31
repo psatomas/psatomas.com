@@ -453,4 +453,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "resource-limits",
   "fee-accounting",
   "denial-of-service-resistance",
+  "state-models",
+  "global-state",
+  "local-state",
+  "state-encoding",
+  "state-layout",
 ];
