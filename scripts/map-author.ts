@@ -92,6 +92,8 @@ import {
   repairLimitSubject,
   latestRepairReason,
   humanMerge,
+  recordHumanMerge,
+  reopenPrProblem,
   partialStartProblems,
   repairOriginal,
   repairStatusLine,
@@ -123,6 +125,7 @@ import {
   type FixGroup,
   type RemoteCheck,
   type RemotePr,
+  type ObservedPr,
   type RunState,
   type Stage,
 } from "../src/lib/map/authoring/orchestrator/run-state.ts";
@@ -852,6 +855,12 @@ function writeAudit(kind: "audit" | "group-audit", subject: string, group: strin
 function commandL2Reopen() {
   let state = activeState();
   if (state.stop) return printStop(state);
+  // A run whose PR exists is reopened only while that PR is known to be unmerged; refused before anything is recorded.
+  if (state.pr) {
+    const viewed = sh("gh", ["pr", "view", String(state.pr.number), "--json", "state"]);
+    const problem = reopenPrProblem(state, viewed.ok ? (JSON.parse(viewed.out) as { state: string }) : undefined);
+    if (problem) fail(problem, 1);
+  }
   verifyGit(state);
   const concepts = (positional[0] ?? fail(`reopen needs concept ids: ${CLI} reopen <id>[,<id>..] --reason ".."`)).split(",").map((conceptId) => conceptId.trim()).filter(Boolean);
   const reason = flag("--reason") ?? fail("reopen needs --reason: the finding the repair answers");
@@ -985,7 +994,7 @@ function commandStatus(state = activeState()) {
           ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
           ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
-          `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}${state.l2.merged.byHand ? " by hand" : ""}` : ""}`,
+          `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}${state.l2.merged.byHand ? " by hand" : ""}` : state.stage === "done" && state.pr ? `; once #${state.pr.number} is merged, \`${CLI} run --domain ${state.domainId}\` records the merge` : ""}`,
         ]
       : []),
     `already authored: ${state.plan.authored.join(", ") || "none"}`,
@@ -1667,12 +1676,42 @@ function syncMainAfterMerge(state: RunState) {
  * validated set. Then main is synchronized and must contain the pushed head.
  * A PR a human already merged at the pushed head is recorded instead.
  */
+/**
+ * The run's PR as merged by a human, if it is (humanMerge): main is fetched
+ * first, so the merge commit and the pushed head are looked for on origin.
+ */
+function observeHumanMerge(state: RunState): ReturnType<typeof humanMerge> {
+  const viewed = sh("gh", ["pr", "view", String(state.pr!.number), "--json", "number,state,mergeCommit,headRefOid,headRefName,baseRefName"]);
+  if (!viewed.ok) throw new ToolFailure("gh pr view", viewed.out);
+  const pr = JSON.parse(viewed.out) as ObservedPr;
+  if (pr.state !== "MERGED" || !pr.mergeCommit) return undefined;
+  gitOut("fetch", "--quiet", "origin", MAIN);
+  const onMain = (sha: string) => git("merge-base", "--is-ancestor", sha, `origin/${MAIN}`).ok;
+  return humanMerge(state, pr, now(), { main: MAIN, integration: { mergeOnMain: onMain(pr.mergeCommit.oid), headOnMain: Boolean(state.pushedSha) && onMain(state.pushedSha!) } });
+}
+
+/**
+ * `l2 run` on a finished run without a recorded merge: records the human merge
+ * of its PR once it is exactly the validated head on main (humanMerge), then
+ * synchronizes main. An unmerged PR changes nothing; any mismatch is refused
+ * and nothing is recorded.
+ */
+function reconcileL2(state: RunState) {
+  const outcome = observeHumanMerge(state);
+  if (!outcome) return console.log(`${state.title}: PR #${state.pr!.number} is not merged; it awaits human merge, then \`${CLI} run --domain ${state.domainId}\` records the merge`);
+  if ("problem" in outcome) fail(`refused to record the merge of PR #${state.pr!.number}: ${outcome.problem}; nothing was recorded, reconcile by hand`, 1);
+  const changes = trackedChanges();
+  if (changes.length) fail(`tracked changes present (${changes.join(", ")}): recording the merge switches to ${MAIN}; commit or restore them first`, 1);
+  syncMainAfterMerge(state);
+  const recorded = recordHumanMerge(state, outcome.merged);
+  saveState(recorded);
+  console.log(`recorded the human merge of #${state.pr!.number} as ${outcome.merged.sha.slice(0, 7)}; ${MAIN} is at ${head().slice(0, 7)}`);
+}
+
 function mergeL2(state: RunState): RunState {
   // A PR a human merged by hand is recorded, never merged again: only if it is exactly the validated, pushed head.
   if (state.pr) {
-    const observed = sh("gh", ["pr", "view", String(state.pr.number), "--json", "state,mergeCommit,headRefOid"]);
-    if (!observed.ok) throw new ToolFailure("gh pr view", observed.out);
-    const outcome = humanMerge(state, JSON.parse(observed.out) as { state: string; mergeCommit?: { oid: string } | null; headRefOid: string }, now());
+    const outcome = observeHumanMerge(state);
     if (outcome && "problem" in outcome) stop(state, { subject: `merged PR #${state.pr.number}`, evidence: outcome.problem, why: "a run records only the merge of exactly what it validated", decision: "reconcile the merge by hand" });
     if (outcome && "merged" in outcome) {
       verifyGit(state, { remoteMayBeDeleted: true });
@@ -1883,6 +1922,8 @@ async function commandRun() {
   if (flag("--trailer") || flag("--footer")) {
     state = { ...state, attribution: { trailer: flag("--trailer") ?? state.attribution?.trailer, footer: flag("--footer") ?? state.attribution?.footer } };
   }
+  // A finished run awaiting human merge: `run` records the merge once a human has made it.
+  if (l2Mode && state.stage === "done" && state.l2 && !state.l2.merged && state.pr) return reconcileL2(state);
   const action = nextAction(state);
   if (action.kind !== "tool") return commandNext(state);
   if (dryRun) {
@@ -1920,7 +1961,7 @@ async function commandRun() {
 function l2CompletionReport(state: RunState): string {
   const record = state.l2!;
   return [
-    `${state.title}: ${record.merged ? `merged as ${record.merged.sha.slice(0, 7)}` : "validated PR awaiting human merge"}${state.pr ? ` (${state.pr.url})` : ""}`,
+    `${state.title}: ${record.merged ? `merged as ${record.merged.sha.slice(0, 7)}` : `validated PR awaiting human merge; once merged, \`${CLI} run --domain ${state.domainId}\` records the merge`}${state.pr ? ` (${state.pr.url})` : ""}`,
     `authored: ${record.diff?.authored.join(", ") || "none"}`,
     `blocked: ${record.blocked.join(", ") || "none"}`,
     `commits: ${state.commits.map((entry) => `${entry.sha.slice(0, 7)} ${entry.message.split("\n")[0]}`).join("; ")}`,
