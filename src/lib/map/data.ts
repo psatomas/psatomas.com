@@ -7831,7 +7831,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Layout decides what is cheap. Data that is read, updated, or proven together can be stored together, while data scattered across a structure costs more to access and to prove. Whether a piece of state is local to one account or contract, or kept for the protocol as a whole, bears on how much of the whole must be touched to prove anything about it; who can change it is set by the rules for each entry, which locality informs but does not settle.",
+          text: "Layout decides what is cheap. Data that is read, updated, or proven together can be stored together, while data scattered across a structure costs more to access and to prove. Whether a piece of state is local to one account or contract, or kept for the protocol as a whole, bears on how much of the state must be touched to prove anything about it. Who can change it is set by each entry's rules; locality informs that but does not settle it.",
         },
       ],
     },
