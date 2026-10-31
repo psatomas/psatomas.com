@@ -7831,7 +7831,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "Layout decides what is cheap. Data that is read, updated, or proven together can be stored together, while data scattered across a structure costs more to access and to prove. Whether a piece of state is local to one account or contract, or global to the protocol, determines who can change it and how much of the whole must be touched to prove anything about it.",
+          text: "Layout decides what is cheap. Data that is read, updated, or proven together can be stored together, while data scattered across a structure costs more to access and to prove. Whether a piece of state is local to one account or contract, or kept for the protocol as a whole, bears on how much of the whole must be touched to prove anything about it; who can change it is set by the rules for each entry, which locality informs but does not settle.",
         },
       ],
     },
@@ -14045,7 +14045,7 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
         {
           kind: "paragraph",
-          text: "The data model shapes what is easy to express. Account balances, independent objects and unspent outputs each make different operations natural and different conflicts likely, and channels such as event logs, readable by off-chain consumers but not by contracts, carry information out of execution without making it part of state.",
+          text: "The state model the data rests on shapes what is easy to express. Account balances, independent objects and unspent outputs each make different operations natural and different conflicts likely, and channels such as event logs, readable by off-chain consumers but not by contracts, carry information out of execution without making it part of state.",
         },
       ],
     },
