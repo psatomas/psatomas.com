@@ -39,7 +39,9 @@
 //   npm run map:author -- l2 territory <group> [--write]
 //   npm run map:author -- l2 check [--group <group>] [--json]
 //   npm run map:author -- l2 campaign                    every slice, the next one, and whether merging is authorized
-//   npm run map:author -- l2 start --slice <id> | --pilot [--dry-run]
+//   npm run map:author -- l2 start --slice <id> | --pilot --budget-usd <usd> [--reserve role=usd,..] [--headroom-usd <usd>] [--dry-run]
+//   npm run map:author -- l2 budget [--json] | hook | reserve --role <r> [--id <id>] | release <id> --reason ".." | set --usd <n> --decision ".."
+//                                                        the run's hard spending cap (l2/budget.ts); every start needs one
 //   npm run map:author -- l2 start --slice <id> --groups <group>[,<group>..] [--dry-run]   a partial run: those groups of the slice only
 //   npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".." [--dry-run]   repair merged concepts in a new run
 //   npm run map:author -- l2 record plan|design|author|audit|group-audit <subject> [--note ..] [--audit-file <json>]
@@ -62,6 +64,9 @@ import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupC
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget } from "../src/lib/map/authoring/l2/budget.ts";
+import { BudgetLockError, readLedger, reserveUnderLock, withLock, writeLedger } from "../src/lib/map/authoring/l2/budget-io.ts";
+import { HOOK_SETTINGS, hookInstalled, ledgerPath, measure } from "./map-l2-budget.ts";
 import { describePipeline, PipelineError, pipelineMismatchProblem, pipelineOf, pipelineStatus, startPipeline, type L2Pipeline } from "../src/lib/map/authoring/l2/pipeline.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
@@ -663,6 +668,7 @@ function commandL2Start() {
     console.log(`a run ${id} already exists; resuming it`);
     return commandStatus(existing);
   }
+  const budget = startBudgetOrFail();
   const scoped = slice.groups.filter((group) => !scope || scope.groups.includes(group.group));
   const integrated = scope ? scoped.filter((group) => !group.concepts.some((conceptId) => remaining.includes(conceptId))).map((group) => group.group) : [];
   const problems = [
@@ -672,17 +678,19 @@ function commandL2Start() {
     ...(integrated.length ? [`nothing left to author in ${integrated.join(", ")}: its concepts are already integrated`] : []),
     ...partialStartProblems({ runs: sliceRuns(slice.id).filter((run) => run.domainId !== id), finished, id }),
     ...observeStart(branch, id),
+    ...budgetHookProblems(),
   ];
   for (const group of scoped) console.log(`  ${group.group.padEnd(48)} ${group.concepts.filter((conceptId) => remaining.includes(conceptId)).join(", ") || "(done)"}`);
   if (problems.length) {
     console.log(`\ncannot start ${id}:\n  ${problems.join("\n  ")}`);
     process.exit(1);
   }
-  if (dryRun) return console.log(`\ndry run: would create ${branch} and author ${scoped.flatMap((group) => group.concepts).filter((conceptId) => remaining.includes(conceptId)).length} concept(s) as ${id} under the ${describePipeline(pipeline)}`);
+  if (dryRun) return console.log(`\ndry run: would create ${branch} and author ${scoped.flatMap((group) => group.concepts).filter((conceptId) => remaining.includes(conceptId)).length} concept(s) as ${id} under the ${describePipeline(pipeline)}, capped at $${budget.capUsd.toFixed(2)}`);
   const baseSha = branchFromMain(branch);
   if (!baseSha) return;
   const pilot = slice.id === PILOT_SLICE;
   let state = createL2RunState({ slice, remaining, branch, baseSha, now: now(), pilot, pipeline, ...(scope ? { scope } : {}) });
+  state = { ...state, l2: { ...state.l2!, budget } };
   const authorization = readCampaign().mergeAuthorization;
   // The pilot always ends at a PR for detailed human review, whatever the campaign authorizes.
   if (authorization && !pilot) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
@@ -721,7 +729,8 @@ function commandL2StartRepair(slice: L2Slice) {
     // Any other refusal (a concept no plan owns, say) is reported the same way: nothing has been written.
     fail((error as Error).message, 1);
   }
-  const problems = observeStart(branch, id);
+  const budget = startBudgetOrFail();
+  const problems = [...observeStart(branch, id), ...budgetHookProblems()];
   if (problems.length) {
     console.log(`cannot start ${id}:\n  ${problems.join("\n  ")}`);
     process.exit(1);
@@ -730,6 +739,7 @@ function commandL2StartRepair(slice: L2Slice) {
   const baseSha = branchFromMain(branch);
   if (!baseSha) return;
   let state = create(baseSha);
+  state = { ...state, l2: { ...state.l2!, budget } };
   const authorization = readCampaign().mergeAuthorization;
   if (authorization) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
   saveState(state);
@@ -845,6 +855,94 @@ function writeAudit(kind: "audit" | "group-audit", subject: string, group: strin
     plan.groupAudit = { ...audit, records: Object.fromEntries(owned.map((conceptId) => [conceptId, recordFingerprint(recordOf(conceptId))])) };
   }
   writeFileSync(path, `${JSON.stringify(plan, null, 2)}\n`);
+}
+
+// ---------------------------------------------------------------- budget
+
+/** The run's hard spending cap from `--budget-usd` (and `--reserve`, `--headroom-usd`), or a refusal: every L2 run is capped. */
+function startBudgetOrFail(): L2Budget {
+  try {
+    return startBudget(flag("--budget-usd"), flag("--reserve"), now(), flag("--headroom-usd"));
+  } catch (error) {
+    if (error instanceof BudgetError) fail(error.message, 1);
+    throw error;
+  }
+}
+
+/** A cap nobody enforces is no cap: a run starts only where the launch hook is registered. */
+const budgetHookProblems = () =>
+  hookInstalled()
+    ? []
+    : [`the L2 budget hook is not registered, so nothing would enforce the cap before an Agent launch: add this to .claude/settings.local.json (or settings.json), then start again:\n${JSON.stringify(HOOK_SETTINGS, null, 2)}`];
+
+/** `l2 status`'s budget line: measured spend, open reservations and what is available. */
+function budgetLine(state: RunState): string {
+  const budget = state.l2?.budget;
+  if (!budget) return `budget: none (the run predates spending caps; \`${CLI} budget set --usd <n> --decision ".."\` sets one)`;
+  const status = budgetStatus(budget, measure(state), readLedger(ledgerPath(state.domainId), state.domainId));
+  const exhausted = launchProblem(budget, status, Object.entries(budget.reserves).sort((a, b) => a[1] - b[1])[0][0]);
+  return `${describeBudget(status)}${exhausted ? `\nBUDGET: ${exhausted}; no model work starts until a human decides (\`${CLI} budget set|release\`)` : ""}`;
+}
+
+/**
+ * The run's spending cap (l2/budget.ts): its status; `hook` (the settings
+ * entry that registers the launch hook); `reserve --role <r>` (for a launcher
+ * other than the Agent hook: refuses, exit 1, when the budget does not allow
+ * it); `release <id> --reason ".."` (a launch whose session will not report
+ * finishing); `set --usd <n> --decision ".."` (a human's new cap).
+ */
+function commandL2Budget() {
+  const sub = positional[0] ?? "status";
+  if (sub === "hook") return console.log(JSON.stringify(HOOK_SETTINGS, null, 2));
+  let state = activeState();
+  const path = ledgerPath(state.domainId);
+  const fromBudget = (run: () => void) => {
+    try {
+      run();
+    } catch (error) {
+      if (error instanceof BudgetError || error instanceof BudgetLockError) fail(error.message, 1);
+      throw error;
+    }
+  };
+  switch (sub) {
+    case "status": {
+      const budget = state.l2?.budget;
+      if (!budget) return console.log(budgetLine(state));
+      const status = budgetStatus(budget, measure(state), readLedger(path, state.domainId));
+      if (flags.has("--json")) return console.log(JSON.stringify({ budget, status }, null, 2));
+      console.log(budgetLine(state));
+      for (const entry of status.open) console.log(`  open ${entry.id} ${entry.role}: holds $${entry.heldUsd.toFixed(2)} (spent $${entry.spentUsd.toFixed(2)}), since ${entry.at}${entry.reporting ? "" : ", no session reporting yet"}${entry.description ? ` (${entry.description})` : ""}`);
+      for (const change of budget.changes ?? []) console.log(`  cap set to $${change.capUsd.toFixed(2)} at ${change.at}: ${change.decision}`);
+      return;
+    }
+    case "reserve":
+      return fromBudget(() => {
+        const budget = state.l2?.budget ?? fail("this run has no spending cap: nothing to reserve against");
+        const role = flag("--role") ?? fail("budget reserve needs --role <plan|author|first-audit|repair|re-audit|group-audit|...>");
+        const result = reserveUnderLock({ ledgerPath: path, run: state.domainId, budget, measure: () => measure(state), launch: { id: flag("--id") ?? `launch-${Date.now()}-${process.pid}`, role, at: now(), ...(flag("--description") ? { description: flag("--description") } : {}) } });
+        if (!result.ok) {
+          console.error(`refused: ${result.problem}\n${describeBudget(result.status)}`);
+          process.exit(1);
+        }
+        console.log(`reserved a ${role} launch; ${describeBudget(result.status)}`);
+      });
+    case "release":
+      return fromBudget(() => {
+        const id = positional[1] ?? fail('budget release needs the reservation id: l2 budget release <id> --reason ".."');
+        withLock(path, () => writeLedger(path, releaseLaunch(readLedger(path, state.domainId), id, flag("--reason"), now())));
+        console.log(`released ${id}`);
+      });
+    case "set":
+      return fromBudget(() => {
+        const decision = flag("--decision");
+        const budget = state.l2?.budget ? changeCap(state.l2.budget, flag("--usd"), decision, now()) : changeCap(startBudget(flag("--usd"), flag("--reserve"), now(), flag("--headroom-usd")), flag("--usd"), decision, now());
+        state = { ...state, l2: { ...state.l2!, budget } };
+        saveState(state);
+        console.log(budgetLine(state));
+      });
+    default:
+      fail(`unknown budget command ${sub}: status, hook, reserve, release, set`);
+  }
 }
 
 /**
@@ -988,6 +1086,7 @@ function commandStatus(state = activeState()) {
       ? [
           `slice ${state.l2.slice.id}: ${state.l2.slice.groups.map((group) => group.group).join(", ")}${state.l2.scope ? ` (partial run, part ${state.l2.scope.part}: ${state.l2.scope.groups.length} of the slice's ${state.l2.scope.sliceGroups.length} groups)` : ""}`,
           `pipeline: ${pipelineStatus(state.l2)}`,
+          budgetLine(state),
           `steps recorded: ${Object.keys(state.l2.steps).length}; next steps: ${pendingL2Steps(state).slice(0, 4).map((step) => `${step.kind} ${step.subject}`).join(", ") || "none"}`,
           `blocked: ${state.l2.blocked.join(", ") || "none"}; repair cycles: ${Object.entries(state.l2.repairs).map(([conceptId, count]) => `${conceptId} ${count}`).join(", ") || "none"}`,
           ...(state.l2.repair ? [repairStatusLine(state.l2.repair, verbose)] : []),
@@ -2027,6 +2126,10 @@ try {
     case "reopen":
       if (!l2Mode) fail("reopen is an l2 command");
       commandL2Reopen();
+      break;
+    case "budget":
+      if (!l2Mode) fail("budget is an l2 command: map:author -- l2 budget");
+      commandL2Budget();
       break;
     case "sync":
       if (!l2Mode) fail("sync is an l2 command");

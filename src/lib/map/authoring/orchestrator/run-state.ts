@@ -11,6 +11,7 @@ import type { Decision, RefactorPlan } from "../representation/refactor.ts";
 import { l2RunId, sliceSteps, stepKey, type L2RunScope, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
 import type { L2RepairBaseline } from "../l2/repair.ts";
 import { pipelineOf, PIPELINES, routingOf, type L2Pipeline } from "../l2/pipeline.ts";
+import type { L2Budget } from "../l2/budget.ts";
 
 /**
  * A run's stages. "merge" exists only for an L2 campaign run whose merging a
@@ -82,6 +83,8 @@ export type L2RunRecord = {
   merged?: { sha: string; at: string; byHand?: true };
   /** A repair run: the merged run whose concepts it repairs, and that run's merge commit. */
   repairOf?: { run: string; merged: string };
+  /** The run's hard spending cap (l2/budget.ts); absent in runs started before caps existed. */
+  budget?: L2Budget;
 };
 
 export type RunState = {

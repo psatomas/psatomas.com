@@ -1,0 +1,205 @@
+/**
+ * The file side of the L2 budget (budget.ts): measuring a run's sessions from
+ * the Claude Code transcripts, and reserving launches in the run's ledger
+ * under an exclusive lock, so concurrent launches (parallel agents, several
+ * sessions on one run) each see the others' reservations. Paths are passed in;
+ * the CLI and the launch hook (scripts/map-l2-budget-hook.ts) pass the
+ * repository's. Development tooling only.
+ */
+import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { budgetStatus, describeBudget, emptyLedger, reserveLaunch, type L2Budget, type L2BudgetLedger, type L2BudgetStatus, type L2Reservation, type L2SpendSession } from "./budget.ts";
+import { sessionCost } from "./cost.ts";
+
+/** Transcript lines, read in chunks so a long session's transcript is never held whole. */
+function* linesOf(path: string): Generator<string> {
+  const fd = openSync(path, "r");
+  const buffer = Buffer.alloc(1 << 20);
+  let rest = "";
+  try {
+    for (let read; (read = readSync(fd, buffer, 0, buffer.length, null)) > 0; ) {
+      const lines = (rest + buffer.toString("utf8", 0, read)).split("\n");
+      rest = lines.pop()!;
+      yield* lines;
+    }
+    if (rest) yield rest;
+  } finally {
+    closeSync(fd);
+  }
+}
+
+const json = <T>(path: string): T | undefined => {
+  try {
+    return JSON.parse(readFileSync(path, "utf8")) as T;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Every session in `transcripts` (a Claude Code project's transcript
+ * directory) with a model call on `branch` since `since`: each orchestrator
+ * session, and each subagent with its launch's tool-use id and whether it
+ * reports having finished. A subagent with no call yet is listed too, so a
+ * finished launch that never called a model still settles its reservation.
+ */
+export function measureRun(transcripts: string, filter: { branch: string; since: string }): L2SpendSession[] {
+  if (!existsSync(transcripts)) return [];
+  const fresh = (path: string) => statSync(path).mtime.toISOString() >= filter.since;
+  const sessions: L2SpendSession[] = [];
+  const measured = (path: string, description: string) => {
+    const cost = sessionCost(linesOf(path), description, filter);
+    return { usd: cost.usd, unpriced: cost.unpriced, unmeasured: cost.unmeasured ?? 0, calls: cost.calls };
+  };
+  // A session is its transcript and, beside it, a directory of its subagents' transcripts; either may exist alone.
+  const ids = [...new Set(readdirSync(transcripts).map((name) => name.replace(/\.jsonl$/, "")))].sort();
+  for (const id of ids) {
+    const path = join(transcripts, `${id}.jsonl`);
+    if (existsSync(path) && fresh(path)) {
+      const { calls, ...cost } = measured(path, `orchestrator ${id}`);
+      if (calls || cost.unmeasured) sessions.push({ description: `orchestrator ${id}`, ...cost });
+    }
+    const subagents = join(transcripts, id, "subagents");
+    if (!existsSync(subagents)) continue;
+    for (const agent of readdirSync(subagents).filter((name) => name.endsWith(".jsonl")).sort()) {
+      const agentPath = join(subagents, agent);
+      const metaPath = agentPath.replace(/\.jsonl$/, ".meta.json");
+      if (!fresh(agentPath) && !(existsSync(metaPath) && fresh(metaPath))) continue;
+      const meta = json<{ description?: string; toolUseId?: string; finished?: boolean }>(metaPath) ?? {};
+      const { calls, ...cost } = measured(agentPath, meta.description ?? agent);
+      if (!calls && !cost.unmeasured && !meta.toolUseId) continue;
+      sessions.push({ description: meta.description ?? agent, ...(meta.toolUseId ? { toolUseId: meta.toolUseId } : {}), ...(meta.finished !== undefined ? { finished: meta.finished } : {}), ...cost });
+    }
+  }
+  return sessions;
+}
+
+/** Waits synchronously: the lock is taken inside a short-lived hook process with nothing else to do. */
+const pause = (ms: number) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+export class BudgetLockError extends Error {}
+
+/**
+ * Runs `fn` holding an exclusive lock (a directory beside `path`; creating one
+ * is atomic). A lock older than `staleMs` was left by a process that died
+ * holding it, since a reservation takes seconds: it is removed. Waiting longer
+ * than `timeoutMs` throws, and the caller refuses the launch.
+ */
+export function withLock<T>(path: string, fn: () => T, { timeoutMs = 30_000, staleMs = 120_000 } = {}): T {
+  const lock = `${path}.lock`;
+  mkdirSync(dirname(lock), { recursive: true });
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      mkdirSync(lock);
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > staleMs) {
+          rmSync(lock, { recursive: true, force: true });
+          continue;
+        }
+      } catch {
+        continue;
+      }
+      if (Date.now() > deadline) throw new BudgetLockError(`the budget ledger ${path} stayed locked for ${timeoutMs / 1000}s`);
+      pause(50);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    rmSync(lock, { recursive: true, force: true });
+  }
+}
+
+/** The run's reservation ledger, or an empty one. A ledger that does not parse, or names another run, is an error: reservations are never silently lost. */
+export function readLedger(path: string, run: string): L2BudgetLedger {
+  if (!existsSync(path)) return emptyLedger(run);
+  const ledger = json<L2BudgetLedger>(path);
+  if (!ledger || ledger.version !== 1 || ledger.run !== run || !Array.isArray(ledger.reservations)) throw new Error(`${path} is not the budget ledger of ${run}; inspect it`);
+  return ledger;
+}
+
+/** Writes the ledger whole or not at all. */
+export function writeLedger(path: string, ledger: L2BudgetLedger): void {
+  mkdirSync(dirname(path), { recursive: true });
+  const temporary = `${path}.${process.pid}.tmp`;
+  writeFileSync(temporary, `${JSON.stringify(ledger, null, 2)}\n`);
+  renameSync(temporary, path);
+}
+
+/**
+ * Reserves one launch under the ledger's lock: the spend is measured and the
+ * ledger read inside it, so two launches can never both take the last of the
+ * budget. A refused launch writes nothing.
+ */
+export function reserveUnderLock(input: { ledgerPath: string; run: string; budget: L2Budget; measure: () => L2SpendSession[]; launch: Omit<L2Reservation, "usd"> }): { ok: true; status: L2BudgetStatus } | { ok: false; problem: string; status: L2BudgetStatus } {
+  return withLock(input.ledgerPath, () => {
+    const ledger = readLedger(input.ledgerPath, input.run);
+    const sessions = input.measure();
+    const status = budgetStatus(input.budget, sessions, ledger);
+    const reserved = reserveLaunch(input.budget, status, ledger, input.launch);
+    if ("problem" in reserved) return { ok: false as const, problem: reserved.problem, status };
+    writeLedger(input.ledgerPath, reserved.ledger);
+    return { ok: true as const, status: budgetStatus(input.budget, sessions, reserved.ledger) };
+  });
+}
+
+/** Unfinished L2 runs in `stateDir` on `branch` (every unfinished run when the branch is unknown), as their state files record them. */
+export function activeRunsOn(stateDir: string, branch: string | undefined): { domainId: string; branch: string; createdAt: string; stage: string; l2?: { budget?: L2Budget } }[] {
+  if (!existsSync(stateDir)) return [];
+  return readdirSync(stateDir)
+    .filter((file) => file.endsWith(".json") && file !== "campaign.json")
+    .map((file) => json<{ kind?: string; domainId: string; branch: string; createdAt: string; stage: string; l2?: { budget?: L2Budget } }>(join(stateDir, file)))
+    .filter((state): state is NonNullable<typeof state> => !!state && state.kind === "l2" && state.stage !== "done" && (branch === undefined || state.branch === branch));
+}
+
+/** What the launch hook receives (Claude Code PreToolUse input) and the outcome it reports. */
+export type LaunchInput = { session_id?: string; tool_name?: string; tool_use_id?: string; tool_input?: { description?: string; subagent_type?: string } };
+export type LaunchOutcome = { allow: true; run?: string; status?: L2BudgetStatus } | { allow: false; reason: string };
+
+/**
+ * The launch gate: whether an Agent launch may start, reserving it if so.
+ * Anything that is not an Agent launch, or happens on a branch with no
+ * unfinished L2 run, passes untouched; so does a run started before caps
+ * existed. On a capped run's branch the launch is reserved under the ledger's
+ * lock, or refused. Every failure to check refuses: a launch is never let
+ * through because the budget could not be read.
+ */
+export function launchGate(input: LaunchInput, where: { stateDir: string; branch: string | undefined; ledgerPath: (run: string) => string; measure: (run: { branch: string; createdAt: string }) => L2SpendSession[]; now: string; role: (description: string) => string }): LaunchOutcome {
+  if (input.tool_name !== "Agent" && input.tool_name !== "Task") return { allow: true };
+  let runs: ReturnType<typeof activeRunsOn>;
+  try {
+    runs = activeRunsOn(where.stateDir, where.branch);
+  } catch (error) {
+    return { allow: false, reason: `cannot read the L2 run states (${(error as Error).message}); no model work starts until they can be read` };
+  }
+  if (runs.length === 0) return { allow: true };
+  // Without a branch no run can be matched to the launch: every unfinished run could be the one it belongs to.
+  if (!where.branch) return { allow: false, reason: `cannot tell the current branch, so cannot tell whether the budget of ${runs.map((run) => run.domainId).join(", ")} applies` };
+  if (runs.length > 1) return { allow: false, reason: `several unfinished L2 runs are on ${where.branch} (${runs.map((run) => run.domainId).join(", ")}): resolve that before launching model work` };
+  const run = runs[0];
+  const budget = run.l2?.budget;
+  if (!budget) return { allow: true, run: run.domainId };
+  const description = input.tool_input?.description ?? input.tool_input?.subagent_type ?? "agent";
+  try {
+    const result = reserveUnderLock({
+      ledgerPath: where.ledgerPath(run.domainId),
+      run: run.domainId,
+      budget,
+      measure: () => where.measure(run),
+      launch: { id: input.tool_use_id ?? `launch-${where.now}-${process.pid}`, role: where.role(description), at: where.now, description, ...(input.session_id ? { session: input.session_id } : {}) },
+    });
+    if (!result.ok) {
+      return {
+        allow: false,
+        reason: `${result.problem}. No model work starts on ${run.domainId} until a human decides: raise the cap (\`npm run map:author -- l2 budget set --usd <n> --decision ".."\`), release a launch that will not finish (\`l2 budget release <id> --reason ".."\`), or stop the run (\`l2 stop\`). ${describeBudget(result.status)}`,
+      };
+    }
+    return { allow: true, run: run.domainId, status: result.status };
+  } catch (error) {
+    return { allow: false, reason: `the budget of ${run.domainId} could not be checked (${(error as Error).message}); no model work starts until it can` };
+  }
+}

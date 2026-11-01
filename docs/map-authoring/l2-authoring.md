@@ -442,7 +442,7 @@ are committed by the run.
 
 ```bash
 npm run map:author -- l2 campaign                         # every slice, the next one, merge authorization
-npm run map:author -- l2 start --slice <id> [--pipeline legacy|simplified] [--routing role=model,..] | --pilot
+npm run map:author -- l2 start --slice <id> --budget-usd <usd> [--reserve role=usd,..] [--headroom-usd <usd>] [--pipeline legacy|simplified] [--routing role=model,..] | --pilot
 npm run map:author -- l2 start --slice <id> --groups <group>[,<group>..] [--pipeline ..]   # a partial run: some of the slice's groups (Partial runs)
 npm run map:author -- l2 start --slice <id> --repair <id>[,<id>..] --reason ".."   # repair merged concepts in a new run (Repairs)
 npm run map:author -- l2 status [--verbose] | next          # --verbose prints every repair finding and stop resolution whole
@@ -458,6 +458,7 @@ npm run map:author -- l2 fix | stop | resume              # as for domain runs
 npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
 npm run map:author -- l2 authorize --repair-exception ".."  # a human's standing repair exception (Repairs)
 npm run map:author -- l2 cost [--branch <b>] [--since <iso>] [--agents] [--json]   # what the slice's model sessions spent: weighted tokens and list-price USD, by role and model
+npm run map:author -- l2 budget [--json] | hook | reserve --role <r> | release <id> --reason ".." | set --usd <n> --decision ".."   # the run's hard spending cap (Budget)
 ```
 
 **Cost.** `l2 cost` reads the local Claude Code transcripts of this checkout:
@@ -474,6 +475,52 @@ breakdown. A model without a listed price is reported as unpriced (`+?`),
 never guessed. The USD figure estimates API-equivalent spend, not a bill or a
 plan's usage limits. Weighted totals are unchanged, so earlier measurements
 stay comparable.
+
+**Budget.** Every L2 run, repair runs included, starts with a hard spending
+cap in list-price USD (`l2 start --budget-usd <usd>`; the start is refused
+without one). Model work starts only if it fits
+([`budget.ts`](../../src/lib/map/authoring/l2/budget.ts)):
+
+```text
+spent (measured) + reserved (launches still running) + headroom + this launch's reserve ≤ cap
+```
+
+- **Spent** is measured, never estimated: every API call on the run's branch
+  since the run started, in the orchestrator sessions and every subagent of
+  this checkout, priced as `l2 cost` prices it. A model without a list price,
+  or a call that carries no usage, makes spend unknown, and unknown spend
+  refuses every launch.
+- **Reserved** is an estimate, kept apart from spend and never reported as
+  spent. Each launch holds a per-role reserve (by default about three times the
+  90th-percentile Opus session last measured: $3, $4 for a group audit or an
+  unrecognized role; `--reserve role=usd,..` sets a run's own). While its
+  session runs, it holds what it has not yet measurably spent. Once the session
+  reports finishing (its subagent metadata), the reserve is settled by the
+  measured spend. A launch whose session never reports finishing (interrupted,
+  killed) keeps its reserve until a human releases it with
+  `l2 budget release <id> --reason ".."`.
+- **Headroom** ($5 by default, `--headroom-usd`) stays free for the
+  orchestrator's own turns, which no launch gate sees.
+
+The cap is enforced before every Agent launch by a Claude Code PreToolUse hook
+([`map-l2-budget-hook.ts`](../../scripts/map-l2-budget-hook.ts)).
+`l2 budget hook` prints its settings entry; `.claude/` is not committed, so
+add it to `.claude/settings.local.json`. `l2 start` refuses while no settings
+file registers it. On a branch with no unfinished L2 run the hook allows
+everything. On a capped run's branch it reserves the launch in the run's
+ledger (`.map-authoring/l2/budget/<run>.json`) under an exclusive lock, so
+parallel launches and several sessions on one run each see the others'
+reservations, or refuses it with the reason. Any failure to check (an
+unreadable ledger, an unknown branch while a run is open, a lock held too long)
+refuses too. A launcher other than the Agent tool reserves with
+`l2 budget reserve --role <r>`, which exits 1 when refused.
+
+Exhausting the budget is a stop for a human: raise the cap
+(`l2 budget set --usd <n> --decision ".."`, recorded with the run), release a
+launch that will not finish, or stop the run. `l2 status` shows spent,
+reserved, headroom and what is available, and says when no launch fits. A run
+started before caps existed has none, and the hook lets its launches through
+until `l2 budget set` gives it one.
 
 **Slices.** Each domain's ownership groups, in L1 order, are split into the
 fewest slices of at most 30 owned concepts, balanced, never splitting a
@@ -702,7 +749,10 @@ session or weekly usage limit) interrupts a run for usage. The interrupted
 step stays unrecorded until it completes; the run state and every recorded
 step hold, and that step resumes or reruns once the limit resets. The
 campaign sets no usage thresholds, usage readings or reading checkpoints of
-its own. The parked batch pipeline keeps its separate accounting policy
+its own: what bounds a run is its spending cap in list-price USD, measured
+from its own calls ([Budget](#runs)). An interrupted step's launch keeps its
+reserve until its session finishes or a human releases it. The parked batch
+pipeline keeps its separate accounting policy
 ([l2-pipeline-v2.md](l2-pipeline-v2.md)).
 
 ## Pilot
