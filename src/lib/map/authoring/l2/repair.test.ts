@@ -144,6 +144,16 @@ test("re-recording an audit replaces its note without counting a repair; the gro
   assert.deepEqual(pendingL2Steps(state).map(stepKey), ["group-audit:g1"]);
 });
 
+test("an audit re-recorded while the uncommitted run validates revalidates from the gates; after commits it needs a reopen", () => {
+  const done = finishedRun();
+  const uncommitted: RunState = { ...done, stage: "render", commits: [], completed: Object.fromEntries(Object.entries(done.completed).filter(([stage]) => STAGES.indexOf(stage as (typeof STAGES)[number]) < STAGES.indexOf("render"))) };
+  const state = recordL2Step(uncommitted, { kind: "audit", subject: "a" }, T1, { note: "signal resolved", fingerprint: "a-v1" });
+  assert.deepEqual([state.l2!.steps["audit:a"].note, state.l2!.repairs.a ?? 0, state.stage, state.completed.gates, state.checks.gates], ["signal resolved", 0, "gates", undefined, undefined]);
+  assert.ok(state.completed.audit);
+  assert.throws(() => recordL2Step({ ...done, stage: "commit" }, { kind: "audit", subject: "a" }, T1, { fingerprint: "a-v1" }), /once the run has commits: reopen a/);
+  assert.throws(() => recordL2Step({ ...uncommitted, stage: "push" }, { kind: "audit", subject: "a" }, T1, { fingerprint: "a-v1" }), /cannot record audit:a at stage push/);
+});
+
 test("repair cycles are counted per concept, once per cycle, and a repeated repair opens a new cycle", () => {
   let state = reopenL2(finishedRun(), { concepts: ["a"], reason: "first finding", baseline, now: T1 });
   // Reopening again, or adding b, joins the open cycle: a still counts one.

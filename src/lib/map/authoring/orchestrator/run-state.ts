@@ -429,7 +429,11 @@ export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject:
   const index = all.findIndex((candidate) => stepKey(candidate) === key);
   if (index < 0) throw new RunStateError(`${key} is not a step of slice ${record.slice.id}`);
   const replacingAudit = step.kind === "audit" && Boolean(record.steps[key]);
-  const expectedStage = step.kind === "group-audit" ? ["audit"] : replacingAudit ? ["author", "audit"] : ["author"];
+  // A replaced audit may also land while the uncommitted run validates (a signal surfaced at the gates, say): the
+  // record is unchanged (the CLI checks its fingerprint), so the run only revalidates from the gates.
+  const lateAudit = replacingAudit && [...VALIDATION_STAGES, "commit"].includes(state.stage);
+  if (lateAudit && state.commits.length > 0 && !record.repair) throw new RunStateError(`cannot record ${key} once the run has commits: reopen ${step.subject} to change its audit`);
+  const expectedStage = step.kind === "group-audit" ? ["audit"] : replacingAudit ? ["author", "audit", ...(lateAudit ? [state.stage] : [])] : ["author"];
   if (!expectedStage.includes(state.stage)) throw new RunStateError(`cannot record ${key} at stage ${state.stage}`);
   const reopen = (conceptId: string) => `${conceptId} is drafted: changing it is a repair; reopen it first (\`l2 reopen ${conceptId} --reason ..\`)`;
   if ((step.kind === "author" || step.kind === "design") && drafted(record, step.subject)) throw new RunStateError(reopen(step.subject));
@@ -447,7 +451,7 @@ export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject:
   if (step.kind === "audit" || (step.kind === "design" && options.blocks)) concepts = { ...concepts, [step.subject]: { done: true, at: now } };
   let next: RunState = { ...state, concepts, l2: { ...record, steps, blocked } };
   if (next.stage === "author" && pendingConcepts(next).length === 0) next = { ...next, stage: "audit", completed: { ...next.completed, author: { at: now } } };
-  return next;
+  return lateAudit ? revalidate(next) : next;
 }
 
 /** Repair cycles a concept may be reopened in: two, plus one for each stop at its limit a human has resolved. */
