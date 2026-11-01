@@ -52,6 +52,8 @@ export type SessionCost = {
   models: Record<string, ModelUsage>;
   usd: number;
   unpriced: string[];
+  /** Model calls that pass the filter but carry no usage: never estimated, so a budget treats their spend as unknown (budget.ts). */
+  unmeasured?: number;
   firstAt?: string;
   lastAt?: string;
 };
@@ -95,10 +97,12 @@ export function roleOf(description: string): string {
  */
 export function sessionCost(lines: Iterable<string>, description: string, filter: CostFilter = {}): SessionCost {
   const calls = new Map<string, ModelUsage & { model: string }>();
+  const withoutUsage = new Set<string>();
   let firstAt: string | undefined;
   let lastAt: string | undefined;
   for (const line of lines) {
-    if (!line.includes('"assistant"') || !line.includes('"usage"')) continue;
+    // Lines without usage are read too: a model call that carries none is counted as unmeasured, never as free.
+    if (!line.includes('"assistant"')) continue;
     let entry: { type?: string; timestamp?: string; gitBranch?: string; message?: { id?: string; model?: string; usage?: Partial<Usage> & { cache_creation?: { ephemeral_1h_input_tokens?: number } } } };
     try {
       entry = JSON.parse(line);
@@ -106,9 +110,13 @@ export function sessionCost(lines: Iterable<string>, description: string, filter
       continue;
     }
     const message = entry.message;
-    if (entry.type !== "assistant" || !message?.id || !message.usage || message.model === "<synthetic>") continue;
+    if (entry.type !== "assistant" || !message?.id || message.model === "<synthetic>") continue;
     if (filter.branch && entry.gitBranch !== filter.branch) continue;
     if (entry.timestamp && ((filter.since && entry.timestamp < filter.since) || (filter.until && entry.timestamp >= filter.until))) continue;
+    if (!message.usage) {
+      withoutUsage.add(message.id);
+      continue;
+    }
     const u = message.usage;
     calls.set(message.id, { model: message.model ?? "unknown", input_tokens: u.input_tokens ?? 0, output_tokens: u.output_tokens ?? 0, cache_creation_input_tokens: u.cache_creation_input_tokens ?? 0, cache_read_input_tokens: u.cache_read_input_tokens ?? 0, cache_creation_1h_input_tokens: u.cache_creation?.ephemeral_1h_input_tokens ?? 0 });
     if (entry.timestamp) {
@@ -123,7 +131,8 @@ export function sessionCost(lines: Iterable<string>, description: string, filter
     const { model, ...counts } = call;
     addModels(models, { [model]: counts });
   }
-  return { description, role: description === "orchestrator" ? "orchestrator" : roleOf(description), calls: calls.size, usage, weighted: calls.size ? weighted(usage) : 0, models, ...priced(models), ...(firstAt ? { firstAt, lastAt } : {}) };
+  const unmeasured = [...withoutUsage].filter((id) => !calls.has(id)).length;
+  return { description, role: description === "orchestrator" ? "orchestrator" : roleOf(description), calls: calls.size, usage, weighted: calls.size ? weighted(usage) : 0, models, ...priced(models), ...(unmeasured ? { unmeasured } : {}), ...(firstAt ? { firstAt, lastAt } : {}) };
 }
 
 /** Sessions with at least one counted call, totalled by role (the orchestrator is its own role). */
