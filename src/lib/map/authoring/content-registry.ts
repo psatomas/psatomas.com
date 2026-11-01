@@ -458,4 +458,10 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "local-state",
   "state-encoding",
   "state-layout",
+  "transition-functions",
+  "valid-transitions",
+  "invalid-transitions",
+  "transition-preconditions",
+  "transition-effects",
+  "atomic-state-transitions",
 ];
