@@ -183,7 +183,10 @@ export const BUDGET_HOOK = "map-l2-budget-hook";
 /**
  * Whether any of the Claude Code settings given registers the budget hook
  * before every Agent launch: a PreToolUse entry whose matcher matches "Agent"
- * and whose command runs the hook.
+ * and whose command runs the hook and ends in `|| exit 2`. Claude Code lets a
+ * launch through when a hook exits with any code but 2, so a command that
+ * could fail to start (a moved script, no node) without that fallback would
+ * fail open.
  */
 export function budgetHookInstalled(settings: readonly unknown[]): boolean {
   return settings.some((entry) => {
@@ -195,7 +198,7 @@ export function budgetHookInstalled(settings: readonly unknown[]): boolean {
       } catch {
         matches = false;
       }
-      return matches && (group.hooks ?? []).some((hook) => hook.type === "command" && typeof hook.command === "string" && hook.command.includes(BUDGET_HOOK));
+      return matches && (group.hooks ?? []).some((hook) => hook.type === "command" && typeof hook.command === "string" && hook.command.includes(BUDGET_HOOK) && /\|\|\s*exit\s+2\s*$/.test(hook.command));
     });
   });
 }

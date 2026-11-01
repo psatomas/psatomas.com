@@ -90,8 +90,10 @@ test("a new cap is a recorded human decision", () => {
 
 test("the budget hook counts as installed only when a PreToolUse entry runs it for Agent launches", () => {
   const entry = (matcher: string | undefined, command: string) => ({ hooks: { PreToolUse: [{ ...(matcher === undefined ? {} : { matcher }), hooks: [{ type: "command", command }] }] } });
-  const hook = 'node "$CLAUDE_PROJECT_DIR/scripts/map-l2-budget-hook.ts"';
+  const hook = "node '/repo/scripts/map-l2-budget-hook.ts' || exit 2";
   assert.equal(budgetHookInstalled([entry("Agent|Task", hook)]), true);
+  // Without the fallback a hook that cannot start exits 1, and Claude Code lets the launch through.
+  assert.equal(budgetHookInstalled([entry("Agent|Task", "node '/repo/scripts/map-l2-budget-hook.ts'")]), false);
   assert.equal(budgetHookInstalled([entry(undefined, hook)]), true);
   assert.equal(budgetHookInstalled([entry("*", hook)]), true);
   assert.equal(budgetHookInstalled([entry("Bash", hook)]), false);
@@ -99,4 +101,18 @@ test("the budget hook counts as installed only when a PreToolUse entry runs it f
   assert.equal(budgetHookInstalled([{ permissions: {} }, undefined, entry("Agent", hook)]), true);
   assert.equal(budgetHookInstalled([entry("(", hook)]), false);
   assert.equal(budgetHookInstalled([]), false);
+});
+
+test("the registered hook command names the script by absolute path and refuses when the script cannot run", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const { HOOK_SETTINGS, ROOT } = await import("../../../../../scripts/map-l2-budget.ts");
+  const command = HOOK_SETTINGS.hooks.PreToolUse[0].hooks[0].command;
+  assert.equal(budgetHookInstalled([HOOK_SETTINGS]), true);
+  assert.ok(command.includes(`${ROOT}scripts/map-l2-budget-hook.ts`), command);
+  assert.ok(!command.includes("$CLAUDE_PROJECT_DIR"));
+  // A moved or broken script: the command still exits 2, which blocks the launch.
+  const broken = spawnSync("sh", ["-c", command.replace("map-l2-budget-hook.ts", "missing-hook.ts")], { input: "{}", encoding: "utf8" });
+  assert.equal(broken.status, 2);
+  // The real script on input it does not gate exits 0.
+  assert.equal(spawnSync("sh", ["-c", command], { input: JSON.stringify({ tool_name: "Bash" }), encoding: "utf8" }).status, 0);
 });

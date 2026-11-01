@@ -7,7 +7,7 @@
  * repository's. Development tooling only.
  */
 import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { budgetStatus, describeBudget, emptyLedger, reserveLaunch, type L2Budget, type L2BudgetLedger, type L2BudgetStatus, type L2Reservation, type L2SpendSession } from "./budget.ts";
 import { sessionCost } from "./cost.ts";
 
@@ -157,32 +157,69 @@ export function activeRunsOn(stateDir: string, branch: string | undefined): { do
 }
 
 /** What the launch hook receives (Claude Code PreToolUse input) and the outcome it reports. */
-export type LaunchInput = { session_id?: string; tool_name?: string; tool_use_id?: string; tool_input?: { description?: string; subagent_type?: string } };
+export type LaunchInput = { session_id?: string; transcript_path?: string; cwd?: string; tool_name?: string; tool_use_id?: string; tool_input?: { description?: string; subagent_type?: string } };
 export type LaunchOutcome = { allow: true; run?: string; status?: L2BudgetStatus } | { allow: false; reason: string };
+type ActiveRun = ReturnType<typeof activeRunsOn>[number];
+
+/** Whether `path` lies inside directory `dir`. */
+const inside = (path: string, dir: string) => resolve(path).startsWith(`${resolve(dir)}${sep}`);
 
 /**
  * The launch gate: whether an Agent launch may start, reserving it if so.
- * Anything that is not an Agent launch, or happens on a branch with no
- * unfinished L2 run, passes untouched; so does a run started before caps
- * existed. On a capped run's branch the launch is reserved under the ledger's
- * lock, or refused. Every failure to check refuses: a launch is never let
- * through because the budget could not be read.
+ *
+ * A launch counts toward a run's cap only if its spend can be measured: it is
+ * made on the run's branch, in the run's checkout, by a session whose
+ * transcript is in the directory the run's spend is read from (`transcripts`).
+ * So, while a capped run is unfinished anywhere in the repository (this
+ * checkout on another branch, or another checkout or worktree, `elsewhere`),
+ * a launch that would escape its accounting is refused rather than let through
+ * uncounted.
+ *
+ * Anything that is not an Agent launch passes, and so does every launch when
+ * no capped run is unfinished; a run started before caps existed is not
+ * enforced. Every failure to check refuses.
  */
-export function launchGate(input: LaunchInput, where: { stateDir: string; branch: string | undefined; ledgerPath: (run: string) => string; measure: (run: { branch: string; createdAt: string }) => L2SpendSession[]; now: string; role: (description: string) => string }): LaunchOutcome {
+export function launchGate(
+  input: LaunchInput,
+  where: {
+    stateDir: string;
+    branch: string | undefined;
+    ledgerPath: (run: string) => string;
+    measure: (run: { branch: string; createdAt: string }) => L2SpendSession[];
+    /** The transcript directory every run of this checkout is measured from. */
+    transcripts: string;
+    /** Unfinished runs in the repository's other checkouts. */
+    elsewhere?: readonly { root: string; runs: readonly ActiveRun[] }[];
+    now: string;
+    role: (description: string) => string;
+  },
+): LaunchOutcome {
   if (input.tool_name !== "Agent" && input.tool_name !== "Task") return { allow: true };
-  let runs: ReturnType<typeof activeRunsOn>;
+  let here: ActiveRun[];
   try {
-    runs = activeRunsOn(where.stateDir, where.branch);
+    here = activeRunsOn(where.stateDir, undefined);
   } catch (error) {
     return { allow: false, reason: `cannot read the L2 run states (${(error as Error).message}); no model work starts until they can be read` };
   }
-  if (runs.length === 0) return { allow: true };
   // Without a branch no run can be matched to the launch: every unfinished run could be the one it belongs to.
-  if (!where.branch) return { allow: false, reason: `cannot tell the current branch, so cannot tell whether the budget of ${runs.map((run) => run.domainId).join(", ")} applies` };
+  if (!where.branch && here.length) return { allow: false, reason: `cannot tell the current branch, so cannot tell whether the budget of ${here.map((run) => run.domainId).join(", ")} applies` };
+  const runs = here.filter((run) => run.branch === where.branch);
   if (runs.length > 1) return { allow: false, reason: `several unfinished L2 runs are on ${where.branch} (${runs.map((run) => run.domainId).join(", ")}): resolve that before launching model work` };
+  if (runs.length === 0) {
+    // No run here on this branch: a capped run on another branch or in another checkout would not see this launch's spend.
+    const capped = [
+      ...here.filter((run) => run.l2?.budget).map((run) => `${run.domainId} (this checkout, on ${run.branch})`),
+      ...(where.elsewhere ?? []).flatMap((checkout) => checkout.runs.filter((run) => run.l2?.budget).map((run) => `${run.domainId} (in ${checkout.root}, on ${run.branch})`)),
+    ];
+    if (capped.length) return { allow: false, reason: `the capped L2 run ${capped.join(", ")} is unfinished, and this launch's spend (another branch or checkout) would not count toward its cap: launch from the run's checkout on its branch, or finish or stop the run first` };
+    return { allow: true };
+  }
   const run = runs[0];
   const budget = run.l2?.budget;
   if (!budget) return { allow: true, run: run.domainId };
+  if (!input.transcript_path || !inside(input.transcript_path, where.transcripts)) {
+    return { allow: false, reason: `this session's transcript (${input.transcript_path ?? "not reported"}) is not in ${where.transcripts}, where the spend of ${run.domainId} is measured, so its launches would not count toward the cap: run the session from the run's checkout root` };
+  }
   const description = input.tool_input?.description ?? input.tool_input?.subagent_type ?? "agent";
   try {
     const result = reserveUnderLock({

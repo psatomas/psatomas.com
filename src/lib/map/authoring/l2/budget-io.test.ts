@@ -32,7 +32,9 @@ function world(budget: L2Budget | null = startBudget("20", undefined, STARTED)) 
     writeFileSync(join(transcripts, "s1", "subagents", `agent-${name}.meta.json`), JSON.stringify(meta));
   };
   const ledger = (run: string) => join(root, "ledgers", `${run}.json`);
-  const gate = (input: LaunchInput, branch: string | null = BRANCH) => launchGate(input, { stateDir, branch: branch ?? undefined, ledgerPath: ledger, measure: (r) => measureRun(transcripts, { branch: r.branch, since: r.createdAt }), now: AT, role: roleOf });
+  /** A launch from the run's own session (its transcript in the measured directory) unless the input names another. */
+  const gate = (input: LaunchInput, branch: string | null = BRANCH, elsewhere: Parameters<typeof launchGate>[1]["elsewhere"] = []) =>
+    launchGate("transcript_path" in input ? input : { ...input, transcript_path: join(transcripts, "s1.jsonl") }, { stateDir, branch: branch ?? undefined, ledgerPath: ledger, measure: (r) => measureRun(transcripts, { branch: r.branch, since: r.createdAt }), transcripts, elsewhere, now: AT, role: roleOf });
   return { root, transcripts, stateDir, orchestrator, subagent, ledger, gate, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 const launch = (id: string, description = "First audit A computation-integrity"): LaunchInput => ({ tool_name: "Agent", tool_use_id: id, session_id: "s1", tool_input: { description } });
@@ -59,11 +61,17 @@ test("a run's spend is measured from its branch's calls since it started, each s
   }
 });
 
-test("the gate passes what is not an Agent launch, a branch with no unfinished run, and a run started before caps", () => {
+test("the gate passes what is not an Agent launch, launches when no run is unfinished, and a run started before caps", () => {
   const w = world();
   try {
     assert.deepEqual(w.gate({ tool_name: "Bash" }), { allow: true });
+    // A finished run binds nothing, whatever the branch.
+    const state = join(w.stateDir, "state-data-1-g3.json");
+    const unfinished = readFileSync(state, "utf8");
+    writeFileSync(state, JSON.stringify({ ...JSON.parse(unfinished), stage: "done" }));
     assert.deepEqual(w.gate(launch("toolu_1"), "main"), { allow: true });
+    assert.deepEqual(w.gate(launch("toolu_1")), { allow: true });
+    writeFileSync(state, unfinished);
     assert.equal(existsSync(w.ledger("state-data-1-g3")), false);
     const legacy = world(null);
     try {
@@ -166,7 +174,7 @@ test("launches racing from separate processes never reserve more than the budget
       `const { launchGate, measureRun } = await import(${JSON.stringify(gateModule)});
 const { roleOf } = await import(${JSON.stringify(cost)});
 const [stateDir, transcripts, ledgers, id] = process.argv.slice(2);
-const outcome = launchGate({ tool_name: "Agent", tool_use_id: id, tool_input: { description: "First audit " + id } }, { stateDir, branch: ${JSON.stringify(BRANCH)}, ledgerPath: (run) => ledgers + "/" + run + ".json", measure: (r) => measureRun(transcripts, { branch: r.branch, since: r.createdAt }), now: new Date().toISOString(), role: roleOf });
+const outcome = launchGate({ tool_name: "Agent", tool_use_id: id, transcript_path: transcripts + "/s1.jsonl", tool_input: { description: "First audit " + id } }, { stateDir, branch: ${JSON.stringify(BRANCH)}, ledgerPath: (run) => ledgers + "/" + run + ".json", measure: (r) => measureRun(transcripts, { branch: r.branch, since: r.createdAt }), transcripts, now: new Date().toISOString(), role: roleOf });
 process.stdout.write(outcome.allow ? "allow" : "refuse");`,
     );
     const race = (id: string) =>
@@ -181,6 +189,44 @@ process.stdout.write(outcome.allow ? "allow" : "refuse");`,
     assert.equal(outcomes.filter((outcome) => outcome === "allow").length, 3, outcomes.join(","));
     assert.equal(outcomes.filter((outcome) => outcome === "refuse").length, 9);
     assert.equal(readLedger(w.ledger("state-data-1-g3"), "state-data-1-g3").reservations.length, 3);
+  } finally {
+    w.cleanup();
+  }
+});
+
+test("a launch whose spend the run would not measure is refused: a session writing transcripts elsewhere, or not saying where", () => {
+  const w = world();
+  try {
+    // A session started in another checkout or a subdirectory writes its transcripts to another project directory.
+    const outside = w.gate({ ...launch("t1"), transcript_path: join(w.root, "other-project", "s9.jsonl") });
+    assert.match((outside as { reason: string }).reason, /this session's transcript .*other-project.* is not in .*transcripts, where the spend of state-data-1-g3 is measured/);
+    assert.match((w.gate({ ...launch("t1"), transcript_path: undefined }) as { reason: string }).reason, /not reported/);
+    assert.equal(existsSync(w.ledger("state-data-1-g3")), false);
+    // A subagent's own launch reports a transcript inside its session's directory: measured, so allowed.
+    assert.equal(w.gate({ ...launch("t1"), transcript_path: join(w.transcripts, "s1", "subagents", "agent-a.jsonl") }).allow, true);
+    // A look-alike sibling directory is not inside the measured one.
+    assert.equal(w.gate({ ...launch("t2"), transcript_path: `${w.transcripts}-2/s1.jsonl` }).allow, false);
+  } finally {
+    w.cleanup();
+  }
+});
+
+test("while a capped run is unfinished, launches from another branch or another checkout are refused; an uncapped run elsewhere refuses nothing", () => {
+  const w = world();
+  try {
+    // This checkout, switched to another branch: the run's spend is filtered by its branch, so this launch would not count.
+    assert.match((w.gate(launch("t1"), "main") as { reason: string }).reason, /capped L2 run state-data-1-g3 \(this checkout, on feat\/map-state-data-l2-1-g3\) is unfinished/);
+    // Another worktree of the repository holds a capped run: a launch here is not measured by it.
+    const elsewhere = [{ root: "/elsewhere/checkout", runs: [{ domainId: "other-run", branch: "feat/other", createdAt: STARTED, stage: "author", l2: { budget: startBudget("20", undefined, STARTED) } }] }];
+    const quiet = world(null);
+    try {
+      assert.match((quiet.gate(launch("t1"), "main", elsewhere) as { reason: string }).reason, /other-run \(in \/elsewhere\/checkout, on feat\/other\)/);
+      assert.equal(quiet.gate(launch("t1"), "main", [{ root: "/elsewhere/checkout", runs: [{ ...elsewhere[0].runs[0], l2: {} }] }]).allow, true);
+      assert.equal(quiet.gate(launch("t1"), "main", []).allow, true);
+      assert.equal(quiet.gate({ tool_name: "Bash" }, "main", elsewhere).allow, true);
+    } finally {
+      quiet.cleanup();
+    }
   } finally {
     w.cleanup();
   }

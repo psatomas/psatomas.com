@@ -506,14 +506,31 @@ The cap is enforced before every Agent launch by a Claude Code PreToolUse hook
 ([`map-l2-budget-hook.ts`](../../scripts/map-l2-budget-hook.ts)).
 `l2 budget hook` prints its settings entry; `.claude/` is not committed, so
 add it to `.claude/settings.local.json`. `l2 start` refuses while no settings
-file registers it. On a branch with no unfinished L2 run the hook allows
-everything. On a capped run's branch it reserves the launch in the run's
-ledger (`.map-authoring/l2/budget/<run>.json`) under an exclusive lock, so
-parallel launches and several sessions on one run each see the others'
-reservations, or refuses it with the reason. Any failure to check (an
-unreadable ledger, an unknown branch while a run is open, a lock held too long)
-refuses too. A launcher other than the Agent tool reserves with
-`l2 budget reserve --role <r>`, which exits 1 when refused.
+file registers it. The entry names the script by its absolute path and ends in
+`|| exit 2`: Claude Code lets a launch through when a hook exits with any code
+but 2, so a hook that cannot even start (a moved script, no `node`) must still
+refuse. `l2 start` accepts only an entry of that form.
+
+On a capped run's branch the hook reserves the launch in the run's ledger
+(`.map-authoring/l2/budget/<run>.json`) under an exclusive lock, so parallel
+launches and several sessions on one run each see the others' reservations,
+or refuses it with the reason. A launch counts only if its spend is measured,
+so while a capped run is unfinished anywhere in the repository, the hook
+refuses a launch that would escape it:
+
+- from a session whose transcript is not in this checkout's transcript
+  directory (a session started in a subdirectory or in another checkout);
+- from this checkout on another branch, or from another checkout or worktree
+  of the repository (`git worktree list`): their calls are not on the run's
+  branch or not in its transcripts.
+
+Any failure to check refuses too (an unreadable or foreign ledger, an unknown
+branch while a run is open, a lock held too long). With no capped run
+unfinished, the hook allows everything. The hook gates only sessions whose
+settings register it: a session in another checkout is gated only if that
+checkout's settings, or the user settings, register the entry. A launcher
+other than the Agent tool reserves with `l2 budget reserve --role <r>`, which
+exits 1 when refused.
 
 Exhausting the budget is a stop for a human: raise the cap
 (`l2 budget set --usd <n> --decision ".."`, recorded with the run), release a
