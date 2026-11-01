@@ -57,11 +57,12 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
-import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
+import { commandL2, coverageFor, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { neighbourBasis } from "../src/lib/map/authoring/l2/coverage.ts";
 import { describePipeline, PipelineError, pipelineMismatchProblem, pipelineOf, pipelineStatus, startPipeline, type L2Pipeline } from "../src/lib/map/authoring/l2/pipeline.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
@@ -798,11 +799,13 @@ async function commandL2Record() {
       const drafted = state.l2!.steps[`author:${subject}`]?.fingerprint;
       // An audit that found a defect reopens the concept: a record edited in place would be a repair nobody counted.
       if (drafted && drafted !== fingerprint) refuse([`${subject}'s record changed since it was drafted: an audit that finds a defect reopens it (\`${CLI} reopen ${subject} --reason ..\`), then it is drafted and audited again`]);
-      refuse([...workProblems(plan, subject, mapKnowledge, "audited", signalsOf(subject, plans).map((signal) => signal.id)), ...scope()]);
+      // An overlap with a neighbour counts as resolved once any audit recorded against both current records resolves it.
+      const signals = signalsOf(subject, plans);
+      refuse([...workProblems(plan, subject, mapKnowledge, "audited", signals, coverageFor(plans, signals)), ...scope()]);
       break;
     }
     case "group-audit":
-      refuse([...groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan).map((signal) => signal.id)), ...scope()]);
+      refuse([...groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan)), ...scope()]);
       break;
     default:
       fail("record needs <plan|design|author|audit|group-audit> <subject>");
@@ -829,7 +832,8 @@ async function commandL2Record() {
 
 /**
  * Writes an audit into its group file, bound to exactly the records as they
- * are now: a concept audit to its record's fingerprint, a group audit to
+ * are now: a concept audit to its record's fingerprint and to each authored
+ * neighbour's (the other side of its relational signals), a group audit to
  * every owned member's. The file holds { note, resolutions }. Recording
  * then validates it like any audit.
  */
@@ -839,7 +843,7 @@ function writeAudit(kind: "audit" | "group-audit", subject: string, group: strin
   const plan = JSON.parse(readFileSync(path, "utf8")) as L2GroupFile & { groupAudit?: L2GroupAudit };
   const audit = { at: now(), note: input.note ?? "", resolutions: input.resolutions ?? [] };
   // A simplified plan holds no concept work until its first audit is recorded: the audit creates the entry.
-  if (kind === "audit") Object.assign(plan, withConceptAudit(plan, subject, { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) }));
+  if (kind === "audit") Object.assign(plan, withConceptAudit(plan, subject, { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)), neighbours: neighbourBasis(mapKnowledge, readPlans(), subject) }));
   else {
     const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
     plan.groupAudit = { ...audit, records: Object.fromEntries(owned.map((conceptId) => [conceptId, recordFingerprint(recordOf(conceptId))])) };
@@ -1514,6 +1518,8 @@ async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registr
   const headPlans = readPlans();
   const groups = state.l2!.slice.groups.map((group) => group.group);
   const authored = l2Authored(state);
+  const signals = Object.fromEntries(authored.filter((conceptId) => recordOf(conceptId)).map((conceptId) => [conceptId, signalsOf(conceptId, headPlans)]));
+  const groupSignals = Object.fromEntries(headPlans.filter((plan) => groups.includes(plan.group)).map((plan) => [plan.group, groupSignalsOf(plan)]));
   const report = validateL2Diff({
     base: base.model,
     head: mapKnowledge,
@@ -1529,8 +1535,9 @@ async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registr
     groups,
     basePlans: plansAt(state.baseSha),
     headPlans,
-    signals: Object.fromEntries(authored.filter((conceptId) => recordOf(conceptId)).map((conceptId) => [conceptId, signalsOf(conceptId, headPlans).map((signal) => signal.id)])),
-    groupSignals: Object.fromEntries(headPlans.filter((plan) => groups.includes(plan.group)).map((plan) => [plan.group, groupSignalsOf(plan).map((signal) => signal.id)])),
+    signals,
+    groupSignals,
+    coverage: coverageFor(headPlans, [...Object.values(signals).flat(), ...Object.values(groupSignals).flat()]),
     ...(state.l2!.repairOf ? { repaired: authored } : {}),
   });
   if (!report.ok) {

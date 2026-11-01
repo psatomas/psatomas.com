@@ -12,25 +12,62 @@ import type { MapConceptContent, MapContentBlock, MapKnowledgeModel } from "../.
 import type { L2ConceptContext } from "./context.ts";
 import type { L2ConceptWork } from "./contracts.ts";
 
-export type L2Signal = { id: string; kind: "deterministic" | "heuristic"; check: string; detail: string };
+/**
+ * A relational signal is about two records at once: an overlap between the
+ * concept's text and a neighbour's. `concepts` is the pair (sorted), `owner`
+ * the concept whose sentence overlaps, and `key` the overlap's identity: the
+ * pair, the owner and the owner's sentence. The key holds whichever record's
+ * audit or group audit computes it, so one overlap is one judgment however it
+ * is reached (contracts.ts L2Coverage).
+ */
+export type L2Relation = { concepts: [string, string]; owner: string; key: string };
+/**
+ * `legacyId` is the id the same signal had before relational identities were
+ * stable (it hashed the detail, overlap percentage included): audits recorded
+ * then resolve it under that id. For a relational signal it is the id the
+ * owner's own audit would have resolved.
+ */
+export type L2Signal = { id: string; kind: "deterministic" | "heuristic"; check: string; detail: string; legacyId?: string; relation?: L2Relation };
 
-const signal = (kind: L2Signal["kind"], check: string, detail: string): L2Signal => ({
-  id: `${check}:${createHash("sha256").update(detail).digest("hex").slice(0, 10)}`,
-  kind,
-  check,
-  detail,
-});
+const hash = (text: string) => createHash("sha256").update(text).digest("hex").slice(0, 10);
+const signal = (kind: L2Signal["kind"], check: string, detail: string): L2Signal => ({ id: `${check}:${hash(detail)}`, kind, check, detail });
+
+/** An overlap's identity: the pair, the concept whose sentence it is, and that sentence. Never the percentage, which moves with the other record. */
+export const overlapKey = (a: string, b: string, owner: string, sentence: string) => hash(["overlap", ...[a, b].sort(), owner, sentence].join("\0"));
+
+/** The id an overlap signal of `check` carries: the same key under either check, so a concept audit and a group audit name one overlap alike. */
+export const relationalId = (check: "neighbour-overlap" | "sibling-overlap", key: string) => `${check}:${key}`;
+
+function overlap(check: "neighbour-overlap" | "sibling-overlap", detail: string, legacyDetail: string, pair: [string, string], owner: string, sentence: string): L2Signal {
+  const key = overlapKey(pair[0], pair[1], owner, sentence);
+  return { id: relationalId(check, key), kind: "heuristic", check, detail, legacyId: `${check}:${hash(legacyDetail)}`, relation: { concepts: [...pair].sort() as [string, string], owner, key } };
+}
 
 export const tokens = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
-const shingles = (text: string, size = 4) => {
-  const words = tokens(text);
-  const set = new Set<string>();
-  for (let index = 0; index + size <= words.length; index++) set.add(words.slice(index, index + size).join(" "));
-  return set;
+// Overlap checks compare every sentence with every other: each text's words and shingles are computed once, not per
+// pair. Bounded, so a long-lived process never grows it without limit; a cleared cache only costs recomputation.
+const CACHE_LIMIT = 50_000;
+const wordCache = new Map<string, string[]>();
+const shingleCache = new Map<string, Set<string>>();
+const remember = <T>(cache: Map<string, T>, key: string, make: () => T): T => {
+  const hit = cache.get(key);
+  if (hit) return hit;
+  if (cache.size >= CACHE_LIMIT) cache.clear();
+  const made = make();
+  cache.set(key, made);
+  return made;
 };
+const words = (text: string) => remember(wordCache, text, () => tokens(text));
+const shingles = (text: string, size = 4) =>
+  remember(shingleCache, `${size}\0${text}`, () => {
+    const list = words(text);
+    const set = new Set<string>();
+    for (let index = 0; index + size <= list.length; index++) set.add(list.slice(index, index + size).join(" "));
+    return set;
+  });
 /** Share of `a`'s word shingles that also occur in `b`; short texts use shorter shingles (at least two words). */
 export function containment(a: string, b: string, size = 4): number {
-  const length = tokens(a).length;
+  const length = words(a).length;
   if (length < 2) return 0;
   const n = Math.min(size, length);
   const left = shingles(a, n);
@@ -146,11 +183,21 @@ export function conceptSignals(input: L2SignalInput): L2Signal[] {
       if (best >= 0.4) found.push(signal("heuristic", "parent-overlap", `${(best * 100).toFixed(0)}% of a ${placement.parent.conceptId} sentence: ${premise.slice(0, 140)}`));
     }
   }
+  // Overlap is measured both ways: this record's sentences inside the neighbour's text, and the neighbour's inside this
+  // one. Containment is not symmetric, so a one-way check let an overlap surface only on the earlier-drafted record,
+  // after its audit. Each overlap carries the identity and legacy id its owner computes, wherever it is computed.
   for (const neighbour of input.neighbours) {
+    const pair: [string, string] = [conceptId, neighbour.conceptId];
     const theirs = prose(neighbour).flatMap(sentences);
     for (const sentence of recordSentences) {
       const best = Math.max(0, ...theirs.map((other) => containment(sentence, other)));
-      if (best >= 0.35) found.push(signal("heuristic", "neighbour-overlap", `${neighbour.conceptId}, ${(best * 100).toFixed(0)}%: ${sentence.slice(0, 140)}`));
+      const detail = `${neighbour.conceptId}, ${(best * 100).toFixed(0)}%: ${sentence.slice(0, 140)}`;
+      if (best >= 0.35) found.push(overlap("neighbour-overlap", detail, detail, pair, conceptId, sentence));
+    }
+    for (const other of theirs) {
+      const best = Math.max(0, ...recordSentences.map((sentence) => containment(other, sentence)));
+      const percent = (best * 100).toFixed(0);
+      if (best >= 0.35) found.push(overlap("neighbour-overlap", `a sentence of ${neighbour.conceptId}, ${percent}% in this record: ${other.slice(0, 140)}`, `${conceptId}, ${percent}%: ${other.slice(0, 140)}`, pair, neighbour.conceptId, other));
     }
   }
   const joined = prose(record).join(" ");
@@ -190,7 +237,8 @@ export function groupSignals(records: readonly { conceptId: string; title: strin
     for (const right of records.slice(index + 1)) {
       for (const sentence of prose(left.record).flatMap(sentences)) {
         const best = Math.max(0, ...prose(right.record).flatMap(sentences).map((other) => containment(sentence, other)));
-        if (best >= 0.35) found.push(signal("heuristic", "sibling-overlap", `${left.conceptId} and ${right.conceptId}, ${(best * 100).toFixed(0)}%: ${sentence.slice(0, 140)}`));
+        const detail = `${left.conceptId} and ${right.conceptId}, ${(best * 100).toFixed(0)}%: ${sentence.slice(0, 140)}`;
+        if (best >= 0.35) found.push(overlap("sibling-overlap", detail, detail, [left.conceptId, right.conceptId], left.conceptId, sentence));
       }
     }
   }

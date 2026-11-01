@@ -18,14 +18,14 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { AUTHORED_CONTENT_CONCEPTS } from "../src/lib/map/authoring/content-registry.ts";
-import type { MapConceptContent } from "../src/lib/map/types.ts";
 import { assembleL2Context, formatL2Context } from "../src/lib/map/authoring/l2/context.ts";
 import { costByRole, PRICES_AS_OF, priceOf, projectSlug, sessionCost, type CostFilter, type CostTotals, type SessionCost } from "../src/lib/map/authoring/l2/cost.ts";
 import { weighted } from "../src/lib/map/authoring/l2v2/core.ts";
-import { conceptWorkOf, groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Coverage, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { coverageIn, l2GroupSignals, l2Signals } from "../src/lib/map/authoring/l2/coverage.ts";
 import { finishedConcepts } from "../src/lib/map/authoring/l2/campaign.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
-import { conceptSignals, driftReport, groupSignals, type L2Signal } from "../src/lib/map/authoring/l2/signals.ts";
+import { driftReport, type L2Signal } from "../src/lib/map/authoring/l2/signals.ts";
 import { crossPlanProblems, groupFile, GROUPS_DIR, planProblems, staleProblems, territorySkeleton, type L2GroupFile } from "../src/lib/map/authoring/l2/territory.ts";
 
 const ROOT = new URL("..", import.meta.url).pathname;
@@ -48,21 +48,17 @@ const recordOf = (conceptId: string) => mapKnowledge.content.find((record) => re
 const titleOf = (conceptId: string) => mapKnowledge.concepts.find((concept) => concept.id === conceptId)?.title ?? conceptId;
 
 /** An authored concept's audit signals, computed from its record, context, work and authored neighbours. */
-export function signalsOf(conceptId: string, plans: readonly L2GroupFile[]): L2Signal[] {
-  const record = recordOf(conceptId);
-  if (!record) throw new Error(`${conceptId} has no record yet`);
-  const context = assembleL2Context(conceptId, mapKnowledge, plans);
-  const domain = mapKnowledge.placements.find((placement) => placement.id === (context.owner?.domain ?? ""));
-  const work = conceptWorkOf(plans.find((plan) => plan.group === context.owner?.group), conceptId) as L2ConceptWork | undefined;
-  const neighbours = context.authoredNeighbours.map(recordOf).filter((entry): entry is MapConceptContent => !!entry);
-  return conceptSignals({ conceptId, record, context, model: mapKnowledge, work, neighbours, domainOrder: domain?.order ?? 0 });
-}
+export const signalsOf = (conceptId: string, plans: readonly L2GroupFile[]): L2Signal[] => l2Signals(mapKnowledge, plans, conceptId);
 
 /** A group's own signals, over every owned member that has a record. */
-export function groupSignalsOf(plan: L2GroupFile): L2Signal[] {
-  const records = plan.members.filter((member) => member.standing === "owned" && recordOf(member.conceptId)).map((member) => ({ conceptId: member.conceptId, title: titleOf(member.conceptId), record: recordOf(member.conceptId)! }));
-  return groupSignals(records);
-}
+export const groupSignalsOf = (plan: L2GroupFile): L2Signal[] => l2GroupSignals(mapKnowledge, plan);
+
+/**
+ * Who covers each relational signal, over every audit in `plans` and the
+ * records as they are now (coverage.ts). `known` are the signals computed
+ * alongside, whose legacy ids name the same overlaps.
+ */
+export const coverageFor = (plans: readonly L2GroupFile[], known: readonly L2Signal[] = []): L2Coverage => coverageIn(mapKnowledge, plans, known);
 
 /**
  * Every problem with the plans: each on its own terms, staleness, consistency
@@ -81,12 +77,15 @@ export function planReport(plans: readonly L2GroupFile[], only?: readonly string
     .map((plan) => {
       const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
       if (!only && owned.every((conceptId) => finished.has(conceptId))) return { group: plan.group, problems: [], stale: [], finished: true as const };
+      const signals = new Map(Object.entries(plan.concepts ?? {}).filter(([, entry]) => (entry as L2ConceptWork).audit).map(([conceptId]) => [conceptId, signalsOf(conceptId, plans)]));
+      const groupSignals = groupSignalsOf(plan);
+      const coverage = coverageFor(plans, [...[...signals.values()].flat(), ...groupSignals]);
       const work = Object.entries(plan.concepts ?? {}).flatMap(([conceptId, entry]) => {
         const audited = (entry as L2ConceptWork).audit;
         const stage = audited ? "audited" : recordOf(conceptId) ? "authored" : "designed";
-        return workProblems(plan, conceptId, mapKnowledge, stage, audited ? signalsOf(conceptId, plans).map((signal) => signal.id) : []);
+        return workProblems(plan, conceptId, mapKnowledge, stage, signals.get(conceptId) ?? [], coverage);
       });
-      const audit = (plan as L2GroupFile & { groupAudit?: L2GroupAudit }).groupAudit ? groupAuditProblems(plan, mapKnowledge, groupSignalsOf(plan).map((signal) => signal.id)) : [];
+      const audit = (plan as L2GroupFile & { groupAudit?: L2GroupAudit }).groupAudit ? groupAuditProblems(plan, mapKnowledge, groupSignals) : [];
       return {
         group: plan.group,
         problems: [...planProblems(plan, mapKnowledge), ...cross.filter((problem) => problem.includes(plan.group) || plan.members.some((member) => problem.startsWith(`${member.conceptId}:`))), ...work, ...audit],
@@ -209,11 +208,18 @@ export function commandL2(command: string | undefined, positional: string[], fla
     case "signals": {
       const conceptId = positional[0];
       if (!conceptId) throw new Error("usage: l2 signals <concept-id> [--json]");
-      const signals = signalsOf(conceptId, readPlans());
-      if (json) console.log(JSON.stringify(signals, null, 2));
+      const plans = readPlans();
+      const signals = signalsOf(conceptId, plans);
+      // A relational signal another current review already judged is still listed, with who judged it.
+      const coverage = coverageFor(plans, signals);
+      const covered = (entry: L2Signal) => (entry.relation ? coverage({ ...entry, relation: entry.relation }) : []);
+      if (json) console.log(JSON.stringify(signals.map((entry) => ({ ...entry, ...(entry.relation ? { coveredBy: covered(entry) } : {}) })), null, 2));
       else {
-        for (const entry of signals) console.log(`${entry.kind === "deterministic" ? "fact  " : "signal"} ${entry.id}  ${entry.detail}`);
-        console.log(`${signals.length} signal(s): resolve each in the concept audit`);
+        for (const entry of signals) {
+          const by = covered(entry);
+          console.log(`${entry.kind === "deterministic" ? "fact  " : "signal"} ${entry.id}  ${entry.detail}${by.length ? `  [already resolved by ${by.join(", ")}]` : ""}`);
+        }
+        console.log(`${signals.length} signal(s): resolve each in the concept audit (an overlap with a neighbour counts once resolved by any audit recorded against both current records)`);
       }
       return;
     }

@@ -139,7 +139,9 @@ exactly the designed structures (prose, none).
 
 **Concept audit:** a `note`, plus a resolution for every signal from
 `l2 signals <id>`. It is bound to the record's fingerprint, so editing the
-record after the audit reopens it.
+record after the audit reopens it, and to the fingerprints of the authored
+neighbours it was recorded against (`neighbours`), the other side of its
+overlap signals ([Signals](#signals)).
 
 **Group audit:** `groupAudit` in the group file, with a note and a resolution
 for every group signal (sibling overlap, a shared opening, one form for
@@ -198,6 +200,29 @@ resolution, and none is a failure, target or quota on its own
 | Depth | A record above 1,300 words, or below 400 words with three or more claims ([Depth](#depth)) |
 | Group | Sibling text overlapping; three or more members opening alike; every member having one structured form |
 
+**Overlap with a neighbour is one finding, judged once.** An overlap signal
+names two records: the concept's and a neighbour's (a member of its group or
+of another group that lists it, or a hazard partner). It is measured both
+ways (this record's sentences in the neighbour's, and the neighbour's in this
+one), so whichever of the two is audited later sees it. Its id is stable: the
+pair, the concept whose sentence overlaps and that sentence, never the
+percentage, which moves with the other record. The same overlap carries the
+same key in either concept's signals and in their group's.
+
+It counts as resolved once any audit recorded against **both** records as they
+are now has resolved it: either concept's audit, or their group audit
+([`coverage.ts`](../../src/lib/map/authoring/l2/coverage.ts)). An audit recorded
+before a sibling was drafted is therefore not reopened when that sibling
+arrives: the sibling's audit judges the pair. `l2 signals` still lists every
+overlap, with the audits that already resolved it, and an overlap no current
+audit has resolved is refused by `record audit`, `complete audit`, the
+`l2-check` gate and the diff. If either record changes, every resolution bound
+to its older text lapses.
+
+Audits recorded before overlap signals were bound (no `neighbours`) are
+validated as they were: each covers the overlaps its own sentences make, under
+the id they had then (the hash of the signal's text). Every other signal keeps
+the id it always had, and is resolved by the concept's own audit.
 ## Drift
 
 `l2 drift [--window n]` describes the latest authored L2 records. It
@@ -595,7 +620,9 @@ editing the record and recording again.
     Non-material defects in text the repair did not touch are advisory.
 - **Staleness.** `l2 status` lists any recorded drafting, concept audit or
   group audit whose record has changed since (`STALE`). The `l2-check` gate
-  and the diff refuse them. The remedy is always to reopen.
+  and the diff refuse them. The remedy is always to reopen. A neighbour's
+  repair stales no audit of an unchanged record: the overlaps it touches are
+  judged again by the repaired concept's re-audit and its group's re-audit.
 - **Limit.** A third repair of one concept stops the run
   (`repair limit: <id>`). A human decision (`l2 resume --decision ..`)
   allows one more.

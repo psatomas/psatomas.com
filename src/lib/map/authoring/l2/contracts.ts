@@ -76,7 +76,13 @@ export type L2Design = {
 
 /** Each signal the deterministic and heuristic checks raised, and how the audit resolved it. */
 export type L2Resolution = { id: string; resolution: string };
-export type L2Audit = { at: string; note: string; resolutions: L2Resolution[]; recordFingerprint: string };
+/**
+ * A concept audit, bound to the record it judged. `neighbours` binds it to
+ * the authored neighbours' records it was recorded against (by fingerprint):
+ * the other side of every relational signal it resolves. Audits recorded
+ * before relational signals were bound carry none (contracts.ts L2Coverage).
+ */
+export type L2Audit = { at: string; note: string; resolutions: L2Resolution[]; recordFingerprint: string; neighbours?: Record<string, string> };
 export type L2ConceptWork = { model: L2ConceptModel; design: L2Design; audit?: L2Audit };
 
 /**
@@ -185,10 +191,44 @@ export function spellingProblems(record: MapConceptContent | undefined): string[
   return found.length ? [`British spelling (${found.join(", ")}): MAP is written in American English`] : [];
 }
 
-/** Signals an audit leaves unresolved, or resolves without saying how. */
-export function resolutionProblems(signalIds: readonly string[], resolutions: readonly L2Resolution[]): string[] {
+/**
+ * A signal as validation needs it: its id, the id an earlier tooling version
+ * gave it (signals.ts L2Signal), and, for a relational signal, the two records
+ * it is about. A bare string is an id with no history.
+ */
+export type L2SignalRef = string | { id: string; legacyId?: string; relation?: { concepts: [string, string]; owner: string; key: string } };
+const refId = (ref: L2SignalRef) => (typeof ref === "string" ? ref : ref.id);
+/** The ids a resolution of this signal may be recorded under. */
+export const resolutionIds = (ref: L2SignalRef): string[] => (typeof ref === "string" ? [ref] : [ref.id, ...(ref.legacyId && ref.legacyId !== ref.id ? [ref.legacyId] : [])]);
+
+/**
+ * Who has judged a relational signal against both of its records as they are
+ * now: each reviewer's name (a concept audit or a group audit), none when no
+ * review covers it. Built from every group file (coverage.ts); a concept's
+ * own audit counts when it was recorded against the other record as it is.
+ */
+export type L2Coverage = (signal: Exclude<L2SignalRef, string> & { relation: NonNullable<Exclude<L2SignalRef, string>["relation"]> }) => string[];
+
+/** Signals an audit leaves unresolved, or resolves without saying how. A resolution recorded under the signal's legacy id counts. */
+export function resolutionProblems(signals: readonly L2SignalRef[], resolutions: readonly L2Resolution[]): string[] {
   const resolved = new Map(resolutions.map((entry) => [entry.id, entry.resolution]));
-  return signalIds.filter((id) => blank(resolved.get(id))).map((id) => `signal ${id} is unresolved: say how the audit judged it`);
+  return signals.filter((ref) => resolutionIds(ref).every((id) => blank(resolved.get(id)))).map((ref) => `signal ${refId(ref)} is unresolved: say how the audit judged it`);
+}
+
+/**
+ * A relational signal no audit bound to both of its current records has
+ * resolved. Without coverage (a caller with no view of the other group files)
+ * the concept's own audit must resolve it, as before relational signals were
+ * bound.
+ */
+function relationalProblems(signals: readonly L2SignalRef[], resolutions: readonly L2Resolution[], coverage: L2Coverage | undefined): string[] {
+  if (!coverage) return resolutionProblems(signals, resolutions);
+  return signals.flatMap((ref) => {
+    if (typeof ref === "string" || !ref.relation) return resolutionProblems([ref], resolutions);
+    if (coverage({ ...ref, relation: ref.relation }).length) return [];
+    const [a, b] = ref.relation.concepts;
+    return [`signal ${ref.id} is unresolved: no audit recorded against the current records of both ${a} and ${b} resolves it (this concept's audit, the other's, or their group audit must)`];
+  });
 }
 
 export type L2WorkStage = "designed" | "authored" | "audited";
@@ -197,8 +237,12 @@ export type L2WorkStage = "designed" | "authored" | "audited";
  * Everything wrong with one owned concept's work at a stage: the model and
  * design always; the record against the design once authored; and, once
  * audited, the audit bound to exactly this record with every signal resolved.
+ * A relational signal (an overlap with a neighbour) is resolved once, by any
+ * audit recorded against both records as they are now: this concept's audit,
+ * the neighbour's, or their group audit (`coverage`). Every other signal is
+ * this audit's to resolve.
  */
-export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKnowledgeModel, stage: L2WorkStage, signalIds: readonly string[] = []): string[] {
+export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKnowledgeModel, stage: L2WorkStage, signals: readonly L2SignalRef[] = [], coverage?: L2Coverage): string[] {
   const work = conceptWorkOf(plan, conceptId);
   const record = model.content.find((entry) => entry.conceptId === conceptId);
   const problems: string[] = [];
@@ -217,7 +261,9 @@ export function workProblems(plan: L2GroupFile, conceptId: string, model: MapKno
     else {
       if (blank(work.audit.note)) problems.push("the concept audit needs its note");
       if (work.audit.recordFingerprint !== contentFingerprint(record)) problems.push("the record changed after its audit: audit it again");
-      problems.push(...resolutionProblems(signalIds, work.audit.resolutions ?? []));
+      const resolutions = work.audit.resolutions ?? [];
+      const relational = signals.filter((ref) => typeof ref !== "string" && ref.relation);
+      problems.push(...resolutionProblems(signals.filter((ref) => !relational.includes(ref)), resolutions), ...relationalProblems(relational, resolutions, coverage));
     }
   }
   return problems.map((problem) => `${conceptId}: ${problem}`);
@@ -256,7 +302,7 @@ export function withConceptAudit<T extends L2GroupFile>(plan: T, conceptId: stri
 }
 
 /** The group audit, bound to every owned member's record as authored, with its group signals resolved. */
-export function groupAuditProblems(plan: L2GroupFile & { groupAudit?: L2GroupAudit }, model: MapKnowledgeModel, signalIds: readonly string[] = []): string[] {
+export function groupAuditProblems(plan: L2GroupFile & { groupAudit?: L2GroupAudit }, model: MapKnowledgeModel, signalIds: readonly L2SignalRef[] = []): string[] {
   const audit = plan.groupAudit;
   if (!audit) return ["the group audit is missing"];
   const problems: string[] = [];
