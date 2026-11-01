@@ -116,6 +116,7 @@ import {
   nextAction,
   pendingConcepts,
   recordCheck,
+  gateOrder,
   recordConcept,
   resumeRun,
   RunStateError,
@@ -1095,6 +1096,12 @@ async function commandComplete() {
     const notes = Object.fromEntries(Object.entries(state.refactor!.decisions).map(([conceptId, recorded]) => [conceptId, { decision: recorded.decision, note: recorded.note }]));
     writeFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), `${JSON.stringify(resolveSpec(readSpec(state.baseSha), notes, mapKnowledge), null, 2)}\n`);
   }
+  if (l2Mode && stage === "audit" && state.stage === "audit") {
+    // What the l2-check gate would refuse (an unresolved signal, a missing or stale audit, a stale plan) is refused
+    // here, while the agent's stage is still open, rather than after the run has started building.
+    const problems = l2CheckProblems(state);
+    if (problems.length) fail(`cannot complete the audit; the l2-check gate would refuse:\n  ${problems.join("\n  ")}`, 1);
+  }
   if (l2Mode && stage === "audit") {
     // A convergence signal across the whole slice pauses the campaign for calibration, once; a long median is only reported.
     const drift = sliceDrift(state);
@@ -1345,22 +1352,31 @@ const GATES: Gate[] = [
     detail: () => "succeeded",
   },
 ];
+/**
+ * Everything wrong with an L2 run's plans and concept work: every plan valid
+ * and current, every signal resolved, and every concept the run drafted
+ * audited. The l2-check gate, and `complete audit` before it.
+ */
+function l2CheckProblems(state: RunState): string[] {
+  const groups = state.l2!.slice.groups.map((group) => group.group);
+  const missing = groups.filter((group) => !existsSync(join(ROOT, groupFile(group))));
+  if (missing.length) return [`no plan for ${missing.join(", ")}`];
+  const plans = readPlans();
+  const report = planReport(plans, groups);
+  return [
+    ...report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`)),
+    // Every concept the run drafted has a recorded audit: planReport checks only the entries a file holds.
+    ...auditCoverageProblems(plans, state.l2!.slice.groups, state.l2!.blocked),
+  ];
+}
+
 /** An L2 run's own gate: every plan valid and current, and each run group's work complete and audited. */
 const L2_GATE: Gate = {
   name: "l2-check",
   label: "L2 plans and concept work",
   run: (state) => {
-    const groups = state.l2!.slice.groups.map((group) => group.group);
-    const missing = groups.filter((group) => !existsSync(join(ROOT, groupFile(group))));
-    if (missing.length) return { ok: false, status: 1, out: `no plan for ${missing.join(", ")}` };
-    const plans = readPlans();
-    const report = planReport(plans, groups);
-    const problems = [
-      ...report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`)),
-      // Every concept the run drafted has a recorded audit: planReport checks only the entries a file holds.
-      ...auditCoverageProblems(plans, state.l2!.slice.groups, state.l2!.blocked),
-    ];
-    return { ok: problems.length === 0, status: problems.length ? 1 : 0, out: problems.length ? problems.join("\n") : `${groups.length} group(s) valid, current and audited` };
+    const problems = l2CheckProblems(state);
+    return { ok: problems.length === 0, status: problems.length ? 1 : 0, out: problems.length ? problems.join("\n") : `${state.l2!.slice.groups.length} group(s) valid, current and audited` };
   },
   detail: (result) => result.out,
 };
@@ -1387,7 +1403,7 @@ async function runStage(state: RunState): Promise<RunState> {
   switch (stage) {
     case "gates": {
       let current = state;
-      for (const gate of l2Mode ? [...GATES, L2_GATE] : GATES) {
+      for (const gate of gateOrder(GATES, l2Mode ? L2_GATE : undefined)) {
         const result = gate.run(current);
         current = check(current, gate.name, result, gate.detail(result), gate.label, `the ${gate.label} gate failed`);
       }

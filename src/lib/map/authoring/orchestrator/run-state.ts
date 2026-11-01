@@ -763,6 +763,13 @@ export const staleChecks = (state: RunState, tree: string) =>
   Object.entries(state.checks).filter(([, check]) => check.tree !== undefined && check.tree !== tree).map(([name]) => name);
 
 /**
+ * The order the gates run in. An L2 run's own check comes first: it takes
+ * seconds, and an unresolved signal, a missing audit or a stale plan then stops
+ * the run before the unit tests, lint and build have spent minutes.
+ */
+export const gateOrder = <T>(gates: readonly T[], l2Gate?: T): T[] => (l2Gate ? [l2Gate, ...gates] : [...gates]);
+
+/**
  * Returns an uncommitted run to the gates, so that a tree changed after it was
  * validated (a gate fix, say) is validated again in full. Every check bound to
  * a tree is dropped with it. Never rewinds past the agent's stages or across

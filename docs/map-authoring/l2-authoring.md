@@ -669,8 +669,11 @@ never merges its own PR.
 
 **Tool stages:**
 
-- **Gates:** the domain gates (generate without drift, unit tests, lint,
-  build), plus `l2-check`: every run group valid, current and audited.
+- **Gates:** `l2-check` first (every run group valid, current and audited,
+  every signal resolved; it takes seconds), then the domain gates (generate
+  without drift, unit tests, lint, build). `complete audit` refuses to close
+  the audit stage while `l2-check` would fail, so an unresolved signal is
+  found while the agent's stage is still open.
 - **Browser:** the full browser suite.
 - **Render:** the render check and the expansion check, for every
   placement of every authored concept.
