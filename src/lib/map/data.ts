@@ -20767,6 +20767,247 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "transition-functions-content",
+      conceptId: "transition-functions",
+      definition: "A transition function is the mapping that a protocol's rules define from a state and an input, which may be one transaction or a whole block, to the next state, or to a refusal that leaves the state as it was.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "At block level, the function in many designs runs steps that no transaction in the block requests, around the transactions it applies in order, and the steps differ in what triggers them. Some run in every block on values the block itself carries. Ethereum's execution layer writes the root of the parent beacon block into a system contract's storage before the first transaction and credits the withdrawals the block lists after the last, without deciding which withdrawals were due: the consensus layer's own transition function computes that list and checks it. Rewards paid by a step rather than by a transaction, to an address the producer fills in, are of this kind too. Some release effects that a transaction in an earlier block requested and the rules deferred: in the Cosmos SDK, the staking module's end-of-block step completes unbondings whose waiting period has ended, and the governance module's tallies proposals whose voting period has closed. Some are tied to a position in the chain rather than to any block's contents. The Ethereum beacon chain applies its per-epoch processing, including rewards, penalties and changes to the validator set, when the slot number crosses an epoch boundary, and it advances through slots in which no block was produced. An upgrade can apply a one-time change at its activation height, as Ethereum's DAO fork moved the balances of a listed set of accounts into a refund contract.",
+        },
+        {
+          kind: "paragraph",
+          text: "These steps make a block's result depend on more than its transactions: header fields, the block's position and queues held in the state feed it as well. A block with no transactions can therefore still change the state, and a tool that reconstructs balances by replaying transactions alone misses what the steps changed. A deferred effect lands on the state as it is when its step runs, not as the requester saw it: in the Cosmos SDK, tokens still unbonding can be slashed for a fault the validator committed before the unbonding began. A design also has to define what a failure of such a step means, since there is no submitter to charge and no transaction whose failure the block could record; Ethereum credits withdrawals as plain balance increases that run no code, which leaves them no failure path. Some designs carry an unrequested effect in a transaction the rules require instead, such as Bitcoin's coinbase, whose outputs the producer writes but whose total the rules cap at the block subsidy plus the block's fees, or the transaction the OP Stack places first in every block to record attributes of the base-layer block that the block derives from. The effect is no more requested for being written as a transaction; the choice decides whether a reader of transactions sees it.",
+        },
+        {
+          kind: "paragraph",
+          text: "As a mapping, a transition function relates two states that both exist as values: computing the next state does not consume the one it starts from. In many clients, the code that computes it keeps one stored state and overwrites entries as it goes. That code implements the function when, started from a stored representation of any state it may be given, it leaves stored a representation of the state the function returns, which for a refused input means leaving or restoring what it started with. Keeping that true when the computation is interrupted is the concern of Atomic State Transitions; the mapping itself has no notion of an interruption.",
+        },
+        {
+          kind: "paragraph",
+          text: "The two part company wherever the function defines an output from pre-state values that the code has already overwritten. A rule that pays each staker in proportion to its share of the total stake defines every payment from the stakes as they stood before any payment. Code that credits stakers one at a time and reads the total, or a staker's stake, after earlier credits have changed it computes a different mapping, one whose result depends on the order in which it visits the stakers. Correct in-place code works from the values the rule reads as they stood before any payment, for example by reading them before writing or by setting them aside. Specifications are often written as in-place code themselves: the Ethereum consensus specification defines its transition as Python functions that change a state object step by step. The mapping such a text defines runs from the state before the code to the state after it, and each read sees what earlier steps left, so the order of reads and writes belongs to the definition. That order need not belong to every computation of the mapping: a reimplementation that batches or reorders updates for speed computes the same function when it returns the same next state, or the same refusal, for every state and input, even where its reads see values the specification's reads never see, as when two additions to one balance are applied in the other order.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some uses need several states at once from a common starting point, such as a producer comparing candidate blocks or a simulation that must leave the stored state untouched. Many clients obtain them by holding pending writes in a layer over the stored state, or, where the state sits in a tree whose nodes are addressed by their hashes, by writing new nodes only along the changed paths, so the earlier state stays readable under its old root for as long as its nodes are kept.",
+        },
+        { kind: "distinction", left: "Transition function", right: "Virtual machine", further: ["Execution environment", "Execution client"] },
+        {
+          kind: "paragraph",
+          text: "A transition function fixes which state follows; virtual machines, execution environments and execution clients take part in computing it, and none of them coincides with it. A virtual machine executes code instruction by instruction within one invocation. The function decides when the machine runs and against which state, and in designs such as Ethereum also with what allowance and how much of its result stands. It includes steps no instruction performs: in those designs, the charges and sequence-number updates around each transaction that Transaction Execution covers, and in many designs, the block-level steps no transaction requests. Two chains can therefore run the same machine under different functions. An EVM-equivalent rollup can reproduce every instruction and its cost while adding a charge for publishing its data to the base layer and crediting deposits derived from base-layer events. Replacing an interpreter with a faster one that computes the same results leaves the function as it was; repricing one instruction changes it.",
+        },
+        {
+          kind: "paragraph",
+          text: "An execution environment is the interface the function presents to programs: the instructions, host functions and context values code can use. It covers what a program meets, while the function also fixes steps that run whether or not any program does. An execution client is software that computes the function along with much that lies outside it: networking, a pool of pending transactions, storage, synchronization and an interface for queries. How a client stores the state, caches entries or schedules transactions in parallel is invisible to the function as long as the results match, which lets several clients compute one function and makes a client that departs from it wrong rather than different. Where a rollup's state is settled through Fraud Proofs or Validity Proofs, the function is also computed by a program the proof system can run, often built apart from the node client, so the client is one computation of the function among several.",
+        },
+        {
+          kind: "paragraph",
+          text: "Calling a departing client wrong requires the function to be defined somewhere other than in that client's code. Bitcoin's consensus rules are in practice defined by Bitcoin Core's code rather than by a separate complete specification, and there a property of the client turned out to be part of the function: when a release changed the client's database, it accepted a block that the earlier release rejected for exceeding a database lock limit, and the chain split until miners switched back to the chain the earlier release accepted. Reference Implementations and Specification Ambiguity treat that dependence.",
+        },
+      ],
+    },
+    {
+      id: "valid-transitions-content",
+      conceptId: "valid-transitions",
+      definition: "A valid transition is a change of state that the rules in force permit: the input is accepted in the state it meets, and the state it produces is one the rules assign to that input there.",
+      body: [
+        { kind: "distinction", left: "Permitted by the rules", right: "Intended by the submitter", further: ["Intended by the contract's authors"] },
+        {
+          kind: "paragraph",
+          text: "Nothing beyond the rules, the input and the state it meets enters the check. On platforms that store programs, the rules in force include the code deployed at the addresses an input reaches, as Transition Rules describes. What the submitter believed the input would do, what a wallet displayed before signing, and what a contract's documentation, comments or audit report say it should do are not read. A transfer to a mistyped address, an approval granted to a malicious contract after a misleading prompt, and a transaction signed with a stolen key can each meet the rules, and are then valid however little their outcome was wanted. A signature check establishes that the input was signed with a key the rules accept, not that whoever held the key meant to sign or was entitled to hold it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The gap can open without any mistake by the submitter. An input is applied to the state at its position in the order, which can differ from the state its submitter saw when signing, and what it does is computed from the state it meets. A swap with a loosely set minimum output can be placed after another party's trade that moves the price against it and before a trade that moves the price back, which can leave the submitter an output near the lowest its bound allows: all three transitions are valid, and the outcome is one the submitter signed for but did not want. Conditions a submitter attaches, such as a minimum output or a deadline, turn part of an intention into something the rules check, as Transition Preconditions covers; the part not written as such a condition goes unchecked.",
+        },
+        {
+          kind: "paragraph",
+          text: "On the authors' side, the deployed code is what the rules execute, whatever the authors meant it to do. A contract that sends funds to a caller before recording the withdrawal can let a calling contract withdraw again from inside that payment, and it permits the repeated withdrawals as fully as a single one: the attacker on The DAO, an Ethereum contract, moved a large share of its ether out through such a path, and each transition was valid under the EVM and the contract's code. A function meant to be called once, at setup, can be called by anyone if the code does not restrict it: in the Parity multisignature library on Ethereum, an account called the library's unprotected initialization function, became its owner and destroyed it, freezing the funds of the wallets that depended on it. Testing, audits and checking code against a formal specification narrow this gap before deployment; they do not change what the rules accept afterward.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because validity reads nothing beyond the rules, a node that refused such a transition because no one intended it would be applying rules of its own, and would diverge from the nodes that accept it under the shared ones. Undoing an unintended transition takes a further transition the rules permit, such as a recipient returning funds or a recovery function written into the contract in advance; a change to the rules that participants adopt; or, while the transition is not yet final, a competing history that leaves it out. Ethereum's hard fork after The DAO was a change of rules: at an agreed height it moved the affected ether in a one-time step, and participants who did not adopt it continued the original chain as Ethereum Classic. Adoption settles which rules a participant runs, and a check settles whether a transition is valid under them: the attacker's transitions are valid under both sets, and the one-time step only under the forked one.",
+        },
+        {
+          kind: "paragraph",
+          text: "A sequence of transitions can be refused although each member is acceptable, and two cases of this are easily run together. In one, the members were each checked against the same earlier state and conflict once applied in order, because one meets a state another has changed; how order decides that outcome belongs to Inputs and Transaction Validation. In the other, each member, at its position, meets every condition the rules state about a single transition, and the sequence is refused anyway, because the rules also state a condition over the sequence.",
+        },
+        {
+          kind: "paragraph",
+          text: "Bounds on an aggregate are a common kind of such condition. Bitcoin bounds the total weight of a block, and Ethereum bounds the gas that a block's transactions may use together, so transactions that each fit can together exceed the bound. Where the block is the unit such a rule judges, the violation makes the whole block invalid, its acceptable members included, although each of them can still go into another block where it is valid at its position; how a block is checked as a whole belongs to Block Validation.",
+        },
+        {
+          kind: "paragraph",
+          text: "A condition over a sequence can be enforced by assembling the sequence and checking the result, or by carrying a running value from member to member, so that the member that would break the condition is identified when it is reached. Ethereum carries such a value for gas: each transaction's gas limit is compared with what remains of the block's allowance after the gas used by the transactions before it, so a producer building a block finds the transaction that no longer fits when it reaches it and can leave that transaction out. The running total is state in the state-machine sense, since the rules consult it together with the next input, although it is no entry of Ethereum's account state and starts again from zero in each block. Carrying it turns the condition over the sequence into one that each member meets or fails in the state it meets, so the transaction that no longer fits is invalid at its position, although it meets every condition about a single transition. Without such a value, a condition on the sequence can be checked only once the sequence is assembled.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where the rules state no condition over the sequence, a sequence of valid transitions is valid as a whole, whatever it achieves, and a harmful sequence falls back into the gap between permitted and intended. A contract that caps each withdrawal but keeps no record of earlier ones permits draining it by many withdrawals that each stay under the cap. Refusing the withdrawal that exceeds an intended limit per period takes a rule that consults a running total kept in the contract's state, and that total exists only if the authors chose to keep it.",
+        },
+      ],
+    },
+    {
+      id: "invalid-transitions-content",
+      conceptId: "invalid-transitions",
+      definition: "An invalid transition is a change of state, proposed or applied, that the rules in force do not permit: the input it applies is one the rules refuse in the state it meets, or the state it arrives at differs from the one the rules assign to that input there.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A check takes the state a transition starts from as given. It establishes that one step follows the rules from where it begins, and says nothing about whether that starting point is one the rules could have produced. A history that contains an invalid transition is not valid, nor is any history extending it, however faithfully each later step follows the rules. The state the invalid step leaves is often one no valid history reaches, but need not be: a transfer applied without a required signature can leave exactly the state a signed one would, since the state records no signatures. Whether a state, or a block built on it, is acceptable therefore depends on the whole history behind it, traced back to the initial state or to a point the participant accepted on other grounds, such as a snapshot it trusts.",
+        },
+        {
+          kind: "flow",
+          label: "Where one invalid transition leads in designs that refuse its block, by whether a participant checks it",
+          stages: [
+            ["Invalid transition included in a block"],
+            [
+              ["Checked: block refused", "Descendants refused for their ancestry", "Valid branch followed from the parent"],
+              ["Accepted unchecked: a state reached through an invalid history", "Later transitions computed from it", "Effects carried into other entries and systems"],
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "In designs that judge a block as a whole and refuse it when any of its transactions fails at its position, as Ethereum and Bitcoin do, the invalidity passes from the transaction to its block and from the block to every block that has it as an ancestor. A validating participant that refused the block holds no state after it, so it has nothing to execute a descendant against and refuses descendants for their ancestry alone. Work or signatures accumulated on the invalid branch do not change the verdict, since such a participant chooses only among branches it holds valid. It keeps following a branch that runs from the invalid block's parent, and a participant that had followed the invalid branch has to return to that parent, which Reorganizations covers. The carry-over follows from that design choice: where the rules have every node skip a transaction that fails at its position in an agreed order, as Transaction Validation describes for some rollups, the invalidity ends at the transaction and its block remains valid.",
+        },
+        {
+          kind: "paragraph",
+          text: "A participant that does apply an invalid transition, because its implementation is faulty or because it took the result on trust, continues from a state that differs from the validating participants' at least in the entries the transition left with values the rules would not have given them. Each later transition that reads those entries can then be accepted on one side and refused on the other, or produce different effects, and the difference reaches whatever those results feed: funds created by an invalid transition and then spent pass into the balances of recipients who did nothing invalid.",
+        },
+        {
+          kind: "paragraph",
+          text: "Participants that do not check transitions themselves, by executing them or verifying a proof that they follow the rules, accept an invalid one through whoever they rely on. A user who reads the state through a server it does not check trusts that server alone, so one faulty or dishonest server can show it a state no valid history reaches. A client that checks headers but not transitions, as light nodes do, is misled when the headers it accepts build on the invalid transition. That takes producers or signers who accepted it, whether by collusion, by a fault their software shares or by extending blocks they had not yet validated. A proof of an entry against a header's state commitment does not close the gap: the producers of an invalid block commit to whatever they computed, so the proof shows that the entry is in what they committed to, not that a valid history reaches it. In designs settled through Fraud Proofs, whoever treats a posted state as settled before its challenge period ends is exposed in the same way.",
+        },
+        {
+          kind: "paragraph",
+          text: "The loss falls where something was done on the strength of the invalid state. A merchant that releases goods against a payment that exists only on an invalid branch, or an exchange that credits a deposit made there, has acted outside the chain, and no return to the valid branch undoes that. The exposure travels through systems that act on what such a participant accepted: a bridge whose contract accepts another chain's state on headers or signatures alone can issue tokens against a deposit that exists only in an invalid state, and the holders of those tokens can carry the loss though they never used the source chain. Producers are exposed too, where validating participants prevail. Shortly after a Bitcoin soft fork took effect, a miner produced a block that the new rules refused, and pools that extended new blocks before validating them built several more on it; those blocks were abandoned with their rewards, and wallets that count confirmations without validating had shown them as confirmations.",
+        },
+        {
+          kind: "paragraph",
+          text: "Validating participants are not misled, but where producers or signers holding most of the work or stake follow an invalid branch, the valid branch can grow slowly or stop, and the validating participants then disagree about the state with everyone who relies on those producers. Their refusal also restrains producers: an invalid branch gains its producers little where the exchanges and merchants that would have to honor its payments refuse it, and more where those parties rely on others' checks.",
+        },
+        {
+          kind: "paragraph",
+          text: "Some invalid transitions can be excluded in ways that need no check, at the transition, of the property they would break. One route restricts the kinds of transition a design admits so that each kind preserves a property, and shows once that it does. If every kind of transition that changes balances debits exactly what it credits, a total exceeding the starting supply cannot be reached by transitions, although no transition computes the total. Where units are also issued, as by block rewards, the property becomes a bound rather than a fixed total, and the argument has to cover the issuing step as well, whether the design writes it as a transaction or as a step no transaction requests. The checks that remain are local, that each transition balances or issues no more than its bound, and the global property rests on them through the argument, so it is only as sound as the case analysis over every kind of transition, and it covers only states reached by transitions from a valid initial state.",
+        },
+        {
+          kind: "paragraph",
+          text: "Another route makes the transition inexpressible. Move, the language that Sui and Aptos execute, lets a type's defining module declare whether values of the type may be copied or discarded, and only that module can construct them or take them apart; a bytecode verifier, run when a module is published, rejects code that breaks those restrictions. Provided the verifier and the virtual machine are sound, no published code can duplicate a value of a type that forbids copying, so execution needs no check for duplication. What construction excludes is fixed by the form of an operation: a condition on values the state holds when the transition runs, such as whether a balance covers an amount, still needs a check then, and the restrictions say nothing about what the defining module's own functions allow. Construction also changes how a mistake shows: where nothing at the transition repeats what was shown once, a gap in the case analysis or in the verifier goes uncaught there and can admit the excluded transitions wherever they are attempted.",
+        },
+      ],
+    },
+    {
+      id: "transition-preconditions-content",
+      conceptId: "transition-preconditions",
+      definition: "A transition precondition is a condition that the state a transition meets and the input it applies must satisfy for the transition to take effect.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Preconditions are stated by different parties, and who states one decides how far it reaches. The protocol's rules state some for every input of a kind; in many designs these include that a signature verifies, that a sequence number is the sender's next and that the sender can pay the largest fee the input can incur, and Transaction Validation covers which a design checks and when. Others are stored as entries in the state, put there by an earlier transition or present from the initial state: the code deployed at an address an input reaches, the conditions locking a Bitcoin output, the keys allowed to act for an account. Whoever put such an entry there stated the condition, and it binds every input that reaches the entry until a transition the rules permit rewrites it, or for as long as the entry lasts where none may. The submitter states conditions in its own input, such as the least a swap must return, a time after which it must not take effect, or a height before which it cannot be included, and those bind that input alone.",
+        },
+        {
+          kind: "paragraph",
+          text: "Defining the form of a condition and choosing its value can fall to different parties. Bitcoin's rules define the lock time and refuse a transaction whose lock time, where in force, has not been reached, while the signer chooses whether it applies and its value. An Ethereum transaction's maximum fee per gas, a value its sender chooses, keeps it out of any block whose base fee exceeds that maximum. A swap's least acceptable output is an argument the submitter passes, and the comparison with it is in the contract's code. A value in an input becomes a precondition only where a rule or stored code compares something with it; a field nothing reads constrains nothing. A submitter can therefore state only conditions for which the protocol, or the code its input reaches, provides a form, and that code can include a contract the submitter deployed for the purpose. What it states applies on top of the other conditions. It narrows the states in which its own input takes effect, while a condition the protocol or the state imposes holds whatever the input says, unless that condition itself depends on something the input carries.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where the form of a submitter's condition lives decides how its failure is treated. A Bitcoin lock time and an Ethereum maximum fee per gas are read by the protocol, so an input that fails either cannot be included at that position. Ethereum's transaction formats provide no field for a deadline or a least acceptable output, so such conditions are arguments to contract code, checked during execution, and an input that fails one can still be included and revert. Transaction Validation and Transaction Reversion cover the two outcomes.",
+        },
+        {
+          kind: "distinction",
+          left: "Precondition",
+          right: "Postcondition",
+          further: ["Invariant"],
+        },
+        {
+          kind: "paragraph",
+          text: "A precondition is judged against the state a transition meets and the input it applies, and its failure is an ordinary outcome: a transfer the balance does not cover is refused, and the state that refused it is an acceptable one. A postcondition of the same transition states what holds once the transition has taken effect, often relative to the state before, such as that the sender's balance fell and the recipient's rose by the amount sent. It describes the effects in the cases the preconditions admit, so a transition that took effect and fails it shows a fault in the rules, in the code that applies them or in the postcondition itself, not in the input. An invariant belongs to no single transition: it is meant to hold in every reachable state, and every transition that can change what it constrains has to preserve it.",
+        },
+        {
+          kind: "paragraph",
+          text: "Preconditions are often what lets a transition preserve an invariant. The invariant that no balance is negative survives a transfer because the transfer requires a balance that covers the amount; without that precondition the same effects, still meeting the same postcondition, would take a balance below zero. The invariant says that some transitions must be refused, and the precondition says which, in which states. Checking the invariant before a transition does not replace the precondition: if every earlier transition preserved it, it already holds, and it says nothing about the state the transition will produce. Code can instead check a condition on the outcome and refuse the transition when it fails. A constant-product exchange contract can send the tokens a swap asks for first, then check that the product of the pool's balances, adjusted for the fee, has not fallen below the product recorded before the swap, and revert the swap otherwise. Such a check gates the transition as a precondition does, and under deterministic rules, where the outcome follows from the state met and the input, it amounts to a precondition that can be evaluated only by computing the effects. It needs effects that can be computed tentatively and discarded when the check fails, which a precondition evaluated before any effect does not.",
+        },
+        {
+          kind: "paragraph",
+          text: "Preconditions on time or chain position read a block's own height and timestamp, which the block carries with its transactions, or values earlier blocks left in the state, such as a median of their timestamps. What sets them apart from conditions on stored entries is what can change their truth. A condition on a stored entry, such as a balance that covers an amount or an output not yet spent, changes truth only when a transition writes that entry, and it can change in either direction: a deposit can make a refused withdrawal acceptable, and a competing spend can make an acceptable one fail. Its truth at a position is decided by what was applied before it, so whoever can place transitions ahead of an input can change it, and in designs where each transaction meets the state its predecessors in the block left, as in Ethereum, it can be true for one transaction and false for the next in the same block.",
+        },
+        {
+          kind: "paragraph",
+          text: "A condition on time or position changes truth as blocks are added, not through anything a submitter's transaction writes. In designs where every transaction in a block is judged against one height and one time fixed for the block, as in Bitcoin and Ethereum, its truth is the same at every position within the block. Where the measure never decreases along a chain, as height does not, a condition that compares it with one fixed point changes truth at most once along that chain: one that forbids taking effect before that point stays met in every block after it is first met, and one that forbids taking effect after it stays failed once it fails. A window bounded on both sides is one of each and changes truth at most twice. On such a chain an expired input cannot become acceptable again, though it can on a competing branch that has not reached the expiry. Time qualifies only under rules that keep it from decreasing. Ethereum requires each block's timestamp to exceed its parent's, while Bitcoin allows a block's timestamp to be earlier than its parent's and measures time-based lock conditions against the median timestamp of the eleven blocks before it, which does not decrease. The producer of a block still has a say: it decides whether an input goes into its block, and so at which height, and, where time conditions are judged against a timestamp it sets within bounds for that block, what that time is, so a condition near its threshold can turn on those choices; in Bitcoin its timestamp counts only toward the median later blocks are measured against. A condition comparing a position with a stored entry, such as an unlock time a contract keeps, combines the two kinds: the measure moves one way, and a transition that rewrites the entry moves the threshold. Timelocks and Validity Windows cover how such conditions are written and used.",
+        },
+      ],
+    },
+    {
+      id: "transition-effects-content",
+      conceptId: "transition-effects",
+      definition: "Transition effects are the changes a transition makes to the state when it is applied: the entries it creates, the new values it gives entries that already exist, and the entries it removes.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "An effect can be written as an absolute value or as a relative change, and the two agree whenever they are applied to the state they were computed for. An absolute effect gives an entry its new value outright, such as setting an allowance to 50; a relative effect states a change to whatever the entry holds, such as reducing a balance by 30. An absolute effect assumes nothing about the prior value when the new value is meant not to depend on it, as when a contract's administrator is replaced. When the new value was derived from the prior one, it carries the assumption that the entry still holds what it held when the value was computed, and applied to an entry changed since then, it overwrites that change. A relative effect does not need the prior value to be any particular one, and it builds on whatever came before it. What it does assume is that the entry exists, or has a defined default such as zero, and that the result stays within whatever bounds the rules impose, such as a balance not falling below zero, which a precondition has to check against the value the entry holds when the effect is applied, as Transition Preconditions describes.",
+        },
+        {
+          kind: "paragraph",
+          text: "The assumption matters where something can change the entry between the read the value was derived from and the write. Contract code that reads a balance, subtracts an amount and writes the result writes an absolute value, but when both fall within one transaction and no call to other code comes between them, the write behaves as a relative change. The exposure arises when a submitter or an outside system computes the value from the state it saw and a transition writes it later, after others may have changed the entry, and within one transaction when a call between the read and the write lets other code change the entry, one path Reentrancy exploits. The approval race in Ethereum's ERC-20 tokens is a well-known case. An owner who lowers a spender's allowance from 100 to 50 by setting it to 50 assumes the 100 is still unspent; a spender who sees the change pending and gets a transfer of the 100 ordered first can then spend the new 50 as well. Functions that lower an allowance by an amount, which some token implementations add, express the change relatively, so a decrease of 50 requested after the 100 has been spent is refused instead of granting 50 afresh.",
+        },
+        {
+          kind: "paragraph",
+          text: "A design can make an absolute effect's assumption checkable by having the input name the version of the entry it was computed against and refusing the input if the entry has changed, a compare-and-set. Unspent-output designs get this from their state model: an output is never modified, only created and consumed, so a transaction whose new outputs carry amounts computed from the outputs it spends meets those outputs exactly as they were, or finds one already consumed and is invalid. Applied twice, the two forms also differ. Repeated back to back, an absolute effect leaves the entry as one application did, while a relative change counts twice; repeated after another write to the entry, an absolute effect restores a stale value. Neither form makes repeated delivery safe on its own; that takes a record of what has been applied, such as the account nonces that stop a signed input from being applied a second time.",
+        },
+        {
+          kind: "paragraph",
+          text: "Whether a transition's effects can be known before it executes depends on whether the input states them or the rules compute them from the state the input meets. A Bitcoin transaction lists the outputs it spends and the outputs it creates, so its effects on the unspent set can be read from the transaction alone. Its scripts decide whether it is valid, not what it does, so before inclusion the uncertainty is only whether it applies: it applies exactly as written, or, if an output it spends has been consumed or a condition fails, not at all. Cardano keeps the property for transactions that run scripts, which can be included although their scripts fail: the effects if the scripts pass and the collateral forfeited if they fail are both fixed by the transaction.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where the rules compute effects by running code against the state, as when an Ethereum transaction calls a contract, the effects depend on every entry the code reads at the transaction's position and on what the input carries, including, in designs that expose them to code, the height and timestamp of the block it is in. Transactions ordered before it can change those entries, so a call can branch, write and move value differently than it would have against the state its sender saw, and the state it will meet may not exist when it is signed. A simulation against recent state predicts its effects without establishing them: the prediction is certain to hold when everything the call reads, the entries and any block values such as the height and timestamp, is the same at its actual position as in the simulation, and it can fail when any of it differs. Finding the effects for a given state means, in general, executing the code against it, since code can compute which entries it writes from values it reads. A footprint declared in advance narrows this without removing it. Solana requires each transaction to list every account it uses, marking those it may write, and fails the transaction on any write to an account not so marked, so its effects cannot land elsewhere, but the list says nothing of the values written; how executors use such lists is the subject of Parallel Execution.",
+        },
+        {
+          kind: "paragraph",
+          text: "Effects also differ in how long their cost lasts. An update gives an existing entry a new value; where the entry's size stays the same, as with a fixed-width storage slot, a node that keeps only the current state stores no more than before, and the cost is the work of applying the update, borne once. A creation adds an entry that every node holding the full current state has to store, and keep available to later transitions, for as long as the entry exists, which in many designs is indefinitely, since nothing makes an entry expire. The transaction is charged once, when it is applied, while the storage it occasions recurs for every such node across the entry's lifetime and falls on nodes that did not choose it; how designs price that is the subject of Storage Costs, and its accumulation that of State Growth. In the unspent-output model, where every transfer consumes outputs and creates new ones and nothing is updated in place, the lasting cost of a transaction is the net change it makes to the unspent set: one that consolidates many outputs into one shrinks the set.",
+        },
+        {
+          kind: "paragraph",
+          text: "Removal takes an entry out of the current state and ends its recurring cost from then on, without returning what keeping it has cost until then, and nothing in that cost rewards whoever would remove an entry unless the design attaches a reward. Some designs do: Ethereum refunds part of the gas charge for clearing a storage slot, within a cap, and Solana requires an account to hold a minimum balance in proportion to its size, which closing the account returns. The asymmetry concerns the current state. A node that keeps earlier states, as archive nodes do, stores something for every effect, updates included, and a removed entry stays in the history it already holds, which Historical State covers.",
+        },
+      ],
+    },
+    {
+      id: "atomic-state-transitions-content",
+      conceptId: "atomic-state-transitions",
+      definition: "An atomic state transition is a unit of change, drawn by the rules a participant applies around anything from part of one transaction to a whole block or batch, whose effects that participant adopts together or not at all: following those rules, it takes no state holding only some of them as its current state and applies no later unit on top of one.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Where a protocol draws the unit follows from what its rules do when part of it fails. A failure that discards everything up to some boundary makes that boundary the unit's edge; where the rules instead record the failing part or skip it and carry on, the failure stops short of the enclosing level, and atomicity holds only for the parts separately. One design can draw different units for different kinds of failure. In Ethereum, a transaction whose execution fails is still included, its fee charged and its failure recorded, so an execution failure is confined to the transaction's payload, the unit Transaction Atomicity covers, and leaves the block around it valid. A transaction that fails a validity rule at its position makes its block invalid instead, in Ethereum as in Bitcoin, so for that kind of failure the unit is the block; in designs whose rules have every node skip such a transaction, as some rollups' do, the failure stays with the transaction, a split Transaction Validation draws. A block that is a unit carries more than its transactions: the steps its transition function runs without any transaction requesting them, such as Ethereum's withdrawal credits, which Transition Functions describes, are adopted or refused with the rest of the block.",
+        },
+        {
+          kind: "paragraph",
+          text: "Making the block the unit does not remove the positions inside it. The states after each transaction exist while the block is computed, but a node that validates blocks adopts the block's result as its current state only once the whole block has been applied and has passed every check, and until then keeps the state at the previous block's end. Bitcoin Core, for example, connects a block against a temporary layer over its cache of unspent outputs and merges the layer into the cache only if the block is valid. Units nest without merging: in designs that include failed transactions, a transaction whose payload failed has still paid its fee inside a block accepted whole, because the block's atomicity decides whether the block is adopted, not what each transaction in it achieved.",
+        },
+        {
+          kind: "paragraph",
+          text: "A unit can also be larger than a block. A settlement contract that treats a rollup's new state root as established only once a validity proof covering several of the rollup's blocks verifies moves its record of the rollup's state from one batch boundary to the next, taking in all of the batch's blocks or none of them, while the rollup's own nodes may have applied each block as it arrived. The unit is therefore fixed by who adopts the state as well as by the rules: the same blocks can be separate units for one participant and a single unit for another.",
+        },
+        {
+          kind: "paragraph",
+          text: "Atomicity is also a duty on each node's copy of the state. An interruption changes nothing about the protocol's state at any position, which the history fixes, but a node that stops partway through writing a block's effects, through a crash or a power cut, can be left with a store holding some entries from before the block and some from after it, a combination that is the state at no position. The journals and buffers that Transaction Atomicity describes do not prevent this: they decide which changes survive a failed execution in the memory that execution reads, not which surviving changes had reached disk when the node stopped. Clients that guard against it make sure that, before the node resumes from its store, two things hold together: the stored entries are the state at one position, and the store records which position that is.",
+        },
+        {
+          kind: "paragraph",
+          text: "The most direct way, where the database offers atomic writes, is to apply the block in memory and then write every changed entry, together with the marker naming the new head, in one write that the database either completes or, after a restart, shows not to have happened. Clients that write in several steps need a recovery procedure instead. Bitcoin Core flushes its cache of unspent outputs in several writes after first recording both the block the stored set reflects and the block it is moving to; on restarting after an interruption, it replays the blocks from the older block to the newer one, first undoing, if the flush spanned a switch of branches, the older branch's blocks back to where the branches meet, which is safe because each write leaves an entry in its final form, so repeating one that already landed changes nothing. The go-ethereum client, in its default configuration, keeps its most recent states in memory and writes them to disk only from time to time, so after an unclean shutdown it can find the state for its head block missing; it then sets its head back to the highest block whose state it holds in full and executes the blocks after it again.",
+        },
+        {
+          kind: "paragraph",
+          text: "The position a node recovers to can therefore be older than the last block it processed. Catching up by executing again needs the blocks after that position, held or fetched, and deterministic transitions, so that applying them again reproduces the states the node lost. Both approaches also rely on the storage keeping its promises: a database's atomic write assumes that the disk and file system make data durable when, and in the order, they report, and a device that acknowledges writes it has only cached can lose some of them in a power cut and leave a store that matches no position, from which many clients recover only by rebuilding or resynchronizing the state. How entries are laid out and written is the subject of State Storage and Persistent Storage.",
+        },
+        {
+          kind: "paragraph",
+          text: "Atomicity decides which effects stand together, not whether they stand for good; whether an applied unit can still be removed is the question Finality answers. A reorganization, or a rollback that returns a chain to an earlier height, removes units along the boundaries they were applied on. In chains built from blocks, the state a node switching branches returns to is one at a block boundary, and it adopts no state inside a block on the way, so no reversal leaves part of a block's effects in place, its unrequested steps included. Because a reversal returns to an earlier position, every unit applied after that position goes with it, leaving none that was applied on top of a removed one. Undoing a block is a change to the stored state like applying one, and an interruption partway through it needs the same protection. How the reversal itself is carried out belongs to Reorganizations.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {

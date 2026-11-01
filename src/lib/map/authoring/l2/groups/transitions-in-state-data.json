@@ -1,0 +1,564 @@
+{
+  "version": 1,
+  "group": "transitions-in-state-data",
+  "domain": "state-data",
+  "parentConceptId": "transitions",
+  "basis": {
+    "membership": "8498f761de7b895b52bd7d74e4c423fcaca32e8f75d46651f4c13ce8b7f17230",
+    "parents": {
+      "execution-layers": "8bb60f75f71d2f3ed93e666481f9ea263d3dd91b848590ebf682b094f02c84ac",
+      "scaling-modular-systems": "4355f4bee20c95e9c14e2836f99e980b9bf0ea5f80a2f6d52f30772d159b5783",
+      "state-data": "bc556a0254dbeeeb19b2d45cb87ca261f03b2dd359a179022620b5b8136cc287",
+      "transitions": "ca9cd6517b6f68430778321c016c29e4acdda83188f329cb84d768b0441abbde"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "transition-functions",
+      "placementId": "transition-functions",
+      "standing": "owned",
+      "claims": [
+        "which parts of a block-level transition function apply effects that no transaction in the block requested",
+        "how a transition function as a mapping between states relates to code that updates one stored state in place",
+        "how a transition function differs from the virtual machine, execution environment and client that compute it"
+      ],
+      "excludes": [
+        "transitions",
+        "transition-rules",
+        "inputs",
+        "determinism",
+        "state-machine-replication",
+        "transaction-execution",
+        "transaction-atomicity",
+        "deterministic-execution",
+        "execution-context",
+        "virtual-machines",
+        "execution-environments",
+        "evm",
+        "execution-clients",
+        "alternative-vms",
+        "parallel-execution",
+        "withdrawals",
+        "issuance",
+        "rewards",
+        "global-state",
+        "reference-implementations",
+        "specification-ambiguity",
+        "fraud-proofs",
+        "validity-proofs"
+      ]
+    },
+    {
+      "conceptId": "valid-transitions",
+      "placementId": "valid-transitions",
+      "standing": "owned",
+      "claims": [
+        "how a transition the rules permit differs from one its submitter or a contract's authors intended",
+        "when a sequence of transitions each valid on its own is not valid as a whole"
+      ],
+      "excludes": [
+        "transition-rules",
+        "rules",
+        "inputs",
+        "state",
+        "invariants",
+        "transaction-validation",
+        "block-validation",
+        "state-machine-replication",
+        "access-control",
+        "global-state",
+        "validity-proofs"
+      ]
+    },
+    {
+      "conceptId": "invalid-transitions",
+      "placementId": "invalid-transitions",
+      "standing": "owned",
+      "claims": [
+        "how the invalidity of one transition carries over to the blocks and states built on top of it",
+        "who is exposed when participants that do not check validity themselves accept an invalid transition",
+        "how a design can rule out some invalid transitions by construction rather than by a check at each transition"
+      ],
+      "excludes": [
+        "transition-rules",
+        "rules",
+        "inputs",
+        "transaction-validation",
+        "transaction-reversion",
+        "block-validation",
+        "state-machine-replication",
+        "consensus",
+        "reorganizations",
+        "light-nodes",
+        "light-client-verification",
+        "fraud-proofs",
+        "validity-proofs",
+        "global-state",
+        "state-models"
+      ]
+    },
+    {
+      "conceptId": "transition-preconditions",
+      "placementId": "transition-preconditions",
+      "standing": "owned",
+      "claims": [
+        "which party states each precondition of a transition and how submitter-set conditions differ from those set by the protocol or held in state",
+        "how a precondition differs from an invariant and from a postcondition of the same transition",
+        "how preconditions on time or chain position differ from preconditions on state entries in how their truth can change"
+      ],
+      "excludes": [
+        "transition-rules",
+        "inputs",
+        "determinism",
+        "transaction-validation",
+        "transaction-reversion",
+        "transaction-simulation",
+        "invariants",
+        "postconditions",
+        "timelocks",
+        "validity-windows",
+        "account-nonces",
+        "replay-protection",
+        "access-control",
+        "contract-state"
+      ]
+    },
+    {
+      "conceptId": "transition-effects",
+      "placementId": "transition-effects",
+      "standing": "owned",
+      "claims": [
+        "how effects written as absolute values differ from effects written as relative changes in what they assume about the pre-state",
+        "whether a transition's effects can be known before it executes or only discovered by executing it",
+        "how effects that create or remove state entries differ in lasting cost from effects that update existing entries"
+      ],
+      "excludes": [
+        "transaction-execution",
+        "transaction-atomicity",
+        "transaction-reversion",
+        "parallel-execution",
+        "state-access-patterns",
+        "state-diffs",
+        "state-growth",
+        "storage-costs",
+        "fees",
+        "logs",
+        "events",
+        "state-models",
+        "global-state"
+      ]
+    },
+    {
+      "conceptId": "atomic-state-transitions",
+      "placementId": "atomic-state-transitions",
+      "standing": "owned",
+      "claims": [
+        "how a protocol sets the unit whose effects apply indivisibly, from a single transaction up to a whole block or batch",
+        "how a node keeps its persisted state at one defined position when applying a transition is interrupted",
+        "how the atomicity of a transition relates to its later reversal as a whole by a reorganization or rollback"
+      ],
+      "excludes": [
+        "transaction-atomicity",
+        "atomicity-guarantees",
+        "cross-domain-atomicity",
+        "partial-failures",
+        "bundle-atomicity",
+        "transaction-reversion",
+        "transaction-validation",
+        "global-state",
+        "state-storage",
+        "persistent-storage",
+        "reorganizations",
+        "rollbacks",
+        "finality",
+        "reorganization-handling",
+        "block-validation"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "transition-functions": {
+      "audit": {
+        "at": "2026-10-31T22:52:48.850Z",
+        "note": "Re-audit after repair cycle 1 (auditor A, scoped; not expanded: the repair narrowed sentences at their own scope and changed no argument, assumption, structure or territory). Snapshot verified: sha256 of JSON.stringify(snapshot.record) = f8f85493..., the recorded drafting fingerprint; the word diff was checked against the current record. Findings resolved: (1) A-B1/B-B1: the reimplementation sentence now states equivalence on results (same next state or same refusal for every state and input), allows reads that see values the specification never shows, and its example (two additions to one balance in the other order) fits; 'That order need not belong to every computation' agrees with the preceding 'the order of reads and writes belongs to the definition' and with the staker sentence, where differing reads do change the result; the in-place list is now 'for example'. (2) A-B2: allowance and how much of the result stands, and the charge and sequence-number envelope, are scoped to designs such as Ethereum, matching Transaction Execution's scope (Bitcoin outside it); block-level steps are scoped 'in many designs', consistent with body[0]; 'the machine runs' fixes the referent. (3) B-B2: branch switching dropped, so the record no longer conflicts with Global State's undo-data account; 'Many clients' scopes the two techniques. Missing space fixed. Cross-record: changed sentences checked against transaction-execution, global-state, deterministic-execution, determinism ('computed as the same function by every implementation' agrees) and execution-layers (second placement's parent; nothing restated). Overlap per placement: State Transitions and Execution Layers parents say nothing about this concept; no parent sentence restated. Territory and splits: unchanged by the repair; Atomic State Transitions, Transaction Execution, Reference Implementations and Specification Ambiguity named, not explained. Representation: the one distinction chain is unchanged and still fits. Accuracy re-read across the whole record; no material defect found. Depth: 1351 words, every paragraph tied to a claim; the added words are scope conditions. Advisory: (a) B-B3, deferred by human decision: the accepted parent transitions record says without condition that a block's transition is the composition of its transactions' transitions; this record's block-level-steps claim is correct, so the parent should be scoped in a later maintenance change. (b) body[6] lists the block-level steps among 'steps no instruction performs', but Ethereum's beacon-root write (body[0]) is a system call that runs the system contract's EVM code; 'steps no transaction's code performs' would be more exact. This text predates the repair, and the point about the function going beyond the machine still holds. (c) 'in designs such as Ethereum also with what allowance': Deterministic Execution describes allowances in metered environments generally; 'such as' leaves them in scope, so this is a precision note only. (d) Carried from the first audits: 'or a staker's stake' could read 'or any stake'; 'execution environment' is used in the blockchain sense, not the Autonomous Execution concept the excluded id names (plan identity weakness).",
+        "resolutions": [
+          {
+            "id": "names-concept:7b5b5c6a51",
+            "resolution": "Atomic State Transitions is named once, as the owner of keeping the stored state correct when computation is interrupted; the record says only that the mapping has no notion of interruption."
+          },
+          {
+            "id": "names-concept:4f23e24515",
+            "resolution": "'base layer' appears only as a reference point for rollups (data-publishing charge, deposits from base-layer events, OP Stack attributes); base layers are not explained."
+          },
+          {
+            "id": "names-concept:d20bdcbae0",
+            "resolution": "The consensus layer is named once, as the party whose own transition function computes and checks the withdrawal list; its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:351b344810",
+            "resolution": "'Bitcoin's consensus rules' is named to state where Bitcoin's function is defined; consensus rules are not explained."
+          },
+          {
+            "id": "names-concept:ed0d2d3661",
+            "resolution": "The EVM is named only in 'EVM-equivalent rollup', an example of one machine under different functions; the EVM is not explained."
+          },
+          {
+            "id": "names-concept:78a695c0f2",
+            "resolution": "Execution clients appear inside claim 3 (how the function differs from the client that computes it): one sentence lists what a client does beyond the function. Client implementation, diversity and storage design are not explained."
+          },
+          {
+            "id": "names-concept:f9f6b27f92",
+            "resolution": "'Execution environment' is used in the blockchain sense (the interface offered to programs), inside claim 3's distinction. The excluded concept id belongs to Autonomous Execution and is never referenced, so this is a false identity match; the sense agrees with Deterministic Execution and Execution Layers."
+          },
+          {
+            "id": "names-concept:bb2c59ae03",
+            "resolution": "'Ethereum's execution layer' is named as the place where the beacon-root write and withdrawal crediting happen; execution layers are not explained, and the second placement's parent is not restated."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "Fraud Proofs is named as a settlement route under which a proof program also computes the function; not explained."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "'input' is used as the function's argument (one transaction or a block) in the definition and the reimplementation sentence; inputs are not explained."
+          },
+          {
+            "id": "names-concept:9861397223",
+            "resolution": "'the proof system' is named as what runs the separate program that computes the function; proof systems are not explained."
+          },
+          {
+            "id": "names-concept:32087f8cd0",
+            "resolution": "Reference Implementations is named as the owner of the code-as-specification dependence; body[8] gives only the Bitcoin case needed to bound 'wrong rather than different' and defers the topic."
+          },
+          {
+            "id": "names-concept:fb753bbeba",
+            "resolution": "Rewards appear only as examples of block-level and per-epoch steps; reward design is not explained."
+          },
+          {
+            "id": "names-concept:9fa754258f",
+            "resolution": "Specification Ambiguity is named alongside Reference Implementations as owner of that dependence; not explained."
+          },
+          {
+            "id": "names-concept:653f1d76ff",
+            "resolution": "Transaction Execution is named as covering the per-transaction charge and sequence-number envelope, now scoped to designs such as Ethereum in line with that record; the envelope's mechanics are not explained."
+          },
+          {
+            "id": "names-concept:e2e26982d7",
+            "resolution": "'transition' is the parent's term, used without re-explaining it; no parent sentence is restated. The deferred tension with the parent's composition sentence is recorded as advisory."
+          },
+          {
+            "id": "names-concept:2a0747a2f7",
+            "resolution": "'changes to the validator set' is named only as one part of per-epoch processing; validator sets are not explained."
+          },
+          {
+            "id": "names-concept:b9b8490445",
+            "resolution": "Validity Proofs is named next to Fraud Proofs as a settlement route; not explained."
+          },
+          {
+            "id": "names-concept:1d747b3a5d",
+            "resolution": "Virtual machines are the left side of claim 3's distinction: one sentence (instruction by instruction within one invocation) bounds the machine against the function. VM design is not explained."
+          },
+          {
+            "id": "names-concept:3dbede64cd",
+            "resolution": "Withdrawals appear as an example of a block-level step and of a step with no failure path (plain balance increases); the withdrawal mechanism is not explained."
+          },
+          {
+            "id": "depth-long:6faba0ba32",
+            "resolution": "1351 words. Paragraphs 1-2 serve claim 1 (unrequested block-level effects: triggers, consequences, failure and transaction-carried variants); 3-5 serve claim 2 (mapping vs in-place code: implementation condition, where they diverge, specifications as code, several states at once); the distinction and 7-9 serve claim 3 (machine, environment, client, and what makes a departing client wrong). No point is made twice, and nothing is background the claims do not need. The repair's net additions are scope conditions ('in designs such as Ethereum', 'in many designs', 'Many clients') and the results-based equivalence condition, which Depth says to keep. No condensation needed."
+          }
+        ],
+        "recordFingerprint": "869c425418e7d3da2b42a5379ed446d7ebbaa8ec947088f04a8a109680eea865"
+      }
+    },
+    "valid-transitions": {
+      "audit": {
+        "at": "2026-11-01T14:05:10.562Z",
+        "note": "Signal-only audit (fresh auditor) of neighbour-overlap:4e0df4d60c against unchanged records valid-transitions 571753b74b13 and invalid-transitions 38a097a3b6f5; prior re-audit note follows. Re-audit A after repair cycle 1 (simplified v1), scoped to the change in diffs/valid-transitions-c1.diff (before 6e4f5862..., after 571753b7...); not expanded to a full audit, since the repair changed one case definition and two closing sentences without changing the record's structure, scope or claims. Re-read paragraphs 4 to 8 in full, the definition and every use of 'state' (definition, paragraphs 1, 2, 5, 6, 7, 8) against the accepted state, global-state, transition-rules, rules and transaction-validation records and the sibling transition-functions. B-B2 resolved: paragraph 4 now says adoption settles which rules a participant runs and a check settles validity under them; the attacker's transactions precede the fork height and are valid under both rule sets, while the one-time balance move at that height is valid only under the forked rules (a non-adopting node rejects that block's state result); this agrees with rules (a validating participant applies validity rules itself), transition-rules (outer-rule changes at an agreed height) and transition-functions (the DAO fork as a one-time change at its activation height). B-B1 resolved: paragraph 5's second case is now defined by the single-transition conditions each member meets at its position, so 'state' no longer carries a protocol-state sense there; Bitcoin's block weight (checked over the assembled block) and Ethereum's block gas bound both fit it. Paragraph 7's new sentence says carrying the running total makes the condition over the sequence one each member meets or fails in the state it meets, so the transaction that no longer fits is invalid at its position; this matches the definition ('accepted in the state it meets'), the State record's state-machine sense, global-state (values consulted by later transitions are state in that sense without being global-state entries) and transaction-validation (in Ethereum a block whose member fails validity at its position is rejected whole), and paragraph 6's 'its acceptable members included' still holds. Paragraph 8 ('where the rules state no condition over the sequence') is consistent with the recast condition, which the rules still state. Every remaining use of 'state' now has the state-machine sense or a qualified compound ('account state', 'contract's state'). Overlap: one placement (State Transitions); the changed sentences restate no parent sentence. Territory: the new sentences name no further concept and explain neither Hard Forks nor Block Validation. Representation unchanged and still fitting. Canonical: no positional or dated words, American English, plain text. Repair-introduced blocking defects: none. Advisory: (1) Deferred by human decision: the parent's sentence 'a block's transition is the composition of its transactions' transitions in order' omits block-level steps. (2) Paragraph 7's 'although it meets every condition about a single transition' could be read as including the recast per-member condition it just introduced; 'every condition about that transition alone' would remove the doubt. (3) Paragraph 7's new sentence partly repeats the earlier 'identified when it is reached' and 'finds the transaction that no longer fits when it reaches it'. (4) The stolen-key example in paragraph 1 shows a gap with the key holder's intention, not the submitter's. (5) Paragraph 8's 'takes a rule that consults a running total' is narrower than needed; a record of earlier withdrawals suffices. (6) The swap example (paragraph 2) and the DAO mechanism (paragraph 3) paraphrase Sandwich Attacks and Reentrancy without naming them. (7) Paragraph 4's 'Because validity reads nothing beyond the rules' is looser than paragraph 1's rules, input and state. (8) 'a node that refused such a transition' relies on refusing meaning judging invalid. (9) 'without any mistake by the submitter' sits uneasily beside 'a loosely set minimum output'. (10) 'unprotected initialization function' simplifies Parity's case (the library itself had never been initialized). (11) A failed submitter-set minimum output makes an Ethereum transaction revert while it stays valid at protocol level; the record makes no false claim but does not mark the two layers.",
+        "resolutions": [
+          {
+            "id": "names-concept:1f575fc158",
+            "resolution": "account-state appears once ('no entry of Ethereum's account state') to separate the running gas total from stored account entries; the repair did not touch it; named, not explained."
+          },
+          {
+            "id": "names-concept:c7452b7c57",
+            "resolution": "Block Validation named once in paragraph 6 to hand off how a block is checked as a whole; the repair's paragraph 7 sentence says only that the over-limit member is invalid at its position and does not explain block checking."
+          },
+          {
+            "id": "names-concept:1617ce9e68",
+            "resolution": "Formal specification appears only in 'checking code against a formal specification' among pre-deployment measures; untouched; not explained."
+          },
+          {
+            "id": "names-concept:1266d16af5",
+            "resolution": "Hard fork named for the DAO case as an adopted change of rules with Ethereum Classic continuing; the repaired close says only that adoption settles which rules run and a check settles validity under them, applying the record's own validity claim; how hard forks are made is not explained."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "Inputs named in paragraph 5 to hand off how order decides conflicts between members checked against the same earlier state; untouched by the repair; commutation not explained."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "'rules' used as the ordinary term for what validity is judged against, including the repaired phrases 'conditions the rules state about a single transition' and 'which rules a participant runs'; the validity/prescriptive split, enforcement reach and strictness owned by Rules are not explained, and the node-divergence sentence agrees with Rules."
+          },
+          {
+            "id": "names-concept:8b2fa13cd3",
+            "resolution": "'state' now used in one sense throughout, the State record's state-machine sense (what the rules consult with the next input); the repair removed the protocol-state reading from paragraph 5 and the new paragraph 7 sentence applies that sense to the carried gas total; qualified compounds ('account state', 'contract's state') mark narrower stores; State is not explained."
+          },
+          {
+            "id": "names-concept:af46d28301",
+            "resolution": "State machines appear only as 'the state-machine sense' of state in paragraph 7; not explained."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "Transaction Validation named with Inputs as owner of how order decides conflicts; the repaired paragraph 7 sentence (the over-limit member invalid at its position) agrees with its Ethereum whole-block rejection without explaining its state-dependent checks or admission policy."
+          },
+          {
+            "id": "names-concept:01e7cad290",
+            "resolution": "Transition Preconditions named after one sentence on submitter-attached conditions turning part of an intention into a checked condition; untouched; the sibling's split between submitter-set and protocol-set preconditions is not explained."
+          },
+          {
+            "id": "names-concept:eb8ecee77d",
+            "resolution": "Transition Rules named for stored code being part of the rules in force, matching its inner reading; untouched; gaps, overlaps and the two-layer analysis are not explained."
+          },
+          {
+            "id": "neighbour-overlap:4e0df4d60c",
+            "resolution": "The shared wording is the complementary condition only: valid-transitions defines validity as the input accepted in the state it meets and the produced state being the one the rules assign; invalid-transitions defines its negation (input refused, or a resulting state that differs), the correct complement of that conjunction, contradicting nothing. The bodies split cleanly: valid-transitions explains what the check reads, the gap between permitted and intended (submitter, ordering, contract authors, remedies) and conditions over sequences; invalid-transitions explains what follows when validity fails (history-relative acceptability, carry-over from transaction to block to descendants, unchecked acceptance and its consequences, exclusion by construction). Where both touch block-level effects they agree (valid: a block violating an aggregate bound is invalid with its acceptable members; invalid: a member failing at its position carries invalidity to its block in Ethereum and Bitcoin, not where rules skip it) and hand off to Block Validation or Transaction Validation; neither re-explains the other's responsibility."
+          }
+        ],
+        "recordFingerprint": "571753b74b1399999535ab5f9f309130dee07ee6c8619f79f0be42333c567ddb"
+      }
+    },
+    "invalid-transitions": {
+      "audit": {
+        "at": "2026-10-31T23:23:03.113Z",
+        "note": "Re-audit after repair cycle 1 (auditor A), expanded to a complete audit because the repair changed the opening argument (state reachability reframed as history validity) and the flow. Resolved: (1) the opening paragraph now states invalidity of histories and says the left state is often, not necessarily, unreachable, with a fitting existence example (an unsigned transfer leaving the state a signed one would); the flow's unchecked stage reads 'a state reached through an invalid history'; later uses ('can show it a state no valid history reaches', 'not that a valid history reaches it') are hedged or negative and stay true; consistent with State (histories ending in the same state are interchangeable for later rules; snapshots covered only if reachable). (2) The flow label is scoped to designs that refuse the block, matching the conditioned paragraph and Transaction Validation's skip designs. (3) Divergence is now 'at least in the entries the transition left with values the rules would not have given them', true for both kinds of invalidity in the definition. (4) The lead of the construction paragraph ('no check, at the transition, of the property they would break') fits route one (local balance checks remain, the total is never computed) and route two; 'execution needs no check for duplication' holds even where a VM repeats ability checks defensively; the closing sentence is conditioned on nothing at the transition repeating what was shown once. (5) Non-checking participants exclude validity-proof verifiers, consistent with Global State's comparison (stateless validators execute, light clients check headers only). The cut work-weighted sentence carried nothing the paragraph relied on: the light-client sentence and 'That takes producers or signers who accepted it' stand without it. Overlap per placement (one placement): no restatement of State Transitions' sentences; the deferred parent omission of block-level steps is not counted. Territory and splits: excluded concepts (Reorganizations, Transaction Validation, Light Nodes, Fraud Proofs, Rules, Inputs) are named only; no leakage into Valid Transitions (permitted vs intended, sequence conditions) or Transition Functions (block-level steps named only); checked against Transition Rules and Transaction Reversion with no contradiction. Representation: the scoped flow shows the branch by whether a participant checks; prose carries the rest. Accuracy and depth: every sentence re-read; no depth-long signal; depth follows the three claims. Advisory: (a) opening paragraph, 'since the state records no signatures' reads as universal; 'where the state records no signatures' would scope it, since some designs keep processed signatures for replay protection (Solana, per Transaction Reversion); the example itself holds as an existence claim. (b) 'a branch that runs from the invalid block's parent' and the flow stage 'Valid branch followed from the parent': the best valid branch can fork below the parent. (c) Definition 'the one the rules assign' assumes deterministic rules (Transition Rules allows open choices); group-level wording shared with Valid Transitions. (d) 'refuse it when any of its transactions fails at its position' could say 'fails a validity rule' so it cannot be read as reverting. (e) Closing 'wherever they are attempted' leaves the contrast with a single missing check implicit. (f) The flow's 'Accepted unchecked' branch does not name the faulty-implementation case the next paragraph includes.",
+        "resolutions": [
+          {
+            "id": "names-concept:19b13e1f07",
+            "resolution": "Challenge periods named once ('before its challenge period ends') to bound when a Fraud Proofs settlement exposes a participant; how the period works is not explained."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "Fraud Proofs (excluded) named once as the settlement design in which early reliance is exposed; its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "Inputs (excluded) used only as the term in the definition ('the input it applies'); nothing about inputs or their ordering is explained."
+          },
+          {
+            "id": "names-concept:b085fcdefc",
+            "resolution": "Light nodes (excluded) named as an instance ('as light nodes do') of a client that checks headers but not transitions; their verification method is not explained."
+          },
+          {
+            "id": "names-concept:a0f32f3d7b",
+            "resolution": "Reorganizations (excluded) named as a reference ('which Reorganizations covers') for returning to the invalid block's parent; the switching process is not explained."
+          },
+          {
+            "id": "names-concept:e5815bb669",
+            "resolution": "Rules (excluded) used only as the standard against which transitions are judged ('the rules in force'); what rules are or how they are stated is not explained."
+          },
+          {
+            "id": "names-concept:2f3439f74c",
+            "resolution": "Soft fork named only to date the Bitcoin incident ('Shortly after a Bitcoin soft fork took effect'); soft-fork mechanics are not explained."
+          },
+          {
+            "id": "names-concept:c13534652c",
+            "resolution": "State commitment named in 'a proof of an entry against a header's state commitment' to say what such a proof shows; commitment construction is not explained."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "Transaction Validation (excluded) named as a reference for the skip designs of some rollups, stated only as the boundary that ends carry-over; validity checks themselves are not explained."
+          },
+          {
+            "id": "names-concept:076d086181",
+            "resolution": "Virtual machine named only as a soundness assumption ('Provided the verifier and the virtual machine are sound'); how a VM executes is not explained."
+          }
+        ],
+        "recordFingerprint": "38a097a3b6f577075fa9554f99fb837035ce23284515225c82ac0c3796513af2"
+      }
+    },
+    "transition-preconditions": {
+      "audit": {
+        "at": "2026-10-31T23:39:08.134Z",
+        "note": "Re-audit (auditor A) after repair cycle 1, scoped to the c1 word diff (06d7096f -> 879e2c47), which touches paragraphs 6 and 7 only; not expanded, since the repair narrowed two claims and re-anchored one lead sentence without changing the argument, its assumptions, the structure or the scope. Resolved: A-B1 = B-B1, the monotonicity result is now limited to a condition comparing a never-decreasing measure with one fixed point, with a two-sided window stated as one of each and changing truth at most twice; on a non-decreasing measure a window's truth runs false, true, false at most (zero changes if the measure jumps past it), so 'at most twice' is exact, and the following 'an expired input cannot become acceptable again' still holds since it concerns the upper bound. B-B2, the producer-timestamp clause is scoped to designs that judge time conditions against a timestamp the producer sets for that block, and Bitcoin is correctly placed: under BIP 113 lock times are measured against the median of the eleven earlier timestamps, so a block's own timestamp feeds only the median later blocks use; 'one height and one time fixed for the block' is now true of both Bitcoin and Ethereum. Determinism cross-record: the lead now says a block's own height and timestamp are carried with its transactions and values earlier blocks left (a median of their timestamps) are state, which matches Determinism's block-timestamp-as-input example and State's definition (what the rules consult with the next input). Checked the changed sentences, their paragraphs and dependent claims against determinism, inputs, state, transaction-validation (position-dependent checks against the including block, drift between signing and position: consistent), transaction-reversion (no time claims touched), transition-functions (values the block carries, position and queues in state feed the block: consistent), valid-transitions and invalid-transitions (no conflict). Parent overlap at the one placement (State & Data / State Transitions / Transition Preconditions): none introduced. Territory: Timelocks and Validity Windows still only named; no sibling label explained. Representation unchanged (one distinction, prose elsewhere). Canonical validity: no positional or dated words introduced; American English. Depth: 1339 words, see the depth-long resolution. Advisory: (1) 'a condition that compares it with one fixed point' literally includes equality with one height, which changes truth twice; 'with one threshold' would be exact, though the colon's two one-sided cases make the intended reading clear; (2) 'in Bitcoin its timestamp counts only toward the median later blocks are measured against' is scoped to time conditions by its sentence, but Bitcoin timestamps also feed difficulty retargeting, so 'for time conditions' would make the scope explicit; (3) 'values earlier blocks left in the state, such as a median of their timestamps': the median is computed from timestamps earlier blocks left rather than itself left; (4) known and deferred by human decision: the parent's composition sentence omits block-level steps; (5) paragraph 2's 'What it states applies on top of the other conditions. It narrows ...' partly repeats paragraph 1's 'those bind that input alone'; (6) 'Whoever put such an entry there stated the condition': for a Bitcoin output the recipient usually chooses the locking conditions the payer writes; (7) 'a precondition that can be evaluated only by computing the effects' is strong where a swap's output can be computed ahead; 'evaluated, as written, by computing the effects' would soften it; (8) 'that a signature verifies' could read 'that the signing key is one the state authorizes' to match Inputs' split, not a contradiction as written.",
+        "resolutions": [
+          {
+            "id": "positional:49d814fff0",
+            "resolution": "'below zero' and 'fallen below the product' are quantities, not positions in the page; no positional language."
+          },
+          {
+            "id": "names-concept:f82eac3ec8",
+            "resolution": "Constant-product is named with only the check the outcome-check example needs (fee-adjusted product of balances not below the recorded product); constant-product pricing is not explained."
+          },
+          {
+            "id": "names-concept:e989f8c465",
+            "resolution": "Inputs appears as the general word 'input' (the input a transition applies) and is not explained; the receivable-versus-accepted split Inputs owns is not restated."
+          },
+          {
+            "id": "names-concept:04f783bd8b",
+            "resolution": "Invariants: only the contrast claim 2 requires (holds in every reachable state; preserved by transitions that touch it) inside the distinction; invariant theory is not built."
+          },
+          {
+            "id": "names-concept:c81f0e96a2",
+            "resolution": "Postconditions: only the contrast claim 2 requires (what holds once the transition took effect, failure signals a fault in rules, code or the postcondition); not explained further."
+          },
+          {
+            "id": "names-concept:426649cf37",
+            "resolution": "Timelocks named once at the close as covering how such conditions are written and used; the repair added no timelock mechanics (the Bitcoin median rule is stated only as the measure time conditions use, which claim 3 needs)."
+          },
+          {
+            "id": "names-concept:2c6c90ac19",
+            "resolution": "Transaction Reversion named as covering one of the two failure outcomes; revert mechanics are not explained."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "Transaction Validation named for which checks a design applies and when, and for the other failure outcome; validation points and reuse are not explained."
+          },
+          {
+            "id": "names-concept:56d0207137",
+            "resolution": "Validity Windows named at the close; the repaired sentence says only that a two-sided window is one of each one-sided kind and changes truth at most twice, which claim 3's truth-change contrast needs, not how windows are written or used."
+          },
+          {
+            "id": "absolutes:7634c11755",
+            "resolution": "'cannot be included at that position' holds for protocol-read conditions (validity rule); 'an expired input cannot become acceptable again' holds on a chain whose measure never decreases, as conditioned; 'never decreases' is the stated condition; 'provide no field' holds for Ethereum's transaction formats; the new 'counts only toward the median' holds for Bitcoin time conditions under BIP 113 (advisory 2 on scope). The former unscoped 'at most once' is now limited to one-fixed-point comparisons, with windows at most twice."
+          },
+          {
+            "id": "depth-long:36cb6cb278",
+            "resolution": "1339 words. Every paragraph ties to a claim: paragraphs 1-3 to who states a precondition and how submitter-set conditions differ (stating party, form versus value, where the form lives decides the failure outcome); the distinction and paragraphs 4-5 to precondition versus postcondition versus invariant, including outcome checks; paragraphs 6-7 to how time or position conditions change truth versus stored-entry conditions. The growth over the drafted record comes from conditions the repair added to make claims true (one-fixed-point scope, the two-sided window, the producer-timestamp condition, the carried-versus-state lead), which Depth says to keep. Remaining condensable text is minor (advisory 5); no background, duplicated argument or surplus example warrants a cut."
+          }
+        ],
+        "recordFingerprint": "879e2c471b164247380cd8a24ebc24c6af699791cf5daf77f99b726c6e59940a"
+      }
+    },
+    "transition-effects": {
+      "audit": {
+        "at": "2026-10-31T23:51:33.621Z",
+        "note": "Re-audit after repair cycle 1 (auditor A, scoped, not expanded: the repair replaced one clause and changed neither the argument, its assumptions, the structure nor the scope). Resolution of B1 (reported by both first auditors): the simulation clause now states a sufficient condition ('is certain to hold when everything the call reads, the entries and any block values such as the height and timestamp, is the same at its actual position as in the simulation') and only a possibility of failure otherwise ('it can fail when any of it differs'); the false necessary condition is gone and the block values named in the preceding sentence are now included, so the clause no longer contradicts the conditioned sentence it summarizes. 'Everything the call reads' also covers protocol-side reads during execution (nonce, balance, gas-relevant values), so 'certain' holds under deterministic rules. Checked the changed sentence, its paragraph and dependents: consistent with the preceding sentence's 'in designs that expose them to code' scoping (any block values the call actually reads), with the following sentence ('Finding the effects for a given state means, in general, executing the code'), and with the Solana footprint passage. Cross-record: Determinism (a block's timestamp is recorded with the input and read by its transitions; same state and input fix the next state), Inputs, State, Transaction Execution (no simulation or block-value claim to contradict), Transition Preconditions (a block's height and timestamp, which the block carries with its transactions) and Transition Functions (simulation over layered pending writes, a different point, not restated): no contradiction. Overlap per placement: one placement (State & Data / State Transitions / Transition Effects); the parent says nothing about the concept and no parent sentence is restated. Territory and splits: unchanged by the repair; excluded concepts (fees included) not explained; siblings named only. Representation: all prose, unchanged and fitting. Canonical validity: no positional or dated wording, American English, plain text. Accuracy and depth: no new term introduced; no overclaim in the new clause. Advisory: (1) the preceding sentence's 'what the input carries, including ... the height and timestamp of the block it is in' frames the block values as carried by the input while the new clause and Transition Preconditions call them block values the block carries; aligning the wording would be clearer (non-material, consistent with Determinism's framing); (2) 'Finding the effects for a given state' could say 'for a given state and block' to match the repaired clause, though the paragraph has already established the block values; (3) the unspent-output property is stated twice (compare-and-set and lasting-cost paragraphs); (4) 'The transaction is charged once, when it is applied' reads as universal where deposit or periodic-rent designs differ; (5) the ERC-20 relative decrease 'is refused' where on Ethereum the call reverts in an included, charged transaction; (6) Solana's minimum balance grows with size plus a fixed overhead rather than strictly 'in proportion to its size'; (7) known and deferred by human decision: the parent's composition sentence omits block-level steps (not this record's text).",
+        "resolutions": [
+          {
+            "id": "names-concept:2f62d83914",
+            "resolution": "Account Nonces is named once as an example of a record of what has been applied ('the account nonces that stop a signed input from being applied a second time'); their mechanism is not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:3b3b44d04c",
+            "resolution": "Archive nodes are named as the example of a node that keeps earlier states; nothing about how they work is explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:f65d864244",
+            "resolution": "Historical State is named as the concept that covers retained history ('which Historical State covers'); not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:6c810cedce",
+            "resolution": "Parallel Execution (excluded) is named only as the subject of how executors use declared footprints; the record says only what the footprint guarantees about effects, not how scheduling uses it. Untouched by the repair, which sits in the same paragraph and does not reach it."
+          },
+          {
+            "id": "names-concept:883e72fb0e",
+            "resolution": "State Growth (excluded) is named as the subject of the accumulation of storage; the record explains only the per-effect lasting-cost difference, not growth dynamics. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:34d58c3b0d",
+            "resolution": "State Models (excluded) is referenced through the unspent-output model's key property (outputs created and consumed, never modified), used only as the premise for this concept's points on staleness of absolute effects and net lasting cost; the model itself is not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:06e1b159d5",
+            "resolution": "Storage Costs (excluded) is named as the subject of how designs price lasting storage; the record states the one-time charge versus recurring burden only, no pricing scheme. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:acdb7f1c90",
+            "resolution": "Storage slots are named as the example of a fixed-width entry and in the Ethereum clearing refund; slot layout is not explained. Untouched by the repair."
+          },
+          {
+            "id": "names-concept:01e7cad290",
+            "resolution": "Transition Preconditions (sibling) is named to hand off the bound check on a relative effect ('as Transition Preconditions describes'); how preconditions work is not explained. Untouched by the repair; the repaired clause's block values agree with that record's statement that a block carries its height and timestamp."
+          }
+        ],
+        "recordFingerprint": "dbcc55c4d73c93aa1faf7afa5da6b7c3b8bec260ba8a5d4096bd61130d7754cd"
+      }
+    },
+    "atomic-state-transitions": {
+      "audit": {
+        "at": "2026-11-01T00:08:00.492Z",
+        "note": "Re-audit after repair cycle 1 (auditor A), expanded into a complete audit because the definition changed and a paragraph was removed. Evidence: diff WORK/diffs/atomic-state-transitions-c1.diff (before 9f91e499..., after 3610cbca...). Findings answered: (1) the definition is now relative to the participant that adopts state by the unit ('drawn by the rules a participant applies ... whose effects that participant adopts together or not at all'); checked against every paragraph: paragraph 1 (protocol rules draw the unit by failure handling; the payload and block units in Ethereum, the skip design), paragraph 2 (a validating node adopts the block's result only after the whole block passes), paragraph 3 (the settlement contract adopts by batch while rollup nodes adopt by block, so the closing sentence now follows from the definition instead of contradicting it), paragraphs 4 to 6 (a node following the rules does not resume from a mixed store), paragraph 7 (reversal removes whole units and every later unit, matching 'applies no later unit on top of one'). Resolved. (2) The lead now says clients make sure, before the node resumes from its store, that the entries are the state at one position and the store names it; this holds for the single atomic write and for both recovery examples, and agrees with 'need a recovery procedure instead'. Resolved. (3) Bitcoin Core's recovery is now a replay to the newer block, undoing the older branch's blocks back to the fork point only when the flush spanned a branch switch; this matches ReplayBlocks (head-blocks marker written first, rollback of the old branch to the common ancestor, idempotent roll-forward), and the idempotence clause holds for both steps. Resolved. (4) 'rollback' now appears once, scoped generically as 'a rollback that returns a chain to an earlier height', and the reversal is attributed to Reorganizations only; no sentence is attributed to the Rollbacks execution-recovery concept, so no contradiction with Partial Failures' or Execution Recovery's use remains. Resolved. (5) The final paragraph (re-inclusion, conflicting spends, off-chain effects) is cut; nothing remaining depended on it, claim 3 is still answered by the reversal paragraph, and the overlaps with Partial Failures, Reorganizations and Invalid Transitions it carried are gone. Resolved. Overlap per placement (one placement, State & Data / State Transitions): no sentence restates the parent's definition ('applying all of its effects together'), its composition paragraph or its closing paragraph; the definition is now further from the domain sentence. Territory and splits: claims 1 (paragraphs 1 to 3), 2 (paragraphs 4 to 6) and 3 (paragraph 7) each explained; excluded concepts named, not explained; consistent with Transaction Atomicity (payload unit, fee and sequence number outside it, journals and buffers in memory), Transaction Validation (block invalid in Ethereum, skip in some rollups), Global State (positions inside a block, branch switch returns to the common ancestor), State, Atomicity Guarantees, Partial Failures and the five siblings (Transition Functions defers interruption to this concept; Invalid Transitions' carry-over is a different angle). Representation: all prose, suited to argument and conditioned examples; no structure missing or unneeded. Accuracy and depth: 1,145 words across three claims; Ethereum failed-transaction inclusion and withdrawal credits, Bitcoin Core's temporary coins view and partial flushes, go-ethereum's periodic persistence and head rewind, the validity-proof batch example and the write-caching caveat all checked; American English; no positional or dated words. Advisory: (a) repair-introduced, non-material: 'replays the blocks from the older block to the newer one, first undoing ... back to where the branches meet' leaves the replay's start loosely stated after a branch switch, where it runs from the meeting point; 'replays the blocks up to the newer one' would be exact. (b) Paragraph 3's 'The unit is therefore fixed by who adopts the state as well as by the rules' now partly repeats the participant-relative definition; it reads as the example's consequence. (c) 'How the reversal itself is carried out belongs to Reorganizations' follows a sentence that also names a chain rollback; acceptable since such a rollback returns the chain to an earlier block as a reorganization does. (d) Pre-existing: 'the stored entries are the state at one position' is loose for stores that also keep other states' nodes, such as hash-keyed tries; 'hold the state' would be exact. (e) Pre-existing: 'a combination that is the state at no position' and 'matches no position' could read 'need not be'. (f) Pre-existing: 'The states after each transaction exist while the block is computed' is close to the parent's intermediate-states sentence. (g) Pre-existing: the validity-failure block sentence sits near Invalid Transitions' carry-over, from a different angle. (h) Pre-existing: 'an execution failure' borrows the Execution Failures concept's words in the transaction sense. (i) Pre-existing: paragraph 2's fee-paid nesting point echoes paragraph 1's Ethereum inclusion point. (j) Known and deferred by human decision: the parent's composition sentence omits block-level steps; the record's unrequested-steps sentence adds to it without contradicting it.",
+        "resolutions": [
+          {
+            "id": "names-concept:64d849c312",
+            "resolution": "execution-failures: 'an execution failure is confined to the transaction's payload' uses the words generically for a transaction whose execution fails; the Execution Failures concept is not explained (advisory (h) on the word choice)."
+          },
+          {
+            "id": "names-concept:40ffdb6733",
+            "resolution": "finality (excluded): named once as the concept that answers whether an applied unit can still be removed; not explained."
+          },
+          {
+            "id": "names-concept:65079adb00",
+            "resolution": "persistent-storage (excluded): named once with State Storage as the subject of how entries are laid out and written; not explained."
+          },
+          {
+            "id": "names-concept:a0f32f3d7b",
+            "resolution": "reorganizations (excluded): named as the owner of how a reversal is carried out; the paragraph says only, from the atomicity angle of claim 3, that a branch switch returns to a block boundary and removes whole units with every later one; reorganization mechanics, mempool return and re-inclusion are not explained (the paragraph that did so was cut)."
+          },
+          {
+            "id": "names-concept:c288873469",
+            "resolution": "rollbacks (excluded): the record uses the word once, generically and scoped ('a rollback that returns a chain to an earlier height'); it no longer names or attributes anything to the Rollbacks execution-recovery concept, and explains nothing of it."
+          },
+          {
+            "id": "names-concept:f7afdcab88",
+            "resolution": "settlement-contracts: 'a settlement contract' is named as the participant that adopts a rollup's state by batch; its workings are not explained."
+          },
+          {
+            "id": "names-concept:dc465c81d9",
+            "resolution": "state-roots: 'a rollup's new state root' is named as what the settlement contract records; not explained."
+          },
+          {
+            "id": "names-concept:d55a1e3daa",
+            "resolution": "state-storage (excluded): named once with Persistent Storage for how entries are laid out and written; the record states only the atomicity requirement on the stored copy (claim 2), not storage layout."
+          },
+          {
+            "id": "names-concept:523a1b1507",
+            "resolution": "transaction-atomicity (excluded): named as the owner of the payload unit and of the journals and buffers; the record says only, to draw the boundary, that those work in the memory execution reads, not on disk; the mechanism is not explained and agrees with the Transaction Atomicity record."
+          },
+          {
+            "id": "names-concept:45335585f4",
+            "resolution": "transaction-validation (excluded): named as drawing the split between block-invalidating and skipped invalid transactions; the record uses the split only to locate the unit and agrees with the Transaction Validation record."
+          },
+          {
+            "id": "names-concept:007480753c",
+            "resolution": "transition-functions (sibling): named as describing the unrequested block-level steps; the record says only that such steps are adopted or refused with the block, which is this concept's angle; no overlap with the sibling's explanation."
+          },
+          {
+            "id": "names-concept:49e7a3c624",
+            "resolution": "validity-proofs: 'a validity proof covering several of the rollup's blocks' is named as the settlement condition that makes the batch the unit; proofs are not explained."
+          }
+        ],
+        "recordFingerprint": "3610cbcacc4b0956d59e351fd06ada26ba296a7768f8b626ae521191108b9414"
+      }
+    }
+  },
+  "pipeline": {
+    "mode": "simplified",
+    "version": 1
+  },
+  "groupAudit": {
+    "at": "2026-11-01T01:30:42.322Z",
+    "note": "Group audit, simplified pipeline v1: the six owned members read side by side and against transitions, transition-rules, inputs, determinism, state, global-state, transaction-validation, transaction-reversion, transaction-atomicity, transaction-execution, atomicity-guarantees and partial-failures. No contradiction between members or with those neighbours: the whole-block refusal of a transaction failing a validity rule (Ethereum, Bitcoin) versus rollups that skip it, the fee and sequence-number update surviving a payload failure, positions inside a block, the block's height and timestamp carried with the input, and refusal leaving the state as it was are stated alike wherever they recur. Each member keeps to its labels and names the others only to draw boundaries (valid-transitions to Transition Preconditions for submitter conditions, transition-effects to Transition Preconditions for bounds, transition-functions to Atomic State Transitions for interruption, atomic-state-transitions to Transition Functions for unrequested steps). No member explains state roots or commitments: invalid-transitions says only what a proof against a header's commitment establishes, atomic-state-transitions names a rollup's state root as the thing a settlement contract adopts. State is used consistently: valid-transitions marks its running gas total as state in the state-machine sense and not an account-state entry, in line with global-state; the other members use the protocol's state at a position or the stored entries. Convergence: the definition openings follow the concept titles; forms differ (three distinction chains over different conflations, each answering a claim phrased as a difference, one flow, two prose records); the point that an input meets the state its predecessors left recurs in valid-transitions, transition-preconditions and transition-effects, each for its own claim (unintended outcomes, how a condition's truth changes, effects unknowable before execution), which is repetition that follows the claims, not convergence. Advisory: (1) known and deferred by human decision: the parent's sentence that a block's transition is the composition of its transactions' transitions omits the block-level steps transition-functions describes; a maintenance change will correct the parent. (2) transition-preconditions, 'or values earlier blocks left in the state, such as a median of their timestamps': this is state in the state-machine sense, which the record's definition needs, but Bitcoin reads that median from recent headers rather than from its unspent set; marking the sense, as valid-transitions does, would keep a reader of global-state from seeing a conflict. (3) invalid-transitions and atomic-state-transitions both state the Ethereum and Bitcoin whole-block refusal against the rollup skip, each citing Transaction Validation; divided by angle (carry-over of invalidity versus where the atomic unit lies), minor redundancy. (4) transition-functions' clause on hash-addressed trees keeping an earlier state readable under its old root is the nearest any member comes to state-commitments territory; it describes storage reuse, not what a root commits to, and is worth rechecking when that group is authored.",
+    "resolutions": [
+      {
+        "id": "sibling-overlap:27bc54dddc",
+        "resolution": "Not a defect. The 38% overlap between valid-transitions and invalid-transitions comes from their complementary definitions, which must use the same terms (rules in force, the input accepted or refused in the state it meets, the state the rules assign) to agree with each other, and they do. The bodies take different claims: valid-transitions the gap between permitted and intended and conditions over a sequence; invalid-transitions the carry-over of invalidity to descendants, who is exposed when checks are delegated, and exclusion by construction. No argument or example is made in both."
+      },
+      {
+        "id": "shared-opening:1c653eee94",
+        "resolution": "Not convergence. valid-transitions, invalid-transitions and atomic-state-transitions open with 'A valid transition is', 'An invalid transition is' and 'An atomic state transition is' because their titles end in 'transition' and the definition leads every record; the opening follows the labels. The definitions then diverge in content, and the bodies differ in arc and form (distinction then prose, prose with a flow, prose only)."
+      }
+    ],
+    "records": {
+      "transition-functions": "869c425418e7d3da2b42a5379ed446d7ebbaa8ec947088f04a8a109680eea865",
+      "valid-transitions": "571753b74b1399999535ab5f9f309130dee07ee6c8619f79f0be42333c567ddb",
+      "invalid-transitions": "38a097a3b6f577075fa9554f99fb837035ce23284515225c82ac0c3796513af2",
+      "transition-preconditions": "879e2c471b164247380cd8a24ebc24c6af699791cf5daf77f99b726c6e59940a",
+      "transition-effects": "dbcc55c4d73c93aa1faf7afa5da6b7c3b8bec260ba8a5d4096bd61130d7754cd",
+      "atomic-state-transitions": "3610cbcacc4b0956d59e351fd06ada26ba296a7768f8b626ae521191108b9414"
+    }
+  }
+}
