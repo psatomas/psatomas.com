@@ -50,6 +50,7 @@
 //   npm run map:author -- l2 sync                        merge a moved main into the run's branch and revalidate
 //   npm run map:author -- l2 checkpoint --decision ".."   the pilot's human review of plans and designs
 //   npm run map:author -- l2 authorize --authorization ".."   record a human's explicit campaign merge authorization
+//   npm run map:author -- l2 authorize --revoke-merge --decision ".."   revoke it (kept in the campaign's history); runs started later await human merge
 //   npm run map:author -- l2 status | next | complete audit --note .. | fix .. | stop .. | resume .. | run [--until <stage>] ..
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -61,6 +62,7 @@ import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
 import { commandL2, coverageFor, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { authorizeMerge, AuthorizationError, authorizeRequest, inheritedMergeAuthorization, mergeStatusLines, revocationOf, revokeMerge, type AuthorizeRequest, type L2Campaign } from "../src/lib/map/authoring/l2/authorization.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, groupFileWithoutAudits, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
@@ -159,7 +161,7 @@ const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
   const arg = rest[index];
   if (!arg.startsWith("--")) positional.push(arg);
-  else if (["--json", "--dry-run", "--write", "--pilot", "--agents", "--verbose"].includes(arg)) flags.set(arg, true);
+  else if (["--json", "--dry-run", "--write", "--pilot", "--agents", "--verbose", "--revoke-merge"].includes(arg)) flags.set(arg, true);
   else {
     const value = rest[++index];
     if (value === undefined || value.startsWith("--")) fail(`${arg} needs a value`);
@@ -578,11 +580,14 @@ async function commandRefactorRecord() {
 
 // ---------------------------------------------------------------- L2 slice runs
 
-/** Local campaign state: the human's merge authorization, if any. Never committed. */
+/** Local campaign state: the human's merge authorization, if any, its history, and the repair exception (l2/authorization.ts). Never committed. */
 const L2_CAMPAIGN_FILE = "campaign.json";
-type L2Campaign = { mergeAuthorization?: { at: string; authorization: string }; repairException?: { at: string; authorization: string } };
 const campaignPath = () => join(STATE_ROOT, "l2", L2_CAMPAIGN_FILE);
 const readCampaign = (): L2Campaign => (existsSync(campaignPath()) ? (JSON.parse(readFileSync(campaignPath(), "utf8")) as L2Campaign) : {});
+function writeCampaign(campaign: L2Campaign) {
+  mkdirSync(dirname(campaignPath()), { recursive: true });
+  writeFileSync(campaignPath(), `${JSON.stringify(campaign, null, 2)}\n`);
+}
 const PILOT_FILE = "src/lib/map/authoring/l2/pilot.json";
 const l2Records = (state: RunState) => state.l2!;
 
@@ -613,20 +618,39 @@ function commandL2Campaign() {
   const l2Total = rows.reduce((sum, row) => sum + row.total, 0);
   console.log(`\n${rows.filter((row) => row.remaining === 0).length}/${rows.length} slices complete; ${l2Total - rows.reduce((sum, row) => sum + row.remaining, 0)}/${l2Total} L2 concepts finished`);
   console.log(next ? `next: ${next.slice.id} (\`${CLI} start --slice ${next.slice.id}\`)` : "every slice is complete");
-  console.log(`merging: ${campaign.mergeAuthorization ? `authorized ${campaign.mergeAuthorization.at}: ${campaign.mergeAuthorization.authorization}` : "not authorized; each validated PR awaits human merge"}`);
+  for (const line of mergeStatusLines(campaign)) console.log(line);
 }
 
+/**
+ * Records a human's standing authorization, or revokes the merge
+ * authorization (l2/authorization.ts): exactly one of --authorization,
+ * --repair-exception, or --revoke-merge --decision "..". A revoked or replaced
+ * merge authorization moves to the campaign's history; nothing is deleted.
+ */
 function commandL2Authorize() {
-  const exception = flag("--repair-exception");
-  mkdirSync(dirname(campaignPath()), { recursive: true });
-  if (exception !== undefined) {
-    if (!exception.trim()) fail('--repair-exception needs the human\'s standing authorization, quoted');
-    writeFileSync(campaignPath(), `${JSON.stringify({ ...readCampaign(), repairException: { at: now(), authorization: exception } }, null, 2)}\n`);
-    return console.log("recorded the campaign's standing repair exception: `resume --exception ..` may resolve a repair-limit stop once per concept");
+  let request: AuthorizeRequest;
+  try {
+    request = authorizeRequest({ authorization: flag("--authorization"), repairException: flag("--repair-exception"), revokeMerge: flags.has("--revoke-merge"), decision: flag("--decision") });
+  } catch (error) {
+    if (error instanceof AuthorizationError) fail(error.message);
+    throw error;
   }
-  const authorization = flag("--authorization") ?? fail('authorize needs --authorization "<the human\'s explicit campaign authorization, quoted>"');
-  writeFileSync(campaignPath(), `${JSON.stringify({ ...readCampaign(), mergeAuthorization: { at: now(), authorization } }, null, 2)}\n`);
-  console.log("recorded the campaign's merge authorization; runs started from now merge their own validated PRs (never the pilot)");
+  const campaign = readCampaign();
+  switch (request.kind) {
+    case "repair-exception":
+      writeCampaign({ ...campaign, repairException: { at: now(), authorization: request.authorization } });
+      return console.log("recorded the campaign's standing repair exception: `resume --exception ..` may resolve a repair-limit stop once per concept");
+    case "merge":
+      writeCampaign(authorizeMerge(campaign, request.authorization, now()));
+      return console.log(`recorded the campaign's merge authorization; runs started from now merge their own validated PRs (never the pilot)${campaign.mergeAuthorization ? `; the authorization of ${campaign.mergeAuthorization.at} moves to the history` : ""}`);
+    case "revoke-merge": {
+      const { campaign: revoked, revoked: was } = revokeMerge(campaign, request.decision, now());
+      if (!was) return console.log("no merge authorization is active: nothing to revoke; each validated PR awaits human merge");
+      writeCampaign(revoked);
+      console.log(`revoked the merge authorization of ${was.at}; runs started from now end at a validated PR awaiting human merge, and a run started under it is refused at its merge stage`);
+      for (const line of mergeStatusLines(revoked)) console.log(line);
+    }
+  }
 }
 
 function commandL2Start() {
@@ -695,9 +719,9 @@ function commandL2Start() {
   const pilot = slice.id === PILOT_SLICE;
   let state = createL2RunState({ slice, remaining, branch, baseSha, now: now(), pilot, pipeline, ...(scope ? { scope } : {}) });
   state = { ...state, l2: { ...state.l2!, budget } };
-  const authorization = readCampaign().mergeAuthorization;
   // The pilot always ends at a PR for detailed human review, whatever the campaign authorizes.
-  if (authorization && !pilot) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
+  const authorization = inheritedMergeAuthorization(readCampaign(), { pilot });
+  if (authorization) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
   saveState(state);
   console.log(`\nstarted ${id} on ${branch} at ${baseSha.slice(0, 7)} under the ${describePipeline(pipeline)}${scope ? ` (groups ${scope.groups.join(", ")})` : ""}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
   console.log(`next: ${(nextAction(state) as { message: string }).message}`);
@@ -744,7 +768,7 @@ function commandL2StartRepair(slice: L2Slice) {
   if (!baseSha) return;
   let state = create(baseSha);
   state = { ...state, l2: { ...state.l2!, budget } };
-  const authorization = readCampaign().mergeAuthorization;
+  const authorization = inheritedMergeAuthorization(readCampaign());
   if (authorization) state = { ...state, l2: { ...state.l2!, mergeAuthorized: authorization } };
   saveState(state);
   console.log(`started ${id} on ${branch} at ${baseSha.slice(0, 7)}: repair cycle ${state.l2!.repair!.cycle} of ${concepts.join(", ")}${state.l2!.mergeAuthorized ? " (merge authorized)" : ""}`);
@@ -1100,7 +1124,7 @@ function commandStatus(state = activeState()) {
           ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
           ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
-          `merging: ${state.l2.mergeAuthorized ? `authorized (${state.l2.mergeAuthorized.authorization})` : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}${state.l2.merged.byHand ? " by hand" : ""}` : state.stage === "done" && state.pr ? `; once #${state.pr.number} is merged, \`${CLI} run --domain ${state.domainId}\` records the merge` : ""}`,
+          `merging: ${state.l2.mergeAuthorized ? (revocationOf(readCampaign(), state.l2.mergeAuthorized) ? `started under an authorization since revoked; awaits human merge` : `authorized (${state.l2.mergeAuthorized.authorization})`) : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}${state.l2.merged.byHand ? " by hand" : ""}` : state.stage === "done" && state.pr ? `; once #${state.pr.number} is merged, \`${CLI} run --domain ${state.domainId}\` records the merge` : ""}`,
         ]
       : []),
     `already authored: ${state.plan.authored.join(", ") || "none"}`,
@@ -1887,6 +1911,9 @@ function mergeL2(state: RunState): RunState {
     }
   }
   if (!state.l2?.mergeAuthorized) stop(state, { subject: "merge", evidence: "no recorded authorization", why: "a run merges only under a human's explicit campaign authorization", decision: "merge by hand, or record the authorization" });
+  // A run started under an authorization a human has since revoked does not merge on it.
+  const revocation = revocationOf(readCampaign(), state.l2.mergeAuthorized);
+  if (revocation) stop(state, { subject: "merge", evidence: `the authorization of ${revocation.authorization.at} that this run started under was revoked ${revocation.revokedAt}: ${revocation.decision}`, why: "a run merges only under an authorization that is still in force", decision: "merge the validated PR by hand, then `l2 run` records the merge" });
   verifyGit(state);
   const viewed = sh("gh", ["pr", "view", String(state.pr!.number), "--json", `${PR_FIELDS},mergeable,mergeStateStatus,files`]);
   if (!viewed.ok) throw new ToolFailure("gh pr view", viewed.out);
