@@ -59,11 +59,12 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
-import { commandL2, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
+import { commandL2, coverageFor, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
-import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, groupFileWithoutAudits, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { neighbourBasis } from "../src/lib/map/authoring/l2/coverage.ts";
 import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget } from "../src/lib/map/authoring/l2/budget.ts";
 import { BudgetLockError, readLedger, reserveUnderLock, withLock, writeLedger } from "../src/lib/map/authoring/l2/budget-io.ts";
 import { HOOK_SETTINGS, hookInstalled, ledgerPath, measure } from "./map-l2-budget.ts";
@@ -120,6 +121,9 @@ import {
   nextAction,
   pendingConcepts,
   recordCheck,
+  reusableCheck,
+  checkScope,
+  gateOrder,
   recordConcept,
   resumeRun,
   RunStateError,
@@ -808,11 +812,13 @@ async function commandL2Record() {
       const drafted = state.l2!.steps[`author:${subject}`]?.fingerprint;
       // An audit that found a defect reopens the concept: a record edited in place would be a repair nobody counted.
       if (drafted && drafted !== fingerprint) refuse([`${subject}'s record changed since it was drafted: an audit that finds a defect reopens it (\`${CLI} reopen ${subject} --reason ..\`), then it is drafted and audited again`]);
-      refuse([...workProblems(plan, subject, mapKnowledge, "audited", signalsOf(subject, plans).map((signal) => signal.id)), ...scope()]);
+      // An overlap with a neighbour counts as resolved once any audit recorded against both current records resolves it.
+      const signals = signalsOf(subject, plans);
+      refuse([...workProblems(plan, subject, mapKnowledge, "audited", signals, coverageFor(plans, signals)), ...scope()]);
       break;
     }
     case "group-audit":
-      refuse([...groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan).map((signal) => signal.id)), ...scope()]);
+      refuse([...groupAuditProblems(plan as L2GroupFile & { groupAudit?: L2GroupAudit }, mapKnowledge, groupSignalsOf(plan)), ...scope()]);
       break;
     default:
       fail("record needs <plan|design|author|audit|group-audit> <subject>");
@@ -839,7 +845,8 @@ async function commandL2Record() {
 
 /**
  * Writes an audit into its group file, bound to exactly the records as they
- * are now: a concept audit to its record's fingerprint, a group audit to
+ * are now: a concept audit to its record's fingerprint and to each authored
+ * neighbour's (the other side of its relational signals), a group audit to
  * every owned member's. The file holds { note, resolutions }. Recording
  * then validates it like any audit.
  */
@@ -849,7 +856,7 @@ function writeAudit(kind: "audit" | "group-audit", subject: string, group: strin
   const plan = JSON.parse(readFileSync(path, "utf8")) as L2GroupFile & { groupAudit?: L2GroupAudit };
   const audit = { at: now(), note: input.note ?? "", resolutions: input.resolutions ?? [] };
   // A simplified plan holds no concept work until its first audit is recorded: the audit creates the entry.
-  if (kind === "audit") Object.assign(plan, withConceptAudit(plan, subject, { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)) }));
+  if (kind === "audit") Object.assign(plan, withConceptAudit(plan, subject, { ...audit, recordFingerprint: recordFingerprint(recordOf(subject)), neighbours: neighbourBasis(mapKnowledge, readPlans(), subject) }));
   else {
     const owned = plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId);
     plan.groupAudit = { ...audit, records: Object.fromEntries(owned.map((conceptId) => [conceptId, recordFingerprint(recordOf(conceptId))])) };
@@ -1190,6 +1197,12 @@ async function commandComplete() {
     const notes = Object.fromEntries(Object.entries(state.refactor!.decisions).map(([conceptId, recorded]) => [conceptId, { decision: recorded.decision, note: recorded.note }]));
     writeFileSync(join(ROOT, ACCEPTED_DESIGNS_FILE), `${JSON.stringify(resolveSpec(readSpec(state.baseSha), notes, mapKnowledge), null, 2)}\n`);
   }
+  if (l2Mode && stage === "audit" && state.stage === "audit") {
+    // What the l2-check gate would refuse (an unresolved signal, a missing or stale audit, a stale plan) is refused
+    // here, while the agent's stage is still open, rather than after the run has started building.
+    const problems = l2CheckProblems(state);
+    if (problems.length) fail(`cannot complete the audit; the l2-check gate would refuse:\n  ${problems.join("\n  ")}`, 1);
+  }
   if (l2Mode && stage === "audit") {
     // A convergence signal across the whole slice pauses the campaign for calibration, once; a long median is only reported.
     const drift = sliceDrift(state);
@@ -1281,6 +1294,20 @@ const changedFiles = (state: RunState) => [...new Set([...lines(gitOut("diff", "
 function treeFingerprint(state: RunState): string {
   const hash = createHash("sha256").update(gitOut("diff", "--no-renames", "--binary", state.baseSha));
   for (const file of untrackedFixFiles(state).sort()) hash.update(`\0${file}\0`).update(readFileSync(join(ROOT, file)));
+  return hash.digest("hex");
+}
+
+/**
+ * The tree the site is built from: treeFingerprint without the L2 group
+ * files, which only the tooling reads (plans, audits; no application or build
+ * input imports them). The build, browser, render, expansion and Worker checks
+ * are bound to it, so an audit note re-recorded in a group file does not
+ * rebuild the site or rerun its browser suite (run-state.ts reusableCheck).
+ */
+function runtimeFingerprint(state: RunState): string {
+  const groups = `${GROUPS_DIR}/`;
+  const hash = createHash("sha256").update(gitOut("diff", "--no-renames", "--binary", state.baseSha, "--", ".", `:(exclude)${groups}`));
+  for (const file of untrackedFixFiles(state).filter((path) => !path.startsWith(groups)).sort()) hash.update(`\0${file}\0`).update(readFileSync(join(ROOT, file)));
   return hash.digest("hex");
 }
 
@@ -1409,7 +1436,14 @@ const buildId = () => (existsSync(join(ROOT, ".next/BUILD_ID")) ? readFileSync(j
 const contentFingerprint = (state: RunState) =>
   createHash("sha256")
     .update(JSON.stringify(state.plan.eligible.map((conceptId) => mapKnowledge.content.find((record) => record.conceptId === conceptId) ?? null)))
-    // An L2 run's audit also judged its group files: plans, models, designs and audits.
+    // An L2 run's audit also judged its group files: plans, models and designs (the audits are validated on their own).
+    .update(state.l2 ? state.l2.slice.groups.map((group) => groupFileWithoutAudits(existsSync(join(ROOT, groupFile(group.group))) ? readFileSync(join(ROOT, groupFile(group.group)), "utf8") : "")).join("\0") : "")
+    .digest("hex");
+
+/** contentFingerprint as tooling before audit-free group fingerprints computed it, so an audit completed then still matches. */
+const legacyContentFingerprint = (state: RunState) =>
+  createHash("sha256")
+    .update(JSON.stringify(state.plan.eligible.map((conceptId) => mapKnowledge.content.find((record) => record.conceptId === conceptId) ?? null)))
     .update(state.l2 ? state.l2.slice.groups.map((group) => (existsSync(join(ROOT, groupFile(group.group))) ? readFileSync(join(ROOT, groupFile(group.group)), "utf8") : "")).join("\0") : "")
     .digest("hex");
 
@@ -1440,22 +1474,31 @@ const GATES: Gate[] = [
     detail: () => "succeeded",
   },
 ];
+/**
+ * Everything wrong with an L2 run's plans and concept work: every plan valid
+ * and current, every signal resolved, and every concept the run drafted
+ * audited. The l2-check gate, and `complete audit` before it.
+ */
+function l2CheckProblems(state: RunState): string[] {
+  const groups = state.l2!.slice.groups.map((group) => group.group);
+  const missing = groups.filter((group) => !existsSync(join(ROOT, groupFile(group))));
+  if (missing.length) return [`no plan for ${missing.join(", ")}`];
+  const plans = readPlans();
+  const report = planReport(plans, groups);
+  return [
+    ...report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`)),
+    // Every concept the run drafted has a recorded audit: planReport checks only the entries a file holds.
+    ...auditCoverageProblems(plans, state.l2!.slice.groups, state.l2!.blocked),
+  ];
+}
+
 /** An L2 run's own gate: every plan valid and current, and each run group's work complete and audited. */
 const L2_GATE: Gate = {
   name: "l2-check",
   label: "L2 plans and concept work",
   run: (state) => {
-    const groups = state.l2!.slice.groups.map((group) => group.group);
-    const missing = groups.filter((group) => !existsSync(join(ROOT, groupFile(group))));
-    if (missing.length) return { ok: false, status: 1, out: `no plan for ${missing.join(", ")}` };
-    const plans = readPlans();
-    const report = planReport(plans, groups);
-    const problems = [
-      ...report.flatMap((entry) => [...entry.problems, ...entry.stale.map((problem) => `stale: ${problem}`)].map((problem) => `${entry.group}: ${problem}`)),
-      // Every concept the run drafted has a recorded audit: planReport checks only the entries a file holds.
-      ...auditCoverageProblems(plans, state.l2!.slice.groups, state.l2!.blocked),
-    ];
-    return { ok: problems.length === 0, status: problems.length ? 1 : 0, out: problems.length ? problems.join("\n") : `${groups.length} group(s) valid, current and audited` };
+    const problems = l2CheckProblems(state);
+    return { ok: problems.length === 0, status: problems.length ? 1 : 0, out: problems.length ? problems.join("\n") : `${state.l2!.slice.groups.length} group(s) valid, current and audited` };
   },
   detail: (result) => result.out,
 };
@@ -1464,8 +1507,16 @@ async function runStage(state: RunState): Promise<RunState> {
   const stage = state.stage;
   const at = now();
   const tree = treeFingerprint(state);
+  const runtime = runtimeFingerprint(state);
+  // A check bound to the runtime tree (and, where it ran against one, the production build) is reused while both hold.
+  const reusable = (current: RunState, name: string) => reusableCheck(current, name, { runtime, buildId: buildId() });
+  const reused = (current: RunState, name: string, what: string) => {
+    console.log(`  ok  ${what}: ${current.checks[name].detail} (unchanged since it passed: reused)`);
+    return current;
+  };
   const check = (current: RunState, name: string, result: Result, detail: string, what: string, why: string): RunState => {
-    const recorded = recordCheck(current, name, result.ok, result.ok ? detail : `FAILED: ${detail}`, at, tree);
+    const scope = checkScope(name, runtime, buildId());
+    const recorded = recordCheck(current, name, result.ok, result.ok ? detail : `FAILED: ${detail}`, at, tree, scope);
     saveState(recorded);
     if (!result.ok) {
       stop(recorded, {
@@ -1482,7 +1533,11 @@ async function runStage(state: RunState): Promise<RunState> {
   switch (stage) {
     case "gates": {
       let current = state;
-      for (const gate of l2Mode ? [...GATES, L2_GATE] : GATES) {
+      for (const gate of gateOrder(GATES, l2Mode ? L2_GATE : undefined)) {
+        if (reusable(current, gate.name)) {
+          current = reused(current, gate.name, gate.label);
+          continue;
+        }
         const result = gate.run(current);
         current = check(current, gate.name, result, gate.detail(result), gate.label, `the ${gate.label} gate failed`);
       }
@@ -1490,6 +1545,7 @@ async function runStage(state: RunState): Promise<RunState> {
       return completeStage({ ...current, buildId: buildId() }, "gates", at);
     }
     case "browser": {
+      if (reusable(state, "browser")) return completeStage(reused(state, "browser", "browser suite"), "browser", at);
       const result = sh("npm", ["run", "test:map:browser"]);
       // Success needs a clean exit and the suite's own all-passed summary, never the attempt alone.
       const failures = lines(result.out).filter((line) => line.startsWith("FAIL")).slice(0, 20).join("\n");
@@ -1501,6 +1557,10 @@ async function runStage(state: RunState): Promise<RunState> {
       // A refactor renders what it changed: every placement of every changed record.
       const concepts = refactor ? changedConcepts(state) : l2Mode ? l2Authored(state) : state.plan.eligible;
       if (concepts.length === 0) return completeStage(check(state, "render", { ok: true, status: 0, out: "" }, "no changed record to render", "render verification", ""), "render", at);
+      if (reusable(state, "render") && (!l2Mode || reusable(state, "expansion"))) {
+        const kept = reused(state, "render", "render verification");
+        return completeStage(l2Mode ? reused(kept, "expansion", "L2 expansion") : kept, "render", at);
+      }
       const targets = renderExpectations(mapKnowledge, concepts);
       const report = await checkRender(concepts);
       const evidence = formatRenderFailures(report);
@@ -1519,8 +1579,12 @@ async function runStage(state: RunState): Promise<RunState> {
       const files = changedFiles(state);
       if (l2Mode) {
         // The corpus grows the production Worker; checked here, once the browser and render checks no longer need .next.
-        const budget = workerBudget();
-        const budgeted = check(state, "worker-budget", budget, budget.detail, "Worker budget", `the production Worker passes the ${WORKER_BUDGET_MIB} MiB budget, half Cloudflare's limit, at which storage must change (l2-content-scale.md)`);
+        let budgeted: RunState;
+        if (reusable(state, "worker-budget")) budgeted = reused(state, "worker-budget", "Worker budget");
+        else {
+          const budget = workerBudget();
+          budgeted = check(state, "worker-budget", budget, budget.detail, "Worker budget", `the production Worker passes the ${WORKER_BUDGET_MIB} MiB budget, half Cloudflare's limit, at which storage must change (l2-content-scale.md)`);
+        }
         return completeStage(await diffL2(budgeted, base, files, check, at, tree), "diff", at);
       }
       if (refactor) {
@@ -1613,6 +1677,8 @@ async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registr
   const headPlans = readPlans();
   const groups = state.l2!.slice.groups.map((group) => group.group);
   const authored = l2Authored(state);
+  const signals = Object.fromEntries(authored.filter((conceptId) => recordOf(conceptId)).map((conceptId) => [conceptId, signalsOf(conceptId, headPlans)]));
+  const groupSignals = Object.fromEntries(headPlans.filter((plan) => groups.includes(plan.group)).map((plan) => [plan.group, groupSignalsOf(plan)]));
   const report = validateL2Diff({
     base: base.model,
     head: mapKnowledge,
@@ -1628,8 +1694,9 @@ async function diffL2(state: RunState, base: { model: MapKnowledgeModel; registr
     groups,
     basePlans: plansAt(state.baseSha),
     headPlans,
-    signals: Object.fromEntries(authored.filter((conceptId) => recordOf(conceptId)).map((conceptId) => [conceptId, signalsOf(conceptId, headPlans).map((signal) => signal.id)])),
-    groupSignals: Object.fromEntries(headPlans.filter((plan) => groups.includes(plan.group)).map((plan) => [plan.group, groupSignalsOf(plan).map((signal) => signal.id)])),
+    signals,
+    groupSignals,
+    coverage: coverageFor(headPlans, [...Object.values(signals).flat(), ...Object.values(groupSignals).flat()]),
     ...(state.l2!.repairOf ? { repaired: authored } : {}),
   });
   if (!report.ok) {
@@ -2033,7 +2100,7 @@ async function commandRun() {
   verifyGit(state);
   clearVerifyTrees();
   // Nothing validated earlier is trusted if what it depended on has changed since.
-  const invalidated = invalidate(state, { tree: treeFingerprint(state), content: contentFingerprint(state), buildId: buildId() });
+  const invalidated = invalidate(state, { tree: treeFingerprint(state), runtime: runtimeFingerprint(state), content: contentFingerprint(state), legacyContent: legacyContentFingerprint(state), buildId: buildId() });
   if (invalidated.reason) console.log(invalidated.reason);
   state = invalidated.state;
   saveState(state);

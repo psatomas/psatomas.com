@@ -105,8 +105,13 @@ export type RunState = {
   concepts: Record<string, { done: boolean; at?: string }>;
   fixes: FixGroup[];
   auditNotes: string[];
-  /** Each check's latest result, and the fingerprint of the tree it ran against. */
-  checks: Record<string, { ok: boolean; at: string; detail: string; tree?: string }>;
+  /**
+   * Each check's latest result, and the fingerprint of the tree it ran against. A check that depends only on what
+   * the site is built from (the build, the browser, render and expansion checks, the Worker budget) also records
+   * `runtime`, the fingerprint of the tree without the L2 group files, and, where it ran against a production build,
+   * that `build`: a later change to group files alone (an audit note, say) leaves it valid (reusableCheck).
+   */
+  checks: Record<string, RunCheck>;
   /** Fingerprint of the run's content records when the audit completed; later content changes reopen the audit. */
   auditContent?: string;
   /** The production build the browser and render checks ran against (.next/BUILD_ID). */
@@ -125,6 +130,9 @@ export type RunState = {
   /** Earlier stops and the human decision that resolved each. */
   resolvedStops?: (StopRecord & { resolution: string; resolvedAt: string })[];
 };
+
+/** One check's latest result (RunState.checks). */
+export type RunCheck = { ok: boolean; at: string; detail: string; tree?: string; runtime?: string; build?: string };
 
 export class RunStateError extends Error {}
 
@@ -757,21 +765,61 @@ export function completeStage(state: RunState, stage: Stage, now: string, detail
   return { ...state, stage: nextStage(stage), completed };
 }
 
-export function recordCheck(state: RunState, name: string, ok: boolean, detail: string, now: string, tree?: string): RunState {
-  return { ...state, checks: { ...state.checks, [name]: { ok, at: now, detail, ...(tree ? { tree } : {}) } } };
+export function recordCheck(state: RunState, name: string, ok: boolean, detail: string, now: string, tree?: string, scope: { runtime?: string; build?: string } = {}): RunState {
+  return { ...state, checks: { ...state.checks, [name]: { ok, at: now, detail, ...(tree ? { tree } : {}), ...(scope.runtime ? { runtime: scope.runtime } : {}), ...(scope.build ? { build: scope.build } : {}) } } };
 }
 
-/** Checks that ran against a different tree than `tree`: their results no longer describe the run. */
-export const staleChecks = (state: RunState, tree: string) =>
-  Object.entries(state.checks).filter(([, check]) => check.tree !== undefined && check.tree !== tree).map(([name]) => name);
+/**
+ * Checks whose results no longer describe the run: a check bound to the
+ * runtime tree (the tree without the L2 group files) when that has changed,
+ * and any other check bound to a tree when the tree has changed. Without a
+ * runtime fingerprint every check is judged on the whole tree.
+ */
+export const staleChecks = (state: RunState, tree: string, runtime?: string) =>
+  Object.entries(state.checks)
+    .filter(([, check]) => (check.runtime !== undefined && runtime !== undefined ? check.runtime !== runtime : check.tree !== undefined && check.tree !== tree))
+    .map(([name]) => name);
+
+/**
+ * Checks that depend only on what the site is built from, never on the L2
+ * group files: bound to the runtime tree, they are reused while it holds
+ * (reusableCheck). BUILT_CHECKS also ran against a production build, and need
+ * that build to be the one there now. Every other check (generate, unit tests,
+ * lint, l2-check, the diff) is bound to the whole tree and always runs again.
+ */
+export const RUNTIME_CHECKS: ReadonlySet<string> = new Set(["build", "browser", "render", "expansion", "worker-budget"]);
+export const BUILT_CHECKS: ReadonlySet<string> = new Set(["build", "browser", "render", "expansion"]);
+/** What recordCheck binds a check to beyond the whole tree. */
+export const checkScope = (name: string, runtime: string, build: string | undefined): { runtime?: string; build?: string } =>
+  RUNTIME_CHECKS.has(name) ? { runtime, ...(BUILT_CHECKS.has(name) && build ? { build } : {}) } : {};
+
+/**
+ * The order the gates run in. An L2 run's own check comes first: it takes
+ * seconds, and an unresolved signal, a missing audit or a stale plan then stops
+ * the run before the unit tests, lint and build have spent minutes.
+ */
+export const gateOrder = <T>(gates: readonly T[], l2Gate?: T): T[] => (l2Gate ? [l2Gate, ...gates] : [...gates]);
+
+/**
+ * Whether a passed check still holds without running it again: it is bound to
+ * the runtime tree as it is now and, if it ran against a production build, to
+ * the build that is there now. Only such checks are ever reused; one bound to
+ * the whole tree is always run again.
+ */
+export function reusableCheck(state: RunState, name: string, observed: { runtime: string; buildId?: string }): boolean {
+  const check = state.checks[name];
+  return Boolean(check?.ok && check.runtime !== undefined && check.runtime === observed.runtime && (check.build === undefined || check.build === observed.buildId));
+}
 
 /**
  * Returns an uncommitted run to the gates, so that a tree changed after it was
  * validated (a gate fix, say) is validated again in full. Every check bound to
- * a tree is dropped with it. Never rewinds past the agent's stages or across
- * commits.
+ * the whole tree is dropped with it, and so is every check named in `drop`. A
+ * check bound to the runtime tree is kept, to be reused only if that tree and
+ * its build are unchanged when its stage comes (reusableCheck). Never rewinds
+ * past the agent's stages or across commits.
  */
-export function revalidate(state: RunState): RunState {
+export function revalidate(state: RunState, drop: readonly string[] = []): RunState {
   assertLive(state);
   if (state.commits.length > 0 && !state.l2?.repair) throw new RunStateError("cannot revalidate a run that has commits");
   if (![...VALIDATION_STAGES, "commit"].includes(state.stage)) throw new RunStateError(`cannot revalidate at ${state.stage}`);
@@ -780,7 +828,7 @@ export function revalidate(state: RunState): RunState {
     ...state,
     stage: "gates",
     completed: Object.fromEntries(Object.entries(state.completed).filter(([stage]) => STAGES.indexOf(stage as Stage) < gates)),
-    checks: Object.fromEntries(Object.entries(state.checks).filter(([, check]) => check.tree === undefined)),
+    checks: Object.fromEntries(Object.entries(state.checks).filter(([name, check]) => (check.tree === undefined || check.runtime !== undefined) && !drop.includes(name))),
   };
   delete rewound.validatedFiles;
   delete rewound.diff;
@@ -789,16 +837,23 @@ export function revalidate(state: RunState): RunState {
   return rewound;
 }
 
-/** What the tool observes about the working tree before continuing a run. */
-export type Observed = { tree: string; content: string; buildId?: string };
+/**
+ * What the tool observes about the working tree before continuing a run.
+ * `runtime` fingerprints the tree without the L2 group files. `legacyContent`
+ * is the content fingerprint as tooling before it was introduced computed it,
+ * so an audit completed then still matches.
+ */
+export type Observed = { tree: string; content: string; buildId?: string; runtime?: string; legacyContent?: string };
 
 /**
  * The run's dependency model. Before any tool stage continues an uncommitted
  * run, it compares what earlier results depended on with what is there now:
  * - the run's content records changed after the audit: the audit no longer
  *   describes them, so the run returns to the audit and revalidates after it;
- * - the tree changed since a check (a gate or test fix, say): every check is
- *   redone from the gates;
+ * - the tree changed since a check (a gate or test fix, say): the run is
+ *   validated again from the gates; a check bound to the runtime tree that
+ *   is unchanged (only group files moved: an audit re-recorded, say) is kept
+ *   and reused when its stage comes (reusableCheck), every other one is redone;
  * - the production build is not the one the gates made: the browser and
  *   render checks would test something else, so the gates rebuild it.
  * Once commits exist nothing is rewound: the commits and git checks guard them.
@@ -807,9 +862,9 @@ export function invalidate(state: RunState, observed: Observed): { state: RunSta
   // An open repair's content is uncommitted on top of the run's commits, and is invalidated like a first draft.
   if (state.stop || (state.commits.length > 0 && !state.l2?.repair)) return { state };
   const at = STAGES.indexOf(state.stage);
-  if (state.completed.audit && state.auditContent !== undefined && state.auditContent !== observed.content) {
+  if (state.completed.audit && state.auditContent !== undefined && state.auditContent !== observed.content && state.auditContent !== observed.legacyContent) {
     const rewound: RunState = {
-      ...revalidate({ ...state, stage: "gates" }),
+      ...revalidate({ ...state, stage: "gates" }, Object.keys(state.checks)),
       stage: "audit",
       completed: Object.fromEntries(Object.entries(state.completed).filter(([stage]) => STAGES.indexOf(stage as Stage) < STAGES.indexOf("audit"))),
     };
@@ -818,8 +873,8 @@ export function invalidate(state: RunState, observed: Observed): { state: RunSta
     return { state: rewound, reason: "the run's content changed after the audit; audit it again" };
   }
   if (at < STAGES.indexOf("gates") || at > STAGES.indexOf("commit")) return { state };
-  const stale = staleChecks(state, observed.tree);
-  if (stale.length) return { state: revalidate(state), reason: `the tree changed since ${stale.join(", ")}; revalidating from the gates` };
+  const stale = staleChecks(state, observed.tree, observed.runtime);
+  if (stale.length) return { state: revalidate(state, stale), reason: `the tree changed since ${stale.join(", ")}; revalidating from the gates` };
   if ((state.stage === "browser" || state.stage === "render") && state.buildId !== observed.buildId) {
     return { state: revalidate(state), reason: "the production build is not the one the gates made; rebuilding from the gates" };
   }
