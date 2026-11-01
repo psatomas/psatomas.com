@@ -481,6 +481,7 @@ npm run map:author -- l2 complete audit --note ".."
 npm run map:author -- l2 run [--until <stage>]            # gates → browser → render+expansion → diff → commit → push → pr → ci (→ merge); on a finished run, records its human merge
 npm run map:author -- l2 fix | stop | resume              # as for domain runs
 npm run map:author -- l2 authorize --authorization ".."   # a human's explicit campaign merge authorization
+npm run map:author -- l2 authorize --revoke-merge --decision ".."   # revoke it; kept in the campaign's history (Merging)
 npm run map:author -- l2 authorize --repair-exception ".."  # a human's standing repair exception (Repairs)
 npm run map:author -- l2 cost [--branch <b>] [--since <iso>] [--agents] [--json]   # what the slice's model sessions spent: weighted tokens and list-price USD, by role and model
 npm run map:author -- l2 budget [--json] | hook | reserve --role <r> | release <id> --reason ".." | set --usd <n> --decision ".."   # the run's hard spending cap (Budget)
@@ -768,6 +769,27 @@ merges its own PR, but only when all of these hold:
 - its files are exactly the validated set.
 
 It then synchronizes `main` and proves the pushed head is in it.
+
+**Revoking.** `l2 authorize --revoke-merge --decision ".."` revokes the
+campaign's merge authorization
+([`authorization.ts`](../../src/lib/map/authoring/l2/authorization.ts)). The
+authorization, when it was given, when it was revoked and the human decision
+move to the campaign's append-only `mergeAuthorizationHistory`; nothing is
+deleted, and the repair exception and everything else in the campaign file
+stay as they are. With no active authorization the command changes nothing.
+It refuses to be combined with `--authorization` or `--repair-exception`, and
+`--decision` belongs to it alone. A new `--authorization` that replaces an
+active one also moves the replaced one to the history. After a revocation:
+
+- a run started from then on inherits no authorization: it has no merge stage
+  and ends at "validated PR awaiting human merge";
+- a run started before it still records the authorization it started under,
+  but its merge stage finds that authorization revoked and stops for a human
+  to merge by hand;
+- finished runs are records and are not changed.
+
+`l2 campaign` prints whether merging is authorized, then every revoked or
+replaced authorization with its time and decision.
 
 Without the authorization, the run has no merge stage: it is done once CI
 passes, as a validated PR awaiting human merge. Until then its concepts can be
