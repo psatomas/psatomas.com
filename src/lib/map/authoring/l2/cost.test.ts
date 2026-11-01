@@ -101,3 +101,12 @@ test("each session keeps usage per model and prices it at list rates beside the 
   assert.deepEqual(totals.get("author")!.unpriced, ["claude-new-9"]);
   assert.ok(PRICES["claude-opus-5-5"] && PRICES["claude-sonnet-5-5"]);
 });
+
+test("a model call on the filtered branch that carries no usage is counted as unmeasured, never as free; one that later reports usage is not", () => {
+  const noUsage = (id: string, extra: Record<string, unknown> = {}) => JSON.stringify({ type: "assistant", timestamp: "2026-10-20T01:00:00.000Z", gitBranch: "feat/x", message: { id, model: "claude-opus-5-5" }, ...extra });
+  const cost = sessionCost([noUsage("m1"), call("m2", { output_tokens: 10 }), noUsage("m2"), noUsage("m3", { gitBranch: "main" })], "Author x", { branch: "feat/x" });
+  assert.equal(cost.calls, 1);
+  // m1 never reports usage; m2 does on another line; m3 is on another branch.
+  assert.equal(cost.unmeasured, 1);
+  assert.equal(sessionCost([call("m4", { output_tokens: 1 })], "Author y").unmeasured, undefined);
+});
