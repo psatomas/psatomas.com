@@ -61,7 +61,7 @@ import { commandL2, coverageFor, groupSignalsOf, planReport, readPlans, signalsO
 import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
-import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
+import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, groupFileWithoutAudits, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { neighbourBasis } from "../src/lib/map/authoring/l2/coverage.ts";
 import { describePipeline, PipelineError, pipelineMismatchProblem, pipelineOf, pipelineStatus, startPipeline, type L2Pipeline } from "../src/lib/map/authoring/l2/pipeline.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
@@ -116,6 +116,8 @@ import {
   nextAction,
   pendingConcepts,
   recordCheck,
+  reusableCheck,
+  checkScope,
   gateOrder,
   recordConcept,
   resumeRun,
@@ -1196,6 +1198,20 @@ function treeFingerprint(state: RunState): string {
   return hash.digest("hex");
 }
 
+/**
+ * The tree the site is built from: treeFingerprint without the L2 group
+ * files, which only the tooling reads (plans, audits; no application or build
+ * input imports them). The build, browser, render, expansion and Worker checks
+ * are bound to it, so an audit note re-recorded in a group file does not
+ * rebuild the site or rerun its browser suite (run-state.ts reusableCheck).
+ */
+function runtimeFingerprint(state: RunState): string {
+  const groups = `${GROUPS_DIR}/`;
+  const hash = createHash("sha256").update(gitOut("diff", "--no-renames", "--binary", state.baseSha, "--", ".", `:(exclude)${groups}`));
+  for (const file of untrackedFixFiles(state).filter((path) => !path.startsWith(groups)).sort()) hash.update(`\0${file}\0`).update(readFileSync(join(ROOT, file)));
+  return hash.digest("hex");
+}
+
 /** Added and deleted lines of one file relative to the base. */
 function fileDiff(state: RunState, file: string): { added: string[]; deleted: number } {
   const patch = lines(gitOut("diff", "--no-renames", "-U0", state.baseSha, "--", file).split("\n").map((line) => line.replace(/\s+$/, "")).join("\n"));
@@ -1321,7 +1337,14 @@ const buildId = () => (existsSync(join(ROOT, ".next/BUILD_ID")) ? readFileSync(j
 const contentFingerprint = (state: RunState) =>
   createHash("sha256")
     .update(JSON.stringify(state.plan.eligible.map((conceptId) => mapKnowledge.content.find((record) => record.conceptId === conceptId) ?? null)))
-    // An L2 run's audit also judged its group files: plans, models, designs and audits.
+    // An L2 run's audit also judged its group files: plans, models and designs (the audits are validated on their own).
+    .update(state.l2 ? state.l2.slice.groups.map((group) => groupFileWithoutAudits(existsSync(join(ROOT, groupFile(group.group))) ? readFileSync(join(ROOT, groupFile(group.group)), "utf8") : "")).join("\0") : "")
+    .digest("hex");
+
+/** contentFingerprint as tooling before audit-free group fingerprints computed it, so an audit completed then still matches. */
+const legacyContentFingerprint = (state: RunState) =>
+  createHash("sha256")
+    .update(JSON.stringify(state.plan.eligible.map((conceptId) => mapKnowledge.content.find((record) => record.conceptId === conceptId) ?? null)))
     .update(state.l2 ? state.l2.slice.groups.map((group) => (existsSync(join(ROOT, groupFile(group.group))) ? readFileSync(join(ROOT, groupFile(group.group)), "utf8") : "")).join("\0") : "")
     .digest("hex");
 
@@ -1385,8 +1408,16 @@ async function runStage(state: RunState): Promise<RunState> {
   const stage = state.stage;
   const at = now();
   const tree = treeFingerprint(state);
+  const runtime = runtimeFingerprint(state);
+  // A check bound to the runtime tree (and, where it ran against one, the production build) is reused while both hold.
+  const reusable = (current: RunState, name: string) => reusableCheck(current, name, { runtime, buildId: buildId() });
+  const reused = (current: RunState, name: string, what: string) => {
+    console.log(`  ok  ${what}: ${current.checks[name].detail} (unchanged since it passed: reused)`);
+    return current;
+  };
   const check = (current: RunState, name: string, result: Result, detail: string, what: string, why: string): RunState => {
-    const recorded = recordCheck(current, name, result.ok, result.ok ? detail : `FAILED: ${detail}`, at, tree);
+    const scope = checkScope(name, runtime, buildId());
+    const recorded = recordCheck(current, name, result.ok, result.ok ? detail : `FAILED: ${detail}`, at, tree, scope);
     saveState(recorded);
     if (!result.ok) {
       stop(recorded, {
@@ -1404,6 +1435,10 @@ async function runStage(state: RunState): Promise<RunState> {
     case "gates": {
       let current = state;
       for (const gate of gateOrder(GATES, l2Mode ? L2_GATE : undefined)) {
+        if (reusable(current, gate.name)) {
+          current = reused(current, gate.name, gate.label);
+          continue;
+        }
         const result = gate.run(current);
         current = check(current, gate.name, result, gate.detail(result), gate.label, `the ${gate.label} gate failed`);
       }
@@ -1411,6 +1446,7 @@ async function runStage(state: RunState): Promise<RunState> {
       return completeStage({ ...current, buildId: buildId() }, "gates", at);
     }
     case "browser": {
+      if (reusable(state, "browser")) return completeStage(reused(state, "browser", "browser suite"), "browser", at);
       const result = sh("npm", ["run", "test:map:browser"]);
       // Success needs a clean exit and the suite's own all-passed summary, never the attempt alone.
       const failures = lines(result.out).filter((line) => line.startsWith("FAIL")).slice(0, 20).join("\n");
@@ -1422,6 +1458,10 @@ async function runStage(state: RunState): Promise<RunState> {
       // A refactor renders what it changed: every placement of every changed record.
       const concepts = refactor ? changedConcepts(state) : l2Mode ? l2Authored(state) : state.plan.eligible;
       if (concepts.length === 0) return completeStage(check(state, "render", { ok: true, status: 0, out: "" }, "no changed record to render", "render verification", ""), "render", at);
+      if (reusable(state, "render") && (!l2Mode || reusable(state, "expansion"))) {
+        const kept = reused(state, "render", "render verification");
+        return completeStage(l2Mode ? reused(kept, "expansion", "L2 expansion") : kept, "render", at);
+      }
       const targets = renderExpectations(mapKnowledge, concepts);
       const report = await checkRender(concepts);
       const evidence = formatRenderFailures(report);
@@ -1440,8 +1480,12 @@ async function runStage(state: RunState): Promise<RunState> {
       const files = changedFiles(state);
       if (l2Mode) {
         // The corpus grows the production Worker; checked here, once the browser and render checks no longer need .next.
-        const budget = workerBudget();
-        const budgeted = check(state, "worker-budget", budget, budget.detail, "Worker budget", `the production Worker passes the ${WORKER_BUDGET_MIB} MiB budget, half Cloudflare's limit, at which storage must change (l2-content-scale.md)`);
+        let budgeted: RunState;
+        if (reusable(state, "worker-budget")) budgeted = reused(state, "worker-budget", "Worker budget");
+        else {
+          const budget = workerBudget();
+          budgeted = check(state, "worker-budget", budget, budget.detail, "Worker budget", `the production Worker passes the ${WORKER_BUDGET_MIB} MiB budget, half Cloudflare's limit, at which storage must change (l2-content-scale.md)`);
+        }
         return completeStage(await diffL2(budgeted, base, files, check, at, tree), "diff", at);
       }
       if (refactor) {
@@ -1957,7 +2001,7 @@ async function commandRun() {
   verifyGit(state);
   clearVerifyTrees();
   // Nothing validated earlier is trusted if what it depended on has changed since.
-  const invalidated = invalidate(state, { tree: treeFingerprint(state), content: contentFingerprint(state), buildId: buildId() });
+  const invalidated = invalidate(state, { tree: treeFingerprint(state), runtime: runtimeFingerprint(state), content: contentFingerprint(state), legacyContent: legacyContentFingerprint(state), buildId: buildId() });
   if (invalidated.reason) console.log(invalidated.reason);
   state = invalidated.state;
   saveState(state);

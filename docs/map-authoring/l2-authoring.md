@@ -674,6 +674,14 @@ never merges its own PR.
   without drift, unit tests, lint, build). `complete audit` refuses to close
   the audit stage while `l2-check` would fail, so an unresolved signal is
   found while the agent's stage is still open.
+- **Reuse.** The build, browser, render, expansion and Worker checks are
+  bound to the tree without the group files (and, except the Worker check, to
+  the production build they ran against). When only group files change (an
+  audit re-recorded with its record unchanged, say), the run revalidates from
+  the gates, reruns `l2-check`, generate, unit tests, lint and the diff, and
+  reuses those results while that tree and build are unchanged. Re-recording
+  an audit also leaves the audit stage closed: the stage judged the records and
+  the plans, and each audit is validated on its own.
 - **Browser:** the full browser suite.
 - **Render:** the render check and the expansion check, for every
   placement of every authored concept.

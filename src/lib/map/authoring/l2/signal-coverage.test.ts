@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import type { MapConceptContent } from "../../types.ts";
 import { contentFingerprint } from "../representation/design.ts";
-import { conceptWorkOf, resolutionProblems, withConceptAudit, workProblems, type L2Audit } from "./contracts.ts";
+import { conceptWorkOf, groupFileWithoutAudits, resolutionProblems, withConceptAudit, workProblems, type L2Audit } from "./contracts.ts";
 import { coverageIn, l2GroupSignals, l2Signals, neighbourBasis } from "./coverage.ts";
 import { filledG1, model, options } from "./fixtures.ts";
 import type { L2Signal } from "./signals.ts";
@@ -144,6 +144,23 @@ test("a resolution recorded under a signal's legacy id resolves it; a bare id mu
   assert.deepEqual(resolutionProblems(["dated:1"], [{ id: "dated:2", resolution: "judged" }]), ["signal dated:1 is unresolved: say how the audit judged it"]);
 });
 
+test("the audit stage's content fingerprint ignores re-recorded audits, never the plan", () => {
+  const plan = withConceptAudit(simplifiedG1(), "a", { at: T0, note: "first note", resolutions: [], recordFingerprint: "f" });
+  const renoted = withConceptAudit(plan, "a", { at: "later", note: "second note", resolutions: [{ id: "x", resolution: "y" }], recordFingerprint: "f" });
+  const grouped = { ...renoted, groupAudit: { at: T0, note: "n", resolutions: [], records: {} } };
+  const judged = groupFileWithoutAudits(JSON.stringify(plan));
+  assert.equal(groupFileWithoutAudits(JSON.stringify(renoted, null, 2)), judged);
+  assert.equal(groupFileWithoutAudits(JSON.stringify(grouped)), judged);
+  // Before its first audit a simplified plan has no concepts at all: the same text as with audits removed.
+  assert.equal(groupFileWithoutAudits(JSON.stringify(simplifiedG1())), judged);
+  // A claim, an exclude or a legacy model is still judged.
+  const reclaimed = structuredClone(plan);
+  reclaimed.members.find((member) => member.conceptId === "a")!.claims = ["how alpha ends"];
+  assert.notEqual(groupFileWithoutAudits(JSON.stringify(reclaimed)), judged);
+  const legacy = { ...filledG1(model()), concepts: { a: { model: { meaning: "m" }, audit: { note: "n" } } } };
+  assert.match(groupFileWithoutAudits(JSON.stringify(legacy)), /"model":\{"meaning":"m"\}/);
+  assert.equal(groupFileWithoutAudits("not json"), "not json");
+});
 
 test("in the committed corpus, every overlap between two records whose audits are bound to them is resolved by an audit bound to both", async () => {
   const { readdirSync, readFileSync } = await import("node:fs");

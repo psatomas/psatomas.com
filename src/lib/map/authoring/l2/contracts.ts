@@ -313,3 +313,28 @@ export function groupAuditProblems(plan: L2GroupFile & { groupAudit?: L2GroupAud
   }
   return [...problems, ...resolutionProblems(signalIds, audit.resolutions ?? [])];
 }
+
+/**
+ * A group file's text as a run's audit stage judged it: its plans, models and
+ * designs, without the concept audits and group audit it records. Audits are
+ * bound to their records and validated on their own (workProblems,
+ * groupAuditProblems), so re-recording one (its note, a signal resolution)
+ * changes nothing the audit stage judged. Text that is not JSON is kept whole.
+ */
+export function groupFileWithoutAudits(text: string): string {
+  let plan: L2GroupFile & { groupAudit?: unknown };
+  try {
+    plan = JSON.parse(text);
+  } catch {
+    return text;
+  }
+  const rest: Record<string, unknown> = { ...plan };
+  delete rest.groupAudit;
+  delete rest.concepts;
+  const work = Object.entries(plan.concepts ?? {}).flatMap(([conceptId, entry]) => {
+    const kept: Record<string, unknown> = { ...((entry ?? {}) as Record<string, unknown>) };
+    delete kept.audit;
+    return Object.keys(kept).length ? [[conceptId, kept] as const] : [];
+  });
+  return JSON.stringify(work.length ? { ...rest, concepts: Object.fromEntries(work) } : rest);
+}
