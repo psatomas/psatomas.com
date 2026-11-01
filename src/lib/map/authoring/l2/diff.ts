@@ -13,7 +13,7 @@
  * existing records it repairs, each audited again, and their groups' files.
  */
 import { validateContentDiff, type DiffInput, type DiffReport } from "../orchestrator/diff-check.ts";
-import { groupAuditProblems, workProblems, type L2ConceptWork, type L2GroupAudit } from "./contracts.ts";
+import { groupAuditProblems, workProblems, type L2ConceptWork, type L2Coverage, type L2GroupAudit, type L2SignalRef } from "./contracts.ts";
 import { inventoryL2 } from "./inventory.ts";
 import { crossPlanProblems, groupFile, planProblems, staleProblems, type L2GroupFile, type L2Hazards } from "./territory.ts";
 
@@ -22,9 +22,11 @@ export type L2DiffInput = Omit<DiffInput, "expectedConcepts"> & {
   groups: readonly string[];
   basePlans: readonly L2GroupFile[];
   headPlans: readonly L2GroupFile[];
-  /** Each authored concept's signal ids, and each run group's group-signal ids. */
-  signals: Readonly<Record<string, readonly string[]>>;
-  groupSignals: Readonly<Record<string, readonly string[]>>;
+  /** Each authored concept's signals, and each run group's group signals (ids, or signals with their legacy ids and relations). */
+  signals: Readonly<Record<string, readonly L2SignalRef[]>>;
+  groupSignals: Readonly<Record<string, readonly L2SignalRef[]>>;
+  /** Which audits, over every group file, cover each relational signal (coverage.ts); without it, each concept's own audit must. */
+  coverage?: L2Coverage;
   hazards?: L2Hazards;
   /** A repair run's concepts: existing records it revises, never adds. */
   repaired?: readonly string[];
@@ -64,7 +66,7 @@ export function validateL2Diff(input: L2DiffInput): L2DiffReport {
     problems.push(...planProblems(plan, input.head, options).map((problem) => `${plan.group}: ${problem}`));
     problems.push(...staleProblems(plan, input.head, options).map((problem) => `${plan.group} is stale: ${problem}`));
     for (const conceptId of [...expected, ...repaired].filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {
-      problems.push(...workProblems(plan, conceptId, input.head, "audited", input.signals[conceptId] ?? []));
+      problems.push(...workProblems(plan, conceptId, input.head, "audited", input.signals[conceptId] ?? [], input.coverage));
     }
     for (const conceptId of blocked.filter((id) => plan.members.some((member) => member.conceptId === id && member.standing === "owned"))) {
       if (input.head.content.some((record) => record.conceptId === conceptId)) problems.push(`${conceptId}: its design blocks it, yet it has a record`);

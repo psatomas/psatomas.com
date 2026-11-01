@@ -339,3 +339,15 @@ test("a repair run resumes from its persisted state through re-drafting, re-audi
   assert.deepEqual(state.l2!.history, [{ kind: "repair", cycle: 2, at: T1, reason: "review: a overclaims", concepts: ["a"], closedAt: T2 }]);
   assert.equal(state.stage, "push");
 });
+
+test("an audit re-recorded while the uncommitted run validates keeps the build, browser and render results bound to the unchanged runtime tree", () => {
+  const done = finishedRun();
+  const bound = (name: string) => ({ ok: true, at: T0, detail: `${name} ok`, tree: "tree1", runtime: "runtime1", ...(name === "worker-budget" ? {} : { build: "build1" }) });
+  const checks = { "l2-check": { ok: true, at: T0, detail: "ok", tree: "tree1" }, ...Object.fromEntries(["build", "browser", "render", "expansion", "worker-budget"].map((name) => [name, bound(name)])) };
+  const uncommitted: RunState = { ...done, stage: "diff", commits: [], checks, completed: Object.fromEntries(Object.entries(done.completed).filter(([stage]) => STAGES.indexOf(stage as (typeof STAGES)[number]) < STAGES.indexOf("diff"))) };
+  const state = recordL2Step(uncommitted, { kind: "audit", subject: "a" }, T1, { note: "signal resolved", fingerprint: "a-v1" });
+  assert.equal(state.stage, "gates");
+  // The l2-check judged the group files and runs again; what the site is built from did not change, so those results wait to be reused.
+  assert.deepEqual(Object.keys(state.checks).sort(), ["browser", "build", "expansion", "render", "worker-budget"]);
+  assert.equal(state.l2!.repairs.a ?? 0, 0);
+});

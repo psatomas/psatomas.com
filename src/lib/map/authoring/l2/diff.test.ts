@@ -193,3 +193,15 @@ test("under the simplified pipeline the diff requires every authored concept's a
   const missing: L2GroupFile = { ...simplified, concepts: { a: simplified.concepts!.a } };
   assert.ok(validateL2Diff({ ...input, headPlans: [missing, input.headPlans[1]] }).problems.includes("b: the concept audit is missing"));
 });
+
+test("the diff refuses a relational signal no current review covers, and accepts one another audit covers", () => {
+  const overlap = { id: "neighbour-overlap:k1", legacyId: "neighbour-overlap:old", relation: { concepts: ["a", "b"] as [string, string], owner: "a", key: "k1" } };
+  const uncovered = { ...run(), signals: { a: [overlap] }, coverage: () => [] };
+  assert.match(validateL2Diff(uncovered).problems.join(), /a: signal neighbour-overlap:k1 is unresolved: no audit recorded against the current records of both a and b/);
+  const covered = { ...run(), signals: { a: [overlap] }, coverage: () => ["the audit of b"] };
+  assert.deepEqual(validateL2Diff(covered).problems, []);
+  // Without coverage, a's own audit must resolve it, under either id.
+  const own = run();
+  (own.headPlans[0].concepts!.a as L2ConceptWork).audit!.resolutions = [{ id: "neighbour-overlap:old", resolution: "judged before identities were stable" }];
+  assert.deepEqual(validateL2Diff({ ...own, signals: { a: [overlap] } }).problems, []);
+});
