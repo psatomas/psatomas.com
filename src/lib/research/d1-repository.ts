@@ -10,7 +10,6 @@ import type {
   ResearchArticleRecord,
   ResearchCategory,
   GuestInvitation,
-  NewGuestInvitation,
 } from "./domain";
 import type { GuestInvitationRepository, PublicResearchRepository, ResearchAuthoringRepository } from "./repository";
 
@@ -38,14 +37,14 @@ type ArticleRow = {
 
 type InvitationRow = {
   id: string; guest_name: string; guest_email: string; state: string;
-  created_at: string; expires_at: string; submitted_at: string | null; revoked_at: string | null;
+  created_at: string; expires_at: string; submitted_at: string | null; revoked_at: string | null; accepted_at: string | null;
   article_id: string | null;
 };
 
 function rowToInvitation(row: InvitationRow): GuestInvitation {
   return { id: row.id, guestName: row.guest_name, guestEmail: row.guest_email,
     state: row.state as GuestInvitation["state"], createdAt: row.created_at, expiresAt: row.expires_at,
-    submittedAt: row.submitted_at, revokedAt: row.revoked_at, articleId: row.article_id };
+    submittedAt: row.submitted_at, revokedAt: row.revoked_at, acceptedAt: row.accepted_at, articleId: row.article_id };
 }
 
 function rowToRecord(row: ArticleRow): ResearchArticleRecord {
@@ -305,45 +304,105 @@ export function createD1ResearchRepository(
       return results.map(rowToInvitation);
     },
     async revokeInvitation(id, revokedAt) {
-      const result = await db.prepare("UPDATE guest_invitations SET state = 'revoked', revoked_at = ? WHERE id = ? AND state = 'active'")
-        .bind(revokedAt, id).run();
-      return result.meta.changes === 1;
+      const revokeInvitation = db.prepare("UPDATE guest_invitations SET state = 'revoked', revoked_at = ? WHERE id = ? AND state != 'revoked'").bind(revokedAt, id);
+      const revokeSessions = db.prepare("UPDATE guest_contributor_sessions SET revoked_at = ? WHERE invitation_id = ? AND revoked_at IS NULL").bind(revokedAt, id);
+      const revokeLinks = db.prepare("UPDATE guest_reauthentication_links SET revoked_at = ? WHERE invitation_id = ? AND revoked_at IS NULL").bind(revokedAt, id);
+      const results = await db.batch([revokeInvitation, revokeSessions, revokeLinks]);
+      return results[0].meta.changes === 1;
     },
     async getInvitationByCapabilityHash(capabilityHash) { return findInvitationByHash(capabilityHash); },
+    async acceptInvitation(capabilityHash, sessionHash, sessionId, createdAt, sessionExpiresAt) {
+      // A conditional update makes the original link single-purpose: it may
+      // establish a session once while it is still an unaccepted, live invite.
+      const accept = db.prepare(`UPDATE guest_invitations SET accepted_at = ?, accepted_session_id = ?
+        WHERE capability_hash = ? AND state = 'active' AND accepted_at IS NULL AND expires_at > ?`)
+        .bind(createdAt, sessionId, capabilityHash, createdAt);
+      const session = db.prepare(`INSERT INTO guest_contributor_sessions (id, invitation_id, token_hash, created_at, expires_at)
+        SELECT ?, id, ?, ?, ? FROM guest_invitations
+        WHERE capability_hash = ? AND state = 'active' AND accepted_session_id = ?`)
+        .bind(sessionId, sessionHash, createdAt, sessionExpiresAt, capabilityHash, sessionId);
+      try { await db.batch([accept, session]); } catch { return null; }
+      return this.getInvitationBySessionHash(sessionHash, createdAt);
+    },
+    async getInvitationBySessionHash(sessionHash, now) {
+      const row = await db.prepare(`SELECT i.*, c.article_id FROM guest_contributor_sessions s
+        JOIN guest_invitations i ON i.id = s.invitation_id
+        LEFT JOIN guest_contributions c ON c.invitation_id = i.id
+        WHERE s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ? AND i.state IN ('active', 'submitted')`)
+        .bind(sessionHash, now).first<InvitationRow>();
+      return row ? rowToInvitation(row) : null;
+    },
+    async createReauthenticationLink(invitationId, tokenHash, id, createdAt, expiresAt) {
+      const result = await db.prepare(`INSERT INTO guest_reauthentication_links (id, invitation_id, token_hash, created_at, expires_at)
+        SELECT ?, id, ?, ?, ? FROM guest_invitations WHERE id = ? AND state = 'active'
+          AND (accepted_at IS NOT NULL OR EXISTS (SELECT 1 FROM guest_contributions WHERE invitation_id = guest_invitations.id))`)
+        .bind(id, tokenHash, createdAt, expiresAt, invitationId).run();
+      return result.meta.changes === 1;
+    },
+    async redeemReauthenticationLink(tokenHash, sessionHash, sessionId, createdAt, sessionExpiresAt) {
+      const link = await db.prepare(`SELECT invitation_id FROM guest_reauthentication_links
+        WHERE token_hash = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > ?`).bind(tokenHash, createdAt).first<{ invitation_id: string }>();
+      if (!link) return null;
+      // The used_at predicate is repeated in the write, so concurrent clicks
+      // cannot each mint a session from the same recovery credential.
+      const consume = db.prepare(`UPDATE guest_reauthentication_links SET used_at = ?, used_by_session_id = ?
+        WHERE token_hash = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > ?`)
+        .bind(createdAt, sessionId, tokenHash, createdAt);
+      const session = db.prepare(`INSERT INTO guest_contributor_sessions (id, invitation_id, token_hash, created_at, expires_at)
+        SELECT ?, i.id, ?, ?, ? FROM guest_invitations i JOIN guest_reauthentication_links l ON l.invitation_id = i.id
+        WHERE i.id = ? AND i.state = 'active' AND l.token_hash = ? AND l.used_by_session_id = ?`)
+        .bind(sessionId, sessionHash, createdAt, sessionExpiresAt, link.invitation_id, tokenHash, sessionId);
+      try { await db.batch([consume, session]); } catch { return null; }
+      return this.getInvitationBySessionHash(sessionHash, createdAt);
+    },
     async getContribution(invitationId) {
       const row = await db.prepare(`SELECT a.* FROM articles a JOIN guest_contributions c ON c.article_id = a.id
         WHERE c.invitation_id = ?`).bind(invitationId).first<ArticleRow>();
       return row ? rowToRecord(row) : null;
     },
-    async createContribution(invitationId, input) {
-      const now = new Date().toISOString();
+    async createContribution(sessionHash, now, input) {
       const id = crypto.randomUUID();
       const slug = await resolveUniqueSlug(input.slug ?? input.title);
       // D1 batch is transactional: the unique invitation_id constraint and
       // active-state conditional insert make concurrent creation yield one article.
       const articleStatement = db.prepare(`INSERT INTO articles (id, slug, title, description, category, tags, content, reading_minutes, status, published_at, created_at, updated_at)
         SELECT ?, ?, ?, ?, ?, ?, ?, ?, 'draft', NULL, ?, ?
-        WHERE EXISTS (SELECT 1 FROM guest_invitations WHERE id = ? AND state = 'active' AND expires_at > ?)`)
-        .bind(id, slug, input.title, input.description, input.category, JSON.stringify(input.tags), input.content, estimateReadingMinutes(input.content), now, now, invitationId, now);
+        WHERE EXISTS (SELECT 1 FROM guest_contributor_sessions s JOIN guest_invitations i ON i.id = s.invitation_id
+          WHERE s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ? AND i.state = 'active')`)
+        .bind(id, slug, input.title, input.description, input.category, JSON.stringify(input.tags), input.content, estimateReadingMinutes(input.content), now, now, sessionHash, now);
       const linkStatement = db.prepare(`INSERT INTO guest_contributions (invitation_id, article_id)
-        SELECT id, ? FROM guest_invitations WHERE id = ? AND state = 'active' AND expires_at > ?`)
-        .bind(id, invitationId, now);
-      try { await db.batch([articleStatement, linkStatement]); } catch { return null; }
-      const contribution = await this.getContribution(invitationId);
-      return contribution;
+        SELECT i.id, ? FROM guest_contributor_sessions s JOIN guest_invitations i ON i.id = s.invitation_id
+        WHERE s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ? AND i.state = 'active'`)
+        .bind(id, sessionHash, now);
+      try { await db.batch([articleStatement, linkStatement]); } catch {
+        // A competing first save may already have established the sole
+        // contribution. Return it rather than ever creating a second article.
+        const invitation = await this.getInvitationBySessionHash(sessionHash, now);
+        return invitation ? this.getContribution(invitation.id) : null;
+      }
+      const invitation = await this.getInvitationBySessionHash(sessionHash, now);
+      return invitation ? this.getContribution(invitation.id) : null;
     },
-    async updateContribution(invitationId, input) {
-      const invitation = await db.prepare("SELECT state, expires_at FROM guest_invitations WHERE id = ?").bind(invitationId).first<{state:string; expires_at:string}>();
-      if (!invitation || invitation.state !== "active" || invitation.expires_at <= new Date().toISOString()) return null;
-      const contribution = await this.getContribution(invitationId);
-      if (!contribution) return null;
-      return this.updateDraft(contribution.id, input);
+    async updateContribution(sessionHash, now, input) {
+      const invitation = await this.getInvitationBySessionHash(sessionHash, now);
+      if (!invitation) return null;
+      const contribution = await this.getContribution(invitation.id);
+      if (!contribution || contribution.status !== "draft") return null;
+      // The predicate binds the mutation itself to a live, unrevoked session.
+      const merged = { ...contribution, ...input };
+      const slug = input.slug !== undefined && slugify(input.slug) !== contribution.slug ? await resolveUniqueSlug(input.slug, contribution.id) : contribution.slug;
+      const result = await db.prepare(`UPDATE articles SET slug = ?, title = ?, description = ?, category = ?, tags = ?, content = ?, reading_minutes = ?, updated_at = ?
+        WHERE id = ? AND EXISTS (SELECT 1 FROM guest_contributions c JOIN guest_contributor_sessions s ON s.invitation_id = c.invitation_id JOIN guest_invitations i ON i.id = c.invitation_id
+          WHERE c.article_id = articles.id AND s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ? AND i.state = 'active')`)
+        .bind(slug, merged.title, merged.description, merged.category, JSON.stringify(merged.tags), merged.content, estimateReadingMinutes(merged.content), now, contribution.id, sessionHash, now).run();
+      if (result.meta.changes !== 1) return null;
+      return findById(contribution.id);
     },
-    async submitContribution(invitationId, submittedAt) {
+    async submitContribution(sessionHash, submittedAt) {
       const result = await db.prepare(`UPDATE guest_invitations SET state = 'submitted', submitted_at = ?
-        WHERE id = ? AND state = 'active' AND expires_at > ? AND EXISTS
-        (SELECT 1 FROM guest_contributions WHERE invitation_id = guest_invitations.id)`)
-        .bind(submittedAt, invitationId, submittedAt).run();
+        WHERE state = 'active' AND EXISTS (SELECT 1 FROM guest_contributions c JOIN guest_contributor_sessions s ON s.invitation_id = c.invitation_id
+          WHERE c.invitation_id = guest_invitations.id AND s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ?)`)
+        .bind(submittedAt, sessionHash, submittedAt).run();
       return result.meta.changes === 1;
     },
   };

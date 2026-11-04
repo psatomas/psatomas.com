@@ -29,10 +29,14 @@ export interface GuestInvitationRepository {
   listInvitations(): Promise<GuestInvitation[]>;
   revokeInvitation(id: string, revokedAt: string): Promise<boolean>;
   getInvitationByCapabilityHash(capabilityHash: string): Promise<GuestInvitation | null>;
+  acceptInvitation(capabilityHash: string, sessionHash: string, sessionId: string, createdAt: string, sessionExpiresAt: string): Promise<GuestInvitation | null>;
+  getInvitationBySessionHash(sessionHash: string, now: string): Promise<GuestInvitation | null>;
+  createReauthenticationLink(invitationId: string, tokenHash: string, id: string, createdAt: string, expiresAt: string): Promise<boolean>;
+  redeemReauthenticationLink(tokenHash: string, sessionHash: string, sessionId: string, createdAt: string, sessionExpiresAt: string): Promise<GuestInvitation | null>;
   getContribution(invitationId: string): Promise<ResearchArticleRecord | null>;
-  createContribution(invitationId: string, input: DraftInput): Promise<ResearchArticleRecord | null>;
-  updateContribution(invitationId: string, input: Partial<DraftInput>): Promise<ResearchArticleRecord | null>;
-  submitContribution(invitationId: string, submittedAt: string): Promise<boolean>;
+  createContribution(sessionHash: string, now: string, input: DraftInput): Promise<ResearchArticleRecord | null>;
+  updateContribution(sessionHash: string, now: string, input: Partial<DraftInput>): Promise<ResearchArticleRecord | null>;
+  submitContribution(sessionHash: string, submittedAt: string): Promise<boolean>;
 }
 
 /**

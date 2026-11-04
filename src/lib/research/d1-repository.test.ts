@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { createD1ResearchRepository } from "./d1-repository.ts";
+import { hashCapability } from "./guest-contribution-service.ts";
 import { publicationDate } from "./publication-date.ts";
 
 // Node's runtime provides SQLite; the project's Node 20 type declarations
@@ -22,17 +23,26 @@ const { DatabaseSync } = process.getBuiltinModule("node:sqlite") as {
 function setup() {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(readFileSync(new URL("../../../migrations/0001_create_articles.sql", import.meta.url), "utf8"));
+  sqlite.exec(readFileSync(new URL("../../../migrations/0002_create_guest_invitations.sql", import.meta.url), "utf8"));
+  sqlite.exec(readFileSync(new URL("../../../migrations/0003_guest_contributor_sessions.sql", import.meta.url), "utf8"));
+  sqlite.exec(readFileSync(new URL("../../../migrations/0004_guest_acceptance_session_binding.sql", import.meta.url), "utf8"));
   // Execute the repository's real SQL and bindings, not a mock publisher.
   const db = {
     prepare(sql: string) {
       const statement = sqlite.prepare(sql);
       let values: unknown[] = [];
-      return {
+      const wrapped = {
         bind(...bound: unknown[]) { values = bound; return this; },
-        async run() { return statement.run(...values); },
+        async run() { const result = statement.run(...values) as { changes?: number }; return { meta: { changes: result.changes ?? 0 } }; },
         async first() { return statement.get(...values) ?? null; },
         async all() { return { results: statement.all(...values) }; },
       };
+      return wrapped;
+    },
+    async batch(statements: Array<{ run: () => Promise<unknown> }>) {
+      sqlite.exec("BEGIN");
+      try { const results=[]; for (const statement of statements) results.push(await statement.run()); sqlite.exec("COMMIT"); return results; }
+      catch (error) { sqlite.exec("ROLLBACK"); throw error; }
     },
   } as unknown as D1Database;
   return { sqlite, repository: createD1ResearchRepository(db) };
@@ -111,4 +121,41 @@ test("historical dates survive republishing and a targeted repair changes only p
   assert.deepEqual(await repository.getArticleById(draft.id), { ...before, publishedAt: "2026-09-22" });
   assert.deepEqual((await repository.getPublishedArticles()).map((article) => article.publishedAt),
     ["2026-09-22", "2026-08-29", "2026-08-24", "2026-08-20"]);
+});
+
+test("migrations and real D1 SQL make acceptance and reauthentication single-winner", async (t) => {
+  const { sqlite, repository } = setup(); t.after(() => sqlite.close());
+  const now = "2026-10-06T00:00:00.000Z";
+  const invitationToken = "i".repeat(64);
+  const invitation = await repository.createInvitation({ id:"invite", guestName:"Guest", guestEmail:"guest@example.com", capabilityHash:await hashCapability(invitationToken), createdAt:now, expiresAt:"2026-10-09T00:00:00.000Z" });
+  const [first, second] = await Promise.all([
+    repository.acceptInvitation(await hashCapability(invitationToken), await hashCapability("a".repeat(64)), "session-a", now, "2026-11-05T00:00:00.000Z"),
+    repository.acceptInvitation(await hashCapability(invitationToken), await hashCapability("b".repeat(64)), "session-b", now, "2026-11-05T00:00:00.000Z"),
+  ]);
+  assert.equal([first, second].filter(Boolean).length, 1);
+  assert.equal((sqlite.prepare("SELECT count(*) AS count FROM guest_contributor_sessions").get() as { count:number }).count, 1);
+  assert.equal(await repository.acceptInvitation(await hashCapability(invitationToken), await hashCapability("c".repeat(64)), "session-c", now, "2026-11-05T00:00:00.000Z"), null);
+
+  const winningToken = first ? "a".repeat(64) : "b".repeat(64);
+  const saved = await repository.createContribution(await hashCapability(winningToken), "2026-10-10T00:00:00.000Z", input);
+  assert.ok(saved);
+  assert.equal((sqlite.prepare("SELECT count(*) AS count FROM guest_contributions").get() as { count:number }).count, 1);
+
+  const reauthToken = "r".repeat(64);
+  assert.equal(await repository.createReauthenticationLink(invitation.id, await hashCapability(reauthToken), "link", now, "2026-10-07T00:00:00.000Z"), true);
+  const [reauthA, reauthB] = await Promise.all([
+    repository.redeemReauthenticationLink(await hashCapability(reauthToken), await hashCapability("d".repeat(64)), "session-d", now, "2026-11-05T00:00:00.000Z"),
+    repository.redeemReauthenticationLink(await hashCapability(reauthToken), await hashCapability("e".repeat(64)), "session-e", now, "2026-11-05T00:00:00.000Z"),
+  ]);
+  assert.equal([reauthA, reauthB].filter(Boolean).length, 1);
+  assert.equal((sqlite.prepare("SELECT count(*) AS count FROM guest_contributor_sessions").get() as { count:number }).count, 2);
+  assert.equal((await repository.getContribution(invitation.id))?.id, saved?.id);
+  assert.equal(await repository.redeemReauthenticationLink(await hashCapability(reauthToken), await hashCapability("f".repeat(64)), "session-f", now, "2026-11-05T00:00:00.000Z"), null);
+  assert.equal(await repository.revokeInvitation(invitation.id, now), true);
+  assert.equal(await repository.getInvitationBySessionHash(await hashCapability(winningToken), now), null);
+  assert.equal(await repository.createReauthenticationLink(invitation.id, await hashCapability("q".repeat(64)), "revoked-link", now, "2026-10-07T00:00:00.000Z"), false);
+
+  const expiredToken = "x".repeat(64);
+  await repository.createInvitation({ id:"expired", guestName:"Expired", guestEmail:"expired@example.com", capabilityHash:await hashCapability(expiredToken), createdAt:now, expiresAt:"2026-10-06T00:00:00.000Z" });
+  assert.equal(await repository.acceptInvitation(await hashCapability(expiredToken), await hashCapability("z".repeat(64)), "session-z", now, "2026-11-05T00:00:00.000Z"), null);
 });
