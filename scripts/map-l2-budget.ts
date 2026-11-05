@@ -6,7 +6,9 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { budgetHookInstalled } from "../src/lib/map/authoring/l2/budget.ts";
+import { attemptBudget, attemptIn, attemptMarker, transition, withAttempt } from "../src/lib/map/authoring/l2/attempts.ts";
+import { readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
+import { budgetHookInstalled, reserveFor, type L2Budget, type L2BudgetLedger, type L2SpendSession } from "../src/lib/map/authoring/l2/budget.ts";
 import { activeRunsOn, measureRun } from "../src/lib/map/authoring/l2/budget-io.ts";
 import { projectSlug } from "../src/lib/map/authoring/l2/cost.ts";
 
@@ -76,4 +78,28 @@ export const HOOK_SETTINGS = {
   hooks: {
     PreToolUse: [{ matcher: "Agent|Task", hooks: [{ type: "command", command: `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON ${shellQuoted(join(ROOT, "scripts", "map-l2-budget-hook.ts"))} || exit 2` }] }],
   },
+};
+
+// ---------------------------------------------------------------- attempts (l2/attempts.ts)
+
+/** A run's attempt log, and its commit journal: their own directories, never read as run states. */
+export const attemptsPath = (run: string) => join(L2_STATE_DIR, "attempts", `${run}.json`);
+export const journalPath = (run: string) => join(L2_STATE_DIR, "journal", `${run}.json`);
+
+/**
+ * The launch hook's view of attempts (budget-io.ts launchGate `attempts`): a launch of an attempt-tracked run must
+ * carry the marker of a pending attempt, which is marked running once the launch is reserved; open attempts nothing
+ * else accounts for keep their reserve, and recorded spend whose transcript is gone still counts.
+ */
+export const attemptsAdapter = {
+  pending: (run: string, marker: string | undefined) => {
+    if (!marker) return `every model launch of ${run} is begun as an attempt first (\`npm run map:author -- l2 attempt begin ..\` or \`l2 audit-task\`), and its task description carries the attempt's marker (#att-..)`;
+    const attempt = readAttemptLog(attemptsPath(run), run).attempts.find((entry) => entry.id === marker);
+    if (!attempt) return `${attemptMarker(marker)} is not an attempt of ${run}`;
+    if (attempt.status !== "pending") return `attempt ${marker} is ${attempt.status}, not pending: a launched attempt is never launched again; begin a new one once it is resolved (\`l2 attempts\`)`;
+    return undefined;
+  },
+  claim: (run: string, marker: string, launchRef: string, now: string) =>
+    updateAttemptLog(attemptsPath(run), run, (log) => ({ log: withAttempt(log, transition(attemptIn(log, marker), "running", now, `launched (${launchRef})`, { launch: { ref: launchRef, at: now } })), result: undefined })),
+  extra: (run: string, sessions: readonly L2SpendSession[], ledger: L2BudgetLedger, budget: L2Budget) => attemptBudget(readAttemptLog(attemptsPath(run), run), sessions, ledger, (role) => reserveFor(budget, role)),
 };

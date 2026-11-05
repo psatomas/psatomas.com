@@ -38,7 +38,8 @@ test("v2 refuses any first audit of a group before every draft of that group is 
   let state = record(run(V2), "author", "a");
   assert.throws(() => record(state, "audit", "a"), /record author:b first/);
   assert.equal(nextAction(state).kind, "agent");
-  assert.match((nextAction(state) as { message: string }).message, /^author b /);
+  // A v2 run started now tracks attempts: the draft is begun as an attempt, then recorded with it.
+  assert.match((nextAction(state) as { message: string }).message, /^first `map:author -- l2 attempt begin author b --role author`.*author b in a fresh context.*record author b --attempt <id>/);
   state = record(state, "author", "b");
   // With every draft in place, the first audits may be recorded, in order.
   assert.match((nextAction(state) as { message: string }).message, /first audits of a: two independent auditors, A and B, each in its own fresh context.*audit-task a --role first-audit --auditor A`.*--auditor B`/);

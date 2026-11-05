@@ -50,6 +50,9 @@
 //   npm run map:author -- l2 sync                        merge a moved main into the run's branch and revalidate
 //   npm run map:author -- l2 checkpoint --decision ".."   the pilot's human review of plans and designs
 //   npm run map:author -- l2 authorize --authorization ".."   record a human's explicit campaign merge authorization
+//   npm run map:author -- l2 attempts [--json] | reconcile [--json]   (tracked v2 runs) every attempt and its evidence; apply reconciliation (idempotent)
+//   npm run map:author -- l2 attempt begin <author|audit|group-audit> <subject> --role <r> [--auditor X] [--model m]
+//                                                        | launch <id> --ref <ref> | fail|interrupt <id> --reason .. | decide <id> --relaunch|--abandon --reason .. | release <id> --reason .. | show <id>
 //   npm run map:author -- l2 audit-task <concept|group> --role first-audit|re-audit|group-audit --auditor A|B|R|G
 //                                                        (v2) one auditor's own prompt, naming only its private findings file
 //   npm run map:author -- l2 submit-audit <concept|group> --role first-audit|re-audit|group-audit --auditor A|B|R|G --file <json>
@@ -74,11 +77,14 @@ import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopePr
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, groupFileWithoutAudits, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { neighbourBasis } from "../src/lib/map/authoring/l2/coverage.ts";
-import { AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, findingsProblems, findingsReason, inboxProblem, readArtifacts, staleArtifacts, submitArtifact, type L2AuditRole, type L2FindingsInput } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
+import { AttemptError, artifactAttemptProblem, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, releaseHold, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
+import { launchAttempt, readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
+import { journaledCommit, JournalError, recoverJournal, sha } from "../src/lib/map/authoring/l2/journal.ts";
+import { AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, findingsProblems, findingsReason, inboxProblem, readArtifacts, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
 import { formatRecordDiff, recordDiff, recordLines } from "../src/lib/map/authoring/l2/record-diff.ts";
-import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget } from "../src/lib/map/authoring/l2/budget.ts";
+import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget, type L2SpendSession } from "../src/lib/map/authoring/l2/budget.ts";
 import { BudgetLockError, readLedger, reserveUnderLock, withLock, writeLedger } from "../src/lib/map/authoring/l2/budget-io.ts";
-import { HOOK_SETTINGS, hookInstalled, ledgerPath, measure } from "./map-l2-budget.ts";
+import { attemptsAdapter, attemptsPath, HOOK_SETTINGS, hookInstalled, journalPath, ledgerPath, measure } from "./map-l2-budget.ts";
 import { describePipeline, isBatched, PipelineError, PIPELINES, pipelineMismatchProblem, pipelineOf, pipelineStatus, startPipeline, type L2Pipeline } from "../src/lib/map/authoring/l2/pipeline.ts";
 import { validateL2Diff } from "../src/lib/map/authoring/l2/diff.ts";
 import { inventoryL2 } from "../src/lib/map/authoring/l2/inventory.ts";
@@ -172,7 +178,7 @@ const positional: string[] = [];
 for (let index = 0; index < rest.length; index++) {
   const arg = rest[index];
   if (!arg.startsWith("--")) positional.push(arg);
-  else if (["--json", "--dry-run", "--write", "--pilot", "--agents", "--verbose", "--revoke-merge", "--from-findings"].includes(arg)) flags.set(arg, true);
+  else if (["--json", "--dry-run", "--write", "--pilot", "--agents", "--verbose", "--revoke-merge", "--from-findings", "--relaunch", "--abandon"].includes(arg)) flags.set(arg, true);
   else {
     const value = rest[++index];
     if (value === undefined || value.startsWith("--")) fail(`${arg} needs a value`);
@@ -262,8 +268,21 @@ function readState(domainId: string): RunState | undefined {
 }
 function saveState(state: RunState) {
   mkdirSync(STATE_DIR, { recursive: true });
-  writeFileSync(statePath(state.domainId), `${JSON.stringify(state, null, 2)}\n`);
+  const write = () => writeFileSync(statePath(state.domainId), `${JSON.stringify(state, null, 2)}\n`);
+  if (state.kind !== "l2") return write();
+  // An L2 run's state is written under its commit journal's lock, never over a journaled commit in flight or unrecovered.
+  try {
+    withLock(journalPath(state.domainId), () => {
+      if (existsSync(journalPath(state.domainId))) throw new JournalError(`an interrupted commit of ${state.domainId} is unrecovered (${journalPath(state.domainId)}): run any l2 command to recover it first`);
+      write();
+    });
+  } catch (error) {
+    if (error instanceof JournalError || error instanceof BudgetLockError) fail(`the run state of ${state.domainId} was not saved: ${error.message}`, 1);
+    throw error;
+  }
 }
+/** The files an L2 run's commit journal may write: the run's own state and the L2 group files. */
+const journalAllows = (domainId: string) => (path: string) => path === statePath(domainId) || (dirname(path) === join(ROOT, GROUPS_DIR) && path.endsWith(".json"));
 
 /** Every recorded run of a slice: its full-slice run, its partial runs and its repair runs. */
 function sliceRuns(sliceId: string): RunState[] {
@@ -275,6 +294,44 @@ function sliceRuns(sliceId: string): RunState[] {
 }
 
 function activeState(): RunState {
+  const state = selectState();
+  // An interrupted commit (a v2 audit recording killed between its writes) is recovered before anything reads the run.
+  if (!l2Mode || !existsSync(journalPath(state.domainId))) return state;
+  let recovery: ReturnType<typeof recoverJournal>;
+  try {
+    recovery = recoverJournal(journalPath(state.domainId), state.domainId, journalAllows(state.domainId));
+  } catch (error) {
+    if (error instanceof JournalError) fail(`cannot recover the interrupted commit of ${state.domainId}: ${error.message}`, 1);
+    throw error;
+  }
+  if (recovery.action === "refused") fail(`an interrupted commit of ${state.domainId} (${recovery.what}) cannot be recovered: ${recovery.problem}; a human decides (the journal is ${journalPath(state.domainId)})`, 1);
+  const recovered = readState(state.domainId)!;
+  if (recovery.action === "rolled-forward") {
+    console.log(`recovered an interrupted commit (${recovery.what}): completed it${recovery.written.length ? `, writing ${recovery.written.map((file) => file.replace(`${ROOT}`, "")).join(", ")}` : ""}`);
+    const stale = recoveredStaleness(recovered, recovery.tx);
+    if (stale) console.log(`  the recovered ${stale.step} was decided against evidence that has since changed (${stale.changed.join(", ")}): completing the commit does not make it current; it covers nothing it judged differently, and the gates judge it as they would any stale audit`);
+  }
+  return recovered;
+}
+
+/** What a recovered audit judged that is no longer as it is now: its record, a neighbour's, or a group member's. */
+function recoveredStaleness(state: RunState, tx: string): { step: string; changed: string[] } | undefined {
+  const [kind, subject] = (tx.split("@")[0] ?? "").split(":");
+  if (!state.l2 || (kind !== "audit" && kind !== "group-audit") || !subject) return undefined;
+  const plans = readPlans();
+  let bound: Record<string, string> = {};
+  if (kind === "audit") {
+    const audit = plans.map((plan) => conceptWorkOf(plan, subject)?.audit).find(Boolean);
+    if (!audit) return undefined;
+    bound = { ...(audit.neighbours ?? {}), [subject]: audit.recordFingerprint };
+  } else {
+    bound = (plans.find((plan) => plan.group === subject) as (L2GroupFile & { groupAudit?: L2GroupAudit }) | undefined)?.groupAudit?.records ?? {};
+  }
+  const changed = Object.entries(bound).filter(([conceptId, fingerprint]) => recordFingerprint(recordOf(conceptId)) !== fingerprint).map(([conceptId]) => conceptId);
+  return changed.length ? { step: `${kind} of ${subject}`, changed } : undefined;
+}
+
+function selectState(): RunState {
   const domainId = flag("--domain");
   if (domainId) return readState(domainId) ?? fail(`no run for ${domainId}; start one with \`${CLI} start --domain ${domainId}\``);
   const runs = existsSync(STATE_DIR)
@@ -803,6 +860,8 @@ async function commandL2Record() {
   if (!group) fail(`${subject} is not a concept of this slice`, 1);
   // A group-batched run records audits only from the auditors' submitted findings, all or nothing.
   if ((kind === "audit" || kind === "group-audit") && isBatched(pipelineOf(record))) return recordBatchedAudit(state, kind, subject, group);
+  // A tracked run's draft or repair is recorded with the attempt that produced it, for exactly its inputs.
+  const authorAttempt = kind === "author" ? draftAttempt(state, subject) : undefined;
   // An audit given as a file is written first, so validation reads the audit as now bound to the records.
   const auditFile = flag("--audit-file");
   if (auditFile && (kind === "audit" || kind === "group-audit")) writeAudit(kind, subject, group, auditFile);
@@ -861,12 +920,13 @@ async function commandL2Record() {
       fail("record needs <plan|design|author|audit|group-audit> <subject>");
   }
   try {
-    state = recordL2Step(state, { kind, subject }, now(), { blocks, note: flag("--note"), fingerprint });
+    state = recordL2Step(state, { kind, subject }, now(), { blocks, note: flag("--note"), fingerprint, ...(authorAttempt ? { attempts: [authorAttempt.id] } : {}) });
   } catch (error) {
     if (error instanceof RunStateError) fail(error.message, 1);
     throw error;
   }
   saveState(state);
+  if (authorAttempt) commitAttempts(state, [authorAttempt.id], `recorded author ${subject}`, { kind: "record", ref: fingerprint!, key: authorAttempt.inputKey, at: now() });
   console.log(`recorded ${kind} ${subject}; ${pendingL2Steps(state).length} step(s) to go`);
   if (blocks) {
     const design = conceptWorkOf(plan, subject)?.design as L2Design;
@@ -878,6 +938,22 @@ async function commandL2Record() {
     });
   }
   commandNext(state);
+}
+
+/** The attempt a tracked run's draft is recorded with (`record author --attempt <id>`); none in an untracked run. */
+function draftAttempt(state: RunState, subject: string): L2Attempt | undefined {
+  const id = flag("--attempt");
+  if (!tracksAttempts(state)) {
+    if (id) fail(`${state.domainId} does not track attempts: record without --attempt`, 1);
+    return undefined;
+  }
+  if (!id) fail(`${state.domainId} tracks attempts: record the draft with --attempt <id> (\`${CLI} attempt begin author ${subject}\`)`, 1);
+  const attempt = readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts.find((entry) => entry.id === id) ?? fail(`no attempt ${id} in ${state.domainId}`, 1);
+  if (attempt.step.kind !== "author" || attempt.step.subject !== subject) fail(`attempt ${id} is ${stepId(attempt.step)}, not a draft of ${subject}`, 1);
+  if (attempt.status === "committed") fail(`attempt ${id} is already committed: a duplicate commit`, 1);
+  if (!["running", "interrupted"].includes(attempt.status)) fail(`attempt ${id} is ${attempt.status}: only a launched attempt's draft is recorded`, 1);
+  if (currentInputKey(state, attempt.step) !== attempt.inputKey) fail(`the inputs of attempt ${id} (its territory, repair cycle or pre-repair record) changed since it began: its draft is not recorded`, 1);
+  return attempt;
 }
 
 /**
@@ -959,6 +1035,42 @@ function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: 
   return outcome as Extract<typeof outcome, { kind: "record" }>;
 }
 
+/** The attempts behind the artifacts an audit is recorded from: each completed, for this step, with exactly the current inputs. */
+function acceptedAttempts(state: RunState, artifacts: readonly { attempt?: string; role: string; auditor: string; subject: string; key: string; seq: number }[]): string[] {
+  const log = readAttemptLog(attemptsPath(state.domainId), state.domainId);
+  return artifacts.map((artifact) => {
+    const label = `${artifact.role} ${artifact.auditor}`;
+    if (!artifact.attempt) fail(`cannot record ${artifact.subject}: its ${label} artifact names no attempt, and ${state.domainId} records only attempt-backed findings`, 1);
+    const attempt = log.attempts.find((entry) => entry.id === artifact.attempt) ?? fail(`cannot record ${artifact.subject}: its ${label} artifact names attempt ${artifact.attempt}, which is not in the log`, 1);
+    if (attempt.status === "committed") fail(`cannot record ${artifact.subject}: attempt ${attempt.id} (${label}) is already committed: a duplicate commit`, 1);
+    if (attempt.status !== "completed") fail(`cannot record ${artifact.subject}: attempt ${attempt.id} (${label}) is ${attempt.status}, not completed (\`${CLI} reconcile\`)`, 1);
+    if (attempt.step.role !== artifact.role || attempt.step.auditor !== artifact.auditor || attempt.step.subject !== artifact.subject) fail(`cannot record ${artifact.subject}: attempt ${attempt.id} is ${stepId(attempt.step)}, not the artifact's ${label}`, 1);
+    if (currentInputKey(state, attempt.step) !== attempt.inputKey) fail(`cannot record ${artifact.subject}: the inputs of attempt ${attempt.id} (${label}) have changed since it began`, 1);
+    // The artifact recorded is exactly the output the attempt captured: never another submission naming it.
+    const problem = artifactAttemptProblem(attempt, artifact, artifactRef(artifact));
+    if (problem) fail(`cannot record ${artifact.subject}: ${problem}`, 1);
+    return attempt.id;
+  });
+}
+
+/** Marks recorded attempts committed; a crash before it is reconciled from the run state's step (l2 reconcile). */
+function commitAttempts(state: RunState, ids: readonly string[], reason: string, output?: L2Attempt["output"]) {
+  try {
+    updateAttemptLog(attemptsPath(state.domainId), state.domainId, (log) => {
+      let next = log;
+      for (const id of ids) {
+        let attempt = attemptIn(next, id);
+        if (attempt.status === "running" || attempt.status === "interrupted") attempt = transition(attempt, "completed", now(), "its output was recorded", output ? { output } : {});
+        if (attempt.status === "completed") attempt = transition(attempt, "committed", now(), reason);
+        next = withAttempt(next, attempt);
+      }
+      return { log: next, result: undefined };
+    });
+  } catch (error) {
+    console.log(`  note: the step is recorded, but its attempts could not be marked committed (${(error as Error).message}); \`${CLI} reconcile\` completes it`);
+  }
+}
+
 /**
  * Records a group-batched run's audit from its auditors' artifacts, all or
  * nothing (audit-artifacts.ts commitAuditRecording): the artifacts are read
@@ -970,8 +1082,13 @@ function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: 
 function recordBatchedAudit(state: RunState, kind: "audit" | "group-audit", subject: string, group: string) {
   if (flag("--audit-file")) fail(`${state.domainId} runs group-batched (simplified v2): audits are recorded from submitted findings (\`${CLI} submit-audit\`), never from --audit-file`, 1);
   const record = l2Records(state);
+  // The run state this recording is computed from: if another command changes it before the commit, the commit is refused (journaledCommit `expect`).
+  const stateBefore = readFileSync(statePath(state.domainId), "utf8");
+  if (JSON.stringify(JSON.parse(stateBefore)) !== JSON.stringify(state)) fail(`the run state of ${state.domainId} changed while this command ran: run it again`, 1);
   const accepted = acceptedAudit(state, kind, subject, group);
   const fingerprint = kind === "audit" ? recordFingerprint(recordOf(subject)) : undefined;
+  // A tracked run records only artifacts of completed attempts whose inputs are still exactly the current ones.
+  const attemptIds = tracksAttempts(state) ? acceptedAttempts(state, accepted.from) : [];
   const at = now();
   const path = join(ROOT, groupFile(group));
   const nextPlan = (text: string) => {
@@ -1004,19 +1121,23 @@ function recordBatchedAudit(state: RunState, kind: "audit" | "group-audit", subj
         const signals = signalsOf(subject, plans);
         return [...workProblems(plan, subject, mapKnowledge, "audited", signals, coverageFor(plans, signals)), ...scope];
       },
-      step: () => recordL2Step(state, { kind, subject }, at, { note: flag("--note"), ...(fingerprint ? { fingerprint } : {}) }),
+      step: () => recordL2Step(state, { kind, subject }, at, { note: flag("--note"), ...(fingerprint ? { fingerprint } : {}), ...(attemptIds.length ? { attempts: attemptIds } : {}) }),
       writeGroup: (text) => {
         const temporary = `${path}.${process.pid}.tmp`;
         writeFileSync(temporary, text);
         renameSync(temporary, path);
       },
       saveState,
+      // Both files through the journal: a termination between them is completed on the next command (activeState).
+      persist: (text, next, before) =>
+        journaledCommit(journalPath(state.domainId), { run: state.domainId, tx: `${kind}:${subject}@${at}`, at, what: `record ${kind} ${subject}`, files: [{ path, text, expect: sha(before) }, { path: statePath(state.domainId), text: `${JSON.stringify(next, null, 2)}\n`, expect: sha(stateBefore) }] }),
     });
   } catch (error) {
-    if (error instanceof RunStateError) fail(`cannot record ${kind} ${subject}: ${error.message}`, 1);
+    if (error instanceof RunStateError || error instanceof JournalError) fail(`cannot record ${kind} ${subject}: ${error.message}`, 1);
     throw error;
   }
   if (!result.ok) fail(`cannot record ${kind} ${subject}:\n  ${result.problems.join("\n  ")}`, 1);
+  if (attemptIds.length) commitAttempts(state, attemptIds, `recorded ${kind} ${subject}`);
   console.log(`recorded ${kind} ${subject} from ${accepted.from.map((artifact) => `${artifact.role} ${artifact.auditor}#${artifact.seq}`).join(" and ")}; ${pendingL2Steps(result.state).length} step(s) to go`);
   commandNext(result.state);
 }
@@ -1058,7 +1179,32 @@ function commandL2SubmitAudit() {
   const problems = findingsProblems(input, { role, auditor, concepts: auditedConcepts(kind, subject, group), textOf: recordText });
   if (problems.length) fail(`the findings are not a valid ${role}:\n  ${problems.join("\n  ")}`, 1);
   const binding = currentBinding(state, kind, subject, group);
-  const { path, artifact } = submitArtifact(auditWorkDir(state), { run: state.domainId, subject, role, auditor, at: now(), binding, verdict: input.verdict, note: input.note, findings: input.findings, ...(input.resolutions ? { resolutions: input.resolutions } : {}) });
+  const attemptId = flag("--attempt");
+  if (attemptId && !tracksAttempts(state)) fail(`${state.domainId} does not track attempts: submit without --attempt`, 1);
+  if (tracksAttempts(state) && !attemptId) fail(`${state.domainId} tracks attempts: submit with --attempt <id> (the attempt \`${CLI} audit-task\` began)`, 1);
+  const publish = () => submitArtifact(auditWorkDir(state), { run: state.domainId, subject, role, auditor, at: now(), binding, verdict: input.verdict, note: input.note, findings: input.findings, ...(input.resolutions ? { resolutions: input.resolutions } : {}), ...(attemptId ? { attempt: attemptId } : {}) });
+  // A tracked run's findings belong to the auditor's attempt, and only for exactly the evidence the attempt began with. The
+  // check, the publication and the attempt's completion happen under the attempt log's lock: one attempt publishes one artifact,
+  // however many submissions race. Published first, then completed: a crash between them is reconciled from the artifact.
+  let submitted: ReturnType<typeof publish>;
+  try {
+    submitted = !attemptId
+      ? publish()
+      : updateAttemptLog(attemptsPath(state.domainId), state.domainId, (log) => {
+        const attempt = log.attempts.find((entry) => entry.id === attemptId) ?? attemptFailure(`no attempt ${attemptId} in ${state.domainId}`);
+        if (attempt.step.kind !== kind || attempt.step.subject !== subject || attempt.step.role !== role || attempt.step.auditor !== auditor) attemptFailure(`attempt ${attemptId} is ${stepId(attempt.step)}, not ${kind}:${subject}:${role}:${auditor}`);
+        if (attempt.status !== "running" && attempt.status !== "interrupted") attemptFailure(`attempt ${attemptId} is ${attempt.status}: only a launched attempt submits its findings${attempt.output ? ` (its output is ${attempt.output.ref})` : ""}`);
+        if (!attempt.binding || bindingKey(attempt.binding, subject) !== bindingKey(binding, subject)) attemptFailure(`the records or neighbours have changed since attempt ${attemptId} began: its findings judged other evidence and are not submitted; fail it (\`${CLI} attempt fail ${attemptId} --reason ..\`) and audit again`);
+        const published = publish();
+        const completed = transition(attempt, "completed", now(), "its findings were submitted", { output: { kind: "artifact", ref: artifactRef(published.artifact), key: published.artifact.key, at: now() } });
+        return { log: withAttempt(log, completed), result: published };
+      });
+  } catch (error) {
+    // Refused inside the lock by throwing, so the lock is released before the process exits.
+    if (error instanceof AttemptError) fail(error.message, 1);
+    throw error;
+  }
+  const { path, artifact } = submitted;
   console.log(`submitted ${role} ${artifact.seq} of ${subject} by auditor ${auditor}: ${artifact.verdict}, ${artifact.findings.filter((finding) => finding.severity === "blocking").length} blocking, ${artifact.findings.filter((finding) => finding.severity === "advisory").length} advisory (${path}); nothing recorded: the orchestrator records it`);
 }
 
@@ -1077,7 +1223,11 @@ function commandL2AuditTask() {
   if (!AUDITORS[role].includes(auditor)) fail(`a ${role} is performed by auditor ${AUDITORS[role].join(" or ")}, not ${auditor}`, 1);
   const inbox = auditorInbox(runWorkDir(state), subject, role, auditor);
   mkdirSync(dirname(inbox), { recursive: true });
-  console.log(auditTaskPrompt({ run: state.domainId, subject, role, auditor, inbox, instructions: PIPELINES[pipelineOf(record).mode].instructions }));
+  const kind = role === "group-audit" ? "group-audit" : "audit";
+  // A tracked run begins the auditor's attempt here, its inputs persisted before any launch.
+  const attempt = record.attempts ? beginRunAttempt(state, { kind, subject, role, auditor }) : undefined;
+  if (attempt) console.log(`attempt ${attempt.id} begun; launch this prompt as a new agent described \`${taskDescription(attempt)}\`\n`);
+  console.log(auditTaskPrompt({ run: state.domainId, subject, role, auditor, inbox, instructions: PIPELINES[pipelineOf(record).mode].instructions, ...(attempt ? { attempt: attempt.id } : {}) }));
 }
 
 /** The orchestrator's view of a subject's findings against its current records (`l2 findings <concept|group>`). Auditors never read it. */
@@ -1123,6 +1273,219 @@ function commandL2RepairDiff() {
   console.log(formatRecordDiff(before, recordOf(conceptId)));
 }
 
+// ---------------------------------------------------------------- attempts (l2/attempts.ts)
+
+/** A refusal inside a lock: thrown, never `fail` (which exits holding the lock), and reported once the lock is released. */
+const attemptFailure = (message: string): never => {
+  throw new AttemptError(message);
+};
+/** An artifact's reference, as an attempt's output names it. */
+const artifactRef = (artifact: { role: string; auditor: string; seq: number }) => `${artifact.role}-${artifact.auditor}-${String(artifact.seq).padStart(3, "0")}`;
+/** Whether a run tracks attempts: group-batched runs started since attempts existed. */
+const tracksAttempts = (state: RunState) => Boolean(state.l2?.attempts) && isBatched(pipelineOf(state.l2!));
+const groupOfConcept = (state: RunState, conceptId: string) => state.l2!.slice.groups.find((entry) => entry.concepts.includes(conceptId))?.group;
+/** The task description an attempt's agent is launched with: its role, subject and marker. */
+const taskDescription = (attempt: L2Attempt) => `${{ author: "Author", repair: "Repair", "first-audit": `First audit ${attempt.step.auditor ?? ""}`.trim(), "re-audit": "Re-audit", "group-audit": "Group audit" }[attempt.step.role]} ${attempt.step.subject} ${attemptMarker(attempt.id)}`;
+
+/** The role a step of `kind` has for `subject` now: drafting or repair, a first audit or a re-audit, a group audit. */
+function expectedRole(state: RunState, kind: L2AttemptStep["kind"], subject: string): L2AttemptRole {
+  if (kind === "group-audit") return "group-audit";
+  if (kind === "author") return state.l2!.repair?.concepts.includes(subject) ? "repair" : "author";
+  return auditNeed(state, "audit", subject) as L2AttemptRole;
+}
+
+/**
+ * An attempt's input identity as the repository holds it now. A draft or repair
+ * judges its group's territory (the group file without its audits), its repair
+ * cycle and the record its failing audit judged; an audit judges its complete
+ * binding: the records and every neighbour's (or every member's for a group).
+ */
+function attemptInputs(state: RunState, step: L2AttemptStep): { inputs: Record<string, string>; binding?: L2AuditBinding } {
+  const group = step.kind === "group-audit" ? step.subject : groupOfConcept(state, step.subject);
+  if (!group) throw new AttemptError(`${step.subject} is not a ${step.kind === "group-audit" ? "group" : "concept"} of ${state.domainId}`);
+  if (step.kind === "author") {
+    const repair = state.l2!.repair;
+    const repairing = repair?.concepts.includes(step.subject);
+    const before = repairing ? (repair!.records?.[step.subject] as MapConceptContent | undefined) : undefined;
+    return { inputs: { plan: sha(groupFileWithoutAudits(readFileSync(join(ROOT, groupFile(group)), "utf8"))), cycle: String(repairing ? repair!.cycle : 0), before: before ? recordFingerprint(before) : "none" } };
+  }
+  const binding = currentBinding(state, step.kind, step.subject, group);
+  return { inputs: { binding: bindingKey(binding, step.subject) }, binding };
+}
+const currentInputKey = (state: RunState, step: L2AttemptStep) => {
+  try {
+    return inputKeyOf(state.domainId, step, pipelineOf(state.l2!), attemptInputs(state, step).inputs);
+  } catch {
+    return undefined;
+  }
+};
+const attemptStepKey = (step: L2AttemptStep) => `${step.kind}:${step.subject}`;
+
+/** What durable evidence says about an attempt now (attempts.ts L2AttemptEvidence). */
+function attemptEvidence(state: RunState, attempt: L2Attempt, sessions: readonly L2SpendSession[]): L2AttemptEvidence {
+  const recorded = state.l2!.steps[attemptStepKey(attempt.step)];
+  const committed = Boolean(recorded?.attempts?.includes(attempt.id));
+  const inputKey = currentInputKey(state, attempt.step);
+  const marker = attemptMarker(attempt.id);
+  const own = sessions.filter((session) => session.description.includes(marker));
+  let output: L2AttemptEvidence["output"] = { state: "missing" };
+  if (attempt.step.kind === "author") {
+    if (committed && recorded?.fingerprint) output = { state: "valid", ref: recorded.fingerprint, key: attempt.inputKey };
+    else if (recordOf(attempt.step.subject)) output = { state: "missing", detail: "a draft is in data.ts but was never recorded with this attempt" };
+  } else if (attempt.binding) {
+    const group = attempt.step.kind === "group-audit" ? attempt.step.subject : groupOfConcept(state, attempt.step.subject)!;
+    const stale = inputKey !== attempt.inputKey;
+    try {
+      const named = readArtifacts(auditWorkDir(state), { run: state.domainId, subject: attempt.step.subject, binding: attempt.binding, concepts: auditedConcepts(attempt.step.kind, attempt.step.subject, group), textOf: recordText }).filter((artifact) => artifact.attempt === attempt.id);
+      // An attempt's output is one artifact of its own step, the one it captured: another naming it is not its output.
+      const problems = named.map((artifact) => artifactAttemptProblem(attempt, artifact, artifactRef(artifact))).filter(Boolean);
+      const found = named.find((artifact) => !artifactAttemptProblem(attempt, artifact, artifactRef(artifact)));
+      if (problems.length && (!attempt.output || named.length > 1)) output = { state: "invalid", detail: problems.join("; ") };
+      else if (found) output = { state: stale ? "stale" : "valid", ref: artifactRef(found), key: found.key, ...(stale ? { detail: "the records or neighbours it judged have changed" } : {}) };
+    } catch (error) {
+      if (!(error instanceof AuditArtifactError)) throw error;
+      // An artifact for older evidence is read against the current record text, so it may no longer validate: stale before invalid.
+      output = stale ? { state: "stale", detail: "the records or neighbours it judged have changed" } : { state: "invalid", detail: (error as Error).message };
+    }
+  }
+  return { ...(inputKey ? { inputKey } : {}), output, committed, sessions: own };
+}
+
+/** Every attempt of the run reconciled against its evidence: applied under the log's lock, or only reported. */
+function reconcileAttempts(state: RunState, apply: boolean) {
+  const sessions = measure(state);
+  const path = attemptsPath(state.domainId);
+  const run = (log: L2AttemptLog) => {
+    const results = log.attempts.map((attempt) => reconcile(attempt, attemptEvidence(state, attempt, sessions), now()));
+    return { log: { ...log, attempts: results.map((result) => result.attempt) }, result: results };
+  };
+  return apply ? updateAttemptLog(path, state.domainId, run) : run(readAttemptLog(path, state.domainId)).result;
+}
+
+/** Begins an attempt for a step of a tracked run (reconciling first), or refuses why it must not start. */
+function beginRunAttempt(state: RunState, step: L2AttemptStep): L2Attempt {
+  if (!tracksAttempts(state)) fail(`${state.domainId} does not track attempts (${state.l2?.attempts ? describePipeline(pipelineOf(state.l2)) : "it predates attempt tracking, or is not a simplified v2 run"}): its steps run as before, without attempt records`, 1);
+  const expected = expectedRole(state, step.kind, step.subject);
+  if (step.role !== expected) fail(`${step.subject} needs a ${expected} attempt now, not a ${step.role}`, 1);
+  if (step.kind !== "author") {
+    const group = step.kind === "group-audit" ? step.subject : groupOfConcept(state, step.subject);
+    const undrafted = group ? pendingDrafts(state, group) : [];
+    if (undrafted.length) fail(`${group}'s drafts come before its audits: ${undrafted.join(", ")} not drafted yet`, 1);
+    if (!(AUDITORS[step.role as L2AuditRole] ?? []).includes(step.auditor ?? "")) fail(`a ${step.role} is performed by auditor ${AUDITORS[step.role as L2AuditRole].join(" or ")}`, 1);
+  }
+  reconcileAttempts(state, true);
+  try {
+    const { inputs, binding } = attemptInputs(state, step);
+    return updateAttemptLog(attemptsPath(state.domainId), state.domainId, (log) => {
+      const begun = beginAttempt(log, { step, pipeline: { mode: pipelineOf(state.l2!).mode, version: pipelineOf(state.l2!).version }, inputs, ...(binding ? { binding } : {}), ...(flag("--model") ? { model: flag("--model") } : {}), now: now() });
+      return { log: begun.log, result: begun.attempt };
+    });
+  } catch (error) {
+    if (error instanceof AttemptError) fail(error.message, 1);
+    throw error;
+  }
+}
+
+/** `l2 attempts [--json]`: every attempt, what its evidence says, and the decision it waits for. Writes nothing. */
+function commandL2Attempts() {
+  const state = activeState();
+  if (!tracksAttempts(state)) return console.log(`${state.domainId} does not track attempts: ${state.l2?.attempts ? "it is not group-batched" : "it was started before attempt tracking, or is a legacy or simplified v1 run"}; its steps run as before`);
+  const results = reconcileAttempts(state, false);
+  if (flags.has("--json")) return console.log(JSON.stringify(results.map((result) => ({ attempt: result.attempt, wouldChange: result.changed, explanation: result.explanation, ...(result.decision ? { decision: result.decision } : {}) })), null, 2));
+  if (!results.length) return console.log(`no attempts in ${state.domainId}`);
+  for (const result of results) {
+    const attempt = result.attempt;
+    console.log(`${attempt.id} ${stepId(attempt.step).padEnd(48)} ${attempt.status}${result.changed ? " (reconcile would update it)" : ""}${attempt.usage ? ` $${attempt.usage.usd.toFixed(2)}` : ""}: ${result.explanation}`);
+    if (result.decision) console.log(`  DECISION NEEDED: ${result.decision}`);
+  }
+}
+
+/** `l2 reconcile [--json]`: recovers an interrupted commit (on load) and moves each attempt as its evidence requires. Idempotent. */
+function commandL2Reconcile() {
+  const state = activeState();
+  if (!tracksAttempts(state)) return console.log(`${state.domainId} does not track attempts: nothing to reconcile beyond its commit journal (none pending)`);
+  const results = reconcileAttempts(state, true);
+  if (flags.has("--json")) return console.log(JSON.stringify(results.map((result) => ({ id: result.attempt.id, status: result.attempt.status, changed: result.changed, explanation: result.explanation, ...(result.decision ? { decision: result.decision } : {}) })), null, 2));
+  const changed = results.filter((result) => result.changed);
+  for (const result of changed) console.log(`${result.attempt.id} ${stepId(result.attempt.step)} -> ${result.attempt.status}: ${result.explanation}`);
+  for (const result of results.filter((entry) => entry.decision)) console.log(`DECISION NEEDED ${result.attempt.id}: ${result.decision}`);
+  console.log(`${changed.length} of ${results.length} attempt(s) updated; ${results.filter((entry) => entry.decision).length} wait for a decision`);
+}
+
+/**
+ * `l2 attempt begin <author|audit|group-audit> <subject> --role <r> [--auditor X] [--model m]`,
+ * `launch <id> --ref <launch reference>` (a launcher other than the hook), `fail <id> --reason ..`,
+ * `interrupt <id> --reason ..` (its process is gone), `decide <id> --relaunch|--abandon --reason ..`,
+ * `release <id> --reason ..` (a resolved attempt's unmeasured reserve), `show <id>`.
+ */
+function commandL2Attempt() {
+  const state = activeState();
+  const sub = positional[0];
+  if (sub === "begin") {
+    const kind = positional[1] as L2AttemptStep["kind"];
+    if (!["author", "audit", "group-audit"].includes(kind)) fail("attempt begin <author|audit|group-audit> <subject> --role <role> [--auditor X]");
+    const subject = positional[2] ?? fail("attempt begin needs the subject");
+    const role = (flag("--role") ?? expectedRole(state, kind, subject)) as L2AttemptRole;
+    const attempt = beginRunAttempt(state, { kind, subject, role, ...(flag("--auditor") ? { auditor: flag("--auditor") } : {}) });
+    if (flags.has("--json")) return console.log(JSON.stringify(attempt, null, 2));
+    return console.log(`attempt ${attempt.id} begun (pending) for ${stepId(attempt.step)}; launch its agent described \`${taskDescription(attempt)}\`${kind === "author" ? `, and record its draft with \`${CLI} record author ${subject} --attempt ${attempt.id}\`` : ""}`);
+  }
+  if (!tracksAttempts(state)) fail(`${state.domainId} does not track attempts`, 1);
+  const id = positional[1] ?? fail(`attempt ${sub ?? "<command>"} needs an attempt id`);
+  const change = (make: (attempt: L2Attempt) => L2Attempt) => {
+    try {
+      return updateAttemptLog(attemptsPath(state.domainId), state.domainId, (log) => {
+        const next = make(attemptIn(log, id));
+        return { log: withAttempt(log, next), result: next };
+      });
+    } catch (error) {
+      if (error instanceof AttemptError) fail(error.message, 1);
+      throw error;
+    }
+  };
+  const reason = () => flag("--reason") ?? fail("give --reason \"..\"");
+  switch (sub) {
+    case "show": {
+      const log = readAttemptLog(attemptsPath(state.domainId), state.domainId);
+      const attempt = log.attempts.find((entry) => entry.id === id) ?? fail(`no attempt ${id}`, 1);
+      const evidence = attemptEvidence(state, attempt, measure(state));
+      return console.log(JSON.stringify({ attempt, evidence: { ...evidence, sessions: evidence.sessions.length }, reconciliation: reconcile(attempt, evidence, now()) }, null, 2));
+    }
+    case "launch": {
+      // A launcher other than the Claude Code hook reserves under the same cap: the launch is refused, and the attempt stays pending, when it does not fit.
+      const ref = flag("--ref") ?? fail("attempt launch needs --ref <the launcher's reference for the session>");
+      const budget = state.l2?.budget ?? fail(`${state.domainId} has no budget: every L2 run is capped`, 1);
+      const attempt = readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts.find((entry) => entry.id === id) ?? fail(`no attempt ${id} in ${state.domainId}`, 1);
+      let launched: ReturnType<typeof launchAttempt>;
+      try {
+        launched = launchAttempt({ attemptsPath: attemptsPath(state.domainId), ledgerPath: ledgerPath(state.domainId), run: state.domainId, budget, measure: () => measure(state), id, ref, description: taskDescription(attempt), now: now() });
+      } catch (error) {
+        if (error instanceof AttemptError || error instanceof BudgetLockError) fail(`attempt ${id} was not launched: ${error.message}`, 1);
+        throw error;
+      }
+      if (!launched.ok) fail(`attempt ${id} was not launched: ${launched.problem}${launched.status ? `. ${describeBudget(launched.status)}` : ""}`, 1);
+      return console.log(`${id} running (launch ${ref} reserved; it holds until its session is measured or a human releases it: \`${CLI} budget release ${ref} --reason ..\`)`);
+    }
+    case "release": {
+      // A resolved attempt whose spend was never measured keeps its reserve until a human says what it cost is accounted for.
+      const next = change((attempt) => releaseHold(attempt, flag("--reason"), now()));
+      return console.log(`${next.id}: its reserve is released (${next.holdReleased!.reason}); its spend is no longer held against the cap`);
+    }
+    case "fail":
+      return console.log(`${change((attempt) => transition(attempt, "failed", now(), reason())).id} failed`);
+    case "interrupt":
+      return console.log(`${change((attempt) => transition(attempt, "interrupted", now(), reason())).id} interrupted: decide it before beginning another (\`${CLI} attempt decide ${id} --relaunch|--abandon --reason ..\`)`);
+    case "decide": {
+      const kind = flags.has("--relaunch") ? "relaunch" : flags.has("--abandon") ? "abandon" : fail("attempt decide needs --relaunch or --abandon");
+      if (flags.has("--relaunch") && flags.has("--abandon")) fail("attempt decide takes --relaunch or --abandon, not both");
+      const next = change((attempt) => decide(attempt, kind, flag("--reason"), now()));
+      return console.log(`${next.id} failed by decision (${kind})${kind === "relaunch" ? `; begin a new attempt for ${stepId(next.step)}` : ""}`);
+    }
+    default:
+      fail("attempt begin|launch|fail|interrupt|decide|release|show");
+  }
+}
+
 // ---------------------------------------------------------------- budget
 
 /** The run's hard spending cap from `--budget-usd` (and `--reserve`, `--headroom-usd`), or a refusal: every L2 run is capped. */
@@ -1145,7 +1508,9 @@ const budgetHookProblems = () =>
 function budgetLine(state: RunState): string {
   const budget = state.l2?.budget;
   if (!budget) return `budget: none (the run predates spending caps; \`${CLI} budget set --usd <n> --decision ".."\` sets one)`;
-  const status = budgetStatus(budget, measure(state), readLedger(ledgerPath(state.domainId), state.domainId));
+  const sessions = measure(state);
+  const ledger = readLedger(ledgerPath(state.domainId), state.domainId);
+  const status = budgetStatus(budget, sessions, ledger, state.l2?.attempts ? attemptsAdapter.extra(state.domainId, sessions, ledger, budget) : {});
   const exhausted = launchProblem(budget, status, Object.entries(budget.reserves).sort((a, b) => a[1] - b[1])[0][0]);
   return `${describeBudget(status)}${exhausted ? `\nBUDGET: ${exhausted}; no model work starts until a human decides (\`${CLI} budget set|release\`)` : ""}`;
 }
@@ -1174,7 +1539,9 @@ function commandL2Budget() {
     case "status": {
       const budget = state.l2?.budget;
       if (!budget) return console.log(budgetLine(state));
-      const status = budgetStatus(budget, measure(state), readLedger(path, state.domainId));
+      const sessions = measure(state);
+      const ledger = readLedger(path, state.domainId);
+      const status = budgetStatus(budget, sessions, ledger, state.l2?.attempts ? attemptsAdapter.extra(state.domainId, sessions, ledger, budget) : {});
       if (flags.has("--json")) return console.log(JSON.stringify({ budget, status }, null, 2));
       console.log(budgetLine(state));
       for (const entry of status.open) console.log(`  open ${entry.id} ${entry.role}: holds $${entry.heldUsd.toFixed(2)} (spent $${entry.spentUsd.toFixed(2)}), since ${entry.at}${entry.reporting ? "" : ", no session reporting yet"}${entry.description ? ` (${entry.description})` : ""}`);
@@ -2461,6 +2828,18 @@ try {
     case "submit-audit":
       if (!l2Mode) fail("submit-audit is an l2 command");
       commandL2SubmitAudit();
+      break;
+    case "attempts":
+      if (!l2Mode) fail("attempts is an l2 command");
+      commandL2Attempts();
+      break;
+    case "attempt":
+      if (!l2Mode) fail("attempt is an l2 command");
+      commandL2Attempt();
+      break;
+    case "reconcile":
+      if (!l2Mode) fail("reconcile is an l2 command");
+      commandL2Reconcile();
       break;
     case "audit-task":
       if (!l2Mode) fail("audit-task is an l2 command");
