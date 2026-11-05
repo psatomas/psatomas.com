@@ -1,6 +1,8 @@
-# L2 simplified pipeline, version 1
+# L2 simplified pipeline
 
-The agent instructions for slices started with `npm run map:author -- l2 start --slice <id> --pipeline simplified`.
+The agent instructions for slices started with `npm run map:author -- l2 start --slice <id> --pipeline simplified`
+(version 2, the current one) or `--pipeline simplified@1` (version 1). Version 2 runs each group drafts-first and
+records audits from the auditors' submitted findings: read [v2.md](v2.md) with each step's instructions.
 The mode, its version and its routing are defined in
 [`pipeline.ts`](../../../src/lib/map/authoring/l2/pipeline.ts); the procedure is
 [`l2-authoring.md`](../l2-authoring.md), "Pipeline modes". These files are the instructions for version 1. A change
@@ -33,3 +35,9 @@ What differs from the legacy pipeline:
 
 - 1 (2026-10-29): first version, from the campaign prompts of computation-execution-2 and the pipeline benchmark of
   2026-10-28/29 (arm C).
+- 2 (2026-11-05): group-batched ([v2.md](v2.md)). Each group drafts every owned concept before any first audit, so
+  both independent first auditors see every sibling's record; auditors submit immutable, structured findings
+  (`l2 submit-audit`) and only the orchestrator records them, so a group's audits can run concurrently; overlap
+  neighbours add the member's exclusions and the authored concepts its record names; `l2 repair-diff` shows what a
+  repair changed. Unchanged: both first audits, repair limits and exceptions, signal coverage, fingerprints, group
+  audits, budget, drift and every gate. Version 1 runs keep their order and contract.

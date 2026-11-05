@@ -18,7 +18,8 @@ import type { MapConceptContent, MapKnowledgeModel } from "../../types.ts";
 import { contentFingerprint } from "../representation/design.ts";
 import { assembleL2Context } from "./context.ts";
 import { conceptWorkOf, type L2ConceptWork, type L2Coverage, type L2GroupAudit } from "./contracts.ts";
-import { conceptSignals, groupSignals, relationalId, type L2Relation, type L2Signal } from "./signals.ts";
+import { isBatched } from "./pipeline.ts";
+import { conceptSignals, groupSignals, mentionedConcepts, relationalId, type L2Relation, type L2Signal } from "./signals.ts";
 import type { L2GroupFile } from "./territory.ts";
 
 /** One recorded review: the records it is bound to (by fingerprint) and the signal ids it resolved. */
@@ -91,7 +92,40 @@ type ContextOptions = Parameters<typeof assembleL2Context>[3];
 function relationalNeighbours(model: MapKnowledgeModel, plans: readonly L2GroupFile[], conceptId: string, context: ReturnType<typeof assembleL2Context>): string[] {
   const listing = plans.filter((plan) => plan.group !== context.owner?.group && plan.members.some((member) => member.conceptId === conceptId));
   const reverse = listing.flatMap((plan) => plan.members.filter((member) => member.standing === "owned").map((member) => member.conceptId));
-  return [...new Set([...context.authoredNeighbours, ...reverse])].filter((id) => id !== conceptId && recordIn(model, id)).sort();
+  const owner = plans.find((plan) => plan.group === context.owner?.group);
+  // Group-batched plans (simplified v2) also compare against what the record must not explain and what it names.
+  const expanded = isBatched(owner) ? expandedNeighbours(model, conceptId, context) : [];
+  return [...new Set([...context.authoredNeighbours, ...reverse, ...expanded])].filter((id) => id !== conceptId && recordIn(model, id)).sort();
+}
+
+/** The most authored concepts a record's naming adds to its neighbours: a bound, so a record that names many concepts stays cheap to check. */
+export const MAX_REFERENCED_NEIGHBOURS = 16;
+
+/** Every concept above a concept's placements in the taxonomy: their texts are premises (parent overlap), not neighbours. */
+function ancestorsOf(model: MapKnowledgeModel, conceptId: string): Set<string> {
+  const byId = new Map(model.placements.map((placement) => [placement.id, placement]));
+  const ancestors = new Set<string>();
+  for (const placement of model.placements.filter((entry) => entry.conceptId === conceptId)) {
+    for (let parent = placement.parentPlacementId ? byId.get(placement.parentPlacementId) : undefined; parent; parent = parent.parentPlacementId ? byId.get(parent.parentPlacementId) : undefined) ancestors.add(parent.conceptId);
+  }
+  return ancestors;
+}
+
+/**
+ * Neighbours a group-batched plan adds, deterministically: every concept the
+ * member excludes (it may be named, never explained: an overlap is the
+ * leakage to look at), and the authored concepts its record names (signals.ts
+ * mentionedConcepts), at most MAX_REFERENCED_NEIGHBOURS of them in id order,
+ * never the concept's own ancestors.
+ */
+export function expandedNeighbours(model: MapKnowledgeModel, conceptId: string, context: ReturnType<typeof assembleL2Context>): string[] {
+  const excludes = [...(context.plan?.excludes ?? [])].sort();
+  const record = recordIn(model, conceptId);
+  if (!record) return excludes;
+  const ancestors = ancestorsOf(model, conceptId);
+  const nearby = new Set([...context.siblingTerritory.map((sibling) => sibling.conceptId), ...context.hazards.pairs.flatMap((pair) => pair.concepts), ...excludes]);
+  const named = mentionedConcepts(record, model, conceptId, nearby).filter((id) => !ancestors.has(id) && !excludes.includes(id) && recordIn(model, id));
+  return [...excludes, ...named.slice(0, MAX_REFERENCED_NEIGHBOURS)];
 }
 
 /** An authored concept's audit signals, from its record, context, work and authored neighbours. */

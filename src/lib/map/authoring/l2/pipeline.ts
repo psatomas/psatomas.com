@@ -11,6 +11,14 @@
  *   to explain and assert nothing), then drafting and audits. No model or
  *   design is persisted; the author decides the representation, and the
  *   audit judges it.
+ *   - version 1: each concept is drafted and audited in turn; auditors record
+ *     their own audit.
+ *   - version 2: group-batched (campaign.ts sliceSteps): every owned concept
+ *     of a group is drafted before any of them is audited, so both first
+ *     auditors see every sibling's record; auditors submit immutable,
+ *     structured findings (audit-artifacts.ts) and only the orchestrator
+ *     records them; overlap neighbours include explicit exclusions and
+ *     authored concepts the record names (coverage.ts).
  *
  * Everything after drafting is the same in both modes: two independent first
  * audits, fingerprint-bound audit records, territory, group audits, repair
@@ -30,7 +38,7 @@ export type L2Pipeline = { mode: L2PipelineMode; version: number; routing?: L2Ro
 /** Each mode's current version, and where its versioned agent instructions live. */
 export const PIPELINES: Record<L2PipelineMode, { version: number; instructions: string; roles: readonly L2Role[] }> = {
   legacy: { version: 1, instructions: "docs/map-authoring/l2-authoring.md", roles: L2_ROLES },
-  simplified: { version: 1, instructions: "docs/map-authoring/l2-simplified/", roles: L2_ROLES.filter((role) => role !== "design") },
+  simplified: { version: 2, instructions: "docs/map-authoring/l2-simplified/", roles: L2_ROLES.filter((role) => role !== "design") },
 };
 
 /**
@@ -72,10 +80,33 @@ export function parseRouting(text: string | undefined, mode: L2PipelineMode): L2
 
 /** A mode known to this tooling, or a PipelineError. */
 export function pipelineMode(mode: string | undefined): L2PipelineMode {
-  const chosen = (mode ?? "legacy") as L2PipelineMode;
-  if (!(chosen in PIPELINES)) throw new PipelineError(`unknown pipeline ${mode}: legacy or simplified`);
+  const chosen = ((mode ?? "legacy").split("@")[0]) as L2PipelineMode;
+  if (!(chosen in PIPELINES)) throw new PipelineError(`unknown pipeline ${mode}: legacy or simplified (simplified@<version> for an earlier version)`);
   return chosen;
 }
+
+/**
+ * The version a `--pipeline` argument asks for: `<mode>` is the mode's current
+ * version, `<mode>@<n>` an earlier one (a slice that must stay on it, or a
+ * rollback). Unknown versions are refused.
+ */
+export function pipelineVersion(spec: string | undefined): number {
+  const mode = pipelineMode(spec);
+  const [, version, extra] = (spec ?? "").split("@");
+  if (version === undefined) return PIPELINES[mode].version;
+  const chosen = Number(version);
+  if (extra !== undefined || !Number.isInteger(chosen) || chosen < 1 || chosen > PIPELINES[mode].version) throw new PipelineError(`${mode} pipeline version ${version} is not one this tooling knows (1..${PIPELINES[mode].version})`);
+  return chosen;
+}
+
+/** The `--pipeline` argument that names exactly this pipeline: what a run's own messages pass on, so a resumed run never writes another version's files. */
+export const pipelineSpec = (pipeline: L2Pipeline) => (pipeline.mode === "legacy" ? "legacy" : `${pipeline.mode}@${pipeline.version}`);
+
+/** Whether a pipeline runs group-batched (simplified version 2 onward): every draft of a group before any of its audits. */
+export const isBatched = (holder: { pipeline?: L2Pipeline } | L2Pipeline | undefined) => {
+  const pipeline = holder && "mode" in holder ? holder : pipelineOf(holder as { pipeline?: L2Pipeline } | undefined);
+  return pipeline.mode === "simplified" && pipeline.version >= 2;
+};
 
 /**
  * The pipeline a new run starts with: a known mode at its current version,
@@ -85,9 +116,10 @@ export function pipelineMode(mode: string | undefined): L2PipelineMode {
  */
 export function startPipeline(mode: string | undefined, routing?: string): L2Pipeline {
   const chosen = pipelineMode(mode);
+  const version = pipelineVersion(mode);
   const overrides = parseRouting(routing, chosen);
   const defaults = Object.fromEntries(Object.entries(DEFAULT_ROUTING[chosen]).filter(([role]) => PIPELINES[chosen].roles.includes(role as L2Role)));
-  return { mode: chosen, version: PIPELINES[chosen].version, routing: { ...defaults, ...overrides } };
+  return { mode: chosen, version, routing: { ...defaults, ...overrides } };
 }
 
 export const describePipeline = (pipeline: L2Pipeline) => `${pipeline.mode} pipeline v${pipeline.version}`;

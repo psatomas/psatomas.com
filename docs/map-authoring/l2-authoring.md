@@ -421,7 +421,7 @@ a version; a change to what its agents do is a new version.
 - **legacy** (the default, version 1): everything this document describes:
   territory plans with assertion claims, then a persisted concept model and
   representation design per concept (above), then drafting and audits.
-- **simplified** (version 1): territory plans whose claims are **topic
+- **simplified** (version 2; version 1 with `--pipeline simplified@1`): territory plans whose claims are **topic
   labels**, then drafting and audits, with no model or design step. A topic
   label is one short phrase naming a question the concept must explain; it
   asserts nothing, so the accuracy of every statement is the author's and the
@@ -433,12 +433,38 @@ a version; a change to what its agents do is a new version.
   [`l2-simplified/`](l2-simplified/README.md).
 
 The mode is recorded twice, and both must agree: in the run state, and as
-`"pipeline": { "mode": "simplified", "version": 1 }` in each of the slice's
+`"pipeline": { "mode": "simplified", "version": 2 }` (the run's version) in each of the slice's
 group files, so a committed plan validates under the mode it was written for
 on any checkout. A run state or group file without one is legacy, which keeps
 every plan merged before modes existed valid as it was accepted. Under the
 simplified mode a group file's `concepts` holds only audits, created when the
 first one is recorded, and a model or design there is refused.
+
+**Simplified version 2** changes the order and the audit contract, nothing
+else ([`l2-simplified/v2.md`](l2-simplified/v2.md)):
+
+- after every plan, each group drafts all its owned concepts, then audits
+  each (both independent first audits, with every sibling's record in place),
+  then is audited as a group, before the next group starts
+  ([`campaign.ts`](../../src/lib/map/authoring/l2/campaign.ts) `sliceSteps`);
+  an audit of a group is refused while any of its drafts is missing;
+- auditors submit structured findings (verdict, note, and for each finding its
+  severity, concept, evidence and required action) with `l2 submit-audit`; each
+  is published as an immutable artifact bound to the records it judged
+  ([`audit-artifacts.ts`](../../src/lib/map/authoring/l2/audit-artifacts.ts)),
+  so a group's audits can run concurrently, and only the orchestrator records
+  audits (`l2 record audit|group-audit`, from the artifacts; `--audit-file` is
+  refused). A first audit needs both A and B; any blocking finding refuses it
+  and `l2 reopen --from-findings` opens the repair;
+- overlap neighbours add the member's exclusions and up to 16 authored
+  concepts its record names (never its ancestors);
+- reopening keeps each record as its failing audit judged it, and
+  `l2 repair-diff <id>` shows what the repair changed.
+
+The version is fixed per run: a version 1 run keeps the version 1 order and
+contract when resumed, and its messages write version 1 group files
+(`--pipeline simplified@1`). A group file of another version than the run's is
+refused when its plan is recorded.
 
 What does not change between modes: two independent first audits per concept,
 audit records bound to record fingerprints, territory (excludes, splits,
