@@ -74,7 +74,12 @@ export type L2RunRecord = {
   /** A partial run's selected groups (l2/campaign.ts L2RunScope); absent for a full-slice run. */
   scope?: L2RunScope;
   /** Each recorded judgment step ("plan:<group>", "design:<concept>", ...), when, and for drafting and audits the record they bound. */
-  steps: Record<string, { at: string; note?: string; fingerprint?: string }>;
+  steps: Record<string, { at: string; note?: string; fingerprint?: string; attempts?: string[] }>;
+  /**
+   * Attempt tracking (l2/attempts.ts): set when a group-batched (simplified v2) run starts. Absent in runs started
+   * before attempts existed and in every legacy and simplified v1 run, which keep running without them.
+   */
+  attempts?: { version: 1 };
   /** Concepts whose design blocks them: they stay unauthored. */
   blocked: string[];
   /** Repair cycles each concept has been reopened in: more than the allowance stops the run (repairAllowance). */
@@ -231,7 +236,7 @@ export function createL2RunState(input: { slice: L2Slice; remaining: readonly st
   return {
     version: 1,
     kind: "l2",
-    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(input.scope ? { scope: input.scope } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
+    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(isBatched(input.pipeline) ? { attempts: { version: 1 as const } } : {}), ...(input.scope ? { scope: input.scope } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
     domainId: l2RunId(input.slice, input.scope),
     title: input.scope ? `${title}, ${scoped.map((group) => group.title).join(", ")}` : title,
     branch: input.branch,
@@ -293,6 +298,8 @@ export function createL2RepairRunState(
     l2: {
       slice: { ...record.slice, groups },
       ...(record.pipeline ? { pipeline: record.pipeline } : {}),
+      // A repair run tracks attempts when its pipeline does, whether or not the merged run did.
+      ...(isBatched(record.pipeline) ? { attempts: { version: 1 as const } } : {}),
       steps,
       blocked: [],
       repairs,
@@ -452,7 +459,7 @@ const groupOf = (record: L2RunRecord, conceptId: string) => record.slice.groups.
  * reopened first (reopenL2), which counts the cycle. Re-recording an audit
  * whose record is unchanged only replaces its note, and counts nothing.
  */
-export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject: string }, now: string, options: { blocks?: boolean; note?: string; fingerprint?: string } = {}): RunState {
+export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject: string }, now: string, options: { blocks?: boolean; note?: string; fingerprint?: string; attempts?: readonly string[] } = {}): RunState {
   assertLive(state);
   if (state.kind !== "l2" || !state.l2) throw new RunStateError("steps belong to L2 runs");
   const record = state.l2;
@@ -479,7 +486,9 @@ export function recordL2Step(state: RunState, step: { kind: L2StepKind; subject:
   const earlier = pendingL2Steps(state).filter((pending) => all.findIndex((candidate) => stepKey(candidate) === stepKey(pending)) < index);
   if (earlier.length) throw new RunStateError(`record ${stepKey(earlier[0])} first`);
   if (step.kind === "author" && atL2Checkpoint(state)) throw new RunStateError("the pilot checkpoint holds drafting until a human has reviewed every plan and design");
-  const steps = { ...record.steps, [key]: { at: now, ...(options.note ? { note: options.note } : {}), ...(options.fingerprint ? { fingerprint: options.fingerprint } : {}) } };
+  // A step recorded from attempts names them: durable evidence that recovery reads (l2/attempts.ts reconcile).
+  if (options.attempts?.length && record.steps[key]?.attempts?.some((id) => options.attempts!.includes(id))) throw new RunStateError(`${key} is already recorded from attempt(s) ${record.steps[key].attempts!.filter((id) => options.attempts!.includes(id)).join(", ")}: a duplicate commit`);
+  const steps = { ...record.steps, [key]: { at: now, ...(options.note ? { note: options.note } : {}), ...(options.fingerprint ? { fingerprint: options.fingerprint } : {}), ...(options.attempts?.length ? { attempts: [...options.attempts] } : {}) } };
   let concepts = state.concepts;
   const blocked = step.kind === "design" && options.blocks ? [...new Set([...record.blocked, step.subject])] : step.kind === "design" ? record.blocked.filter((conceptId) => conceptId !== step.subject) : record.blocked;
   if (step.kind === "audit" || (step.kind === "design" && options.blocks)) concepts = { ...concepts, [step.subject]: { done: true, at: now } };
@@ -981,12 +990,15 @@ export function nextAction(state: RunState): NextAction {
     const via = (role: keyof typeof routing) => (simplified && routing[role] ? ` (${routing[role]})` : "");
     // Group-batched runs (simplified v2): auditors submit immutable findings; only these commands record them.
     const batched = isBatched(pipeline);
+    // A run that tracks attempts begins each model step as an attempt, its inputs persisted, before launching it.
+    const attempt = (role: string) => (batched && state.l2!.attempts ? `first \`map:author -- l2 attempt begin author ${step.subject} --role ${role}\` and launch the agent with the description it prints; ` : "");
+    const withAttempt = (command: string) => (batched && state.l2!.attempts ? `${command} --attempt <id>` : command);
     const v2 = `${instructions}v2.md`;
     const repairing = state.l2!.repair;
     if (repairing && (repairing.concepts.includes(step.subject) || repairing.groups.includes(step.subject))) {
       const repairMessages: Partial<Record<L2StepKind, string>> = {
         author: simplified
-          ? `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context${via("repair")}, within its accepted territory (${instructions}repair.md); if the finding needs its territory changed, re-record its plan first; then \`map:author -- l2 record author ${step.subject}\``
+          ? `${attempt("repair")}repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context${via("repair")}, within its accepted territory (${instructions}repair.md); if the finding needs its territory changed, re-record its plan first; then \`${withAttempt(`map:author -- l2 record author ${step.subject}`)}\``
           : `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
         audit: batched
           ? `re-audit ${step.subject} in a fresh context${via("re-audit")} against its record as repaired (\`map:author -- l2 repair-diff ${step.subject}\` shows what changed); give the auditor only its own prompt, \`map:author -- l2 audit-task ${step.subject} --role re-audit --auditor R\` (${v2}); then \`map:author -- l2 record audit ${step.subject}\`, or \`l2 reopen ${step.subject} --from-findings\` on a blocking finding`
@@ -1004,7 +1016,7 @@ export function nextAction(state: RunState): NextAction {
         : `write ${step.subject}'s territory plan: \`map:author -- l2 territory ${step.subject} --write\`, fill claims, reservations and splits, then \`map:author -- l2 record plan ${step.subject}\``,
       design: `model and design ${step.subject} in ${step.group}'s group file from \`map:author -- l2 context ${step.subject}\`, then \`map:author -- l2 record design ${step.subject}\``,
       author: simplified
-        ? `author ${step.subject} in a fresh context${via("author")} from \`map:author -- l2 context ${step.subject}\` and its plan's topic labels, choosing its representation (${instructions}author.md); register it, check \`map:author -- l2 signals ${step.subject}\`, then \`map:author -- l2 record author ${step.subject}\` (recorded once: later changes are repairs)`
+        ? `${attempt("author")}author ${step.subject} in a fresh context${via("author")} from \`map:author -- l2 context ${step.subject}\` and its plan's topic labels, choosing its representation (${instructions}author.md); register it, check \`map:author -- l2 signals ${step.subject}\`, then \`${withAttempt(`map:author -- l2 record author ${step.subject}`)}\` (recorded once: later changes are repairs)`
         : `author ${step.subject} in a fresh context from \`map:author -- l2 context ${step.subject}\` and its design, register it, check \`map:author -- l2 signals ${step.subject}\`, then \`map:author -- l2 record author ${step.subject}\` (recorded once: later changes are repairs)`,
       audit: batched
         ? `first audits of ${step.subject}: two independent auditors, A and B, each in its own fresh context${via("first-audit")} and never shown the other's findings, judge it with every sibling's record in place; give each only its own prompt, \`map:author -- l2 audit-task ${step.subject} --role first-audit --auditor A\` and \`.. --auditor B\` (${v2}; the audits of the group's concepts may run concurrently); then \`map:author -- l2 record audit ${step.subject}\`, or \`l2 reopen ${step.subject} --from-findings\` on a blocking finding`

@@ -11,7 +11,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { launchGate, type LaunchInput } from "../src/lib/map/authoring/l2/budget-io.ts";
 import { roleOf } from "../src/lib/map/authoring/l2/cost.ts";
-import { L2_STATE_DIR, ledgerPath, measure, otherCheckouts, ROOT, transcriptsDir } from "./map-l2-budget.ts";
+import { attemptsAdapter, L2_STATE_DIR, ledgerPath, measure, otherCheckouts, ROOT, transcriptsDir } from "./map-l2-budget.ts";
 
 let input: LaunchInput;
 try {
@@ -28,7 +28,7 @@ try {
 }
 let outcome: ReturnType<typeof launchGate>;
 try {
-  outcome = launchGate(input, { stateDir: L2_STATE_DIR, branch, ledgerPath, measure, transcripts: transcriptsDir(), elsewhere: otherCheckouts(), now: new Date().toISOString(), role: roleOf });
+  outcome = launchGate(input, { stateDir: L2_STATE_DIR, branch, ledgerPath, measure, transcripts: transcriptsDir(), elsewhere: otherCheckouts(), now: new Date().toISOString(), role: roleOf, attempts: attemptsAdapter });
 } catch (error) {
   outcome = { allow: false, reason: `the budget check failed (${(error as Error).message}); no model work starts until it can run` };
 }

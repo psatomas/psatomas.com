@@ -38,7 +38,8 @@ export type L2Finding = { severity: L2Severity; concept: string; criterion?: str
 export type L2FindingsInput = { verdict: "pass" | "fail"; note: string; findings: L2Finding[]; resolutions?: L2Resolution[] };
 /** The records an artifact judged, by fingerprint; `neighbours` are a concept audit's authored neighbours (coverage.ts). */
 export type L2AuditBinding = { records: Record<string, string>; neighbours?: Record<string, string> };
-export type L2AuditArtifact = L2FindingsInput & { version: 1; run: string; subject: string; role: L2AuditRole; auditor: string; key: string; seq: number; at: string; binding: L2AuditBinding };
+/** `attempt` names the attempt (attempts.ts) that produced it, in runs that track attempts. */
+export type L2AuditArtifact = L2FindingsInput & { version: 1; run: string; subject: string; role: L2AuditRole; auditor: string; key: string; seq: number; at: string; binding: L2AuditBinding; attempt?: string };
 
 /** A published artifact is untrusted input until the orchestrator reads it. */
 export class AuditArtifactError extends Error {}
@@ -224,7 +225,7 @@ export function inboxProblem(file: string, inbox: string): string | undefined {
  * findings, artifacts or the `l2 findings` command, which are the
  * orchestrator's.
  */
-export function auditTaskPrompt(input: { run: string; subject: string; role: L2AuditRole; auditor: string; inbox: string; instructions: string }): string {
+export function auditTaskPrompt(input: { run: string; subject: string; role: L2AuditRole; auditor: string; inbox: string; instructions: string; attempt?: string }): string {
   const step = input.role === "group-audit" ? "group-audit.md" : "audit.md";
   const what =
     input.role === "first-audit"
@@ -236,7 +237,7 @@ export function auditTaskPrompt(input: { run: string; subject: string; role: L2A
     `You perform ${what}, in run ${input.run} of the MAP L2 simplified pipeline, version 2.`,
     `Read ${input.instructions}common.md, then ${input.instructions}${step}, then ${input.instructions}v2.md, and follow them. Where they differ, v2.md wins.`,
     `Write your findings, in the JSON form v2.md gives, to exactly this file and no other: ${input.inbox}`,
-    `Then submit it: npm run map:author -- l2 submit-audit ${input.subject} --role ${input.role} --auditor ${input.auditor} --file ${input.inbox}`,
+    `Then submit it: npm run map:author -- l2 submit-audit ${input.subject} --role ${input.role} --auditor ${input.auditor} --file ${input.inbox}${input.attempt ? ` --attempt ${input.attempt}` : ""}`,
     "Never run `l2 record`, `l2 reopen` or `l2 findings`, never edit records or group files, and never read, list or search the run's work directory beyond your own file: other auditors' findings and the published artifacts are the orchestrator's.",
     "Report back: PASS or FAIL, each blocking finding in one line, the number of advisory findings, and whether submit-audit succeeded.",
   ].join("\n");
@@ -258,12 +259,18 @@ export function commitAuditRecording<S>(io: {
   validate: (nextText: string) => string[];
   step: () => S;
   saveState: (state: S) => void;
+  /** Writes the group file and the run state together, crash-safely (journal.ts journaledCommit); without it, the two writes below. */
+  persist?: (nextText: string, state: S) => void;
 }): { ok: true; state: S } | { ok: false; problems: string[] } {
   const before = io.readGroup();
   const nextText = io.next(before);
   const problems = io.validate(nextText);
   if (problems.length) return { ok: false, problems };
   const state = io.step();
+  if (io.persist) {
+    io.persist(nextText, state);
+    return { ok: true, state };
+  }
   io.writeGroup(nextText);
   try {
     io.saveState(state);

@@ -53,6 +53,8 @@ export type L2SpendSession = {
   unpriced: string[];
   /** Model calls on the branch that carry no usage: their spend is unknown. */
   unmeasured: number;
+  /** Model calls measured. */
+  calls?: number;
 };
 
 export type L2Reservation = {
@@ -121,6 +123,8 @@ export type L2BudgetStatus = {
   /** What a new launch may take: the cap less spent, reserved and headroom. */
   availableUsd: number;
   open: { id: string; role: string; heldUsd: number; spentUsd: number; at: string; description?: string; reporting: boolean }[];
+  /** Of spent and reserved, what open or recorded attempts account for (attempts.ts attemptBudget). */
+  attempts?: { recordedUsd: number; heldUsd: number };
   /** Why spend cannot be measured: any entry refuses every launch. */
   unknown: string[];
 };
@@ -131,9 +135,10 @@ export type L2BudgetStatus = {
  * human releases it; until then it holds whatever of its reserve its session
  * has not yet spent.
  */
-export function budgetStatus(budget: L2Budget, sessions: readonly L2SpendSession[], ledger: L2BudgetLedger): L2BudgetStatus {
-  const spentUsd = sessions.reduce((sum, session) => sum + session.usd, 0);
+export function budgetStatus(budget: L2Budget, sessions: readonly L2SpendSession[], ledger: L2BudgetLedger, extra: L2BudgetExtra = {}): L2BudgetStatus {
+  const spentUsd = sessions.reduce((sum, session) => sum + session.usd, 0) + (extra.recordedUsd ?? 0);
   const unknown = [
+    ...(extra.unknown ?? []),
     ...[...new Set(sessions.flatMap((session) => session.unpriced))].map((model) => `model ${model} has no list price (cost.ts PRICES): its spend is unknown`),
     ...sessions.filter((session) => session.unmeasured > 0).map((session) => `${session.unmeasured} model call(s) of ${session.description} carry no usage: their spend is unknown`),
   ];
@@ -145,9 +150,18 @@ export function budgetStatus(budget: L2Budget, sessions: readonly L2SpendSession
       const spent = own.reduce((sum, session) => sum + session.usd, 0);
       return [{ id: reservation.id, role: reservation.role, heldUsd: Math.max(0, reservation.usd - spent), spentUsd: spent, at: reservation.at, ...(reservation.description ? { description: reservation.description } : {}), reporting: own.length > 0 }];
     });
-  const reservedUsd = open.reduce((sum, entry) => sum + entry.heldUsd, 0);
-  return { capUsd: budget.capUsd, spentUsd, reservedUsd, headroomUsd: budget.headroomUsd, availableUsd: budget.capUsd - spentUsd - reservedUsd - budget.headroomUsd, open, unknown };
+  const reservedUsd = open.reduce((sum, entry) => sum + entry.heldUsd, 0) + (extra.heldUsd ?? 0);
+  const attempts = extra.recordedUsd || extra.heldUsd ? { attempts: { recordedUsd: extra.recordedUsd ?? 0, heldUsd: extra.heldUsd ?? 0 } } : {};
+  return { capUsd: budget.capUsd, spentUsd, reservedUsd, headroomUsd: budget.headroomUsd, availableUsd: budget.capUsd - spentUsd - reservedUsd - budget.headroomUsd, open, unknown, ...attempts };
 }
+
+/**
+ * What a run's attempts add to its budget (attempts.ts attemptBudget): spend
+ * recorded for attempts whose sessions are no longer measured (counted as
+ * spent), reserves held for open attempts nothing else accounts for, and
+ * spend that cannot be known.
+ */
+export type L2BudgetExtra = { recordedUsd?: number; heldUsd?: number; unknown?: string[] };
 
 /** Why a launch of `role` may not start now; undefined when it may. */
 export function launchProblem(budget: L2Budget, status: L2BudgetStatus, role: string): string | undefined {
@@ -175,7 +189,7 @@ export function releaseLaunch(ledger: L2BudgetLedger, id: string, reason: string
 }
 
 export const describeBudget = (status: L2BudgetStatus) =>
-  `budget ${money(status.capUsd)}: spent ${money(status.spentUsd)} (measured), reserved ${money(status.reservedUsd)} for ${status.open.length} launch(es) still running, headroom ${money(status.headroomUsd)}, available ${money(Math.max(0, status.availableUsd))}${status.unknown.length ? `; SPEND UNKNOWN: ${status.unknown.join("; ")}` : ""}`;
+  `budget ${money(status.capUsd)}: spent ${money(status.spentUsd)} (measured${status.attempts?.recordedUsd ? `, ${money(status.attempts.recordedUsd)} of it recorded on attempts whose transcripts are gone` : ""}), reserved ${money(status.reservedUsd)} for ${status.open.length} launch(es) still running${status.attempts?.heldUsd ? ` and ${money(status.attempts.heldUsd)} for open attempts of unknown outcome` : ""}, headroom ${money(status.headroomUsd)}, available ${money(Math.max(0, status.availableUsd))}${status.unknown.length ? `; SPEND UNKNOWN: ${status.unknown.join("; ")}` : ""}`;
 
 /** The settings a project or user may keep the budget hook in. */
 export const BUDGET_HOOK = "map-l2-budget-hook";

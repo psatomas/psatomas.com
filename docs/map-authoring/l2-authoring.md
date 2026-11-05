@@ -460,6 +460,12 @@ else ([`l2-simplified/v2.md`](l2-simplified/v2.md)):
   concepts its record names (never its ancestors);
 - reopening keeps each record as its failing audit judged it, and
   `l2 repair-diff <id>` shows what the repair changed.
+- runs started from now track attempts: each model-driven step is begun
+  (`l2 attempt begin`, or `l2 audit-task`) and its inputs persisted before its
+  agent is launched; `l2 attempts`, `l2 reconcile` and
+  `l2 attempt decide|fail|interrupt|launch|show` inspect and resume them, and
+  audit recordings are crash-safe through a journal
+  ([`l2-simplified/v2.md`](l2-simplified/v2.md), "Attempts and recovery").
 
 The version is fixed per run: a version 1 run keeps the version 1 order and
 contract when resumed, and its messages write version 1 group files

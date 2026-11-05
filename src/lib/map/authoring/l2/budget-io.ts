@@ -8,7 +8,8 @@
  */
 import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
-import { budgetStatus, describeBudget, emptyLedger, reserveLaunch, type L2Budget, type L2BudgetLedger, type L2BudgetStatus, type L2Reservation, type L2SpendSession } from "./budget.ts";
+import { markerIn } from "./attempts.ts";
+import { budgetStatus, describeBudget, emptyLedger, reserveLaunch, type L2Budget, type L2BudgetExtra, type L2BudgetLedger, type L2BudgetStatus, type L2Reservation, type L2SpendSession } from "./budget.ts";
 import { sessionCost } from "./cost.ts";
 
 /** Transcript lines, read in chunks so a long session's transcript is never held whole. */
@@ -68,7 +69,7 @@ export function measureRun(transcripts: string, filter: { branch: string; since:
       const meta = json<{ description?: string; toolUseId?: string; finished?: boolean }>(metaPath) ?? {};
       const { calls, ...cost } = measured(agentPath, meta.description ?? agent);
       if (!calls && !cost.unmeasured && !meta.toolUseId) continue;
-      sessions.push({ description: meta.description ?? agent, ...(meta.toolUseId ? { toolUseId: meta.toolUseId } : {}), ...(meta.finished !== undefined ? { finished: meta.finished } : {}), ...cost });
+      sessions.push({ description: meta.description ?? agent, ...(meta.toolUseId ? { toolUseId: meta.toolUseId } : {}), ...(meta.finished !== undefined ? { finished: meta.finished } : {}), ...cost, calls });
     }
   }
   return sessions;
@@ -135,24 +136,24 @@ export function writeLedger(path: string, ledger: L2BudgetLedger): void {
  * ledger read inside it, so two launches can never both take the last of the
  * budget. A refused launch writes nothing.
  */
-export function reserveUnderLock(input: { ledgerPath: string; run: string; budget: L2Budget; measure: () => L2SpendSession[]; launch: Omit<L2Reservation, "usd"> }): { ok: true; status: L2BudgetStatus } | { ok: false; problem: string; status: L2BudgetStatus } {
+export function reserveUnderLock(input: { ledgerPath: string; run: string; budget: L2Budget; measure: () => L2SpendSession[]; launch: Omit<L2Reservation, "usd">; extra?: (sessions: readonly L2SpendSession[], ledger: L2BudgetLedger) => L2BudgetExtra }): { ok: true; status: L2BudgetStatus } | { ok: false; problem: string; status: L2BudgetStatus } {
   return withLock(input.ledgerPath, () => {
     const ledger = readLedger(input.ledgerPath, input.run);
     const sessions = input.measure();
-    const status = budgetStatus(input.budget, sessions, ledger);
+    const status = budgetStatus(input.budget, sessions, ledger, input.extra?.(sessions, ledger));
     const reserved = reserveLaunch(input.budget, status, ledger, input.launch);
     if ("problem" in reserved) return { ok: false as const, problem: reserved.problem, status };
     writeLedger(input.ledgerPath, reserved.ledger);
-    return { ok: true as const, status: budgetStatus(input.budget, sessions, reserved.ledger) };
+    return { ok: true as const, status: budgetStatus(input.budget, sessions, reserved.ledger, input.extra?.(sessions, reserved.ledger)) };
   });
 }
 
 /** Unfinished L2 runs in `stateDir` on `branch` (every unfinished run when the branch is unknown), as their state files record them. */
-export function activeRunsOn(stateDir: string, branch: string | undefined): { domainId: string; branch: string; createdAt: string; stage: string; l2?: { budget?: L2Budget } }[] {
+export function activeRunsOn(stateDir: string, branch: string | undefined): { domainId: string; branch: string; createdAt: string; stage: string; l2?: { budget?: L2Budget; attempts?: { version: number } } }[] {
   if (!existsSync(stateDir)) return [];
   return readdirSync(stateDir)
     .filter((file) => file.endsWith(".json") && file !== "campaign.json")
-    .map((file) => json<{ kind?: string; domainId: string; branch: string; createdAt: string; stage: string; l2?: { budget?: L2Budget } }>(join(stateDir, file)))
+    .map((file) => json<{ kind?: string; domainId: string; branch: string; createdAt: string; stage: string; l2?: { budget?: L2Budget; attempts?: { version: number } } }>(join(stateDir, file)))
     .filter((state): state is NonNullable<typeof state> => !!state && state.kind === "l2" && state.stage !== "done" && (branch === undefined || state.branch === branch));
 }
 
@@ -192,6 +193,16 @@ export function launchGate(
     elsewhere?: readonly { root: string; runs: readonly ActiveRun[] }[];
     now: string;
     role: (description: string) => string;
+    /**
+     * A run that tracks attempts (attempts.ts): a launch must name a pending attempt (its marker in the task
+     * description), which `claim` marks running once the launch is reserved; `extra` is what the run's attempts add
+     * to its budget. Provided by the launcher's adapter; absent, attempts are not checked.
+     */
+    attempts?: {
+      pending: (run: string, marker: string | undefined) => string | undefined;
+      claim: (run: string, marker: string, launchRef: string, now: string) => void;
+      extra: (run: string, sessions: readonly L2SpendSession[], ledger: L2BudgetLedger, budget: L2Budget) => L2BudgetExtra;
+    };
   },
 ): LaunchOutcome {
   if (input.tool_name !== "Agent" && input.tool_name !== "Task") return { allow: true };
@@ -221,13 +232,22 @@ export function launchGate(
     return { allow: false, reason: `this session's transcript (${input.transcript_path ?? "not reported"}) is not in ${where.transcripts}, where the spend of ${run.domainId} is measured, so its launches would not count toward the cap: run the session from the run's checkout root` };
   }
   const description = input.tool_input?.description ?? input.tool_input?.subagent_type ?? "agent";
+  const tracked = Boolean(run.l2?.attempts) && where.attempts;
+  const marker = markerIn(description);
+  const launchRef = input.tool_use_id ?? `launch-${where.now}-${process.pid}`;
   try {
+    // Every model launch of an attempt-tracked run is begun as an attempt first, its inputs persisted.
+    if (tracked) {
+      const problem = where.attempts!.pending(run.domainId, marker);
+      if (problem) return { allow: false, reason: problem };
+    }
     const result = reserveUnderLock({
       ledgerPath: where.ledgerPath(run.domainId),
       run: run.domainId,
       budget,
       measure: () => where.measure(run),
-      launch: { id: input.tool_use_id ?? `launch-${where.now}-${process.pid}`, role: where.role(description), at: where.now, description, ...(input.session_id ? { session: input.session_id } : {}) },
+      launch: { id: launchRef, role: where.role(description), at: where.now, description, ...(input.session_id ? { session: input.session_id } : {}) },
+      ...(tracked ? { extra: (sessions: readonly L2SpendSession[], ledger: L2BudgetLedger) => where.attempts!.extra(run.domainId, sessions, ledger, budget) } : {}),
     });
     if (!result.ok) {
       return {
@@ -235,6 +255,8 @@ export function launchGate(
         reason: `${result.problem}. No model work starts on ${run.domainId} until a human decides: raise the cap (\`npm run map:author -- l2 budget set --usd <n> --decision ".."\`), release a launch that will not finish (\`l2 budget release <id> --reason ".."\`), or stop the run (\`l2 stop\`). ${describeBudget(result.status)}`,
       };
     }
+    // The reservation is made; a failure to mark the attempt running now refuses the launch, and the reservation holds.
+    if (tracked) where.attempts!.claim(run.domainId, marker!, launchRef, where.now);
     return { allow: true, run: run.domainId, status: result.status };
   } catch (error) {
     return { allow: false, reason: `the budget of ${run.domainId} could not be checked (${(error as Error).message}); no model work starts until it can` };
