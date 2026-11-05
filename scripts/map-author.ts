@@ -801,14 +801,23 @@ async function commandL2Record() {
   if (!group) fail(`${subject} is not a concept of this slice`, 1);
   // An audit given as a file is written first, so validation reads the audit as now bound to the records.
   const auditFile = flag("--audit-file");
+  // A refused group-batched recording leaves the group file exactly as it was: no partial audit entry.
+  let restoreGroupFile: (() => void) | undefined;
   if ((kind === "audit" || kind === "group-audit") && isBatched(pipelineOf(record))) {
     // A group-batched run records audits only from the auditors' submitted findings, and only here.
     if (auditFile) fail(`${state.domainId} runs group-batched (simplified v2): audits are recorded from submitted findings (\`${CLI} submit-audit\`), never from --audit-file`, 1);
+    const path = join(ROOT, groupFile(group));
+    const before = readFileSync(path, "utf8");
+    restoreGroupFile = () => writeFileSync(path, before);
     writeAuditFromArtifacts(state, kind, subject, group);
   } else if (auditFile && (kind === "audit" || kind === "group-audit")) writeAudit(kind, subject, group, auditFile);
   const plans = readPlans();
   const plan = planOf(group);
-  const refuse = (problems: string[]) => problems.length && fail(`cannot record ${kind} ${subject}:\n  ${problems.join("\n  ")}`, 1);
+  const refuse = (problems: string[]) => {
+    if (!problems.length) return;
+    restoreGroupFile?.();
+    fail(`cannot record ${kind} ${subject}:\n  ${problems.join("\n  ")}`, 1);
+  };
   const repair = record.repair;
   // A repair stays within the territory, models and designs it was reopened with, except what it re-records.
   const scope = (extra: { redesigned?: string[]; replanned?: string[]; territoryOnly?: boolean } = {}) =>
@@ -863,7 +872,10 @@ async function commandL2Record() {
   try {
     state = recordL2Step(state, { kind, subject }, now(), { blocks, note: flag("--note"), fingerprint });
   } catch (error) {
-    if (error instanceof RunStateError) fail(error.message, 1);
+    if (error instanceof RunStateError) {
+      restoreGroupFile?.();
+      fail(error.message, 1);
+    }
     throw error;
   }
   saveState(state);
