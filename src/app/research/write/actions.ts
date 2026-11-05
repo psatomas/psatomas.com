@@ -47,3 +47,4 @@ export async function createGuestInvitationAction(name: string, email: string) {
   return invitationService.create(name, email);
 }
 export async function revokeGuestInvitationAction(id: string) { return invitationService.revoke(id); }
+export async function issueGuestReauthenticationLinkAction(id: string) { return invitationService.issueReauthenticationLink(id); }

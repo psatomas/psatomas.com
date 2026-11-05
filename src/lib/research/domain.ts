@@ -110,9 +110,10 @@ export type GuestInvitation = {
   expiresAt: string;
   submittedAt: string | null;
   revokedAt: string | null;
+  acceptedAt: string | null;
   articleId: string | null;
 };
 
-export type NewGuestInvitation = Omit<GuestInvitation, "state" | "submittedAt" | "revokedAt" | "articleId"> & {
+export type NewGuestInvitation = Omit<GuestInvitation, "state" | "submittedAt" | "revokedAt" | "acceptedAt" | "articleId"> & {
   capabilityHash: string;
 };
