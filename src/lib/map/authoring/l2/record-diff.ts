@@ -41,7 +41,11 @@ export function recordDiff(before: MapConceptContent | undefined, after: MapConc
   let i = 0;
   let j = 0;
   while (i < a.length && j < b.length) {
-    if (same(a[i], b[j])) out.push({ op: "=", where: b[j].where, text: b[j++].text }), i++;
+    if (same(a[i], b[j])) {
+      out.push({ op: "=", where: b[j].where, text: b[j].text });
+      i++;
+      j++;
+    }
     // Ties remove before they add, so a replaced sentence reads as its old text, then its new one.
     else if (table[i + 1][j] >= table[i][j + 1]) out.push({ op: "-", where: a[i].where, text: a[i++].text });
     else out.push({ op: "+", where: b[j].where, text: b[j++].text });
