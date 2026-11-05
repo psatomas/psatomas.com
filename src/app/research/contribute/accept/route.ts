@@ -2,8 +2,4 @@ import { guestContributionService } from "@/lib/research/guest-contribution-serv
 import { confirmationPage, redeemPost } from "@/lib/research/redemption-page";
 
 export async function GET() { return confirmationPage("Accept contributor invitation"); }
-
-export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
-  return redeemPost(request, () => guestContributionService.accept(token));
-}
+export async function POST(request: Request) { return redeemPost(request, (token) => guestContributionService.accept(token)); }
