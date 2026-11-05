@@ -18,7 +18,7 @@
  */
 import { createHash } from "node:crypto";
 import { existsSync, linkSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import type { L2Resolution } from "./contracts.ts";
 
 export const AUDIT_ROLES = ["first-audit", "re-audit", "group-audit"] as const;
@@ -39,6 +39,9 @@ export type L2FindingsInput = { verdict: "pass" | "fail"; note: string; findings
 /** The records an artifact judged, by fingerprint; `neighbours` are a concept audit's authored neighbours (coverage.ts). */
 export type L2AuditBinding = { records: Record<string, string>; neighbours?: Record<string, string> };
 export type L2AuditArtifact = L2FindingsInput & { version: 1; run: string; subject: string; role: L2AuditRole; auditor: string; key: string; seq: number; at: string; binding: L2AuditBinding };
+
+/** A published artifact is untrusted input until the orchestrator reads it. */
+export class AuditArtifactError extends Error {}
 
 const blank = (value: unknown) => typeof value !== "string" || !value.trim();
 const squeeze = (text: string) => text.replace(/\s+/g, " ").trim();
@@ -80,9 +83,17 @@ export function findingsProblems(input: unknown, context: { role: L2AuditRole; a
   return problems;
 }
 
-/** The binding key of a set of records: a concept audit's own record fingerprint, a group audit's members' fingerprints together. */
-export const bindingKey = (records: Record<string, string>, subject: string) =>
-  records[subject] ?? createHash("sha256").update(JSON.stringify(Object.entries(records).sort(([a], [b]) => a.localeCompare(b)))).digest("hex");
+const ordered = (values: Record<string, string> | undefined) => Object.entries(values ?? {}).sort(([a], [b]) => a.localeCompare(b));
+const normalizedBinding = (binding: L2AuditBinding | undefined) => ({ records: ordered(binding?.records), neighbours: ordered(binding?.neighbours) });
+const sameBinding = (a: L2AuditBinding | undefined, b: L2AuditBinding) => JSON.stringify(normalizedBinding(a)) === JSON.stringify(normalizedBinding(b));
+
+/**
+ * The complete evidence basis, not only the subject record. A neighbour
+ * changing therefore sends a new artifact to a new directory and the old one
+ * can never be mistaken for a current audit.
+ */
+export const bindingKey = (binding: L2AuditBinding, subject: string) =>
+  createHash("sha256").update(JSON.stringify({ subject, ...normalizedBinding(binding) })).digest("hex");
 
 const directory = (workDir: string, subject: string, key: string) => join(workDir, subject, key.slice(0, 16));
 const NAME = /^(first-audit|re-audit|group-audit)-([A-Z])-(\d{3,})\.json$/;
@@ -94,7 +105,7 @@ const NAME = /^(first-audit|re-audit|group-audit)-([A-Z])-(\d{3,})\.json$/;
  * is tried. Returns the artifact as published.
  */
 export function submitArtifact(workDir: string, artifact: Omit<L2AuditArtifact, "seq" | "key" | "version">): { path: string; artifact: L2AuditArtifact } {
-  const key = bindingKey(artifact.binding.records, artifact.subject);
+  const key = bindingKey(artifact.binding, artifact.subject);
   const dir = directory(workDir, artifact.subject, key);
   mkdirSync(dir, { recursive: true });
   const taken = readdirSync(dir).map((name) => name.match(NAME)).filter((match) => match && match[1] === artifact.role && match[2] === artifact.auditor).map((match) => Number(match![3]));
@@ -114,14 +125,33 @@ export function submitArtifact(workDir: string, artifact: Omit<L2AuditArtifact, 
   }
 }
 
-/** Every artifact published for `subject` against the records `key` names, oldest first; temporary files are never read. */
-export function readArtifacts(workDir: string, subject: string, key: string): L2AuditArtifact[] {
-  const dir = directory(workDir, subject, key);
+export type ArtifactReadContext = {
+  run: string;
+  subject: string;
+  binding: L2AuditBinding;
+  concepts: readonly string[];
+  textOf: (conceptId: string) => string | undefined;
+};
+
+/** Every current artifact, revalidated at the recording boundary. */
+export function readArtifacts(workDir: string, context: ArtifactReadContext): L2AuditArtifact[] {
+  const key = bindingKey(context.binding, context.subject);
+  const dir = directory(workDir, context.subject, key);
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((name) => NAME.test(name))
-    .map((name) => JSON.parse(readFileSync(join(dir, name), "utf8")) as L2AuditArtifact)
-    .filter((artifact) => artifact.version === 1 && artifact.subject === subject && artifact.key === key)
+    .map((name) => {
+      let artifact: unknown;
+      try { artifact = JSON.parse(readFileSync(join(dir, name), "utf8")); }
+      catch { throw new AuditArtifactError(`${join(dir, name)} is not complete JSON`); }
+      const file = name.match(NAME)!;
+      const value = artifact as Partial<L2AuditArtifact> | undefined;
+      const structural = !value || typeof value !== "object" || value.version !== 1 || value.run !== context.run || value.subject !== context.subject || value.key !== key || !Number.isInteger(value.seq) || value.seq! < 1 || value.role !== file[1] || value.auditor !== file[2] || value.seq !== Number(file[3]) || !(AUDIT_ROLES as readonly string[]).includes(value.role as string) || !sameBinding(value.binding as L2AuditBinding, context.binding);
+      if (structural) throw new AuditArtifactError(`${join(dir, name)} does not match the current run, subject, filename, or complete record-and-neighbour binding`);
+      const problems = findingsProblems(value, { role: value.role!, auditor: value.auditor!, concepts: context.concepts, textOf: context.textOf });
+      if (problems.length) throw new AuditArtifactError(`${join(dir, name)} is not a valid ${value.role}: ${problems.join("; ")}`);
+      return value as L2AuditArtifact;
+    })
     .sort((a, b) => a.role.localeCompare(b.role) || a.auditor.localeCompare(b.auditor) || a.seq - b.seq);
 }
 
@@ -163,3 +193,83 @@ export function auditOutcome(artifacts: readonly L2AuditArtifact[], need: "first
 /** A repair reason from blocking findings: each concept, auditor, criterion, required action and evidence, on one line each. */
 export const findingsReason = (findings: readonly (L2Finding & { auditor: string; role: L2AuditRole })[]) =>
   findings.map((finding) => `${finding.concept} [${finding.role} ${finding.auditor}${finding.criterion ? `, ${finding.criterion}` : ""}]: ${finding.action}${finding.evidence.quote ? ` ("${finding.evidence.quote}")` : ""}${finding.evidence.location ? ` at ${finding.evidence.location}` : ""}`).join("; ");
+
+/** Artifacts of `subject` published against other bindings than `key`: audits of records (its own or a neighbour's) that have since changed. */
+export function staleArtifacts(workDir: string, subject: string, key: string): number {
+  const root = join(workDir, subject);
+  if (!existsSync(root)) return 0;
+  return readdirSync(root)
+    .filter((entry) => entry !== key.slice(0, 16))
+    .reduce((sum, entry) => sum + (existsSync(join(root, entry)) ? readdirSync(join(root, entry)).filter((name) => NAME.test(name)).length : 0), 0);
+}
+
+// ---------------------------------------------------------------- independent auditors
+
+/**
+ * The one file an auditor writes its findings to: private to the subject,
+ * role and auditor, so two auditors of a concept never share an input file,
+ * and `submit-audit` accepts no other (inboxProblem). Under the run's work
+ * directory, apart from the published artifacts.
+ */
+export const auditorInbox = (runWorkDir: string, subject: string, role: L2AuditRole, auditor: string) => join(runWorkDir, "inbox", subject, `${role}-${auditor}`, "findings.json");
+
+/** Why `file` is not the submitting auditor's own inbox; undefined when it is. */
+export function inboxProblem(file: string, inbox: string): string | undefined {
+  return resolve(file) === resolve(inbox) ? undefined : `an auditor submits only its own findings file, ${inbox} (\`l2 audit-task\` names it); ${file} is not it`;
+}
+
+/**
+ * The prompt for one auditor of one subject (`l2 audit-task`): each auditor
+ * gets its own, naming only its own inbox, and never another auditor's
+ * findings, artifacts or the `l2 findings` command, which are the
+ * orchestrator's.
+ */
+export function auditTaskPrompt(input: { run: string; subject: string; role: L2AuditRole; auditor: string; inbox: string; instructions: string }): string {
+  const step = input.role === "group-audit" ? "group-audit.md" : "audit.md";
+  const what =
+    input.role === "first-audit"
+      ? `an independent FIRST audit of ${input.subject}, as auditor ${input.auditor}. Another auditor audits it independently; you are never shown their work and must not look for it`
+      : input.role === "re-audit"
+        ? `the independent RE-AUDIT of ${input.subject} as repaired (auditor ${input.auditor}); \`npm run map:author -- l2 repair-diff ${input.subject}\` shows what the repair changed`
+        : `the independent GROUP audit of ${input.subject} (auditor ${input.auditor})`;
+  return [
+    `You perform ${what}, in run ${input.run} of the MAP L2 simplified pipeline, version 2.`,
+    `Read ${input.instructions}common.md, then ${input.instructions}${step}, then ${input.instructions}v2.md, and follow them. Where they differ, v2.md wins.`,
+    `Write your findings, in the JSON form v2.md gives, to exactly this file and no other: ${input.inbox}`,
+    `Then submit it: npm run map:author -- l2 submit-audit ${input.subject} --role ${input.role} --auditor ${input.auditor} --file ${input.inbox}`,
+    "Never run `l2 record`, `l2 reopen` or `l2 findings`, never edit records or group files, and never read, list or search the run's work directory beyond your own file: other auditors' findings and the published artifacts are the orchestrator's.",
+    "Report back: PASS or FAIL, each blocking finding in one line, the number of advisory findings, and whether submit-audit succeeded.",
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------- atomic recording
+
+/**
+ * Records an audit all or nothing. The group file's new text is computed in
+ * memory and every check runs against it (`validate`, then the run-state
+ * transition `step`) before anything is written; only then is the group file
+ * replaced and the run state saved. If saving the state fails, the group file
+ * is put back as it was. A failure at any point leaves both as they were.
+ */
+export function commitAuditRecording<S>(io: {
+  readGroup: () => string;
+  writeGroup: (text: string) => void;
+  next: (before: string) => string;
+  validate: (nextText: string) => string[];
+  step: () => S;
+  saveState: (state: S) => void;
+}): { ok: true; state: S } | { ok: false; problems: string[] } {
+  const before = io.readGroup();
+  const nextText = io.next(before);
+  const problems = io.validate(nextText);
+  if (problems.length) return { ok: false, problems };
+  const state = io.step();
+  io.writeGroup(nextText);
+  try {
+    io.saveState(state);
+  } catch (error) {
+    io.writeGroup(before);
+    throw error;
+  }
+  return { ok: true, state };
+}

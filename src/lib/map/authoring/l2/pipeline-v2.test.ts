@@ -41,7 +41,7 @@ test("v2 refuses any first audit of a group before every draft of that group is 
   assert.match((nextAction(state) as { message: string }).message, /^author b /);
   state = record(state, "author", "b");
   // With every draft in place, the first audits may be recorded, in order.
-  assert.match((nextAction(state) as { message: string }).message, /first audits of a: two independent auditors, A and B, each in its own fresh context.*submit-audit a --role first-audit --auditor A\|B/);
+  assert.match((nextAction(state) as { message: string }).message, /first audits of a: two independent auditors, A and B, each in its own fresh context.*audit-task a --role first-audit --auditor A`.*--auditor B`/);
   state = record(record(state, "audit", "a"), "audit", "b");
   state = record(state, "group-audit", "g1");
   assert.deepEqual(pendingL2Steps(state), []);

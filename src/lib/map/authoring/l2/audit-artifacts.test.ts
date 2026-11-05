@@ -35,6 +35,9 @@ test("structured findings: verdict, note, severity, concept, evidence found in t
 const binding = { records: { a: "fp-a1" }, neighbours: { b: "fp-b1" } };
 const artifact = (auditor: string, input: L2FindingsInput, extra: Partial<L2AuditArtifact> = {}) => ({ run: "r", subject: "a", role: "first-audit" as const, auditor, at: "t", binding, ...input, ...extra });
 const scratch = () => mkdtempSync(join(tmpdir(), "l2-artifacts-"));
+/** How the orchestrator reads a's artifacts now: the run, the subject, the binding it judges now, and a's record text. */
+const readContext = (extra: Partial<Parameters<typeof readArtifacts>[1]> = {}) => ({ run: "r", subject: "a", binding, concepts: ["a"], textOf: context.textOf, ...extra });
+const dirOf = (root: string, subject: string, of: typeof binding | { records: Record<string, string> }) => join(root, subject, bindingKey(of, subject).slice(0, 16));
 
 test("artifacts are published whole and never replaced: a resubmission is a new artifact, and recording reads the latest", () => {
   const dir = scratch();
@@ -45,20 +48,20 @@ test("artifacts are published whole and never replaced: a resubmission is a new 
     assert.deepEqual([first.artifact.seq, second.artifact.seq], [1, 2]);
     assert.equal(readFileSync(first.path, "utf8"), original);
     // A stray temporary file (a submission that died mid-write) is never read.
-    writeFileSync(join(dir, "a", "fp-a1", ".first-audit-A-003.json.1.x.tmp"), "{ partial");
-    const read = readArtifacts(dir, "a", bindingKey(binding.records, "a"));
+    writeFileSync(join(dirOf(dir, "a", binding), ".first-audit-A-003.json.1.x.tmp"), "{ partial");
+    const read = readArtifacts(dir, readContext());
     assert.deepEqual(read.map((entry) => [entry.auditor, entry.seq, entry.verdict]), [["A", 1, "fail"], ["A", 2, "pass"]]);
     assert.equal(latest(read, "first-audit", "A")!.seq, 2);
     // Artifacts bound to other records are not this record's.
-    assert.deepEqual(readArtifacts(dir, "a", "fp-a2"), []);
+    assert.deepEqual(readArtifacts(dir, readContext({ binding: { ...binding, records: { a: "fp-a2" } } })), []);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
 test("a first audit is recorded only from both independent auditors; one blocking finding refuses it", () => {
-  const a = { version: 1 as const, key: "fp-a1", seq: 1, ...artifact("A", pass()) };
-  const b = { version: 1 as const, key: "fp-a1", seq: 1, ...artifact("B", pass({ note: "second opinion. Advisory: none", findings: [], resolutions: [{ id: "dated:1", resolution: "B's own words" }, { id: "math:2", resolution: "none" }] })) };
+  const a = { version: 1 as const, key: bindingKey(binding, "a"), seq: 1, ...artifact("A", pass()) };
+  const b = { version: 1 as const, key: bindingKey(binding, "a"), seq: 1, ...artifact("B", pass({ note: "second opinion. Advisory: none", findings: [], resolutions: [{ id: "dated:1", resolution: "B's own words" }, { id: "math:2", resolution: "none" }] })) };
   assert.deepEqual(auditOutcome([a], "first-audit"), { kind: "missing", missing: ["first-audit by auditor B"] });
   const outcome = auditOutcome([a, b], "first-audit");
   assert.equal(outcome.kind, "record");
@@ -101,13 +104,13 @@ submitArtifact(dir, { run: "r", subject, role: "first-audit", auditor, at: "t", 
     // Eight submissions by the same auditor for one concept, and four each by A and B for two others, all at once.
     const jobs = [...Array.from({ length: 8 }, (_, n) => submit("a", "A", n)), ...Array.from({ length: 4 }, (_, n) => submit("b", "A", n)), ...Array.from({ length: 4 }, (_, n) => submit("b", "B", n)), ...Array.from({ length: 4 }, (_, n) => submit("c", "B", n))];
     assert.deepEqual([...new Set(await Promise.all(jobs))], [0]);
-    const of = (subject: string) => readArtifacts(join(dir, "work"), subject, `fp-${subject}`);
+    const of = (subject: string) => readArtifacts(join(dir, "work"), { run: "r", subject, binding: { records: { [subject]: `fp-${subject}` } }, concepts: [subject], textOf: () => "" });
     assert.deepEqual(of("a").map((entry) => entry.seq), [1, 2, 3, 4, 5, 6, 7, 8]);
     assert.deepEqual(of("b").map((entry) => `${entry.auditor}${entry.seq}`), ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4"]);
     assert.equal(of("c").length, 4);
     // Every artifact is whole, each note distinct, and nothing but artifacts was left behind.
     assert.equal(new Set(of("a").map((entry) => entry.note)).size, 8);
-    for (const subject of ["a", "b", "c"]) assert.deepEqual(readdirSync(join(dir, "work", subject, `fp-${subject}`)).filter((name) => !/^first-audit-[AB]-\d{3}\.json$/.test(name)), []);
+    for (const subject of ["a", "b", "c"]) assert.deepEqual(readdirSync(dirOf(join(dir, "work"), subject, { records: { [subject]: `fp-${subject}` } })).filter((name) => !/^first-audit-[AB]-\d{3}\.json$/.test(name)), []);
     assert.deepEqual(readdirSync(join(dir, "work")).sort(), ["a", "b", "c"]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
