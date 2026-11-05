@@ -138,15 +138,20 @@ export function writeLedger(path: string, ledger: L2BudgetLedger): void {
 /**
  * Reserves one launch under the ledger's lock: the spend is measured and the
  * ledger read inside it, so two launches can never both take the last of the
- * budget. A refused launch writes nothing.
+ * budget. A refused launch writes nothing. `claim` (marking the launch's
+ * attempt running) runs inside the lock once the budget allows the launch and
+ * before the reservation is written: if it throws, nothing is reserved. If the
+ * reservation then cannot be written, the claimed attempt holds its reserve
+ * itself (attempts.ts attemptBudget), so the budget never under-counts.
  */
-export function reserveUnderLock(input: { ledgerPath: string; run: string; budget: L2Budget; measure: () => L2SpendSession[]; launch: Omit<L2Reservation, "usd">; extra?: (sessions: readonly L2SpendSession[], ledger: L2BudgetLedger) => L2BudgetExtra }): { ok: true; status: L2BudgetStatus } | { ok: false; problem: string; status: L2BudgetStatus } {
+export function reserveUnderLock(input: { ledgerPath: string; run: string; budget: L2Budget; measure: () => L2SpendSession[]; launch: Omit<L2Reservation, "usd">; extra?: (sessions: readonly L2SpendSession[], ledger: L2BudgetLedger) => L2BudgetExtra; claim?: () => void }): { ok: true; status: L2BudgetStatus } | { ok: false; problem: string; status: L2BudgetStatus } {
   return withLock(input.ledgerPath, () => {
     const ledger = readLedger(input.ledgerPath, input.run);
     const sessions = input.measure();
     const status = budgetStatus(input.budget, sessions, ledger, input.extra?.(sessions, ledger));
     const reserved = reserveLaunch(input.budget, status, ledger, input.launch);
     if ("problem" in reserved) return { ok: false as const, problem: reserved.problem, status };
+    input.claim?.();
     writeLedger(input.ledgerPath, reserved.ledger);
     return { ok: true as const, status: budgetStatus(input.budget, sessions, reserved.ledger, input.extra?.(sessions, reserved.ledger)) };
   });
@@ -199,7 +204,8 @@ export function launchGate(
     role: (description: string) => string;
     /**
      * A run that tracks attempts (attempts.ts): a launch must name a pending attempt (its marker in the task
-     * description), which `claim` marks running once the launch is reserved; `extra` is what the run's attempts add
+     * description), which `claim` marks running under the ledger's lock, before the reservation is written (a
+     * claim that fails reserves nothing); `extra` is what the run's attempts add
      * to its budget. Provided by the launcher's adapter; absent, attempts are not checked.
      */
     attempts?: {
@@ -251,7 +257,7 @@ export function launchGate(
       budget,
       measure: () => where.measure(run),
       launch: { id: launchRef, role: where.role(description), at: where.now, description, ...(input.session_id ? { session: input.session_id } : {}) },
-      ...(tracked ? { extra: (sessions: readonly L2SpendSession[], ledger: L2BudgetLedger) => where.attempts!.extra(run.domainId, sessions, ledger, budget) } : {}),
+      ...(tracked ? { extra: (sessions: readonly L2SpendSession[], ledger: L2BudgetLedger) => where.attempts!.extra(run.domainId, sessions, ledger, budget), claim: () => where.attempts!.claim(run.domainId, marker!, launchRef, where.now) } : {}),
     });
     if (!result.ok) {
       return {
@@ -259,8 +265,7 @@ export function launchGate(
         reason: `${result.problem}. No model work starts on ${run.domainId} until a human decides: raise the cap (\`npm run map:author -- l2 budget set --usd <n> --decision ".."\`), release a launch that will not finish (\`l2 budget release <id> --reason ".."\`), or stop the run (\`l2 stop\`). ${describeBudget(result.status)}`,
       };
     }
-    // The reservation is made; a failure to mark the attempt running now refuses the launch, and the reservation holds.
-    if (tracked) where.attempts!.claim(run.domainId, marker!, launchRef, where.now);
+    // The attempt was marked running inside the reservation's lock: a concurrent launch of it found it no longer pending, and reserved nothing.
     return { allow: true, run: run.domainId, status: result.status };
   } catch (error) {
     return { allow: false, reason: `the budget of ${run.domainId} could not be checked (${(error as Error).message}); no model work starts until it can` };

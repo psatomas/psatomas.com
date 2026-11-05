@@ -60,10 +60,19 @@ export type L2Attempt = {
   /** Spend measured for its session; kept when the session's transcript is gone. Never estimated. */
   usage?: { usd: number; calls: number; unpriced: string[]; unmeasured: number; measuredAt: string };
   decision?: { kind: "relaunch" | "abandon"; reason: string; at: string };
+  /** A human's release of the reserve a launched attempt holds while its spend was never measured (attemptBudget). */
+  holdReleased?: { reason: string; at: string };
 };
 export type L2AttemptLog = { version: 1; run: string; attempts: L2Attempt[] };
 
 export class AttemptError extends Error {}
+
+/**
+ * How long a launched attempt may go without any session reporting it before
+ * reconciliation calls it interrupted: a subagent's transcript can appear
+ * after its launch, and a false interruption invites paying for it twice.
+ */
+export const LAUNCH_GRACE_MS = 15 * 60_000;
 
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export const stepId = (step: L2AttemptStep) => `${step.kind}:${step.subject}:${step.role}${step.auditor ? `:${step.auditor}` : ""}`;
@@ -184,6 +193,8 @@ export function reconcile(attempt: L2Attempt, evidence: L2AttemptEvidence, now: 
       else if (attempt.status === "interrupted") {
         explanation = "interrupted: no output was captured";
         decision = `outcome unknown: its model call may have completed without its result being captured. Decide before paying for it again: \`l2 attempt decide ${attempt.id} --relaunch|--abandon --reason ".."\``;
+      } else if (!finished && !ran && Date.parse(now) - Date.parse(attempt.launch?.at ?? attempt.updatedAt) < LAUNCH_GRACE_MS) {
+        explanation = `running: launched at ${attempt.launch?.at ?? attempt.updatedAt}; no session reports it yet (within the ${LAUNCH_GRACE_MS / 60_000}-minute launch grace)`;
       } else if (finished || !ran) {
         explanation = move("interrupted", finished ? "its session reports finishing, but no output was captured" : "no session reports running it and no output was captured");
         decision = `outcome unknown: its model call may have completed without its result being captured. Decide before paying for it again: \`l2 attempt decide ${attempt.id} --relaunch|--abandon --reason ".."\``;
@@ -218,6 +229,35 @@ export function decide(attempt: L2Attempt, kind: "relaunch" | "abandon", reason:
   return transition(attempt, "failed", now, `decision (${kind}): ${reason}`, { decision: { kind, reason, at: now } });
 }
 
+/** Whether an attempt was ever launched: a model may have been called for it. */
+export const launched = (attempt: L2Attempt) => Boolean(attempt.launch) || attempt.history.some((entry) => entry.to === "running");
+
+/**
+ * A human's release of the reserve a launched attempt still holds (attemptBudget):
+ * its spend was never measured, and releasing says it is known to be no more
+ * than what is measured elsewhere. Only an attempt that is resolved (committed
+ * or failed) and holds a reserve is released; the decision is kept.
+ */
+export function releaseHold(attempt: L2Attempt, reason: string | undefined, now: string): L2Attempt {
+  if (!reason?.trim()) throw new AttemptError("releasing an attempt's reserve needs the human's reason: --reason \"..\"");
+  if (OPEN.has(attempt.status)) throw new AttemptError(`attempt ${attempt.id} is ${attempt.status}: resolve it first (an interrupted one by \`l2 attempt decide\`)`);
+  if (!launched(attempt)) throw new AttemptError(`attempt ${attempt.id} was never launched: it holds nothing`);
+  if (attempt.holdReleased) throw new AttemptError(`attempt ${attempt.id}'s reserve was already released (${attempt.holdReleased.at})`);
+  return { ...attempt, holdReleased: { reason, at: now }, updatedAt: now };
+}
+
+/**
+ * Why an audit artifact is not the output of `attempt`: it names another
+ * attempt, or another step (subject, role, auditor), or the attempt's
+ * captured output is another artifact. Undefined when it is that output.
+ */
+export function artifactAttemptProblem(attempt: L2Attempt, artifact: { attempt?: string; subject: string; role: string; auditor: string; key: string }, ref: string): string | undefined {
+  if (artifact.attempt !== attempt.id) return `the artifact ${ref} names attempt ${artifact.attempt ?? "none"}, not ${attempt.id}`;
+  if (artifact.subject !== attempt.step.subject || artifact.role !== attempt.step.role || artifact.auditor !== (attempt.step.auditor ?? "")) return `the artifact ${ref} is ${artifact.role} ${artifact.auditor} of ${artifact.subject}, not attempt ${attempt.id}'s ${stepId(attempt.step)}`;
+  if (attempt.output && (attempt.output.ref !== ref || attempt.output.key !== artifact.key)) return `attempt ${attempt.id}'s output is ${attempt.output.ref}, not ${ref}: one attempt has one output`;
+  return undefined;
+}
+
 /**
  * What attempts add to a run's budget so recovery never frees spending
  * authorization (budget.ts budgetStatus `extra`):
@@ -226,6 +266,9 @@ export function decide(attempt: L2Attempt, kind: "relaunch" | "abandon", reason:
  * - a running or interrupted attempt that no measured session or unreleased
  *   budget reservation accounts for holds its role's reserve, less what it
  *   has measurably spent;
+ * - so does a launched attempt that is resolved (failed by a decision, say)
+ *   whose spend was never measured or recorded: resolving it says nothing of
+ *   what its model call cost, so only an explicit release (releaseHold) frees it;
  * - recorded spend with an unpriced model or unmeasured calls is unknown.
  */
 export function attemptBudget(log: L2AttemptLog | undefined, sessions: readonly Pick<L2SpendSession, "description">[], ledger: L2BudgetLedger, reserveFor: (role: string) => number): { recordedUsd: number; heldUsd: number; unknown: string[] } {
@@ -239,9 +282,11 @@ export function attemptBudget(log: L2AttemptLog | undefined, sessions: readonly 
       recordedUsd += attempt.usage.usd;
       if (attempt.usage.unpriced.length || attempt.usage.unmeasured) unknown.push(`attempt ${attempt.id}'s recorded spend includes unpriced or unmeasured calls`);
     }
-    if (attempt.status !== "running" && attempt.status !== "interrupted") continue;
+    if (!launched(attempt) || measured) continue;
     const reserved = ledger.reservations.some((reservation) => !reservation.released && (reservation.description ?? "").includes(marker));
-    if (!reserved && !measured) heldUsd += Math.max(0, reserveFor(attempt.step.role) - (attempt.usage?.usd ?? 0));
+    if (reserved) continue;
+    if (attempt.status === "running" || attempt.status === "interrupted") heldUsd += Math.max(0, reserveFor(attempt.step.role) - (attempt.usage?.usd ?? 0));
+    else if (!attempt.usage && !attempt.holdReleased) heldUsd += reserveFor(attempt.step.role);
   }
   return { recordedUsd, heldUsd, unknown };
 }

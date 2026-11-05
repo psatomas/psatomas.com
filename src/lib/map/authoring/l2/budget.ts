@@ -189,7 +189,7 @@ export function releaseLaunch(ledger: L2BudgetLedger, id: string, reason: string
 }
 
 export const describeBudget = (status: L2BudgetStatus) =>
-  `budget ${money(status.capUsd)}: spent ${money(status.spentUsd)} (measured${status.attempts?.recordedUsd ? `, ${money(status.attempts.recordedUsd)} of it recorded on attempts whose transcripts are gone` : ""}), reserved ${money(status.reservedUsd)} for ${status.open.length} launch(es) still running${status.attempts?.heldUsd ? ` and ${money(status.attempts.heldUsd)} for open attempts of unknown outcome` : ""}, headroom ${money(status.headroomUsd)}, available ${money(Math.max(0, status.availableUsd))}${status.unknown.length ? `; SPEND UNKNOWN: ${status.unknown.join("; ")}` : ""}`;
+  `budget ${money(status.capUsd)}: spent ${money(status.spentUsd)} (measured${status.attempts?.recordedUsd ? `, ${money(status.attempts.recordedUsd)} of it recorded on attempts whose transcripts are gone` : ""}), reserved ${money(status.reservedUsd)} for ${status.open.length} launch(es) still running${status.attempts?.heldUsd ? ` and ${money(status.attempts.heldUsd)} for launched attempts whose spend is not measured (released only by \`l2 attempt release\`)` : ""}, headroom ${money(status.headroomUsd)}, available ${money(Math.max(0, status.availableUsd))}${status.unknown.length ? `; SPEND UNKNOWN: ${status.unknown.join("; ")}` : ""}`;
 
 /** The settings a project or user may keep the budget hook in. */
 export const BUDGET_HOOK = "map-l2-budget-hook";

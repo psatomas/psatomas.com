@@ -52,7 +52,7 @@
 //   npm run map:author -- l2 authorize --authorization ".."   record a human's explicit campaign merge authorization
 //   npm run map:author -- l2 attempts [--json] | reconcile [--json]   (tracked v2 runs) every attempt and its evidence; apply reconciliation (idempotent)
 //   npm run map:author -- l2 attempt begin <author|audit|group-audit> <subject> --role <r> [--auditor X] [--model m]
-//                                                        | launch <id> --ref <ref> | fail|interrupt <id> --reason .. | decide <id> --relaunch|--abandon --reason .. | show <id>
+//                                                        | launch <id> --ref <ref> | fail|interrupt <id> --reason .. | decide <id> --relaunch|--abandon --reason .. | release <id> --reason .. | show <id>
 //   npm run map:author -- l2 audit-task <concept|group> --role first-audit|re-audit|group-audit --auditor A|B|R|G
 //                                                        (v2) one auditor's own prompt, naming only its private findings file
 //   npm run map:author -- l2 submit-audit <concept|group> --role first-audit|re-audit|group-audit --auditor A|B|R|G --file <json>
@@ -77,8 +77,8 @@ import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopePr
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, groupFileWithoutAudits, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { neighbourBasis } from "../src/lib/map/authoring/l2/coverage.ts";
-import { AttemptError, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
-import { readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
+import { AttemptError, artifactAttemptProblem, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, releaseHold, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
+import { launchAttempt, readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
 import { journaledCommit, JournalError, recoverJournal, sha } from "../src/lib/map/authoring/l2/journal.ts";
 import { AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, findingsProblems, findingsReason, inboxProblem, readArtifacts, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
 import { formatRecordDiff, recordDiff, recordLines } from "../src/lib/map/authoring/l2/record-diff.ts";
@@ -1036,7 +1036,7 @@ function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: 
 }
 
 /** The attempts behind the artifacts an audit is recorded from: each completed, for this step, with exactly the current inputs. */
-function acceptedAttempts(state: RunState, artifacts: readonly { attempt?: string; role: string; auditor: string; subject: string }[]): string[] {
+function acceptedAttempts(state: RunState, artifacts: readonly { attempt?: string; role: string; auditor: string; subject: string; key: string; seq: number }[]): string[] {
   const log = readAttemptLog(attemptsPath(state.domainId), state.domainId);
   return artifacts.map((artifact) => {
     const label = `${artifact.role} ${artifact.auditor}`;
@@ -1046,6 +1046,9 @@ function acceptedAttempts(state: RunState, artifacts: readonly { attempt?: strin
     if (attempt.status !== "completed") fail(`cannot record ${artifact.subject}: attempt ${attempt.id} (${label}) is ${attempt.status}, not completed (\`${CLI} reconcile\`)`, 1);
     if (attempt.step.role !== artifact.role || attempt.step.auditor !== artifact.auditor || attempt.step.subject !== artifact.subject) fail(`cannot record ${artifact.subject}: attempt ${attempt.id} is ${stepId(attempt.step)}, not the artifact's ${label}`, 1);
     if (currentInputKey(state, attempt.step) !== attempt.inputKey) fail(`cannot record ${artifact.subject}: the inputs of attempt ${attempt.id} (${label}) have changed since it began`, 1);
+    // The artifact recorded is exactly the output the attempt captured: never another submission naming it.
+    const problem = artifactAttemptProblem(attempt, artifact, artifactRef(artifact));
+    if (problem) fail(`cannot record ${artifact.subject}: ${problem}`, 1);
     return attempt.id;
   });
 }
@@ -1176,21 +1179,32 @@ function commandL2SubmitAudit() {
   const problems = findingsProblems(input, { role, auditor, concepts: auditedConcepts(kind, subject, group), textOf: recordText });
   if (problems.length) fail(`the findings are not a valid ${role}:\n  ${problems.join("\n  ")}`, 1);
   const binding = currentBinding(state, kind, subject, group);
-  // A tracked run's findings belong to the auditor's attempt, and only for exactly the evidence the attempt began with.
   const attemptId = flag("--attempt");
   if (attemptId && !tracksAttempts(state)) fail(`${state.domainId} does not track attempts: submit without --attempt`, 1);
-  if (tracksAttempts(state)) {
-    if (!attemptId) fail(`${state.domainId} tracks attempts: submit with --attempt <id> (the attempt \`${CLI} audit-task\` began)`, 1);
-    const attempt = readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts.find((entry) => entry.id === attemptId) ?? fail(`no attempt ${attemptId} in ${state.domainId}`, 1);
-    if (attempt.step.kind !== kind || attempt.step.subject !== subject || attempt.step.role !== role || attempt.step.auditor !== auditor) fail(`attempt ${attemptId} is ${stepId(attempt.step)}, not ${kind}:${subject}:${role}:${auditor}`, 1);
-    if (attempt.status !== "running" && attempt.status !== "interrupted") fail(`attempt ${attemptId} is ${attempt.status}: only a launched attempt submits its findings`, 1);
-    if (!attempt.binding || bindingKey(attempt.binding, subject) !== bindingKey(binding, subject)) fail(`the records or neighbours have changed since attempt ${attemptId} began: its findings judged other evidence and are not submitted; fail it (\`${CLI} attempt fail ${attemptId} --reason ..\`) and audit again`, 1);
+  if (tracksAttempts(state) && !attemptId) fail(`${state.domainId} tracks attempts: submit with --attempt <id> (the attempt \`${CLI} audit-task\` began)`, 1);
+  const publish = () => submitArtifact(auditWorkDir(state), { run: state.domainId, subject, role, auditor, at: now(), binding, verdict: input.verdict, note: input.note, findings: input.findings, ...(input.resolutions ? { resolutions: input.resolutions } : {}), ...(attemptId ? { attempt: attemptId } : {}) });
+  // A tracked run's findings belong to the auditor's attempt, and only for exactly the evidence the attempt began with. The
+  // check, the publication and the attempt's completion happen under the attempt log's lock: one attempt publishes one artifact,
+  // however many submissions race. Published first, then completed: a crash between them is reconciled from the artifact.
+  let submitted: ReturnType<typeof publish>;
+  try {
+    submitted = !attemptId
+      ? publish()
+      : updateAttemptLog(attemptsPath(state.domainId), state.domainId, (log) => {
+        const attempt = log.attempts.find((entry) => entry.id === attemptId) ?? attemptFailure(`no attempt ${attemptId} in ${state.domainId}`);
+        if (attempt.step.kind !== kind || attempt.step.subject !== subject || attempt.step.role !== role || attempt.step.auditor !== auditor) attemptFailure(`attempt ${attemptId} is ${stepId(attempt.step)}, not ${kind}:${subject}:${role}:${auditor}`);
+        if (attempt.status !== "running" && attempt.status !== "interrupted") attemptFailure(`attempt ${attemptId} is ${attempt.status}: only a launched attempt submits its findings${attempt.output ? ` (its output is ${attempt.output.ref})` : ""}`);
+        if (!attempt.binding || bindingKey(attempt.binding, subject) !== bindingKey(binding, subject)) attemptFailure(`the records or neighbours have changed since attempt ${attemptId} began: its findings judged other evidence and are not submitted; fail it (\`${CLI} attempt fail ${attemptId} --reason ..\`) and audit again`);
+        const published = publish();
+        const completed = transition(attempt, "completed", now(), "its findings were submitted", { output: { kind: "artifact", ref: artifactRef(published.artifact), key: published.artifact.key, at: now() } });
+        return { log: withAttempt(log, completed), result: published };
+      });
+  } catch (error) {
+    // Refused inside the lock by throwing, so the lock is released before the process exits.
+    if (error instanceof AttemptError) fail(error.message, 1);
+    throw error;
   }
-  const { path, artifact } = submitArtifact(auditWorkDir(state), { run: state.domainId, subject, role, auditor, at: now(), binding, verdict: input.verdict, note: input.note, findings: input.findings, ...(input.resolutions ? { resolutions: input.resolutions } : {}), ...(attemptId ? { attempt: attemptId } : {}) });
-  if (attemptId) {
-    // Published first, then the attempt completes: a crash between them is reconciled from the artifact (l2 reconcile).
-    updateAttemptLog(attemptsPath(state.domainId), state.domainId, (log) => ({ log: withAttempt(log, transition(attemptIn(log, attemptId), "completed", now(), "its findings were submitted", { output: { kind: "artifact", ref: `${artifact.role}-${artifact.auditor}-${String(artifact.seq).padStart(3, "0")}`, key: artifact.key, at: now() } })), result: undefined }));
-  }
+  const { path, artifact } = submitted;
   console.log(`submitted ${role} ${artifact.seq} of ${subject} by auditor ${auditor}: ${artifact.verdict}, ${artifact.findings.filter((finding) => finding.severity === "blocking").length} blocking, ${artifact.findings.filter((finding) => finding.severity === "advisory").length} advisory (${path}); nothing recorded: the orchestrator records it`);
 }
 
@@ -1261,6 +1275,12 @@ function commandL2RepairDiff() {
 
 // ---------------------------------------------------------------- attempts (l2/attempts.ts)
 
+/** A refusal inside a lock: thrown, never `fail` (which exits holding the lock), and reported once the lock is released. */
+const attemptFailure = (message: string): never => {
+  throw new AttemptError(message);
+};
+/** An artifact's reference, as an attempt's output names it. */
+const artifactRef = (artifact: { role: string; auditor: string; seq: number }) => `${artifact.role}-${artifact.auditor}-${String(artifact.seq).padStart(3, "0")}`;
 /** Whether a run tracks attempts: group-batched runs started since attempts existed. */
 const tracksAttempts = (state: RunState) => Boolean(state.l2?.attempts) && isBatched(pipelineOf(state.l2!));
 const groupOfConcept = (state: RunState, conceptId: string) => state.l2!.slice.groups.find((entry) => entry.concepts.includes(conceptId))?.group;
@@ -1316,8 +1336,12 @@ function attemptEvidence(state: RunState, attempt: L2Attempt, sessions: readonly
     const group = attempt.step.kind === "group-audit" ? attempt.step.subject : groupOfConcept(state, attempt.step.subject)!;
     const stale = inputKey !== attempt.inputKey;
     try {
-      const found = readArtifacts(auditWorkDir(state), { run: state.domainId, subject: attempt.step.subject, binding: attempt.binding, concepts: auditedConcepts(attempt.step.kind, attempt.step.subject, group), textOf: recordText }).find((artifact) => artifact.attempt === attempt.id);
-      if (found) output = { state: stale ? "stale" : "valid", ref: `${found.role}-${found.auditor}-${String(found.seq).padStart(3, "0")}`, key: found.key, ...(stale ? { detail: "the records or neighbours it judged have changed" } : {}) };
+      const named = readArtifacts(auditWorkDir(state), { run: state.domainId, subject: attempt.step.subject, binding: attempt.binding, concepts: auditedConcepts(attempt.step.kind, attempt.step.subject, group), textOf: recordText }).filter((artifact) => artifact.attempt === attempt.id);
+      // An attempt's output is one artifact of its own step, the one it captured: another naming it is not its output.
+      const problems = named.map((artifact) => artifactAttemptProblem(attempt, artifact, artifactRef(artifact))).filter(Boolean);
+      const found = named.find((artifact) => !artifactAttemptProblem(attempt, artifact, artifactRef(artifact)));
+      if (problems.length && (!attempt.output || named.length > 1)) output = { state: "invalid", detail: problems.join("; ") };
+      else if (found) output = { state: stale ? "stale" : "valid", ref: artifactRef(found), key: found.key, ...(stale ? { detail: "the records or neighbours it judged have changed" } : {}) };
     } catch (error) {
       if (!(error instanceof AuditArtifactError)) throw error;
       // An artifact for older evidence is read against the current record text, so it may no longer validate: stale before invalid.
@@ -1391,7 +1415,8 @@ function commandL2Reconcile() {
 /**
  * `l2 attempt begin <author|audit|group-audit> <subject> --role <r> [--auditor X] [--model m]`,
  * `launch <id> --ref <launch reference>` (a launcher other than the hook), `fail <id> --reason ..`,
- * `interrupt <id> --reason ..` (its process is gone), `decide <id> --relaunch|--abandon --reason ..`, `show <id>`.
+ * `interrupt <id> --reason ..` (its process is gone), `decide <id> --relaunch|--abandon --reason ..`,
+ * `release <id> --reason ..` (a resolved attempt's unmeasured reserve), `show <id>`.
  */
 function commandL2Attempt() {
   const state = activeState();
@@ -1427,9 +1452,24 @@ function commandL2Attempt() {
       return console.log(JSON.stringify({ attempt, evidence: { ...evidence, sessions: evidence.sessions.length }, reconciliation: reconcile(attempt, evidence, now()) }, null, 2));
     }
     case "launch": {
+      // A launcher other than the Claude Code hook reserves under the same cap: the launch is refused, and the attempt stays pending, when it does not fit.
       const ref = flag("--ref") ?? fail("attempt launch needs --ref <the launcher's reference for the session>");
-      const next = change((attempt) => transition(attempt, "running", now(), `launched (${ref})`, { launch: { ref, at: now() } }));
-      return console.log(`${next.id} running`);
+      const budget = state.l2?.budget ?? fail(`${state.domainId} has no budget: every L2 run is capped`, 1);
+      const attempt = readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts.find((entry) => entry.id === id) ?? fail(`no attempt ${id} in ${state.domainId}`, 1);
+      let launched: ReturnType<typeof launchAttempt>;
+      try {
+        launched = launchAttempt({ attemptsPath: attemptsPath(state.domainId), ledgerPath: ledgerPath(state.domainId), run: state.domainId, budget, measure: () => measure(state), id, ref, description: taskDescription(attempt), now: now() });
+      } catch (error) {
+        if (error instanceof AttemptError || error instanceof BudgetLockError) fail(`attempt ${id} was not launched: ${error.message}`, 1);
+        throw error;
+      }
+      if (!launched.ok) fail(`attempt ${id} was not launched: ${launched.problem}${launched.status ? `. ${describeBudget(launched.status)}` : ""}`, 1);
+      return console.log(`${id} running (launch ${ref} reserved; it holds until its session is measured or a human releases it: \`${CLI} budget release ${ref} --reason ..\`)`);
+    }
+    case "release": {
+      // A resolved attempt whose spend was never measured keeps its reserve until a human says what it cost is accounted for.
+      const next = change((attempt) => releaseHold(attempt, flag("--reason"), now()));
+      return console.log(`${next.id}: its reserve is released (${next.holdReleased!.reason}); its spend is no longer held against the cap`);
     }
     case "fail":
       return console.log(`${change((attempt) => transition(attempt, "failed", now(), reason())).id} failed`);
@@ -1442,7 +1482,7 @@ function commandL2Attempt() {
       return console.log(`${next.id} failed by decision (${kind})${kind === "relaunch" ? `; begin a new attempt for ${stepId(next.step)}` : ""}`);
     }
     default:
-      fail("attempt begin|launch|fail|interrupt|decide|show");
+      fail("attempt begin|launch|fail|interrupt|decide|release|show");
   }
 }
 

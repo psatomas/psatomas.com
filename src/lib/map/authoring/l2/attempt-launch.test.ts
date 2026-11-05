@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { completeStage, createL2RunState, recordL2Step, STAGES } from "../orchestrator/run-state.ts";
 import { attemptBudget, attemptIn, attemptMarker, beginAttempt, transition, withAttempt } from "./attempts.ts";
-import { readAttemptLog, updateAttemptLog } from "./attempts-io.ts";
+import { launchAttempt, readAttemptLog, updateAttemptLog } from "./attempts-io.ts";
 import { reserveFor, startBudget } from "./budget.ts";
 import { launchGate, readLedger, type LaunchInput } from "./budget-io.ts";
 import { pilotSlice } from "./campaign.ts";
@@ -41,7 +41,7 @@ function world(tracked = true) {
       const begun = beginAttempt(log, { step: { kind: "audit", subject: "a", role: "first-audit", auditor }, pipeline: { mode: "simplified", version: 2 }, inputs: { binding: "k" }, now: T0 });
       return { log: begun.log, result: begun.attempt };
     });
-  return { root, attempts, ledger, gate, begin, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+  return { root, attempts, ledger, gate, begin, adapter, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
 test("in an attempt-tracked run a launch needs a pending attempt's marker; it is launched once, and never paid for twice", () => {
@@ -115,4 +115,77 @@ test("v1 compatibility: legacy and simplified v1 runs never track attempts; v2 r
   v1 = recordL2Step(v1, { kind: "author", subject: "a" }, T0, { fingerprint: "a1" });
   assert.equal("attempts" in v1.l2!.steps["author:a"], false);
   assert.ok(STAGES.includes("done") && typeof completeStage === "function");
+});
+
+// ---------------------------------------------------------------- adversarial review of PR-4: concurrent launches and launch failures
+
+test("two processes launching one attempt at once (both saw it pending): one launches, the other is refused and reserves nothing", () => {
+  const w = world();
+  try {
+    const attempt = w.begin("A");
+    const description = `First audit A a ${attemptMarker(attempt.id)}`;
+    // Simulate the race: the second hook read the attempt as pending before the first claimed it.
+    const racing = (id: string) =>
+      launchGate({ tool_name: "Agent", tool_use_id: id, transcript_path: join(w.root, "transcripts", "s1.jsonl"), tool_input: { description } } as LaunchInput, {
+        stateDir: join(w.root, "state"), branch: BRANCH, ledgerPath: () => w.ledger, measure: () => [], transcripts: join(w.root, "transcripts"), now: T0, role: roleOf,
+        attempts: { ...w.adapter, pending: () => undefined },
+      });
+    assert.equal(racing("toolu_1").allow, true);
+    const second = racing("toolu_2");
+    assert.equal(second.allow, false);
+    assert.match((second as { reason: string }).reason, /is running: it cannot become running/);
+    // No orphan reservation: the refused launch held nothing.
+    assert.deepEqual(readLedger(w.ledger, "run").reservations.map((reservation) => reservation.id), ["toolu_1"]);
+    assert.equal(attemptIn(readAttemptLog(w.attempts, "run"), attempt.id).launch?.ref, "toolu_1");
+  } finally {
+    w.cleanup();
+  }
+});
+
+test("a claim that fails (the attempt log cannot be written) refuses the launch and reserves nothing; a claimed attempt whose reservation is lost still holds its reserve", () => {
+  const w = world();
+  try {
+    const attempt = w.begin("A");
+    const description = `First audit A a ${attemptMarker(attempt.id)}`;
+    const failing = launchGate({ tool_name: "Agent", tool_use_id: "toolu_1", transcript_path: join(w.root, "transcripts", "s1.jsonl"), tool_input: { description } } as LaunchInput, {
+      stateDir: join(w.root, "state"), branch: BRANCH, ledgerPath: () => w.ledger, measure: () => [], transcripts: join(w.root, "transcripts"), now: T0, role: roleOf,
+      attempts: { ...w.adapter, claim: () => { throw new Error("EROFS: read-only file system"); } },
+    });
+    assert.equal(failing.allow, false);
+    assert.equal(readLedger(w.ledger, "run").reservations.length, 0);
+    assert.equal(attemptIn(readAttemptLog(w.attempts, "run"), attempt.id).status, "pending");
+    // The other order of failure: the attempt is claimed, but its reservation never reaches the ledger. The attempt holds the reserve itself.
+    w.adapter.claim("run", attempt.id, "toolu_1", T0);
+    assert.equal(attemptBudget(readAttemptLog(w.attempts, "run"), [], readLedger(w.ledger, "run"), (role) => reserveFor(budget, role)).heldUsd, 3);
+  } finally {
+    w.cleanup();
+  }
+});
+
+test("a launcher other than the hook launches through the same cap: reserved once under the lock, refused when it does not fit, never launched twice", () => {
+  const w = world();
+  try {
+    const launch = (id: string, ref: string, cap = budget) => launchAttempt({ attemptsPath: w.attempts, ledgerPath: w.ledger, run: "run", budget: cap, measure: () => [], id, ref, description: `First audit ${id} ${attemptMarker(id)}`, now: T0 });
+    const a = w.begin("A");
+    const first = launch(a.id, "codex-1");
+    assert.equal(first.ok, true);
+    assert.equal(attemptIn(readAttemptLog(w.attempts, "run"), a.id).status, "running");
+    assert.deepEqual(readLedger(w.ledger, "run").reservations.map((reservation) => [reservation.id, reservation.role, reservation.usd]), [["codex-1", "first-audit", 3]]);
+    // The same attempt again: refused, nothing reserved.
+    const again = launch(a.id, "codex-2");
+    assert.equal(again.ok, false);
+    assert.equal(readLedger(w.ledger, "run").reservations.length, 1);
+    // A cap that the held reservation exhausts: refused, and the attempt stays pending.
+    const b = w.begin("B");
+    const tight = { ...budget, capUsd: 10 };
+    const refused = launch(b.id, "codex-3", tight);
+    assert.equal(refused.ok, false);
+    if (!refused.ok) assert.match(refused.problem, /reserves \$3\.00, but only \$2\.00/);
+    assert.equal(attemptIn(readAttemptLog(w.attempts, "run"), b.id).status, "pending");
+    assert.equal(readLedger(w.ledger, "run").reservations.length, 1);
+    // A launch description without the attempt's marker would not be matched to it: refused.
+    assert.throws(() => launchAttempt({ attemptsPath: w.attempts, ledgerPath: w.ledger, run: "run", budget, measure: () => [], id: b.id, ref: "codex-4", description: "First audit B a", now: T0 }), /carries its marker/);
+  } finally {
+    w.cleanup();
+  }
 });

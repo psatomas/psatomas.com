@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { attemptBudget, AttemptError, attemptMarker, beginAttempt, decide, emptyLog, inputKeyOf, markerIn, reconcile, TRANSITIONS, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptStep } from "./attempts.ts";
+import { artifactAttemptProblem, attemptBudget, AttemptError, attemptMarker, beginAttempt, decide, emptyLog, inputKeyOf, LAUNCH_GRACE_MS, markerIn, reconcile, releaseHold, TRANSITIONS, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptStep } from "./attempts.ts";
 
 const T0 = "2026-11-05T10:00:00.000Z";
 const T1 = "2026-11-05T11:00:00.000Z";
@@ -166,4 +166,67 @@ test("independent audit recovery: one auditor's interruption never touches the o
   // A neighbour changes before B2 submits: A's output is stale for the new evidence, so A is failed too and both audit again.
   const moved = reconcile(aDone, none(aDone, { inputKey: "new-key", output: { state: "stale" } }), T1);
   assert.equal(moved.attempt.status, "failed");
+});
+
+// ---------------------------------------------------------------- adversarial review of PR-4
+
+test("a just-launched attempt whose session has not appeared yet stays running: a false interruption would invite paying for it twice", () => {
+  const { attempt } = running();
+  const soon = new Date(Date.parse(T0) + LAUNCH_GRACE_MS - 60_000).toISOString();
+  const quiet = reconcile(attempt, none(attempt), soon);
+  assert.equal(quiet.attempt.status, "running");
+  assert.equal(quiet.changed, false);
+  assert.equal(quiet.decision, undefined);
+  assert.match(quiet.explanation, /launch grace/);
+  // Past the grace, no session ever reporting it is an unknown outcome: interrupted, and a decision is needed.
+  const late = reconcile(attempt, none(attempt), new Date(Date.parse(T0) + LAUNCH_GRACE_MS).toISOString());
+  assert.equal(late.attempt.status, "interrupted");
+  assert.ok(late.decision);
+  // A session that reports finishing without output is interrupted at once.
+  assert.equal(reconcile(attempt, none(attempt, { sessions: [session(true, 0)] }), soon).attempt.status, "interrupted");
+});
+
+test("a human recovery decision never frees spending authorization: a launched attempt whose spend was never measured holds its reserve until it is explicitly released", () => {
+  const reserve = () => 3;
+  const ledger = { version: 1 as const, run: "r", reservations: [] as { id: string; role: string; usd: number; at: string; description?: string }[] };
+  const log = (...attempts: L2Attempt[]): L2AttemptLog => ({ version: 1, run: "r", attempts });
+  const { attempt } = running();
+  const interrupted = transition(attempt, "interrupted", T1, "gone");
+  assert.equal(attemptBudget(log(interrupted), [], ledger, reserve).heldUsd, 3);
+  // Deciding (relaunch or abandon) resolves the step, not what its model call cost: the reserve stays held.
+  for (const kind of ["relaunch", "abandon"] as const) assert.equal(attemptBudget(log(decide(interrupted, kind, "gone", T1)), [], ledger, reserve).heldUsd, 3, kind);
+  // So does failing a launched attempt by hand.
+  assert.equal(attemptBudget(log(transition(attempt, "failed", T1, "its session crashed")), [], ledger, reserve).heldUsd, 3);
+  // A relaunch begins a new attempt; both are held, never one in place of the other.
+  const decided = decide(interrupted, "relaunch", "gone", T1);
+  const again = transition(beginAttempt(log(decided), { step: A, pipeline: V2, inputs: { binding: "key-1" }, binding: BINDING, now: T1 }).attempt, "running", T1, "launched", { launch: { ref: "toolu_2", at: T1 } });
+  assert.equal(attemptBudget(log(decided, again), [], ledger, reserve).heldUsd, 6);
+  // Only an explicit release, with the human's reason, frees it; the release is kept.
+  const released = releaseHold(decided, "the session made no model call: its transcript shows none", T1);
+  assert.equal(released.holdReleased?.reason, "the session made no model call: its transcript shows none");
+  assert.equal(attemptBudget(log(released), [], ledger, reserve).heldUsd, 0);
+  assert.throws(() => releaseHold(decided, " ", T1), /needs the human's reason/);
+  assert.throws(() => releaseHold(released, "again", T1), /already released/);
+  assert.throws(() => releaseHold(interrupted, "x", T1), /interrupted: resolve it first/);
+  // A never-launched attempt holds nothing, and has nothing to release.
+  const unlaunched = transition(begin(emptyLog("r")).attempt, "failed", T1, "inputs changed");
+  assert.equal(attemptBudget(log(unlaunched), [], ledger, reserve).heldUsd, 0);
+  assert.throws(() => releaseHold(unlaunched, "x", T1), /never launched/);
+  // Measured or recorded spend accounts for it: nothing more is held.
+  assert.equal(attemptBudget(log(decided), [{ description: `First audit A a ${attemptMarker(decided.id)}` }], ledger, reserve).heldUsd, 0);
+});
+
+test("an audit artifact is the output of exactly one attempt: its own step, and the artifact that attempt captured", () => {
+  const { attempt } = running();
+  const artifact = { attempt: attempt.id, subject: "a", role: "first-audit", auditor: "A", key: "k1" };
+  assert.equal(artifactAttemptProblem(attempt, artifact, "first-audit-A-001"), undefined);
+  assert.match(artifactAttemptProblem(attempt, { ...artifact, attempt: "att-00000000-009" }, "first-audit-A-001")!, /names attempt att-00000000-009/);
+  assert.match(artifactAttemptProblem(attempt, { ...artifact, attempt: undefined }, "first-audit-A-001")!, /names attempt none/);
+  assert.match(artifactAttemptProblem(attempt, { ...artifact, auditor: "B" }, "first-audit-B-001")!, /not attempt .*first-audit:A/);
+  assert.match(artifactAttemptProblem(attempt, { ...artifact, subject: "b" }, "first-audit-A-001")!, /of b, not attempt/);
+  const completed = transition(attempt, "completed", T1, "submitted", { output: { kind: "artifact", ref: "first-audit-A-001", key: "k1", at: T1 } });
+  assert.equal(artifactAttemptProblem(completed, artifact, "first-audit-A-001"), undefined);
+  // A second submission naming the same attempt is not its output.
+  assert.match(artifactAttemptProblem(completed, artifact, "first-audit-A-002")!, /one attempt has one output/);
+  assert.match(artifactAttemptProblem(completed, { ...artifact, key: "k2" }, "first-audit-A-001")!, /one attempt has one output/);
 });
