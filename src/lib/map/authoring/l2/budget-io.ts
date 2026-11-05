@@ -108,10 +108,14 @@ export function withLock<T>(path: string, fn: () => T, { timeoutMs = 30_000, sta
       pause(50);
     }
   }
+  // A process that exits while holding the lock (a refusal that exits) still releases it; only a killed one leaves it, until stale.
+  const release = () => rmSync(lock, { recursive: true, force: true });
+  process.once("exit", release);
   try {
     return fn();
   } finally {
-    rmSync(lock, { recursive: true, force: true });
+    process.off("exit", release);
+    release();
   }
 }
 

@@ -260,7 +260,7 @@ export function commitAuditRecording<S>(io: {
   step: () => S;
   saveState: (state: S) => void;
   /** Writes the group file and the run state together, crash-safely (journal.ts journaledCommit); without it, the two writes below. */
-  persist?: (nextText: string, state: S) => void;
+  persist?: (nextText: string, state: S, before: string) => void;
 }): { ok: true; state: S } | { ok: false; problems: string[] } {
   const before = io.readGroup();
   const nextText = io.next(before);
@@ -268,7 +268,7 @@ export function commitAuditRecording<S>(io: {
   if (problems.length) return { ok: false, problems };
   const state = io.step();
   if (io.persist) {
-    io.persist(nextText, state);
+    io.persist(nextText, state, before);
     return { ok: true, state };
   }
   io.writeGroup(nextText);

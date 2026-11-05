@@ -268,8 +268,21 @@ function readState(domainId: string): RunState | undefined {
 }
 function saveState(state: RunState) {
   mkdirSync(STATE_DIR, { recursive: true });
-  writeFileSync(statePath(state.domainId), `${JSON.stringify(state, null, 2)}\n`);
+  const write = () => writeFileSync(statePath(state.domainId), `${JSON.stringify(state, null, 2)}\n`);
+  if (state.kind !== "l2") return write();
+  // An L2 run's state is written under its commit journal's lock, never over a journaled commit in flight or unrecovered.
+  try {
+    withLock(journalPath(state.domainId), () => {
+      if (existsSync(journalPath(state.domainId))) throw new JournalError(`an interrupted commit of ${state.domainId} is unrecovered (${journalPath(state.domainId)}): run any l2 command to recover it first`);
+      write();
+    });
+  } catch (error) {
+    if (error instanceof JournalError || error instanceof BudgetLockError) fail(`the run state of ${state.domainId} was not saved: ${error.message}`, 1);
+    throw error;
+  }
 }
+/** The files an L2 run's commit journal may write: the run's own state and the L2 group files. */
+const journalAllows = (domainId: string) => (path: string) => path === statePath(domainId) || (dirname(path) === join(ROOT, GROUPS_DIR) && path.endsWith(".json"));
 
 /** Every recorded run of a slice: its full-slice run, its partial runs and its repair runs. */
 function sliceRuns(sliceId: string): RunState[] {
@@ -284,10 +297,38 @@ function activeState(): RunState {
   const state = selectState();
   // An interrupted commit (a v2 audit recording killed between its writes) is recovered before anything reads the run.
   if (!l2Mode || !existsSync(journalPath(state.domainId))) return state;
-  const recovery = recoverJournal(journalPath(state.domainId), state.domainId);
+  let recovery: ReturnType<typeof recoverJournal>;
+  try {
+    recovery = recoverJournal(journalPath(state.domainId), state.domainId, journalAllows(state.domainId));
+  } catch (error) {
+    if (error instanceof JournalError) fail(`cannot recover the interrupted commit of ${state.domainId}: ${error.message}`, 1);
+    throw error;
+  }
   if (recovery.action === "refused") fail(`an interrupted commit of ${state.domainId} (${recovery.what}) cannot be recovered: ${recovery.problem}; a human decides (the journal is ${journalPath(state.domainId)})`, 1);
-  if (recovery.action === "rolled-forward") console.log(`recovered an interrupted commit (${recovery.what}): completed it${recovery.written.length ? `, writing ${recovery.written.map((file) => file.replace(`${ROOT}`, "")).join(", ")}` : ""}`);
-  return readState(state.domainId)!;
+  const recovered = readState(state.domainId)!;
+  if (recovery.action === "rolled-forward") {
+    console.log(`recovered an interrupted commit (${recovery.what}): completed it${recovery.written.length ? `, writing ${recovery.written.map((file) => file.replace(`${ROOT}`, "")).join(", ")}` : ""}`);
+    const stale = recoveredStaleness(recovered, recovery.tx);
+    if (stale) console.log(`  the recovered ${stale.step} was decided against evidence that has since changed (${stale.changed.join(", ")}): completing the commit does not make it current; it covers nothing it judged differently, and the gates judge it as they would any stale audit`);
+  }
+  return recovered;
+}
+
+/** What a recovered audit judged that is no longer as it is now: its record, a neighbour's, or a group member's. */
+function recoveredStaleness(state: RunState, tx: string): { step: string; changed: string[] } | undefined {
+  const [kind, subject] = (tx.split("@")[0] ?? "").split(":");
+  if (!state.l2 || (kind !== "audit" && kind !== "group-audit") || !subject) return undefined;
+  const plans = readPlans();
+  let bound: Record<string, string> = {};
+  if (kind === "audit") {
+    const audit = plans.map((plan) => conceptWorkOf(plan, subject)?.audit).find(Boolean);
+    if (!audit) return undefined;
+    bound = { ...(audit.neighbours ?? {}), [subject]: audit.recordFingerprint };
+  } else {
+    bound = (plans.find((plan) => plan.group === subject) as (L2GroupFile & { groupAudit?: L2GroupAudit }) | undefined)?.groupAudit?.records ?? {};
+  }
+  const changed = Object.entries(bound).filter(([conceptId, fingerprint]) => recordFingerprint(recordOf(conceptId)) !== fingerprint).map(([conceptId]) => conceptId);
+  return changed.length ? { step: `${kind} of ${subject}`, changed } : undefined;
 }
 
 function selectState(): RunState {
@@ -1038,6 +1079,9 @@ function commitAttempts(state: RunState, ids: readonly string[], reason: string,
 function recordBatchedAudit(state: RunState, kind: "audit" | "group-audit", subject: string, group: string) {
   if (flag("--audit-file")) fail(`${state.domainId} runs group-batched (simplified v2): audits are recorded from submitted findings (\`${CLI} submit-audit\`), never from --audit-file`, 1);
   const record = l2Records(state);
+  // The run state this recording is computed from: if another command changes it before the commit, the commit is refused (journaledCommit `expect`).
+  const stateBefore = readFileSync(statePath(state.domainId), "utf8");
+  if (JSON.stringify(JSON.parse(stateBefore)) !== JSON.stringify(state)) fail(`the run state of ${state.domainId} changed while this command ran: run it again`, 1);
   const accepted = acceptedAudit(state, kind, subject, group);
   const fingerprint = kind === "audit" ? recordFingerprint(recordOf(subject)) : undefined;
   // A tracked run records only artifacts of completed attempts whose inputs are still exactly the current ones.
@@ -1082,8 +1126,8 @@ function recordBatchedAudit(state: RunState, kind: "audit" | "group-audit", subj
       },
       saveState,
       // Both files through the journal: a termination between them is completed on the next command (activeState).
-      persist: (text, next) =>
-        journaledCommit(journalPath(state.domainId), { run: state.domainId, tx: `${kind}:${subject}@${at}`, at, what: `record ${kind} ${subject}`, files: [{ path, text }, { path: statePath(state.domainId), text: `${JSON.stringify(next, null, 2)}\n` }] }),
+      persist: (text, next, before) =>
+        journaledCommit(journalPath(state.domainId), { run: state.domainId, tx: `${kind}:${subject}@${at}`, at, what: `record ${kind} ${subject}`, files: [{ path, text, expect: sha(before) }, { path: statePath(state.domainId), text: `${JSON.stringify(next, null, 2)}\n`, expect: sha(stateBefore) }] }),
     });
   } catch (error) {
     if (error instanceof RunStateError || error instanceof JournalError) fail(`cannot record ${kind} ${subject}: ${error.message}`, 1);
