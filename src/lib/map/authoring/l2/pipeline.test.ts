@@ -23,11 +23,16 @@ function simplifiedG1(m = model()): L2GroupFile {
 
 test("a pipeline is chosen per run at its current version; none declared is legacy", () => {
   assert.deepEqual([startPipeline(undefined).mode, startPipeline(undefined).version], ["legacy", 1]);
-  assert.deepEqual([startPipeline("simplified").mode, startPipeline("simplified").version], ["simplified", 1]);
+  // `simplified` is the mode's current version; an earlier one is chosen explicitly, never by default.
+  assert.deepEqual([startPipeline("simplified").mode, startPipeline("simplified").version], ["simplified", 2]);
+  assert.deepEqual([startPipeline("simplified@1").mode, startPipeline("simplified@1").version], ["simplified", 1]);
+  assert.throws(() => startPipeline("simplified@3"), /version 3 is not one this tooling knows \(1\.\.2\)/);
+  assert.throws(() => startPipeline("simplified@x"), PipelineError);
   assert.throws(() => startPipeline("fast"), PipelineError);
   assert.deepEqual(pipelineOf(undefined), { mode: "legacy", version: 1 });
   assert.deepEqual(pipelineOf({}), { mode: "legacy", version: 1 });
-  assert.deepEqual(pipelineProblems({ mode: "simplified", version: 2 }), ["simplified pipeline version 2 is not one this tooling knows (1..1)"]);
+  assert.deepEqual(pipelineProblems({ mode: "simplified", version: 2 }), []);
+  assert.deepEqual(pipelineProblems({ mode: "simplified", version: 3 }), ["simplified pipeline version 3 is not one this tooling knows (1..2)"]);
   assert.deepEqual(pipelineProblems({ mode: "other" as never, version: 1 }), ["unknown pipeline mode other"]);
   assert.deepEqual(pipelineProblems(undefined), []);
 });
@@ -147,7 +152,9 @@ test("a pipeline mismatch is refused with a safe, actionable edit of the one fie
 
 test("territory selects the skeleton's pipeline: simplified declares it, legacy (or none) declares nothing", () => {
   const m = model();
-  assert.deepEqual(territorySkeleton(m, "g1", "simplified", options).pipeline, SIMPLIFIED);
+  // A v1 run's messages ask for `simplified@1` (pipelineSpec), so its new group files stay on version 1.
+  assert.deepEqual(territorySkeleton(m, "g1", "simplified@1", options).pipeline, SIMPLIFIED);
+  assert.deepEqual(territorySkeleton(m, "g1", "simplified", options).pipeline, { mode: "simplified", version: 2 });
   assert.equal(territorySkeleton(m, "g1", "legacy", options).pipeline, undefined);
   assert.equal(territorySkeleton(m, "g1", undefined, options).pipeline, undefined);
   assert.throws(() => territorySkeleton(m, "g1", "fast", options), PipelineError);
@@ -158,7 +165,7 @@ test("status: recorded routing shown as recorded, a run from before modes says r
   assert.equal(pipelineStatus(undefined), "legacy pipeline v1 (run predates pipeline modes); routing not recorded");
   assert.equal(pipelineStatus({}), "legacy pipeline v1 (run predates pipeline modes); routing not recorded");
   assert.equal(pipelineStatus({ pipeline: SIMPLIFIED }), "simplified pipeline v1; routing not recorded");
-  const routed = startPipeline("simplified", "author=sonnet");
+  const routed = startPipeline("simplified@1", "author=sonnet");
   assert.equal(pipelineStatus({ pipeline: routed }), "simplified pipeline v1; routing plan=opus, author=sonnet, first-audit=opus, repair=opus, re-audit=opus, group-audit=opus");
   // The recorded routing is what is shown, even if the defaults change later.
   assert.match(pipelineStatus({ pipeline: { ...routed, routing: { ...routed.routing, plan: "haiku" } } }), /plan=haiku/);

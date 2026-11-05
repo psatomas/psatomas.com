@@ -131,12 +131,28 @@ export type L2Step = { kind: L2StepKind; subject: string; group: string };
  * concept is drafted and audited in turn (each in its own fresh context); the
  * group audits close the slice. The pilot's checkpoint sits between design
  * and drafting. The simplified pipeline (pipeline.ts) has no model or design
- * step: drafting follows the plans directly.
+ * step: drafting follows the plans directly. From simplified version 2 the
+ * order is group-batched: after the plans, each group drafts every owned
+ * concept, then audits each, then is audited as a group, before the next group.
+ * `version` is the run's own: version 1 runs keep their order when resumed.
  */
-export function sliceSteps(groups: readonly { group: string; concepts: readonly string[] }[], mode: L2PipelineMode = "legacy"): L2Step[] {
+export function sliceSteps(groups: readonly { group: string; concepts: readonly string[] }[], mode: L2PipelineMode = "legacy", version = 1): L2Step[] {
   const concepts = groups.flatMap((group) => group.concepts.map((conceptId) => ({ conceptId, group: group.group })));
+  const plans = groups.map((group): L2Step => ({ kind: "plan", subject: group.group, group: group.group }));
+  if (mode === "simplified" && version >= 2) {
+    // Group-batched: within each group every draft comes before any audit, so both first auditors judge a record with
+    // every sibling's record in place; the group's audit closes it before the next group starts.
+    return [
+      ...plans,
+      ...groups.flatMap((group): L2Step[] => [
+        ...group.concepts.map((conceptId): L2Step => ({ kind: "author", subject: conceptId, group: group.group })),
+        ...group.concepts.map((conceptId): L2Step => ({ kind: "audit", subject: conceptId, group: group.group })),
+        { kind: "group-audit", subject: group.group, group: group.group },
+      ]),
+    ];
+  }
   return [
-    ...groups.map((group): L2Step => ({ kind: "plan", subject: group.group, group: group.group })),
+    ...plans,
     ...(mode === "simplified" ? [] : concepts.map(({ conceptId, group }): L2Step => ({ kind: "design", subject: conceptId, group }))),
     ...concepts.flatMap(({ conceptId, group }): L2Step[] => [
       { kind: "author", subject: conceptId, group },
