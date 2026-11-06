@@ -3,6 +3,7 @@
 The agent instructions for slices started with `npm run map:author -- l2 start --slice <id> --pipeline simplified`
 (version 2, the current one) or `--pipeline simplified@1` (version 1). Version 2 runs each group drafts-first and
 records audits from the auditors' submitted findings: read [v2.md](v2.md) with each step's instructions.
+A driver reads the run's state from `l2 next --json`, whose contract is [orchestration.md](orchestration.md).
 The mode, its version and its routing are defined in
 [`pipeline.ts`](../../../src/lib/map/authoring/l2/pipeline.ts); the procedure is
 [`l2-authoring.md`](../l2-authoring.md), "Pipeline modes". These files are the instructions for version 1. A change

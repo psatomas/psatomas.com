@@ -62,21 +62,24 @@
 //   npm run map:author -- l2 reopen <id>[,<id>..] --from-findings   (v2) reopen with the submitted blocking findings as the reason
 //   npm run map:author -- l2 authorize --revoke-merge --decision ".."   revoke it (kept in the campaign's history); runs started later await human merge
 //   npm run map:author -- l2 status | next | complete audit --note .. | fix .. | stop .. | resume .. | run [--until <stage>] ..
+//   npm run map:author -- l2 next --json [--domain <run>]   the versioned, read-only driver view (l2/orchestration.ts)
+//   npm run map:author -- l2 batches --slice <id> [--json]   the slice's remaining work as runs of at most 12 concepts
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { mapKnowledge } from "../src/lib/map/data.ts";
 import { commandRepresent } from "./map-author-represent.ts";
 import { commandL2, coverageFor, groupSignalsOf, planReport, readPlans, signalsOf } from "./map-author-l2.ts";
-import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
+import { DATA_FILE as L2_DATA_FILE, finishedConcepts, groupCommitMessage, groupCommitTrees, l2Branch, l2PrBody, l2RepairBranch, l2PrTitle, l2RunId, l2Slices, L2ScopeError, pilotSlice, PILOT_SLICE, selectGroups, stepKey, REGISTRY_FILE as L2_REGISTRY_FILE, repairCommitMessage, sliceRemaining, VIEW_FILE as L2_VIEW_FILE, withRecordsFrom, type L2RunScope, type L2Slice, type L2StepKind } from "../src/lib/map/authoring/l2/campaign.ts";
 import { authorizeMerge, AuthorizationError, authorizeRequest, inheritedMergeAuthorization, mergeStatusLines, revocationOf, revokeMerge, type AuthorizeRequest, type L2Campaign } from "../src/lib/map/authoring/l2/authorization.ts";
 import { REPAIR_EXCEPTION, repairBaseline, repairExceptionProblem, repairScopeProblems } from "../src/lib/map/authoring/l2/repair.ts";
 import { contentFingerprint as recordFingerprint } from "../src/lib/map/authoring/representation/design.ts";
 import { auditCoverageProblems, conceptWorkOf, groupAuditProblems, groupFileWithoutAudits, withConceptAudit, workProblems, type L2ConceptWork, type L2Design, type L2GroupAudit } from "../src/lib/map/authoring/l2/contracts.ts";
 import { neighbourBasis } from "../src/lib/map/authoring/l2/coverage.ts";
+import { l2Next, l2NoRun, planBatches, staleSummary, stepFreshness, type L2FreshnessInput, type L2NextInput, type L2SubmittedAudit } from "../src/lib/map/authoring/l2/orchestration.ts";
 import { AttemptError, artifactAttemptProblem, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, releaseHold, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
 import { launchAttempt, readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
 import { journaledCommit, JournalError, recoverJournal, sha } from "../src/lib/map/authoring/l2/journal.ts";
@@ -1727,6 +1730,7 @@ function commandStatus(state = activeState()) {
           ...(state.l2.repair ? [repairStatusLine(state.l2.repair, verbose)] : []),
           ...(state.l2.history ?? []).map((entry) => (entry.kind === "repair" ? `history: repair cycle ${entry.cycle} (${entry.concepts.join(", ")}) closed ${entry.closedAt}` : `history: merged main ${entry.from.slice(0, 7)} → ${entry.to.slice(0, 7)} at ${entry.merge.slice(0, 7)}`)),
           ...staleL2Steps(state, observedAudits(state)).map((entry) => `STALE ${entry.step}: ${entry.reason}; reopen the concept to repair and re-audit it`),
+          ...neighbourStaleLines(state),
           ...(state.l2.checkpoint ? [`checkpoint: ${state.l2.checkpoint.clearedAt ? `cleared ${state.l2.checkpoint.clearedAt}: ${state.l2.checkpoint.decision}` : "holds drafting until a human review"}`] : []),
           `merging: ${state.l2.mergeAuthorized ? (revocationOf(readCampaign(), state.l2.mergeAuthorized) ? `started under an authorization since revoked; awaits human merge` : `authorized (${state.l2.mergeAuthorized.authorization})`) : "awaits human merge"}${state.l2.merged ? `; merged ${state.l2.merged.sha.slice(0, 7)}${state.l2.merged.byHand ? " by hand" : ""}` : state.stage === "done" && state.pr ? `; once #${state.pr.number} is merged, \`${CLI} run --domain ${state.domainId}\` records the merge` : ""}`,
         ]
@@ -1748,6 +1752,136 @@ function commandNext(state = activeState()) {
   if (action.kind === "done") console.log(state.l2?.merged ? `next: nothing; merged as ${state.l2.merged.sha.slice(0, 7)}; \`${CLI} campaign\` names the next slice` : `next: nothing; the PR awaits human merge`);
   else if (action.kind === "stop") printStop(state);
   else console.log(`next: ${action.message}`);
+}
+
+// ---------------------------------------------------------------- the driver view (l2/orchestration.ts)
+
+/** What the run's recorded drafts and audits were bound to, and what they would bind now. Reads only. */
+function freshnessInput(state: RunState): L2FreshnessInput {
+  const record = state.l2!;
+  const plans = readPlans();
+  const fingerprint = (conceptId: string) => recordFingerprint(recordOf(conceptId));
+  const concepts = record.slice.groups.flatMap((group) => group.concepts);
+  const drafts = Object.fromEntries(
+    concepts.filter((conceptId) => record.steps[`author:${conceptId}`]).map((conceptId) => {
+      const bound = record.steps[`author:${conceptId}`].fingerprint;
+      return [conceptId, { ...(bound ? { bound } : {}), current: fingerprint(conceptId) }];
+    }),
+  );
+  const audits = Object.fromEntries(
+    concepts.flatMap((conceptId) => {
+      const audit = record.steps[`audit:${conceptId}`] ? plans.map((plan) => conceptWorkOf(plan, conceptId)?.audit).find(Boolean) : undefined;
+      if (!audit) return [];
+      return [[conceptId, { record: { bound: audit.recordFingerprint, current: fingerprint(conceptId) }, ...(audit.neighbours ? { neighbours: { bound: audit.neighbours, current: neighbourBasis(mapKnowledge, plans, conceptId) } } : {}) }]];
+    }),
+  );
+  const groupAudits = Object.fromEntries(
+    record.slice.groups.flatMap((group) => {
+      const plan = record.steps[`group-audit:${group.group}`] ? (plans.find((candidate) => candidate.group === group.group) as (L2GroupFile & { groupAudit?: L2GroupAudit }) | undefined) : undefined;
+      return plan ? [[group.group, { bound: plan.groupAudit?.records ?? {}, current: ownedRecords(plan) }]] : [];
+    }),
+  );
+  return { drafts, audits, groupAudits };
+}
+
+/** `l2 status`: recorded audits that bound records since changed, beyond what staleL2Steps already reports (their own record). */
+function neighbourStaleLines(state: RunState): string[] {
+  const listed = new Set(staleL2Steps(state, observedAudits(state)).map((entry) => entry.step));
+  const input = freshnessInput(state);
+  const keys = [...Object.keys(input.audits).map((conceptId) => `audit:${conceptId}`), ...Object.keys(input.groupAudits).map((group) => `group-audit:${group}`)];
+  return keys.flatMap((key) => {
+    const stale = stepFreshness(key, input).stale;
+    return stale.length && !listed.has(key) ? [`STALE ${key}: records it was bound to have changed since it was recorded: ${staleSummary(stale)}; re-audit it (\`${CLI} next --json\` lists the reasons)`] : [];
+  });
+}
+
+/** What each ready audit step's current artifacts support, in a group-batched run. Reads only. */
+function submittedAudits(state: RunState): Record<string, L2SubmittedAudit> {
+  if (!isBatched(pipelineOf(state.l2!))) return {};
+  const submitted: Record<string, L2SubmittedAudit> = {};
+  for (const step of pendingL2Steps(state)) {
+    if ((step.kind !== "audit" && step.kind !== "group-audit") || pendingDrafts(state, step.group).length) continue;
+    try {
+      const artifacts = currentArtifacts(state, step.kind, step.subject, step.group);
+      const outcome = auditOutcome(artifacts, auditNeed(state, step.kind, step.subject));
+      submitted[stepKey(step)] = {
+        submitted: artifacts.map((artifact) => ({ role: artifact.role, auditor: artifact.auditor })),
+        outcome: outcome.kind,
+        ...(outcome.kind === "blocking" ? { concepts: [...new Set(outcome.findings.map((finding) => finding.concept))].sort() } : {}),
+      };
+    } catch (error) {
+      if (!(error instanceof AuditArtifactError)) throw error;
+      submitted[stepKey(step)] = { submitted: [], outcome: "invalid" };
+    }
+  }
+  return submitted;
+}
+
+/** The run's spending cap as measured now, and why it refuses a launch of each role. Reads only. */
+function budgetView(state: RunState): L2NextInput["budget"] {
+  const budget = state.l2?.budget;
+  if (!budget) return undefined;
+  const sessions = measure(state);
+  const ledger = readLedger(ledgerPath(state.domainId), state.domainId);
+  const status = budgetStatus(budget, sessions, ledger, state.l2?.attempts ? attemptsAdapter.extra(state.domainId, sessions, ledger, budget) : {});
+  const roles = [...new Set([...Object.keys(budget.reserves), "plan", "design", "author", "repair", "first-audit", "re-audit", "group-audit"])].sort();
+  return { status, refused: Object.fromEntries(roles.map((role) => [role, launchProblem(budget, status, role)])) };
+}
+
+/**
+ * `l2 next --json`: the run's orchestration view (l2/orchestration.ts), for a driver. Strictly read-only: it never
+ * recovers a commit journal (it reports one), reconciles, begins or launches an attempt, reserves budget, or writes
+ * any file; selecting the run reads the state files without the recovery every other command performs on load.
+ */
+function commandL2NextJson() {
+  const print = (value: unknown) => console.log(JSON.stringify(value, null, 2));
+  const domainId = flag("--domain");
+  let state: RunState | undefined;
+  if (domainId) state = readState(domainId);
+  else {
+    const active = existsSync(STATE_DIR)
+      ? readdirSync(STATE_DIR).filter((file) => file.endsWith(".json") && file !== L2_CAMPAIGN_FILE).map((file) => readState(file.slice(0, -5))!).filter((candidate) => candidate.stage !== "done")
+      : [];
+    if (active.length !== 1) return print(l2NoRun(active.map((candidate) => candidate.domainId)));
+    state = active[0];
+  }
+  if (!state) return print(l2NoRun([]));
+  const journal = existsSync(journalPath(state.domainId));
+  const tracked = tracksAttempts(state);
+  const governance = { mergeAuthorized: Boolean(state.l2?.mergeAuthorized && !revocationOf(readCampaign(), state.l2.mergeAuthorized)), hookRegistered: hookInstalled() };
+  const common = { state, journal, tracked, governance, taskOf: taskDescription, inboxOf: (subject: string, role: L2AuditRole, auditor: string) => relative(ROOT, auditorInbox(runWorkDir(state!), subject, role, auditor)) };
+  // An unrecovered journal means the state may be half of a commit: nothing more is read from it.
+  if (journal) return print(l2Next({ ...common, freshness: { drafts: {}, audits: {}, groupAudits: {} }, attempts: [], drafts: {}, audits: {} }));
+  print(
+    l2Next({
+      ...common,
+      freshness: freshnessInput(state),
+      attempts: tracked ? readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts : [],
+      drafts: Object.fromEntries(state.l2!.slice.groups.flatMap((group) => group.concepts).map((conceptId) => [conceptId, Boolean(recordOf(conceptId))])),
+      audits: submittedAudits(state),
+      budget: budgetView(state),
+    }),
+  );
+}
+
+/** `l2 batches --slice <id> [--json] [--pipeline <spec>]`: the slice's remaining work as runs of at most 12 concepts, whole groups only. Reads only. */
+function commandL2Batches() {
+  const { slices, finished } = campaignSlices();
+  const id = flag("--slice") ?? fail(`batches needs --slice <id>; see \`${CLI} campaign\``);
+  const slice = slices.find((candidate) => candidate.id === id) ?? fail(`unknown slice ${id}; see \`${CLI} campaign\``, 1);
+  // A run of the slice that would refuse a new start (open, or finished and not integrated) holds its groups.
+  const holding = sliceRuns(slice.id).filter((run) => !run.l2?.repairOf && partialStartProblems({ runs: [run], finished, id: "batch" }).length > 0);
+  const claimed = Object.fromEntries(holding.flatMap((run) => run.l2!.slice.groups.map((group) => [group.group, run.domainId])));
+  const plan = planBatches({ slice, remaining: new Set(sliceRemaining(slice, finished)), claimed, openRuns: holding.map((run) => run.domainId), pipeline: flag("--pipeline") ?? "simplified" });
+  if (flags.has("--json")) return console.log(JSON.stringify(plan, null, 2));
+  console.log(`${plan.slice}: ${plan.batches.length} batch(es) of at most ${plan.maxConcepts} concepts, whole groups in the slice's order`);
+  for (const batch of plan.batches) {
+    console.log(`  ${batch.index}. ${batch.groups.map((group) => `${group.group} (${group.concepts})`).join(", ")}: ${batch.concepts} concept(s)`);
+    console.log(`     ${batch.problems.length ? `PROBLEM: ${batch.problems.join("; ")}` : `npm run map:author -- ${batch.command}`}`);
+  }
+  if (plan.claimed.length) console.log(`held by runs of the slice: ${plan.claimed.map((entry) => `${entry.group} (${entry.run})`).join(", ")}`);
+  if (plan.integrated.length) console.log(`integrated: ${plan.integrated.join(", ")}`);
+  console.log(plan.startable ? "the first batch may start now; each later one once the previous run is finished and integrated" : plan.openRuns.length ? `no batch starts until ${plan.openRuns.join(", ")} is finished and integrated` : "nothing to start");
 }
 
 function topicOf(state: RunState, conceptId: string) {
@@ -2794,7 +2928,13 @@ try {
       commandStatus();
       break;
     case "next":
-      commandNext();
+      // `l2 next --json` is the read-only driver view; every other form keeps its text output.
+      if (l2Mode && flags.has("--json")) commandL2NextJson();
+      else commandNext();
+      break;
+    case "batches":
+      if (!l2Mode) fail("batches is an l2 command: map:author -- l2 batches --slice <id>");
+      commandL2Batches();
       break;
     case "context":
       if (refactor) commandRefactorContext();
