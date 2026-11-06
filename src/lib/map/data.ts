@@ -21008,6 +21008,221 @@ export const mapKnowledge: MapKnowledgeModel = {
         },
       ],
     },
+    {
+      id: "merkle-trees-content",
+      conceptId: "merkle-trees",
+      definition: "A Merkle tree is a tree of hashes built over an ordered collection: each leaf is the hash of one element, each internal node is the hash of its children's hashes, and the one root hash that results stands for the collection.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "A proof that an element belongs to the collection, an inclusion proof, gives the element's position and the hashes of the siblings along the path from its leaf to the root, one per level. The verifier hashes the element, combines the running hash with each sibling in turn, placing it on the left or the right as the matching bit of the position says, and accepts if the last hash equals the root it already holds. Provided the tree's construction is unambiguous and the verifier knows the number of elements, so that it rejects a position outside the collection and a proof of the wrong length, a matching proof for an element that is not at that position would require a collision in the hash function. A verified proof therefore establishes only that this element sits at this position in the collection the root stands for. It says nothing about other elements, including whether the same element appears elsewhere too, and it cannot make the verifier's copy of the root authentic.",
+        },
+        {
+          kind: "paragraph",
+          text: "Proof size follows the tree's height rather than its size. A balanced binary tree has one level for each doubling of the collection, so a proof holds about 20 hashes for a million elements and about 30 for a billion, and verifying it takes the same number of hash computations. Nodes with more children make a tree shallower, but each level of a proof must then carry all of a node's other children, so in a tree of hashes a wider node enlarges proofs rather than shrinking them. Proofs for several elements of one tree share their upper levels, so a combined proof that sends each needed node once, and none the verifier can compute, is smaller than the separate proofs together, especially when the elements sit close together.",
+        },
+        {
+          kind: "paragraph",
+          text: "Recomputing the root costs one hash for every node a change touches. Each node depends only on its descendants, so a change that leaves every element at its position touches only the paths from the changed leaves to the root, and a party holding only the root can still compute the new one: an inclusion proof for the old value, checked against the old root, supplies exactly the sibling hashes the new path needs. A change that moves elements to new positions touches every node over a moved position. Building a binary tree from scratch, about two hashes per element, bounds what any single change can cost.",
+        },
+        {
+          kind: "comparison",
+          label: "What recomputing a Merkle root takes, by kind of change",
+          dimensions: ["Nodes recomputed", "What the recomputation needs"],
+          alternatives: [
+            { name: "One element replaced", values: ["The nodes on its path to the root, one per level", "Its siblings along that path, read from storage or taken from a checked inclusion proof"] },
+            { name: "Several elements replaced together", values: ["Every node on any of their paths, each once even where paths share it", "The siblings of those paths that are not themselves on a changed path"] },
+            { name: "Element appended at the end", values: ["The nodes on its path to the root, including a new top level when the tree grows one", "The hashes of the completed subtrees to its left, at most one per level, and any fixed padding values"] },
+            { name: "Element inserted or removed before the end", values: ["Every ancestor of every element whose position shifts, up to the whole tree", "The elements or leaf hashes from that point on, and stored nodes for the rest"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Designs that expect removals often avoid the shift by overwriting the removed element's leaf with an empty marker, which is an ordinary replacement, or by placing elements by key so that inserting one does not move the others, as sparse Merkle trees and Merkle Patricia Tries do.",
+        },
+        {
+          kind: "paragraph",
+          text: "Two different collections can share a root without any hash collision when the construction feeds the hash function the same inputs for both. If leaves and internal nodes are hashed the same way and an element may be exactly two hashes long, the two child hashes of an internal node, written side by side, form a valid element: taking the nodes of any internal level and writing each as its two child hashes gives a different collection with the same root, and an internal node can be presented as an element with a proof one level shorter than a real one. In Bitcoin, which hashes transactions and internal nodes alike, a transaction exactly 64 bytes long is ambiguous in this way. If a level with an odd number of nodes is completed by duplicating its last node, as Bitcoin's transaction tree does, a collection with an odd number of elements and the same collection with its last element repeated produce the same root. If each pair of children is sorted before hashing, as OpenZeppelin's proof library for Solidity contracts does so that proofs need no left or right markers, swapping two sibling subtrees leaves the root unchanged, so the root does not fix the elements' order, and its proofs carry no positions.",
+        },
+        {
+          kind: "paragraph",
+          text: "Separating leaves from internal nodes removes the first case: Certificate Transparency logs hash a leaf with a zero byte in front of its data and an internal node with a one byte in front of its children, so no leaf input can equal a node input; other designs hash leaves with a different function or twice, or admit only elements that can never be two hashes long. The inclusion-proof verifier's length check also rejects an internal node presented as an element, because its proof is one level short. Promoting a lone last node unchanged, padding with a value no element can produce, or committing to the number of elements alongside the root removes the duplication case. Bitcoin keeps duplication, so Bitcoin Core treats a transaction list whose tree contains a repeated pair as malformed rather than relying on the root. A root meant to fix order hashes each pair in position order.",
+        },
+        {
+          kind: "paragraph",
+          text: "What a Merkle tree can show about an element it does not contain depends on whether that element has a position it would have to occupy. An inclusion proof shows what one position holds, and so that the element is not there. In a collection in no particular order, that is all: showing that an element appears nowhere needs every position, which means handing over every leaf. If the elements are sorted by key, absence becomes local. Proofs for two elements whose positions differ by one, and whose keys fall on either side of the missing key, show that no element lies between them; a key smaller than the first or larger than the last needs a proof for the first or last position, and recognizing the last position requires knowing the number of elements. If positions are derived from keys, as in a sparse Merkle tree whose leaves cover every possible key hash and whose empty leaves all hold one default value, absence is an inclusion proof of the default value at the key's position. Such a tree is as deep as the key hash is long, but empty subtrees have hashes known in advance, so proofs can omit them and, with key hashes spreading the occupied leaves evenly, carry on average about as many hashes as a balanced tree over the occupied leaves alone.",
+        },
+        {
+          kind: "paragraph",
+          text: "Absence proofs over sorted positions are only as sound as the sorting. The verifier checks two neighbors, not the order of the whole collection, so a root built over an unsorted list can yield a convincing proof that a present key is absent; whoever accepts the root has to enforce the order, as a protocol can through its validity rules. Keeping that order also makes each new key smaller than the largest an insertion before the end, with its shifting cost, one reason mutable key-value state is often committed with keyed structures instead.",
+        },
+      ],
+    },
+    {
+      id: "merkle-patricia-tries-content",
+      conceptId: "merkle-patricia-tries",
+      definition: "A Merkle Patricia trie is a key-value structure, used most prominently by Ethereum, in which the nibbles of each key spell a path through a sixteen-way trie whose unbranched runs are collapsed into single nodes, and in which every node's encoding fixes those of its children, usually by including their hashes, so that one root hash commits to every key and value the trie holds.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The trie reads a key as a sequence of nibbles, half-byte digits from 0 to 15, and each nibble selects one of sixteen slots on the way from the root. With branching nodes alone, a 32-byte key would pass a node for each of its sixty-four nibbles, most of those nodes with a single occupied slot. The Patricia construction removes those: wherever all keys past a point share the next run of nibbles, or only one key remains, one node stands for the whole run. Each node on a path is therefore one of three kinds, and its kind decides how much of the key a lookup consumes there.",
+        },
+        {
+          kind: "comparison",
+          label: "Node kinds of a Merkle Patricia trie, as a lookup meets them",
+          dimensions: ["What it holds", "Nibbles of the key it consumes", "Where the lookup goes next"],
+          alternatives: [
+            { name: "Branch node", values: ["Sixteen slots, one per nibble value, each empty or referring to a child, and a value slot for a key that ends at the node", "One, or none when the key ends at the node", "To the child in the slot the nibble selects, or to the value slot if the key ends here; an empty slot means the key is absent"] },
+            { name: "Extension node", values: ["A run of nibbles shared by every key that passes through it, and a reference to one branch node", "The whole run, when the key's next nibbles match it", "To that branch node if the run matched; otherwise the key is absent"] },
+            { name: "Leaf node", values: ["The rest of one key's nibbles, and that key's value", "All that remain, when they match", "Nowhere: the value is found if the nibbles match, and the key is absent if they do not"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A path thus has a branch node only where keys part, an extension node only where every key passing that point shares a run of nibbles before they part, and the leaf at its end. In Ethereum's account and storage tries the keys are Keccak-256 hashes of addresses and of slot numbers, which spreads them evenly over the possible paths: branch nodes near the root are full, branching thins out after about as many levels as the base-16 logarithm of the number of keys, and a leaf then holds the remaining fifty-odd nibbles. A million such keys put five or six branch nodes on a typical path, and a few hundred million put seven or eight. Two hashed keys that part from the rest at one branch seldom share further nibbles, so in these tries leaves do most of the shortening and extension nodes are uncommon. Extensions matter more where keys are not hashed and share prefixes, as in Ethereum's per-block transaction and receipt tries, keyed by each transaction's position in the block. The even spread holds only for keys no one has chosen to collide: whoever controls keys can search for ones whose hashes share a prefix with a target key's, at sixteen times the effort for each further matched nibble, and so add nodes to that key's path.",
+        },
+        {
+          kind: "paragraph",
+          text: "A proof for a key the trie holds is the list of encoded nodes on its path, from the root to the leaf. It needs no positions or left and right markers, because the key's own nibbles say which slot to follow: the first node must hash to the root, and each further node must hash to the reference that the key selects in the node before it. In Ethereum, a child whose encoding is shorter than 32 bytes is embedded in its parent instead of being referenced by hash, and so travels inside it. For a key the trie does not hold, the list ends where the key's path leaves the trie: at a branch node whose slot for the next nibble is empty, or at an extension or leaf whose nibbles differ from the key's.",
+        },
+        {
+          kind: "paragraph",
+          text: "Every node in a proof travels whole, so a branch node brings the references in all its occupied slots, not only the one the path takes; in Ethereum's encoding a full branch node of sixteen 32-byte hashes takes about 530 bytes. A proof's size is therefore set by how many branch nodes the path passes, which grows with the base-16 logarithm of the number of keys, by how full those nodes are, which is greatest near the root, and by the leaf with its remaining nibbles and its value. With a few hundred million evenly spread keys that comes to a few kilobytes, most of it hashes of slots the path does not take, up to fifteen at each level, roughly three to four times the hashes a proof in a binary tree over the same keys would carry. In Ethereum, where each contract's storage is its own trie whose root sits in the contract's account leaf, a proof for a storage slot is two such lists, one through the account trie and one through that storage trie, and their sizes add.",
+        },
+        {
+          kind: "paragraph",
+          text: "Reading a key walks its path, fetching and decoding the same nodes a proof for it would contain; in Ethereum, a storage read through the tries first walks the contract's account path to find its storage trie's root. A client that stores each node under its hash in a key-value database pays one database lookup per node, and because hashes give the nodes of one path no locality, those lookups scatter across the disk, each adding whatever reads the database needs internally. The upper levels hold few nodes, each on a large share of all paths, so clients commonly keep them in memory and go to disk only for the deeper ones.",
+        },
+        {
+          kind: "paragraph",
+          text: "An update walks the same path and then changes every node on it: the leaf takes the new value, and each ancestor is re-encoded with its child's new reference and hashed again, up to the root. An insertion that leaves the trie at an empty slot of a branch node adds only a leaf there; one that leaves inside an extension or leaf splits it, putting a new branch node where the paths part, with the shortened old node and the new leaf as its children and an extension node leading to it for any nibbles they still share. A deletion reverses this: a branch node left with one child and no value collapses into an extension or leaf node carrying that child's nibble, which joins any extension leading to it. The trie therefore always has the one shape its current keys determine, which is why its root does not depend on the order in which keys were inserted or removed. A client that applies all of a block's writes before hashing pays for each touched node once, so the upper levels, which nearly every write passes through, are rehashed once per block rather than once per write. In Ethereum, changing one storage slot rewrites the slot's path in its storage trie and then, because the account leaf holds that trie's root, the account's path as well.",
+        },
+        {
+          kind: "paragraph",
+          text: "Each rewritten node is a new record for the database, so a change of a few dozen bytes can write kilobytes of nodes. Under hash-keyed storage the old versions stay behind until something removes them, and removing them is not simple: identical nodes are stored once and can belong to several versions of a trie, or to several tries, so a node can be discarded only when nothing refers to it any more. How clients store, retain and prune nodes to contain these costs is the subject of State Storage.",
+        },
+      ],
+    },
+    {
+      id: "verkle-trees-content",
+      conceptId: "verkle-trees",
+      definition: "A verkle tree is a key-value tree in which each internal node commits to the ordered list of its children with a vector commitment instead of a hash over them, so that one root commitment stands for every key and value the tree holds.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "Each internal node has a fixed number of slots, its width, and successive pieces of a key select one slot at each level. In the elliptic-curve schemes verkle designs commonly use, a commitment is a curve point while the vector a node commits to holds field elements, so a slot holds an agreed empty value when it has no child and otherwise a field element derived from the child's commitment. At the bottom of a path, slots hold the key's value encoded as field elements, spread over more than one slot when the value is wider than one element. The tree relies on one property of the node commitment: an opening can show that one slot holds a given element without sending any other slot. Because a changed child changes the element its parent holds, a change to any value changes every commitment on its path, up to the root.",
+        },
+        {
+          kind: "paragraph",
+          text: "A proof for a key the tree holds therefore contains, for each node on the key's path, an opening of the one slot the key selects, the commitments of the nodes those slots lead to, the value, and enough bookkeeping to say where the path ends. The verifier holds only the root commitment. It checks that the slot the key selects in the root opens to the element derived from the next commitment in the proof, and continues down the path until the last slots open to the value. No sibling of a node on the path appears, whereas a proof over a tree of hashes carries, at each level, what the verifier needs of the node's other children to recompute it. For a key the tree does not hold, the path ends early: at a slot that opens to the empty value, or at a node belonging to another key, whose recorded key is opened to show that it differs. Openings need not travel one by one. Designs can combine every opening of a path, or of many keys at once, such as all the keys a block touches, into one aggregated proof, and the design proposed for Ethereum does; what then grows with the number of keys is mainly the commitments on their paths, counted once where paths share them, and the values.",
+        },
+        {
+          kind: "paragraph",
+          text: "Because an opening does not carry the node's other slots, widening nodes shrinks proofs. Evenly spread keys sit about as many levels deep as the logarithm of their number to the base of the width, so a wider node means fewer levels and fewer commitments in each proof. With 256 slots per node, as in the design proposed for Ethereum, a few hundred million keys sit about four levels deep. The opening itself depends on the scheme: a single KZG opening is one group element whatever the width, while an inner-product-argument opening, the kind Ethereum's design uses, grows by two group elements each time the width doubles, so its size follows the logarithm of the width.",
+        },
+        {
+          kind: "paragraph",
+          text: "Width moves computation in two directions. Generating an opening in general involves every slot of the node being opened, not only the one shown, so the prover's work for each node on a path grows with the width, and with those elliptic-curve schemes that work is curve and field arithmetic, much costlier per element than hashing. Updating a node does not grow with its width, because the commitments verkle designs commonly use, Pedersen and KZG commitments, are additively homomorphic: when a node is committed slot by slot and one slot changes, the node's new commitment is its old one plus the change in that slot times the slot's fixed basis point, a single scalar multiplication. A write therefore costs, at each node on its path, deriving the new element from the changed child commitment and one such multiplication, and wider nodes, by shortening paths, make writes cheaper. Building a node from scratch, by contrast, costs work in proportion to its width.",
+        },
+        {
+          kind: "paragraph",
+          text: "Given an unambiguous construction, a proof over a tree of hashes can be forged only by finding a collision in the hash function. A verkle proof depends on the commitment scheme as well: on its binding, which, for the elliptic-curve commitments verkle designs commonly use, holds only while a problem in the curve group stays hard, and, wherever openings are made non-interactive or combined by the Fiat-Shamir transformation, on a hash function treated as a random oracle, a stronger demand than collision resistance. Which assumption, and whether the scheme needs a trusted setup, depends on the commitment the tree uses.",
+        },
+        {
+          kind: "comparison",
+          label: "What forging a proof against the root would require",
+          dimensions: ["Assumption a forger must break", "Setup", "Against a large quantum computer"],
+          alternatives: [
+            { name: "Tree of hashes", values: ["Collision resistance of the hash function, given an unambiguous construction", "Nothing beyond fixing the hash function", "Not broken by known quantum algorithms, which speed up collision search only polynomially"] },
+            { name: "Verkle tree with Pedersen commitments and inner-product openings", values: ["Hardness of discrete logarithms in the curve group, and a hash treated as a random oracle", "No secret: the basis points are public and generated, for instance by hashing to the curve, so that no one knows a relation among them", "Forgeable, since Shor's algorithm computes discrete logarithms"] },
+            { name: "Verkle tree with KZG commitments", values: ["A pairing-based assumption of the strong Diffie-Hellman family, and a hash treated as a random oracle where openings are combined", "A ceremony whose secret must stay unknown, which it does if at least one participant destroyed their contribution", "Forgeable, since Shor's algorithm also solves the discrete logarithms these assumptions rest on"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "A break of the binding does not show in the root. Whoever can open a slot to an element it does not hold can prove a false value, or a false absence, for any key whose path passes that node, against a root that every honest party computed and accepts. The exposure therefore covers every proof checked against the tree, not one key, and a protocol that commits its state with a verkle tree makes each of its state proofs no stronger than the assumptions of its commitment scheme.",
+        },
+      ],
+    },
+    {
+      id: "state-roots-content",
+      conceptId: "state-roots",
+      definition: "A state root is the short value at the top of the commitment structure a protocol builds over its whole state, computed for the state as it stands at one point in the protocol's history, such as the end of a block, so that it fixes every entry of that state.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "The root fixes the state as long as the structure is built unambiguously and the hash function or commitment scheme it relies on stays binding: under those conditions no one can feasibly find a second state that produces the same root. Two parties that compute the same root under the same rules therefore hold the same value for every entry, so comparing roots can stand in for comparing states, and a node that downloads a state from untrusted peers can accept the copy by checking that it reproduces a root taken from a header it already trusts. Where the root depends only on the current entries, as with Ethereum's Merkle Patricia tries, it says which state, not which block or history produced it: a block that leaves the state unchanged records its parent's root, and two competing blocks that reach the same state record the same root. Where node hashes also depend on the order of updates, as in the IAVL trees many Cosmos SDK chains use, the same entries can have different roots: equal roots still mean equal states, but different roots do not mean different ones. Where roots are recorded once per block, the states between one transaction and the next inside a block have no root, and nothing can be proven against a root about them.",
+        },
+        {
+          kind: "paragraph",
+          text: "A root commits to whatever state its producer computed. A root over a state reached by invalid transitions is as well formed as any other: proofs against it check out, and nothing in the root reveals the fault. Whether the state is valid is a separate question, settled by executing the transitions that produced it or by a proof or challenge process about that execution. Holding a root also gives no access to the state. It lets its holder check values that others present, and if no one serves the state behind a root, the root alone recovers none of it.",
+        },
+        {
+          kind: "paragraph",
+          text: "The root changes whenever any committed entry changes. A node that executes a block applies its transactions' writes to the commitment structure and recomputes the root, usually by updating only what the writes touched. Where a block's header records the root of that block's own execution, as in Ethereum, the block's producer records the result, and every node that executes the block repeats that work and rejects the block if the root it computes differs from the recorded one. Where a block is executed only after it has been agreed on, as on CometBFT chains, the result is recorded in, and checked against, the next block's header. The root thus makes the resulting state, not only the order of transactions, something nodes agree on: if one client implementation computes a committed entry differently from the others, the nodes running it and the rest part ways at the first recorded root that exposes the difference rather than drifting apart unnoticed. A mismatch shows that the two computations differ, not where; in a tree-shaped structure the difference is found by descending from the top along the branches whose hashes or commitments disagree.",
+        },
+        {
+          kind: "paragraph",
+          text: "Where the root is recorded decides which state a given header vouches for. An Ethereum block header records the root of the state after that block's own execution. Chains built on CometBFT record in each block's header an application hash, which in Cosmos SDK chains is their state root, for the state after the previous block, because a block is executed only after it has been agreed on; the state after a block is therefore checked against the next block's header, and pairing a root with the wrong block reads a state one block off. A rollup posts roots of its state to a contract on the chain it settles to, often one root for a batch of its blocks, so its state can be referred to there only at the points it posted. Bitcoin records no state root: its header commits to the block's transactions and to the previous header, so no proof against a header can show what the set of unspent outputs holds at that block.",
+        },
+        {
+          kind: "paragraph",
+          text: "A full node trusts the roots of the blocks it executes because it computed them itself. Anything outside the protocol, whether a wallet, a light node, a bridge or another chain, holds a root it did not compute, and its trust is only as good as what established three separate facts: that the root is the one recorded at the claimed point of the source's history, that the block recording it will stay in that history, and that the state behind it was reached by valid transitions. A proof checked against the root adds nothing to any of the three, so a wallet that takes both a header and a proof from the same remote node is trusting that node for all of them. Checking the source's consensus on the header, as header relaying and light-client verification do, establishes the first fact under the source's consensus assumptions. It does not establish the third: a full node of the source rejects a block whose root does not match its own execution however many validators endorsed it, while a consumer that checks only their endorsement accepts that root, and so depends on the endorsing majority being honest. A rollup's root posted to its settlement layer is commonly accepted there as valid only after a verified validity proof or an unanswered challenge period, which settlement proofs cover. The second fact depends on finality: until the block is final under the source's rules, a reorganization can replace it, and the root then describes a state the chain has abandoned, so consumers wait for finality.",
+        },
+        {
+          kind: "paragraph",
+          text: "In a header such as Ethereum's, the effects of execution accumulate in the state root. The transactions and receipts roots describe the block alone, and the parent hash links earlier headers without fixing the state this block leaves; the state root describes the combined effect of every block up to the point it was computed for, so a value written long ago can be proven against a much later root, while showing what happened in a particular block needs that block's own commitments.",
+        },
+        {
+          kind: "comparison",
+          label: "Four commitments an Ethereum block header records",
+          dimensions: ["What it commits to", "What computing it takes", "What a proof against it can show"],
+          alternatives: [
+            { name: "Transactions root", values: ["The block's transactions, in order", "Only the block's transaction list; nothing is executed", "That a transaction is in this block at a given position, not what it did"] },
+            { name: "Receipts root", values: ["Each transaction's outcome in the block: whether it succeeded, the gas used in the block up to and including it, and the logs it emitted", "Executing the block's transactions", "What a transaction in this block did: whether it succeeded and which logs it emitted"] },
+            { name: "State root", values: ["Every account's nonce, balance, code hash and storage root after the block, and through the last two each account's code and storage", "Executing the block on the state its parent's state root commits to, then updating the account trie and the storage tries the block touched", "What a key holds, or that it is absent, in the state after the block, whichever block last wrote it"] },
+            { name: "Parent hash", values: ["The previous block's header, and through it every earlier header and the roots they record", "Hashing the previous header", "That an earlier header, with its roots, is an ancestor of this block, given every header in between"] },
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Proving that something happened and proving that its effect persists are therefore different proofs. A log in a receipt shows that a contract emitted an event in one block, whatever later blocks did; a value proven against a later state root shows what the state holds at that point, not how it came to hold it.",
+        },
+      ],
+    },
+    {
+      id: "state-proofs-content",
+      conceptId: "state-proofs",
+      definition: "A state proof is the data that lets a verifier holding only a commitment to a protocol's state, such as a state root, check a claim about particular entries of that state: that a key holds a given value or, where the commitment structure supports it, that a key holds nothing.",
+      body: [
+        {
+          kind: "paragraph",
+          text: "As long as the commitment is binding, a proof that a key holds one value also rules out every other value for that key in that state, but it reaches no further than the keys it covers. Facts derived from many entries, such as the total held by all accounts or that no account meets some condition, are not established by a state proof unless the protocol keeps the result as an entry of its own. Otherwise they need a separate proof of a computation over those entries, or proofs covering every entry involved; since proofs of the entries a prover presents do not show that no others exist, for a fact about all accounts those proofs must cover the whole structure. Where a structure omits unset keys and reads them as a default, absence and the default are one statement: in Ethereum, writing zero to a contract's storage slot removes the slot from that contract's storage trie, so a value of zero is proven by showing the slot absent.",
+        },
+        {
+          kind: "paragraph",
+          text: "The key in a state proof is a position in the structure, and its meaning lies outside the proof. A proof that a storage slot of a token contract holds some number shows a holder's balance only to a verifier that knows which slot the contract uses for that holder, as a Solidity contract's storage layout determines, and that the code at that address is the contract it expects. To check the proof itself, the verifier holds a root it already trusts for the claimed point in the source's history, the key with the claimed value or claimed absence, the proof data, and the structure's exact rules: how a key becomes a path, how nodes are encoded, and which hash function or commitment scheme, with its parameters, links each node to the next. It needs none of the state. Whether the root deserves trust is settled outside the proof, which state roots and header relaying cover. The check of the proof itself goes wrong wherever the verifier leaves out one of the structure's rules: a verifier that does not confirm that each node has a shape the structure allows, or that the path it follows is the one the key selects, can accept data that matches the trusted root without showing what it claims. A flaw of this kind in how the bridge between BNB Beacon Chain and BNB Smart Chain checked IAVL proofs let an attacker pass a crafted proof and mint tokens.",
+        },
+        {
+          kind: "paragraph",
+          text: "A state proof cannot show by itself that the value it proves is still the value, or that an absent key is still absent, at any point after the state its root was computed for, and the newest root a verifier trusts trails the source's latest block by however long that root took to become trusted, including any wait for finality. Which root a proof is checked against is therefore the verifier's decision, not the prover's. A verifier that accepts a proof against any root it holds lets the prover choose the block, and so present a balance from before it was spent or an approval from before it was revoked. Designs bound that choice by requiring a root no older than some limit, or by fixing one block for every party, as a vote weighted by balances at a single snapshot block does: every voter is measured against the same root, so a token moved after that block is counted once, for whoever held it then.",
+        },
+        {
+          kind: "paragraph",
+          text: "When a contract checks a state proof, the chain's validating nodes run the check, so each part of it is metered. The proof's bytes travel as transaction data and are paid for by size. In a structure linked by hashes, each node is decoded to find the reference to the next, and hashed to compare with the reference its parent holds; a structure linked by a commitment scheme, such as a verkle tree, is checked by verifying commitment openings instead. On Ethereum, where the EVM parses node encodings with general-purpose instructions, carrying and decoding the nodes typically costs more than hashing them, and a value in contract storage, proven through both the account trie and the contract's storage trie, can cost hundreds of thousands of gas to verify. The cost grows with the depth of the structure and with the number of keys; keys proven together against one root share the nodes near the top, so a combined proof can cost less than separate ones. In a structure linked by hashes, the hash function matters as much as the structure: one the chain offers natively, as the EVM offers Keccak-256 and SHA-256, is cheap to apply, while one it lacks must be computed in contract code, which can multiply the cost. The check also presumes a root the contract already holds, and putting one there, through header relaying, a settlement contract or a block hash the chain exposes, is a separate cost. Where many reads are needed, designs often check the state proofs off chain inside one succinct proof and have the contract check only that, trading per-key cost for a fixed verification cost and the time the proof takes to produce; on-chain verification and proof aggregation cover that route.",
+        },
+        {
+          kind: "distinction",
+          left: "State proof: what a committed state holds at a key",
+          right: "Validity or fraud proof: whether a transition followed the rules",
+          further: ["Storage proof: whether a party holds data"],
+        },
+        {
+          kind: "paragraph",
+          text: "State proofs and validity or fraud proofs often appear together without merging: a validity proof, or the one-step re-execution behind a fraud proof, needs the values a transition read, and commonly checks them as state proofs against the root the transition started from, while each state proof still takes that root as given. A state proof is also indifferent to who sends it: anyone with a copy of the state can produce one, so it shows nothing about who stores the data, which is what challenge-based storage proofs address. The names collide in Ethereum usage, where a proof for one contract storage slot is commonly called a storage proof, as the eth_getProof method labels it: that is a state proof about contract storage, not evidence that anyone holds data.",
+        },
+      ],
+    },
   ],
   mechanisms: [
     {
