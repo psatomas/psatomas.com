@@ -116,6 +116,12 @@ export function selectGroups(slice: Pick<L2Slice, "id" | "groups">, requested: r
   return { part: sliceGroups.indexOf(groups[0]) + 1, groups, sliceGroups };
 }
 
+/**
+ * The most concepts a group-batched (simplified v2) run may hold: whole groups only, never a split one. A slice
+ * larger than this runs as consecutive partial runs (`l2 batches`). Legacy and version 1 runs are not limited.
+ */
+export const MAX_BATCH_CONCEPTS = 12;
+
 /** A partial run's state id; a full-slice run keeps the slice's id. */
 export const l2RunId = (slice: Pick<L2Slice, "id">, scope?: Pick<L2RunScope, "part">) => (scope ? `${slice.id}-g${scope.part}` : slice.id);
 

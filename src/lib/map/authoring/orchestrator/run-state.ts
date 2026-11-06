@@ -8,7 +8,7 @@
 import { validateFixes, type DiffReport, type FixKind } from "./diff-check.ts";
 import type { DomainPlan } from "./plan.ts";
 import type { Decision, RefactorPlan } from "../representation/refactor.ts";
-import { l2RunId, sliceSteps, stepKey, type L2RunScope, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
+import { l2RunId, MAX_BATCH_CONCEPTS, sliceSteps, stepKey, type L2RunScope, type L2Slice, type L2Step, type L2StepKind } from "../l2/campaign.ts";
 import type { L2RepairBaseline } from "../l2/repair.ts";
 import { isBatched, pipelineOf, pipelineSpec, PIPELINES, routingOf, type L2Pipeline } from "../l2/pipeline.ts";
 import type { L2Budget } from "../l2/budget.ts";
@@ -80,6 +80,12 @@ export type L2RunRecord = {
    * before attempts existed and in every legacy and simplified v1 run, which keep running without them.
    */
   attempts?: { version: 1 };
+  /**
+   * The batch limit a group-batched run was started under (MAX_BATCH_CONCEPTS): set when such a run starts, and
+   * checked again before any attempt begins (batchLimitProblem). Absent in runs started before it existed, and in
+   * every legacy and version 1 run, which are not limited.
+   */
+  batch?: { maxConcepts: number };
   /** Concepts whose design blocks them: they stay unauthored. */
   blocked: string[];
   /** Repair cycles each concept has been reopened in: more than the allowance stops the run (repairAllowance). */
@@ -232,11 +238,13 @@ export function createL2RunState(input: { slice: L2Slice; remaining: readonly st
   const groups = scoped.map((group) => ({ group: group.group, concepts: group.concepts.filter((conceptId) => input.remaining.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
   const eligible = groups.flatMap((group) => group.concepts);
   if (eligible.length === 0) throw new RunStateError(`slice ${input.slice.id} has nothing left to author`);
+  const limit = batchStartProblem(input.pipeline, eligible.length, `l2 batches --slice ${input.slice.id}`);
+  if (limit) throw new RunStateError(limit);
   const title = input.slice.id === "pilot" ? "L2 pilot" : `${input.slice.domainTitle} L2, part ${input.slice.index}`;
   return {
     version: 1,
     kind: "l2",
-    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(isBatched(input.pipeline) ? { attempts: { version: 1 as const } } : {}), ...(input.scope ? { scope: input.scope } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
+    l2: { slice: { ...input.slice, groups: input.slice.groups.filter((group) => groups.some((entry) => entry.group === group.group)).map((group) => ({ ...group, concepts: groups.find((entry) => entry.group === group.group)!.concepts })) }, steps: {}, blocked: [], repairs: {}, ...(input.pipeline ? { pipeline: input.pipeline } : {}), ...(isBatched(input.pipeline) ? { attempts: { version: 1 as const }, batch: { maxConcepts: MAX_BATCH_CONCEPTS } } : {}), ...(input.scope ? { scope: input.scope } : {}), ...(input.pilot ? { checkpoint: { required: true as const } } : {}) },
     domainId: l2RunId(input.slice, input.scope),
     title: input.scope ? `${title}, ${scoped.map((group) => group.title).join(", ")}` : title,
     branch: input.branch,
@@ -287,6 +295,8 @@ export function createL2RepairRunState(
   if (over.length) throw new RepairLimitError(over);
   const groups = record.slice.groups.map((group) => ({ ...group, concepts: group.concepts.filter((conceptId) => named.includes(conceptId)) })).filter((group) => group.concepts.length > 0);
   const concepts = groups.flatMap((group) => group.concepts);
+  const limit = batchStartProblem(record.pipeline, concepts.length, "repair at most that many concepts per repair run");
+  if (limit) throw new RunStateError(limit);
   const recorded = (key: string) => (record.steps[key] ? [[key, record.steps[key]] as const] : []);
   const steps = Object.fromEntries([...groups.flatMap((group) => recorded(`plan:${group.group}`)), ...concepts.flatMap((conceptId) => recorded(`design:${conceptId}`))]);
   const repairs = Object.fromEntries(concepts.map((conceptId) => [conceptId, used(conceptId) + 1]));
@@ -299,7 +309,7 @@ export function createL2RepairRunState(
       slice: { ...record.slice, groups },
       ...(record.pipeline ? { pipeline: record.pipeline } : {}),
       // A repair run tracks attempts when its pipeline does, whether or not the merged run did.
-      ...(isBatched(record.pipeline) ? { attempts: { version: 1 as const } } : {}),
+      ...(isBatched(record.pipeline) ? { attempts: { version: 1 as const }, batch: { maxConcepts: MAX_BATCH_CONCEPTS } } : {}),
       steps,
       blocked: [],
       repairs,
@@ -415,6 +425,19 @@ export function reopenPrProblem(state: RunState, pr: Pick<ObservedPr, "state"> |
   if (!pr) return `cannot read PR #${state.pr.number}, so whether it merged is unknown: reopen once \`gh pr view ${state.pr.number}\` works`;
   if (pr.state === "MERGED") return `PR #${state.pr.number} is merged: record the merge (\`l2 run --domain ${state.domainId}\`), then repair in a new run (\`l2 start --slice ${state.l2?.slice.id ?? state.domainId} --repair ..\`)`;
   return undefined;
+}
+
+/** Why a new group-batched run of `concepts` concepts may not start: more than MAX_BATCH_CONCEPTS. Legacy and v1 runs are not limited. */
+export function batchStartProblem(pipeline: L2Pipeline | undefined, concepts: number, plan: string): string | undefined {
+  if (!isBatched(pipeline) || concepts <= MAX_BATCH_CONCEPTS) return undefined;
+  return `a group-batched run holds at most ${MAX_BATCH_CONCEPTS} concepts, whole groups only, and this one would hold ${concepts}: start the slice as consecutive batches (\`${plan}\`)`;
+}
+
+/** Why a run started under a batch limit no longer satisfies it (its state was changed by hand, say): no attempt begins. */
+export function batchLimitProblem(state: RunState): string | undefined {
+  const limit = state.l2?.batch?.maxConcepts;
+  const concepts = (state.l2?.slice.groups ?? []).reduce((sum, group) => sum + group.concepts.length, 0);
+  return limit !== undefined && concepts > limit ? `${state.domainId} was started under a batch limit of ${limit} concepts but holds ${concepts}: no attempt begins until a human resolves it` : undefined;
 }
 
 /** The merged run a repair of the named concepts repairs: the one run of the slice that drafted every one of them. */
