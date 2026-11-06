@@ -107,6 +107,8 @@ import { validateRefactorDiff } from "../src/lib/map/authoring/representation/re
 import {
   addFix,
   AGENT_STAGES,
+  batchLimitProblem,
+  batchStartProblem,
   clearL2Checkpoint,
   createL2RepairRunState,
   createL2RunState,
@@ -776,6 +778,8 @@ function commandL2Start() {
     ...(existing && remaining.length ? [`${id} already ran to the end (${statePath(id)}) with concepts not on main: a finished run's record is never overwritten; integrate its PR, or move the file aside to start again`] : []),
     ...(integrated.length ? [`nothing left to author in ${integrated.join(", ")}: its concepts are already integrated`] : []),
     ...partialStartProblems({ runs: sliceRuns(slice.id).filter((run) => run.domainId !== id), finished, id }),
+    // A group-batched run holds at most MAX_BATCH_CONCEPTS concepts, whole groups only: refused before any branch is made.
+    ...[batchStartProblem(pipeline, scoped.flatMap((group) => group.concepts).filter((conceptId) => remaining.includes(conceptId)).length, `${CLI} batches --slice ${slice.id}`)].filter((problem): problem is string => Boolean(problem)),
     ...observeStart(branch, id),
     ...budgetHookProblems(),
   ];
@@ -952,11 +956,18 @@ function draftAttempt(state: RunState, subject: string): L2Attempt | undefined {
   }
   if (!id) fail(`${state.domainId} tracks attempts: record the draft with --attempt <id> (\`${CLI} attempt begin author ${subject}\`)`, 1);
   const attempt = readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts.find((entry) => entry.id === id) ?? fail(`no attempt ${id} in ${state.domainId}`, 1);
-  if (attempt.step.kind !== "author" || attempt.step.subject !== subject) fail(`attempt ${id} is ${stepId(attempt.step)}, not a draft of ${subject}`, 1);
-  if (attempt.status === "committed") fail(`attempt ${id} is already committed: a duplicate commit`, 1);
-  if (!["running", "interrupted"].includes(attempt.status)) fail(`attempt ${id} is ${attempt.status}: only a launched attempt's draft is recorded`, 1);
-  if (currentInputKey(state, attempt.step) !== attempt.inputKey) fail(`the inputs of attempt ${id} (its territory, repair cycle or pre-repair record) changed since it began: its draft is not recorded`, 1);
+  const problem = draftAttemptProblem(state, attempt, subject);
+  if (problem) fail(problem, 1);
   return attempt;
+}
+
+/** Why a draft of `subject` is not recorded with `attempt` (`record author --attempt`); `l2 next --json` reports the same. */
+function draftAttemptProblem(state: RunState, attempt: L2Attempt, subject: string): string | undefined {
+  if (attempt.step.kind !== "author" || attempt.step.subject !== subject) return `attempt ${attempt.id} is ${stepId(attempt.step)}, not a draft of ${subject}`;
+  if (attempt.status === "committed") return `attempt ${attempt.id} is already committed: a duplicate commit`;
+  if (!["running", "interrupted"].includes(attempt.status)) return `attempt ${attempt.id} is ${attempt.status}: only a launched attempt's draft is recorded`;
+  if (currentInputKey(state, attempt.step) !== attempt.inputKey) return `the inputs of attempt ${attempt.id} (its territory, repair cycle or pre-repair record) changed since it began: its draft is not recorded`;
+  return undefined;
 }
 
 /**
@@ -1040,20 +1051,34 @@ function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: 
 
 /** The attempts behind the artifacts an audit is recorded from: each completed, for this step, with exactly the current inputs. */
 function acceptedAttempts(state: RunState, artifacts: readonly { attempt?: string; role: string; auditor: string; subject: string; key: string; seq: number }[]): string[] {
+  const accepted = attemptsOf(state, artifacts);
+  if ("problem" in accepted) fail(accepted.problem, 1);
+  return accepted.ids;
+}
+
+/**
+ * The attempts an audit would be recorded from, or why recording refuses them; `reconcilable` when `l2 reconcile`
+ * settles it (an attempt whose published findings were not yet marked completed). `l2 next --json` reports the same.
+ */
+function attemptsOf(state: RunState, artifacts: readonly { attempt?: string; role: string; auditor: string; subject: string; key: string; seq: number }[]): { ids: string[] } | { problem: string; reconcilable: boolean } {
   const log = readAttemptLog(attemptsPath(state.domainId), state.domainId);
-  return artifacts.map((artifact) => {
+  const ids: string[] = [];
+  for (const artifact of artifacts) {
     const label = `${artifact.role} ${artifact.auditor}`;
-    if (!artifact.attempt) fail(`cannot record ${artifact.subject}: its ${label} artifact names no attempt, and ${state.domainId} records only attempt-backed findings`, 1);
-    const attempt = log.attempts.find((entry) => entry.id === artifact.attempt) ?? fail(`cannot record ${artifact.subject}: its ${label} artifact names attempt ${artifact.attempt}, which is not in the log`, 1);
-    if (attempt.status === "committed") fail(`cannot record ${artifact.subject}: attempt ${attempt.id} (${label}) is already committed: a duplicate commit`, 1);
-    if (attempt.status !== "completed") fail(`cannot record ${artifact.subject}: attempt ${attempt.id} (${label}) is ${attempt.status}, not completed (\`${CLI} reconcile\`)`, 1);
-    if (attempt.step.role !== artifact.role || attempt.step.auditor !== artifact.auditor || attempt.step.subject !== artifact.subject) fail(`cannot record ${artifact.subject}: attempt ${attempt.id} is ${stepId(attempt.step)}, not the artifact's ${label}`, 1);
-    if (currentInputKey(state, attempt.step) !== attempt.inputKey) fail(`cannot record ${artifact.subject}: the inputs of attempt ${attempt.id} (${label}) have changed since it began`, 1);
+    const refuse = (problem: string, reconcilable = false) => ({ problem: `cannot record ${artifact.subject}: ${problem}`, reconcilable });
+    if (!artifact.attempt) return refuse(`its ${label} artifact names no attempt, and ${state.domainId} records only attempt-backed findings`);
+    const attempt = log.attempts.find((entry) => entry.id === artifact.attempt);
+    if (!attempt) return refuse(`its ${label} artifact names attempt ${artifact.attempt}, which is not in the log`);
+    if (attempt.status === "committed") return refuse(`attempt ${attempt.id} (${label}) is already committed: a duplicate commit`);
+    if (attempt.status !== "completed") return refuse(`attempt ${attempt.id} (${label}) is ${attempt.status}, not completed (\`${CLI} reconcile\`)`, attempt.status === "running" || attempt.status === "interrupted");
+    if (attempt.step.role !== artifact.role || attempt.step.auditor !== artifact.auditor || attempt.step.subject !== artifact.subject) return refuse(`attempt ${attempt.id} is ${stepId(attempt.step)}, not the artifact's ${label}`);
+    if (currentInputKey(state, attempt.step) !== attempt.inputKey) return refuse(`the inputs of attempt ${attempt.id} (${label}) have changed since it began`, true);
     // The artifact recorded is exactly the output the attempt captured: never another submission naming it.
     const problem = artifactAttemptProblem(attempt, artifact, artifactRef(artifact));
-    if (problem) fail(`cannot record ${artifact.subject}: ${problem}`, 1);
-    return attempt.id;
-  });
+    if (problem) return refuse(problem);
+    ids.push(attempt.id);
+  }
+  return { ids };
 }
 
 /** Marks recorded attempts committed; a crash before it is reconciled from the run state's step (l2 reconcile). */
@@ -1370,6 +1395,9 @@ function beginRunAttempt(state: RunState, step: L2AttemptStep): L2Attempt {
   if (!tracksAttempts(state)) fail(`${state.domainId} does not track attempts (${state.l2?.attempts ? describePipeline(pipelineOf(state.l2)) : "it predates attempt tracking, or is not a simplified v2 run"}): its steps run as before, without attempt records`, 1);
   const expected = expectedRole(state, step.kind, step.subject);
   if (step.role !== expected) fail(`${step.subject} needs a ${expected} attempt now, not a ${step.role}`, 1);
+  // Every tracked model launch begins here: a run outside the batch limit it was started under launches nothing.
+  const overLimit = batchLimitProblem(state);
+  if (overLimit) fail(overLimit, 1);
   if (step.kind !== "author") {
     const group = step.kind === "group-audit" ? step.subject : groupOfConcept(state, step.subject);
     const undrafted = group ? pendingDrafts(state, group) : [];
@@ -1791,7 +1819,7 @@ function neighbourStaleLines(state: RunState): string[] {
   const keys = [...Object.keys(input.audits).map((conceptId) => `audit:${conceptId}`), ...Object.keys(input.groupAudits).map((group) => `group-audit:${group}`)];
   return keys.flatMap((key) => {
     const stale = stepFreshness(key, input).stale;
-    return stale.length && !listed.has(key) ? [`STALE ${key}: records it was bound to have changed since it was recorded: ${staleSummary(stale)}; re-audit it (\`${CLI} next --json\` lists the reasons)`] : [];
+    return stale.length && !listed.has(key) ? [`STALE ${key}: records it was bound to have changed since it was recorded: ${staleSummary(stale)}; it is not current evidence (\`${CLI} next --json\` gives its resolution)`] : [];
   });
 }
 
@@ -1804,10 +1832,13 @@ function submittedAudits(state: RunState): Record<string, L2SubmittedAudit> {
     try {
       const artifacts = currentArtifacts(state, step.kind, step.subject, step.group);
       const outcome = auditOutcome(artifacts, auditNeed(state, step.kind, step.subject));
+      // A recordable outcome of a tracked run is checked as `l2 record` checks its attempts (attemptsOf).
+      const attempts = outcome.kind === "record" && tracksAttempts(state) ? attemptsOf(state, outcome.from) : undefined;
       submitted[stepKey(step)] = {
         submitted: artifacts.map((artifact) => ({ role: artifact.role, auditor: artifact.auditor })),
         outcome: outcome.kind,
         ...(outcome.kind === "blocking" ? { concepts: [...new Set(outcome.findings.map((finding) => finding.concept))].sort() } : {}),
+        ...(attempts && "problem" in attempts ? { attempts: { problem: attempts.problem, reconcilable: attempts.reconcilable } } : {}),
       };
     } catch (error) {
       if (!(error instanceof AuditArtifactError)) throw error;
@@ -1851,13 +1882,20 @@ function commandL2NextJson() {
   const governance = { mergeAuthorized: Boolean(state.l2?.mergeAuthorized && !revocationOf(readCampaign(), state.l2.mergeAuthorized)), hookRegistered: hookInstalled() };
   const common = { state, journal, tracked, governance, taskOf: taskDescription, inboxOf: (subject: string, role: L2AuditRole, auditor: string) => relative(ROOT, auditorInbox(runWorkDir(state!), subject, role, auditor)) };
   // An unrecovered journal means the state may be half of a commit: nothing more is read from it.
-  if (journal) return print(l2Next({ ...common, freshness: { drafts: {}, audits: {}, groupAudits: {} }, attempts: [], drafts: {}, audits: {} }));
+  if (journal) return print(l2Next({ ...common, freshness: { drafts: {}, audits: {}, groupAudits: {} }, attempts: [], inputsCurrent: {}, drafts: {}, plans: {}, designs: {}, audits: {} }));
+  const attempts = tracked ? readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts : [];
+  const plans = readPlans();
+  const concepts = state.l2!.slice.groups.flatMap((group) => group.concepts);
   print(
     l2Next({
       ...common,
       freshness: freshnessInput(state),
-      attempts: tracked ? readAttemptLog(attemptsPath(state.domainId), state.domainId).attempts : [],
-      drafts: Object.fromEntries(state.l2!.slice.groups.flatMap((group) => group.concepts).map((conceptId) => [conceptId, Boolean(recordOf(conceptId))])),
+      attempts,
+      // Each attempt's inputs against the current ones: what `record` and `submit-audit` require of it.
+      inputsCurrent: Object.fromEntries(attempts.map((attempt) => [attempt.id, currentInputKey(state!, attempt.step) === attempt.inputKey])),
+      drafts: Object.fromEntries(concepts.map((conceptId) => [conceptId, Boolean(recordOf(conceptId))])),
+      plans: Object.fromEntries(state.l2!.slice.groups.map((group) => [group.group, plans.some((plan) => plan.group === group.group)])),
+      designs: Object.fromEntries(concepts.map((conceptId) => [conceptId, Boolean(plans.map((plan) => conceptWorkOf(plan, conceptId)?.design).find(Boolean))])),
       audits: submittedAudits(state),
       budget: budgetView(state),
     }),
