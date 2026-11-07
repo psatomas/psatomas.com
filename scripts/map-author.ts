@@ -84,7 +84,7 @@ import { l2Next, l2NoRun, planBatches, staleSummary, stepFreshness, type L2Fresh
 import { AttemptError, artifactAttemptProblem, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, releaseHold, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
 import { launchAttempt, readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
 import { journaledCommit, JournalError, recoverJournal, sha } from "../src/lib/map/authoring/l2/journal.ts";
-import { artifactPath, AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, draftTaskPrompt, findingsProblems, findingsReason, inboxProblem, provenanceProblem, readArtifacts, repairItems, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput, type L2RepairEvidence, type L2RepairItem } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
+import { artifactPath, AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, draftTaskPrompt, findingsProblems, findingsReason, inboxProblem, provenanceProblem, readArtifacts, repairItems, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditOutcome, type L2AuditRole, type L2FindingsInput, type L2RepairEvidence, type L2RepairItem } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
 import { formatRecordDiff, recordDiff, recordLines } from "../src/lib/map/authoring/l2/record-diff.ts";
 import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget, type L2SpendSession } from "../src/lib/map/authoring/l2/budget.ts";
 import { BudgetLockError, readLedger, reserveUnderLock, withLock, writeLedger } from "../src/lib/map/authoring/l2/budget-io.ts";
@@ -1047,17 +1047,27 @@ function verificationItems(state: RunState, kind: "audit" | "group-audit", subje
   return repairItems(members.flatMap((conceptId) => (repair.concepts.includes(conceptId) ? (repair.evidence![conceptId] ?? []) : [])), { groupAudit: true });
 }
 const verificationIds = (state: RunState, kind: "audit" | "group-audit", subject: string, group: string) => verificationItems(state, kind, subject, group).map((item) => item.id);
-/** Refuses when any finding's source artifact is missing or changed: its provenance is then unknown. */
+/** Each finding whose source artifact is missing or changed: its provenance is then unknown. */
+const provenanceProblems = (state: RunState, items: readonly L2RepairItem[]) =>
+  items.flatMap((item) => (item.finding ? [provenanceProblem(auditWorkDir(state), item.finding)].filter(Boolean).map((problem) => `${item.id}: ${problem}`) : []));
+/** Refuses when any finding's source artifact is missing or changed. */
 function checkedProvenance(state: RunState, items: readonly L2RepairItem[], what: string) {
-  const problems = items.flatMap((item) => (item.finding ? [provenanceProblem(auditWorkDir(state), item.finding)].filter(Boolean).map((problem) => `${item.id}: ${problem}`) : []));
+  const problems = provenanceProblems(state, items);
   if (problems.length) fail(`cannot ${what}: the findings' provenance cannot be confirmed:\n  ${problems.join("\n  ")}\nartifacts are never rewritten: a human inspects them`, 1);
   return items;
+}
+/** A recordable outcome stays recordable only while the findings it verifies are confirmed; else it is inconsistent (read-only views). */
+function confirmedOutcome(state: RunState, outcome: L2AuditOutcome, kind: "audit" | "group-audit", subject: string, group: string): L2AuditOutcome {
+  if (outcome.kind !== "record") return outcome;
+  const problems = provenanceProblems(state, verificationItems(state, kind, subject, group));
+  return problems.length ? { kind: "inconsistent", problem: `the findings its repair answered cannot be confirmed: ${problems.join("; ")}; artifacts are never rewritten: a human inspects them` } : outcome;
 }
 
 /** What the artifacts of a subject's current records support for recording, or a refusal: missing, stale, inconsistent or blocking. */
 function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: string, group: string) {
   const artifacts = checkedArtifacts(state, kind, subject, group, `record ${kind} ${subject}`);
-  const outcome = auditOutcome(artifacts, auditNeed(state, kind, subject), verificationIds(state, kind, subject, group));
+  const verified = verificationItems(state, kind, subject, group);
+  const outcome = auditOutcome(artifacts, auditNeed(state, kind, subject), verified.map((item) => item.id));
   if (outcome.kind === "missing") {
     const binding = currentBinding(state, kind, subject, group);
     const stale = staleArtifacts(auditWorkDir(state), subject, bindingKey(binding, subject));
@@ -1068,6 +1078,8 @@ function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: 
     const concepts = [...new Set(outcome.findings.map((finding) => finding.concept))];
     fail(`cannot record ${kind} ${subject}: ${outcome.findings.length} blocking finding(s):\n  ${outcome.findings.map((finding) => findingsReason([finding])).join("\n  ")}\nreopen ${concepts.join(", ")} to repair it (\`${CLI} reopen ${concepts.join(",")} --from-findings\`)`, 1);
   }
+  // A resolution is accepted only against findings whose source artifacts are still the files they were at the reopening.
+  checkedProvenance(state, verified, `record ${kind} ${subject}`);
   return outcome as Extract<typeof outcome, { kind: "record" }>;
 }
 
@@ -1226,7 +1238,8 @@ function commandL2SubmitAudit() {
   } catch (error) {
     fail(`cannot read the findings in ${file}: ${(error as Error).message}`, 1);
   }
-  const problems = findingsProblems(input, { role, auditor, concepts: auditedConcepts(kind, subject, group), textOf: recordText, verify: verificationIds(state, kind, subject, group) });
+  const verified = checkedProvenance(state, verificationItems(state, kind, subject, group), `submit ${subject}'s ${role}`);
+  const problems = findingsProblems(input, { role, auditor, concepts: auditedConcepts(kind, subject, group), textOf: recordText, verify: verified.map((item) => item.id) });
   if (problems.length) fail(`the findings are not a valid ${role}:\n  ${problems.join("\n  ")}`, 1);
   const binding = currentBinding(state, kind, subject, group);
   const attemptId = flag("--attempt");
@@ -1311,7 +1324,7 @@ function commandL2Findings() {
     console.log(`${artifact.role} ${artifact.auditor} #${artifact.seq} ${artifact.verdict} (${artifact.at})`);
     for (const finding of artifact.findings) console.log(`  ${finding.severity} ${findingsReason([{ ...finding, auditor: artifact.auditor, role: artifact.role }])}`);
   }
-  const outcome = auditOutcome(artifacts, need, verificationIds(state, kind, subject, group));
+  const outcome = confirmedOutcome(state, auditOutcome(artifacts, need, verificationIds(state, kind, subject, group)), kind, subject, group);
   console.log(`outcome: ${outcome.kind === "record" ? `ready to record (\`${CLI} record ${isGroup ? "group-audit" : "audit"} ${subject}\`)` : outcome.kind === "missing" ? `waiting for ${outcome.missing.join(" and ")}` : outcome.kind === "blocking" ? `${outcome.findings.length} blocking finding(s): reopen (\`${CLI} reopen <id> --from-findings\`)` : outcome.problem}`);
   for (const line of history) console.log(line);
 }
@@ -1909,7 +1922,7 @@ function submittedAudits(state: RunState): Record<string, L2SubmittedAudit> {
     if ((step.kind !== "audit" && step.kind !== "group-audit") || pendingDrafts(state, step.group).length) continue;
     try {
       const artifacts = currentArtifacts(state, step.kind, step.subject, step.group);
-      const outcome = auditOutcome(artifacts, auditNeed(state, step.kind, step.subject), verificationIds(state, step.kind, step.subject, step.group));
+      const outcome = confirmedOutcome(state, auditOutcome(artifacts, auditNeed(state, step.kind, step.subject), verificationIds(state, step.kind, step.subject, step.group)), step.kind, step.subject, step.group);
       // A recordable outcome of a tracked run is checked as `l2 record` checks its attempts (attemptsOf).
       const attempts = outcome.kind === "record" && tracksAttempts(state) ? attemptsOf(state, outcome.from) : undefined;
       submitted[stepKey(step)] = {

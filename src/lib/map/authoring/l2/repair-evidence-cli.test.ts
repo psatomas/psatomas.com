@@ -202,3 +202,27 @@ test("CLI: evidence whose source artifact changed or vanished is refused, never 
   }
   assert.match(ok("repair-findings", Y), /provenance confirmed/);
 });
+
+test("CLI: a verified re-audit is not accepted as a resolution once the evidence it verified changed or vanished", () => {
+  // X's re-audit verified F1 (above) and is ready to record; its F1 source artifact is then altered, then removed.
+  assert.match(ok("findings", X), /outcome: ready to record/);
+  const { items } = JSON.parse(ok("repair-findings", X, "--json"));
+  const source = join(dir, ".map-authoring/l2/work", RUN, "audits", items[0].finding.artifact.path);
+  const original = readFileSync(source);
+  const verifiedAgain = { ...passing("R"), verifications: [{ id: "F1", status: "resolved", evidence: "the definition now reads '(repaired) ...'" }] };
+  try {
+    for (const damage of [() => appendFileSync(source, " "), () => rmSync(source)]) {
+      damage();
+      refused(/cannot record audit .*provenance cannot be confirmed/, "record", "audit", X);
+      assert.match(submit(X, "re-audit", "R", verifiedAgain).stderr, /cannot submit .*provenance cannot be confirmed/);
+      assert.match(ok("findings", X), /outcome: the findings its repair answered cannot be confirmed: F1: its source artifact/);
+      const blocker = JSON.parse(ok("next", "--json")).blockers.find((entry: { code: string; subject: string }) => entry.code === "audit-inconsistent" && entry.subject.endsWith(X));
+      assert.match(blocker?.detail ?? "", /the findings its repair answered cannot be confirmed/);
+      assert.equal(blocker.actor, "human");
+      writeFileSync(source, original);
+    }
+  } finally {
+    writeFileSync(source, original);
+  }
+  assert.match(ok("findings", X), /outcome: ready to record/);
+});
