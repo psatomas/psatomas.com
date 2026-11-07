@@ -12,6 +12,7 @@ import { l2RunId, MAX_BATCH_CONCEPTS, sliceSteps, stepKey, type L2RunScope, type
 import type { L2RepairBaseline } from "../l2/repair.ts";
 import { isBatched, pipelineOf, pipelineSpec, PIPELINES, routingOf, type L2Pipeline } from "../l2/pipeline.ts";
 import type { L2Budget } from "../l2/budget.ts";
+import type { L2RepairEvidence } from "../l2/audit-artifacts.ts";
 
 /**
  * A run's stages. "merge" exists only for an L2 campaign run whose merging a
@@ -60,6 +61,12 @@ export type L2Repair = {
   baseline: L2RepairBaseline;
   /** Each reopened concept's record as its failing audit judged it, taken at its latest reopening: what `l2 repair-diff` compares against. Absent in cycles opened before snapshots existed. */
   records?: Record<string, unknown>;
+  /**
+   * Each reopened concept's own findings, one entry per reopening in this cycle, with their source artifacts
+   * (`l2 repair-findings`, and the re-audit's task). Historical evidence: never a current audit. Absent in cycles
+   * opened before it was kept.
+   */
+  evidence?: Record<string, L2RepairEvidence[]>;
 };
 /** What happened to a run after its first drafting: closed repair cycles and base synchronizations, in order. */
 export type L2HistoryEntry =
@@ -554,6 +561,13 @@ export class RepairLimitError extends RunStateError {
   }
 }
 
+/** A cycle's per-concept evidence with one reopening's entries appended. */
+function appendEvidence(earlier: Record<string, L2RepairEvidence[]>, added: Record<string, L2RepairEvidence> | undefined): Record<string, L2RepairEvidence[]> {
+  const next = { ...earlier };
+  for (const [conceptId, entry] of Object.entries(added ?? {})) next[conceptId] = [...(next[conceptId] ?? []), entry];
+  return next;
+}
+
 /**
  * Reopens drafted concepts for repair after their audit, their group's audit
  * or human review. Each reopening counts one repair for each concept, however
@@ -566,7 +580,7 @@ export class RepairLimitError extends RunStateError {
  * The baseline fixes the territory, models and designs the repair must stay
  * within (repairScopeProblems).
  */
-export function reopenL2(state: RunState, input: { concepts: readonly string[]; reason: string; baseline: L2RepairBaseline; now: string; records?: Record<string, unknown> }): RunState {
+export function reopenL2(state: RunState, input: { concepts: readonly string[]; reason: string; baseline: L2RepairBaseline; now: string; records?: Record<string, unknown>; evidence?: Record<string, L2RepairEvidence> }): RunState {
   assertLive(state);
   if (state.kind !== "l2" || !state.l2) throw new RunStateError("only L2 runs reopen concepts");
   const record = state.l2;
@@ -604,8 +618,10 @@ export function reopenL2(state: RunState, input: { concepts: readonly string[]; 
         baseline: { work: merge(open.baseline.work, input.baseline.work), members: merge(open.baseline.members, input.baseline.members), splits: merge(open.baseline.splits, input.baseline.splits) },
         // A snapshot is the record the latest failing audit judged: a concept reopened again takes its newer one.
         ...(open.records || input.records ? { records: { ...(open.records ?? {}), ...(input.records ?? {}) } } : {}),
+        // Each concept's findings accumulate over the cycle's reopenings: a re-audit verifies every one.
+        ...(open.evidence || input.evidence ? { evidence: appendEvidence(open.evidence ?? {}, input.evidence) } : {}),
       }
-    : { cycle: (record.history ?? []).filter((entry) => entry.kind === "repair").length + 1, at: input.now, reason: input.reason, concepts: [...input.concepts], groups, baseline: input.baseline, ...(input.records ? { records: input.records } : {}) };
+    : { cycle: (record.history ?? []).filter((entry) => entry.kind === "repair").length + 1, at: input.now, reason: input.reason, concepts: [...input.concepts], groups, baseline: input.baseline, ...(input.records ? { records: input.records } : {}), ...(input.evidence ? { evidence: appendEvidence({}, input.evidence) } : {}) };
   const concepts = { ...state.concepts };
   for (const conceptId of input.concepts) concepts[conceptId] = { done: false };
   const reopened: RunState = { ...state, stage: "author", completed: {}, concepts, checks: {}, l2: { ...record, steps, repairs, repair, diff: undefined } };
@@ -1014,14 +1030,14 @@ export function nextAction(state: RunState): NextAction {
     // Group-batched runs (simplified v2): auditors submit immutable findings; only these commands record them.
     const batched = isBatched(pipeline);
     // A run that tracks attempts begins each model step as an attempt, its inputs persisted, before launching it.
-    const attempt = (role: string) => (batched && state.l2!.attempts ? `first \`map:author -- l2 attempt begin author ${step.subject} --role ${role}\` and launch the agent with the description it prints; ` : "");
+    const attempt = (role: string) => (batched && state.l2!.attempts ? `first \`map:author -- l2 attempt begin author ${step.subject} --role ${role}\` and launch the agent with the description and prompt it prints; ` : "");
     const withAttempt = (command: string) => (batched && state.l2!.attempts ? `${command} --attempt <id>` : command);
     const v2 = `${instructions}v2.md`;
     const repairing = state.l2!.repair;
     if (repairing && (repairing.concepts.includes(step.subject) || repairing.groups.includes(step.subject))) {
       const repairMessages: Partial<Record<L2StepKind, string>> = {
         author: simplified
-          ? `${attempt("repair")}repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context${via("repair")}, within its accepted territory (${instructions}repair.md); if the finding needs its territory changed, re-record its plan first; then \`${withAttempt(`map:author -- l2 record author ${step.subject}`)}\``
+          ? `${attempt("repair")}repair ${step.subject} (cycle ${repairing.cycle}: ${repairing.evidence?.[step.subject] ? `its own findings: \`map:author -- l2 repair-findings ${step.subject}\`` : latestRepairReason(repairing.reason)}) in a fresh context${via("repair")}, within its accepted territory (${instructions}repair.md); if the finding needs its territory changed, re-record its plan first; then \`${withAttempt(`map:author -- l2 record author ${step.subject}`)}\``
           : `repair ${step.subject} (cycle ${repairing.cycle}: ${latestRepairReason(repairing.reason)}) in a fresh context, within its accepted territory, model and design; if the finding needs its model, design or territory changed, re-record its design or plan first; then \`map:author -- l2 record author ${step.subject}\``,
         audit: batched
           ? `re-audit ${step.subject} in a fresh context${via("re-audit")} against its record as repaired (\`map:author -- l2 repair-diff ${step.subject}\` shows what changed); give the auditor only its own prompt, \`map:author -- l2 audit-task ${step.subject} --role re-audit --auditor R\` (${v2}); then \`map:author -- l2 record audit ${step.subject}\`, or \`l2 reopen ${step.subject} --from-findings\` on a blocking finding`

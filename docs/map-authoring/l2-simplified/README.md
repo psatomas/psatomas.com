@@ -42,3 +42,8 @@ What differs from the legacy pipeline:
   neighbours add the member's exclusions and the authored concepts its record names; `l2 repair-diff` shows what a
   repair changed. Unchanged: both first audits, repair limits and exceptions, signal coverage, fingerprints, group
   audits, budget, drift and every gate. Version 1 runs keep their order and contract.
+  Maintenance (2026-11-07, after the first v2 pilot): a reopened concept keeps its own findings with their source
+  artifacts (`l2 repair-findings`), readable after a sibling's repair and never current evidence; a re-auditor is
+  given exactly those findings and submits a verification of each; `l2 findings` withholds first audits until both
+  are in; the tooling prints every agent's prompt, and agents report back in one to three lines. Cycles opened before
+  it carry no evidence and run as before.
