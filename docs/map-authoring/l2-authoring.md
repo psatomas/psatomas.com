@@ -459,7 +459,11 @@ else ([`l2-simplified/v2.md`](l2-simplified/v2.md)):
 - overlap neighbours add the member's exclusions and up to 16 authored
   concepts its record names (never its ancestors);
 - reopening keeps each record as its failing audit judged it, and
-  `l2 repair-diff <id>` shows what the repair changed.
+  `l2 repair-diff <id>` shows what the repair changed;
+- reopening also keeps each concept's own findings with their source
+  artifacts, as historical evidence that a sibling's repair cannot hide
+  (`l2 repair-findings <id>`); the re-auditor is given exactly those findings
+  and must verify each (v2.md, "Repair evidence").
 - runs started from now track attempts: each model-driven step is begun
   (`l2 attempt begin`, or `l2 audit-task`) and its inputs persisted before its
   agent is launched; `l2 attempts`, `l2 reconcile` and
