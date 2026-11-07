@@ -191,6 +191,8 @@ export type L2SubmittedAudit = {
   outcome: "record" | "missing" | "blocking" | "inconsistent" | "invalid";
   /** The concepts blocking findings name (outcome "blocking"). */
   concepts?: readonly string[];
+  /** Why the artifacts are inconsistent (outcome "inconsistent"): first auditors who judged different neighbours, or a repair verification that does not account for every finding. */
+  problem?: string;
   /**
    * Tracked runs, outcome "record": why recording would refuse the artifacts' attempts (the CLI's attemptsOf, the
    * check `l2 record` makes), and whether `l2 reconcile` settles it. Absent when recording would accept them.
@@ -576,7 +578,7 @@ export function l2Next(input: L2NextInput): L2Next {
     }
     if (reasons.length) return done("blocked", units);
     if (submitted.outcome === "inconsistent") {
-      block({ code: "audit-inconsistent", subject: stepKey(step), actor: "human", detail: "auditors A and B judged different versions of its neighbours' records", command: `l2 findings ${step.subject}` });
+      block({ code: "audit-inconsistent", subject: stepKey(step), actor: "human", detail: submitted.problem ?? "auditors A and B judged different versions of its neighbours' records", command: `l2 findings ${step.subject}` });
       return done("blocked", units);
     }
     if (submitted.outcome === "blocking") {

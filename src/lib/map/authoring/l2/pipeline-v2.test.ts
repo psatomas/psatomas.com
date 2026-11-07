@@ -158,3 +158,25 @@ test("an audit artifact is accepted only once every draft of its group exists, a
   // Once repaired, a concept needs an independent re-audit; the other keeps needing nothing new.
   assert.deepEqual([auditNeed(reopened, "audit", "a"), auditNeed(reopened, "audit", "b")], ["re-audit", "first-audit"]);
 });
+
+test("each concept's repair evidence stays its own across the cycle's reopenings, and the repair step names only its own", () => {
+  let state = record(record(record(record(run(V2), "author", "a"), "author", "b"), "audit", "a"), "audit", "b");
+  const baseline = { work: {}, members: {}, splits: {} };
+  const finding = (concept: string, action: string) => ({ severity: "blocking" as const, concept, evidence: { quote: "q" }, action, auditor: "A", role: "first-audit" as const, artifact: { path: `${concept}/k/first-audit-A-001.json`, key: "k", sha256: "s" } });
+  state = reopenL2(state, { concepts: ["a"], reason: "a: fix A1", baseline, now: T0, evidence: { a: { at: T0, findings: [finding("a", "fix A1")] } } });
+  state = reopenL2(state, { concepts: ["b"], reason: "b: fix B1", baseline, now: T0, evidence: { b: { at: T0, findings: [finding("b", "fix B1")] } } });
+  assert.deepEqual(Object.keys(state.l2!.repair!.evidence!).sort(), ["a", "b"]);
+  // The cycle's latest reopening is b's; a's repair step still names a's own findings, never b's.
+  const message = (nextAction(state) as { message: string }).message;
+  assert.match(message, /repair a \(cycle 1: its own findings: `map:author -- l2 repair-findings a`\)/);
+  assert.ok(!message.includes("fix B1"));
+  // Reopened again after a failed re-audit: a's findings accumulate, so its next re-audit verifies every one.
+  state = record(state, "author", "a");
+  state = reopenL2(state, { concepts: ["a"], reason: "a: fix R1", baseline, now: T0, evidence: { a: { at: T0, findings: [finding("a", "fix R1")] } } });
+  assert.deepEqual(state.l2!.repair!.evidence!.a.map((entry) => entry.findings[0].action), ["fix A1", "fix R1"]);
+  assert.deepEqual(state.l2!.repair!.evidence!.b.map((entry) => entry.findings[0].action), ["fix B1"]);
+  // A cycle opened without evidence (before it was kept, or a v1 run) keeps its old message and shape.
+  const old = reopenL2(record(record(record(record(run(V2), "author", "a"), "author", "b"), "audit", "a"), "audit", "b"), { concepts: ["a"], reason: "B1", baseline, now: T0 });
+  assert.equal("evidence" in old.l2!.repair!, false);
+  assert.match((nextAction(old) as { message: string }).message, /repair a \(cycle 1: B1\)/);
+});

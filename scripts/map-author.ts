@@ -58,6 +58,7 @@
 //   npm run map:author -- l2 submit-audit <concept|group> --role first-audit|re-audit|group-audit --auditor A|B|R|G --file <json>
 //                                                        group-batched runs (simplified v2): an auditor's immutable findings; only the orchestrator records
 //   npm run map:author -- l2 findings <concept|group> [--json]   the findings submitted against the current records, and what they support
+//   npm run map:author -- l2 repair-findings <concept> [--json]  a reopened concept's own findings in the open repair cycle (historical, provenance-checked)
 //   npm run map:author -- l2 repair-diff <concept> [--json]      what a repair changed, against the record its failing audit judged
 //   npm run map:author -- l2 reopen <id>[,<id>..] --from-findings   (v2) reopen with the submitted blocking findings as the reason
 //   npm run map:author -- l2 authorize --revoke-merge --decision ".."   revoke it (kept in the campaign's history); runs started later await human merge
@@ -83,7 +84,7 @@ import { l2Next, l2NoRun, planBatches, staleSummary, stepFreshness, type L2Fresh
 import { AttemptError, artifactAttemptProblem, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, releaseHold, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
 import { launchAttempt, readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
 import { journaledCommit, JournalError, recoverJournal, sha } from "../src/lib/map/authoring/l2/journal.ts";
-import { AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, findingsProblems, findingsReason, inboxProblem, readArtifacts, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
+import { artifactPath, AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, draftTaskPrompt, findingsProblems, findingsReason, inboxProblem, provenanceProblem, readArtifacts, repairItems, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput, type L2RepairEvidence, type L2RepairItem } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
 import { formatRecordDiff, recordDiff, recordLines } from "../src/lib/map/authoring/l2/record-diff.ts";
 import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget, type L2SpendSession } from "../src/lib/map/authoring/l2/budget.ts";
 import { BudgetLockError, readLedger, reserveUnderLock, withLock, writeLedger } from "../src/lib/map/authoring/l2/budget-io.ts";
@@ -1032,10 +1033,31 @@ function checkedArtifacts(state: RunState, kind: "audit" | "group-audit", subjec
   }
 }
 
+/**
+ * The findings an audit of `subject` verifies now, numbered F1, F2, ... (audit-artifacts.ts repairItems): a
+ * re-audit's are its concept's own findings in the open repair cycle; a group audit's, the group-audit findings on
+ * its members that the cycle repairs. None for a first audit, or when the cycle predates repair evidence.
+ */
+function verificationItems(state: RunState, kind: "audit" | "group-audit", subject: string, group: string): L2RepairItem[] {
+  const repair = state.l2?.repair;
+  if (!repair?.evidence) return [];
+  if (kind === "audit") return repair.concepts.includes(subject) && auditNeed(state, "audit", subject) === "re-audit" ? repairItems(repair.evidence[subject] ?? []) : [];
+  if (!repair.groups.includes(group)) return [];
+  const members = state.l2!.slice.groups.find((entry) => entry.group === group)?.concepts ?? [];
+  return repairItems(members.flatMap((conceptId) => (repair.concepts.includes(conceptId) ? (repair.evidence![conceptId] ?? []) : [])), { groupAudit: true });
+}
+const verificationIds = (state: RunState, kind: "audit" | "group-audit", subject: string, group: string) => verificationItems(state, kind, subject, group).map((item) => item.id);
+/** Refuses when any finding's source artifact is missing or changed: its provenance is then unknown. */
+function checkedProvenance(state: RunState, items: readonly L2RepairItem[], what: string) {
+  const problems = items.flatMap((item) => (item.finding ? [provenanceProblem(auditWorkDir(state), item.finding)].filter(Boolean).map((problem) => `${item.id}: ${problem}`) : []));
+  if (problems.length) fail(`cannot ${what}: the findings' provenance cannot be confirmed:\n  ${problems.join("\n  ")}\nartifacts are never rewritten: a human inspects them`, 1);
+  return items;
+}
+
 /** What the artifacts of a subject's current records support for recording, or a refusal: missing, stale, inconsistent or blocking. */
 function acceptedAudit(state: RunState, kind: "audit" | "group-audit", subject: string, group: string) {
   const artifacts = checkedArtifacts(state, kind, subject, group, `record ${kind} ${subject}`);
-  const outcome = auditOutcome(artifacts, auditNeed(state, kind, subject));
+  const outcome = auditOutcome(artifacts, auditNeed(state, kind, subject), verificationIds(state, kind, subject, group));
   if (outcome.kind === "missing") {
     const binding = currentBinding(state, kind, subject, group);
     const stale = staleArtifacts(auditWorkDir(state), subject, bindingKey(binding, subject));
@@ -1204,13 +1226,13 @@ function commandL2SubmitAudit() {
   } catch (error) {
     fail(`cannot read the findings in ${file}: ${(error as Error).message}`, 1);
   }
-  const problems = findingsProblems(input, { role, auditor, concepts: auditedConcepts(kind, subject, group), textOf: recordText });
+  const problems = findingsProblems(input, { role, auditor, concepts: auditedConcepts(kind, subject, group), textOf: recordText, verify: verificationIds(state, kind, subject, group) });
   if (problems.length) fail(`the findings are not a valid ${role}:\n  ${problems.join("\n  ")}`, 1);
   const binding = currentBinding(state, kind, subject, group);
   const attemptId = flag("--attempt");
   if (attemptId && !tracksAttempts(state)) fail(`${state.domainId} does not track attempts: submit without --attempt`, 1);
   if (tracksAttempts(state) && !attemptId) fail(`${state.domainId} tracks attempts: submit with --attempt <id> (the attempt \`${CLI} audit-task\` began)`, 1);
-  const publish = () => submitArtifact(auditWorkDir(state), { run: state.domainId, subject, role, auditor, at: now(), binding, verdict: input.verdict, note: input.note, findings: input.findings, ...(input.resolutions ? { resolutions: input.resolutions } : {}), ...(attemptId ? { attempt: attemptId } : {}) });
+  const publish = () => submitArtifact(auditWorkDir(state), { run: state.domainId, subject, role, auditor, at: now(), binding, verdict: input.verdict, note: input.note, findings: input.findings, ...(input.resolutions ? { resolutions: input.resolutions } : {}), ...(Array.isArray(input.verifications) ? { verifications: input.verifications } : {}), ...(attemptId ? { attempt: attemptId } : {}) });
   // A tracked run's findings belong to the auditor's attempt, and only for exactly the evidence the attempt began with. The
   // check, the publication and the attempt's completion happen under the attempt log's lock: one attempt publishes one artifact,
   // however many submissions race. Published first, then completed: a crash between them is reconciled from the artifact.
@@ -1252,10 +1274,13 @@ function commandL2AuditTask() {
   const inbox = auditorInbox(runWorkDir(state), subject, role, auditor);
   mkdirSync(dirname(inbox), { recursive: true });
   const kind = role === "group-audit" ? "group-audit" : "audit";
+  // A repair's verifier gets exactly the findings its repair answered, their provenance confirmed first; a first auditor gets none.
+  const group = kind === "group-audit" ? subject : groupOfConcept(state, subject);
+  const repairs = group && role !== "first-audit" ? checkedProvenance(state, verificationItems(state, kind, subject, group), `give ${subject}'s ${role} its findings`) : [];
   // A tracked run begins the auditor's attempt here, its inputs persisted before any launch.
   const attempt = record.attempts ? beginRunAttempt(state, { kind, subject, role, auditor }) : undefined;
   if (attempt) console.log(`attempt ${attempt.id} begun; launch this prompt as a new agent described \`${taskDescription(attempt)}\`\n`);
-  console.log(auditTaskPrompt({ run: state.domainId, subject, role, auditor, inbox, instructions: PIPELINES[pipelineOf(record).mode].instructions, ...(attempt ? { attempt: attempt.id } : {}) }));
+  console.log(auditTaskPrompt({ run: state.domainId, subject, role, auditor, inbox, instructions: PIPELINES[pipelineOf(record).mode].instructions, ...(attempt ? { attempt: attempt.id } : {}), ...(repairs.length ? { repairs } : {}) }));
 }
 
 /** The orchestrator's view of a subject's findings against its current records (`l2 findings <concept|group>`). Auditors never read it. */
@@ -1266,19 +1291,56 @@ function commandL2Findings() {
   const isGroup = record.slice.groups.some((entry) => entry.group === subject);
   const group = isGroup ? subject : record.slice.groups.find((entry) => entry.concepts.includes(subject))?.group;
   if (!group) fail(`${subject} is not a concept or group of this run`, 1);
-  const artifacts = checkedArtifacts(state, isGroup ? "group-audit" : "audit", subject, group, `read the findings of ${subject}`);
+  const kind = isGroup ? "group-audit" : "audit";
+  const need = isGroup ? "group-audit" : auditNeed(state, "audit", subject);
+  const all = checkedArtifacts(state, kind, subject, group, `read the findings of ${subject}`);
+  // Independence: neither first audit's findings are shown, by this command, before both first audits are in.
+  const withheld = need === "first-audit" && auditOutcome(all, "first-audit").kind === "missing" ? all.filter((artifact) => artifact.role === "first-audit") : [];
+  const artifacts = all.filter((artifact) => !withheld.includes(artifact));
   if (flags.has("--json")) return console.log(JSON.stringify(artifacts, null, 2));
-  if (!artifacts.length) return console.log(`no findings submitted for ${subject} as its records are now`);
+  if (withheld.length) console.log(`first audits submitted by ${[...new Set(withheld.map((artifact) => artifact.auditor))].join(", ")}; their findings are withheld until both first audits are in`);
+  // Older evidence is named apart from the current artifacts, and never counts: a repair's own findings, and artifacts bound to changed records.
+  const stale = staleArtifacts(auditWorkDir(state), subject, bindingKey(currentBinding(state, kind, subject, group), subject));
+  const history = [
+    ...(!isGroup && state.l2?.repair?.evidence?.[subject] ? [`historical: ${subject}'s own findings in repair cycle ${state.l2.repair.cycle}, which judged its record before the repair: \`${CLI} repair-findings ${subject}\` (never current evidence)`] : []),
+    ...(stale ? [`stale: ${stale} earlier artifact(s) of ${subject} judged records (its own or a neighbour's) that have since changed; they never count`] : []),
+  ];
+  if (!all.length) return console.log([`no findings submitted for ${subject} as its records are now`, ...history].join("\n"));
+  if (!artifacts.length) return console.log([`outcome: waiting for ${(auditOutcome(all, "first-audit") as { missing: string[] }).missing.join(" and ")}`, ...history].join("\n"));
   for (const artifact of artifacts) {
     console.log(`${artifact.role} ${artifact.auditor} #${artifact.seq} ${artifact.verdict} (${artifact.at})`);
     for (const finding of artifact.findings) console.log(`  ${finding.severity} ${findingsReason([{ ...finding, auditor: artifact.auditor, role: artifact.role }])}`);
   }
-  const outcome = auditOutcome(artifacts, isGroup ? "group-audit" : auditNeed(state, "audit", subject));
+  const outcome = auditOutcome(artifacts, need, verificationIds(state, kind, subject, group));
   console.log(`outcome: ${outcome.kind === "record" ? `ready to record (\`${CLI} record ${isGroup ? "group-audit" : "audit"} ${subject}\`)` : outcome.kind === "missing" ? `waiting for ${outcome.missing.join(" and ")}` : outcome.kind === "blocking" ? `${outcome.findings.length} blocking finding(s): reopen (\`${CLI} reopen <id> --from-findings\`)` : outcome.problem}`);
+  for (const line of history) console.log(line);
 }
 
-/** The blocking findings against reopened concepts' current records, as a repair reason (`l2 reopen --from-findings`). */
-function reasonFromFindings(state: RunState, concepts: readonly string[]): string {
+/**
+ * A reopened concept's own findings in the open repair cycle (`l2 repair-findings <concept> [--json]`), for its
+ * repairer and the orchestrator: exactly what each reopening answered, with the source artifact of each finding,
+ * whose provenance is confirmed (present, unchanged) or the command refuses. Historical evidence: it judged the
+ * record before the repair, stays readable after any sibling's repair, and is never a current audit. Reads only.
+ */
+function commandL2RepairFindings() {
+  const state = activeState();
+  const subject = positional[0] ?? fail("repair-findings needs a reopened concept");
+  const repair = state.l2?.repair;
+  if (!repair?.concepts.includes(subject)) fail(`${subject} is not reopened in an open repair cycle of ${state.domainId}`, 1);
+  const evidence = repair.evidence?.[subject];
+  if (!evidence?.length) fail(`${subject} was reopened before repair evidence was kept: its findings exist only in the cycle's combined reason, so the orchestrator gives its repairer and re-auditor ${subject}'s findings by hand`, 1);
+  const items = checkedProvenance(state, repairItems(evidence), `show ${subject}'s repair findings`);
+  if (flags.has("--json")) return console.log(JSON.stringify({ run: state.domainId, concept: subject, cycle: repair.cycle, status: "historical", current: false, items: items.map((item) => ({ id: item.id, at: item.at, ...(item.finding ? { finding: item.finding } : { reason: item.reason }) })) }, null, 2));
+  console.log(`${subject}: ${items.length} finding(s) to answer in repair cycle ${repair.cycle}. HISTORICAL: they judged ${subject}'s record before the repair; they are not current audit evidence and never an approval: its re-audit verifies each in the record as repaired.`);
+  for (const item of items) console.log(`${item.id} ${item.text}${item.finding ? `\n    from ${item.finding.artifact.path} (judged record ${item.finding.artifact.judged?.slice(0, 12) ?? "?"}, provenance confirmed)` : ""}`);
+}
+
+/**
+ * The blocking findings against reopened concepts' current records, as a repair reason (`l2 reopen --from-findings`),
+ * and as each concept's own repair evidence: its findings, each with its source artifact (path, binding key, the
+ * file's sha256) and the record it judged, so they stay retrievable once a sibling's repair has made them stale.
+ */
+function reasonFromFindings(state: RunState, concepts: readonly string[], at: string): { reason: string; evidence: Record<string, L2RepairEvidence> } {
   const record = l2Records(state);
   const findings = concepts.flatMap((conceptId) => {
     const group = record.slice.groups.find((entry) => entry.concepts.includes(conceptId))?.group;
@@ -1288,7 +1350,15 @@ function reasonFromFindings(state: RunState, concepts: readonly string[]): strin
     return [...(own.kind === "blocking" ? own.findings : []), ...(ofGroup.kind === "blocking" ? ofGroup.findings.filter((finding) => finding.concept === conceptId) : [])];
   });
   if (!findings.length) fail(`no blocking finding is submitted against ${concepts.join(", ")} as recorded now: give --reason`, 1);
-  return findingsReason(findings);
+  const dir = auditWorkDir(state);
+  const evidence = Object.fromEntries(concepts.map((conceptId) => [conceptId, {
+    at,
+    findings: findings.filter((finding) => finding.concept === conceptId).map(({ source, ...finding }) => {
+      const path = artifactPath(dir, { ...source, role: finding.role, auditor: finding.auditor });
+      return { ...finding, artifact: { path: relative(dir, path), key: source.key, sha256: createHash("sha256").update(readFileSync(path)).digest("hex"), judged: recordFingerprint(recordOf(conceptId)) } };
+    }),
+  }]));
+  return { reason: findingsReason(findings), evidence };
 }
 
 /** What a repair changed: the record its failing audit judged against the record now (`l2 repair-diff <concept>`). */
@@ -1459,7 +1529,10 @@ function commandL2Attempt() {
     const role = (flag("--role") ?? expectedRole(state, kind, subject)) as L2AttemptRole;
     const attempt = beginRunAttempt(state, { kind, subject, role, ...(flag("--auditor") ? { auditor: flag("--auditor") } : {}) });
     if (flags.has("--json")) return console.log(JSON.stringify(attempt, null, 2));
-    return console.log(`attempt ${attempt.id} begun (pending) for ${stepId(attempt.step)}; launch its agent described \`${taskDescription(attempt)}\`${kind === "author" ? `, and record its draft with \`${CLI} record author ${subject} --attempt ${attempt.id}\`` : ""}`);
+    console.log(`attempt ${attempt.id} begun (pending) for ${stepId(attempt.step)}; launch its agent described \`${taskDescription(attempt)}\`${kind === "author" ? `, and record its draft with \`${CLI} record author ${subject} --attempt ${attempt.id}\`` : ""}`);
+    // A draft's or repair's prompt, ready to give unedited (an audit's comes from \`l2 audit-task\`).
+    if (kind === "author") console.log(`\n${draftTaskPrompt({ run: state.domainId, subject, group: groupOfConcept(state, subject)!, role: attempt.step.role === "repair" ? "repair" : "author", instructions: PIPELINES[pipelineOf(state.l2!).mode].instructions, attempt: attempt.id, ...(state.l2!.repair ? { cycle: state.l2!.repair.cycle } : {}) })}`);
+    return;
   }
   if (!tracksAttempts(state)) fail(`${state.domainId} does not track attempts`, 1);
   const id = positional[1] ?? fail(`attempt ${sub ?? "<command>"} needs an attempt id`);
@@ -1626,10 +1699,15 @@ function commandL2Reopen() {
   verifyGit(state);
   const concepts = (positional[0] ?? fail(`reopen needs concept ids: ${CLI} reopen <id>[,<id>..] --reason ".."`)).split(",").map((conceptId) => conceptId.trim()).filter(Boolean);
   if (flag("--reason") && flags.has("--from-findings")) fail("reopen takes --reason or --from-findings, not both");
-  const reason = flags.has("--from-findings") ? reasonFromFindings(state, concepts) : (flag("--reason") ?? fail("reopen needs --reason: the finding the repair answers (or --from-findings in a group-batched run)"));
+  const at = now();
+  const batched = isBatched(pipelineOf(l2Records(state)));
+  const fromFindings = flags.has("--from-findings") ? reasonFromFindings(state, concepts, at) : undefined;
+  const reason = fromFindings?.reason ?? flag("--reason") ?? fail("reopen needs --reason: the finding the repair answers (or --from-findings in a group-batched run)");
+  // Each concept's own findings (or the human's reason) stay with the cycle for its repairer and re-auditor (`l2 repair-findings`).
+  const evidence = !batched ? undefined : fromFindings?.evidence ?? Object.fromEntries(concepts.map((conceptId) => [conceptId, { at, findings: [], reason }]));
   try {
     // The records as the failing audit judged them: what `repair-diff` compares the repair against.
-    state = reopenL2(state, { concepts, reason, baseline: repairBaseline(readPlans(), concepts), now: now(), records: Object.fromEntries(concepts.map((conceptId) => [conceptId, recordOf(conceptId) ?? null])) });
+    state = reopenL2(state, { concepts, reason, baseline: repairBaseline(readPlans(), concepts), now: at, records: Object.fromEntries(concepts.map((conceptId) => [conceptId, recordOf(conceptId) ?? null])), ...(evidence ? { evidence } : {}) });
   } catch (error) {
     if (error instanceof RepairLimitError) {
       const [conceptId] = error.conceptIds;
@@ -1831,13 +1909,14 @@ function submittedAudits(state: RunState): Record<string, L2SubmittedAudit> {
     if ((step.kind !== "audit" && step.kind !== "group-audit") || pendingDrafts(state, step.group).length) continue;
     try {
       const artifacts = currentArtifacts(state, step.kind, step.subject, step.group);
-      const outcome = auditOutcome(artifacts, auditNeed(state, step.kind, step.subject));
+      const outcome = auditOutcome(artifacts, auditNeed(state, step.kind, step.subject), verificationIds(state, step.kind, step.subject, step.group));
       // A recordable outcome of a tracked run is checked as `l2 record` checks its attempts (attemptsOf).
       const attempts = outcome.kind === "record" && tracksAttempts(state) ? attemptsOf(state, outcome.from) : undefined;
       submitted[stepKey(step)] = {
         submitted: artifacts.map((artifact) => ({ role: artifact.role, auditor: artifact.auditor })),
         outcome: outcome.kind,
         ...(outcome.kind === "blocking" ? { concepts: [...new Set(outcome.findings.map((finding) => finding.concept))].sort() } : {}),
+        ...(outcome.kind === "inconsistent" ? { problem: outcome.problem } : {}),
         ...(attempts && "problem" in attempts ? { attempts: { problem: attempts.problem, reconcilable: attempts.reconcilable } } : {}),
       };
     } catch (error) {
@@ -3026,6 +3105,10 @@ try {
     case "findings":
       if (!l2Mode) fail("findings is an l2 command");
       commandL2Findings();
+      break;
+    case "repair-findings":
+      if (!l2Mode) fail("repair-findings is an l2 command");
+      commandL2RepairFindings();
       break;
     case "repair-diff":
       if (!l2Mode) fail("repair-diff is an l2 command");
