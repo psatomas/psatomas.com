@@ -464,4 +464,9 @@ export const AUTHORED_CONTENT_CONCEPTS: readonly string[] = [
   "transition-preconditions",
   "transition-effects",
   "atomic-state-transitions",
+  "merkle-trees",
+  "merkle-patricia-tries",
+  "verkle-trees",
+  "state-roots",
+  "state-proofs",
 ];

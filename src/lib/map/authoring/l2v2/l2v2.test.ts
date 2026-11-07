@@ -1310,8 +1310,9 @@ test("a real v1 skeleton's tool-generated fingerprints pass the scan once truste
   for (const name of readdirSync(GROUPS_ON_MAIN)) {
     const text = readFileSync(join(GROUPS_ON_MAIN, name), "utf8");
     const left = groupFileTexts(text, planBasisOf(text)).filter((t) => /\b[0-9a-f]{40,}\b/i.test(t));
-    const audits = JSON.parse(text) as { concepts?: Record<string, { audit?: { recordFingerprint?: string } }>; groupAudit?: { records?: Record<string, string> } };
-    const expected = [...Object.values(audits.concepts ?? {}).map((c) => c.audit?.recordFingerprint), ...Object.values(audits.groupAudit?.records ?? {})].filter(Boolean);
+    const audits = JSON.parse(text) as { concepts?: Record<string, { audit?: { recordFingerprint?: string; neighbours?: Record<string, string> } }>; groupAudit?: { records?: Record<string, string> } };
+    // A simplified v2 audit also binds its neighbours' record fingerprints (audit.neighbours): tool-written, and scanned like the rest.
+    const expected = [...Object.values(audits.concepts ?? {}).flatMap((c) => [c.audit?.recordFingerprint, ...Object.values(c.audit?.neighbours ?? {})]), ...Object.values(audits.groupAudit?.records ?? {})].filter(Boolean);
     assert.deepEqual(left.sort(), (expected as string[]).sort(), name);
   }
 });

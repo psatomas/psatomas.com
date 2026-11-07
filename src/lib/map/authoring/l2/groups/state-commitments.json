@@ -1,0 +1,449 @@
+{
+  "version": 1,
+  "group": "state-commitments",
+  "domain": "state-data",
+  "parentConceptId": "state-commitments",
+  "basis": {
+    "membership": "44cee7c2443c1f56958e619689840177e5af1cb2a3680ef28f68b3d7d792a574",
+    "parents": {
+      "cross-chain-state": "d79d35adba010ec5964eda550a46ce9f962b4f47f1615a02c6c9eb9863992ca7",
+      "interoperability-abstraction": "e639acb562e14b68b89e07a5afd8518103c9ede303078c3d5756130ae192f281",
+      "state-commitments": "a4660a1937437273dfc9cb8dc9a3d640d1bdfed70bd2347e814f65728f94822e",
+      "state-data": "bc556a0254dbeeeb19b2d45cb87ca261f03b2dd359a179022620b5b8136cc287",
+      "state-representation": "d95a56f18acc983d9e7cc34762b1c6e5a0659ed7ad83427cf0d1bcf192793057"
+    },
+    "fixed": {},
+    "hazards": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "members": [
+    {
+      "conceptId": "merkle-trees",
+      "placementId": "merkle-trees",
+      "standing": "owned",
+      "claims": [
+        "how a Merkle tree proves that one element belongs to the committed collection and how that proof grows with the collection",
+        "what recomputing a Merkle root costs when elements are changed, added or removed",
+        "which construction choices let two different collections produce the same Merkle root and how designs rule this out",
+        "what a Merkle tree built over positions can prove about an element it does not contain"
+      ],
+      "excludes": [
+        "hash-based-data-structures",
+        "hash-functions",
+        "cryptographic-hash-functions",
+        "collision-resistance",
+        "merkle-patricia-tries",
+        "verkle-trees",
+        "commitment-schemes",
+        "vector-commitments",
+        "state-roots",
+        "state-proofs",
+        "data-commitments",
+        "data-hashing",
+        "light-nodes",
+        "state-layout"
+      ]
+    },
+    {
+      "conceptId": "merkle-patricia-tries",
+      "placementId": "merkle-patricia-tries",
+      "standing": "owned",
+      "claims": [
+        "how a Merkle Patricia trie turns a key into a path and which node types shorten that path",
+        "what a Merkle Patricia trie proof for one key contains and what sets its size",
+        "what reading and updating a Merkle Patricia trie costs the nodes that store it"
+      ],
+      "excludes": [
+        "merkle-trees",
+        "verkle-trees",
+        "commitment-schemes",
+        "state-roots",
+        "state-proofs",
+        "state-layout",
+        "state-encoding",
+        "state-storage",
+        "state-growth",
+        "global-state",
+        "state-snapshots",
+        "snap-sync",
+        "cryptographic-hash-functions"
+      ]
+    },
+    {
+      "conceptId": "verkle-trees",
+      "placementId": "verkle-trees",
+      "standing": "owned",
+      "claims": [
+        "how a verkle tree commits to each node's children and what a proof for one key then contains",
+        "how node width affects proof size and the cost of updating commitments and generating proofs",
+        "which cryptographic assumptions verkle proofs rest on compared with proofs over hash-based trees"
+      ],
+      "excludes": [
+        "vector-commitments",
+        "polynomial-commitments",
+        "commitment-schemes",
+        "cryptographic-security",
+        "merkle-trees",
+        "merkle-patricia-tries",
+        "state-roots",
+        "state-proofs",
+        "state-layout",
+        "proof-aggregation",
+        "cryptographic-hash-functions"
+      ]
+    },
+    {
+      "conceptId": "commitment-schemes",
+      "placementId": "commitment-schemes",
+      "standing": "owned-elsewhere",
+      "reserved": [
+        "what a commitment scheme specifies and which properties its commit and open steps must provide",
+        "how commitment schemes differ in what they commit to and what an opening reveals",
+        "what a protocol weighs in choosing a commitment scheme for its state"
+      ]
+    },
+    {
+      "conceptId": "state-roots",
+      "placementId": "state-roots-in-state-commitments",
+      "standing": "owned",
+      "claims": [
+        "what a state root identifies and what accepting one does and does not establish about the state",
+        "how a state root is recomputed as transitions change the state and where a protocol records it",
+        "what trust in a state root depends on wherever it is used outside the protocol that computed it",
+        "how a state root differs from the other commitments a block records"
+      ],
+      "excludes": [
+        "state-proofs",
+        "merkle-trees",
+        "merkle-patricia-tries",
+        "verkle-trees",
+        "commitment-schemes",
+        "global-state",
+        "state-encoding",
+        "state-layout",
+        "deterministic-execution",
+        "transaction-execution",
+        "header-relaying",
+        "light-client-verification",
+        "remote-state",
+        "cross-chain-verification",
+        "reorganizations",
+        "finality-gadgets",
+        "rollup-state",
+        "rollup-settlement",
+        "settlement-proofs",
+        "light-nodes",
+        "state-checkpoints"
+      ]
+    },
+    {
+      "conceptId": "state-proofs",
+      "placementId": "state-proofs",
+      "standing": "owned",
+      "claims": [
+        "which statements about a key's value or absence a state proof can establish and what a verifier must hold to check one",
+        "how the block a proof's root belongs to limits what the proof says about the state now",
+        "what verifying a state proof costs when a contract performs the check",
+        "how a state proof differs from proofs that a transition was executed correctly or that a party stores data"
+      ],
+      "excludes": [
+        "state-roots",
+        "merkle-trees",
+        "merkle-patricia-tries",
+        "verkle-trees",
+        "commitment-schemes",
+        "storage-proofs",
+        "validity-proofs",
+        "fraud-proofs",
+        "witnesses",
+        "header-relaying",
+        "light-client-verification",
+        "remote-state",
+        "cross-chain-queries",
+        "cross-chain-verification",
+        "withdrawal-proofs",
+        "light-nodes",
+        "proof-aggregation",
+        "reorganizations",
+        "on-chain-verification",
+        "historical-queries"
+      ]
+    }
+  ],
+  "splits": [],
+  "concepts": {
+    "merkle-trees": {
+      "audit": {
+        "at": "2026-11-06T18:20:10.144Z",
+        "note": "Scoped re-audit of the cycle-1 repair (3 sentences changed, form unchanged; not expanded, since the argument, assumptions, structure and scope are unchanged). Resolved: (A) paragraph 5 now conditions the leaf/node ambiguity on 'an element may be exactly two hashes long', which agrees with paragraph 6's 'admit only elements that can never be two hashes long' and with the Bitcoin 64-byte example; (B) paragraph 1's soundness sentence now requires the verifier to know the number of elements and reject an out-of-range position or a wrong-length proof, which closes the high-bit aliasing of the bit-per-level verifier and Bitcoin's duplicated-position case, and agrees with paragraph 6's count commitment and paragraph 7's 'recognizing the last position requires knowing the number of elements'. The removed paragraph 6 sentence is replaced by one that refers back to paragraph 1's length check instead of restating it, so the point is no longer made twice. Re-read every changed sentence, its paragraph, and every other use of 'unambiguous', 'number of elements', 'position' and 'length': consistent. Accuracy of the new claims checked: with the count known and uniform leaf depth, a presented internal node's proof is shorter than every valid proof and is rejected; RFC 6962 prefixes, Bitcoin's shared double SHA-256 and 64-byte transactions, the mutated-tree check, and OpenZeppelin's sorted-pair hashing are correctly stated. Parent overlap: State Commitments (only placement) says nothing about Merkle trees; no restatement. Territory: hash-functions and merkle-patricia-tries named only; no sibling's label (state-proofs absence, state-roots, verkle) explained; all four labels still explained. Representation: the recomputation comparison is unchanged and accurate per row. Canonical validity: no positional or time-sensitive words, American English, plain text. Depth: the repair added about a dozen words; each paragraph still serves a label. Advisory: (1) 'one level shorter' / 'one level short' holds only for an internal node directly above the leaves; a node h levels up yields a proof h levels short, so 'shorter' would be exact. (2) The paragraph 6 length-check sentence covers only the presented-node half of the first case; the same-root different-collection half is removed by separation (or a committed count), which the paragraph could make explicit.",
+        "resolutions": [
+          {
+            "id": "names-concept:e69106fd95",
+            "resolution": "hash-functions is named only, as the function whose collision a forged proof would need and whose inputs the construction feeds; no property or construction of hash functions is explained. The repair's new wording names nothing new."
+          },
+          {
+            "id": "names-concept:cf2ef08b85",
+            "resolution": "Merkle Patricia Tries is named once in paragraph 4 as an example of placing elements by key to avoid shifts; nothing of its path encoding, node types or proofs is explained. Untouched by the repair."
+          },
+          {
+            "id": "depth-long:bf5cc10c85",
+            "resolution": "1332 words; the repair added about a dozen words to state required conditions and replaced a sentence rather than adding one. Each paragraph serves a label: inclusion proofs and their size (1-2), recomputation cost with the comparison and removal handling (3-4), same-root constructions and their remedies (5-6), absence over positions and its soundness (7-8). No paragraph repeats another; no condensation needed."
+          }
+        ],
+        "recordFingerprint": "a0095017ffc61b2e4110e768be1d93f4c06e7f8eac4c613c14af098db5c8385b",
+        "neighbours": {
+          "hash-functions": "515b2e39fd248ace79290f84dfda0866dc6ad148c5dfd1e3f5f844dda899b2e5",
+          "merkle-patricia-tries": "bfa0fcce7b3f1b8a6a6031649ab497bc4b67fbbe4df8b821947231506444da62",
+          "state-layout": "fbcf706c006f91881b841702118b418cc4a2c7b8b28e4693e149042b468da8e0",
+          "state-proofs": "b478fecff592a153736772ffa936621f909363bd742ff5a92e463ee1947656dd",
+          "state-roots": "ee8a0192cb61fbd5e68b04f44ade92a32f1853505210dc7a6b1d848779067aa5",
+          "verkle-trees": "5b03381558cfb3f5f3dfe1074a23165f0b3a902fe04689af6a17de321f695cb7"
+        }
+      }
+    },
+    "merkle-patricia-tries": {
+      "audit": {
+        "at": "2026-11-06T18:20:14.560Z",
+        "note": "Scoped re-audit of the cycle-1 repair (one sentence replaced, form unchanged, 46 entries kept); not expanded, since the repair changed no argument, assumption, structure or scope. Both blocking findings (A and B, accuracy: the summary 'A path thus has a node only where keys part, plus the leaf at its end' omitted extension nodes and contradicted the comparison) are resolved: the new sentence counts branch, extension and leaf nodes, and its extension clause ('only where every key passing that point shares a run of nibbles before they part') states a necessary condition that holds in every Merkle Patricia trie, matches the comparison's extension row ('A run of nibbles shared by every key that passes through it, and a reference to one branch node'), paragraph 1's collapse rule, and the later sentences that extensions are uncommon in hashed-key tries and more common where keys share prefixes (transaction and receipt tries). Re-read the whole paragraph, the comparison and every other use of branch/extension/leaf and 'part' (proof paragraph, absence cases, insertion split, deletion collapse): no contradiction introduced, no new term or sense, no widened scope. Overlap per placement (one placement, State Commitments parent): the changed sentence restates nothing in the parent or the domain line. Territory: the sentence stays within 'which node types shorten that path'; no sibling or excluded concept is explained. Representation: the comparison remains the right structure; the summary sentence draws the consequence for a whole path, which the per-node rows do not state outright, so it is not a spelled-out copy of the table. Canonical validity: no positional or time-sensitive words, American English, plain text. Spot-checked untouched figures (about 530 bytes per full branch node, five or six and seven or eight branch levels, fifty-odd remaining nibbles, 15/4 hash ratio vs binary, 32-byte embedding rule): all hold. Advisory: (1) the summary's 'and the leaf at its end' (kept from the original) does not cover a key that ends at a branch node's value slot, which the comparison's branch row allows; this cannot occur in Ethereum's tries (fixed-length hashed keys, prefix-free RLP index keys), so it is not material, but 'and, for most keys, a leaf at its end' or a clause for keys ending at a branch would make the summary exact.",
+        "resolutions": [
+          {
+            "id": "names-concept:d55a1e3daa",
+            "resolution": "State Storage is named once as the subject owning how clients store, retain and prune nodes; the preceding sentences explain only the write amplification and the shared-node retention cost that a trie update imposes, which is this concept's 'what updating costs the nodes that store it' label, not storage layout, pruning schemes or client databases. Named, not explained."
+          },
+          {
+            "id": "names-concept:acdb7f1c90",
+            "resolution": "Storage slots appear only as keys of Ethereum's storage tries ('slot numbers', 'a proof for a storage slot', 'changing one storage slot') to say what the trie is keyed by and what a proof or update then traverses; what a slot is and how contracts lay out storage is not explained. Named, not explained."
+          },
+          {
+            "id": "depth-long:ad923b10d1",
+            "resolution": "1312 words, up about 15 from the repair, which the blocking finding required. Each paragraph serves one claim: key-to-path and node kinds (paragraphs 1-2 and the comparison), proof contents and size (paragraphs 3-4), read cost (paragraph 5), update and storage cost (paragraphs 6-7). The figures and Ethereum specifics support size and cost claims rather than repeating them; no paragraph restates another. Length accepted."
+          }
+        ],
+        "recordFingerprint": "bfa0fcce7b3f1b8a6a6031649ab497bc4b67fbbe4df8b821947231506444da62",
+        "neighbours": {
+          "global-state": "16e7c813103e7fbe37c3049cd5840c4e45e7a41036e2ac12c006b41312db2343",
+          "merkle-trees": "a0095017ffc61b2e4110e768be1d93f4c06e7f8eac4c613c14af098db5c8385b",
+          "state-encoding": "d618cd2cc7e10d129ea032ef6d3387ef5fed8b9565bd5a7c7ddc8d6ac69063d3",
+          "state-layout": "fbcf706c006f91881b841702118b418cc4a2c7b8b28e4693e149042b468da8e0",
+          "state-proofs": "b478fecff592a153736772ffa936621f909363bd742ff5a92e463ee1947656dd",
+          "state-roots": "ee8a0192cb61fbd5e68b04f44ade92a32f1853505210dc7a6b1d848779067aa5",
+          "verkle-trees": "5b03381558cfb3f5f3dfe1074a23165f0b3a902fe04689af6a17de321f695cb7"
+        }
+      }
+    },
+    "verkle-trees": {
+      "audit": {
+        "at": "2026-11-06T18:20:18.840Z",
+        "note": "Scoped re-audit from l2 repair-diff (4 sentences changed, form unchanged; not expanded, since the repair narrowed scope only and changed no argument, structure or territory). Resolved: paragraph 1 now scopes 'curve point vs field elements' to the elliptic-curve schemes verkle designs commonly use; paragraph 4 scopes the prover's curve and field arithmetic to those schemes; paragraph 5 scopes binding resting on a curve-group problem to the elliptic-curve commitments commonly used, and 'Which assumption' replaces 'Which group problem', consistent with the comparison rows (discrete log for Pedersen/IPA, strong Diffie-Hellman family for KZG) and with the wider scope. Re-read every changed sentence, its paragraph and the comparison that depends on paragraph 5; checked every other use of 'verkle designs (commonly) use' (paragraph 4, Pedersen and KZG homomorphic update) for consistency. Accuracy of the narrowed claims holds: KZG and Pedersen commitments are curve points over field-element vectors; binding fails if discrete logs in the group become easy; Fiat-Shamir needs a random-oracle hash. Overlap: the single placement's parent (State Commitments) is not restated; the domain sentence is not repeated. Territory: vector commitments, commitment schemes, state proofs, hash functions and collision resistance are named, not explained; no sibling explained. Representation: the comparison remains accurate in every cell and is not spelled out by the prose. Canonical validity and American English: fine. Advisory: (1) paragraph 4 'Updating a node does not grow with its width' is stated before its condition; now that the record acknowledges designs beyond the common ones, leading with 'With those homomorphic commitments, updating a node...' would scope it explicitly (the following 'because' clause already conditions it, so no claim is wrong for the designs named). (2) paragraph 4 'with those elliptic-curve schemes' points back to paragraph 1, three paragraphs away; naming them (Pedersen and KZG) would read more directly.",
+        "resolutions": [
+          {
+            "id": "names-concept:c49278a5e1",
+            "resolution": "collision resistance is named in paragraph 5 and the comparison as the assumption a hash-tree forger must break, and as what quantum search speeds up only polynomially; its definition and properties are not explained."
+          },
+          {
+            "id": "names-concept:280f58ccdf",
+            "resolution": "commitment schemes is named (the scheme's binding and setup that verkle proofs depend on); the record states only the one opening property the tree relies on and the homomorphic update needed for update cost, both within its claims; what a scheme specifies and how schemes differ in general is not explained."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "hash functions are named as what a tree of hashes rests on and as the random oracle of Fiat-Shamir; their construction and properties are not explained."
+          },
+          {
+            "id": "names-concept:33a2de66fb",
+            "resolution": "state proofs is named only in the closing sentence on exposure; the proof contents explained are the verkle-specific path opening (own claim), not what state proofs establish, what verifiers hold generally, or root freshness."
+          },
+          {
+            "id": "names-concept:5d62c3f891",
+            "resolution": "vector commitment is named in the definition as what each node uses; the record uses its single-slot opening property without explaining how vector commitments work in general."
+          }
+        ],
+        "recordFingerprint": "5b03381558cfb3f5f3dfe1074a23165f0b3a902fe04689af6a17de321f695cb7",
+        "neighbours": {
+          "hash-functions": "515b2e39fd248ace79290f84dfda0866dc6ad148c5dfd1e3f5f844dda899b2e5",
+          "merkle-patricia-tries": "bfa0fcce7b3f1b8a6a6031649ab497bc4b67fbbe4df8b821947231506444da62",
+          "merkle-trees": "a0095017ffc61b2e4110e768be1d93f4c06e7f8eac4c613c14af098db5c8385b",
+          "state-layout": "fbcf706c006f91881b841702118b418cc4a2c7b8b28e4693e149042b468da8e0",
+          "state-proofs": "b478fecff592a153736772ffa936621f909363bd742ff5a92e463ee1947656dd",
+          "state-roots": "ee8a0192cb61fbd5e68b04f44ade92a32f1853505210dc7a6b1d848779067aa5"
+        }
+      }
+    },
+    "state-roots": {
+      "audit": {
+        "at": "2026-11-06T18:20:23.013Z",
+        "note": "Re-audit of state-roots after repair, scoped by l2 repair-diff (5 sentences removed, 6 added, form unchanged; paragraphs 3 and 6 changed). Not expanded into a full audit: the repair fixed statements at their scope and changed neither the argument, its assumptions, the structure nor the scope; the whole record was nevertheless read. Resolved: paragraph 3 no longer says the producer of every block records the root of its own execution and that validators reject the block on mismatch, which contradicted paragraph 4's CometBFT case; it now conditions the same-block check on headers that record their own execution's root (Ethereum) and states that on CometBFT chains the result is recorded in, and checked against, the next block's header (CometBFT validation rejects a block whose app hash differs from the state the node computed), and the divergence sentence now says nodes part ways 'at the first recorded root that exposes the difference', which holds under both recording rules. Paragraph 6 no longer claims the state root is the one header commitment that accumulates (the parent hash also reaches back through history); it is scoped to headers such as Ethereum's, says the effects of execution accumulate in the state root, and distinguishes the parent hash as linking earlier headers without fixing the state this block leaves, consistent with the comparison's parent-hash row. Checked every use of the changed terms (recorded root, producer, next block's header, accumulate, parent hash) across paragraphs 3, 4, 6, the comparison and paragraph 7: consistent. Overlap per placement: nothing restates the State Commitments, State Representation or Cross-Chain State parent texts; the Cross-Chain State parent's sentence on header relaying is not restated. Territory: changes stay within 'how a state root is recomputed ... and where a protocol records it' and 'how a state root differs from the other commitments a block records'; excluded concepts remain named only. Representation unchanged and still accurate. American English, plain text, no positional words. Advisory: (1) the repair made paragraph 3 repeat paragraph 4's point that Ethereum headers record their own block's post-state root while CometBFT headers record the previous block's, with the same 'executed only after it has been agreed on' reason; one of the two statements could be reduced to a reference, which would also bring the record back under the depth-long threshold; (2) 'the root of that block's own execution' would read more precisely as 'the root of the state after that block's own execution', the wording paragraph 4 uses.",
+        "resolutions": [
+          {
+            "id": "names-concept:19b13e1f07",
+            "resolution": "challenge-periods: named once ('an unanswered challenge period') as one way a settlement layer accepts a rollup root; not explained."
+          },
+          {
+            "id": "names-concept:280f58ccdf",
+            "resolution": "commitment-schemes (excluded): named only as the binding primitive the root relies on ('hash function or commitment scheme it relies on stays binding'); what a scheme specifies is not explained."
+          },
+          {
+            "id": "names-concept:97d08c7182",
+            "resolution": "full-nodes: named as the party that trusts roots it computed itself; the sentence is about trust in a state root (this concept's claim), not about what a full node is."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "hash-functions: named only as the binding assumption under which the root fixes the state; not explained."
+          },
+          {
+            "id": "names-concept:30abd9ef36",
+            "resolution": "header-relaying (excluded): named ('as header relaying and light-client verification do') with the fact it establishes about a root; its mechanism is not explained."
+          },
+          {
+            "id": "names-concept:ef1d102526",
+            "resolution": "invalid-transitions: named to state that a root over a state reached by invalid transitions is well formed; what makes a transition invalid is not explained."
+          },
+          {
+            "id": "names-concept:5830b01a84",
+            "resolution": "light-client-verification (excluded): named alongside header relaying as checking the source's consensus on a header; not explained."
+          },
+          {
+            "id": "names-concept:b085fcdefc",
+            "resolution": "light-nodes (excluded): named in a list of consumers holding a root they did not compute; not explained."
+          },
+          {
+            "id": "names-concept:cf2ef08b85",
+            "resolution": "merkle-patricia-tries (excluded): named as Ethereum's structure in the example of a root that depends only on current entries; trie construction, paths and proofs are not explained."
+          },
+          {
+            "id": "names-concept:a0f32f3d7b",
+            "resolution": "reorganizations (excluded): named in one clause giving its consequence for a root's trustworthiness (the root describes an abandoned state until finality); how reorganizations occur is not explained."
+          },
+          {
+            "id": "names-concept:4d13af81c8",
+            "resolution": "settlement-layers: named as where a rollup posts roots; not explained."
+          },
+          {
+            "id": "names-concept:596b9e1635",
+            "resolution": "settlement-proofs (excluded): named as covering acceptance of a posted rollup root; not explained."
+          },
+          {
+            "id": "names-concept:87a76e7b80",
+            "resolution": "valid-transitions: named as the third fact trust in a root depends on; not explained."
+          },
+          {
+            "id": "names-concept:49e7a3c624",
+            "resolution": "validity-proofs: named once as a condition for accepting a rollup root; not explained."
+          },
+          {
+            "id": "depth-long:bc50bf20f4",
+            "resolution": "1334 words. Each paragraph ties to a claim: 1-2 what a root identifies and does not establish; 3-4 recomputation and where it is recorded; 5 trust outside the protocol; 6, the comparison and 7 how the root differs from the other header commitments. The repair added the CometBFT condition to paragraph 3, which now repeats paragraph 4's recording point; that repetition is the main condensable text and is listed as advisory. No background or extra example otherwise found that the claims do not need."
+          }
+        ],
+        "recordFingerprint": "ee8a0192cb61fbd5e68b04f44ade92a32f1853505210dc7a6b1d848779067aa5",
+        "neighbours": {
+          "cross-chain-verification": "0f9d2f85a69beaa32863e4abe76bda292ca0febcf6143f9bdde953403c89197f",
+          "deterministic-execution": "31cfff77e5c917d280b9ffe201ed17ef8daf16a76af71c8073ec294c0dc1a93c",
+          "global-state": "16e7c813103e7fbe37c3049cd5840c4e45e7a41036e2ac12c006b41312db2343",
+          "hash-functions": "515b2e39fd248ace79290f84dfda0866dc6ad148c5dfd1e3f5f844dda899b2e5",
+          "invalid-transitions": "38a097a3b6f577075fa9554f99fb837035ce23284515225c82ac0c3796513af2",
+          "local-state": "a2ebb34520905d3a2fac3a2d013d42f36b1b510c9158afb5f9b8337c93fc43b6",
+          "merkle-patricia-tries": "bfa0fcce7b3f1b8a6a6031649ab497bc4b67fbbe4df8b821947231506444da62",
+          "merkle-trees": "a0095017ffc61b2e4110e768be1d93f4c06e7f8eac4c613c14af098db5c8385b",
+          "settlement-layers": "bffcb37522e0e110b28aa859b7299b30511f13c742dba58cd62f5ed63ea7d6f0",
+          "state-encoding": "d618cd2cc7e10d129ea032ef6d3387ef5fed8b9565bd5a7c7ddc8d6ac69063d3",
+          "state-layout": "fbcf706c006f91881b841702118b418cc4a2c7b8b28e4693e149042b468da8e0",
+          "state-models": "97f8ef3905d41cee073f61ab67e93e07a0693c1cbc6b3160e13d9ef7d5777fa9",
+          "state-proofs": "b478fecff592a153736772ffa936621f909363bd742ff5a92e463ee1947656dd",
+          "transaction-execution": "00433341802aa496895f52f5adab96dc812c0e86fb9f5140650ca775e135d9ae",
+          "valid-transitions": "571753b74b1399999535ab5f9f309130dee07ee6c8619f79f0be42333c567ddb",
+          "verkle-trees": "5b03381558cfb3f5f3dfe1074a23165f0b3a902fe04689af6a17de321f695cb7"
+        }
+      }
+    },
+    "state-proofs": {
+      "audit": {
+        "at": "2026-11-06T18:20:27.091Z",
+        "note": "Re-audit (R), scoped by l2 repair-diff (4 removed, 6 added, form unchanged), not expanded: the repair narrowed claims without changing the argument, assumptions, structure or scope. Checked each changed statement and its paragraph. Paragraph 1: the aggregate-fact example now reads 'that no account meets some condition', and the added sentence correctly states that proofs of the entries a prover presents do not show that no others exist, so a fact about all accounts needs a proof of a computation over the entries or proofs covering the whole structure; consistent with the definition, the binding sentence and the zero-as-absence example. Paragraph 2: 'matches the trusted root' replaces 'hashes to', so the verifier-flaw sentence now holds for structures linked by hashes or by commitment schemes, consistent with the earlier 'which hash function or commitment scheme' sentence; the BNB/IAVL example still fits. Paragraph 4: decode-and-hash is now scoped to structures linked by hashes, with commitment-linked structures (verkle trees) checked by verifying openings; the hash-function sentence is scoped the same way; the Ethereum decoding-vs-hashing and gas claims remain scoped to Ethereum's hash tries; depth, key count and shared top nodes hold for both kinds. Every other use of the changed terms (hash function, commitment scheme, cover) checked for one sense. Overlap per placement: no sentence restates State Commitments (presence vs absence and stateless validation are not repeated) or Cross-Chain State (root trust named, not restated); no restatement of verkle-trees, merkle-trees, merkle-patricia-tries or state-roots. Territory: the added verkle clause names verkle trees and commitment openings without explaining how openings work, and stays within the claim about what verification costs; all excluded concepts are named only. Representation: the single distinction plus prose remains adequate; no structure needed by the change. Canonical validity: no positional or time-sensitive words; American English; plain text. Advisory: (1) paragraph 4 now separates commitment-linked structures but gives cost drivers only for hash-linked ones; a clause on what drives the cost of verifying openings in a contract (curve arithmetic the chain may lack natively) would be an optional clarification. (2) The added sentence in paragraph 1 is long; splitting at the semicolon would read more easily.",
+        "resolutions": [
+          {
+            "id": "names-concept:280f58ccdf",
+            "resolution": "commitment-schemes is named ('which hash function or commitment scheme, with its parameters'; 'a structure linked by a commitment scheme ... verifying commitment openings instead'); what a scheme specifies or how openings work is not explained."
+          },
+          {
+            "id": "names-concept:49fa2960fb",
+            "resolution": "fraud-proofs is named in the distinction and its paragraph only to say a one-step re-execution reads values checked as state proofs; how fraud proofs work is not explained."
+          },
+          {
+            "id": "names-concept:bd89814c21",
+            "resolution": "hash-functions is named as part of a structure's rules and as a cost driver (native Keccak-256 and SHA-256 versus computed in contract code); no hash-function properties are explained."
+          },
+          {
+            "id": "names-concept:30abd9ef36",
+            "resolution": "header-relaying is named as covering root trust and as one way a root reaches a contract; not explained."
+          },
+          {
+            "id": "names-concept:b923046954",
+            "resolution": "on-chain-verification is named as covering the off-chain aggregation route; not explained."
+          },
+          {
+            "id": "names-concept:ad4a85c15b",
+            "resolution": "proof-aggregation is named alongside on-chain verification; the record says only the trade (per-key cost for a fixed verification cost and proving time), which belongs to this concept's cost label."
+          },
+          {
+            "id": "names-concept:f7afdcab88",
+            "resolution": "settlement-contracts is named once as a way a root reaches a contract; not explained."
+          },
+          {
+            "id": "names-concept:494c5caa00",
+            "resolution": "state-roots is named in the definition as an example commitment and as covering root trust; what a state root identifies or how it is recomputed is not explained."
+          },
+          {
+            "id": "names-concept:e50d5d02fa",
+            "resolution": "storage-layout is named ('as a Solidity contract's storage layout determines') to say a key's meaning lies outside the proof; layout rules are not explained."
+          },
+          {
+            "id": "names-concept:eb1a1c57ea",
+            "resolution": "storage-proofs is named in the distinction and as what challenge-based storage proofs address, and the eth_getProof naming collision is drawn as a boundary; how storage proofs work is not explained."
+          },
+          {
+            "id": "names-concept:acdb7f1c90",
+            "resolution": "storage-slots is named in examples (zero slot removed from the storage trie; a token contract's slot); slot assignment is not explained."
+          },
+          {
+            "id": "names-concept:2082e5afc5",
+            "resolution": "transaction-data is named once as how proof bytes travel and are paid for by size; not explained."
+          },
+          {
+            "id": "names-concept:b9b8490445",
+            "resolution": "validity-proofs is named in the distinction and its paragraph only as reading values checked as state proofs; not explained."
+          },
+          {
+            "id": "names-concept:3d803e5523",
+            "resolution": "verkle-trees is named in the repaired paragraph 4 as an example of a commitment-linked structure checked by verifying openings; its node commitments, widths and proof contents are not explained, and nothing restates the verkle-trees record."
+          }
+        ],
+        "recordFingerprint": "b478fecff592a153736772ffa936621f909363bd742ff5a92e463ee1947656dd",
+        "neighbours": {
+          "cross-chain-verification": "0f9d2f85a69beaa32863e4abe76bda292ca0febcf6143f9bdde953403c89197f",
+          "hash-functions": "515b2e39fd248ace79290f84dfda0866dc6ad148c5dfd1e3f5f844dda899b2e5",
+          "merkle-patricia-tries": "bfa0fcce7b3f1b8a6a6031649ab497bc4b67fbbe4df8b821947231506444da62",
+          "merkle-trees": "a0095017ffc61b2e4110e768be1d93f4c06e7f8eac4c613c14af098db5c8385b",
+          "on-chain-verification": "5901a1de774ceada1405c7a03257f64f772c2ec76b5de3cef57de3d5fcb602cd",
+          "state-roots": "ee8a0192cb61fbd5e68b04f44ade92a32f1853505210dc7a6b1d848779067aa5",
+          "storage-proofs": "48b3041f5d331540454cae10a367665dbc6db5b1cd650deefcdd2c236ef779da",
+          "verkle-trees": "5b03381558cfb3f5f3dfe1074a23165f0b3a902fe04689af6a17de321f695cb7"
+        }
+      }
+    }
+  },
+  "pipeline": {
+    "mode": "simplified",
+    "version": 2
+  },
+  "groupAudit": {
+    "at": "2026-11-06T18:22:54.006Z",
+    "note": "Group audit of state-commitments: the five owned members (merkle-trees, merkle-patricia-tries, verkle-trees, state-roots, state-proofs) read side by side against the plan, the reserved commitment-schemes labels and the parent State Commitments. Territory: no member explains what another's labels cover. Absence is divided by angle (merkle-trees: positions, sorting, sparse default leaves; merkle-patricia-tries: where a key's path leaves the trie; verkle-trees: empty slot or another key's stem; state-proofs: which statements a proof can establish, deferring to the structure). Root trust is owned by state-roots (three facts); merkle-trees and state-proofs only state in one boundary sentence each that a proof does not authenticate the root and name state roots. The two-trie storage proof is explained in merkle-patricia-tries and only referenced in state-proofs (cost) and state-roots (account fields). Reserved commitment-schemes labels are not crossed: verkle-trees names binding, homomorphic update and opening size per scheme only as its width and assumption labels need; state-roots and state-proofs name the commitment scheme only. No split exists. Contradictions: none found. Checked: wide nodes enlarge proofs in a tree of hashes (merkle-trees) agrees with the three-to-four-times figure for sixteen-way branch nodes (merkle-patricia-tries) and with verkle-trees' contrast that openings omit siblings; forging a hash-tree proof needs a collision given an unambiguous construction (merkle-trees, verkle-trees, state-roots) is stated with the same condition each time; the MPT root depending only on current keys (merkle-patricia-tries) agrees with state-roots' history-independence example, and IAVL's order dependence is correctly kept separate; sparse-tree absence as a default value (merkle-trees) agrees with state-proofs' absence-equals-default statement for Ethereum storage. Terms: binding, opening, unambiguous construction, tree of hashes and inclusion/absence are used in one sense across members. Representation: four members carry one comparison and state-proofs a distinction; each comparison has different alternatives and dimensions decided by its own claim (recomputation by kind of change, node kinds as a lookup meets them, forging assumptions by commitment, an Ethereum header's four commitments), so this is not one cloned form, and the group signal for one form did not fire. Convergence: the five definitional openings ('A ... is ...') follow the definition-leads rule, not imitation; the shared arc of the three structure records (path, proof contents, proof size, update cost) follows their parallel labels, and verkle-trees and merkle-patricia-tries diverge after it (assumptions; storage and pruning). Drift window shows no convergence flag. Group signals: none to resolve. Advisory: (1) state-roots states twice that CometBFT records the result in the next block's header and that Ethereum records its own block's root (paragraph 4 and paragraph 5); one could refer back to the other. (2) The shared-upper-levels saving of combined proofs is made in merkle-trees (size) and again in state-proofs (cost); state-proofs could shorten its clause to a reference.",
+    "resolutions": [],
+    "records": {
+      "merkle-trees": "a0095017ffc61b2e4110e768be1d93f4c06e7f8eac4c613c14af098db5c8385b",
+      "merkle-patricia-tries": "bfa0fcce7b3f1b8a6a6031649ab497bc4b67fbbe4df8b821947231506444da62",
+      "verkle-trees": "5b03381558cfb3f5f3dfe1074a23165f0b3a902fe04689af6a17de321f695cb7",
+      "state-roots": "ee8a0192cb61fbd5e68b04f44ade92a32f1853505210dc7a6b1d848779067aa5",
+      "state-proofs": "b478fecff592a153736772ffa936621f909363bd742ff5a92e463ee1947656dd"
+    }
+  }
+}
