@@ -334,7 +334,27 @@ export function auditTaskPrompt(input: { run: string; subject: string; role: L2A
     `Write your findings, in the JSON form v2.md gives, to exactly this file and no other: ${input.inbox}`,
     `Then submit it: npm run map:author -- l2 submit-audit ${input.subject} --role ${input.role} --auditor ${input.auditor} --file ${input.inbox}${input.attempt ? ` --attempt ${input.attempt}` : ""}`,
     "Never run `l2 record`, `l2 reopen`, `l2 findings`, `l2 repair-findings` or `l2 status`, never edit records or group files, and never read, list or search the run's work directory beyond your own file: other auditors' findings and the published artifacts are the orchestrator's.",
-    "Report back: PASS or FAIL, each blocking finding in one line, the number of advisory findings, and whether submit-audit succeeded.",
+    "Report back in one line: PASS or FAIL, the number of blocking and advisory findings, and whether submit-audit succeeded (its error if not). Do not repeat your findings: the orchestrator reads them from the tooling.",
+  ].join("\n");
+}
+
+/**
+ * The prompt for a draft or a repair (`l2 attempt begin author <concept>`): the step's instructions, where its
+ * territory or its findings come from, the one command that records it, and the limits of its work. A repairer reads
+ * only its own concept's findings (`l2 repair-findings`), never another concept's.
+ */
+export function draftTaskPrompt(input: { run: string; subject: string; group: string; role: "author" | "repair"; instructions: string; attempt?: string; cycle?: number }): string {
+  const repair = input.role === "repair";
+  const record = `npm run map:author -- l2 record author ${input.subject}${input.attempt ? ` --attempt ${input.attempt}` : ""}`;
+  return [
+    `You perform the ${repair ? `REPAIR of ${input.subject} (repair cycle ${input.cycle ?? "?"})` : `DRAFT of ${input.subject}`}, in run ${input.run} (group ${input.group}) of the MAP L2 simplified pipeline, version 2.`,
+    `Read ${input.instructions}common.md, then ${input.instructions}${repair ? "repair.md" : "author.md"}, then ${input.instructions}v2.md ("Order"${repair ? ', "Repair evidence"' : ""}), and follow them. Where they differ, v2.md wins.`,
+    repair
+      ? `The findings to repair, and only these: \`npm run map:author -- l2 repair-findings ${input.subject}\`. They judged the record before this repair. Fix every one at its scope; a suggested wording is a proposal, checked against the record's conditioned sentences. Never use \`l2 status\` or \`l2 findings\` for them: they print other concepts' audits.`
+      : `Your territory: \`npm run map:author -- l2 context ${input.subject}\` (topic-label claims, exclusions, siblings' territory). Explain only those labels; name excluded concepts and siblings at most to draw a boundary.`,
+    `When the record is in place and checked, record it exactly once: ${record}. After that succeeds, never edit the record again.`,
+    `Edit only ${input.subject}'s record in src/lib/map/data.ts (find it with grep -n; never read data.ts wholesale). Never commit, push, switch branches, stash, reset or merge; never edit group files, other records, taxonomy, tests, tooling or docs; never launch agents; never run \`l2 record\` for anything else, \`l2 reopen\` or \`l2 submit-audit\`.${repair ? " If a finding cannot be fixed within the accepted territory, stop and report it." : ""}`,
+    `Report back in at most 3 lines: whether \`l2 record author\` succeeded (its error if not), any stop condition${repair ? " or finding left unfixed" : ""}, and any real tooling problem. Do not list the record's content${repair ? " or your changes: `l2 repair-diff` shows them, and the re-auditor verifies them independently" : ""}.`,
   ].join("\n");
 }
 

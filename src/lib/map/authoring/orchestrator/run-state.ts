@@ -1030,7 +1030,7 @@ export function nextAction(state: RunState): NextAction {
     // Group-batched runs (simplified v2): auditors submit immutable findings; only these commands record them.
     const batched = isBatched(pipeline);
     // A run that tracks attempts begins each model step as an attempt, its inputs persisted, before launching it.
-    const attempt = (role: string) => (batched && state.l2!.attempts ? `first \`map:author -- l2 attempt begin author ${step.subject} --role ${role}\` and launch the agent with the description it prints; ` : "");
+    const attempt = (role: string) => (batched && state.l2!.attempts ? `first \`map:author -- l2 attempt begin author ${step.subject} --role ${role}\` and launch the agent with the description and prompt it prints; ` : "");
     const withAttempt = (command: string) => (batched && state.l2!.attempts ? `${command} --attempt <id>` : command);
     const v2 = `${instructions}v2.md`;
     const repairing = state.l2!.repair;

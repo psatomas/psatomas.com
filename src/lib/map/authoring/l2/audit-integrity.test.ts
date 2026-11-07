@@ -10,6 +10,7 @@ import {
   auditTaskPrompt,
   bindingKey,
   commitAuditRecording,
+  draftTaskPrompt,
   inboxProblem,
   readArtifacts,
   repairItems,
@@ -181,8 +182,9 @@ test("independence: each auditor gets its own prompt naming only its own private
   for (const text of [a, b]) {
     assert.match(text, /independent FIRST audit/);
     assert.match(text, /Never run `l2 record`, `l2 reopen`, `l2 findings`, `l2 repair-findings` or `l2 status`/);
-    // A first auditor is never given findings.
+    // A first auditor is never given findings, and reports back without repeating its own.
     assert.ok(!/verifications|F1:/.test(text));
+    assert.match(text, /Report back in one line.*Do not repeat your findings/);
     // The prompt never names the published artifacts' directory: auditors have no reason to look there.
     assert.ok(!text.includes(`${work}/audits`));
   }
@@ -250,4 +252,17 @@ test("repair verification: a re-audit is recordable only when it accounts for ev
   assert.deepEqual(verificationProblems({ verdict: "fail", findings: [blocking], verifications: [{ id: "F1", status: "unresolved", evidence: "unchanged" }] }, ["F1"]), []);
   assert.deepEqual(verificationProblems({ verdict: "pass", findings: [], verifications: [{ id: "F1", status: "resolved", evidence: "x" }, { id: "F1", status: "resolved", evidence: "y" }] }, ["F1"]), ["F1 is verified more than once"]);
   assert.match(verificationProblems({ verdict: "pass", findings: [], verifications: [{ id: "F1", status: "resolved", evidence: " " }] }, ["F1"])[0], /give the evidence/);
+});
+
+test("draft and repair prompts: a repairer reads only its own concept's findings, and agents report back briefly", () => {
+  const repair = draftTaskPrompt({ run: "run-1", subject: "a", group: "g1", role: "repair", instructions: "d/", attempt: "att-1", cycle: 2 });
+  assert.match(repair, /REPAIR of a \(repair cycle 2\)/);
+  assert.match(repair, /only these: `npm run map:author -- l2 repair-findings a`/);
+  assert.match(repair, /Never use `l2 status` or `l2 findings` for them/);
+  assert.match(repair, /l2 record author a --attempt att-1/);
+  assert.match(repair, /Report back in at most 3 lines.*re-auditor verifies them independently/);
+  const author = draftTaskPrompt({ run: "run-1", subject: "a", group: "g1", role: "author", instructions: "d/", attempt: "att-2" });
+  assert.match(author, /DRAFT of a/);
+  assert.match(author, /l2 context a/);
+  assert.ok(!author.includes("repair-findings"));
 });

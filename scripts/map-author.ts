@@ -84,7 +84,7 @@ import { l2Next, l2NoRun, planBatches, staleSummary, stepFreshness, type L2Fresh
 import { AttemptError, artifactAttemptProblem, attemptIn, attemptMarker, beginAttempt, decide, inputKeyOf, reconcile, releaseHold, stepId, transition, withAttempt, type L2Attempt, type L2AttemptEvidence, type L2AttemptLog, type L2AttemptRole, type L2AttemptStep } from "../src/lib/map/authoring/l2/attempts.ts";
 import { launchAttempt, readAttemptLog, updateAttemptLog } from "../src/lib/map/authoring/l2/attempts-io.ts";
 import { journaledCommit, JournalError, recoverJournal, sha } from "../src/lib/map/authoring/l2/journal.ts";
-import { artifactPath, AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, findingsProblems, findingsReason, inboxProblem, provenanceProblem, readArtifacts, repairItems, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput, type L2RepairEvidence, type L2RepairItem } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
+import { artifactPath, AUDIT_ROLES, AuditArtifactError, AUDITORS, auditorInbox, auditOutcome, auditTaskPrompt, bindingKey, commitAuditRecording, draftTaskPrompt, findingsProblems, findingsReason, inboxProblem, provenanceProblem, readArtifacts, repairItems, staleArtifacts, submitArtifact, type L2AuditBinding, type L2AuditRole, type L2FindingsInput, type L2RepairEvidence, type L2RepairItem } from "../src/lib/map/authoring/l2/audit-artifacts.ts";
 import { formatRecordDiff, recordDiff, recordLines } from "../src/lib/map/authoring/l2/record-diff.ts";
 import { BudgetError, budgetStatus, changeCap, describeBudget, launchProblem, releaseLaunch, startBudget, type L2Budget, type L2SpendSession } from "../src/lib/map/authoring/l2/budget.ts";
 import { BudgetLockError, readLedger, reserveUnderLock, withLock, writeLedger } from "../src/lib/map/authoring/l2/budget-io.ts";
@@ -1529,7 +1529,10 @@ function commandL2Attempt() {
     const role = (flag("--role") ?? expectedRole(state, kind, subject)) as L2AttemptRole;
     const attempt = beginRunAttempt(state, { kind, subject, role, ...(flag("--auditor") ? { auditor: flag("--auditor") } : {}) });
     if (flags.has("--json")) return console.log(JSON.stringify(attempt, null, 2));
-    return console.log(`attempt ${attempt.id} begun (pending) for ${stepId(attempt.step)}; launch its agent described \`${taskDescription(attempt)}\`${kind === "author" ? `, and record its draft with \`${CLI} record author ${subject} --attempt ${attempt.id}\`` : ""}`);
+    console.log(`attempt ${attempt.id} begun (pending) for ${stepId(attempt.step)}; launch its agent described \`${taskDescription(attempt)}\`${kind === "author" ? `, and record its draft with \`${CLI} record author ${subject} --attempt ${attempt.id}\`` : ""}`);
+    // A draft's or repair's prompt, ready to give unedited (an audit's comes from \`l2 audit-task\`).
+    if (kind === "author") console.log(`\n${draftTaskPrompt({ run: state.domainId, subject, group: groupOfConcept(state, subject)!, role: attempt.step.role === "repair" ? "repair" : "author", instructions: PIPELINES[pipelineOf(state.l2!).mode].instructions, attempt: attempt.id, ...(state.l2!.repair ? { cycle: state.l2!.repair.cycle } : {}) })}`);
+    return;
   }
   if (!tracksAttempts(state)) fail(`${state.domainId} does not track attempts`, 1);
   const id = positional[1] ?? fail(`attempt ${sub ?? "<command>"} needs an attempt id`);

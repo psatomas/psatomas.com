@@ -45,4 +45,5 @@ What differs from the legacy pipeline:
   Maintenance (2026-11-07, after the first v2 pilot): a reopened concept keeps its own findings with their source
   artifacts (`l2 repair-findings`), readable after a sibling's repair and never current evidence; a re-auditor is
   given exactly those findings and submits a verification of each; `l2 findings` withholds first audits until both
-  are in. Cycles opened before it carry no evidence and run as before.
+  are in; the tooling prints every agent's prompt, and agents report back in one to three lines. Cycles opened before
+  it carry no evidence and run as before.
